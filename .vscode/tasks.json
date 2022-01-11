@@ -1,0 +1,30 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "Build Module",
+      "command": "make",
+      "args": ["module"],
+      "group": { "kind": "build", "isDefault": true }
+    },
+    {
+      "type": "shell",
+      "label": "Install Module",
+      "command": "make",
+      "args": ["install"],
+    },
+    {
+      "type": "shell",
+      "label": "Build && Install Module",
+      "dependsOrder": "sequence",
+      "dependsOn": ["Build Module", "Install Module"],
+    },
+    {
+      "type": "shell",
+      "label": "Build Test",
+      "command": "make",
+      "args": ["cpp-tests"],
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Debug C++",
+            "type": "cppdbg",
+            "request": "launch",
+            "windows": {
+                "program": "${workspaceFolder}/build/Windows/cpp-tests/cpp-tests.exe",
+                "miDebuggerPath": "C:/msys64/mingw64/bin/gdb.exe",
+            },
+            "linux": {
+                "program": "${workspaceFolder}/build/Linux/cpp-tests/cpp-tests",
+                "miDebuggerPath": "",
+            },
+            "osx": {
+                "program": "${workspaceFolder}/build/Darwin/cpp-tests/cpp-tests",
+                "miDebuggerPath": "",
+            },
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "preLaunchTask": "Build Test"
+        }
+    ]
+}
