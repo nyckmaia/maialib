@@ -7,7 +7,7 @@ This project can be used in two ways:
 . Maia App: It is user-friendly application with a Graphical User Interface (GUI)
 . Maia Lib: Its a C++ library (with a Python wrapper) without the GUI
 
-So, the `Maia Lib` is the project *core* and the `Maia App` is just a Graphical User Interface that calls the `Maia Lib` functionalities.
+So, the `maialib` is the project *core* and the `Maia App` is just a Graphical User Interface that calls the `maialib` functionalities.
 
 ## Advantages
 * Easy to use to musicians and musical researchers
@@ -17,15 +17,16 @@ So, the `Maia Lib` is the project *core* and the `Maia App` is just a Graphical 
 
 Now you can easily import your musical score using:
 ```
-import maialib as maia
-score = maia.Score('examples/Beethoven/Symphony_9th.xml')
+from maialib import * 
 
-ADD KNOWING ISSUES TO build
-Windows
-- disable Antivirus or make a exception (Cmake permissions)
-- Python que vem com o MSYS2 pode conffundir o cmake e nao pegar a versao certa do Python
-
+score = Score('examples/Beethoven/Symphony_9th.xml')
 ```
+
+## Knowing issues to build from source
+### On Windows
+- Disable Antivirus or make a exception (CMake permissions)
+- Multiple Python versions installed. Example: "Official Python", "Microsoft Python" and "MSYS2 Python" can direct the `Maialib` build system to choose a wrong version to build and install the library
+
 [NOTE]
 ====
 To import musical scores using Maialib, these files must be `MusicXML` files. +
@@ -41,19 +42,16 @@ You can easily generate this files using a score editor like:
 * Sibelius
 * Finale
 * Others
-====
 
-[NOTE]
-====
 Many `MusicXML` files are avaliable for free in the internet for download.
-But if you don't have a specific MusicXML file, you can import the MIDI file in a score editor (like MuseScore) and then export the `MusicXML` file from it. 
-====
+But if you don't have a specific MusicXML file, you can import the MIDI file in a score editor (like MuseScore) and then export the `MusicXML` file from it.
+
+
 Now you can explore the Maialib functionalities as:
 
 * x
 * y
 * z
-====================================
 
 # TO DO
 . myScore.getPart(0).append() => auto create new measures at the score end

@@ -24,18 +24,20 @@ target_include_directories(${PROJECT_NAME} PUBLIC ../include)
 target_include_directories(${PROJECT_NAME} PUBLIC ../external/pugi/include)
 target_include_directories(${PROJECT_NAME} PUBLIC ../external)
 
+include_directories(${PROJECT_NAME} PUBLIC ../external/zip/src)
+
 if(WIN32)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/debug)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/debug/external/zip)
 elseif(APPLE)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/debug)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/debug/external/zip)
 elseif(UNIX AND NOT APPLE)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/debug)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/debug/external/zip)
 else()
     message(FATAL_ERROR "Unable to detect the OS")
 endif()
-
-include_directories(${PROJECT_NAME} PUBLIC ../external/zip/src)
-target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/debug/external/zip)
 
 target_link_libraries(${PROJECT_NAME} PUBLIC maialib zip gtest)
 

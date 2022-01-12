@@ -1,7 +1,6 @@
 all: module
 
 .PHONY: clean
-.PHONY: app
 .PHONY: static-clean
 .PHONY: shared-clean
 .PHONY: module-clean
@@ -27,9 +26,6 @@ SCRIPTS_DIR = ./scripts
 
 clean:
 	@python3 $(SCRIPTS_DIR)/make-clean.py all
-
-app:
-	@python3 $(SCRIPTS_DIR)/make-app.py
 
 static-clean:
 	@python3 $(SCRIPTS_DIR)/make-clean.py static
