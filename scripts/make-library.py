@@ -25,7 +25,7 @@ path = Path.cwd() / "build" / myOS / "static" / buildMode
 path.mkdir(parents=True, exist_ok=True)
 
 # Base CMake command to build the python module
-cmakeCommand = "cmake -G \"Unix Makefiles\" -B {} -S .".format(path)
+cmakeCommand = "cmake -G \"Unix Makefiles\" -B {} -S ./core".format(path)
 
 # If 'Windows' define the MinGW 'make.exe'
 if myOS == "Windows":

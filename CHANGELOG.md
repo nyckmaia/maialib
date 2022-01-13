@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.3] - 2022-01-13
+### New Features
+
+### Improved
+- Folder structure: Create a `core` folder separate the C++ side
+- Better `README.md`
+- `Makefile`: Added the new `make dev` - build and install the Python module
+
+### Fixed
+- `Score::Score`: Added a `std::vector` constructor overload
+- `Makefile`: Renamed `make test` to `make tests`
+
 ## [v0.0.2] - 2022-01-10
 ### New Features
 - New build system using `make` commands

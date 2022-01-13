@@ -1,5 +1,6 @@
 all: module
 
+.PHONY: dev
 .PHONY: clean
 .PHONY: static-clean
 .PHONY: shared-clean
@@ -23,6 +24,10 @@ all: module
 .PHONY: logo
 
 SCRIPTS_DIR = ./scripts
+
+dev:
+	@make module
+	@make install
 
 clean:
 	@python3 $(SCRIPTS_DIR)/make-clean.py all
@@ -74,7 +79,7 @@ run-cpp-tests:
 py-tests:
 	@python3 $(SCRIPTS_DIR)/make-py-tests.py
 
-test:
+tests:
 	@make cpp-tests
 	@make run-cpp-tests
 	@make py-tests

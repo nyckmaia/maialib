@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.0)
 
 project("maialib" LANGUAGES CXX)
 
-# Windows: CMake errors -> Desabilitar o antivirus!!
+# Windows: If CMake errors -> Desable your antivirus!!
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -88,7 +88,7 @@ if(PYBIND_LIB)
             target_link_libraries(${PROJECT_NAME} PRIVATE zip -static-libgcc -static-libstdc++ -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive)
         else()
             message(STATUS "===> Selected Windows Compiler: MSVC")
-            # MSVC: Talvez nao precise de todas essas flags necessarias para o MSYS. Testar!
+            # MSVC: Talvez nao precise de todas essas flags necessarias para o MSVC. Testar!
             target_link_libraries(${PROJECT_NAME} PRIVATE zip)
         endif()
     else()
