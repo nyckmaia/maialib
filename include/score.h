@@ -48,6 +48,8 @@ public:
      */
     Score(const std::initializer_list<std::string>& partsName, const int numMeasures = 20, const int divisionsPerQuarterNote = 256);
     
+    Score(const std::vector<std::string>& partsName, const int numMeasures = 20, const int divisionsPerQuarterNote = 256);
+
     /**
      * @brief Construct a new Score object from a loaded sheet music file
      * 

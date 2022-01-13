@@ -21,6 +21,12 @@ void ScoreClass(py::module &m) {
             py::arg("divisionsPerQuarterNote") = 256,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
+    cls.def(py::init<const std::vector<std::string>&, const int, const int>(),
+            py::arg("partsName"),
+            py::arg("numMeasures") = 20,
+            py::arg("divisionsPerQuarterNote") = 256,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+
     cls.def(py::init<const std::string&>(), py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("clear", &Score::clear);

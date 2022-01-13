@@ -18,6 +18,24 @@ Score::Score(const std::initializer_list<std::string>& partsName, const int numM
     }
 }
 
+Score::Score(const std::vector<std::string>& partsName, const int numMeasures, const int divisionsPerQuarterNote) :
+    _numParts(partsName.size()),
+    _numMeasures(numMeasures),
+    _numNotes(0),
+    _divisionsPerQuarterNote(divisionsPerQuarterNote),
+    _isValidXML(false),
+    _haveTypeTag(false),
+    _isLoadedXML(false)
+{
+    if (_numParts == 0) {
+        throw std::runtime_error("You MUST provide at least one part name");
+    }
+
+    for (const auto& part : partsName) {
+        addPart(part);
+    }
+}
+
 Score::Score(const std::string& filePath) :
     _numParts(0),
     _numMeasures(0),
