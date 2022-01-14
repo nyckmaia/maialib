@@ -37,6 +37,6 @@ setup(
         
     ],
     install_requires=["pathlib"],
-    python_requires=">=3.8.0",
+    python_requires=">=3.7.0",
     zip_safe=False,
 )

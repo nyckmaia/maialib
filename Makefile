@@ -26,6 +26,7 @@ all: module
 SCRIPTS_DIR = ./scripts
 
 dev:
+	@make clean
 	@make module
 	@make install
 

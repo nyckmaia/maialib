@@ -24,12 +24,12 @@ Now you can explore some `maialib` features like:
 
 ## Requirements
 ### To run-only
-- Python 3
+- Python 3.7 (or greater)
 
 ### To build from source
 - C++17 compatible compiler
 - CMake 3.0
-- Python 3
+- Python 3.7
 - Make
 - Doxygen (Optional: To build documentation)
 
@@ -39,7 +39,7 @@ Operational System | Compilers
 ------------------ | ----------------
 Windows 10 x64     | GCC 10.3 (MSYS2) <br> Visual Studio 2022
 Linux Ubuntu 20.04 | GCC 9.3
-Apple OSX 10.15    | XCode 11.6
+Apple OSX 10.15    | XCode (Command Line Tools) 11.5
 
 ## Documentation
 This project have 2 documentation levels. One for each user type:
@@ -52,6 +52,13 @@ There you will learn how to use and mix `maialib` classes and functions to reach
 
 ### Level 2: Developer Documentation
 You can browse the compiled `doxygen` documentation opening `docs/index.html`. <br>
+
+## Quick Start
+### Build Python module from C++ source
+Open a terminal (or CMD in Windows), enter inside of the `maialib` folder. <br>
+Type: `make` to build the Python module <br>
+When the build process finishes, type: `make install` <br>
+Done!
 
 ## Frequent Asked Questions
 ### 1) Where can I find the XML file of a specific musical score?
@@ -73,3 +80,13 @@ But if you don't have a specific MusicXML file, you can import the MIDI file in 
 
 ### Windows-Only
 - Disable your antivirus or create a exception (CMake permissions)
+
+## Contact
+Nycholas Maia - nyckmaia@gmail.com
+
+## Contributing
+If you want...
+
+## License
+Maialib is licensed under (GPLv3 License) [https://www.gnu.org/licenses/gpl-3.0.html]
+

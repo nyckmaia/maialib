@@ -42,6 +42,6 @@ copy2(setupFilePath, distDir)
 copy2(licenseFilePath, distDir)
 
 # Link the install directory in the Python 'site-packages' folder
-os.system(f"pip3 install {distDir}/")
+os.system(f"pip3 install --user {distDir}/")
 
 print(f"{color.OKGREEN}Maialib Installed! {color.ENDC}")
