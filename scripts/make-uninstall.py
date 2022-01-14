@@ -15,6 +15,6 @@ os.system(f"pip3 uninstall --yes maialib")
 distDir = "dist"
 
 # Delete dist directory
-rmtree(distDir)
+rmtree(distDir, True)
 
 print(f"{color.OKGREEN}Maialib uninstalled! {color.ENDC}")
