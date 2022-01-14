@@ -20,11 +20,11 @@ add_executable(${PROJECT_NAME}
     ./src/adolfo-test.cpp
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC ../include)
-target_include_directories(${PROJECT_NAME} PUBLIC ../external/pugi/include)
-target_include_directories(${PROJECT_NAME} PUBLIC ../external)
+target_include_directories(${PROJECT_NAME} PUBLIC ../core/include)
+target_include_directories(${PROJECT_NAME} PUBLIC ../core/external/pugi/include)
+target_include_directories(${PROJECT_NAME} PUBLIC ../core/external)
 
-include_directories(${PROJECT_NAME} PUBLIC ../external/zip/src)
+include_directories(${PROJECT_NAME} PUBLIC ../core/external/zip/src)
 
 if(WIN32)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/debug)
