@@ -6,7 +6,7 @@ from pathlib import Path
 
 from terminal_colors import *
 
-print(f"{color.OKGREEN}Installing Maialib Python Module...{color.ENDC}")
+print(f"{color.OKGREEN}Installing Maialib module on Python Kernel v{platform.python_version()}...{color.ENDC}")
 
 # Get the Operational System
 myOS = platform.system()

@@ -9,6 +9,7 @@ All notable changes to this project will be documented in this file.
 - Folder structure: Create a `core` folder separate the C++ side
 - Better `README.md`
 - `Makefile`: Added the new `make dev` - build and install the Python module
+- Update `pybin11_json.hpp` to `v0.2.12`
 
 ### Fixed
 - `Score::Score`: Added a `std::vector` constructor overload
