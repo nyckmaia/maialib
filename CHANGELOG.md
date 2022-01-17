@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.0.4] - 2022-01-XX
+## [v0.0.4] - 2022-01-17
 ### New Features
 - Part Class:
     - `.getNumNotesOn()`
