@@ -79,21 +79,23 @@ public:
     bool metronomeChanged() const;
     bool isMajorKeyMode() const;
 
-    const Note& getElement(const int elementId, const int staveId = 0) const;
-    Note& getElement(const int elementId, const int staveId = 0);
-
     const Note& getNote(const int noteId, const int staveId = 0) const;
     Note& getNote(const int noteId, const int staveId = 0);
 
+    const Note& getNoteOn(const int noteOnId, const int staveId = 0) const;
+    Note& getNoteOn(const int noteOnId, const int staveId = 0);
+
+    const Note& getNoteOff(const int noteOffId, const int staveId = 0) const;
+    Note& getNoteOff(const int noteOffId, const int staveId = 0);
+
+    int getNumNotesOn(const int staveId) const;
+    int getNumNotesOn() const; // overload like Score class
+
+    int getNumNotesOff(const int staveId) const;
+    int getNumNotesOff() const; // overload like Score class
+
     int getNumNotes(const int staveId) const;
     int getNumNotes() const; // overload like Score class
-
-    int getNumRests(const int staveId) const;
-    int getNumRests() const; // overload like Score class
-
-    int getNumElements(const int staveId) const;
-    int getNumElements() const; // overload like Score class
-
 
     int getDivisionsPerQuarterNote() const;
 

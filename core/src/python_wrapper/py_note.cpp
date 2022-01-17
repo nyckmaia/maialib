@@ -86,6 +86,7 @@ void NoteClass(py::module &m) {
     cls.def("getOctave", &Note::getOctave, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getDurationTicks", &Note::getDurationTicks, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("isNoteOn", &Note::isNoteOn, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("isNoteOff", &Note::isNoteOff, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getPitch", &Note::getPitch, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getMIDINumber", &Note::getMIDINumber);
 

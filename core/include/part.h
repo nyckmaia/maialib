@@ -60,7 +60,9 @@ public:
     bool isPitched() const;
     int getStaffLines() const;
 
-    int getNumNotes(); // overload like MusicXML class
+    int getNumNotes(const int staveId = -1);
+    int getNumNotesOn(const int staveId = -1);
+    int getNumNotesOff(const int staveId = -1);
 
     void setShortName(const std::string& shortName);
 

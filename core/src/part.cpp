@@ -183,16 +183,42 @@ std::vector<int> Part::getMidiUnpitched() const
     return _midiUnpitched;
 }
 
-int Part::getNumNotes()
+int Part::getNumNotes(const int staveId)
 {
     int numNotes = 0;
 
     const int numMeasures = getNumMeasures();
 
     for (int i = 0; i < numMeasures; i++) {
-        numNotes += _measure[i].getNumNotes();
+        numNotes += (staveId < 0) ? _measure[i].getNumNotes() : _measure[i].getNumNotes(staveId);
     }
 
+    return numNotes;
+}
+
+int Part::getNumNotesOn(const int staveId)
+{
+    int numNotes = 0;
+
+    const int numMeasures = getNumMeasures();
+
+    for (int i = 0; i < numMeasures; i++) {
+        numNotes += (staveId < 0) ? _measure[i].getNumNotesOn() : _measure[i].getNumNotesOn(staveId);
+    }
+    
+    return numNotes;
+}
+
+int Part::getNumNotesOff(const int staveId)
+{
+    int numNotes = 0;
+
+    const int numMeasures = getNumMeasures();
+
+    for (int i = 0; i < numMeasures; i++) {
+        numNotes += (staveId < 0) ? _measure[i].getNumNotesOff() : _measure[i].getNumNotesOff(staveId);
+    }
+    
     return numNotes;
 }
 

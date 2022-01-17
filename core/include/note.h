@@ -166,6 +166,7 @@ public:
     int getOctave() const;
     int getDurationTicks() const;
     bool isNoteOn() const;
+    bool isNoteOff() const;
     std::string getPitch() const;
     int getMIDINumber() const;
     int getVoice() const;

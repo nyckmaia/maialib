@@ -243,6 +243,11 @@ bool Note::isNoteOn() const
     return _isNoteOn;
 }
 
+bool Note::isNoteOff() const
+{
+    return !_isNoteOn;
+}
+
 std::string Note::getAlterSymbol() const
 {
     return _alterSymbol;

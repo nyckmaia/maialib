@@ -271,80 +271,127 @@ bool Measure::isMajorKeyMode() const
     return _isMajorKeyMode;
 }
 
-const Note& Measure::getElement(const int elementId, const int staveId) const
+const Note& Measure::getNote(const int noteId, const int staveId) const
 {
     const auto& stave = _note[staveId];
 
-    if (elementId > (static_cast<int>(stave.size() - 1))) { throw std::out_of_range("Out of Range error"); }
+    if (noteId > (static_cast<int>(stave.size() - 1))) { throw std::out_of_range("Out of Range error"); }
 
-    return stave[elementId];
-}
-
-Note& Measure::getElement(const int elementId, const int staveId)
-{
-    auto& stave = _note[staveId];
-
-    if (elementId > (static_cast<int>(stave.size() - 1))) { throw std::out_of_range("Out of Range error"); }
-
-    return stave[elementId];
-}
-
-const Note& Measure::getNote(const int noteId, const int staveId) const
-{
-    auto& stave = _note[staveId];
-
-    const int numNotes = getNumNotes(staveId);
-
-    if (noteId < 0 || noteId > (numNotes - 1)) { throw std::out_of_range("Out of Range error"); }
-
-    const int numElements = getNumElements();
-    int noteCount = 0;
-    for (int n = 0; n < numElements; n++) {
-        const Note& currentNote = stave[n];
-
-        if (currentNote.isNoteOn()) {
-            continue;
-        } 
-        
-        if (noteId == noteCount) {
-            return currentNote;
-        } else {
-            noteCount++;
-        }
-    }
-
-    return stave[0]; // This return statement is only to remove the warning "returning reference to temporary"
+    return stave[noteId];
 }
 
 Note& Measure::getNote(const int noteId, const int staveId)
 {
     auto& stave = _note[staveId];
 
+    if (noteId > (static_cast<int>(stave.size() - 1))) { throw std::out_of_range("Out of Range error"); }
+
+    return stave[noteId];
+}
+
+const Note& Measure::getNoteOn(const int noteOnId, const int staveId) const
+{
+    auto& stave = _note[staveId];
+
     const int numNotes = getNumNotes(staveId);
 
-    if (noteId < 0 || noteId > (numNotes - 1)) { throw std::out_of_range("Out of Range error"); }
+    if (noteOnId < 0 || noteOnId > (numNotes - 1)) { throw std::out_of_range("Out of Range error"); }
 
-    const int numElements = getNumElements();
+    int noteCount = 0;
+    for (int n = 0; n < numNotes; n++) {
+        const Note& currentNote = stave[n];
+
+        if (!currentNote.isNoteOn()) { continue; }
+
+        if (noteOnId != noteCount) {
+            noteCount++;
+            continue;
+        }
+        
+        return currentNote;
+    }
+
+    return stave[0]; // This return statement is only to remove the warning "returning reference to temporary"
+}
+
+Note& Measure::getNoteOn(const int noteOnId, const int staveId)
+{
+    auto& stave = _note[staveId];
+
+    const int numNotes = getNumNotes(staveId);
+
+    if (noteOnId < 0 || noteOnId > (numNotes - 1)) { throw std::out_of_range("Out of Range error"); }
+
     int noteCount = 0;
     Note* currentNote = nullptr;
-    for (int n = 0; n < numElements; n++) {
+    for (int n = 0; n < numNotes; n++) {
         currentNote = &stave[n];
 
-        if (!currentNote->isNoteOn()) {
-            continue;
-        } 
+        if (!currentNote->isNoteOn()) { continue; } 
         
-        if (noteId == noteCount) {
-            break;
-        } else {
+        if (noteOnId != noteCount) {
             noteCount++;
+            continue;
         }
+
+        break;
     }
 
     return *currentNote;
 }
 
-int Measure::getNumNotes() const
+const Note& Measure::getNoteOff(const int noteOffId, const int staveId) const
+{
+    auto& stave = _note[staveId];
+
+    const int numNotes = getNumNotes(staveId);
+
+    if (noteOffId < 0 || noteOffId > (numNotes - 1)) { throw std::out_of_range("Out of Range error"); }
+
+    int noteCount = 0;
+    for (int n = 0; n < numNotes; n++) {
+        const Note& currentNote = stave[n];
+
+        if (!currentNote.isNoteOff()) { continue; }
+
+        if (noteOffId != noteCount) {
+            noteCount++;
+            continue;
+        }
+        
+        return currentNote;
+    }
+
+    return stave[0]; // This return statement is only to remove the warning "returning reference to temporary"
+}
+
+Note& Measure::getNoteOff(const int noteOffId, const int staveId)
+{
+    auto& stave = _note[staveId];
+
+    const int numNotes = getNumNotes(staveId);
+
+    if (noteOffId < 0 || noteOffId > (numNotes - 1)) { throw std::out_of_range("Out of Range error"); }
+
+    int noteCount = 0;
+    Note* currentNote = nullptr;
+    for (int n = 0; n < numNotes; n++) {
+        currentNote = &stave[n];
+
+        if (!currentNote->isNoteOff()) { continue; } 
+        
+        if (noteOffId != noteCount) {
+            noteCount++;
+            continue;
+        }
+
+        break;
+    }
+
+    return *currentNote;
+}
+
+int Measure::getNumNotesOn() const
 {
     int numNotes = 0;
 
@@ -359,7 +406,7 @@ int Measure::getNumNotes() const
     return numNotes;
 }
 
-int Measure::getNumNotes(const int staveId) const
+int Measure::getNumNotesOn(const int staveId) const
 {
     const int staveSize = static_cast<int>(_note.size());
 
@@ -377,13 +424,13 @@ int Measure::getNumNotes(const int staveId) const
     return numNotes;
 }
 
-int Measure::getNumRests() const
+int Measure::getNumNotesOff() const
 {
     int numRests = 0;
 
     for (const auto& stave : _note) {
         for (const auto& note : stave) {
-            if (!note.isNoteOn()) {
+            if (note.isNoteOff()) {
                 numRests++;
             }
         }
@@ -392,7 +439,7 @@ int Measure::getNumRests() const
     return numRests;
 }
 
-int Measure::getNumRests(const int staveId) const
+int Measure::getNumNotesOff(const int staveId) const
 {
     const int staveSize = static_cast<int>(_note.size());
 
@@ -402,7 +449,7 @@ int Measure::getNumRests(const int staveId) const
 
     int numRests = 0;
     for (const auto& note : stave) {
-        if (!note.isNoteOn()) {
+        if (note.isNoteOff()) {
             numRests++;
         }
     }
@@ -410,18 +457,18 @@ int Measure::getNumRests(const int staveId) const
     return numRests;
 }
 
-int Measure::getNumElements() const
+int Measure::getNumNotes() const
 {
-    int numElements = 0;
+    int numNotes = 0;
 
     for (const auto& stave : _note) {
-        numElements += static_cast<int>(stave.size());
+        numNotes += static_cast<int>(stave.size());
     }
 
-    return numElements;
+    return numNotes;
 }
 
-int Measure::getNumElements(const int staveId) const
+int Measure::getNumNotes(const int staveId) const
 {
     const int staveSize = static_cast<int>(_note.size());
 
@@ -429,9 +476,9 @@ int Measure::getNumElements(const int staveId) const
 
     const auto& stave = _note[staveId];
 
-    int numElements = static_cast<int>(stave.size());
+    int numNotes = static_cast<int>(stave.size());
 
-    return numElements;
+    return numNotes;
 }
 
 int Measure::getFifthCicle() const

@@ -2,6 +2,7 @@ all: module
 
 .PHONY: dev
 .PHONY: clean
+.PHONY: dist-clean
 .PHONY: static-clean
 .PHONY: shared-clean
 .PHONY: module-clean
@@ -18,6 +19,7 @@ all: module
 .PHONY: run-cpp-tests
 .PHONY: py-tests 
 .PHONY: test
+.PHONY: dist
 .PHONY: install
 .PHONY: uninstall
 .PHONY: doc
@@ -32,6 +34,9 @@ dev:
 
 clean:
 	@python3 $(SCRIPTS_DIR)/make-clean.py all
+
+dist-clean:
+	@python3 $(SCRIPTS_DIR)/make-clean.py dist
 
 static-clean:
 	@python3 $(SCRIPTS_DIR)/make-clean.py static
@@ -85,7 +90,11 @@ tests:
 	@make run-cpp-tests
 	@make py-tests
 
+dist:
+	@python3 $(SCRIPTS_DIR)/make-dist.py
+
 install:
+	@make dist
 	@python3 $(SCRIPTS_DIR)/make-install.py
 
 uninstall:

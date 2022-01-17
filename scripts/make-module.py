@@ -3,7 +3,7 @@ import platform
 from pathlib import Path
 from terminal_colors import *
 
-print(f"{color.OKGREEN}Building Maialib Python Module...{color.ENDC}")
+print(f"{color.OKGREEN}Building maiacore Python module...{color.ENDC}")
 
 # Get the Operational System
 myOS = platform.system()
@@ -19,12 +19,11 @@ cmakeCommand = "cmake -G \"Unix Makefiles\" -B {} -S ./core -D PYBIND_LIB=ON".fo
 if myOS == "Windows":
     cmakeCommand += ' -DCMAKE_MAKE_PROGRAM="C:/msys64/mingw64/bin/make.exe"'
 
+# Get CPU num threads
+numThreads = os.cpu_count()
+
 # Run CMake and Make commands
 os.system(cmakeCommand)
-os.system("make -j8 -C {} --no-print-directory".format(path))
-
-# Create the '__init__.py' module file
-with open(f'{path}/__init__.py', 'w') as f:
-    f.write('from .maialib import *\n')
+os.system(f"make -j {numThreads} -C {path} --no-print-directory")
 
 print(f"{color.OKGREEN}Done!{color.ENDC}")

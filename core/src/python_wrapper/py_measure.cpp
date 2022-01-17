@@ -87,14 +87,6 @@ void MeasureClass(py::module &m) {
     cls.def("metronomeChanged", &Measure::metronomeChanged);
     cls.def("isMajorKeyMode", &Measure::isMajorKeyMode);
 
-    cls.def("getElement", py::overload_cast<const int, const int>(&Measure::getElement), 
-        py::arg("elementId"),
-        py::arg("staveId") = 0);
-    cls.def("getElement", py::overload_cast<const int, const int>(&Measure::getElement, py::const_), 
-        py::arg("elementId"),
-        py::arg("staveId") = 0,
-        py::return_value_policy::reference_internal);
-
     cls.def("getNote", py::overload_cast<const int, const int>(&Measure::getNote), 
         py::arg("noteId"),
         py::arg("staveId") = 0);
@@ -102,15 +94,34 @@ void MeasureClass(py::module &m) {
         py::arg("noteId"),
         py::arg("staveId") = 0,
         py::return_value_policy::reference_internal);
+
+    cls.def("getNoteOn", py::overload_cast<const int, const int>(&Measure::getNoteOn), 
+        py::arg("noteOnId"),
+        py::arg("staveId") = 0);
+    cls.def("getNoteOn", py::overload_cast<const int, const int>(&Measure::getNoteOn, py::const_), 
+        py::arg("noteOnId"),
+        py::arg("staveId") = 0,
+        py::return_value_policy::reference_internal);
+
+    cls.def("getNoteOff", py::overload_cast<const int, const int>(&Measure::getNoteOff), 
+        py::arg("noteOffId"),
+        py::arg("staveId") = 0);
+    cls.def("getNoteOff", py::overload_cast<const int, const int>(&Measure::getNoteOff, py::const_), 
+        py::arg("noteOffId"),
+        py::arg("staveId") = 0,
+        py::return_value_policy::reference_internal);
     
+    cls.def("getNumNotesOn", py::overload_cast<>(&Measure::getNumNotesOn, py::const_));
+    cls.def("getNumNotesOn", py::overload_cast<const int>(&Measure::getNumNotesOn, py::const_),
+        py::arg("staveId") = 0);
+
+    cls.def("getNumNotesOff", py::overload_cast<>(&Measure::getNumNotesOff, py::const_));
+    cls.def("getNumNotesOff", py::overload_cast<const int>(&Measure::getNumNotesOff, py::const_),
+        py::arg("staveId") = 0);
+
     cls.def("getNumNotes", py::overload_cast<>(&Measure::getNumNotes, py::const_));
-    cls.def("getNumNotes", py::overload_cast<const int>(&Measure::getNumNotes, py::const_));
-
-    cls.def("getNumRests", py::overload_cast<>(&Measure::getNumRests, py::const_));
-    cls.def("getNumRests", py::overload_cast<const int>(&Measure::getNumRests, py::const_));
-
-    cls.def("getNumElements", py::overload_cast<>(&Measure::getNumElements, py::const_));
-    cls.def("getNumElements", py::overload_cast<const int>(&Measure::getNumElements, py::const_));
+    cls.def("getNumNotes", py::overload_cast<const int>(&Measure::getNumNotes, py::const_),
+        py::arg("staveId") = 0);
     
     cls.def("getFifthCicle", &Measure::getFifthCicle);
     cls.def("getKeySignature", &Measure::getKeySignature);

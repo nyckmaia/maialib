@@ -31,8 +31,11 @@ cmakeCommand = "cmake -G \"Unix Makefiles\" -B {} -S ./core".format(path)
 if myOS == "Windows":
     cmakeCommand += ' -DCMAKE_MAKE_PROGRAM="C:/msys64/mingw64/bin/make.exe"'
 
+# Get CPU num threads
+numThreads = os.cpu_count()
+
 # Run CMake and Make commands
 os.system(cmakeCommand)
-os.system("make -j8 -C {} --no-print-directory".format(path))
+os.system(f"make -j {numThreads} -C {path} --no-print-directory")
 
 print(f"{color.OKGREEN}Done!{color.ENDC}")

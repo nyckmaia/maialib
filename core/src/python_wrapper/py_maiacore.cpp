@@ -13,7 +13,7 @@ void BarlineClass(py::module &);
 void IntervalClass(py::module &);
 void HelperClass(py::module &);
 
-PYBIND11_MODULE(maialib, m) {
+PYBIND11_MODULE(maiacore, m) {
 
     m.doc() = "This is a Python binding of C++ Maia Library";
 

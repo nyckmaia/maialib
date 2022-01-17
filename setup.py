@@ -24,7 +24,7 @@ setup(
     package_data = {
         '': ['*.so', '*.pyd'],
     },
-    py_modules=["maialib"],
+    py_modules=["maiacore"],
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",

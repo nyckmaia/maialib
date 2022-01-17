@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.4] - 2022-01-XX
+### New Features
+- Part Class:
+    - `.getNumNotesOn()`
+    - `.getNumNotesOff()`
+- Measure Class:
+    - `.getNumNotesOn()`
+    - `.getNumNotesOff()`
+    - `.getNoteOff()`
+- Note Class:
+    - `.isNoteOff()`
+- New `dist` folder structure
+- Added `maiapy` to this project
+
+### Improved
+- Rename the compiled C++ output module from `maialib` to `maiacore`
+- Parallel build: dynamically count the max number of threads (`make jobs`)
+- Rename `Measure::getNumElements()` to `.getNumNotes()`
+- Rename `Measure::getNote()` to `.getNoteOn()`
+
+### Fixed
+
 ## [v0.0.3] - 2022-01-13
 ### New Features
 

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0)
 
-project("maialib" LANGUAGES CXX)
+project("maiacore" LANGUAGES CXX)
 
 # Windows: If CMake errors -> Desable your antivirus!!
 
@@ -27,8 +27,8 @@ if(NOT STATIC_LIB AND NOT SHARED_LIB AND NOT PYBIND_LIB)
     set(STATIC_LIB ON)
 endif()
 
-# Add all maialib source files
-file(GLOB maialib_src
+# Add all maiacore source files
+file(GLOB maiacore_src
     "./src/*.cpp"
     "./src/python_wrapper/*.cpp"
     "./external/pugi/src/pugixml.cpp"
@@ -39,7 +39,7 @@ if(STATIC_LIB)
     message("=====> GENERATING STATIC LIBRARY <=====")
 
     add_subdirectory(external/zip) 
-    add_library(${PROJECT_NAME} STATIC ${maialib_src})
+    add_library(${PROJECT_NAME} STATIC ${maiacore_src})
 
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
@@ -52,7 +52,7 @@ endif()
 if(SHARED_LIB)
     message("=====> GENERATING SHARED LIBRARY <=====")
     add_subdirectory(external/zip)
-    add_library(${PROJECT_NAME} SHARED ${maialib_src})
+    add_library(${PROJECT_NAME} SHARED ${maiacore_src})
 
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
@@ -73,7 +73,7 @@ if(PYBIND_LIB)
 
     add_subdirectory(external/pybind11)
     
-    pybind11_add_module(${PROJECT_NAME} ${maialib_src})
+    pybind11_add_module(${PROJECT_NAME} ${maiacore_src})
     
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)

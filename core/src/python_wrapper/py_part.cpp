@@ -44,7 +44,10 @@ void PartClass(py::module &m) {
     cls.def("removeStave", &Part::removeStave);
     cls.def("getNumStaves", &Part::getNumStaves);
 
-    cls.def("getNumNotes", &Part::getNumNotes);
+    cls.def("getNumNotes", &Part::getNumNotes, py::arg("staveId") = -1);
+    cls.def("getNumNotesOn", &Part::getNumNotesOn, py::arg("staveId") = -1);
+    cls.def("getNumNotesOff", &Part::getNumNotesOff, py::arg("staveId") = -1);
+    
     cls.def("setShortName", &Part::setShortName);
 
     cls.def("info", &Part::info, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());

@@ -529,12 +529,7 @@ int Score::getNumMeasures() const
 
 int Score::getNumNotes() const
 {
-    // FOR EACH PART..FOR EACH MEASURE...ACC num NOTES
-
-//    if (_isLoadedXML) { return getNotes(); }
-
     int numNotes = 0;
-
 
     for (const auto& part : _part) {
         for (int m = 0; m < part.getNumMeasures(); m++) {
