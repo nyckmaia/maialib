@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.5] - 2022-01-22
+### New Features
+- Add `Note::getStaff()`
+- Add `Score::getPart(const std::string& partName)` overload
+- Add `Score::getPartNames()`
+- Add `Score::toDataFrame()`
+
+### Improved
+- `make dev` first uninstall the current installed Python module before start the new installation
+- Better `README.md`
+- Added a new test score: `test_multiple_instruments4.musicxml`
+
+### Fixed
+- Python wrapper: `Helper::ticks2noteType()` and `Helper::noteType2ticks`
+- tests-cpp: `CMakeLists.txt` to include `maiacore` library
+------------------------
 ## [v0.0.4] - 2022-01-17
 ### New Features
 - Part Class:
@@ -23,7 +39,7 @@ All notable changes to this project will be documented in this file.
 - Rename `Measure::getNote()` to `.getNoteOn()`
 
 ### Fixed
-
+------------------------
 ## [v0.0.3] - 2022-01-13
 ### New Features
 
@@ -36,7 +52,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - `Score::Score`: Added a `std::vector` constructor overload
 - `Makefile`: Renamed `make test` to `make tests`
-
+------------------------
 ## [v0.0.2] - 2022-01-10
 ### New Features
 - New build system using `make` commands
@@ -60,7 +76,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - `Score::forEachNote()` now works as expected
 - `midiNote2pitch()` python wrapper default argument
-
+------------------------
 ## [v0.0.1] - 2021-08-14
 ### New Features
 - A optional *callback function* to the `Chord::isTonal()` method
@@ -78,4 +94,4 @@ All notable changes to this project will be documented in this file.
 - `tutorial/create_note_chords.ipynb` correct variable names
 - `Measure::getNote()` now return only notes and skip all rests
 - `Measure::getElement()` now return notes and rests
-
+------------------------

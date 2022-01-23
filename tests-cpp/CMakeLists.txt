@@ -39,7 +39,7 @@ else()
     message(FATAL_ERROR "Unable to detect the OS")
 endif()
 
-target_link_libraries(${PROJECT_NAME} PUBLIC maialib zip gtest)
+target_link_libraries(${PROJECT_NAME} PUBLIC maiacore zip gtest)
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 

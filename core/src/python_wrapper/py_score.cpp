@@ -8,6 +8,7 @@
 #include "pybind11_json/pybind11_json.hpp"
 #include <pybind11/functional.h>
 namespace py = pybind11;
+using namespace pybind11::literals;
 
 void ScoreClass(py::module &m) {
 
@@ -30,7 +31,6 @@ void ScoreClass(py::module &m) {
     cls.def(py::init<const std::string&>(), py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("clear", &Score::clear);
-    cls.def("loadXMLFile", &Score::loadXMLFile);
     cls.def("addPart", &Score::addPart,
         py::arg("partName"),
         py::arg("numStaves") = 1,
@@ -38,10 +38,22 @@ void ScoreClass(py::module &m) {
     cls.def("removePart", &Score::removePart);
     cls.def("addMeasure", &Score::addMeasure);
     cls.def("removeMeasure", &Score::removeMeasure);
-    cls.def("getPart", &Score::getPart, py::return_value_policy::reference_internal, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    
+    cls.def("getPart", py::overload_cast<const int>(&Score::getPart), 
+        py::arg("partId"),
+        py::return_value_policy::reference_internal, 
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    
+    cls.def("getPart", py::overload_cast<const std::string&>(&Score::getPart),
+        py::arg("partName"),
+        py::return_value_policy::reference_internal, 
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    
     cls.def("getNumParts", &Score::getNumParts);
     cls.def("getNumMeasures", &Score::getNumMeasures);
     cls.def("getNumNotes", &Score::getNumNotes);
+    cls.def("getPartNames", &Score::getPartNames);
+
     cls.def("setTitle", &Score::setTitle);
     cls.def("setComposerName", &Score::setComposerName);
 
@@ -71,7 +83,6 @@ void ScoreClass(py::module &m) {
             py::arg("identSize") = 2);
     cls.def("info", &Score::info, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    // ===== OLD MUSICXML Class methods ===== //
     cls.def("isValid", &Score::isValid, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("xPathCountNodes", &Score::xPathCountNodes, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getPartsName", &Score::getPartsName, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
@@ -80,7 +91,6 @@ void ScoreClass(py::module &m) {
     cls.def("countNotes", &Score::countNotes, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("findPattern", &Score::findPattern, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("instrumentFragmentation", &Score::instrumentFragmentation, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("getPianoRoll", &Score::getPianoRoll, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("getChords", &Score::getChords,
         py::arg("config") = nlohmann::json(),
@@ -93,5 +103,43 @@ void ScoreClass(py::module &m) {
         py::arg("measureEnd") = -1,
         py::arg("partNames") = std::vector<std::string>(),
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    
+    cls.def("toDataFrame", [](Score& score) 
+        {
+            py::object Pandas = py::module_::import("pandas");
+            
+            py::object DataFrame = Pandas.attr("DataFrame");
+            py::object FromRecords = DataFrame.attr("from_records");
+
+            const int numParts = score.getNumParts();
+            const int numMeasures = score.getNumMeasures();
+
+            std::vector<std::tuple<int, int, std::string, int>> temp;
+
+            for (int p = 0; p < numParts; p++) {
+                Part& currentPart = score.getPart(p);
+
+                for (int m = 0; m < numMeasures; m++) {
+                    Measure& currentMeasure = currentPart.getMeasure(m);
+
+                    for (int s = 0; s < currentMeasure.getNumStaves(); s++) {
+                        const int numNotes = currentMeasure.getNumNotes(s);
+
+                        for (int n = 0; n < numNotes; n++) {
+                            Note& currentNote = currentMeasure.getNote(n, s);
+
+                            temp.push_back(std::make_tuple(p, m, currentNote.getPitch(),currentNote.getStaff()));
+                        }
+                    }
+                }
+            }
+            
+            std::vector<std::string> columns = {"Part", "Measure", "Pitch", "Staff"};
+            std::vector<std::string> index = {"Part", "Measure"};
+            py::object df = FromRecords(temp, "columns"_a = columns, "index"_a = index);
+
+            return df;
+        }
+    );
 }
 #endif

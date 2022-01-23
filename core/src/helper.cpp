@@ -905,9 +905,9 @@ const nlohmann::json Helper::getPercentiles(const nlohmann::json& table, const s
     return output;
 }
 
-size_t Helper::noteType2ticks(const std::string& noteType, const size_t divisionsPerQuarterNote)
+int Helper::noteType2ticks(const std::string& noteType, const int divisionsPerQuarterNote)
 {
-    size_t ticks = 0;
+    int ticks = 0;
 
     switch( hash(noteType.c_str()) ) {
         case hash("maxima"):
@@ -974,7 +974,7 @@ size_t Helper::noteType2ticks(const std::string& noteType, const size_t division
     return ticks;
 }
 
-const std::string Helper::ticks2noteType(const size_t ticks, const size_t divisionsPerQuarterNote)
+const std::string Helper::ticks2noteType(const int ticks, const int divisionsPerQuarterNote)
 {
     const float ratio = log2f(static_cast<float>(ticks) / static_cast<float>(divisionsPerQuarterNote));
 

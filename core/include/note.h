@@ -120,6 +120,7 @@ public:
      * @param pitch Pitch name
      */
     void setPitch(const std::string& pitch);
+
     void setIsInChord(bool inChord);
     void setTransposingInterval(const int diatonicInterval, const int chromaticInterval);
     void setVoice(const int voice);
@@ -143,12 +144,11 @@ public:
     void setIsPitched(const bool isPitched = true);
     void setUnpitchedIndex(const int unpitchedIndex);
 
-
     void transposition(int semitonesNumber);
 
     void info() const;
 
-    // ===================== Method GETTERS for class Note ===== //
+    // ===== GETTERS ===== //
     const std::string getSoundingPitchClass() const;
     const std::string getSoundingPitch() const;
 
@@ -170,6 +170,7 @@ public:
     std::string getPitch() const;
     int getMIDINumber() const;
     int getVoice() const;
+    int getStaff() const;
     std::string getType() const;
     std::string getStem() const;
     int getDivisionsPerQuarterNote() const;

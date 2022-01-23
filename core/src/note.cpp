@@ -539,6 +539,11 @@ int Note::getVoice() const
     return _voice;
 }
 
+int Note::getStaff() const
+{
+    return _staff;
+}
+
 std::vector<std::string> Note::getTie() const
 {
     return _tie;

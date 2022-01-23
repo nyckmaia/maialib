@@ -1,7 +1,7 @@
 # Maialib - Music Analysis Library
 
 This library is a multiplatform set of musical tools that enable musical score analisys and composition in a easy and fast way. <br>
-The project *core* was wrote in `C++17`, but it also has a `Python` wrapper that allows a greater number of people (ie musicians not trained in IT) to also have in their hands the same power and musical tools available in `maialib`.
+The project **core** was wrote in `C++17`, but it also has a `Python` wrapper that allows a greater number of people (ie musicians not trained in IT) to also have in their hands the same power and musical tools available in `maialib`.
 
 ## Advantages
 - Easy to use to musicians and musical researchers
@@ -76,7 +76,14 @@ But if you don't have a specific MusicXML file, you can import the MIDI file in 
 
 ## Known issues to build from source
 ### All Platforms
-- Multiple Python versions installed, like: `Official Python`, `Microsoft Python`, `MSYS2 Python` and others can direct the build system to choose a wrong version to build and install the library
+- Multiple Python versions installed, like: `Official Python`, `Microsoft Python`, `MSYS2 Python` and others can direct the build system to choose a wrong version to build and install the library. <br>
+To check all Python versions installed on your system, open the `Terminal` (or `CMD` on Windows) and type:
+    - Linux or Mac:
+        - `which python`
+        - `which python3`
+    - Windows:
+        - `where.exe python`
+        - `where.exe python3`
 
 ### Windows-Only
 - Disable your antivirus or create a exception (CMake permissions)

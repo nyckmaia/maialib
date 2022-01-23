@@ -1,4 +1,4 @@
-all: module
+all: dev
 
 .PHONY: dev
 .PHONY: clean
@@ -29,6 +29,7 @@ SCRIPTS_DIR = ./scripts
 
 dev:
 	@make clean
+	@make uninstall
 	@make module
 	@make install
 

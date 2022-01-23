@@ -37,8 +37,7 @@ private:
     std::string enharmonicName();
     std::string nonEnharmonicName() const;
     void stackInThirds();
-
-
+    
 public:
 
     Chord();

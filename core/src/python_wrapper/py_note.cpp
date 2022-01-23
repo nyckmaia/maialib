@@ -91,6 +91,7 @@ void NoteClass(py::module &m) {
     cls.def("getMIDINumber", &Note::getMIDINumber);
 
     cls.def("getVoice", &Note::getVoice);
+    cls.def("getStaff", &Note::getStaff);
     cls.def("getType", &Note::getType);
     cls.def("getStem", &Note::getStem);
     cls.def("getDivisionsPerQuarterNote", &Note::getDivisionsPerQuarterNote);

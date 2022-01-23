@@ -1,20 +1,47 @@
 import os
 import platform
 from shutil import rmtree
-from pathlib import Path
 from terminal_colors import *
 
-print(f"{color.OKGREEN}Uninstalling Maialib Python Module...{color.ENDC}")
+def isInstalled():
+    try:
+        import maialib
+        return True
+    except:
+        return False
 
-# Get the Operational System
-myOS = platform.system()
+isMaialibInstalled = isInstalled()
 
-# Uninstall directory in the Python 'site-packages' folder
-os.system(f"pip3 uninstall --yes maialib")
+if (isMaialibInstalled == True):
+    print(f"{color.OKGREEN}Uninstalling Maialib Python Module...{color.ENDC}")
 
-distDir = "dist"
+    # Get the Operational System
+    myOS = platform.system()
 
-# Delete dist directory
-rmtree(distDir, True)
+    # Uninstall directory in the Python 'site-packages' folder
+    os.system(f"pip3 uninstall --yes maialib")
 
-print(f"{color.OKGREEN}Maialib uninstalled! {color.ENDC}")
+    distDir = "dist"
+
+    # Delete dist directory
+    rmtree(distDir, True)
+
+    print(f"{color.OKGREEN}Maialib uninstalled!{color.ENDC}")
+else:
+    print(f"{color.OKGREEN}Maialib is not installed in your system{color.ENDC}")
+
+
+# ==== OLD VERSION OF CODE ====== #
+
+# print(f"{color.OKGREEN}Uninstalling Maialib Python Module...{color.ENDC}")
+
+# # Get the Operational System
+# myOS = platform.system()
+
+# # Uninstall directory in the Python 'site-packages' folder
+# os.system(f"pip3 uninstall --yes maialib")
+# distDir = "dist"
+
+# # Delete dist directory
+# rmtree(distDir, True)
+# print(f"{color.OKGREEN}Maialib uninstalled!{color.ENDC}")

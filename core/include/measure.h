@@ -89,13 +89,13 @@ public:
     Note& getNoteOff(const int noteOffId, const int staveId = 0);
 
     int getNumNotesOn(const int staveId) const;
-    int getNumNotesOn() const; // overload like Score class
+    int getNumNotesOn() const;
 
     int getNumNotesOff(const int staveId) const;
-    int getNumNotesOff() const; // overload like Score class
+    int getNumNotesOff() const;
 
     int getNumNotes(const int staveId) const;
-    int getNumNotes() const; // overload like Score class
+    int getNumNotes() const;
 
     int getDivisionsPerQuarterNote() const;
 

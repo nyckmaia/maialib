@@ -512,6 +512,20 @@ Part& Score::getPart(const int partId)
     return _part.at(partId);
 }
 
+Part& Score::getPart(const std::string& partName)
+{
+    int partIndex = 0;
+    const bool isValid = getPartIndex(partName, partIndex);
+
+    if (!isValid) {
+        const std::string msg = "[ERROR] There is no '" + partName +  "' in this score";
+        std::runtime_error(msg.c_str());
+        printPartNames();
+    }
+
+    return getPart(partIndex);
+}
+
 int Score::getNumParts() const
 {
 //    if (_isLoadedXML) { return getParts(); }
@@ -538,6 +552,18 @@ int Score::getNumNotes() const
     }
 
     return numNotes;
+}
+
+const std::vector<std::string> Score::getPartNames() const
+{
+    const int numParts = getNumParts();
+    std::vector<std::string> partNames(numParts);
+
+    for (int p = 0; p < numParts; p++) {
+        partNames[p] = _part[p].getName();
+    }
+
+    return partNames;
 }
 
 void Score::setTitle(const std::string& title)
@@ -2392,7 +2418,7 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
     return out;
 }
 
-std::vector<Chord> Score::getChords(nlohmann::json config, const bool sameAttackNotes) const
+std::vector<Chord> Score::getChords(nlohmann::json config, const bool sameAttackNotes)
 {
     int partNumberSize = 0;
 
@@ -2679,20 +2705,20 @@ std::vector<Chord> Score::getChords(nlohmann::json config, const bool sameAttack
         }
     }
 
-    // Create a blank stacked chords vector: This will be our final output
-    std::vector<Chord> stackedChords;
+    // PEGAR ESSE VALOR DO JSON DE INPUT!!!!!!
+    int minDurationTicks = 0;
 
     // Choose which stack chords algorithm you desired:
     if (sameAttackNotes) {
-        getSameAttackChords(stackedChords, scoreTable, minStackedNotes, maxStackedNotes);
+        getSameAttackChords(scoreTable, minStackedNotes, maxStackedNotes);
     } else {
-        getChordsPerDeltaTime(stackedChords, scoreTable, minStackedNotes, maxStackedNotes);
+        getChordsPerEachNoteEvent(scoreTable, minStackedNotes, maxStackedNotes, minDurationTicks);
     }
 
-    return stackedChords;
+    return _stackedChords;
 }
 
-void Score::getSameAttackChords(std::vector<Chord>& stackedChords, ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes) const
+void Score::getSameAttackChords(ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes)
 {
     std::vector<float> keys;
 
@@ -2740,206 +2766,63 @@ void Score::getSameAttackChords(std::vector<Chord>& stackedChords, ScoreTable& s
         if (chordSize < minStackedNotes || chordSize > maxStackedNotes) { continue; }
 
         // Store the chord:
-        stackedChords.push_back(chord);
+        _stackedChords.push_back(chord);
     }
 }
 
-void Score::getChordsPerDeltaTime(std::vector<Chord>& stackedChords, ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes) const
+void Score::getChordsPerEachNoteEvent(ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks)
 {
-    // ===== ONLY FOR "AUDIO CHORDS" ===== //
-    // To develop in the future
-    std::cout << "This method is NOT implemented yet!" << std::endl;
-
-    ignore(stackedChords);
-    ignore(scoreTable);
     ignore(minStackedNotes);
     ignore(maxStackedNotes);
-}
 
-nlohmann::json Score::getPianoRoll(nlohmann::json& config) const
-{
-    int partNumberSize = 0;
+    // Clear the output chords vector
+    _stackedChords.clear();
 
-    // Optional config argument: Set default values
-    if (!config.contains("partNumber")) {
-        partNumberSize = getNumParts();
+    // ===== STEP 1: CREATE A 2D TABLE WITH ALL SCORE NOTES DATA ===== //
 
-        // Fill the config json with all part indexes:
-        for (int p = 0; p < partNumberSize; p++) {
-            config["partNumber"].push_back(p+1);
+    // Create a aux 2D table: [timeStart][timeEnd][&Note]
+    typedef std::vector<std::tuple<float, float, const Note*>> Table2D;
+    Table2D table;
+
+    // Fill table with data, excluding short notes
+    for (const auto& part : scoreTable) {
+        for (const auto& note : part) {
+            const Note* note_ptr = &note.second.second;
+            
+            // Exclude short notes
+            if (note_ptr->getDurationTicks() < minDurationTicks) { continue; }
+
+            const float timeStart = note.first;
+            const float timeEnd = note.second.first;
+
+            table.push_back(std::make_tuple(timeStart, timeEnd, note_ptr));
         }
     }
 
-    // Error checking: 2 valid types
-    if (config.contains("partNumber")) {
-        if (!config["partNumber"].is_string() && !config["partNumber"].is_array()) {
-            std::cerr << "[ERROR] 'partNumber' is a optional config argument.\nThe valid values are: 'all' or a positive integers array" << std::endl;
-            return nlohmann::json();
+    // Sort table by first column [timeStart]
+    std::sort(table.begin(), table.end());
+
+    // ===== STEP 2: GET THE CHORDS ===== //
+    // This 'chord' will be used inside the next for loop
+    Chord chord;
+
+    const int tableSize = table.size();
+    for (int i = 1; i < tableSize; i++) {
+        const auto& previous_line = table[i-1];
+        const auto& current_line = table[i];
+
+        const float& previous_timeEnd = std::get<1>(previous_line);
+        
+        const float& current_timeStart = std::get<0>(current_line);
+        const Note* current_Note = std::get<2>(current_line);
+
+        if (current_timeStart > previous_timeEnd) { 
+            _stackedChords.push_back(chord);
+            chord.clear();
+            chord.addNote(*current_Note);
+            continue;
         }
 
-        if (config["partNumber"].is_string()) {
-            const std::string temp = config["partNumber"].get<std::string>();
-            // Error checking: validade config in the 'string' type case:
-            if (temp != "all") {
-                std::cerr << "[ERROR] 'partNumber' is a optional config argument.\n The valid values are: 'all' or a positive integers array" << std::endl;
-                return nlohmann::json();
-            }
-
-            // Convert 'all' value to an empty array:
-            config["partNumber"] = nlohmann::json::array();
-
-            // Get the amount of all parts (default):
-            const int numParts = getNumParts();
-
-            // Fill the config json with all part indexes:
-            for (int p = 0; p < numParts; p++) {
-                config["partNumber"].push_back(p+1);
-            }
-        }
-
-        // Get the amount of parts in the 'integer array' case:
-        if (config["partNumber"].is_array()) {
-            partNumberSize = config["partNumber"].size();
-        }
+        chord.addNote(*current_Note);   
     }
-
-    // Error checking:
-    if (partNumberSize == 0) {
-        std::cerr << "[ERROR] Unable to get the parts amount!" << std::endl;
-        return nlohmann::json();
-    }
-
-    // Pre-allocate a partNumber vector:
-    std::vector<int> partNumber(partNumberSize, 0);
-
-    // Error checking:
-    for(int i = 0; i < partNumberSize; i++) {
-        partNumber[i] = config["partNumber"][i].get<int>();
-        if (partNumber[i] < 1 || partNumber[i] > getNumParts()) {
-            std::cerr << "[ERROR] The 'partNumber' vector elements MUST BE greater than 0 and smaller than total number of parts" << std::endl;
-            return nlohmann::json();
-        }
-    }
-
-    // ===== READ MEASURE START ===== //
-    int measureStart = 0;
-
-    // If not setted, set the default value = 1
-    if (!config.contains("measureStart")) {
-        measureStart = 1;
-        config["measureStart"] = measureStart;
-        std::cout << "[WARNING]: Setting the 'measureStart' to the first measure: " << measureStart << std::endl;
-    }
-
-    // Type checking:
-    if (config.contains("measureStart") && !config["measureStart"].is_number_integer()) {
-        std::cerr << "[ERROR] 'measureStart' is a optional config argument and MUST BE a positive integer!" << std::endl;
-        return nlohmann::json();
-    } else {
-        // Get measure start value:
-        measureStart = config["measureStart"].get<int>();
-    }
-
-    // Error checking:
-    if (measureStart < 1) {
-        std::cerr << "[ERROR] The 'measureStart' value MUST BE greater than zero!" << std::endl;
-        return nlohmann::json();
-    }
-
-    // ===== READ MEASURE END ===== //
-    int measureEnd = 0;
-
-    // If not setted, set the default value = All measures!
-    if (!config.contains("measureEnd")) {
-        measureEnd = getNumMeasures();
-        config["measureEnd"] = measureEnd;
-        std::cout << "[WARNING]: Setting the 'measureEnd' to the last measure: " << measureEnd << std::endl;
-    }
-
-    // Type checking:
-    if (config.contains("measureEnd") && !config["measureEnd"].is_number_integer()) {
-        std::cerr << "[ERROR] 'measureEnd' is a optional config argument and MUST BE a positive integer!" << std::endl;
-        return nlohmann::json();
-    } else {
-        // Get the 'measureEnd' config value:
-        measureEnd = config["measureEnd"].get<int>();
-    }
-
-    // Error checking:
-    if (measureEnd < 1) {
-        std::cerr << "[ERROR] The 'measureEnd' value MUST BE greater than zero!" << std::endl;
-        return nlohmann::json();
-    }
-
-    // Error checking:
-    if (measureEnd > getNumMeasures()) {
-        std::cout << "[WARNING]: The 'measureEnd' value is greater then the music length!" << std::endl;
-        std::cout << "Changing the 'measureEnd' value to: " << getNumMeasures() << std::endl;
-        measureEnd = getNumMeasures();
-    }
-
-    // Error checking:
-    if (measureStart > measureEnd) {
-        std::cerr << "[ERROR] 'measureEnd' value MUST BE greater than 'measureStart' value" << std::endl;
-        return nlohmann::json();
-    }
-
-    // ===== READ TIME UNIT ===== //
-
-    // Aqui vc le o valor de timeUnit que o usuario digitou no config
-    // Se ele nao passou nenhum valor de timeUnit: Setar um valor default!
-    // Olhar os exemplos acima neste metodo para ver como se faz isso da maneira correta.
-
-    // ===== PROCESSING ===== //
-
-    nlohmann::json response;
-
-    // Aqui vc vai construir o JSON ´resposta´
-
-    // Exemplo:
-    response["timeUnit"] = 256;
-
-    // ----- PARA VER NA TELA O CONTEUDO ATUAL DE RESPONSE ----- //
-    //std::cout << "Conteudo de response eh: " << response.dump(2) << std::endl;
-
-    // ----- O response deve ser um JSON no seguinte formato ----- //
-//    {
-//        "timeUnit": 256,
-//        [ // <--- Array of parts
-//             { // <--- Part 1
-//                 "partNumber": 1,
-//                 "notes": [ <--- Part 1 notes vector
-//                    { <--- Note 1 data
-//                        "pitch": "C4",
-//                        "duration": 1
-//                    },
-//                    { <--- Note 2 data
-//                        "pitch": "G5",
-//                        "duration": 3
-//                    },
-//                 ]
-//             }.
-//             { // <--- Part 2
-//                 "partNumber": 2,
-//                 "notes": [ <--- Part 2 notes vector
-//                    { <--- Note 1 data
-//                        "pitch": "F3",
-//                        "duration": 5
-//                    },
-//                    { <--- Note 2 data
-//                        "pitch": "A5",
-//                        "duration": 2
-//                    },
-//                 ]
-//             }
-//        ]
-//    }
-
-    // ===================
-//    // Para ler os dados da partitura que foi carregada use:
-//    const std::string myPitchClass = _part[0].getMeasure(0).getNote(0).getPitch();
-//    const int myDuration = _part[0].getMeasure(0).getNote(0).getDurationTicks();
-
-
-    return response;
 }

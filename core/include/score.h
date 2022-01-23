@@ -4,6 +4,7 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <tuple>
 #include <initializer_list>
 #include <chrono>
 
@@ -27,7 +28,6 @@ private:
     std::string _composerName;
     std::vector<Part> _part;
 
-    // ===== OLD MUSICXML class members ===== //
     pugi::xml_document _doc;
     int _numParts;
     int _numMeasures;
@@ -37,6 +37,11 @@ private:
     bool _isValidXML;
     bool _haveTypeTag;
     bool _isLoadedXML;
+    std::vector<Chord> _stackedChords;
+
+    void loadXMLFile(const std::string& filePath);
+    void getSameAttackChords(ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes);
+    void getChordsPerEachNoteEvent(ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks);
 
 public:
     /**
@@ -69,7 +74,6 @@ public:
      * Clear all content inside of Score object
      */
     void clear();
-    void loadXMLFile(const std::string& filePath);
 
     void addPart(const std::string& partName, const int numStaves = 1);
     void removePart(const int partId);
@@ -78,10 +82,13 @@ public:
     void removeMeasure(const int measureStart, const int measureEnd);
 
     Part& getPart(const int partId);
+    Part& getPart(const std::string& partName);
 
     int getNumParts() const;
     int getNumMeasures() const;
-    int getNumNotes() const; // overload like MusicXML class
+    int getNumNotes() const;
+
+    const std::vector<std::string> getPartNames() const;
 
     void setTitle(const std::string& title);
     void setComposerName(const std::string& composerName);
@@ -98,7 +105,6 @@ public:
     void info() const;
     void forEachNote(std::function<void (Note& note)> callback, int measureStart = 0, int measureEnd = -1, std::vector<std::string> partNames = {});
 
-    // ===== OLD MUSIC_XML CLASS METHODS ===== //
     bool isValid(void) const;
     bool haveTypeTag(void) const;
     bool getNote(const int part, const int measure, const int note, std::string& pitch, std::string& step, int& octave, int& duration, int& voice, std::string& type, std::string& steam, int& staff) const;
@@ -202,10 +208,5 @@ public:
      * @param sameAttackNotes (Optional) Filters only for chords that have all notes with the same attack time (synchronized) 
      * @return A list of Chord objects
      */
-    std::vector<Chord> getChords(nlohmann::json config = nlohmann::json(), const bool sameAttackNotes = true) const;
-
-    void getSameAttackChords(std::vector<Chord>& stackedChords, ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes) const;
-    void getChordsPerDeltaTime(std::vector<Chord>& stackedChords, ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes) const;
-
-    nlohmann::json getPianoRoll(nlohmann::json& config) const;
+    std::vector<Chord> getChords(nlohmann::json config = nlohmann::json(), const bool sameAttackNotes = true);
 };
