@@ -1,6 +1,7 @@
 #include "measure.h"
 
 Measure::Measure(const int numStaves, const int divisionsPerQuarterNote) :
+    _number(0),
     _timeSignatureUpper(4),
     _timeSignatureLower(4),
     _fifthCicle(0),
@@ -28,9 +29,15 @@ Measure::~Measure()
 
 void Measure::info() const
 {
+    std::cout << "Number: " << _number << std::endl;
     std::cout << "Time Signature: " << _timeSignatureUpper << "/" << _timeSignatureLower << std::endl;
     std::cout << "Fifth Cicle: " << _fifthCicle << std::endl;
     std::cout << "Metronome Mark: " << _metronomeFigure << " - " << _metronomeValue << std::endl;
+}
+
+void Measure::setNumber(const int MeasureNumber)
+{
+    _number = MeasureNumber;
 }
 
 void Measure::setKeySignature(const int fifthCicle, const bool isMajorMode)
@@ -204,6 +211,11 @@ bool Measure::timeSignatureChanged() const
 bool Measure::keySignatureChanged() const
 {
     return _isKeySignatureChanged;
+}
+
+int Measure::getNumber() const
+{
+    return _number;
 }
 
 const Clef& Measure::getClef(const int clefId) const

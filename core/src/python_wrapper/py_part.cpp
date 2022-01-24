@@ -71,5 +71,8 @@ void PartClass(py::module &m) {
         py::arg("instrumentId") = 1,
         py::arg("identSize") = 2);
     cls.def("toJSON", &Part::toJSON);
+
+    // Default Python 'print' function:
+    cls.def("__repr__", [](const Part& part) { return part.getName() + " Part"; });
 }
 #endif

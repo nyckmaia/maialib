@@ -186,7 +186,6 @@ void Score::loadXMLFile(const std::string& filePath)
     setTitle(workTitle);
     setComposerName(composerName);
 
-
     // ===== PARSING THE FILE TO THE CLASS MEMBERS ===== //
 
     // For each part 'p'
@@ -256,6 +255,7 @@ void Score::loadXMLFile(const std::string& filePath)
 
         // For each measure 'm'
         for (int m = 0; m < _numMeasures; m++) {
+            _part[p].getMeasure(m).setNumber(m);
 
             // Get the xPath for the measure 'm'
             const std::string xPathMeasure = xPathPart + "/measure[" + std::to_string(m+1) + "]";
@@ -2079,9 +2079,8 @@ int Score::xPathCountNodes(const std::string& xPath) const
     const pugi::xpath_node_set nodes = _doc.select_nodes(xPath.c_str());
 
     // Compute the number of nodes:
-    const int numNodes = nodes.size();
 
-    return numNodes;
+    return nodes.size();
 }
 
 void Score::forEachNote(std::function<void (Note& note)> callback, int measureStart, int measureEnd, std::vector<std::string> partNames)
@@ -2119,7 +2118,7 @@ void Score::forEachNote(std::function<void (Note& note)> callback, int measureSt
             Measure& currentMeasure = currentPart.getMeasure(m);
 
             for (int s = 0; s < currentMeasure.getNumStaves(); s++) {
-                const int numNotes = currentMeasure.getNumNotes();
+                const int numNotes = currentMeasure.getNumNotes(s);
 
                 for (int n = 0; n < numNotes; n++) {
                     Note& currentNote = currentMeasure.getNote(n, s);

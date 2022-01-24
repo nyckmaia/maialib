@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.6] - 2022-01-24
+### New Features
+- Add `Measure::getNumber()` and `Measure::setNumber()`
+
+### Improved
+- `Score::toDataFrame()`
+    - Now return more data and columns for index and objects
+    - Better performace
+- Python default print for: `Part` and `Measure` objects 
+### Fixed
+
+------------------------
 ## [v0.0.5] - 2022-01-22
 ### New Features
 - Add `Note::getStaff()`

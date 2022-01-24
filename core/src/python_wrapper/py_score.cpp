@@ -106,16 +106,23 @@ void ScoreClass(py::module &m) {
     
     cls.def("toDataFrame", [](Score& score) 
         {
+            // Import Pandas module
             py::object Pandas = py::module_::import("pandas");
-            
-            py::object DataFrame = Pandas.attr("DataFrame");
-            py::object FromRecords = DataFrame.attr("from_records");
 
+            // Get method 'from_records' from 'DataFrame()' object
+            py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
+
+            // Get basic score data
             const int numParts = score.getNumParts();
             const int numMeasures = score.getNumMeasures();
+            const int numNotes = score.getNumNotes();
 
-            std::vector<std::tuple<int, int, std::string, int>> temp;
+            // Create a temp store object: [partName][measureNumber][Staff][PartObj][MeasureObj][NoteObj]
+            typedef std::tuple<std::string, int, int, Part*, Measure*, Note*> DataFrameRow;
+            std::vector<DataFrameRow> df_records(numNotes);
 
+            // For each note inside the score
+            int rowNumber = 0;
             for (int p = 0; p < numParts; p++) {
                 Part& currentPart = score.getPart(p);
 
@@ -128,15 +135,25 @@ void ScoreClass(py::module &m) {
                         for (int n = 0; n < numNotes; n++) {
                             Note& currentNote = currentMeasure.getNote(n, s);
 
-                            temp.push_back(std::make_tuple(p, m, currentNote.getPitch(),currentNote.getStaff()));
+                            df_records[rowNumber] = DataFrameRow(
+                                currentPart.getName(),
+                                currentMeasure.getNumber(),
+                                s,
+                                &currentPart, &currentMeasure, &currentNote);
+
+                            rowNumber++;
                         }
                     }
                 }
             }
             
-            std::vector<std::string> columns = {"Part", "Measure", "Pitch", "Staff"};
-            std::vector<std::string> index = {"Part", "Measure"};
-            py::object df = FromRecords(temp, "columns"_a = columns, "index"_a = index);
+            // Set DataFrame columns name
+            std::vector<std::string> columns = {"Part", "Measure", "Staff", "PartObj", "MeasureObj", "NoteObj"};
+            // std::vector<std::string> index = {"Part", "Measure"};
+            //py::object df = FromRecords(df_records, "columns"_a = columns, "index"_a = index);
+            
+            // Fill DataFrame with records and columns
+            py::object df = FromRecords(df_records, "columns"_a = columns);
 
             return df;
         }

@@ -19,6 +19,7 @@ void MeasureClass(py::module &m) {
 
     cls.def("clear", &Measure::clear);
 
+    cls.def("setNumber", &Measure::setNumber);
     cls.def("setKeySignature", &Measure::setKeySignature);
     cls.def("setTimeSignature", &Measure::setTimeSignature);
     cls.def("setMetronome", &Measure::setMetronome);
@@ -80,7 +81,7 @@ void MeasureClass(py::module &m) {
     cls.def("removeRepeatEnd", &Measure::removeRepeatEnd);
 
     cls.def("getNumStaves", &Measure::getNumStaves);
-
+    cls.def("getNumber", &Measure::getNumber);
     cls.def("clefChanged", &Measure::clefChanged);
     cls.def("timeSignatureChanged", &Measure::timeSignatureChanged);
     cls.def("keySignatureChanged", &Measure::keySignatureChanged);
@@ -138,6 +139,9 @@ void MeasureClass(py::module &m) {
         py::arg("instrumentId") = 1,
         py::arg("identSize") = 2);
     cls.def("toJSON", &Measure::toJSON);
+
+    // Default Python 'print' function:
+    cls.def("__repr__", [](const Measure& measure) { return "Measure " + std::to_string(measure.getNumber()); });
 }
 
 #endif

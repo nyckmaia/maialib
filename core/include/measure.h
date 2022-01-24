@@ -13,6 +13,7 @@ class Measure
 {
 
 private:
+    int _number;
     int _timeSignatureUpper;
     int _timeSignatureLower;
     int _fifthCicle;
@@ -38,6 +39,7 @@ public:
 
     void clear();
 
+    void setNumber(const int MeasureNumber);
     void setKeySignature(const int fifthCicle, const bool isMajorMode = true); // overload with measure
     void setTimeSignature(const int upper, const int lower); // overload with measure
     void setMetronome(const int bpm, const std::string& rhythmFigure = "quarter"); // overload with measure
@@ -57,6 +59,7 @@ public:
 
     void removeNote(const int noteId, const int staveId = 0);
 
+    int getNumber() const;
     const Clef& getClef(const int clefId = 0) const;
     Clef& getClef(const int clefId = 0);
     int getNumStaves() const;
