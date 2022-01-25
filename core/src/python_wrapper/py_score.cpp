@@ -117,8 +117,8 @@ void ScoreClass(py::module &m) {
             const int numMeasures = score.getNumMeasures();
             const int numNotes = score.getNumNotes();
 
-            // Create a temp store object: [partName][measureNumber][Staff][PartObj][MeasureObj][NoteObj]
-            typedef std::tuple<std::string, int, int, Part*, Measure*, Note*> DataFrameRow;
+            // Create a temp store object: [PartObj][MeasureObj][NoteObj]
+            typedef std::tuple<Part*, Measure*, Note*> DataFrameRow;
             std::vector<DataFrameRow> df_records(numNotes);
 
             // For each note inside the score
@@ -135,11 +135,7 @@ void ScoreClass(py::module &m) {
                         for (int n = 0; n < numNotes; n++) {
                             Note& currentNote = currentMeasure.getNote(n, s);
 
-                            df_records[rowNumber] = DataFrameRow(
-                                currentPart.getName(),
-                                currentMeasure.getNumber(),
-                                s,
-                                &currentPart, &currentMeasure, &currentNote);
+                            df_records[rowNumber] = DataFrameRow(&currentPart, &currentMeasure, &currentNote);
 
                             rowNumber++;
                         }
@@ -148,9 +144,7 @@ void ScoreClass(py::module &m) {
             }
             
             // Set DataFrame columns name
-            std::vector<std::string> columns = {"Part", "Measure", "Staff", "PartObj", "MeasureObj", "NoteObj"};
-            // std::vector<std::string> index = {"Part", "Measure"};
-            //py::object df = FromRecords(df_records, "columns"_a = columns, "index"_a = index);
+            std::vector<std::string> columns = {"Part", "Measure", "Note"};
             
             // Fill DataFrame with records and columns
             py::object df = FromRecords(df_records, "columns"_a = columns);
