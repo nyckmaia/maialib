@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.0.7] - 2022-MM-DD
+## [v0.0.7] - 2022-02-08
 ### New Features
 - Rewrite: `Score::getChords()`
     - Mode `Continuos`
