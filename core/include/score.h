@@ -38,8 +38,8 @@ private:
 
     void loadXMLFile(const std::string& filePath);
 
-    std::vector<std::pair<int, Chord>> getSameAttackChords(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks);
-    std::vector<std::pair<int, Chord>> getChordsPerEachNoteEvent(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks);
+    std::vector<std::pair<int, Chord>> getSameAttackChords(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks);
+    std::vector<std::pair<int, Chord>> getChordsPerEachNoteEvent(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks);
     
 public:
     /**
@@ -185,24 +185,34 @@ public:
     nlohmann::json instrumentFragmentation(const nlohmann::json config);
 
     /**
-     * @brief Get the musical chords inside the score object
+     * @brief Get the vertical stacked chords from the score object
      * 
      * @param config (Optional) A JSON object that contains: \n \n
-     * \c partNumber: list of integers \n
+     * \c partNames: list of strings \n
      * \c measureStart: integer \n
      * \c measureEnd: integer \n 
-     * \c minStackedNotes: integer \n 
-     * \c maxStackedNotes: integer \n \n
+     * \c minStack: integer \n 
+     * \c maxStack: integer \n
+     * \c minDuration: string \n
+     * \c maxDuration: string \n
+     * \c continuosMode: boolean \n \n
      * \b Example:
      * \code{.json}
      * {
-     *   "partNumber": [1, 3, 7],
+     *   "partNames": ["Violino", "Viola", "Violoncelo"],
      *   "measureStart": 4,
      *   "measureEnd": 10,
-     *   "minStackedNotes": 3,
-     *   "maxStackedNotes": 5
+     *   "minStack": 3,
+     *   "maxStack": 5,
+     *   "minDuration": "quarter",
+     *   "maxDuration": "whole",
+     *   "continuosMode": true
      * }
      * \endcode
+     * When \c continuosMode is \c true the algorithm will detect all vertical chords,
+     * including counterpoint notes \n
+     * When \c continuosMode is \c false the algorithm will detect only the chords formed by
+     * the same attack notes, excluding counterpoint
      * @return A list of Chord objects
      */
     std::vector<std::pair<int, Chord>> getChords(nlohmann::json config = {});

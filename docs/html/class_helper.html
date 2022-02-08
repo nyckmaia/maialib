@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">maialib<span id="projectnumber">&#160;0.0.2</span>
+   <div id="projectname">maialib<span id="projectnumber">&#160;0.0.7</span>
    </div>
    <div id="projectbrief">Music analisys library</div>
   </td>
@@ -98,12 +98,12 @@ static std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valig
 <tr class="memitem:a599d397c4a50714156b9c9cfc28efc90"><td class="memItemLeft" align="right" valign="top"><a id="a599d397c4a50714156b9c9cfc28efc90" name="a599d397c4a50714156b9c9cfc28efc90"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>generateIdentation</b> (int identPosition, int identSize=2)</td></tr>
 <tr class="separator:a599d397c4a50714156b9c9cfc28efc90"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aba4bd4b96549b553ddfd84a56f96e592"><td class="memItemLeft" align="right" valign="top"><a id="aba4bd4b96549b553ddfd84a56f96e592" name="aba4bd4b96549b553ddfd84a56f96e592"></a>
-static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ticks2noteType</b> (const size_t ticks, const size_t divisionsPerQuarterNote)</td></tr>
-<tr class="separator:aba4bd4b96549b553ddfd84a56f96e592"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af8fdbe8050715eada0bbe11559f0ac5d"><td class="memItemLeft" align="right" valign="top"><a id="af8fdbe8050715eada0bbe11559f0ac5d" name="af8fdbe8050715eada0bbe11559f0ac5d"></a>
-static size_t&#160;</td><td class="memItemRight" valign="bottom"><b>noteType2ticks</b> (const std::string &amp;noteType, const size_t divisionsPerQuarterNote)</td></tr>
-<tr class="separator:af8fdbe8050715eada0bbe11559f0ac5d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6d266d2f8608b986ea4b72fadb3eca6f"><td class="memItemLeft" align="right" valign="top"><a id="a6d266d2f8608b986ea4b72fadb3eca6f" name="a6d266d2f8608b986ea4b72fadb3eca6f"></a>
+static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>ticks2noteType</b> (const int ticks, const int divisionsPerQuarterNote=256)</td></tr>
+<tr class="separator:a6d266d2f8608b986ea4b72fadb3eca6f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7c1f49532b06ffea95c9ff72f673ea68"><td class="memItemLeft" align="right" valign="top"><a id="a7c1f49532b06ffea95c9ff72f673ea68" name="a7c1f49532b06ffea95c9ff72f673ea68"></a>
+static int&#160;</td><td class="memItemRight" valign="bottom"><b>noteType2ticks</b> (std::string noteType, const int divisionsPerQuarterNote=256)</td></tr>
+<tr class="separator:a7c1f49532b06ffea95c9ff72f673ea68"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a375f2c6c824f218a5b3e9d02d4d38908"><td class="memItemLeft" align="right" valign="top"><a id="a375f2c6c824f218a5b3e9d02d4d38908" name="a375f2c6c824f218a5b3e9d02d4d38908"></a>
 static float&#160;</td><td class="memItemRight" valign="bottom"><b>ticks2QuarterNoteValue</b> (const size_t ticks, const size_t divisionsPerQuarterNote)</td></tr>
 <tr class="separator:a375f2c6c824f218a5b3e9d02d4d38908"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -175,7 +175,7 @@ static const pugi::xpath_node_set&#160;</td><td class="memItemRight" valign="bot
 <tr class="separator:a77dae5f8ea5b9bcb90123323659686d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/<a class="el" href="helper_8h_source.html">helper.h</a></li>
+<li>core/include/<a class="el" href="helper_8h_source.html">helper.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

@@ -32,7 +32,7 @@ public:
     static const std::string generateIdentation(int identPosition, int identSize = 2);
 
     static const std::string ticks2noteType(const int ticks, const int divisionsPerQuarterNote = 256);
-    static int noteType2ticks(const std::string& noteType, const int divisionsPerQuarterNote = 256);
+    static int noteType2ticks(std::string noteType, const int divisionsPerQuarterNote = 256);
 
     static float ticks2QuarterNoteValue(const size_t ticks, const size_t divisionsPerQuarterNote);
 

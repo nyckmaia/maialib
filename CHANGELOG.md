@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file.
 - Rewrite: `Score::getChords()`
     - Mode `Continuos`
     - Mode `Same Attack`
+- Add `Chord::getDurationTicks()` method
 - Add external dependency: `SQLiteCpp`
 - Add `BuildCache` as a *optional* development tool
 
@@ -14,6 +15,7 @@ All notable changes to this project will be documented in this file.
 - `VS Code`: Enable `pretty-printing` for `gdb`
 
 ### Fixed
+- `Helper::noteType2ticks()` fix uppercase strings
 
 ------------------------
 ## [v0.0.6] - 2022-01-24

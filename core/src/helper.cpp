@@ -905,9 +905,12 @@ const nlohmann::json Helper::getPercentiles(const nlohmann::json& table, const s
     return output;
 }
 
-int Helper::noteType2ticks(const std::string& noteType, const int divisionsPerQuarterNote)
+int Helper::noteType2ticks(std::string noteType, const int divisionsPerQuarterNote)
 {
     int ticks = 0;
+
+    // Set string to lower case
+    for(auto& c : noteType) { c = tolower(c); }
 
     switch( hash(noteType.c_str()) ) {
         case hash("maxima"):

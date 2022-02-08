@@ -25,7 +25,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">maialib<span id="projectnumber">&#160;0.0.2</span>
+   <div id="projectname">maialib<span id="projectnumber">&#160;0.0.7</span>
    </div>
    <div id="projectbrief">Music analisys library</div>
   </td>
@@ -98,6 +98,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a222b54445c0360a20d54c096926759f6"><td class="memItemLeft" align="right" valign="top"><a id="a222b54445c0360a20d54c096926759f6" name="a222b54445c0360a20d54c096926759f6"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()</td></tr>
 <tr class="separator:a222b54445c0360a20d54c096926759f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7b65362f85acd4c3d1c7412d8619815e"><td class="memItemLeft" align="right" valign="top"><a id="a7b65362f85acd4c3d1c7412d8619815e" name="a7b65362f85acd4c3d1c7412d8619815e"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setNumber</b> (const int MeasureNumber)</td></tr>
+<tr class="separator:a7b65362f85acd4c3d1c7412d8619815e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abe59adadbc7f05d29331cd563894ae1b"><td class="memItemLeft" align="right" valign="top"><a id="abe59adadbc7f05d29331cd563894ae1b" name="abe59adadbc7f05d29331cd563894ae1b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setKeySignature</b> (const int fifthCicle, const bool isMajorMode=true)</td></tr>
 <tr class="separator:abe59adadbc7f05d29331cd563894ae1b"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -143,6 +146,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>addNote</b> (const st
 <tr class="memitem:ae5673155b18b4b21d7a0a30c0f7380b0"><td class="memItemLeft" align="right" valign="top"><a id="ae5673155b18b4b21d7a0a30c0f7380b0" name="ae5673155b18b4b21d7a0a30c0f7380b0"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>removeNote</b> (const int noteId, const int staveId=0)</td></tr>
 <tr class="separator:ae5673155b18b4b21d7a0a30c0f7380b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0dc1c19a85ca82dfb1ba968b51135a1"><td class="memItemLeft" align="right" valign="top"><a id="aa0dc1c19a85ca82dfb1ba968b51135a1" name="aa0dc1c19a85ca82dfb1ba968b51135a1"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumber</b> () const</td></tr>
+<tr class="separator:aa0dc1c19a85ca82dfb1ba968b51135a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aac6b6e55f372affe4210b04300e19b17"><td class="memItemLeft" align="right" valign="top"><a id="aac6b6e55f372affe4210b04300e19b17" name="aac6b6e55f372affe4210b04300e19b17"></a>
 const <a class="el" href="class_clef.html">Clef</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getClef</b> (const int clefId=0) const</td></tr>
 <tr class="separator:aac6b6e55f372affe4210b04300e19b17"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -191,36 +197,42 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>metronomeChanged</b> 
 <tr class="memitem:a2a0bf39a9d9e216c1d0a1c0340e0066c"><td class="memItemLeft" align="right" valign="top"><a id="a2a0bf39a9d9e216c1d0a1c0340e0066c" name="a2a0bf39a9d9e216c1d0a1c0340e0066c"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMajorKeyMode</b> () const</td></tr>
 <tr class="separator:a2a0bf39a9d9e216c1d0a1c0340e0066c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a93ec416490fa532b2f26eafb7dbd719b"><td class="memItemLeft" align="right" valign="top"><a id="a93ec416490fa532b2f26eafb7dbd719b" name="a93ec416490fa532b2f26eafb7dbd719b"></a>
-const <a class="el" href="class_note.html">Note</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getElement</b> (const int elementId, const int staveId=0) const</td></tr>
-<tr class="separator:a93ec416490fa532b2f26eafb7dbd719b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07c93fdeea48eec4d32a578f4a527fec"><td class="memItemLeft" align="right" valign="top"><a id="a07c93fdeea48eec4d32a578f4a527fec" name="a07c93fdeea48eec4d32a578f4a527fec"></a>
-<a class="el" href="class_note.html">Note</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getElement</b> (const int elementId, const int staveId=0)</td></tr>
-<tr class="separator:a07c93fdeea48eec4d32a578f4a527fec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45fe82dbd5e8a53c44dca26b87f09c4d"><td class="memItemLeft" align="right" valign="top"><a id="a45fe82dbd5e8a53c44dca26b87f09c4d" name="a45fe82dbd5e8a53c44dca26b87f09c4d"></a>
 const <a class="el" href="class_note.html">Note</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getNote</b> (const int noteId, const int staveId=0) const</td></tr>
 <tr class="separator:a45fe82dbd5e8a53c44dca26b87f09c4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad7fa2ba3d553088a97ce03de61f6eccf"><td class="memItemLeft" align="right" valign="top"><a id="ad7fa2ba3d553088a97ce03de61f6eccf" name="ad7fa2ba3d553088a97ce03de61f6eccf"></a>
 <a class="el" href="class_note.html">Note</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getNote</b> (const int noteId, const int staveId=0)</td></tr>
 <tr class="separator:ad7fa2ba3d553088a97ce03de61f6eccf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a19290dfd2f9f0bc02a095eb914285a4e"><td class="memItemLeft" align="right" valign="top"><a id="a19290dfd2f9f0bc02a095eb914285a4e" name="a19290dfd2f9f0bc02a095eb914285a4e"></a>
+const <a class="el" href="class_note.html">Note</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getNoteOn</b> (const int noteOnId, const int staveId=0) const</td></tr>
+<tr class="separator:a19290dfd2f9f0bc02a095eb914285a4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acc000fc116fb2306a7328af4b6a6bf89"><td class="memItemLeft" align="right" valign="top"><a id="acc000fc116fb2306a7328af4b6a6bf89" name="acc000fc116fb2306a7328af4b6a6bf89"></a>
+<a class="el" href="class_note.html">Note</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getNoteOn</b> (const int noteOnId, const int staveId=0)</td></tr>
+<tr class="separator:acc000fc116fb2306a7328af4b6a6bf89"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab78bbdda4bd1573a4fe8a1103836dc20"><td class="memItemLeft" align="right" valign="top"><a id="ab78bbdda4bd1573a4fe8a1103836dc20" name="ab78bbdda4bd1573a4fe8a1103836dc20"></a>
+const <a class="el" href="class_note.html">Note</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getNoteOff</b> (const int noteOffId, const int staveId=0) const</td></tr>
+<tr class="separator:ab78bbdda4bd1573a4fe8a1103836dc20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8b3f72b8327d36768ca8abc04aa0c088"><td class="memItemLeft" align="right" valign="top"><a id="a8b3f72b8327d36768ca8abc04aa0c088" name="a8b3f72b8327d36768ca8abc04aa0c088"></a>
+<a class="el" href="class_note.html">Note</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getNoteOff</b> (const int noteOffId, const int staveId=0)</td></tr>
+<tr class="separator:a8b3f72b8327d36768ca8abc04aa0c088"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9cfb8918c957e46ac4f374760877ae69"><td class="memItemLeft" align="right" valign="top"><a id="a9cfb8918c957e46ac4f374760877ae69" name="a9cfb8918c957e46ac4f374760877ae69"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumNotesOn</b> (const int staveId) const</td></tr>
+<tr class="separator:a9cfb8918c957e46ac4f374760877ae69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a998bde82c78d36387efedcd0ba93d30a"><td class="memItemLeft" align="right" valign="top"><a id="a998bde82c78d36387efedcd0ba93d30a" name="a998bde82c78d36387efedcd0ba93d30a"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumNotesOn</b> () const</td></tr>
+<tr class="separator:a998bde82c78d36387efedcd0ba93d30a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07faa77439edafe7b35c3e4c11610bef"><td class="memItemLeft" align="right" valign="top"><a id="a07faa77439edafe7b35c3e4c11610bef" name="a07faa77439edafe7b35c3e4c11610bef"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumNotesOff</b> (const int staveId) const</td></tr>
+<tr class="separator:a07faa77439edafe7b35c3e4c11610bef"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a470d36789e00a99c4ce56a83600903bd"><td class="memItemLeft" align="right" valign="top"><a id="a470d36789e00a99c4ce56a83600903bd" name="a470d36789e00a99c4ce56a83600903bd"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumNotesOff</b> () const</td></tr>
+<tr class="separator:a470d36789e00a99c4ce56a83600903bd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aee329362e077f0659f7acbb9782aab18"><td class="memItemLeft" align="right" valign="top"><a id="aee329362e077f0659f7acbb9782aab18" name="aee329362e077f0659f7acbb9782aab18"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumNotes</b> (const int staveId) const</td></tr>
 <tr class="separator:aee329362e077f0659f7acbb9782aab18"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa43cd6163333e4c2f02e1b7bbe576414"><td class="memItemLeft" align="right" valign="top"><a id="aa43cd6163333e4c2f02e1b7bbe576414" name="aa43cd6163333e4c2f02e1b7bbe576414"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumNotes</b> () const</td></tr>
 <tr class="separator:aa43cd6163333e4c2f02e1b7bbe576414"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa98ef90d4c40c91e09793a5e6270bae4"><td class="memItemLeft" align="right" valign="top"><a id="aa98ef90d4c40c91e09793a5e6270bae4" name="aa98ef90d4c40c91e09793a5e6270bae4"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumRests</b> (const int staveId) const</td></tr>
-<tr class="separator:aa98ef90d4c40c91e09793a5e6270bae4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9c18ba53bf33bf4d859b602324c752f5"><td class="memItemLeft" align="right" valign="top"><a id="a9c18ba53bf33bf4d859b602324c752f5" name="a9c18ba53bf33bf4d859b602324c752f5"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumRests</b> () const</td></tr>
-<tr class="separator:a9c18ba53bf33bf4d859b602324c752f5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a01a89e7f4628fa6b8d19235eb02e85b9"><td class="memItemLeft" align="right" valign="top"><a id="a01a89e7f4628fa6b8d19235eb02e85b9" name="a01a89e7f4628fa6b8d19235eb02e85b9"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumElements</b> (const int staveId) const</td></tr>
-<tr class="separator:a01a89e7f4628fa6b8d19235eb02e85b9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae95a39c44452d5fa4aa15673bce1fa4f"><td class="memItemLeft" align="right" valign="top"><a id="ae95a39c44452d5fa4aa15673bce1fa4f" name="ae95a39c44452d5fa4aa15673bce1fa4f"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumElements</b> () const</td></tr>
-<tr class="separator:ae95a39c44452d5fa4aa15673bce1fa4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acb514d6cf4c827b783826a62af4eb3a1"><td class="memItemLeft" align="right" valign="top"><a id="acb514d6cf4c827b783826a62af4eb3a1" name="acb514d6cf4c827b783826a62af4eb3a1"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>getDivisionsPerQuarterNote</b> () const</td></tr>
 <tr class="separator:acb514d6cf4c827b783826a62af4eb3a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -253,7 +265,7 @@ const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>toJSON</
 <tr class="separator:a3a1d7797ce67146a5e2c40e9e32c8f17"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>include/<a class="el" href="measure_8h_source.html">measure.h</a></li>
+<li>core/include/<a class="el" href="measure_8h_source.html">measure.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->
