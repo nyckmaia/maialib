@@ -16,3 +16,11 @@ TEST(nyckSuite01, myTestExample01)
 
     EXPECT_EQ(score.isValid(), true);
 }
+
+TEST(nyckSuite01, getChords)
+{
+    Score score = Score("./tests/xml_examples/unit_test/test_getchords_poly.musicxml");
+
+    const auto x = score.getChords();
+    EXPECT_EQ(score.isValid(), true);
+}

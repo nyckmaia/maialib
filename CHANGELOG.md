@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.7] - 2022-MM-DD
+### New Features
+- Rewrite: `Score::getChords()`
+    - Mode `Continuos`
+    - Mode `Same Attack`
+- Add external dependency: `SQLiteCpp`
+- Add `BuildCache` as a *optional* development tool
+
+### Improved
+- `VS Code`: Enable `pretty-printing` for `gdb`
+
+### Fixed
+
+------------------------
 ## [v0.0.6] - 2022-01-24
 ### New Features
 - Add `Measure::getNumber()` and `Measure::setNumber()`

@@ -92,10 +92,33 @@ void ScoreClass(py::module &m) {
     cls.def("findPattern", &Score::findPattern, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("instrumentFragmentation", &Score::instrumentFragmentation, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def("getChords", &Score::getChords,
+    // cls.def("getChords", &Score::getChords,
+    //     py::arg("config") = nlohmann::json(),
+    //     py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+
+    cls.def("getChords", [](Score& score, nlohmann::json config)
+        {
+            // Get data
+            const auto records = score.getChords(config);
+
+            // Import Pandas module
+            py::object Pandas = py::module_::import("pandas");
+
+            // Get method 'from_records' from 'DataFrame()' object
+            py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
+
+            // Set DataFrame columns name
+            std::vector<std::string> columns = {"Measure", "Chord"};
+            
+            // Fill DataFrame with records and columns
+            py::object df = FromRecords(records, "columns"_a = columns);
+
+            return df;
+        },
         py::arg("config") = nlohmann::json(),
-        py::arg("sameAttackNotes") = true,
-        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>()
+    );
+        
 
     cls.def("forEachNote", &Score::forEachNote,
         py::arg("callback"),

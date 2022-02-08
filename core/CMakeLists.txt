@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.0)
 
+find_program(buildcache_program buildcache)
+if(buildcache_program)
+    message("=====> Use BUILDCACHE: yes <=====")
+    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE "${buildcache_program}")
+else()
+    message("=====> Use BUILDCACHE: no found <=====")
+endif()
+
 project("maiacore" LANGUAGES CXX)
 
 # Windows: If CMake errors -> Desable your antivirus!!
@@ -38,27 +46,31 @@ file(GLOB maiacore_src
 if(STATIC_LIB)
     message("=====> GENERATING STATIC LIBRARY <=====")
 
-    add_subdirectory(external/zip) 
+    add_subdirectory(external/zip)
+    add_subdirectory(external/sqlitecpp)
+
     add_library(${PROJECT_NAME} STATIC ${maiacore_src})
 
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
     target_include_directories(${PROJECT_NAME} PUBLIC external)
 
-    target_link_libraries(${PROJECT_NAME} zip)
+    target_link_libraries(${PROJECT_NAME} zip SQLiteCpp sqlite3 pthread dl)
 endif()
 
 # Generate shared library
 if(SHARED_LIB)
     message("=====> GENERATING SHARED LIBRARY <=====")
     add_subdirectory(external/zip)
+    add_subdirectory(external/sqlitecpp)
+
     add_library(${PROJECT_NAME} SHARED ${maiacore_src})
 
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
     target_include_directories(${PROJECT_NAME} PUBLIC external)
 
-    target_link_libraries(${PROJECT_NAME} zip)
+    target_link_libraries(${PROJECT_NAME} zip SQLiteCpp sqlite3 pthread dl)
 endif()
 
 # Generate python module library
@@ -80,19 +92,20 @@ if(PYBIND_LIB)
     target_include_directories(${PROJECT_NAME} PUBLIC external)
 
     add_subdirectory(external/zip)
+    add_subdirectory(external/sqlitecpp)
 
     if(WIN32)
         if(MSYS OR MINGW)
             message(STATUS "===> Selected Windows Compiler: MSYS or MINGW")
             # https://cython.readthedocs.io/en/latest/src/tutorial/appendix.html
-            target_link_libraries(${PROJECT_NAME} PRIVATE zip -static-libgcc -static-libstdc++ -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive)
+            target_link_libraries(${PROJECT_NAME} PRIVATE zip -static-libgcc -static-libstdc++ -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive SQLiteCpp sqlite3)
         else()
             message(STATUS "===> Selected Windows Compiler: MSVC")
-            # MSVC: Talvez nao precise de todas essas flags necessarias para o MSVC. Testar!
-            target_link_libraries(${PROJECT_NAME} PRIVATE zip)
+            # MSVC: Talvez nao precise de todas essas flags necessarias para o MSVC. Substituir a pthread pela winpthread? Remover o dl?
+            target_link_libraries(${PROJECT_NAME} PRIVATE zip SQLiteCpp sqlite3 pthread dl)
         endif()
     else()
         # Linux e MacOSX
-        target_link_libraries(${PROJECT_NAME} PRIVATE zip)
+        target_link_libraries(${PROJECT_NAME} PRIVATE zip SQLiteCpp sqlite3 pthread dl)
     endif()
 endif()

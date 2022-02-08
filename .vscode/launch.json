@@ -19,6 +19,13 @@
                 "miDebuggerPath": "/usr/bin/lldb",
                 "MIMode": "lldb",
             },
+            "setupCommands": [
+                {   // Display content in STL containers pretty
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

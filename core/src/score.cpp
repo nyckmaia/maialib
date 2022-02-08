@@ -2417,126 +2417,58 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
     return out;
 }
 
-std::vector<Chord> Score::getChords(nlohmann::json config, const bool sameAttackNotes)
+std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
 {
-    int partNumberSize = 0;
+    // ===== STEP 1: PARSE THE INPUT CONFIG JSON ===== //
 
-    // Optional config argument: Set default values
-    if (!config.contains("partNumber")) {
-        partNumberSize = getNumParts();
-
-        // Fill the config json with all part indexes:
-        for (int p = 0; p < partNumberSize; p++) {
-            config["partNumber"].push_back(p+1);
-        }
-    }
-
-    // Error checking: 2 valid types
-    if (config.contains("partNumber")) {
-        if (!config["partNumber"].is_string() && !config["partNumber"].is_array()) {
-            std::cerr << "[ERROR] 'partNumber' is a optional config argument.\nThe valid values are: 'all' or a positive integers array" << std::endl;
-            return std::vector<Chord>();
-        }
-
-        if (config["partNumber"].is_string()) {
-            const std::string temp = config["partNumber"].get<std::string>();
-            // Error checking: validade config in the 'string' type case:
-            if (temp != "all") {
-                std::cerr << "[ERROR] 'partNumber' is a optional config argument.\n The valid values are: 'all' or a positive integers array" << std::endl;
-                return std::vector<Chord>();
-            }
-
-            // Convert 'all' value to an empty array:
-            config["partNumber"] = nlohmann::json::array();
-
-            // Get the amount of all parts (default):
-            const int numParts = getNumParts();
-
-            // Fill the config json with all part indexes:
-            for (int p = 0; p < numParts; p++) {
-                config["partNumber"].push_back(p+1);
-            }
-        }
-
-        // Get the amount of parts in the 'integer array' case:
-        if (config["partNumber"].is_array()) {
-            partNumberSize = config["partNumber"].size();
-        }
-    }
-
-    // Error checking:
-    if (partNumberSize == 0) {
-        std::cerr << "[ERROR] Unable to get the parts amount!" << std::endl;
-        return std::vector<Chord>();
-    }
-
-    // Pre-allocate a partNumber vector:
-    std::vector<int> partNumber(partNumberSize, 0);
-
-    // Error checking:
-    for(int i = 0; i < partNumberSize; i++) {
-        partNumber[i] = config["partNumber"][i].get<int>();
-        if (partNumber[i] < 1 || partNumber[i] > getNumParts()) {
-            std::cerr << "[ERROR] The 'partNumber' vector elements MUST BE greater than 0 and smaller than total number of parts" << std::endl;
-            return std::vector<Chord>();
-        }
-    }
-
-    //    // Printing some console header
-    //    std::cout << "Processing " << partNumberSize << " selected part numbers: [";
-    //    for (int i = 0; i < partNumberSize; i++) {
-    //        std::cout << partNumber[i];
-    //        if (i == partNumberSize-1) {std::cout << "]" << std::endl;} else {std::cout << ", ";}
-    //    }
-
-    // ===== READ MEASURE START ===== //
+    // ===== STEP 1.1: READ MEASURE START ===== //
     int measureStart = 0;
 
-    // If not setted, set the default value = 1
+    // If not setted, set the default value = 0
     if (!config.contains("measureStart")) {
-        measureStart = 1;
+        measureStart = 0;
         config["measureStart"] = measureStart;
-        std::cout << "[WARNING]: Setting the 'measureStart' to the first measure: " << measureStart << std::endl;
+        // std::cout << "[WARNING]: Setting the 'measureStart' to the first measure: " << measureStart << std::endl;
     }
 
-    // Type checking:
+    // Type checking
     if (config.contains("measureStart") && !config["measureStart"].is_number_integer()) {
         std::cerr << "[ERROR] 'measureStart' is a optional config argument and MUST BE a positive integer!" << std::endl;
-        return std::vector<Chord>();
-    } else {
-        // Get measure start value:
-        measureStart = config["measureStart"].get<int>();
+        return {};
     }
+
+    // Get measure start value
+    measureStart = config["measureStart"].get<int>();
 
     // Error checking:
-    if (measureStart < 1) {
-        std::cerr << "[ERROR] The 'measureStart' value MUST BE greater than zero!" << std::endl;
-        return std::vector<Chord>();
+    if (measureStart < 0) {
+        std::cerr << "[ERROR] The 'measureStart' value MUST BE a positive integer!" << std::endl;
+        return {};
     }
 
-    // ===== READ MEASURE END ===== //
+    // ===== STEP 1.2: READ MEASURE END ===== //
     int measureEnd = 0;
 
     // If not setted, set the default value = All measures!
     if (!config.contains("measureEnd")) {
         measureEnd = getNumMeasures();
         config["measureEnd"] = measureEnd;
-        std::cout << "[WARNING]: Setting the 'measureEnd' to the last measure: " << measureEnd << std::endl;
+        // std::cout << "[WARNING]: Setting the 'measureEnd' to the last measure: " << measureEnd << std::endl;
     }
 
     // Type checking:
     if (config.contains("measureEnd") && !config["measureEnd"].is_number_integer()) {
         std::cerr << "[ERROR] 'measureEnd' is a optional config argument and MUST BE a positive integer!" << std::endl;
-        return std::vector<Chord>();
-    } else {
-        // Get the 'measureEnd' config value:
-        measureEnd = config["measureEnd"].get<int>();
+        return {};
     }
+    
+    // Get the 'measureEnd' config value:
+    measureEnd = config["measureEnd"].get<int>();
 
     // Error checking:
-    if (measureEnd < 1) {
-        std::cerr << "[ERROR] The 'measureEnd' value MUST BE greater than zero!" << std::endl;
-        return std::vector<Chord>();
+    if (measureEnd < 0) {
+        std::cerr << "[ERROR] The 'measureEnd' value MUST BE greater than 0!" << std::endl;
+        return {};
     }
 
     // Error checking:
@@ -2549,279 +2481,468 @@ std::vector<Chord> Score::getChords(nlohmann::json config, const bool sameAttack
     // Error checking:
     if (measureStart > measureEnd) {
         std::cerr << "[ERROR] 'measureEnd' value MUST BE greater than 'measureStart' value" << std::endl;
-        return std::vector<Chord>();
+        return {};
     }
 
-    // ===== READ MININIMUM CHORD STACKED NOTES ===== //
-    int minStackedNotes = (!config.contains("minStackedNotes") || !config["minStackedNotes"].is_number_integer()) ? 3 : config["minStackedNotes"].get<int>();
+    // ===== STEP 1.3: READ MININIMUM CHORD STACKED NOTES ===== //
+    int minStackedNotes = (!config.contains("minStack") || !config["minStack"].is_number_integer()) ? 3 : config["minStack"].get<int>();
 
-    if (minStackedNotes < 3) {
-        std::cout << "[WARNING]: You set the 'minStackedNotes' to " << minStackedNotes << ", but the minimum value is 3." << std::endl;
-        std::cout << "Setting the 'minStackedNotes' to 3" << std::endl;
+    if (minStackedNotes < 2) {
+        std::cout << "[WARNING]: You set the 'minStack' to " << minStackedNotes << ", but the minimum value is 2." << std::endl;
+        std::cout << "Setting the 'minStack' to the default: 3" << std::endl;
         minStackedNotes = 3;
     }
 
-    // ===== READ MAXIMUM CHORD STACKED NOTES ===== //
-    const int maxStackedNotes = (!config.contains("maxStackedNotes") || !config["maxStackedNotes"].is_number_integer()) ? 100 : config["maxStackedNotes"].get<int>();
+    // ===== STEP 1.4: READ MAXIMUM CHORD STACKED NOTES ===== //
+    const int maxStackedNotes = (!config.contains("maxStack") || !config["maxStack"].is_number_integer()) ? 100 : config["maxStack"].get<int>();
 
     // Error checking:
     if (minStackedNotes > maxStackedNotes) {
-        std::cerr << "[ERROR] The 'maxStackedNotes' value MUST BE greater than 'minStackedNotes' value" << std::endl;
-        return std::vector<Chord>();
+        std::cerr << "[ERROR] The 'maxStack' value MUST BE greater than 'minStack' value" << std::endl;
+        return {};
     }
 
-    // Get divisions per quarter note of this XML file:
-    const int divisionsPerQuarterNote = getDivisionsPerQuarterNote();
+    // ===== STEP 1.5: READ STACK MODE ===== //
+    const bool continuosMode = (!config.contains("continuosMode") || !config["continuosMode"].is_boolean()) ? true : config["continuosMode"].get<bool>();
 
-    // ===== CREATE A 'scoreTable' TO STORE MUSICAL NOTES INFO ===== //
-    ScoreTable scoreTable(partNumberSize); // [partNumber][timeStart][timeEnd][Note]
+    // ===== STEP 1.6: READ DURATION TICKS  ===== //
+    int defaultMinDurationTicks = _divisionsPerQuarterNote; // Arbitrary value
+    int minDurationTicks = (!config.contains("minDurationTicks") || !config["minDurationTicks"].is_number_integer()) ? defaultMinDurationTicks : config["minDurationTicks"].get<int>();
 
-    // ===== FILL THE 'scoreTable' WITH ALL DATA ===== // (time, (timeEnd, note))
-    for (int i = 0; i < partNumberSize; i++) {
+    if (minDurationTicks < 0) {
+        std::cout << "[WARNING]: The 'minDurationTicks' MUST BE a positive integer!" << std::endl;
+        std::cout << "Setting the 'minDurationTicks' = 'divisions per quarter note': " << defaultMinDurationTicks << std::endl;
+        minDurationTicks = defaultMinDurationTicks;
+    }
 
-        // ===== STEP 1: GET THE PART 'i' STAVES VALUE ===== //
-        // Create a xPath to capture the 'staff' tag in the first measure of the part 'i'
-        const std::string xPathRoot = "/score-partwise";  // Selects the Score
-        const std::string xPathPart = "/part[" + std::to_string(partNumber[i]) + "]";  // Selects the Instrument
-        const std::string xPathFirstMeasure = "/measure[1]";
-        const std::string xPathAttributes = "/attributes";
-        const std::string xPathStaves = "/staves";
-        const std::string xPathStaff = xPathRoot + xPathPart + xPathFirstMeasure + xPathAttributes + xPathStaves;
+    // ===== STEP 2: CREATE A 'IN MEMORY' SQLITE DATABASE ===== //
+    SQLite::Database db(":memory:", SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE|SQLite::OPEN_MEMORY);
 
-        // Get the xPath result:
-        const pugi::xpath_node_set numStaffVec = Helper::getNodeSet(_doc, xPathStaff); // gets all nodes set as a vector.
+    db.exec("create table events (measure int, starttime int, endtime int, address intptr_t)");
 
-        // Verify if the part 'i' is a single or multiple staff/staves:
-        const bool isSingleStaff = (numStaffVec.size() == 0) ? true : false;
+    int previusTime = 0;
+    int currentTime = 0;
+    
+    for (int p = 0; p < _numParts; p++) {
+        Part& currentPart = getPart(p);
+        currentTime = 0;
+        
+        for (int m = measureStart; m < measureEnd; m++) {
+            Measure& currentMeasure = currentPart.getMeasure(m);
+            
+            const int measureBeginningTime = currentTime;
+            for (int s = 0; s < currentMeasure.getNumStaves(); s++) {
+                const int numNotes = currentMeasure.getNumNotes(s);
+                currentTime = measureBeginningTime; // Reset time when use multiple staves
 
-        // Get the number of staves for the part 'i':
-        const int numStaves = (isSingleStaff) ? 1 : numStaffVec[0].node().text().as_int();
+                for (int n = 0; n < numNotes; n++) {
+                    Note& currentNote = currentMeasure.getNote(n, s);
+                    
+                    if (currentNote.inChord()) { currentTime = previusTime; }
 
-        // ===== STEP 2: GET THE PART 'i' TRANSPOSE VALUES ===== //
-        const std::string xPathTransposeTag = "/transpose";
+                    const int timeEnd = currentTime + currentNote.getDurationTicks();
 
-        const std::string xPathTranspose = xPathRoot + xPathPart + xPathFirstMeasure + xPathAttributes + xPathTransposeTag;
+                    if (currentNote.isNoteOn()) {
+                        std::string str = "insert into events (measure, starttime, endtime, address) VALUES ";
+                        std::string values = "(" + std::to_string(m) + ", " 
+                                                + std::to_string(currentTime) + ", " 
+                                                + std::to_string(timeEnd) + ", "
+                                                + std::to_string((intptr_t)&currentNote) + ")";
+                        str.append(values);
 
-        // Get the xPath result:
-        const pugi::xpath_node_set numTransposeTag = Helper::getNodeSet(_doc, xPathTranspose);
-
-        // Verify if the part 'i' is a transposed instrument or not:
-        const bool isTransposedInstrument = (numTransposeTag.size() == 0) ? false : true;
-
-        // Get the number of staves for the part 'i':
-        int transposeDiatonic = 0;
-        int transposeChromatic = 0;
-
-        const std::string xPathDiatonic = "/diatonic";
-        const std::string xPathChormatic = "/chromatic";
-
-        if (isTransposedInstrument) {
-            const pugi::xpath_node_set diatonic = Helper::getNodeSet(_doc, xPathTranspose + xPathDiatonic);
-            const pugi::xpath_node_set chromatic = Helper::getNodeSet(_doc, xPathTranspose + xPathChormatic);
-
-            transposeDiatonic = diatonic[0].node().text().as_int();
-            transposeChromatic = chromatic[0].node().text().as_int();
-        }
-
-        // ===== SELECT THE DESIRED XML NODES VIA XPATH ===== //
-        // For each stave 's':
-        for (int s = 0; s < numStaves; s++) {
-            // Create a xPath to select only the notes inside the staff 's':
-            const std::string xPathMeasureSection = "/measure[" + std::to_string(measureStart) + " <= position() and position() <= " + std::to_string(measureEnd) + "]";
-            const std::string xPathNote = "//note"; // Selects all notes in the Section
-            const std::string xPathFilterNote = (isSingleStaff) ? "[not(grace)]" : "[not(grace) and (staff=" + std::to_string(s+1) + ")]";  // This makes grace notes not be considered to time calculations
-            const std::string xPath = xPathRoot + xPathPart + xPathMeasureSection + xPathNote + xPathFilterNote; // Concatenation of the all partial paths to that one of interest
-
-            // Get the xPath result notes vector:
-            const pugi::xpath_node_set notes = Helper::getNodeSet(_doc, xPath); // gets all nodes set as a vector.
-
-            // ===== ITERATE OVER ALL NOTES OF THE PART 'i' ====== //
-            // For each stave inside the part 'i':
-            float previusTime = 0.0f; // Previus note time (in beats)
-            float currentTime = 0.0f; // currenTime is the acumulate time of notes
-
-            // For all notes inside the part 'i':
-            const int notesSize = notes.size();
-            for (int n = 0; n < notesSize; n++) {
-
-                // Select a note 'n' inside the 'notes' vector. Each note is a XML node
-                const pugi::xml_node note = notes[n].node();
-
-                // ===== GET THE PROPERTIES OF THE NOTE 'n' FOR THE PART 'i' ===== //
-                const std::string pitchStep = note.child("pitch").child("step").text().as_string(); // get the pitch of i-th note (a text as a string). A rest has value 0.
-                const std::string alterNumber = note.child("pitch").child("alter").text().as_string(); // get the  alteration (which is a string) "sharp" or "flat" if there any alteration
-
-                float alterValue = 0.0f;
-                std::string alterSymbol;
-
-                if (!alterNumber.empty()) {
-                    alterValue = std::stof(alterNumber); // "stof" converts a "string" to "float"
-                    alterSymbol = Helper::alterValue2symbol(alterValue); // this method converts alterValue to the proper alterSymbol (sharp or flat)
+                        db.exec(str.c_str());
+                    }
+                    
+                    previusTime = currentTime;
+                    currentTime += currentNote.getDurationTicks();
                 }
-
-                const std::string& pitchClass = pitchStep + alterSymbol;  // pitchClass (a string) is the concatenation of the two strings pitchStep + alterSynbol (example: C + # = C#)
-
-                const std::string octaveStr = note.child("pitch").child("octave").text().as_string(); // return the octave (string) of a note
-
-                const int duration = note.child("duration").text().as_int(); // get the duration of i-th note as a  "string" number
-
-                const pugi::xpath_node_set& testChord = note.select_nodes("chord");   // this pointer selects notes belongin to chords (unless the root)
-                const bool inChord = (testChord.size() != 0) ? true : false;
-
-                const pugi::xpath_node_set& isRestVec = note.select_nodes("rest");  // this pointer selects notes = rests belongin ???? to a chord
-                const pugi::xpath_node_set& isUnpitchedVec = note.select_nodes("unpitched");
-
-                const bool isNote = ((isRestVec.size() == 0) && (isUnpitchedVec.size() == 0)) ? true : false;
-
-                Note x(pitchClass + octaveStr, duration, isNote, inChord, transposeDiatonic, transposeChromatic);  // x is an object of class Note with parameters of the constructor of class Note
-
-                const float durationQuarterNote = Helper::ticks2QuarterNoteValue(x.getDurationTicks(), divisionsPerQuarterNote);  // this is to measure duration of notes as number of quarter notes
-
-                if (inChord) { currentTime = previusTime; }
-
-                // Compute Time End:
-                const float timeEnd = currentTime + durationQuarterNote;
-
-                //                std::cout << "part[" << i << "] => note[" << n << "]: " <<
-                //                             " pitchClass: " << pitchClass <<
-                //                             " | octave: " << octave <<
-                //                             " | duration: " << duration <<
-                //                             " | isNote: " << isNote <<
-                //                             " | inChord: " << inChord <<
-                //                             " | currentTime: " << currentTime <<
-                //                             " | timeEnd: " << timeEnd <<
-                //                             std::endl;
-
-                // Only stack notes! Skip rests:
-                if (isNote) {
-                    scoreTable[i].insert({currentTime, std::make_pair(timeEnd, x)}); // store all notes in a chord //  for the i-th instrument
-                }
-
-                // Go to the next note in time domain:
-                previusTime = currentTime;
-                currentTime += durationQuarterNote;
             }
         }
     }
 
-    // PEGAR ESSE VALOR DO JSON DE INPUT!!!!!!
-    int minDurationTicks = 0;
-
-    // Choose which stack chords algorithm you desired:
-    if (sameAttackNotes) {
-        getSameAttackChords(scoreTable, minStackedNotes, maxStackedNotes);
-    } else {
-        getChordsPerEachNoteEvent(scoreTable, minStackedNotes, maxStackedNotes, minDurationTicks);
+    // Choose which stack chords algorithm that you desired:
+    if (!continuosMode) {
+        return getSameAttackChords(db, minStackedNotes, maxStackedNotes, minDurationTicks);
     }
 
-    return _stackedChords;
+    return getChordsPerEachNoteEvent(db, minStackedNotes, maxStackedNotes, minDurationTicks);
 }
 
-void Score::getSameAttackChords(ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes)
+std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks)
 {
-    std::vector<float> keys;
-
-    // Get the number of parts in this 'scoreTable':
-    const int numParts = scoreTable.size();
-
-    // For each part inside the 'scoreTable'
-    for (int i = 0; i < numParts; i++) {
-        // create a iterator to parse the first columm (timeStart = key for the method multimap) of Table
-        for(PartTableMap::iterator it = scoreTable[i].begin(); it != scoreTable[i].end(); it++) {
-            keys.push_back(it->first);  // load the first column (key collumn of multimap of Table)
-        }
-    }
-
-    // this sort the keys as a increasing sequence of unique values // erase repetitions
-    sort(keys.begin(), keys.end());  // since keys=time here, this introduce a time order in keys
-    keys.erase(unique(keys.begin(), keys.end()), keys.end());
-
-    // Get the amount of unique keys (timeStart):
-    const int numUniqueKeys = keys.size();
-
-    // For each key:
-    for (int k = 0; k < numUniqueKeys; k++) {
-        const float currentKey = keys[k];
-
-        Chord chord;
-
-        // For each part:
-        for (int i = 0; i < numParts; i++) {
-
-            // Get all Notes with the same 'currentKey' (timeStart)
-            auto sameKeyValue = scoreTable[i].equal_range(currentKey);
-
-            // Iterate over all Notes with the same filtered key:
-            for (auto it2 = sameKeyValue.first; it2 != sameKeyValue.second; it2++) {
-                Note& note = it2->second.second; // Note reference
-                chord.addNote(note); // Add note to the chord
-            }
-        }
-
-        // Get the chord size:
-        const int chordSize = chord.size();
-
-        // User defined chord size filter:
-        if (chordSize < minStackedNotes || chordSize > maxStackedNotes) { continue; }
-
-        // Store the chord:
-        _stackedChords.push_back(chord);
-    }
-}
-
-void Score::getChordsPerEachNoteEvent(ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks)
-{
+    ignore(db);
     ignore(minStackedNotes);
     ignore(maxStackedNotes);
+    ignore(minDurationTicks);
 
-    // Clear the output chords vector
-    _stackedChords.clear();
-
-    // ===== STEP 1: CREATE A 2D TABLE WITH ALL SCORE NOTES DATA ===== //
-
-    // Create a aux 2D table: [timeStart][timeEnd][&Note]
-    typedef std::vector<std::tuple<float, float, const Note*>> Table2D;
-    Table2D table;
-
-    // Fill table with data, excluding short notes
-    for (const auto& part : scoreTable) {
-        for (const auto& note : part) {
-            const Note* note_ptr = &note.second.second;
-            
-            // Exclude short notes
-            if (note_ptr->getDurationTicks() < minDurationTicks) { continue; }
-
-            const float timeStart = note.first;
-            const float timeEnd = note.second.first;
-
-            table.push_back(std::make_tuple(timeStart, timeEnd, note_ptr));
-        }
-    }
-
-    // Sort table by first column [timeStart]
-    std::sort(table.begin(), table.end());
-
-    // ===== STEP 2: GET THE CHORDS ===== //
-    // This 'chord' will be used inside the next for loop
-    Chord chord;
-
-    const int tableSize = table.size();
-    for (int i = 1; i < tableSize; i++) {
-        const auto& previous_line = table[i-1];
-        const auto& current_line = table[i];
-
-        const float& previous_timeEnd = std::get<1>(previous_line);
-        
-        const float& current_timeStart = std::get<0>(current_line);
-        const Note* current_Note = std::get<2>(current_line);
-
-        if (current_timeStart > previous_timeEnd) { 
-            _stackedChords.push_back(chord);
-            chord.clear();
-            chord.addNote(*current_Note);
-            continue;
-        }
-
-        chord.addNote(*current_Note);   
-    }
+    return {};
 }
+
+std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks)
+{
+    // ===== STEP 1: GET THE NUMBER OF UNIQUE START TIME EVENTS ===== //
+    const int numUniqueEvents = db.execAndGet("SELECT COUNT (DISTINCT starttime) from events").getInt();
+    
+    // ===== STEP 2: GET THE UNIQUE START TIME EVENTS ===== //
+    std::vector<int> uniqueStartTime(numUniqueEvents, 0);
+    SQLite::Statement query(db, "SELECT DISTINCT starttime from events ORDER BY starttime ASC");
+
+    int i = 0;
+    while (query.executeStep())
+    {
+        uniqueStartTime[i] = query.getColumn(0).getInt();
+        i++;
+    }
+
+    // ===== STEP 3: FOR EACH UNIQUE START TIME - GET THE STACK CHORD ===== //
+    std::vector<std::pair<int,Chord>> stackedChords;
+    for (const int startTime : uniqueStartTime) {
+
+        SQLite::Statement query(db, "SELECT measure, address FROM events WHERE starttime <= ? and endtime > ?");
+        // Bind query parameters
+        query.bind(1, startTime);
+        query.bind(2, startTime);
+        
+        int measure = 0;
+        std::vector<const Note*> chordNotes;
+        while (query.executeStep())
+        {
+            // Get the measure value
+            measure = query.getColumn(0).getInt();
+
+            // Get the note pointer
+            const intptr_t address = query.getColumn(1);
+            const Note* note = reinterpret_cast<Note*>(address);
+
+            // Skip rests
+            if (note->isNoteOff()) { continue; }
+            
+            chordNotes.push_back(note);            
+        }
+
+        Chord chord;
+        bool tooShortChord = false;
+        for (const auto& note : chordNotes) {
+            if (note->getDurationTicks() < minDurationTicks) {
+                tooShortChord = true;
+                break;
+            }
+
+            // Append note the the temp chord
+            chord.addNote(*note);
+        }
+
+        // Skip undesired short time chords
+        if (tooShortChord) { continue; }
+
+        // Skip undesired smaller/bigger chords
+        const int chordSize = chord.size();
+        if (chordSize < minStackedNotes || chordSize > maxStackedNotes) { continue; }
+
+        // Store measure-chord pair
+        stackedChords.push_back({measure, chord});
+    }
+
+    return stackedChords;
+}
+
+// std::vector<Chord> Score::getChords(nlohmann::json config, const bool sameAttackNotes)
+// {
+//     int partNumberSize = 0;
+
+//     // Optional config argument: Set default values
+//     if (!config.contains("partNumber")) {
+//         partNumberSize = getNumParts();
+
+//         // Fill the config json with all part indexes:
+//         for (int p = 0; p < partNumberSize; p++) {
+//             config["partNumber"].push_back(p+1);
+//         }
+//     }
+
+//     // Error checking: 2 valid types
+//     if (config.contains("partNumber")) {
+//         if (!config["partNumber"].is_string() && !config["partNumber"].is_array()) {
+//             std::cerr << "[ERROR] 'partNumber' is a optional config argument.\nThe valid values are: 'all' or a positive integers array" << std::endl;
+//             return std::vector<Chord>();
+//         }
+
+//         if (config["partNumber"].is_string()) {
+//             const std::string temp = config["partNumber"].get<std::string>();
+//             // Error checking: validade config in the 'string' type case:
+//             if (temp != "all") {
+//                 std::cerr << "[ERROR] 'partNumber' is a optional config argument.\n The valid values are: 'all' or a positive integers array" << std::endl;
+//                 return std::vector<Chord>();
+//             }
+
+//             // Convert 'all' value to an empty array:
+//             config["partNumber"] = nlohmann::json::array();
+
+//             // Get the amount of all parts (default):
+//             const int numParts = getNumParts();
+
+//             // Fill the config json with all part indexes:
+//             for (int p = 0; p < numParts; p++) {
+//                 config["partNumber"].push_back(p+1);
+//             }
+//         }
+
+//         // Get the amount of parts in the 'integer array' case:
+//         if (config["partNumber"].is_array()) {
+//             partNumberSize = config["partNumber"].size();
+//         }
+//     }
+
+//     // Error checking:
+//     if (partNumberSize == 0) {
+//         std::cerr << "[ERROR] Unable to get the parts amount!" << std::endl;
+//         return std::vector<Chord>();
+//     }
+
+//     // Pre-allocate a partNumber vector:
+//     std::vector<int> partNumber(partNumberSize, 0);
+
+//     // Error checking:
+//     for(int i = 0; i < partNumberSize; i++) {
+//         partNumber[i] = config["partNumber"][i].get<int>();
+//         if (partNumber[i] < 1 || partNumber[i] > getNumParts()) {
+//             std::cerr << "[ERROR] The 'partNumber' vector elements MUST BE greater than 0 and smaller than total number of parts" << std::endl;
+//             return std::vector<Chord>();
+//         }
+//     }
+
+//     //    // Printing some console header
+//     //    std::cout << "Processing " << partNumberSize << " selected part numbers: [";
+//     //    for (int i = 0; i < partNumberSize; i++) {
+//     //        std::cout << partNumber[i];
+//     //        if (i == partNumberSize-1) {std::cout << "]" << std::endl;} else {std::cout << ", ";}
+//     //    }
+
+//     // ===== READ MEASURE START ===== //
+//     int measureStart = 0;
+
+//     // If not setted, set the default value = 1
+//     if (!config.contains("measureStart")) {
+//         measureStart = 1;
+//         config["measureStart"] = measureStart;
+//         std::cout << "[WARNING]: Setting the 'measureStart' to the first measure: " << measureStart << std::endl;
+//     }
+
+//     // Type checking:
+//     if (config.contains("measureStart") && !config["measureStart"].is_number_integer()) {
+//         std::cerr << "[ERROR] 'measureStart' is a optional config argument and MUST BE a positive integer!" << std::endl;
+//         return std::vector<Chord>();
+//     } else {
+//         // Get measure start value:
+//         measureStart = config["measureStart"].get<int>();
+//     }
+
+//     // Error checking:
+//     if (measureStart < 1) {
+//         std::cerr << "[ERROR] The 'measureStart' value MUST BE greater than zero!" << std::endl;
+//         return std::vector<Chord>();
+//     }
+
+//     // ===== READ MEASURE END ===== //
+//     int measureEnd = 0;
+
+//     // If not setted, set the default value = All measures!
+//     if (!config.contains("measureEnd")) {
+//         measureEnd = getNumMeasures();
+//         config["measureEnd"] = measureEnd;
+//         std::cout << "[WARNING]: Setting the 'measureEnd' to the last measure: " << measureEnd << std::endl;
+//     }
+
+//     // Type checking:
+//     if (config.contains("measureEnd") && !config["measureEnd"].is_number_integer()) {
+//         std::cerr << "[ERROR] 'measureEnd' is a optional config argument and MUST BE a positive integer!" << std::endl;
+//         return std::vector<Chord>();
+//     } else {
+//         // Get the 'measureEnd' config value:
+//         measureEnd = config["measureEnd"].get<int>();
+//     }
+
+//     // Error checking:
+//     if (measureEnd < 1) {
+//         std::cerr << "[ERROR] The 'measureEnd' value MUST BE greater than zero!" << std::endl;
+//         return std::vector<Chord>();
+//     }
+
+//     // Error checking:
+//     if (measureEnd > getNumMeasures()) {
+//         std::cout << "[WARNING]: The 'measureEnd' value is greater then the music length!" << std::endl;
+//         std::cout << "Changing the 'measureEnd' value to: " << getNumMeasures() << std::endl;
+//         measureEnd = getNumMeasures();
+//     }
+
+//     // Error checking:
+//     if (measureStart > measureEnd) {
+//         std::cerr << "[ERROR] 'measureEnd' value MUST BE greater than 'measureStart' value" << std::endl;
+//         return std::vector<Chord>();
+//     }
+
+//     // ===== READ MININIMUM CHORD STACKED NOTES ===== //
+//     int minStackedNotes = (!config.contains("minStackedNotes") || !config["minStackedNotes"].is_number_integer()) ? 3 : config["minStackedNotes"].get<int>();
+
+//     if (minStackedNotes < 3) {
+//         std::cout << "[WARNING]: You set the 'minStackedNotes' to " << minStackedNotes << ", but the minimum value is 3." << std::endl;
+//         std::cout << "Setting the 'minStackedNotes' to 3" << std::endl;
+//         minStackedNotes = 3;
+//     }
+
+//     // ===== READ MAXIMUM CHORD STACKED NOTES ===== //
+//     const int maxStackedNotes = (!config.contains("maxStackedNotes") || !config["maxStackedNotes"].is_number_integer()) ? 100 : config["maxStackedNotes"].get<int>();
+
+//     // Error checking:
+//     if (minStackedNotes > maxStackedNotes) {
+//         std::cerr << "[ERROR] The 'maxStackedNotes' value MUST BE greater than 'minStackedNotes' value" << std::endl;
+//         return std::vector<Chord>();
+//     }
+
+//     // Get divisions per quarter note of this XML file:
+//     const int divisionsPerQuarterNote = getDivisionsPerQuarterNote();
+
+//     // ===== CREATE A 'scoreTable' TO STORE MUSICAL NOTES INFO ===== //
+//     ScoreTable scoreTable(partNumberSize); // [partNumber][timeStart][timeEnd][Note]
+
+//     // ===== FILL THE 'scoreTable' WITH ALL DATA ===== // (time, (timeEnd, note))
+//     for (int i = 0; i < partNumberSize; i++) {
+
+//         // ===== STEP 1: GET THE PART 'i' STAVES VALUE ===== //
+//         // Create a xPath to capture the 'staff' tag in the first measure of the part 'i'
+//         const std::string xPathRoot = "/score-partwise";  // Selects the Score
+//         const std::string xPathPart = "/part[" + std::to_string(partNumber[i]) + "]";  // Selects the Instrument
+//         const std::string xPathFirstMeasure = "/measure[1]";
+//         const std::string xPathAttributes = "/attributes";
+//         const std::string xPathStaves = "/staves";
+//         const std::string xPathStaff = xPathRoot + xPathPart + xPathFirstMeasure + xPathAttributes + xPathStaves;
+
+//         // Get the xPath result:
+//         const pugi::xpath_node_set numStaffVec = Helper::getNodeSet(_doc, xPathStaff); // gets all nodes set as a vector.
+
+//         // Verify if the part 'i' is a single or multiple staff/staves:
+//         const bool isSingleStaff = (numStaffVec.size() == 0) ? true : false;
+
+//         // Get the number of staves for the part 'i':
+//         const int numStaves = (isSingleStaff) ? 1 : numStaffVec[0].node().text().as_int();
+
+//         // ===== STEP 2: GET THE PART 'i' TRANSPOSE VALUES ===== //
+//         const std::string xPathTransposeTag = "/transpose";
+
+//         const std::string xPathTranspose = xPathRoot + xPathPart + xPathFirstMeasure + xPathAttributes + xPathTransposeTag;
+
+//         // Get the xPath result:
+//         const pugi::xpath_node_set numTransposeTag = Helper::getNodeSet(_doc, xPathTranspose);
+
+//         // Verify if the part 'i' is a transposed instrument or not:
+//         const bool isTransposedInstrument = (numTransposeTag.size() == 0) ? false : true;
+
+//         // Get the number of staves for the part 'i':
+//         int transposeDiatonic = 0;
+//         int transposeChromatic = 0;
+
+//         const std::string xPathDiatonic = "/diatonic";
+//         const std::string xPathChormatic = "/chromatic";
+
+//         if (isTransposedInstrument) {
+//             const pugi::xpath_node_set diatonic = Helper::getNodeSet(_doc, xPathTranspose + xPathDiatonic);
+//             const pugi::xpath_node_set chromatic = Helper::getNodeSet(_doc, xPathTranspose + xPathChormatic);
+
+//             transposeDiatonic = diatonic[0].node().text().as_int();
+//             transposeChromatic = chromatic[0].node().text().as_int();
+//         }
+
+//         // ===== SELECT THE DESIRED XML NODES VIA XPATH ===== //
+//         // For each stave 's':
+//         for (int s = 0; s < numStaves; s++) {
+//             // Create a xPath to select only the notes inside the staff 's':
+//             const std::string xPathMeasureSection = "/measure[" + std::to_string(measureStart) + " <= position() and position() <= " + std::to_string(measureEnd) + "]";
+//             const std::string xPathNote = "//note"; // Selects all notes in the Section
+//             const std::string xPathFilterNote = (isSingleStaff) ? "[not(grace)]" : "[not(grace) and (staff=" + std::to_string(s+1) + ")]";  // This makes grace notes not be considered to time calculations
+//             const std::string xPath = xPathRoot + xPathPart + xPathMeasureSection + xPathNote + xPathFilterNote; // Concatenation of the all partial paths to that one of interest
+
+//             // Get the xPath result notes vector:
+//             const pugi::xpath_node_set notes = Helper::getNodeSet(_doc, xPath); // gets all nodes set as a vector.
+
+//             // ===== ITERATE OVER ALL NOTES OF THE PART 'i' ====== //
+//             // For each stave inside the part 'i':
+//             float previusTime = 0.0f; // Previus note time (in beats)
+//             float currentTime = 0.0f; // currenTime is the acumulate time of notes
+
+//             // For all notes inside the part 'i':
+//             const int notesSize = notes.size();
+//             for (int n = 0; n < notesSize; n++) {
+
+//                 // Select a note 'n' inside the 'notes' vector. Each note is a XML node
+//                 const pugi::xml_node note = notes[n].node();
+
+//                 // ===== GET THE PROPERTIES OF THE NOTE 'n' FOR THE PART 'i' ===== //
+//                 const std::string pitchStep = note.child("pitch").child("step").text().as_string(); // get the pitch of i-th note (a text as a string). A rest has value 0.
+//                 const std::string alterNumber = note.child("pitch").child("alter").text().as_string(); // get the  alteration (which is a string) "sharp" or "flat" if there any alteration
+
+//                 float alterValue = 0.0f;
+//                 std::string alterSymbol;
+
+//                 if (!alterNumber.empty()) {
+//                     alterValue = std::stof(alterNumber); // "stof" converts a "string" to "float"
+//                     alterSymbol = Helper::alterValue2symbol(alterValue); // this method converts alterValue to the proper alterSymbol (sharp or flat)
+//                 }
+
+//                 const std::string& pitchClass = pitchStep + alterSymbol;  // pitchClass (a string) is the concatenation of the two strings pitchStep + alterSynbol (example: C + # = C#)
+
+//                 const std::string octaveStr = note.child("pitch").child("octave").text().as_string(); // return the octave (string) of a note
+
+//                 const int duration = note.child("duration").text().as_int(); // get the duration of i-th note as a  "string" number
+
+//                 const pugi::xpath_node_set& testChord = note.select_nodes("chord");   // this pointer selects notes belongin to chords (unless the root)
+//                 const bool inChord = (testChord.size() != 0) ? true : false;
+
+//                 const pugi::xpath_node_set& isRestVec = note.select_nodes("rest");  // this pointer selects notes = rests belongin ???? to a chord
+//                 const pugi::xpath_node_set& isUnpitchedVec = note.select_nodes("unpitched");
+
+//                 const bool isNote = ((isRestVec.size() == 0) && (isUnpitchedVec.size() == 0)) ? true : false;
+
+//                 Note x(pitchClass + octaveStr, duration, isNote, inChord, transposeDiatonic, transposeChromatic);  // x is an object of class Note with parameters of the constructor of class Note
+
+//                 const float durationQuarterNote = Helper::ticks2QuarterNoteValue(x.getDurationTicks(), divisionsPerQuarterNote);  // this is to measure duration of notes as number of quarter notes
+
+//                 if (inChord) { currentTime = previusTime; }
+
+//                 // Compute Time End:
+//                 const float timeEnd = currentTime + durationQuarterNote;
+
+//                 //                std::cout << "part[" << i << "] => note[" << n << "]: " <<
+//                 //                             " pitchClass: " << pitchClass <<
+//                 //                             " | octave: " << octave <<
+//                 //                             " | duration: " << duration <<
+//                 //                             " | isNote: " << isNote <<
+//                 //                             " | inChord: " << inChord <<
+//                 //                             " | currentTime: " << currentTime <<
+//                 //                             " | timeEnd: " << timeEnd <<
+//                 //                             std::endl;
+
+//                 // Only stack notes! Skip rests:
+//                 if (isNote) {
+//                     scoreTable[i] = {currentTime, timeEnd, &x}; // store all notes in a chord //  for the i-th instrument
+//                 }
+
+//                 // Go to the next note in time domain:
+//                 previusTime = currentTime;
+//                 currentTime += durationQuarterNote;
+//             }
+//         }
+//     }
+
+//     // PEGAR ESSE VALOR DO JSON DE INPUT!!!!!!
+//     int minDurationTicks = 0;
+
+//     // Choose which stack chords algorithm you desired:
+//     if (sameAttackNotes) {
+//         getSameAttackChords(scoreTable, minStackedNotes, maxStackedNotes);
+//     } else {
+//         getChordsPerEachNoteEvent(scoreTable, minStackedNotes, maxStackedNotes, minDurationTicks);
+//     }
+
+//     return _stackedChords;
+// }
+

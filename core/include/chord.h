@@ -57,6 +57,7 @@ public:
     void transpose(const int semiTonesNumber);
     void transposeStackOnly(const int semiTonesNumber);
 
+    int getDurationTicks() const;
     Note& getNote(size_t noteIndex);
     const Note& getNote(const size_t noteIndex) const;
     const Note& getRoot();

@@ -32,6 +32,7 @@ Now you can explore some `maialib` features like:
 - Python 3.7
 - Make
 - Doxygen (Optional: To build documentation)
+- Buildcache (Optional: To accelerate the build process)
 
 ## Tested Environments
 

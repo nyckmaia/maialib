@@ -10,16 +10,13 @@
 
 #include "pugixml.hpp"
 #include "nlohmann/json.hpp"
+#include "sqlitecpp/SQLiteCpp.h"
 
 #include "part.h"
 #include "chord.h"
 #include "helper.h"
 
 #include <zip.h>
-
-
-typedef std::multimap<float, std::pair<float, Note>> PartTableMap; // [timeStart, timeEnd, Note] For a single part (2D table)
-typedef std::vector<PartTableMap> ScoreTable; // multiple parts (3D table)
 
 class Score
 {
@@ -40,9 +37,10 @@ private:
     std::vector<Chord> _stackedChords;
 
     void loadXMLFile(const std::string& filePath);
-    void getSameAttackChords(ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes);
-    void getChordsPerEachNoteEvent(ScoreTable& scoreTable, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks);
 
+    std::vector<std::pair<int, Chord>> getSameAttackChords(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks);
+    std::vector<std::pair<int, Chord>> getChordsPerEachNoteEvent(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks);
+    
 public:
     /**
      * @brief Construct a new blank Score object
@@ -205,8 +203,7 @@ public:
      *   "maxStackedNotes": 5
      * }
      * \endcode
-     * @param sameAttackNotes (Optional) Filters only for chords that have all notes with the same attack time (synchronized) 
      * @return A list of Chord objects
      */
-    std::vector<Chord> getChords(nlohmann::json config = nlohmann::json(), const bool sameAttackNotes = true);
+    std::vector<std::pair<int, Chord>> getChords(nlohmann::json config = {});
 };

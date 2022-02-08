@@ -246,6 +246,11 @@ size_t Chord::size() const
     return _note.size();
 }
 
+int Chord::getDurationTicks() const
+{
+    return _note[0].getDurationTicks();
+}
+
 Note& Chord::getNote(size_t noteIndex)
 {
    return _note[noteIndex];
