@@ -798,3 +798,8 @@ Chord Chord::getStackedChord() const
 {
     return _stack;
 }
+
+void Chord::sortNotes()
+{
+    std::sort(_note.begin(), _note.end());
+}

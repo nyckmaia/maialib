@@ -15,19 +15,17 @@ void NoteClass(py::module &m) {
 
     py::class_<Note> cls(m, "Note");
 
-    cls.def(py::init<std::string, size_t, bool, bool, int, int, int>(),
+    cls.def(py::init<std::string, size_t, bool, bool, int, int>(),
             py::arg("pitch"),
             py::arg("durationTicks") = 256,
             py::arg("isNoteOn") = true,
             py::arg("inChord") = false,
             py::arg("transposeDiatonic") = 0,
-            py::arg("transposeChromatic") = 0,
-            py::arg("divisionsPerQuarterNote") = 256);
+            py::arg("transposeChromatic") = 0);
 
     // Overloaded constructor for rests
-    cls.def(py::init<size_t, int>(), 
-        py::arg("durationTicks") = 256,
-        py::arg("divisionsPerQuarterNote") = 256);
+    cls.def(py::init<size_t>(), 
+        py::arg("durationTicks") = 256);
 
     // ====== Methods SETTERS for class Note ===== //
     cls.def("setPitchClass", &Note::setPitchClass);
@@ -45,8 +43,6 @@ void NoteClass(py::module &m) {
         py::arg("isGraceNote") = false);
     cls.def("setType", &Note::setType);
     cls.def("setStem", &Note::setStem);
-    cls.def("setDivisionsPerQuarterNote", &Note::setDivisionsPerQuarterNote,
-        py::arg("divisionsPerQuarterNote") = 256);
     cls.def("removeDots", &Note::removeDots);
     cls.def("setSingleDot", &Note::setSingleDot);
     cls.def("setDoubleDot", &Note::setDoubleDot);
@@ -94,7 +90,6 @@ void NoteClass(py::module &m) {
     cls.def("getStaff", &Note::getStaff);
     cls.def("getType", &Note::getType);
     cls.def("getStem", &Note::getStem);
-    cls.def("getDivisionsPerQuarterNote", &Note::getDivisionsPerQuarterNote);
     cls.def("getNumDots", &Note::getNumDots);
     cls.def("getTie", &Note::getTie);
     cls.def("removeTies", &Note::removeTies);

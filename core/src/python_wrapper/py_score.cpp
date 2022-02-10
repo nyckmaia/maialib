@@ -16,16 +16,14 @@ void ScoreClass(py::module &m) {
 
     // bindings to Score class
     py::class_<Score> cls(m, "Score");
-    cls.def(py::init<const std::initializer_list<std::string>&, const int, const int>(),
+    cls.def(py::init<const std::initializer_list<std::string>&, const int>(),
             py::arg("partsName"),
             py::arg("numMeasures") = 20,
-            py::arg("divisionsPerQuarterNote") = 256,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def(py::init<const std::vector<std::string>&, const int, const int>(),
+    cls.def(py::init<const std::vector<std::string>&, const int>(),
             py::arg("partsName"),
             py::arg("numMeasures") = 20,
-            py::arg("divisionsPerQuarterNote") = 256,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def(py::init<const std::string&>(), py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
@@ -91,11 +89,6 @@ void ScoreClass(py::module &m) {
     cls.def("countNotes", &Score::countNotes, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("findPattern", &Score::findPattern, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("instrumentFragmentation", &Score::instrumentFragmentation, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-
-    // cls.def("getChords", &Score::getChords,
-    //     py::arg("config") = nlohmann::json(),
-    //     py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-
     cls.def("getChords", [](Score& score, nlohmann::json config)
         {
             // Import Pandas module

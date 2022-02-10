@@ -25,6 +25,7 @@ private:
     bool _isTimeSignatureChanged;
     bool _isClefChanged;
     bool _isMetronomeChanged;
+    bool _isDivisionsPerQuarterNoteChanged;
     int _numStaves;
     int _divisionsPerQuarterNote;
 
@@ -49,6 +50,7 @@ public:
     void setIsTimeSignatureChanged(bool isTimeSignatureChanged = false);
     void setIsClefChanged(bool isClefChanged = false);
     void setIsMetronomeChanged(bool isMetronomeChanged = false);
+    void setIsDivisionsPerQuarterNoteChanged(bool isDivisionsPerQuarterNoteChanged = false);
     void setNumStaves(const int numStaves);
     void setDivisionsPerQuarterNote(const int divisionsPerQuarterNote);
 
@@ -80,6 +82,7 @@ public:
     bool timeSignatureChanged() const;
     bool keySignatureChanged() const;
     bool metronomeChanged() const;
+    bool divisionsPerQuarterNoteChanged() const;
     bool isMajorKeyMode() const;
 
     const Note& getNote(const int noteId, const int staveId = 0) const;

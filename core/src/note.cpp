@@ -1,7 +1,7 @@
 #include "note.h"
 #include "helper.h"
 
-Note::Note(const std::string& pitch, const size_t durationTicks, bool isNoteOn, bool inChord, int transposeDiatonic, int transposeChromatic, int divisionsPerQuarterNote) :
+Note::Note(const std::string& pitch, const size_t durationTicks, bool isNoteOn, bool inChord, int transposeDiatonic, int transposeChromatic) :
     _writtenPitchClass(MUSIC_XML::PITCH::REST),
     _writtenOctave(0),
     _soundingPitchClass(MUSIC_XML::PITCH::REST),
@@ -18,8 +18,7 @@ Note::Note(const std::string& pitch, const size_t durationTicks, bool isNoteOn, 
     _numDots(0),
     _isTuplet(false),
     _isPitched(true),
-    _unpitchedIndex(0),
-    _divisionsPerQuarterNote(divisionsPerQuarterNote)
+    _unpitchedIndex(0)
 {
     // Rest case: This is necessary to prevent: empty pitchClass + alterSymbol
     if (pitch.empty() || (pitch.find(MUSIC_XML::PITCH::REST) != std::string::npos)
@@ -75,7 +74,7 @@ Note::Note(const std::string& pitch, const size_t durationTicks, bool isNoteOn, 
 }
 
 // Rest constructor
-Note::Note(const size_t durationTicks, int divisionsPerQuarterNote) :
+Note::Note(const size_t durationTicks) :
     _writtenPitchClass(MUSIC_XML::PITCH::REST),
     _writtenOctave(0),
     _soundingPitchClass(MUSIC_XML::PITCH::REST),
@@ -92,8 +91,7 @@ Note::Note(const size_t durationTicks, int divisionsPerQuarterNote) :
     _numDots(0),
     _isTuplet(false),
     _isPitched(true),
-    _unpitchedIndex(0),
-    _divisionsPerQuarterNote(divisionsPerQuarterNote)
+    _unpitchedIndex(0)
 {
 
 }
@@ -195,7 +193,6 @@ int Note::getTransposeChromatic() const
 void Note::setDurationTicks(int durationTicks)
 {
     _durationTicks = durationTicks;
-    _type = Helper::ticks2noteType(_durationTicks, _divisionsPerQuarterNote);
 }
 
 void Note::setIsGraceNote(const bool isGraceNote)
@@ -453,11 +450,6 @@ void Note::setStem(const std::string& stem)
     _stem = stem;
 }
 
-void Note::setDivisionsPerQuarterNote(const int divisionsPerQuarterNote)
-{
-    _divisionsPerQuarterNote = divisionsPerQuarterNote;
-}
-
 void Note::transposition(int semitonesNumber)
 {
      std::string pitch = _writtenPitchClass + std::to_string(_writtenOctave);
@@ -484,16 +476,10 @@ bool Note::isTuplet() const
     return _isTuplet;
 }
 
-int Note::getDivisionsPerQuarterNote() const
-{
-    return _divisionsPerQuarterNote;
-}
-
 std::string Note::getStem() const
 {
     return _stem;
 }
-
 
 std::string Note::getType() const
 {
@@ -719,7 +705,7 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
         if (!_type.empty()) {
             xml.append(Helper::generateIdentation(4, identSize) + "<type>" + _type + "</type>\n");
         } else {
-            xml.append(Helper::generateIdentation(4, identSize) + "<type>" + Helper::ticks2noteType(_durationTicks, _divisionsPerQuarterNote) + "</type>\n");
+            // xml.append(Helper::generateIdentation(4, identSize) + "<type>" + Helper::ticks2noteType(_durationTicks, _divisionsPerQuarterNote) + "</type>\n");
         }
     }
 

@@ -15,14 +15,7 @@
 
 #include "constants.h"
 #include "note.h"
-
-template <typename T>
-void ignore(T &&)
-{ }
-
-constexpr unsigned int hash(const char *s, int off = 0) {
-    return !s[off] ? 5381 : (hash(s, off+1)*33) ^ s[off];
-}
+#include "utils.h"
 
 class Helper
 {

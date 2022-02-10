@@ -85,6 +85,8 @@ void ChordClass(py::module &m) {
 
     cls.def("getStackedChord", &Chord::getStackedChord);
 
+    cls.def("sortNotes", &Chord::sortNotes);
+
     cls.def(py::self == py::self);
     cls.def(py::self != py::self);
     cls.def(py::self + py::self);

@@ -1,13 +1,13 @@
 #include "score.h"
 
-Score::Score(const std::initializer_list<std::string>& partsName, const int numMeasures, const int divisionsPerQuarterNote) :
+Score::Score(const std::initializer_list<std::string>& partsName, const int numMeasures) :
     _numParts(partsName.size()),
     _numMeasures(numMeasures),
     _numNotes(0),
-    _divisionsPerQuarterNote(divisionsPerQuarterNote),
     _isValidXML(false),
     _haveTypeTag(false),
-    _isLoadedXML(false)
+    _isLoadedXML(false),
+    _lcmDivisionsPerQuarterNote(0)
 {
     if (_numParts == 0) {
         throw std::runtime_error("You MUST provide at least one part name");
@@ -18,14 +18,14 @@ Score::Score(const std::initializer_list<std::string>& partsName, const int numM
     }
 }
 
-Score::Score(const std::vector<std::string>& partsName, const int numMeasures, const int divisionsPerQuarterNote) :
+Score::Score(const std::vector<std::string>& partsName, const int numMeasures) :
     _numParts(partsName.size()),
     _numMeasures(numMeasures),
     _numNotes(0),
-    _divisionsPerQuarterNote(divisionsPerQuarterNote),
     _isValidXML(false),
     _haveTypeTag(false),
-    _isLoadedXML(false)
+    _isLoadedXML(false),
+    _lcmDivisionsPerQuarterNote(0)
 {
     if (_numParts == 0) {
         throw std::runtime_error("You MUST provide at least one part name");
@@ -40,10 +40,10 @@ Score::Score(const std::string& filePath) :
     _numParts(0),
     _numMeasures(0),
     _numNotes(0),
-    _divisionsPerQuarterNote(256),
     _isValidXML(false),
     _haveTypeTag(false),
-    _isLoadedXML(false)
+    _isLoadedXML(false),
+    _lcmDivisionsPerQuarterNote(0)
 {
     loadXMLFile(filePath);
 }
@@ -63,10 +63,10 @@ void Score::clear()
     _numMeasures = 0;
     _numNotes = 0;
     _partsName.clear();
-    _divisionsPerQuarterNote = 256;
     _isValidXML = false;
     _haveTypeTag = false;
     _isLoadedXML = false;
+    _lcmDivisionsPerQuarterNote = 0;
 }
 
 void Score::info() const
@@ -153,25 +153,25 @@ void Score::loadXMLFile(const std::string& filePath)
     _numNotes = notes.size();
 
     // ===== GET THE DIVISIONS PER QUARTER NOTE ===== //
-    int divisionsPerQuarterNoteSize = divisionsPerQuarterNote.size();
+    const int divisionsPerQuarterNoteSize = divisionsPerQuarterNote.size();
     std::vector<int> div_vec(divisionsPerQuarterNoteSize, 0);
 
     for (int d = 0; d < divisionsPerQuarterNoteSize; d++) {
-        const pugi::xml_node divisions = divisionsPerQuarterNote[d].node();
-        div_vec[d] = divisions.text().as_int();
+        const int divisions = divisionsPerQuarterNote[d].node().text().as_int();
+        div_vec[d] = divisions;
+
+        // std::cout << "div_vec[" << d << "]: " << div_vec[d] << std::endl;
     }
 
-    // Error checking:
-    if ( !std::equal(div_vec.begin() + 1, div_vec.end(), div_vec.begin()) ) {
-        std::cerr << "[ERROR] This file have multiple divisions per quarter note" << std::endl;
-        return;
+    _lcmDivisionsPerQuarterNote = div_vec[0];
+    for (int d = 0; d < divisionsPerQuarterNoteSize; d++) {
+        _lcmDivisionsPerQuarterNote = std::lcm(_lcmDivisionsPerQuarterNote, div_vec[d]);
     }
 
-    // Get the divisions per quarter note value:
-    _divisionsPerQuarterNote = div_vec[0];
+    // std::cout << "LCM: " << _lcmDivisionsPerQuarterNote << std::endl;
 
-    // ===== CHECK OBJECT VALIDATION ===== //
-    if ((_numParts > 0) && (_numMeasures > 0) && (_divisionsPerQuarterNote > 0)) {
+    // ===== CHECK BASIC OBJECT VALIDATION ===== //
+    if ((_numParts > 0) && (_numMeasures > 0) && (_lcmDivisionsPerQuarterNote > 0)) {
         _isValidXML = true;
         _isLoadedXML = true;
     }
@@ -253,12 +253,27 @@ void Score::loadXMLFile(const std::string& filePath)
             transposeChromatic = chromatic[0].node().text().as_int();
         }
 
+        // Get the part 'p' first measure divisions per quarter note
+        const pugi::xpath_node firstMeasureDivisionsPerQuarterNote = _doc.select_node(firstMeasure.c_str()).node().select_node("attributes/divisions");
+        const int firstDivisions = firstMeasureDivisionsPerQuarterNote.node().text().as_int();
+
         // For each measure 'm'
         for (int m = 0; m < _numMeasures; m++) {
             _part[p].getMeasure(m).setNumber(m);
 
             // Get the xPath for the measure 'm'
             const std::string xPathMeasure = xPathPart + "/measure[" + std::to_string(m+1) + "]";
+
+            // ===== DIVISIONS PER QUARTER NOTE CHANGES ===== //
+            const pugi::xpath_node measureDivisionsPerQuarterNote = _doc.select_node(xPathMeasure.c_str()).node().select_node("attributes/divisions");
+                   
+            if (!measureDivisionsPerQuarterNote.node().empty()) {
+                _part[p].getMeasure(m).setIsDivisionsPerQuarterNoteChanged(true);
+                const int divisions = measureDivisionsPerQuarterNote.node().text().as_int();
+                _part[p].getMeasure(m).setDivisionsPerQuarterNote(divisions);
+            } else {
+                _part[p].getMeasure(m).setDivisionsPerQuarterNote(firstDivisions);
+            }
 
             // ===== KEY SIGNATURE CHANGES ===== //
             const pugi::xpath_node measureKeyFifths = _doc.select_node(xPathMeasure.c_str()).node().select_node("attributes/key");
@@ -403,7 +418,7 @@ void Score::loadXMLFile(const std::string& filePath)
                 if (staff <= 0) { staff = 0; }
 
                 // ===== CONSTRUCT A NOTE OBJECT AND STORE IT INSIDE THE SCORE OBJECT ===== //
-                Note note(pitch, duration, isNoteOn, inChord, transposeDiatonic, transposeChromatic, _divisionsPerQuarterNote);
+                Note note(pitch, duration, isNoteOn, inChord, transposeDiatonic, transposeChromatic);
                 note.setVoice(voice);
                 note.setStaff(staff);
                 note.setIsGraceNote(isGraceNote);
@@ -1234,11 +1249,6 @@ bool Score::getNote(const int part, const int measure, const int note, std::stri
     return getNote(part, measure, note, pitch, step, octave, duration, voice, type, steam, staff);
 }
 
-int Score::getDivisionsPerQuarterNote() const
-{
-    return _divisionsPerQuarterNote;
-}
-
 void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, int& measure, std::string& pitch, std::string& pitchClass, std::string& alterSymbol, int& alterValue, int& octave, std::string& type, float& duration) const
 {
     // ===== GET PART NAME ===== //
@@ -1282,7 +1292,11 @@ void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, i
     // ===== GET TYPE ===== //
     type = node.child_value("type");
     if (type.empty()) {
-        type = Helper::ticks2noteType(duration, _divisionsPerQuarterNote);
+        const int divisions = atoi(node.parent().child("attributes").child_value("divisions"));
+        if (divisions <= 0) {
+            std::cerr << "[ERROR] Unable to get the 'divisionsPerQuarterNote' value" << std::endl;
+        }
+        type = Helper::ticks2noteType(duration, divisions);
     }
 }
 
@@ -1673,7 +1687,6 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
     // ===== PRE-PROCESSING PATTERN: START ===== //
     // For each pattern item: Error checking:
     bool pureMelodicPattern = true;
-    const int divisionsPerQuarterNote = getDivisionsPerQuarterNote();
 
     const int patterNotesSize = pattern["notes"].size();
     for(int idx = 0; idx < patterNotesSize; idx++) {
@@ -1702,7 +1715,8 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
         if (noteType == "all") {
             el["duration"] = MUSIC_XML::DURATION::ALL;
         } else {
-            el["duration"] = Helper::noteType2ticks(noteType, divisionsPerQuarterNote);
+            // FIX IT: divisionsPerQuarterNote can change over measures
+            // el["duration"] = Helper::noteType2ticks(noteType, divisionsPerQuarterNote);
         }
 
         // ===== OCTAVE ===== //
@@ -1878,7 +1892,8 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
         // Get the first rhythm of the pattern:
         const nlohmann::json& patternElementRef = patternRef["notes"][0];
         firstPatternType = patternElementRef["type"].get<std::string>();
-        firstPatternDuration = Helper::noteType2ticks(firstPatternType, _divisionsPerQuarterNote);
+        // FIX IT: divisionsPerQuarterNote can change over measures
+        // firstPatternDuration = Helper::noteType2ticks(firstPatternType, _divisionsPerQuarterNote);
     }
 
     // ===== START ITERATIONS ===== //
@@ -2536,24 +2551,24 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
     const std::string defaultMinDuration = "quarter"; // Arbitrary value
     std::string minDuration = (!config.contains("minDuration") || !config["minDuration"].is_string()) ? defaultMinDuration : config["minDuration"].get<std::string>();
 
-    int minDurationTicks = Helper::noteType2ticks(minDuration, _divisionsPerQuarterNote);
+    int minDurationTicks = Helper::noteType2ticks(minDuration, _lcmDivisionsPerQuarterNote);
 
     if (minDurationTicks < 0) {
         std::cout << "[WARNING]: The 'minDuration' MUST BE a basic rhythm figure string!" << std::endl;
         std::cout << "Setting the 'minDuration' to 'quarter'" << std::endl;
-        minDurationTicks = Helper::noteType2ticks("quarter", _divisionsPerQuarterNote);
+        minDurationTicks = Helper::noteType2ticks("quarter", _lcmDivisionsPerQuarterNote);
     }
 
     // ===== STEP 1.7: READ MAX DURATION ===== //
     const std::string defaultMaxDuration = "whole"; // Arbitrary value
     std::string maxDuration = (!config.contains("maxDuration") || !config["maxDuration"].is_string()) ? defaultMaxDuration : config["maxDuration"].get<std::string>();
 
-    int maxDurationTicks = Helper::noteType2ticks(maxDuration, _divisionsPerQuarterNote);
+    int maxDurationTicks = Helper::noteType2ticks(maxDuration, _lcmDivisionsPerQuarterNote);
 
     if (maxDurationTicks < 0) {
         std::cout << "[WARNING]: The 'maxDuration' MUST BE a basic rhythm figure string!" << std::endl;
         std::cout << "Setting the 'maxDuration' to 'whole'" << std::endl;
-        maxDurationTicks = Helper::noteType2ticks("whole", _divisionsPerQuarterNote);
+        maxDurationTicks = Helper::noteType2ticks("whole", _lcmDivisionsPerQuarterNote);
     }
 
     // Error checking
@@ -2561,6 +2576,10 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
         std::cerr << "[ERROR] The 'maxDuration' figure MUST BE greater than 'minDuration' figure" << std::endl;
         return {};
     }
+
+    // std::cout << "minDuration:" << minDuration << " | minDurationTicks: " << minDurationTicks << std::endl;
+    // std::cout << "maxDuration:" << maxDuration << " | maxDurationTicks: " << maxDurationTicks << std::endl;
+
 
     // ===== STEP 2: CREATE A 'IN MEMORY' SQLITE DATABASE ===== //
     SQLite::Database db(":memory:", SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE|SQLite::OPEN_MEMORY);
@@ -2577,6 +2596,11 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
         
         for (int m = measureStart; m < measureEnd; m++) {
             Measure& currentMeasure = currentPart.getMeasure(m);
+
+            // Compute the measure 'divisions per quarter note' scale factor
+            // That's necessary to standardize the integer values to each rhythm figure
+            // Because 'divisions per quarter note' can change over XML measures 
+            const int divisionsScaleFactor = _lcmDivisionsPerQuarterNote / currentMeasure.getDivisionsPerQuarterNote();
             
             const int measureBeginningTime = currentTime;
             for (int s = 0; s < currentMeasure.getNumStaves(); s++) {
@@ -2588,7 +2612,7 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
                     
                     if (currentNote.inChord()) { currentTime = previusTime; }
 
-                    const int timeEnd = currentTime + currentNote.getDurationTicks();
+                    const int timeEnd = currentTime + (currentNote.getDurationTicks() * divisionsScaleFactor);
 
                     if (currentNote.isNoteOn()) {
                         std::string str = "insert into events (measure, starttime, endtime, address) VALUES ";
@@ -2601,8 +2625,8 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
                         db.exec(str.c_str());
                     }
                     
-                    previusTime = currentTime;
-                    currentTime += currentNote.getDurationTicks();
+                    previusTime = currentTime * divisionsScaleFactor;
+                    currentTime += (currentNote.getDurationTicks() * divisionsScaleFactor);
                 }
             }
         }
@@ -2665,11 +2689,11 @@ std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& 
         Chord chord;
         // bool undesiredTimeChord = false;
         bool tooShortTimeChord = false;
-        bool tooLongTimeChord = chordNotes[0]->getDurationTicks() > maxDurationTicks;
+        bool tooLongTimeChord = (chordNotes[0]->getDurationTicks() * _lcmDivisionsPerQuarterNote) > maxDurationTicks;
 
         for (const auto& note : chordNotes) {
-            tooShortTimeChord |= note->getDurationTicks() < minDurationTicks;
-            tooLongTimeChord &= note->getDurationTicks() > maxDurationTicks;
+            tooShortTimeChord |= (note->getDurationTicks() * _lcmDivisionsPerQuarterNote) < minDurationTicks;
+            tooLongTimeChord &= (note->getDurationTicks() * _lcmDivisionsPerQuarterNote) > maxDurationTicks;
 
             // Append note to the temp chord
             chord.addNote(*note);
@@ -2694,6 +2718,8 @@ std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& 
         // Skip undesired smaller/bigger chords
         const int chordSize = chord.size();
         if (chordSize < minStackedNotes || chordSize > maxStackedNotes) { continue; }
+
+        chord.sortNotes();
 
         // Store measure-chord pair
         stackedChords.push_back({measure, chord});
@@ -2754,11 +2780,11 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Data
         Chord chord;
         // bool undesiredTimeChord = false;
         bool tooShortTimeChord = false;
-        bool tooLongTimeChord = chordNotes[0]->getDurationTicks() > maxDurationTicks;
+        bool tooLongTimeChord = (chordNotes[0]->getDurationTicks() * _lcmDivisionsPerQuarterNote) > maxDurationTicks;
 
         for (const auto& note : chordNotes) {
-            tooShortTimeChord |= note->getDurationTicks() < minDurationTicks;
-            tooLongTimeChord &= note->getDurationTicks() > maxDurationTicks;
+            tooShortTimeChord |= (note->getDurationTicks() * _lcmDivisionsPerQuarterNote) < minDurationTicks;
+            tooLongTimeChord &= (note->getDurationTicks() * _lcmDivisionsPerQuarterNote) > maxDurationTicks;
 
             // Append note to the temp chord
             chord.addNote(*note);
@@ -2783,6 +2809,8 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Data
         // Skip undesired smaller/bigger chords
         const int chordSize = chord.size();
         if (chordSize < minStackedNotes || chordSize > maxStackedNotes) { continue; }
+
+        chord.sortNotes();
 
         // Store measure-chord pair
         stackedChords.push_back({measure, chord});

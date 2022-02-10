@@ -50,8 +50,6 @@ private:
     std::vector<std::string> _articulation;
     std::vector<std::string> _beam;
 
-    int _divisionsPerQuarterNote;
-
 public:
 
     /**
@@ -63,18 +61,16 @@ public:
      * @param inChord Is this note inside of a chord?
      * @param transposeDiatonic Number of diatonic semitones of the transpose instrument
      * @param transposeChromatic Number of chromatic semitones of the transpose instrument
-     * @param divisionsPerQuarterNote Number of divisions per quarter note (MusicXML protocol specification)
      */
-    Note(const std::string& pitch, const size_t durationTicks = 256, bool isNoteOn = true, bool inChord = false, int transposeDiatonic = 0, int transposeChromatic = 0, int divisionsPerQuarterNote = 256);
+    Note(const std::string& pitch, const size_t durationTicks = 256, bool isNoteOn = true, bool inChord = false, int transposeDiatonic = 0, int transposeChromatic = 0);
     
     /**
      * @brief Construct a new Rest (Note object)
      * This is an alias to construct a rest
      * 
      * @param durationTicks Duration in Ticks
-     * @param divisionsPerQuarterNote Number of divisions per quarter note (MusicXML protocol specification)
      */
-    Note(const size_t durationTicks = 256, int divisionsPerQuarterNote = 256); // For rest
+    Note(const size_t durationTicks = 256); // For rest
 
     ~Note();
 
@@ -128,7 +124,6 @@ public:
     void setIsGraceNote(const bool isGraceNote = false);
     void setType(const std::string& type);
     void setStem(const std::string& steam);
-    void setDivisionsPerQuarterNote(const int divisionsPerQuarterNote = 256);
     void removeDots();
     void setSingleDot();
     void setDoubleDot();
@@ -173,7 +168,6 @@ public:
     int getStaff() const;
     std::string getType() const;
     std::string getStem() const;
-    int getDivisionsPerQuarterNote() const;
     int getNumDots() const;
     std::vector<std::string> getTie() const;
     void removeTies();

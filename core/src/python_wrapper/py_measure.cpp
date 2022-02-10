@@ -34,6 +34,9 @@ void MeasureClass(py::module &m) {
         py::arg("isClefChanged") = false);
     cls.def("setIsMetronomeChanged", &Measure::setIsMetronomeChanged,
         py::arg("isMetronomeChanged") = false);
+    cls.def("setIsDivisionsPerQuarterNoteChanged", &Measure::setIsDivisionsPerQuarterNoteChanged,
+        py::arg("isDivisionsPerQuarterNoteChanged") = false);
+
     cls.def("setNumStaves", &Measure::setNumStaves);
     
     cls.def("addNote", py::overload_cast<const Note&, const int, int>(&Measure::addNote),
@@ -86,6 +89,7 @@ void MeasureClass(py::module &m) {
     cls.def("timeSignatureChanged", &Measure::timeSignatureChanged);
     cls.def("keySignatureChanged", &Measure::keySignatureChanged);
     cls.def("metronomeChanged", &Measure::metronomeChanged);
+    cls.def("divisionsPerQuarterNoteChanged", &Measure::divisionsPerQuarterNoteChanged);
     cls.def("isMajorKeyMode", &Measure::isMajorKeyMode);
 
     cls.def("getNote", py::overload_cast<const int, const int>(&Measure::getNote), 

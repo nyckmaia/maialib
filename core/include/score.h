@@ -30,11 +30,11 @@ private:
     int _numMeasures;
     int _numNotes;
     std::map<int, std::string> _partsName;
-    int _divisionsPerQuarterNote;
     bool _isValidXML;
     bool _haveTypeTag;
     bool _isLoadedXML;
     std::vector<Chord> _stackedChords;
+    int _lcmDivisionsPerQuarterNote; /* Least Common Multiple of all 'divisions' tags in XML file */
 
     void loadXMLFile(const std::string& filePath);
 
@@ -47,11 +47,10 @@ public:
      * 
      * @param partsName A musical instrument names list
      * @param numMeasures Initial measures amount
-     * @param divisionsPerQuarterNote The number of internal divisions for each note (MusicXML protocol)
      */
-    Score(const std::initializer_list<std::string>& partsName, const int numMeasures = 20, const int divisionsPerQuarterNote = 256);
+    Score(const std::initializer_list<std::string>& partsName, const int numMeasures = 20);
     
-    Score(const std::vector<std::string>& partsName, const int numMeasures = 20, const int divisionsPerQuarterNote = 256);
+    Score(const std::vector<std::string>& partsName, const int numMeasures = 20);
 
     /**
      * @brief Construct a new Score object from a loaded sheet music file
@@ -108,7 +107,6 @@ public:
     bool getNote(const int part, const int measure, const int note, std::string& pitch, std::string& step, int& octave, int& duration, int& voice, std::string& type, std::string& steam, int& staff) const;
     bool getNote(const int part, const int measure, const int note, std::string& pitch, std::string& step, int& octave) const;
     bool getNote(const int part, const int measure, const int note, std::string& pitch) const;
-    int getDivisionsPerQuarterNote() const;
     void printPartNames() const;
 
     int xPathCountNodes(const std::string& xPath) const;

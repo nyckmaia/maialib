@@ -980,34 +980,54 @@ int Helper::noteType2ticks(std::string noteType, const int divisionsPerQuarterNo
 const std::string Helper::ticks2noteType(const int ticks, const int divisionsPerQuarterNote)
 {
     const float ratio = static_cast<float>(ticks) / static_cast<float>(divisionsPerQuarterNote);
-    const int scaledRatio = std::round(ratio * 1000000.0f); // Round up, like MusicXML scores
+    const int scaledRatio = std::round(ratio * 1000000.0f); // Round to the nearest integer, like MusicXML scores
 
-    // TODO: Add a #ifdef _WIN32 to do the same switch/case below
-    // but using if(scaledRatio < x && scaledRatio > x)
-    // because MSVS doesn't suppor 'case range' like GCC
-    // TODO: Test it on Apple clang compiler!
+    // Microsoft Visual C++ Compiler doesn't support 'case range' like GCC and Clang/LLVM
+    // Replaced this feature using multiple 'if' statements
+#ifdef _MSC_VER
+    if ((scaledRatio >= 32000000) && (scaledRatio <= 63999999)) { return MUSIC_XML::NOTE_TYPE::MAXIMA; } // 32:1
+    if ((scaledRatio >= 16000000) && (scaledRatio <= 31999999)) { return MUSIC_XML::NOTE_TYPE::LONG; } // 16:1
+    if ((scaledRatio >= 8000000)  && (scaledRatio <= 15999999)) { return MUSIC_XML::NOTE_TYPE::BREVE; } // 8:1
+    if ((scaledRatio >= 4000000)  && (scaledRatio <= 7999999))  { return MUSIC_XML::NOTE_TYPE::WHOLE; } // 4:1
+    if ((scaledRatio >= 2000000)  && (scaledRatio <= 3999999))  { return MUSIC_XML::NOTE_TYPE::HALF; } // 2:1
+    if ((scaledRatio >= 1000000)  && (scaledRatio <= 1999999))  { return MUSIC_XML::NOTE_TYPE::QUARTER; } // 1:1
+    if ((scaledRatio >= 500000)   && (scaledRatio <= 999999))   { return MUSIC_XML::NOTE_TYPE::EIGHTH; } // 1:2
+    if ((scaledRatio >= 250000)   && (scaledRatio <= 499999))   { return MUSIC_XML::NOTE_TYPE::N16TH; } // 1:4
+    if ((scaledRatio >= 125000)   && (scaledRatio <= 249999))   { return MUSIC_XML::NOTE_TYPE::N32ND; } // 1:8
+    if ((scaledRatio >= 62500)    && (scaledRatio <= 124999))   { return MUSIC_XML::NOTE_TYPE::N64TH; } // 1:16
+    if ((scaledRatio >= 31250)    && (scaledRatio <= 62499))    { return MUSIC_XML::NOTE_TYPE::N128TH; } // 1:32
+    if ((scaledRatio >= 15625)    && (scaledRatio <= 31249))    { return MUSIC_XML::NOTE_TYPE::N256TH; } // 1:64
+    if ((scaledRatio >= 7813)     && (scaledRatio <= 15624))    { return MUSIC_XML::NOTE_TYPE::N512TH; } // 1:128
+    if ((scaledRatio >= 3906)     && (scaledRatio <= 7812))     { return MUSIC_XML::NOTE_TYPE::N1024TH; } // 1:256
 
+    // switch/case default option
+    std::cerr << "[ERROR] Unable to convert ticks to noteType: " << ticks << std::endl;
+    return {};
+
+#else
+    // GCC and Clang/LLVM compilers have 'case range' support
     switch (scaledRatio) {
     case 32000000 ... 63999999: return MUSIC_XML::NOTE_TYPE::MAXIMA; // 32:1
     case 16000000 ... 31999999: return MUSIC_XML::NOTE_TYPE::LONG; // 16:1
     case 8000000 ... 15999999:  return MUSIC_XML::NOTE_TYPE::BREVE; // 8:1
-    case 4000000 ... 7999999:  return MUSIC_XML::NOTE_TYPE::WHOLE; // 4:1
-    case 2000000 ... 3999999:  return MUSIC_XML::NOTE_TYPE::HALF; // 2:1
-    case 1000000 ... 1999999:  return MUSIC_XML::NOTE_TYPE::QUARTER; // 1:1
-    case 500000 ... 999999:   return MUSIC_XML::NOTE_TYPE::EIGHTH; // 1:2
-    case 250000 ... 499999:   return MUSIC_XML::NOTE_TYPE::N16TH; // 1:4
-    case 125000 ... 249999:   return MUSIC_XML::NOTE_TYPE::N32ND; // 1:8
-    case 62500 ... 124999:    return MUSIC_XML::NOTE_TYPE::N64TH; // 1:16
-    case 31250 ... 62499:    return MUSIC_XML::NOTE_TYPE::N128TH; // 1:32
-    case 15625 ... 31249:    return MUSIC_XML::NOTE_TYPE::N256TH; // 1:64
-    case 7813 ... 15624:     return MUSIC_XML::NOTE_TYPE::N512TH; // 1:128
-    case 3906 ... 7812:     return MUSIC_XML::NOTE_TYPE::N1024TH; // 1:256
+    case 4000000 ... 7999999:   return MUSIC_XML::NOTE_TYPE::WHOLE; // 4:1
+    case 2000000 ... 3999999:   return MUSIC_XML::NOTE_TYPE::HALF; // 2:1
+    case 1000000 ... 1999999:   return MUSIC_XML::NOTE_TYPE::QUARTER; // 1:1
+    case 500000 ... 999999:     return MUSIC_XML::NOTE_TYPE::EIGHTH; // 1:2
+    case 250000 ... 499999:     return MUSIC_XML::NOTE_TYPE::N16TH; // 1:4
+    case 125000 ... 249999:     return MUSIC_XML::NOTE_TYPE::N32ND; // 1:8
+    case 62500 ... 124999:      return MUSIC_XML::NOTE_TYPE::N64TH; // 1:16
+    case 31250 ... 62499:       return MUSIC_XML::NOTE_TYPE::N128TH; // 1:32
+    case 15625 ... 31249:       return MUSIC_XML::NOTE_TYPE::N256TH; // 1:64
+    case 7813 ... 15624:        return MUSIC_XML::NOTE_TYPE::N512TH; // 1:128
+    case 3906 ... 7812:         return MUSIC_XML::NOTE_TYPE::N1024TH; // 1:256
     default:
         std::cerr << "[ERROR] Unable to convert ticks to noteType: " << ticks << std::endl;
         break;
     }
 
     return {};
+#endif
 }
 
 float Helper::noteSimilarity(std::string& pitchClass_A, int octave_A, const float duration_A, std::string& pitchClass_B, int octave_B, const float duration_B, float& durRatio, float& pitRatio, const bool enableEnharmonic)

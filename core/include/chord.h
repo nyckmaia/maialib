@@ -100,6 +100,8 @@ public:
 
     Chord getStackedChord() const;
 
+    void sortNotes();
+
     const Note& operator[](size_t index) const {
         return _note.at(index);
     }

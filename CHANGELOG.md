@@ -2,16 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.0.8] - 2022-MM-DD
+## [v0.0.8] - 2022-02-10
 ### New Features
+- Add unit test to `Helper::ticks2noteType()`
+- Add `Chord::sortNotes()`
+- `Measure` Class
+    - Add `.divisionsPerQuarterNoteChanged()`
+    - Add `.setIsDivisionsPerQuarterNoteChanged()`
 
 ### Improved
 - Performance: Add optimization flags to the build system
 - Performance: `Score::getChords()` add database indexes to speed up queries
 - Performance: `Helper::ticks2noteType()` add GCC extension: `case range`
+- Better code reading on `Score::loadXML()`
+- Move external utility functions to a new file called: `utils.h`
 
 ### Fixed
+- Fix `Score::getChords()` to support multiple `divisionsPerQuarterNote`
 - Fix `cpp-tests` build
+- Move `divisionsPerQuarterNote` from `Score` to `Measure` class
+- Remove `divisionsPerQuarterNote` from `Note` class
+
 
 -------------------------
 ## [v0.0.7] - 2022-02-08

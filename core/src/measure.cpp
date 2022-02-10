@@ -12,6 +12,8 @@ Measure::Measure(const int numStaves, const int divisionsPerQuarterNote) :
     _isKeySignatureChanged(false),
     _isTimeSignatureChanged(false),
     _isClefChanged(false),
+    _isMetronomeChanged(false),
+    _isDivisionsPerQuarterNoteChanged(false),
     _numStaves(numStaves),
     _divisionsPerQuarterNote(divisionsPerQuarterNote)
 {
@@ -130,6 +132,11 @@ void Measure::setIsClefChanged(bool isClefChanged)
 void Measure::setIsMetronomeChanged(bool isMetronomeMarkChanged)
 {
     _isMetronomeChanged = isMetronomeMarkChanged;
+}
+
+void Measure::setIsDivisionsPerQuarterNoteChanged(bool isDivisionsPerQuarterNoteChanged)
+{
+    _isDivisionsPerQuarterNoteChanged = isDivisionsPerQuarterNoteChanged;
 }
 
 void Measure::setNumStaves(const int numStaves)
@@ -276,6 +283,11 @@ bool Measure::clefChanged() const
 bool Measure::metronomeChanged() const
 {
     return _isMetronomeChanged;
+}
+
+bool Measure::divisionsPerQuarterNoteChanged() const
+{
+    return _isDivisionsPerQuarterNoteChanged;
 }
 
 bool Measure::isMajorKeyMode() const
