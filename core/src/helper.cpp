@@ -35,7 +35,7 @@ const std::string Helper::midiNote2pitch(const int midiNote, const std::string& 
     if (!accType.empty() && (accType != MUSIC_XML::ACCIDENT::SHARP) && (accType != MUSIC_XML::ACCIDENT::FLAT) &&
         (accType != MUSIC_XML::ACCIDENT::DOUBLE_SHARP) && (accType != MUSIC_XML::ACCIDENT::DOUBLE_FLAT)) {
 
-        std::cerr << "[ERROR]: Unknown accident type: " << accType << std::endl;
+        std::cerr << "[ERROR] Unknown accident type: " << accType << std::endl;
         return std::string();
     }
 
@@ -750,7 +750,7 @@ const std::string Helper::alterValue2Name(const float alterValue)
             break;
     
         default:
-            std::cerr << "[ERROR]: Unknown accidental alter value: " << alterStr << std::endl;
+            std::cerr << "[ERROR] Unknown accidental alter value: " << alterStr << std::endl;
             break;
     }
 
@@ -808,7 +808,7 @@ const std::string Helper::alterValue2symbol(const float alterValue)
             break;
 
         default:
-            std::cerr << "[ERROR]: Unknown accidental alter value: " << value << std::endl;
+            std::cerr << "[ERROR] Unknown accidental alter value: " << value << std::endl;
             break;
     }
 
@@ -856,7 +856,7 @@ const std::string Helper::alterName2symbol(const std::string& alterName)
             break;
     
         default:
-            std::cerr << "[ERROR]: Unknown accidental name: " << alterName << std::endl;
+            std::cerr << "[ERROR] Unknown accidental name: " << alterName << std::endl;
             break;
     }
 
@@ -872,7 +872,7 @@ const nlohmann::json Helper::getPercentiles(const nlohmann::json& table, const s
     // Check input values:
     for (size_t i = 0; i < desiredPercentilesSize; i++) {
         if (desiredPercentiles[i] > 1.0f) {
-            std::cerr << "[ERROR]: All desired percentiles MUST BE smaller than 1.0" << std::endl;
+            std::cerr << "[ERROR] All desired percentiles MUST BE smaller than 1.0" << std::endl;
             return nlohmann::json();
         }
     }
@@ -970,7 +970,7 @@ int Helper::noteType2ticks(std::string noteType, const int divisionsPerQuarterNo
             break;
 
         default:
-            std::cerr << "[ERROR]: Unknown note type called: " << noteType << std::endl;
+            std::cerr << "[ERROR] Unknown note type called: " << noteType << std::endl;
             break;
     }
 
@@ -979,82 +979,35 @@ int Helper::noteType2ticks(std::string noteType, const int divisionsPerQuarterNo
 
 const std::string Helper::ticks2noteType(const int ticks, const int divisionsPerQuarterNote)
 {
-    const float ratio = log2f(static_cast<float>(ticks) / static_cast<float>(divisionsPerQuarterNote));
+    const float ratio = static_cast<float>(ticks) / static_cast<float>(divisionsPerQuarterNote);
+    const int scaledRatio = std::round(ratio * 1000000.0f); // Round up, like MusicXML scores
 
-    // Stream with Fixed-Point Notation
-    std::ostringstream streamObj;
-    streamObj << std::fixed;
-    streamObj << std::setprecision(0);
-    streamObj << ratio;
+    // TODO: Add a #ifdef _WIN32 to do the same switch/case below
+    // but using if(scaledRatio < x && scaledRatio > x)
+    // because MSVS doesn't suppor 'case range' like GCC
+    // TODO: Test it on Apple clang compiler!
 
-    // Get string from output string stream
-    const std::string ratioStr = streamObj.str().c_str();
-
-    std::string noteType;
-    switch (hash(ratioStr.c_str())) {
-
-    case hash("5"):
-        noteType = MUSIC_XML::NOTE_TYPE::MAXIMA;
-        break;
-
-    case hash("4"):
-        noteType = MUSIC_XML::NOTE_TYPE::LONG;
-        break;
-
-    case hash("3"):
-        noteType = MUSIC_XML::NOTE_TYPE::BREVE;
-        break;
-
-    case hash("2"):
-        noteType = MUSIC_XML::NOTE_TYPE::WHOLE;
-        break;
-
-    case hash("1"):
-        noteType = MUSIC_XML::NOTE_TYPE::HALF;
-        break;
-
-    case hash("0"):
-        noteType = MUSIC_XML::NOTE_TYPE::QUARTER;
-        break;
-
-    case hash("-1"):
-        noteType = MUSIC_XML::NOTE_TYPE::EIGHTH;
-        break;
-
-    case hash("-2"):
-        noteType = MUSIC_XML::NOTE_TYPE::N16TH;
-        break;
-
-    case hash("-3"):
-        noteType = MUSIC_XML::NOTE_TYPE::N32ND;
-        break;
-
-    case hash("-4"):
-        noteType = MUSIC_XML::NOTE_TYPE::N64TH;
-        break;
-
-    case hash("-5"):
-        noteType = MUSIC_XML::NOTE_TYPE::N128TH;
-        break;
-
-    case hash("-6"):
-        noteType = MUSIC_XML::NOTE_TYPE::N256TH;
-        break;
-
-    case hash("-7"):
-        noteType = MUSIC_XML::NOTE_TYPE::N512TH;
-        break;
-
-    case hash("-8"):
-        noteType = MUSIC_XML::NOTE_TYPE::N1024TH;
-        break;
-
+    switch (scaledRatio) {
+    case 32000000 ... 63999999: return MUSIC_XML::NOTE_TYPE::MAXIMA; // 32:1
+    case 16000000 ... 31999999: return MUSIC_XML::NOTE_TYPE::LONG; // 16:1
+    case 8000000 ... 15999999:  return MUSIC_XML::NOTE_TYPE::BREVE; // 8:1
+    case 4000000 ... 7999999:  return MUSIC_XML::NOTE_TYPE::WHOLE; // 4:1
+    case 2000000 ... 3999999:  return MUSIC_XML::NOTE_TYPE::HALF; // 2:1
+    case 1000000 ... 1999999:  return MUSIC_XML::NOTE_TYPE::QUARTER; // 1:1
+    case 500000 ... 999999:   return MUSIC_XML::NOTE_TYPE::EIGHTH; // 1:2
+    case 250000 ... 499999:   return MUSIC_XML::NOTE_TYPE::N16TH; // 1:4
+    case 125000 ... 249999:   return MUSIC_XML::NOTE_TYPE::N32ND; // 1:8
+    case 62500 ... 124999:    return MUSIC_XML::NOTE_TYPE::N64TH; // 1:16
+    case 31250 ... 62499:    return MUSIC_XML::NOTE_TYPE::N128TH; // 1:32
+    case 15625 ... 31249:    return MUSIC_XML::NOTE_TYPE::N256TH; // 1:64
+    case 7813 ... 15624:     return MUSIC_XML::NOTE_TYPE::N512TH; // 1:128
+    case 3906 ... 7812:     return MUSIC_XML::NOTE_TYPE::N1024TH; // 1:256
     default:
-        std::cerr << "[ERROR]: Unable to convert ticks to noteType: " << ticks << std::endl;
+        std::cerr << "[ERROR] Unable to convert ticks to noteType: " << ticks << std::endl;
         break;
     }
 
-    return  noteType;
+    return {};
 }
 
 float Helper::noteSimilarity(std::string& pitchClass_A, int octave_A, const float duration_A, std::string& pitchClass_B, int octave_B, const float duration_B, float& durRatio, float& pitRatio, const bool enableEnharmonic)
@@ -1372,7 +1325,7 @@ float Helper::durationRatio(float duration_A, float duration_B)
 
     // Error checking: negative values
     if (duration_A < 0 || duration_B < 0) {
-        std::cerr << "[ERROR]: Both duration values must be positive!" << std::endl;
+        std::cerr << "[ERROR] Both duration values must be positive!" << std::endl;
         return 0.0f;
     }
 

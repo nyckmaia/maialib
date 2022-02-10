@@ -20,6 +20,7 @@ TEST(nyckSuite01, myTestExample01)
 TEST(nyckSuite01, getChords)
 {
     Score score = Score("./tests/xml_examples/unit_test/test_getchords_poly.musicxml");
+    // Score score = Score("./tests/xml_examples/Beethoven/Symphony_9th.xml");
 
     const auto x = score.getChords();
     EXPECT_EQ(score.isValid(), true);

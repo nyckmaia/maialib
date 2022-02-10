@@ -98,9 +98,6 @@ void ScoreClass(py::module &m) {
 
     cls.def("getChords", [](Score& score, nlohmann::json config)
         {
-            // Get data
-            const auto records = score.getChords(config);
-
             // Import Pandas module
             py::object Pandas = py::module_::import("pandas");
 
@@ -111,7 +108,7 @@ void ScoreClass(py::module &m) {
             std::vector<std::string> columns = {"Measure", "Chord"};
             
             // Fill DataFrame with records and columns
-            py::object df = FromRecords(records, "columns"_a = columns);
+            py::object df = FromRecords(score.getChords(config), "columns"_a = columns);
 
             return df;
         },

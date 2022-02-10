@@ -2353,7 +2353,7 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
         // std::cout << "lines size = " << lines.size() << std:: endl;
         // std::cout << "lines_rests size = " << lines_rests.size() << std:: endl;
 
-        for(int k = 0; k < static_cast<int>(lines.size()); k++){
+        for(int k = 0; k < static_cast<int>(lines.size()); k++) {
 
 //            float a1 = std::get<0>(lines[k][0]); //Initial beat of the segment
 //            float b1 = std::get<1>(lines[k][0]);  // Activation Sign of the segment ( = 1, 2, 3, ...)
@@ -2365,7 +2365,7 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
 
         //        ------Ploting Rests Activation-------------
 
-        for(int k = 0; k < static_cast<int>(lines_rests.size()); k++){
+        for(int k = 0; k < static_cast<int>(lines_rests.size()); k++) {
 //            float a2 = std::get<0>(lines_rests[k][0]); //Initial beat of the segment
 //            float b2 = std::get<1>(lines_rests[k][0]);  // Activation Sign of the segment ( = 1, 2, 3...)
 //            float c2 = std::get<0>(lines_rests[k][1]); // Final beat of the segment
@@ -2413,7 +2413,7 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
 
         out["element"].push_back(temp);    // each interaction load the json out
 
-    }  // this bracket closes  a loop with instrument 'i" index
+    }  // this bracket closes a loop with instrument 'i" index
     return out;
 }
 
@@ -2618,6 +2618,9 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
 
 std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks)
 {
+    // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
+    db.exec("CREATE INDEX startTime_idx ON events (starttime)");
+
     // ===== STEP 1: GET THE AMOUNT OF UNIQUE START TIME EVENTS ===== //
     SQLite::Statement query(db, "SELECT starttime, COUNT(*) from events GROUP BY starttime HAVING COUNT(*) > ? ORDER BY starttime ASC");
     // Bind query parameters
@@ -2701,6 +2704,9 @@ std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& 
 
 std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks)
 {
+    // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
+    db.exec("CREATE INDEX startTime_endTime_idx ON events (starttime, endtime)");
+
     // ===== STEP 1: GET THE NUMBER OF UNIQUE START TIME EVENTS ===== //
     const int numUniqueEvents = db.execAndGet("SELECT COUNT (DISTINCT starttime) from events").getInt();
     

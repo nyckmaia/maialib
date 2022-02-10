@@ -13,6 +13,8 @@ all: dev
 .PHONY: static
 .PHONY: shared
 .PHONY: cmake
+.PHONY: module-debug
+.PHONY: module-release
 .PHONY: module
 .PHONY: validate
 .PHONY: cpp-tests
@@ -30,7 +32,7 @@ SCRIPTS_DIR = ./scripts
 dev:
 	@make clean
 	@make uninstall
-	@make module
+	@make module-release
 	@make install
 
 clean:
@@ -69,15 +71,21 @@ shared:
 cmake:
 	@python3 $(SCRIPTS_DIR)/make-cmake.py
 
+module-debug:
+	@python3 $(SCRIPTS_DIR)/make-module.py Debug
+
+module-release:
+	@python3 $(SCRIPTS_DIR)/make-module.py Release
+
 module:
-	@python3 $(SCRIPTS_DIR)/make-module.py
+	@make module-release
 	
 validate:
 	@python3 $(SCRIPTS_DIR)/make-validate.py
 
 cpp-tests:
 	@make static-debug
-	@python3 $(SCRIPTS_DIR)/make-cpp-tests.py
+	@python3 $(SCRIPTS_DIR)/make-cpp-tests.py Debug
 
 run-cpp-tests:
 	@make cpp-tests

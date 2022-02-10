@@ -14,7 +14,14 @@ project("maiacore" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -g -O0")
+
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 option(STATIC_LIB "Generate a static libray" OFF)
 option(SHARED_LIB "Generate a shared libray" OFF)
@@ -38,8 +45,12 @@ endif()
 # Add all maiacore source files
 file(GLOB maiacore_src
     "./src/*.cpp"
-    "./src/python_wrapper/*.cpp"
     "./external/pugi/src/pugixml.cpp"
+)
+
+# Add all python_wrapper source files
+file(GLOB python_wrapper_src
+    "./src/python_wrapper/*.cpp"
 )
 
 # Generate static library
@@ -85,7 +96,7 @@ if(PYBIND_LIB)
 
     add_subdirectory(external/pybind11)
     
-    pybind11_add_module(${PROJECT_NAME} ${maiacore_src})
+    pybind11_add_module(${PROJECT_NAME} ${maiacore_src} ${python_wrapper_src})
     
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)

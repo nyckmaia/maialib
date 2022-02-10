@@ -7,25 +7,25 @@ from terminal_colors import *
 numArgs = len(sys.argv)
 
 if (numArgs != 3):
-    print(f"{color.FAIL}[ERROR] You MUST pass 2 arguments: 'libType' and 'buildMode'!{color.ENDC}")
+    print(f"{color.FAIL}[ERROR] You MUST pass 2 arguments: 'libType' and 'buildType'!{color.ENDC}")
 
 # Get input command line arguments
 libType = sys.argv[1]
-buildMode = sys.argv[2]
+buildType = sys.argv[2]
 
 # ===== VALIDATE INPUT ARGUMENTS ===== #
 
-print(f"{color.OKGREEN}Building a {libType} library in {buildMode} mode...{color.ENDC}")
+print(f"{color.OKGREEN}Building a {libType} library in {buildType} mode...{color.ENDC}")
 
 # Get the Operational System
 myOS = platform.system()
 
 # Create a 'build' folder (if not exists)
-path = Path.cwd() / "build" / myOS / "static" / buildMode
+path = Path.cwd() / "build" / myOS / "static" / buildType
 path.mkdir(parents=True, exist_ok=True)
 
 # Base CMake command to build the python module
-cmakeCommand = "cmake -G \"Unix Makefiles\" -B {} -S ./core".format(path)
+cmakeCommand = f"cmake -G \"Unix Makefiles\" -B {path} -S ./core -DCMAKE_BUILD_TYPE={buildType}"
 
 # If 'Windows' define the MinGW 'make.exe'
 if myOS == "Windows":

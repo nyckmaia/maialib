@@ -61,19 +61,47 @@ namespace MUSIC_XML {
 
     namespace NOTE_TYPE {
         const std::string ALL = "all";
+        const std::string MAXIMA_DOT_DOT = "maxima";
+        const std::string MAXIMA_DOT = "maxima";
         const std::string MAXIMA = "maxima";
+        const std::string LONG_DOT_DOT = "long";
+        const std::string LONG_DOT = "long";
         const std::string LONG = "long";
+        const std::string BREVE_DOT_DOT = "breve";
+        const std::string BREVE_DOT = "breve";
         const std::string BREVE = "breve";
+        const std::string WHOLE_DOT_DOT = "whole";
+        const std::string WHOLE_DOT = "whole";
         const std::string WHOLE = "whole";
+        const std::string HALF_DOT_DOT = "half";
+        const std::string HALF_DOT = "half";
         const std::string HALF = "half";
+        const std::string QUARTER_DOT_DOT = "quarter";
+        const std::string QUARTER_DOT = "quarter";
         const std::string QUARTER = "quarter";
+        const std::string EIGHTH_DOT_DOT = "eighth";
+        const std::string EIGHTH_DOT = "eighth";
         const std::string EIGHTH = "eighth";
+        const std::string N16TH_DOT_DOT = "16th";
+        const std::string N16TH_DOT = "16th";
         const std::string N16TH = "16th";
+        const std::string N32ND_DOT_DOT = "32nd";
+        const std::string N32ND_DOT = "32nd";
         const std::string N32ND = "32nd";
+        const std::string N64TH_DOT_DOT = "64th";
+        const std::string N64TH_DOT = "64th";
         const std::string N64TH = "64th";
+        const std::string N128TH_DOT_DOT = "128th";
+        const std::string N128TH_DOT = "128th";
         const std::string N128TH = "128th";
+        const std::string N256TH_DOT_DOT = "256th";
+        const std::string N256TH_DOT = "256th";
         const std::string N256TH = "256th";
+        const std::string N512TH_DOT_DOT = "512th";
+        const std::string N512TH_DOT = "512th";
         const std::string N512TH = "512th";
+        const std::string N1024TH_DOT_DOT = "1024th";
+        const std::string N1024TH_DOT = "1024th";
         const std::string N1024TH = "1024th";
     }
 

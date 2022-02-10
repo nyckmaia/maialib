@@ -1,9 +1,18 @@
 import os
+import sys
 import platform
 from pathlib import Path
 from terminal_colors import *
 
-print(f"{color.OKGREEN}Building maiacore Python module...{color.ENDC}")
+numArgs = len(sys.argv)
+
+if (numArgs != 2):
+    print(f"{color.FAIL}[ERROR] You MUST pass 1 argument: 'buildType' -> Debug or Release{color.ENDC}")
+
+# Get input command line arguments
+buildType = sys.argv[1]
+
+print(f"{color.OKGREEN}Building maiacore Python module on {buildType} mode...{color.ENDC}")
 
 # Get the Operational System
 myOS = platform.system()
@@ -13,7 +22,7 @@ path = Path.cwd() / "build" / myOS / "module"
 path.mkdir(parents=True, exist_ok=True)
 
 # Base CMake command to build the python module
-cmakeCommand = "cmake -G \"Unix Makefiles\" -B {} -S ./core -D PYBIND_LIB=ON".format(path)
+cmakeCommand = f"cmake -G \"Unix Makefiles\" -B {path} -S ./core -D PYBIND_LIB=ON -DCMAKE_BUILD_TYPE={buildType}"
 
 # If 'Windows' define the MinGW 'make.exe'
 if myOS == "Windows":

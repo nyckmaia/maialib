@@ -278,3 +278,50 @@ TEST(midiNote2pitch, twelveTonesOctave4)
     EXPECT_EQ(Helper::midiNote2pitch(72, "x"),  "");
     EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '72' cannot be wrote using 'x' accident type\n");
 }
+
+TEST(ticks2noteType, basicNoteTypes)
+{
+    const int divisionsPerQuarterNote = 1024;
+
+    EXPECT_EQ(Helper::ticks2noteType(57344, divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(49152, divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::MAXIMA_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(32768, divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::MAXIMA);
+    EXPECT_EQ(Helper::ticks2noteType(28672, divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::LONG_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(24576, divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::LONG_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(16384, divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::LONG);
+    EXPECT_EQ(Helper::ticks2noteType(14336, divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::BREVE_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(12288, divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::BREVE_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(8192,  divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::BREVE);
+    EXPECT_EQ(Helper::ticks2noteType(7168,  divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::WHOLE_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(6144,  divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::WHOLE_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(4096,  divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::WHOLE);
+    EXPECT_EQ(Helper::ticks2noteType(3584,  divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::HALF_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(3072,  divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::HALF_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(2048,  divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::HALF);
+    EXPECT_EQ(Helper::ticks2noteType(1792,  divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::QUARTER_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(1536,  divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::QUARTER_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(1024,  divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::QUARTER);
+    EXPECT_EQ(Helper::ticks2noteType(896,   divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::EIGHTH_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(768,   divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::EIGHTH_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(512,   divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::EIGHTH);
+    EXPECT_EQ(Helper::ticks2noteType(448,   divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N16TH_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(384,   divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N16TH_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(256,   divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N16TH);
+    EXPECT_EQ(Helper::ticks2noteType(224,   divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N32ND_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(192,   divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N32ND_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(128,   divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N32ND);
+    EXPECT_EQ(Helper::ticks2noteType(112,   divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N64TH_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(96,    divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N64TH_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(64,    divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N64TH);
+    EXPECT_EQ(Helper::ticks2noteType(56,    divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N128TH_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(48,    divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N128TH_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(32,    divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N128TH);
+    EXPECT_EQ(Helper::ticks2noteType(28,    divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N256TH_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(24,    divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N256TH_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(16,    divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N256TH);
+    EXPECT_EQ(Helper::ticks2noteType(14,    divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N512TH_DOT_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(12,    divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N512TH_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(8,     divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N512TH);
+    EXPECT_EQ(Helper::ticks2noteType(6,     divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N1024TH_DOT);
+    EXPECT_EQ(Helper::ticks2noteType(4,     divisionsPerQuarterNote), MUSIC_XML::NOTE_TYPE::N1024TH);
+}

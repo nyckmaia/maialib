@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.8] - 2022-MM-DD
+### New Features
+
+### Improved
+- Performance: Add optimization flags to the build system
+- Performance: `Score::getChords()` add database indexes to speed up queries
+- Performance: `Helper::ticks2noteType()` add GCC extension: `case range`
+
+### Fixed
+- Fix `cpp-tests` build
+
+-------------------------
 ## [v0.0.7] - 2022-02-08
 ### New Features
 - Rewrite: `Score::getChords()`
