@@ -9,5 +9,6 @@ var dir_24d671cfcbc5d5238a6bd565a49d198f =
     [ "measure.h", "measure_8h_source.html", null ],
     [ "note.h", "note_8h_source.html", null ],
     [ "part.h", "part_8h_source.html", null ],
-    [ "score.h", "score_8h_source.html", null ]
+    [ "score.h", "score_8h_source.html", null ],
+    [ "utils.h", "utils_8h_source.html", null ]
 ];

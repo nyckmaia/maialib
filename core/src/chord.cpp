@@ -241,6 +241,12 @@ void Chord::transposeStackOnly(const int semitonesNumber)
     }
 }
 
+void Chord::removeDuplicateNotes()
+{
+    sortNotes();
+    _note.erase(std::unique(_note.begin(), _note.end() ), _note.end());
+}
+
 size_t Chord::size() const
 {
     return _note.size();

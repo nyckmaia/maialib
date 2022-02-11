@@ -35,6 +35,8 @@ void ChordClass(py::module &m) {
     cls.def("inversion", &Chord::inversion, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("transpose", &Chord::transpose, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
+    cls.def("removeDuplicateNotes", &Chord::removeDuplicateNotes);
+
     cls.def("getDurationTicks", &Chord::getDurationTicks);
     cls.def("getNote", py::overload_cast<size_t>(&Chord::getNote),
             py::arg("noteIndex"));

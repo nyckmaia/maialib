@@ -38,8 +38,8 @@ private:
 
     void loadXMLFile(const std::string& filePath);
 
-    std::vector<std::pair<int, Chord>> getSameAttackChords(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks);
-    std::vector<std::pair<int, Chord>> getChordsPerEachNoteEvent(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks);
+    std::vector<std::pair<int, Chord>> getSameAttackChords(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks, const bool includeDuplicates);
+    std::vector<std::pair<int, Chord>> getChordsPerEachNoteEvent(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks, const bool includeDuplicates);
     
 public:
     /**
@@ -193,7 +193,9 @@ public:
      * \c maxStack: integer \n
      * \c minDuration: string \n
      * \c maxDuration: string \n
-     * \c continuosMode: boolean \n \n
+     * \c continuosMode: boolean \n
+     * \c includeDuplicates: boolean \n
+     * \c includeUnpitched: boolean \n \n
      * \b Example:
      * \code{.json}
      * {
@@ -204,14 +206,26 @@ public:
      *   "maxStack": 5,
      *   "minDuration": "quarter",
      *   "maxDuration": "whole",
-     *   "continuosMode": true
+     *   "continuosMode": true,
+     *   "includeDuplicates": false,
+     *   "includeUnpitched": false
      * }
-     * \endcode
+     * \endcode \n
+     * \b continuosMode \n
      * When \c continuosMode is \c true the algorithm will detect all vertical chords,
      * including counterpoint notes \n
      * When \c continuosMode is \c false the algorithm will detect only the chords formed by
-     * the same attack notes, excluding counterpoint
-     * @return A list of Chord objects
+     * the same attack notes, excluding counterpoint \n \n
+     * \b includeDuplicates \n
+     * When \c includeDuplicates is \c true the return chords can have multiple notes
+     * with the same pitch value (duplicate notes) \n
+     * Example: ["C4", "C4", "E4", "G4"] \n
+     * When \c includeDuplicates is \c false each chord will be filtered in post processing,
+     * returning the same chord but removing the duplicate pitch notes \n
+     * Example: The original chord ["C4", "C4", "E4", "G4"] will be returned as ["C4", "E4", "G4"] \n \n
+     * \b includeUnpitched \n
+     * 
+     * @return A list of pairs: {measureId, Chord object} 
      */
     std::vector<std::pair<int, Chord>> getChords(nlohmann::json config = {});
 };

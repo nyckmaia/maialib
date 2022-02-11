@@ -56,6 +56,7 @@ public:
     void inversion(size_t inversionNumber);
     void transpose(const int semiTonesNumber);
     void transposeStackOnly(const int semiTonesNumber);
+    void removeDuplicateNotes();
 
     int getDurationTicks() const;
     Note& getNote(size_t noteIndex);

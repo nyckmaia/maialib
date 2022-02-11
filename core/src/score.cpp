@@ -2529,14 +2529,14 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
     // ===== STEP 1.3: READ MININIMUM CHORD STACKED NOTES ===== //
     int minStackedNotes = (!config.contains("minStack") || !config["minStack"].is_number_integer()) ? 3 : config["minStack"].get<int>();
 
-    if (minStackedNotes < 2) {
-        std::cout << "[WARNING]: You set the 'minStack' to " << minStackedNotes << ", but the minimum value is 2." << std::endl;
+    if (minStackedNotes < 1) {
+        std::cout << "[WARNING]: You set the 'minStack' to " << minStackedNotes << ", but the minimum value is 1." << std::endl;
         std::cout << "Setting the 'minStack' to the default: 3" << std::endl;
         minStackedNotes = 3;
     }
 
     // ===== STEP 1.4: READ MAXIMUM CHORD STACKED NOTES ===== //
-    const int maxStackedNotes = (!config.contains("maxStack") || !config["maxStack"].is_number_integer()) ? 100 : config["maxStack"].get<int>();
+    const int maxStackedNotes = (!config.contains("maxStack") || !config["maxStack"].is_number_integer()) ? 1000 : config["maxStack"].get<int>();
 
     // Error checking:
     if (minStackedNotes > maxStackedNotes) {
@@ -2548,27 +2548,27 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
     const bool continuosMode = (!config.contains("continuosMode") || !config["continuosMode"].is_boolean()) ? true : config["continuosMode"].get<bool>();
 
     // ===== STEP 1.6: READ MIN DURATION ===== //
-    const std::string defaultMinDuration = "quarter"; // Arbitrary value
+    const std::string defaultMinDuration = MUSIC_XML::NOTE_TYPE::N64TH; // Arbitrary value
     std::string minDuration = (!config.contains("minDuration") || !config["minDuration"].is_string()) ? defaultMinDuration : config["minDuration"].get<std::string>();
 
     int minDurationTicks = Helper::noteType2ticks(minDuration, _lcmDivisionsPerQuarterNote);
 
     if (minDurationTicks < 0) {
         std::cout << "[WARNING]: The 'minDuration' MUST BE a basic rhythm figure string!" << std::endl;
-        std::cout << "Setting the 'minDuration' to 'quarter'" << std::endl;
-        minDurationTicks = Helper::noteType2ticks("quarter", _lcmDivisionsPerQuarterNote);
+        std::cout << "Setting the 'minDuration' to '64th'" << std::endl;
+        minDurationTicks = Helper::noteType2ticks(defaultMinDuration, _lcmDivisionsPerQuarterNote);
     }
 
     // ===== STEP 1.7: READ MAX DURATION ===== //
-    const std::string defaultMaxDuration = "whole"; // Arbitrary value
+    const std::string defaultMaxDuration = MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT; // Arbitrary value
     std::string maxDuration = (!config.contains("maxDuration") || !config["maxDuration"].is_string()) ? defaultMaxDuration : config["maxDuration"].get<std::string>();
 
     int maxDurationTicks = Helper::noteType2ticks(maxDuration, _lcmDivisionsPerQuarterNote);
 
     if (maxDurationTicks < 0) {
         std::cout << "[WARNING]: The 'maxDuration' MUST BE a basic rhythm figure string!" << std::endl;
-        std::cout << "Setting the 'maxDuration' to 'whole'" << std::endl;
-        maxDurationTicks = Helper::noteType2ticks("whole", _lcmDivisionsPerQuarterNote);
+        std::cout << "Setting the 'maxDuration' to 'maxima'" << std::endl;
+        maxDurationTicks = Helper::noteType2ticks(defaultMaxDuration, _lcmDivisionsPerQuarterNote);
     }
 
     // Error checking
@@ -2577,14 +2577,16 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
         return {};
     }
 
-    // std::cout << "minDuration:" << minDuration << " | minDurationTicks: " << minDurationTicks << std::endl;
-    // std::cout << "maxDuration:" << maxDuration << " | maxDurationTicks: " << maxDurationTicks << std::endl;
+    // ===== STEP 1.8: READ 'INCLUDE UNPITCHED' ===== //
+    const bool includeUnpitched = (!config.contains("includeUnpitched") || !config["includeUnpitched"].is_boolean()) ? false : config["includeUnpitched"].get<bool>();
 
+    // ===== STEP 1.9: READ 'INCLUDE DUPLICATES' ===== //
+    const bool includeDuplicates = (!config.contains("includeDuplicates") || !config["includeDuplicates"].is_boolean()) ? false : config["includeDuplicates"].get<bool>();
 
     // ===== STEP 2: CREATE A 'IN MEMORY' SQLITE DATABASE ===== //
     SQLite::Database db(":memory:", SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE|SQLite::OPEN_MEMORY);
 
-    db.exec("create table events (measure int, starttime int, endtime int, address intptr_t)");
+    db.exec("create table events (measure int, starttime int, endtime int, address intptr_t, scalefactor int)");
 
     int previusTime = 0;
     int currentTime = 0;
@@ -2592,6 +2594,10 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
     const int partNamesSize = partNames.size();
     for (int p = 0; p < partNamesSize; p++) {
         Part& currentPart = getPart(partNames[p]);
+        
+        // Skip unpitched parts
+        if (!includeUnpitched && !currentPart.isPitched()) { continue; }
+
         currentTime = 0;
         
         for (int m = measureStart; m < measureEnd; m++) {
@@ -2615,11 +2621,12 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
                     const int timeEnd = currentTime + (currentNote.getDurationTicks() * divisionsScaleFactor);
 
                     if (currentNote.isNoteOn()) {
-                        std::string str = "insert into events (measure, starttime, endtime, address) VALUES ";
+                        std::string str = "insert into events (measure, starttime, endtime, address, scalefactor) VALUES ";
                         std::string values = "(" + std::to_string(m) + ", " 
                                                 + std::to_string(currentTime) + ", " 
                                                 + std::to_string(timeEnd) + ", "
-                                                + std::to_string((intptr_t)&currentNote) + ")";
+                                                + std::to_string((intptr_t)&currentNote) + ", "
+                                                + std::to_string(divisionsScaleFactor) + ")";
                         str.append(values);
 
                         db.exec(str.c_str());
@@ -2634,13 +2641,13 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
 
     // Choose which stack chords algorithm that you desired:
     if (!continuosMode) {
-        return getSameAttackChords(db, minStackedNotes, maxStackedNotes, minDurationTicks, maxDurationTicks);
+        return getSameAttackChords(db, minStackedNotes, maxStackedNotes, minDurationTicks, maxDurationTicks, includeDuplicates);
     }
 
-    return getChordsPerEachNoteEvent(db, minStackedNotes, maxStackedNotes, minDurationTicks, maxDurationTicks);
+    return getChordsPerEachNoteEvent(db, minStackedNotes, maxStackedNotes, minDurationTicks, maxDurationTicks, includeDuplicates);
 }
 
-std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks)
+std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks, const bool includeDuplicates)
 {
     // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
     db.exec("CREATE INDEX startTime_idx ON events (starttime)");
@@ -2661,12 +2668,12 @@ std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& 
     std::vector<std::pair<int, Chord>> stackedChords;
 
     for (const auto& startTime : uniqueStartTimes) {
-        SQLite::Statement query(db, "SELECT measure, address FROM events WHERE starttime = ?");
+        SQLite::Statement query(db, "SELECT measure, address, scalefactor FROM events WHERE starttime = ?");
         // Bind query parameters
         query.bind(1, startTime);
 
         int measure = 0;
-        std::vector<const Note*> chordNotes;
+        std::vector<std::pair<int, const Note*>> scaleFactorNotePair;
         while (query.executeStep())
         {
             // Get the measure value
@@ -2679,21 +2686,31 @@ std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& 
             // Skip rests
             if (note->isNoteOff()) { continue; }
             
-            chordNotes.push_back(note);            
+            const int measureScaleFactor = query.getColumn(2).getInt();
+            
+            scaleFactorNotePair.push_back({measureScaleFactor, note});         
         }
 
-        // ===== STEP 3.1: SKIP UNDESIRED CHORDS ===== //
+        // ===== STEP 2.1: SKIP UNDESIRED CHORDS ===== //
         // The logic below is:
         // a) Skip this chord if it have ALL notes longer than 'maxDuration'
         // b) Skip this chord if it have AT LEAST ONE note shorter than 'minDuration'
         Chord chord;
         // bool undesiredTimeChord = false;
-        bool tooShortTimeChord = false;
-        bool tooLongTimeChord = (chordNotes[0]->getDurationTicks() * _lcmDivisionsPerQuarterNote) > maxDurationTicks;
+        const int firstNoteMeasureScale = scaleFactorNotePair[0].first;
+        const Note* firstNote = scaleFactorNotePair[0].second;
 
-        for (const auto& note : chordNotes) {
-            tooShortTimeChord |= (note->getDurationTicks() * _lcmDivisionsPerQuarterNote) < minDurationTicks;
-            tooLongTimeChord &= (note->getDurationTicks() * _lcmDivisionsPerQuarterNote) > maxDurationTicks;
+        bool tooShortTimeChord = false;
+        bool tooLongTimeChord = (firstNote->getDurationTicks() * firstNoteMeasureScale) > maxDurationTicks;
+
+        for (const auto& pair : scaleFactorNotePair) {
+            const int measureScale = pair.first;
+            const Note* note = pair.second;
+
+            const int scaledDurationTicks = note->getDurationTicks() * measureScale;
+                        
+            tooShortTimeChord |= scaledDurationTicks < minDurationTicks;
+            tooLongTimeChord &= scaledDurationTicks > maxDurationTicks;
 
             // Append note to the temp chord
             chord.addNote(*note);
@@ -2702,18 +2719,8 @@ std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& 
         // Skip undesired short/long time chords
         if (tooShortTimeChord || tooLongTimeChord) { continue; }
 
-        // for (const auto& note : chordNotes) {
-        //     if (note->getDurationTicks() < minDurationTicks || note->getDurationTicks() > maxDurationTicks) {
-        //         undesiredTimeChord = true;
-        //         break;
-        //     }
-
-        //     // Append note the the temp chord
-        //     chord.addNote(*note);
-        // }
-
-        // // Skip undesired short/long time chords
-        // if (undesiredTimeChord) { continue; }
+        // Remove chord duplicate notes
+        if (!includeDuplicates) { chord.removeDuplicateNotes(); }
 
         // Skip undesired smaller/bigger chords
         const int chordSize = chord.size();
@@ -2728,7 +2735,7 @@ std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& 
     return stackedChords;
 }
 
-std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks)
+std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks, const bool includeDuplicates)
 {
     // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
     db.exec("CREATE INDEX startTime_endTime_idx ON events (starttime, endtime)");
@@ -2751,13 +2758,13 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Data
     std::vector<std::pair<int, Chord>> stackedChords;
     for (const int startTime : uniqueStartTime) {
 
-        SQLite::Statement query(db, "SELECT measure, address FROM events WHERE starttime <= ? and endtime > ?");
+        SQLite::Statement query(db, "SELECT measure, address, scalefactor FROM events WHERE starttime <= ? and endtime > ?");
         // Bind query parameters
         query.bind(1, startTime);
         query.bind(2, startTime);
         
         int measure = 0;
-        std::vector<const Note*> chordNotes;
+        std::vector<std::pair<int, const Note*>> scaleFactorNotePair;
         while (query.executeStep())
         {
             // Get the measure value
@@ -2769,8 +2776,10 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Data
 
             // Skip rests
             if (note->isNoteOff()) { continue; }
+
+            const int measureScaleFactor = query.getColumn(2).getInt();  
             
-            chordNotes.push_back(note);            
+            scaleFactorNotePair.push_back({measureScaleFactor, note});                     
         }
 
         // ===== STEP 3.1: SKIP UNDESIRED CHORDS ===== //
@@ -2779,12 +2788,20 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Data
         // b) Skip this chord if it have AT LEAST ONE note shorter than 'minDuration'
         Chord chord;
         // bool undesiredTimeChord = false;
-        bool tooShortTimeChord = false;
-        bool tooLongTimeChord = (chordNotes[0]->getDurationTicks() * _lcmDivisionsPerQuarterNote) > maxDurationTicks;
+        const int firstNoteMeasureScale = scaleFactorNotePair[0].first;
+        const Note* firstNote = scaleFactorNotePair[0].second;
 
-        for (const auto& note : chordNotes) {
-            tooShortTimeChord |= (note->getDurationTicks() * _lcmDivisionsPerQuarterNote) < minDurationTicks;
-            tooLongTimeChord &= (note->getDurationTicks() * _lcmDivisionsPerQuarterNote) > maxDurationTicks;
+        bool tooShortTimeChord = false;
+        bool tooLongTimeChord = (firstNote->getDurationTicks() * firstNoteMeasureScale) > maxDurationTicks;
+
+        for (const auto& pair : scaleFactorNotePair) {
+            const int measureScale = pair.first;
+            const Note* note = pair.second;
+
+            const int scaledDurationTicks = note->getDurationTicks() * measureScale;
+                        
+            tooShortTimeChord |= scaledDurationTicks < minDurationTicks;
+            tooLongTimeChord &= scaledDurationTicks > maxDurationTicks;
 
             // Append note to the temp chord
             chord.addNote(*note);
@@ -2793,18 +2810,8 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Data
         // Skip undesired short/long time chords
         if (tooShortTimeChord || tooLongTimeChord) { continue; }
 
-        // for (const auto& note : chordNotes) {
-        //     if (note->getDurationTicks() < minDurationTicks || note->getDurationTicks() > maxDurationTicks) {
-        //         undesiredTimeChord = true;
-        //         break;
-        //     }
-
-        //     // Append note the the temp chord
-        //     chord.addNote(*note);
-        // }
-
-        // // Skip undesired short/long time chords
-        // if (undesiredTimeChord) { continue; }
+        // Remove chord duplicate notes
+        if (!includeDuplicates) { chord.removeDuplicateNotes(); }
 
         // Skip undesired smaller/bigger chords
         const int chordSize = chord.size();

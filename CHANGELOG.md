@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.9] - 2022-02-11
+### New Features
+- Add `Chord::removeDuplicateNotes()`
+
+### Improved
+- `Score::getChords()`
+    - Add optional boolean config input argument: `includeUnpitched`
+    - Add optional boolean config input argument: ``includeDuplicates`
+    - Replace optional default values:
+        - `minStack`: minimum value from `2` to `1` 
+        - `maxDuration`: maximum value from `quarter` to `maxima`
+- Update Doxygen documentation
+- Update Trello status and cards
+
+### Fixed
+- Fix `Score::getChords()` input arguments: `minDuration` and `maxDuration` 
+
+-------------------------
 ## [v0.0.8] - 2022-02-10
 ### New Features
 - Add unit test to `Helper::ticks2noteType()`
@@ -22,7 +40,6 @@ All notable changes to this project will be documented in this file.
 - Fix `cpp-tests` build
 - Move `divisionsPerQuarterNote` from `Score` to `Measure` class
 - Remove `divisionsPerQuarterNote` from `Note` class
-
 
 -------------------------
 ## [v0.0.7] - 2022-02-08
