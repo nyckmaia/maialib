@@ -254,7 +254,18 @@ size_t Chord::size() const
 
 int Chord::getDurationTicks() const
 {
-    return _note[0].getDurationTicks();
+    // Error check
+    if (_note.empty()) { return 0; }
+
+    // For each internal note, get de minimum duration ticks value
+    int minValue = _note[0].getDurationTicks();
+    for (const auto& note : _note) {
+        if (note.getDurationTicks() < minValue) {
+            minValue = note.getDurationTicks();
+        }
+    }
+
+    return minValue;
 }
 
 Note& Chord::getNote(size_t noteIndex)
