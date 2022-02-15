@@ -418,7 +418,9 @@ void Score::loadXMLFile(const std::string& filePath)
                 if (staff <= 0) { staff = 0; }
 
                 // ===== CONSTRUCT A NOTE OBJECT AND STORE IT INSIDE THE SCORE OBJECT ===== //
-                Note note(pitch, duration, isNoteOn, inChord, transposeDiatonic, transposeChromatic);
+                const int divPQN = _part[p].getMeasure(m).getDivisionsPerQuarterNote();
+                const std::string noteType = Helper::ticks2noteType(duration, divPQN).first;
+                Note note(pitch, noteType, isNoteOn, inChord, transposeDiatonic, transposeChromatic, divPQN);
                 note.setVoice(voice);
                 note.setStaff(staff);
                 note.setIsGraceNote(isGraceNote);
@@ -1296,7 +1298,7 @@ void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, i
         if (divisions <= 0) {
             std::cerr << "[ERROR] Unable to get the 'divisionsPerQuarterNote' value" << std::endl;
         }
-        type = Helper::ticks2noteType(duration, divisions);
+        type = Helper::ticks2noteType(duration, divisions).first;
     }
 }
 
@@ -2630,6 +2632,13 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
                         str.append(values);
 
                         db.exec(str.c_str());
+
+                        // std::cout << "measure: " << m << 
+                        // " | mDiv: " << currentMeasure.getDivisionsPerQuarterNote() <<
+                        // " | note: " << currentNote.getPitch() << 
+                        // " | ticks: " << currentNote.getDurationTicks() <<
+                        // " | noteDiv: " << currentNote.getDivisionsPerQuarterNote() <<
+                        // " | noteDur: " << currentNote.getType() << std::endl; 
                     }
                     
                     previusTime = currentTime * divisionsScaleFactor;
@@ -2805,6 +2814,13 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Data
 
             // Append note to the temp chord
             chord.addNote(*note);
+
+            //  std::cout << "measure: " << measure << 
+            //             " | startTime: " << startTime <<
+            //             " | note: " << note->getPitch() << 
+            //             " | ticks: " << note->getDurationTicks() <<
+            //             " | noteDiv: " << note->getDivisionsPerQuarterNote() <<
+            //             " | noteDur: " << note->getType() << std::endl; 
         }
 
         // Skip undesired short/long time chords

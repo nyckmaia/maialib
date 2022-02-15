@@ -14,7 +14,6 @@
 #include "nlohmann/json.hpp"
 
 #include "constants.h"
-#include "note.h"
 #include "utils.h"
 
 class Helper
@@ -24,7 +23,7 @@ public:
     static std::vector<std::string> splitString(const std::string& s, char delimiter);
     static const std::string generateIdentation(int identPosition, int identSize = 2);
 
-    static const std::string ticks2noteType(const int ticks, const int divisionsPerQuarterNote = 256);
+    static std::pair<std::string, int> ticks2noteType(const int ticks, const int divisionsPerQuarterNote = 256);
     static int noteType2ticks(std::string noteType, const int divisionsPerQuarterNote = 256);
 
     static float ticks2QuarterNoteValue(const size_t ticks, const size_t divisionsPerQuarterNote);

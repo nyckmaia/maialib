@@ -27,12 +27,20 @@ Now you can explore some `maialib` features like:
 - Python 3.7 (or greater)
 
 ### To build from source
+#### Applications:
 - C++17 compatible compiler
 - CMake 3.0
 - Python 3.7
 - Make
 - Doxygen (Optional: To build documentation)
 - Buildcache (Optional: To accelerate the build process)
+- CppCheck (Optional: C++ Static Analyzer)
+
+#### Python Dev-only dependencies
+```
+pip install pathlib
+pip install cpplint
+```
 
 ## Tested Environments
 

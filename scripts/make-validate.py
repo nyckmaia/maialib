@@ -1,10 +1,20 @@
+import os
 from terminal_colors import *
 
 print(f"{color.OKGREEN}Validating C++ Code...{color.ENDC}")
 
-# cpplint (aqui vai o clang formater?)
-# cppcheck
-# doxygen
+coreSrcFilesDir = "./core/src/"
 
-print(f"{color.OKGREEN}Done!{color.ENDC}")
+# ===== CPPLINT ===== #
+# Clang formater??
+print(f"{color.OKGREEN}=====> CPPLINT <====={color.ENDC}")
+runCommand = f"cpplint --linelength=100 --recursive {coreSrcFilesDir}"
+os.system(runCommand)
+
+# ===== CPPCHECK: STATIC ANALYZER ===== #
+print(f"{color.OKGREEN}=====> CPPCHECK <====={color.ENDC}")
+runCommand = f"cppcheck --quiet {coreSrcFilesDir}"
+os.system(runCommand)
+
+print(f"{color.OKGREEN}Validation: Done!{color.ENDC}")
 

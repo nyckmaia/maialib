@@ -133,9 +133,9 @@ void Chord::addNote(const Note& note)
         _note.back().setIsInChord(true);
         _stack.back().setIsInChord(true);
 
-        const int defaultDurationTicks = _note.begin()->getDurationTicks();
-        _note.back().setDurationTicks(defaultDurationTicks);
-        _stack.back().setDurationTicks(defaultDurationTicks);
+        // const std::string& noteType = _note.begin()->getType();
+        // _note.back().setType(noteType);
+        // _stack.back().setType(noteType);
     }
 
     // Reset the chord stacked flag
@@ -174,7 +174,7 @@ void Chord::removeNote(size_t noteIndex)
      _isStackedInThirds = false;
 }
 
-void Chord::setDuration(size_t durationTicks)
+void Chord::setDurationTicks(const int durationTicks)
 {
     const size_t chordSize = _note.size();
 
@@ -247,6 +247,83 @@ void Chord::removeDuplicateNotes()
     _note.erase(std::unique(_note.begin(), _note.end() ), _note.end());
 }
 
+std::string Chord::getDuration() const
+{
+    const std::map<std::string, int> map {
+        { MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT, 56000000 },
+        { MUSIC_XML::NOTE_TYPE::MAXIMA_DOT, 48000000 },
+        { MUSIC_XML::NOTE_TYPE::MAXIMA, 32000000 },
+        { MUSIC_XML::NOTE_TYPE::LONG_DOT_DOT, 28000000 },
+        { MUSIC_XML::NOTE_TYPE::LONG_DOT, 24000000 },
+        { MUSIC_XML::NOTE_TYPE::LONG, 16000000 },
+        { MUSIC_XML::NOTE_TYPE::BREVE_DOT_DOT, 14000000 },
+        { MUSIC_XML::NOTE_TYPE::BREVE_DOT, 12000000 },
+        { MUSIC_XML::NOTE_TYPE::BREVE, 8000000 },
+        { MUSIC_XML::NOTE_TYPE::WHOLE_DOT_DOT, 7000000 },
+        { MUSIC_XML::NOTE_TYPE::WHOLE_DOT, 6000000 },
+        { MUSIC_XML::NOTE_TYPE::WHOLE, 4000000 },
+        { MUSIC_XML::NOTE_TYPE::HALF_DOT_DOT, 3500000 },
+        { MUSIC_XML::NOTE_TYPE::HALF_DOT, 3000000 },
+        { MUSIC_XML::NOTE_TYPE::HALF, 2000000 },
+        { MUSIC_XML::NOTE_TYPE::QUARTER_DOT_DOT, 1750000 },
+        { MUSIC_XML::NOTE_TYPE::QUARTER_DOT, 1500000},
+        { MUSIC_XML::NOTE_TYPE::QUARTER, 1000000 }, // 1:1
+        { MUSIC_XML::NOTE_TYPE::EIGHTH_DOT_DOT, 875000 },
+        { MUSIC_XML::NOTE_TYPE::EIGHTH_DOT, 750000 },
+        { MUSIC_XML::NOTE_TYPE::EIGHTH, 500000 },
+        { MUSIC_XML::NOTE_TYPE::N16TH_DOT_DOT, 437500 },
+        { MUSIC_XML::NOTE_TYPE::N16TH_DOT, 375000 },
+        { MUSIC_XML::NOTE_TYPE::N16TH, 250000 },
+        { MUSIC_XML::NOTE_TYPE::N32ND_DOT_DOT, 218750 },
+        { MUSIC_XML::NOTE_TYPE::N32ND_DOT, 187500 },
+        { MUSIC_XML::NOTE_TYPE::N32ND, 125000 },
+        { MUSIC_XML::NOTE_TYPE::N64TH_DOT_DOT, 109375 },
+        { MUSIC_XML::NOTE_TYPE::N64TH_DOT, 93750 },
+        { MUSIC_XML::NOTE_TYPE::N64TH, 62500 },
+        { MUSIC_XML::NOTE_TYPE::N128TH_DOT_DOT, 54688 },
+        { MUSIC_XML::NOTE_TYPE::N128TH_DOT, 46875 },
+        { MUSIC_XML::NOTE_TYPE::N128TH, 31250 },
+        { MUSIC_XML::NOTE_TYPE::N256TH_DOT_DOT, 27344 },
+        { MUSIC_XML::NOTE_TYPE::N256TH_DOT, 23438 },
+        { MUSIC_XML::NOTE_TYPE::N256TH, 15625 },
+        { MUSIC_XML::NOTE_TYPE::N512TH_DOT_DOT, 13672 },
+        { MUSIC_XML::NOTE_TYPE::N512TH_DOT, 11719 },
+        { MUSIC_XML::NOTE_TYPE::N512TH, 7813 },
+        { MUSIC_XML::NOTE_TYPE::N1024TH_DOT_DOT, 6836 },
+        { MUSIC_XML::NOTE_TYPE::N1024TH_DOT, 5859 },
+        { MUSIC_XML::NOTE_TYPE::N1024TH, 3906 }
+    };
+
+    int minDuration = Helper::noteType2ticks(MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT, 1000000);
+    for (const auto& note : _note) {
+        const auto noteType = note.getType();
+
+        const int durationMap = map.at(noteType);
+
+        if (durationMap < minDuration) {
+            minDuration = durationMap;
+        }
+    }
+
+    std::string keyNote;
+    for (const auto& el : map) {
+       if (el.second == minDuration) {
+          keyNote = el.first;
+          break; // to stop searching
+       }
+    }
+
+    return keyNote;
+}
+
+float Chord::getQuarterDuration() const
+{
+    std::string duration = getDuration();
+    const int ticks = Helper::noteType2ticks(duration, 256);
+
+    return static_cast<float>(ticks) / 256.0f;
+}
+
 size_t Chord::size() const
 {
     return _note.size();
@@ -257,7 +334,7 @@ int Chord::getDurationTicks() const
     // Error check
     if (_note.empty()) { return 0; }
 
-    // For each internal note, get de minimum duration ticks value
+    // For each internal note, get the minimum duration ticks value
     int minValue = _note[0].getDurationTicks();
     for (const auto& note : _note) {
         if (note.getDurationTicks() < minValue) {
@@ -813,7 +890,7 @@ const Note& Chord::getBassNote()
 
 Chord Chord::getStackedChord() const
 {
-    return _stack;
+    return Chord(_stack);
 }
 
 void Chord::sortNotes()

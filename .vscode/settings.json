@@ -1,4 +1,5 @@
 {
+    "clang-format.executable": "C:/Users/nyck/AppData/Local/Programs/Python/Python39/Scripts/clang-format.exe",
     "python.testing.unittestArgs": [
         "-v",
         "-s",

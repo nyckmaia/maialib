@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.10] - 2022-02-14
+### New Features
+- Add Makefile target: `make validate`
+    - Run `cppcheck` static analyzer (optional dev dependency)
+    - Run `cpplint` (optional dev dependency)
+- Add `float Chord::getQuarterDuration()`
+- `Note` class:
+    - Add `float getQuarterDuration()`
+    - Add `std::string getType()`
+    - Add `std::string getLongType()`
+    - Add `std::string getShortType()`
+    - Add `int getNumDots()`
+    - Add `bool isDotted()`
+    - Add `bool isDoubleDotted()`
+
+### Improved
+- `Note` class: abstract the `ticks` integer values and replace it to `rhythm figures` as strings
+- `Chord::getDuration()` now returns a `rhythm figure` as string
+- `Helper::noteType2ticks()`
+- `Helper::ticks2NoteType()`
+### Fixed
+
+-------------------------
 ## [v0.0.9] - 2022-02-11
 ### New Features
 - Add `Chord::removeDuplicateNotes()`

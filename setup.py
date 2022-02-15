@@ -8,7 +8,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="0.0.9",
+    version="0.0.10",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate music data",
@@ -35,7 +35,7 @@ setup(
         "Natural Language :: English",
         "Topic :: Software Development :: Libraries"
     ],
-    install_requires=["pathlib", "pandas"],
+    install_requires=["pandas"],
     python_requires=">=3.7.0",
     zip_safe=False,
 )

@@ -41,8 +41,8 @@ private:
 public:
 
     Chord();
-    Chord(const std::vector<Note>& notes);
-    Chord(const std::vector<std::string>& pitches);
+    explicit Chord(const std::vector<Note>& notes);
+    explicit Chord(const std::vector<std::string>& pitches);
 
     ~Chord();
 
@@ -52,18 +52,21 @@ public:
     void removeTopNote();
     void insertNote(Note& insertNote, size_t positionNote = 0);
     void removeNote(size_t noteIndex);
-    void setDuration(size_t durationTicks);
+    void setDurationTicks(const int durationTicks);
     void inversion(size_t inversionNumber);
     void transpose(const int semiTonesNumber);
     void transposeStackOnly(const int semiTonesNumber);
     void removeDuplicateNotes();
 
+    std::string getDuration() const;
+    float getQuarterDuration() const;
     int getDurationTicks() const;
     Note& getNote(size_t noteIndex);
     const Note& getNote(const size_t noteIndex) const;
     const Note& getRoot();
     std::string getName(const bool useEnharmonicName = true);
     const Note& getBassNote();
+    
 
     bool haveMinorThird();
     bool haveMajorThird();

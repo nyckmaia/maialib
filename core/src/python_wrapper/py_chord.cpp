@@ -31,11 +31,12 @@ void ChordClass(py::module &m) {
     cls.def("removeTopNote", &Chord::removeTopNote, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("insertNote", &Chord::insertNote, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("removeNote", &Chord::removeNote, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("setDuration", &Chord::setDuration, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("setDurationTicks", &Chord::setDurationTicks, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("inversion", &Chord::inversion, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("transpose", &Chord::transpose, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("removeDuplicateNotes", &Chord::removeDuplicateNotes);
+    cls.def("getDuration", &Chord::getDuration);
 
     cls.def("getDurationTicks", &Chord::getDurationTicks);
     cls.def("getNote", py::overload_cast<size_t>(&Chord::getNote),
@@ -77,7 +78,8 @@ void ChordClass(py::module &m) {
 
     cls.def("getMIDIIntervals", &Chord::getMIDIIntervals);
     cls.def("getIntervalNames", &Chord::getIntervalNames);
-
+    cls.def("getQuarterDuration", &Chord::getQuarterDuration);
+    
     cls.def("size", &Chord::size);
     cls.def("stackSize", &Chord::stackSize);
     cls.def("info", &Chord::info, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());

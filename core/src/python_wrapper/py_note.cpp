@@ -15,17 +15,14 @@ void NoteClass(py::module &m) {
 
     py::class_<Note> cls(m, "Note");
 
-    cls.def(py::init<std::string, size_t, bool, bool, int, int>(),
+    cls.def(py::init<const std::string&, const std::string&, bool, bool, const int, const int, const int>(),
             py::arg("pitch"),
-            py::arg("durationTicks") = 256,
+            py::arg("noteType") = "quarter",
             py::arg("isNoteOn") = true,
             py::arg("inChord") = false,
             py::arg("transposeDiatonic") = 0,
-            py::arg("transposeChromatic") = 0);
-
-    // Overloaded constructor for rests
-    cls.def(py::init<size_t>(), 
-        py::arg("durationTicks") = 256);
+            py::arg("transposeChromatic") = 0,
+            py::arg("divisionsPerQuarterNote") = 256);
 
     // ====== Methods SETTERS for class Note ===== //
     cls.def("setPitchClass", &Note::setPitchClass);
@@ -78,12 +75,22 @@ void NoteClass(py::module &m) {
     cls.def("getSoundingOctave", &Note::getSoundingOctave);
     cls.def("getWrittenOctave", &Note::getWrittenOctave);
 
-    cls.def("getPitchClass", &Note::getPitchClass, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("getOctave", &Note::getOctave, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("getDurationTicks", &Note::getDurationTicks, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("isNoteOn", &Note::isNoteOn, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("isNoteOff", &Note::isNoteOff, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("getPitch", &Note::getPitch, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("getPitchClass", &Note::getPitchClass);
+    cls.def("getOctave", &Note::getOctave);
+    
+    cls.def("getType", &Note::getType);
+    cls.def("getLongType", &Note::getLongType);
+    cls.def("getShortType", &Note::getShortType);
+    cls.def("getDurationTicks", &Note::getDurationTicks);
+    cls.def("getNumDots", &Note::getNumDots);
+    cls.def("isDotted", &Note::isDotted);
+    cls.def("isDoubleDotted", &Note::isDoubleDotted);
+    cls.def("getDivisionsPerQuarterNote", &Note::getDivisionsPerQuarterNote);
+    cls.def("getQuarterDuration", &Note::getQuarterDuration);
+    
+    cls.def("isNoteOn", &Note::isNoteOn);
+    cls.def("isNoteOff", &Note::isNoteOff);
+    cls.def("getPitch", &Note::getPitch);
     cls.def("getMIDINumber", &Note::getMIDINumber);
 
     cls.def("getVoice", &Note::getVoice);
@@ -99,7 +106,7 @@ void NoteClass(py::module &m) {
 
     cls.def("getAlterSymbol", &Note::getAlterSymbol);
 
-    cls.def("inChord", &Note::inChord, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("inChord", &Note::inChord);
     cls.def("getTransposeDiatonic", &Note::getTransposeDiatonic);
     cls.def("getTransposeChromatic", &Note::getTransposeChromatic);
     cls.def("isTransposed", &Note::isTransposed);

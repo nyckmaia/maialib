@@ -1,4 +1,6 @@
 #include "interval.h"
+#include "constants.h"
+#include <stdexcept>
 
 Interval::Interval(const std::string& pitch_A, const std::string& pitch_B) :
     Interval(Note(pitch_A), Note(pitch_B))

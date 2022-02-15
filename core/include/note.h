@@ -6,13 +6,18 @@
 #include <cctype>
 #include <string>
 
-#include "helper.h"
-
 struct timeModification_st {
     int actualNotes = 0;
     int normalNotes = 0;
     std::string normalType = "eighth";
 };
+
+typedef struct duration_st {
+    int ticks = 0;
+    std::string noteType;
+    int divisionsPerQuarterNote = 0;
+    int numDots = 0;
+} Duration;
 
 class Note
 {
@@ -24,7 +29,7 @@ private:
     std::string _soundingPitchClass;
     int _soundingOctave;
 
-    int _durationTicks;
+    Duration _duration;
     bool _isNoteOn;
     bool _inChord;
     int _midiNumber;
@@ -33,9 +38,7 @@ private:
     int _voice;
     int _staff;
     bool _isGraceNote;
-    std::string _type;
     std::string _stem;
-    int _numDots;
     bool _isTuplet;
     bool _isPitched;
     int _unpitchedIndex;
@@ -51,26 +54,8 @@ private:
     std::vector<std::string> _beam;
 
 public:
-
-    /**
-     * @brief Construct a new Note object
-     * 
-     * @param pitch Note Pitch
-     * @param durationTicks Duration in Ticks
-     * @param isNoteOn If is note = true | If is rest = false 
-     * @param inChord Is this note inside of a chord?
-     * @param transposeDiatonic Number of diatonic semitones of the transpose instrument
-     * @param transposeChromatic Number of chromatic semitones of the transpose instrument
-     */
-    Note(const std::string& pitch, const size_t durationTicks = 256, bool isNoteOn = true, bool inChord = false, int transposeDiatonic = 0, int transposeChromatic = 0);
-    
-    /**
-     * @brief Construct a new Rest (Note object)
-     * This is an alias to construct a rest
-     * 
-     * @param durationTicks Duration in Ticks
-     */
-    Note(const size_t durationTicks = 256); // For rest
+    Note();
+    explicit Note(const std::string& pitch, const std::string& noteType = "quarter", bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0, const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
 
     ~Note();
 
@@ -122,7 +107,7 @@ public:
     void setVoice(const int voice);
     void setStaff(const int staff);
     void setIsGraceNote(const bool isGraceNote = false);
-    void setType(const std::string& type);
+    void setType(const std::string& noteType);
     void setStem(const std::string& steam);
     void removeDots();
     void setSingleDot();
@@ -159,16 +144,25 @@ public:
     std::string getPitchClass() const;
     std::string getPitchStep() const;
     int getOctave() const;
+
+    std::string getType() const;
+    std::string getLongType() const;
+    std::string getShortType() const;
     int getDurationTicks() const;
+    int getNumDots() const;
+    bool isDotted() const;
+    bool isDoubleDotted() const;
+    int getDivisionsPerQuarterNote() const;
+    float getQuarterDuration() const;
+    
     bool isNoteOn() const;
     bool isNoteOff() const;
     std::string getPitch() const;
     int getMIDINumber() const;
     int getVoice() const;
     int getStaff() const;
-    std::string getType() const;
     std::string getStem() const;
-    int getNumDots() const;
+    
     std::vector<std::string> getTie() const;
     void removeTies();
     std::pair<std::string, std::string> getSlur() const;
