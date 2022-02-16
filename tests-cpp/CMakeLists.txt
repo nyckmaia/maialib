@@ -10,7 +10,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra -pedantic")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 enable_testing()
@@ -40,19 +40,24 @@ if(WIN32)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/debug)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/debug/external/zip)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/debug/external/sqlitecpp)
+
+    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore zip gtest SQLiteCpp sqlite3)
 elseif(APPLE)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/debug)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/debug/external/zip)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/debug/external/sqlitecpp)
+
+    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore zip gtest SQLiteCpp sqlite3 dl)
 elseif(UNIX AND NOT APPLE)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/debug)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/debug/external/zip)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/debug/external/sqlitecpp)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/debug/external/sqlitecpp/sqlite3)
+
+    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore zip gtest SQLiteCpp sqlite3 dl)
 else()
     message(FATAL_ERROR "Unable to detect the OS")
 endif()
-
-target_link_libraries(${PROJECT_NAME} PUBLIC maiacore zip gtest SQLiteCpp sqlite3)
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})
 

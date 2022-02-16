@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.11] - 2022-02-16
+### New Features
+- `Note` class
+    - Add constructor overload to receive MIDI Numbers
+    - Add `.transpose()`
+- Add external `Cherno Instrumentor` profiler class. Load the output `profile.json` file inside `chrome://tracing/`
+
+### Improved
+
+### Fixed
+- `Helper::midiNote2pitch()`
+
+-------------------------
 ## [v0.0.10] - 2022-02-14
 ### New Features
 - Add Makefile target: `make validate`
@@ -22,6 +35,7 @@ All notable changes to this project will be documented in this file.
 - `Chord::getDuration()` now returns a `rhythm figure` as string
 - `Helper::noteType2ticks()`
 - `Helper::ticks2NoteType()`
+
 ### Fixed
 
 -------------------------

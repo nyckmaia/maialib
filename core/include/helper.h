@@ -26,8 +26,6 @@ public:
     static std::pair<std::string, int> ticks2noteType(const int ticks, const int divisionsPerQuarterNote = 256);
     static int noteType2ticks(std::string noteType, const int divisionsPerQuarterNote = 256);
 
-    static float ticks2QuarterNoteValue(const size_t ticks, const size_t divisionsPerQuarterNote);
-
     static float pitch2number(const std::string& pitch);
     static const std::string number2pitch(const float number, const std::string& accType = MUSIC_XML::ACCIDENT::SHARP);
 

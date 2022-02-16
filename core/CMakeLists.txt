@@ -20,7 +20,7 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 
 set(CMAKE_CXX_FLAGS "-Wall -Wextra")
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O2")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 option(STATIC_LIB "Generate a static libray" OFF)
@@ -53,6 +53,12 @@ file(GLOB python_wrapper_src
     "./src/python_wrapper/*.cpp"
 )
 
+OPTION(PROFILING "Profile functions" OFF)
+
+if(PROFILING)
+  add_definitions(-DPROFILING)
+endif()
+
 # Generate static library
 if(STATIC_LIB)
     message("=====> GENERATING STATIC LIBRARY <=====")
@@ -65,6 +71,7 @@ if(STATIC_LIB)
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
     target_include_directories(${PROJECT_NAME} PUBLIC external)
+    target_include_directories(${PROJECT_NAME} PUBLIC external/cherno)
 
     target_link_libraries(${PROJECT_NAME} zip SQLiteCpp sqlite3 pthread dl)
 endif()
@@ -80,6 +87,7 @@ if(SHARED_LIB)
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
     target_include_directories(${PROJECT_NAME} PUBLIC external)
+    target_include_directories(${PROJECT_NAME} PUBLIC external/cherno)
 
     target_link_libraries(${PROJECT_NAME} zip SQLiteCpp sqlite3 pthread dl)
 endif()
@@ -87,7 +95,7 @@ endif()
 # Generate python module library
 if(PYBIND_LIB)
     message("=====> GENERATING PYBIND LIBRARY <=====")
-
+    
     add_definitions(-DPYBIND)
     
     find_package(Python COMPONENTS Interpreter Development)
@@ -101,6 +109,7 @@ if(PYBIND_LIB)
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
     target_include_directories(${PROJECT_NAME} PUBLIC external)
+    target_include_directories(${PROJECT_NAME} PUBLIC external/cherno)
 
     add_subdirectory(external/zip)
     add_subdirectory(external/sqlitecpp)

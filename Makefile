@@ -30,7 +30,7 @@ all: dev
 SCRIPTS_DIR = ./scripts
 
 dev:
-	@make clean
+#	@make clean
 	@make uninstall
 	@make module-release
 	@make install
@@ -51,7 +51,7 @@ module-clean:
 	@python3 $(SCRIPTS_DIR)/make-clean.py module
 
 static-debug:
-	@python3 $(SCRIPTS_DIR)/make-library.py static debug
+	@python3 $(SCRIPTS_DIR)/make-library.py static Debug
 
 static-release:
 	@python3 $(SCRIPTS_DIR)/make-library.py static release

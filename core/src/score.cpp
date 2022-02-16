@@ -1,4 +1,5 @@
 #include "score.h"
+#include "cherno/instrumentor.h"
 
 Score::Score(const std::initializer_list<std::string>& partsName, const int numMeasures) :
     _numParts(partsName.size()),
@@ -45,7 +46,10 @@ Score::Score(const std::string& filePath) :
     _isLoadedXML(false),
     _lcmDivisionsPerQuarterNote(0)
 {
+    Instrumentor::Instance().beginSession("TEST");
+    PROFILE_FUNCTION();
     loadXMLFile(filePath);
+    Instrumentor::Instance().endSession();
 }
 
 Score::~Score()
@@ -55,6 +59,8 @@ Score::~Score()
 
 void Score::clear()
 {
+    PROFILE_FUNCTION();
+
     _title.clear();
     _composerName.clear();
     _part.clear();
@@ -83,6 +89,7 @@ void Score::info() const
 
 void Score::loadXMLFile(const std::string& filePath)
 {
+    PROFILE_FUNCTION();
     auto start = std::chrono::steady_clock::now();
 
     clear();
@@ -487,12 +494,16 @@ void Score::loadXMLFile(const std::string& filePath)
 
 void Score::addPart(const std::string& partName, const int numStaves)
 {
+    PROFILE_FUNCTION();
+
     _part.emplace_back(partName, numStaves);
     _part.back().addMeasure(_numMeasures);
 }
 
 void Score::removePart(const int partId)
 {
+    PROFILE_FUNCTION();
+
     if (partId >= static_cast<int>(_part.size())) {
         std::cerr << "[ERROR] Invalid part index" << std::endl;
         return;
@@ -503,6 +514,7 @@ void Score::removePart(const int partId)
 
 void Score::addMeasure(const int numMeasures)
 {
+    PROFILE_FUNCTION();
     const int partSize = _part.size();
 
     for (int i = 0; i < partSize; i++) {
@@ -512,6 +524,7 @@ void Score::addMeasure(const int numMeasures)
 
 void Score::removeMeasure(const int measureStart, const int measureEnd)
 {
+    PROFILE_FUNCTION();
     if (measureEnd < measureStart) {
         std::cerr << "[ERROR] The 'measureEnd' MUST BE equal or greater than 'measureStart'" << std::endl;
         return;
@@ -526,11 +539,13 @@ void Score::removeMeasure(const int measureStart, const int measureEnd)
 
 Part& Score::getPart(const int partId)
 {
+    PROFILE_FUNCTION();
     return _part.at(partId);
 }
 
 Part& Score::getPart(const std::string& partName)
 {
+    PROFILE_FUNCTION();
     int partIndex = 0;
     const bool isValid = getPartIndex(partName, partIndex);
 
@@ -545,21 +560,22 @@ Part& Score::getPart(const std::string& partName)
 
 int Score::getNumParts() const
 {
-//    if (_isLoadedXML) { return getParts(); }
+    PROFILE_FUNCTION();
 
     return _part.size();
 }
 
 int Score::getNumMeasures() const
 {
-    // FOR EACH PART...get num acc MESURES
-//    if (_isLoadedXML) { return getMeasures(); }
+    PROFILE_FUNCTION();
 
     return _numMeasures;
 }
 
 int Score::getNumNotes() const
 {
+    PROFILE_FUNCTION();
+
     int numNotes = 0;
 
     for (const auto& part : _part) {
@@ -573,6 +589,8 @@ int Score::getNumNotes() const
 
 const std::vector<std::string> Score::getPartNames() const
 {
+    PROFILE_FUNCTION();
+
     const int numParts = getNumParts();
     std::vector<std::string> partNames(numParts);
 
@@ -595,6 +613,7 @@ void Score::setComposerName(const std::string& composerName)
 
 void Score::setKeySignature(const int fifthCicle, const bool isMajorMode, const int measureId)
 {
+    PROFILE_FUNCTION();
     const int partSize = _part.size();
 
     for (int i = 0; i < partSize; i++) {
@@ -604,6 +623,7 @@ void Score::setKeySignature(const int fifthCicle, const bool isMajorMode, const 
 
 void Score::setKeySignature(const std::string& key, const int measureId)
 {
+    PROFILE_FUNCTION();
     const bool isMajorKey = (key.back() != 'm') ? true : false;
 
     const std::map<std::string, int> c_majorKeySignatureMap {
@@ -634,6 +654,7 @@ void Score::setKeySignature(const std::string& key, const int measureId)
 
 void Score::setTimeSignature(const int timeUpper, const int timeLower, const int measureId)
 {
+    PROFILE_FUNCTION();
     if (measureId < 0) { // For all measures
         for (auto& part : _part) {
             for (int m = 0; m < _numMeasures; m++) {
@@ -654,6 +675,7 @@ void Score::setTimeSignature(const int timeUpper, const int timeLower, const int
 
 void Score::setMetronomeMark(int bpm, const std::string& rhythmFigure, int measureStart)
 {
+    PROFILE_FUNCTION();
     // ===== VALIDADE INPUT ARGUMENTS ===== //
     // BPM validation
     if (bpm <= 0) { std::runtime_error("BPM must be a positive value"); }
@@ -676,6 +698,7 @@ void Score::setMetronomeMark(int bpm, const std::string& rhythmFigure, int measu
 
 const std::string Score::toXML(const int identSize) const
 {
+    PROFILE_FUNCTION();
     const int numParts = getNumParts();
 
     std::string xml;
@@ -821,6 +844,7 @@ const std::string Score::toJSON() const
 
 void Score::toFile(std::string fileName, const int identSize) const
 {
+    PROFILE_FUNCTION();
     std::string fileWithExtension;
 
     // Error checking:
@@ -860,6 +884,7 @@ bool Score::haveTypeTag(void) const
 
 int Score::countNotes(nlohmann::json& config) const
 {
+    PROFILE_FUNCTION();
     // ===== CHECKING THE INPUT ARGUMENTS ===== //
     // Parts:
     if (!config.contains("parts")) {
@@ -1169,23 +1194,10 @@ int Score::countNotes(nlohmann::json& config) const
     return nodes.size();
 }
 
-//int Score::getNotes() const
-//{
-//    // If already computed, return from cache:
-//    if (_numNotes > 0) { return _numNotes; }
-
-//    const std::string xPath = "/score-partwise/part//note";
-//    const pugi::xpath_node_set musicNotes = _doc.select_nodes(xPath.c_str());
-
-//    if (musicNotes.empty()) {
-//        std::cerr << "[ERROR] Unable to get the amount of notes" << std::endl;
-//    }
-
-//    return musicNotes.size();
-//}
-
 bool Score::getNote(const int part, const int measure, const int note, std::string& pitch, std::string& step, int& octave, int& duration, int& voice, std::string& type, std::string& steam, int& staff) const
 {
+    PROFILE_FUNCTION();
+
     // Create a XPATH pointed to the desired note:
     const std::string xPath = "/score-partwise/part[" + std::to_string(part+1) + "]/measure[" + std::to_string(measure+1) + "]/note[" + std::to_string(note+1) + "]";
 
@@ -1232,6 +1244,8 @@ bool Score::getNote(const int part, const int measure, const int note, std::stri
 
 bool Score::getNote(const int part, const int measure, const int note, std::string& pitch, std::string& step, int& octave) const
 {
+    PROFILE_FUNCTION();
+
     int duration, voice;
     std::string type;
     std::string steam;
@@ -1242,6 +1256,7 @@ bool Score::getNote(const int part, const int measure, const int note, std::stri
 
 bool Score::getNote(const int part, const int measure, const int note, std::string& pitch) const
 {
+    PROFILE_FUNCTION();
     std::string step;
     int octave,duration, voice;
     std::string type;
@@ -1253,6 +1268,7 @@ bool Score::getNote(const int part, const int measure, const int note, std::stri
 
 void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, int& measure, std::string& pitch, std::string& pitchClass, std::string& alterSymbol, int& alterValue, int& octave, std::string& type, float& duration) const
 {
+    PROFILE_FUNCTION();
     // ===== GET PART NAME ===== //
     const std::string partId = node.parent().parent().attribute("id").as_string();
     const int id = atoi(partId.substr(1, partId.size()).c_str());
@@ -1304,6 +1320,8 @@ void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, i
 
 nlohmann::json Score::selectNotes(nlohmann::json& config) const
 {
+    PROFILE_FUNCTION();
+
     // ===== XPATH: ROOT ===== //
     const std::string xPathRoot = "/score-partwise";
 
@@ -1533,6 +1551,8 @@ const std::string Score::getPartName(const int partId) const
 
 bool Score::getPartIndex(const std::string& partName, int& index) const
 {
+    PROFILE_FUNCTION();
+
     bool foundIndex = false;
 
     const int partsNameSize = _partsName.size();
@@ -1552,6 +1572,8 @@ bool Score::getPartIndex(const std::string& partName, int& index) const
 
 const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
 {
+    PROFILE_FUNCTION();
+
     // Measure elapsed time:
     auto start = std::chrono::steady_clock::now();
 
@@ -2102,6 +2124,8 @@ int Score::xPathCountNodes(const std::string& xPath) const
 
 void Score::forEachNote(std::function<void (Note& note)> callback, int measureStart, int measureEnd, std::vector<std::string> partNames)
 {
+    PROFILE_FUNCTION();
+
     // Set the correct values of the measure end input argument
     measureEnd = (measureEnd < 0) ? getNumMeasures() : measureEnd;
 
@@ -2149,7 +2173,7 @@ void Score::forEachNote(std::function<void (Note& note)> callback, int measureSt
 
 nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
 {
-
+    PROFILE_FUNCTION();
     nlohmann::json out;
 
     const int instrumentCount = config["partNumber"].size();
@@ -2436,6 +2460,7 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
 
 std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
 {
+    PROFILE_FUNCTION();
     // ===== STEP 1: PARSE THE INPUT CONFIG JSON ===== //
 
     // ===== STEP 1.0: READ PART NAMES ===== //
@@ -2658,6 +2683,7 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
 
 std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks, const bool includeDuplicates)
 {
+    PROFILE_FUNCTION();
     // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
     db.exec("CREATE INDEX startTime_idx ON events (starttime)");
 
@@ -2746,6 +2772,7 @@ std::vector<std::pair<int, Chord>> Score::getSameAttackChords(SQLite::Database& 
 
 std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes, const int minDurationTicks, const int maxDurationTicks, const bool includeDuplicates)
 {
+    PROFILE_FUNCTION();
     // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
     db.exec("CREATE INDEX startTime_endTime_idx ON events (starttime, endtime)");
 

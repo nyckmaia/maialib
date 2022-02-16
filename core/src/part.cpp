@@ -1,4 +1,5 @@
 #include "part.h"
+#include "cherno/instrumentor.h"
 
 //Part::Part(const std::string& partName, const int numMeasures, const int numStaves, const int divisionsPerQuarterNote) :
 //    _numStaves(numStaves),
@@ -90,6 +91,8 @@ bool Part::isPitched() const
 
 void Part::setStaffLines(const int staffLines)
 {
+    PROFILE_FUNCTION();
+
     _staffLines = staffLines;
 }
 
@@ -100,6 +103,8 @@ int Part::getStaffLines() const
 
 void Part::setIsPitched(const bool isPitched)
 {
+    PROFILE_FUNCTION();
+
     _isPitched = isPitched;
 
     for (auto& m : _measure) {
@@ -137,6 +142,7 @@ Measure& Part::getMeasure(const int measureId)
 
 const Measure& Part::getMeasure(const int measureId) const
 {
+    PROFILE_FUNCTION();
     return _measure.at(measureId);
 }
 
@@ -147,6 +153,8 @@ int Part::getNumMeasures() const
 
 void Part::setNumStaves(const int numStaves)
 {
+    PROFILE_FUNCTION();
+
     _numStaves = numStaves;
 
     for (auto& m : _measure) {
@@ -175,6 +183,8 @@ int Part::getNumStaves() const
 
 void Part::addMidiUnpitched(const int midiUnpitched)
 {
+    PROFILE_FUNCTION();
+
     _midiUnpitched.push_back(midiUnpitched);
 }
 

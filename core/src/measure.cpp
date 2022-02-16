@@ -1,4 +1,5 @@
 #include "measure.h"
+#include "cherno/instrumentor.h"
 
 Measure::Measure(const int numStaves, const int divisionsPerQuarterNote) :
     _number(0),
@@ -39,11 +40,13 @@ void Measure::info() const
 
 void Measure::setNumber(const int MeasureNumber)
 {
+    PROFILE_FUNCTION();
     _number = MeasureNumber;
 }
 
 void Measure::setKeySignature(const int fifthCicle, const bool isMajorMode)
 {
+    PROFILE_FUNCTION();
     const std::map<int, std::string> majorKey {
       std::make_pair(0, ""),
       std::make_pair(1, "G"),
@@ -171,6 +174,7 @@ bool Measure::empty() const
 
 void Measure::addNote(const Note& note, const int staveId, int position)
 {
+    PROFILE_FUNCTION();
     auto& stave = _note[staveId];
 
     if (position < 0) {
@@ -195,6 +199,8 @@ void Measure::addNote(const std::string& pitch, const int staveId, int position)
 
 void Measure::addNote(const std::vector<std::string>& pitchClassVec, const int staveId, int position)
 {
+    PROFILE_FUNCTION();
+
     for (auto& pitch : pitchClassVec) {
         addNote(pitch, staveId, position);
     }

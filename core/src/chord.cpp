@@ -187,7 +187,7 @@ void Chord::setDurationTicks(const int durationTicks)
 void Chord::inversion(size_t inversionNumber)
 {
     for (size_t i = 0; i < inversionNumber; i++) {
-        _note[0].transposition(12);  // isto apenas altera a nota uma oitava acima
+        _note[0].transpose(12);  // isto apenas altera a nota uma oitava acima
 
         const Note& x = _note[0];  // pega a nota que foi alterada acima
         _note.push_back(x);

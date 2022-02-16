@@ -23,6 +23,16 @@ void NoteClass(py::module &m) {
             py::arg("transposeDiatonic") = 0,
             py::arg("transposeChromatic") = 0,
             py::arg("divisionsPerQuarterNote") = 256);
+    
+    cls.def(py::init<const int, const std::string&, const std::string&, bool, bool, const int, const int, const int>(),
+            py::arg("midiNumber"),
+            py::arg("accType") = "",
+            py::arg("noteType") = "quarter",
+            py::arg("isNoteOn") = true,
+            py::arg("inChord") = false,
+            py::arg("transposeDiatonic") = 0,
+            py::arg("transposeChromatic") = 0,
+            py::arg("divisionsPerQuarterNote") = 256);
 
     // ====== Methods SETTERS for class Note ===== //
     cls.def("setPitchClass", &Note::setPitchClass);
@@ -32,8 +42,10 @@ void NoteClass(py::module &m) {
     cls.def("setPitch", &Note::setPitch);
     cls.def("setIsInChord", &Note::setIsInChord);
     cls.def("setTransposingInterval", &Note::setTransposingInterval);
+    cls.def("transpose", &Note::transpose,
+        py::arg("semitones"),
+        py::arg("accType") = MUSIC_XML::ACCIDENT::SHARP);
     
-
     cls.def("setVoice", &Note::setVoice);
     cls.def("setStaff", &Note::setStaff);
     cls.def("setIsGraceNote", &Note::setIsGraceNote,
@@ -58,8 +70,6 @@ void NoteClass(py::module &m) {
 
     cls.def("setUnpitchedIndex", &Note::setUnpitchedIndex);
     cls.def("getUnpitchedIndex", &Note::getUnpitchedIndex);
-
-    cls.def("transposition", &Note::transposition);
 
     // ===================== Method GETTERS for class Note ===== //
     cls.def("getPitchStep", &Note::getPitchStep);

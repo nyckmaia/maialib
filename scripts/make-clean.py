@@ -17,10 +17,12 @@ if (cleanOption == "all"):
 
     rmtree("./build", True)
     rmtree("./dist", True)
+    rmtree("./maialib.egg-info", True)
     rmtree("__pycache__", True)
     rmtree("tests/__pycache__", True)
     rmtree("maiapy/__pycache__", True)
     rmtree("scripts/__pycache__", True)
+    rmtree("profile.json", True)
     print(f"{color.OKGREEN}Done!{color.ENDC}")
     sys.exit()
 

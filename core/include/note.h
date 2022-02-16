@@ -6,6 +6,8 @@
 #include <cctype>
 #include <string>
 
+#include "constants.h"
+
 struct timeModification_st {
     int actualNotes = 0;
     int normalNotes = 0;
@@ -56,6 +58,7 @@ private:
 public:
     Note();
     explicit Note(const std::string& pitch, const std::string& noteType = "quarter", bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0, const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
+    explicit Note(const int midiNumber, const std::string& accType = "", const std::string& noteType = "quarter", bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0, const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
 
     ~Note();
 
@@ -124,8 +127,6 @@ public:
     void setIsPitched(const bool isPitched = true);
     void setUnpitchedIndex(const int unpitchedIndex);
 
-    void transposition(int semitonesNumber);
-
     void info() const;
 
     // ===== GETTERS ===== //
@@ -179,6 +180,8 @@ public:
     int getTransposeChromatic() const;
     bool isTransposed() const;
     bool isGraceNote() const;
+
+    void transpose(const int semitones, const std::string& accType = MUSIC_XML::ACCIDENT::SHARP);
 
     const std::string toXML(const size_t instrumentId = 1, const int identSize = 2) const;
 

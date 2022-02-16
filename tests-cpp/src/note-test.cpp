@@ -3,6 +3,13 @@
 
 using namespace testing;
 
+TEST(NoteConstructor, midiNumber)
+{
+    Note note(60);
+
+    EXPECT_EQ(note.getPitch(), "C4");
+}
+
 TEST(NoteConstructor, onlyPitchClass_getPitchTypesOctaveAndDuration)
 {
     Note noteDoubleFlat("Abb");

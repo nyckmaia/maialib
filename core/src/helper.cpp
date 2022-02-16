@@ -1,5 +1,5 @@
 #include "helper.h"
-// #include "note.h"
+#include "cherno/instrumentor.h"
 
 std::vector<std::string> Helper::splitString(const std::string& s, char delimiter)
 {
@@ -45,47 +45,47 @@ const std::string Helper::midiNote2pitch(const int midiNote, const std::string& 
     // Get this midi note inside the first octave range
     const int firstOctaveMidiNote = midiNote % 12;
 
-    const bool canBeDoubleFlat  = (firstOctaveMidiNote == 0 ||
-                                   firstOctaveMidiNote == 2 ||
-                                   firstOctaveMidiNote == 3 ||
-                                   firstOctaveMidiNote == 5 ||
-                                   firstOctaveMidiNote == 7 ||
-                                   firstOctaveMidiNote == 9 ||
-                                   firstOctaveMidiNote == 10) ? true : false;
+    // const bool canBeDoubleFlat  = (firstOctaveMidiNote == 0 ||
+    //                                firstOctaveMidiNote == 2 ||
+    //                                firstOctaveMidiNote == 3 ||
+    //                                firstOctaveMidiNote == 5 ||
+    //                                firstOctaveMidiNote == 7 ||
+    //                                firstOctaveMidiNote == 9 ||
+    //                                firstOctaveMidiNote == 10) ? true : false;
 
-    const bool canBeFlat        = (firstOctaveMidiNote == 1 ||
-                                   firstOctaveMidiNote == 3 ||
-                                   firstOctaveMidiNote == 4 ||
-                                   firstOctaveMidiNote == 6 ||
-                                   firstOctaveMidiNote == 8 ||
-                                   firstOctaveMidiNote == 10 ||
-                                   firstOctaveMidiNote == 11) ? true : false;
+    // const bool canBeFlat        = (firstOctaveMidiNote == 1 ||
+    //                                firstOctaveMidiNote == 3 ||
+    //                                firstOctaveMidiNote == 4 ||
+    //                                firstOctaveMidiNote == 6 ||
+    //                                firstOctaveMidiNote == 8 ||
+    //                                firstOctaveMidiNote == 10 ||
+    //                                firstOctaveMidiNote == 11) ? true : false;
 
-    const bool canBeSharp       = (firstOctaveMidiNote == 0 ||
-                                   firstOctaveMidiNote == 1 ||
-                                   firstOctaveMidiNote == 3 ||
-                                   firstOctaveMidiNote == 5 ||
-                                   firstOctaveMidiNote == 6 ||
-                                   firstOctaveMidiNote == 8 ||
-                                   firstOctaveMidiNote == 10) ? true : false;
+    // const bool canBeSharp       = (firstOctaveMidiNote == 0 ||
+    //                                firstOctaveMidiNote == 1 ||
+    //                                firstOctaveMidiNote == 3 ||
+    //                                firstOctaveMidiNote == 5 ||
+    //                                firstOctaveMidiNote == 6 ||
+    //                                firstOctaveMidiNote == 8 ||
+    //                                firstOctaveMidiNote == 10) ? true : false;
 
-    const bool canBeDoubleSharp = (firstOctaveMidiNote == 1 ||
-                                   firstOctaveMidiNote == 2 ||
-                                   firstOctaveMidiNote == 4 ||
-                                   firstOctaveMidiNote == 6 ||
-                                   firstOctaveMidiNote == 7 ||
-                                   firstOctaveMidiNote == 9 ||
-                                   firstOctaveMidiNote == 11) ? true : false;
+    // const bool canBeDoubleSharp = (firstOctaveMidiNote == 1 ||
+    //                                firstOctaveMidiNote == 2 ||
+    //                                firstOctaveMidiNote == 4 ||
+    //                                firstOctaveMidiNote == 6 ||
+    //                                firstOctaveMidiNote == 7 ||
+    //                                firstOctaveMidiNote == 9 ||
+    //                                firstOctaveMidiNote == 11) ? true : false;
 
 
-    if ((accType == MUSIC_XML::ACCIDENT::DOUBLE_FLAT && !canBeDoubleFlat) ||
-        (accType == MUSIC_XML::ACCIDENT::FLAT && !canBeFlat) ||
-        (accType == MUSIC_XML::ACCIDENT::SHARP && !canBeSharp) ||
-        (accType == MUSIC_XML::ACCIDENT::DOUBLE_SHARP && !canBeDoubleSharp)) {
+    // if ((accType == MUSIC_XML::ACCIDENT::DOUBLE_FLAT && !canBeDoubleFlat) ||
+    //     (accType == MUSIC_XML::ACCIDENT::FLAT && !canBeFlat) ||
+    //     (accType == MUSIC_XML::ACCIDENT::SHARP && !canBeSharp) ||
+    //     (accType == MUSIC_XML::ACCIDENT::DOUBLE_SHARP && !canBeDoubleSharp)) {
 
-        std::cerr << "[ERROR] The MIDI Note '" << midiNote << "' cannot be wrote using '" << accType  << "' accident type" << std::endl;
-        return std::string(); 
-    }
+    //     std::cerr << "[ERROR] The MIDI Note '" << midiNote << "' cannot be wrote using '" << accType  << "' accident type" << std::endl;
+    //     return std::string(); 
+    // }
 
     // ===== GET THE PITCHCLASS ===== //
     std::string firstOctavePitchClass;
@@ -1793,12 +1793,9 @@ float Helper::pitch2number(const std::string& pitch)
 
 const pugi::xpath_node_set Helper::getNodeSet(const pugi::xml_document& doc, const std::string& xPath)
 {
-    return doc.select_nodes(xPath.c_str());
-}
+    PROFILE_FUNCTION();
 
-float Helper::ticks2QuarterNoteValue(const size_t ticks, const size_t divisionsPerQuarterNote)
-{
-    return (float)ticks / (float)divisionsPerQuarterNote;
+    return doc.select_nodes(xPath.c_str());
 }
 
 const std::string Helper::generateIdentation(int identPosition, int identSize)

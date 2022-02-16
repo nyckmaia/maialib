@@ -8,7 +8,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="0.0.10",
+    version="0.0.11",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate music data",

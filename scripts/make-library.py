@@ -27,6 +27,9 @@ path.mkdir(parents=True, exist_ok=True)
 # Base CMake command to build the python module
 cmakeCommand = f"cmake -G \"Unix Makefiles\" -B {path} -S ./core -DCMAKE_BUILD_TYPE={buildType}"
 
+if (buildType == "Debug"):
+    cmakeCommand += " -DPROFILING=ON"
+
 # If 'Windows' define the MinGW 'make.exe'
 if myOS == "Windows":
     cmakeCommand += ' -DCMAKE_MAKE_PROGRAM="C:/msys64/mingw64/bin/make.exe"'

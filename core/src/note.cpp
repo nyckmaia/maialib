@@ -1,9 +1,10 @@
 #include "note.h"
 #include "helper.h"
 
-Note::Note()
+Note::Note() : 
+    Note("A4")
 {
-    Note("A4");
+    
 }
 
 Note::Note(const std::string& pitch, const std::string& noteType, bool isNoteOn, bool inChord, int transposeDiatonic, int transposeChromatic, const int divisionsPerQuarterNote) :
@@ -76,6 +77,12 @@ Note::Note(const std::string& pitch, const std::string& noteType, bool isNoteOn,
 
     // Update the sounding Pitch/PitchClass and MIDI number
     setTransposingInterval(transposeDiatonic, transposeChromatic);
+}
+
+Note::Note(const int midiNumber, const std::string& accType, const std::string& noteType, bool isNoteOn, bool inChord, const int transposeDiatonic, const int transposeChromatic, const int divisionsPerQuarterNote) :
+    Note(Helper::midiNote2pitch(midiNumber, accType), noteType, isNoteOn, inChord, transposeDiatonic, transposeChromatic, divisionsPerQuarterNote)
+{
+   
 }
 
 Note::~Note()
@@ -288,6 +295,14 @@ bool Note::isTransposed() const
     return (_transposeDiatonic == 0 && _transposeChromatic == 0) ? false : true;
 }
 
+void Note::transpose(const int semitones, const std::string& accType)
+{
+    const std::string newPitch = Helper::transposePitch(getPitch(), semitones, accType);
+
+    setPitch(newPitch);
+}
+
+
 void Note::setPitch(const std::string& pitch){
     // Rest case: This is necessary to prevent: empty pitchClass + alterSymbol
     if (pitch.empty() || (pitch.find(MUSIC_XML::PITCH::REST) != std::string::npos)) {
@@ -478,15 +493,6 @@ void Note::setType(const std::string& noteType)
 void Note::setStem(const std::string& stem)
 {
     _stem = stem;
-}
-
-void Note::transposition(int semitonesNumber)
-{
-     std::string pitch = _writtenPitchClass + std::to_string(_writtenOctave);
-     int midinumber = Helper::pitch2midiNote(pitch) + semitonesNumber;
-
-     std::string newPitch = Helper::midiNote2pitch(midinumber);
-     setPitch(newPitch);
 }
 
 void Note::setIsTuplet(const bool isTuplet)
