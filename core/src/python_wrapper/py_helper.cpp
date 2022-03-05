@@ -23,6 +23,10 @@ void HelperClass(py::module &m) {
     //--------------------- //
     cls.def_static("pitch2midiNote", &Helper::pitch2midiNote);
     //--------------------- //
+    cls.def_static("midiNote2pitches", &Helper::midiNote2pitches,
+        py::arg("midiNote"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    //--------------------- //
     cls.def_static("midiNote2pitch", &Helper::midiNote2pitch,
         py::arg("midiNote"),
         py::arg("accType") = std::string(), 
@@ -56,6 +60,10 @@ void HelperClass(py::module &m) {
     //--------------------- //
     cls.def_static("durationRatio", &Helper::durationRatio, 
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    //--------------------- //
+    cls.def_static("duration2noteType", &Helper::duration2noteType);
+    //--------------------- //
+    cls.def_static("noteType2duration", &Helper::noteType2duration);
     //--------------------- //
     cls.def_static("pitch2freq", &Helper::pitch2freq, 
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());

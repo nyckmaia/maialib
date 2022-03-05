@@ -15,11 +15,12 @@ struct timeModification_st {
 };
 
 typedef struct duration_st {
+    Duration duration;
     int ticks = 0;
     std::string noteType;
     int divisionsPerQuarterNote = 0;
     int numDots = 0;
-} Duration;
+} DurationType;
 
 class Note
 {
@@ -31,7 +32,7 @@ private:
     std::string _soundingPitchClass;
     int _soundingOctave;
 
-    Duration _duration;
+    DurationType _duration;
     bool _isNoteOn;
     bool _inChord;
     int _midiNumber;
@@ -57,8 +58,8 @@ private:
 
 public:
     Note();
-    explicit Note(const std::string& pitch, const std::string& noteType = "quarter", bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0, const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
-    explicit Note(const int midiNumber, const std::string& accType = "", const std::string& noteType = "quarter", bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0, const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
+    explicit Note(const std::string& pitch, const Duration duration = Duration::QUARTER, bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0, const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
+    explicit Note(const int midiNumber, const std::string& accType = "", const Duration duration = Duration::QUARTER, bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0, const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
 
     ~Note();
 
@@ -78,6 +79,14 @@ public:
      * @param octave Octave number
      */
     void setOctave(int octave);
+
+    /**
+     * @brief Set the note duration
+     * 
+     * @param duration Duration as a Enum class element
+     * @param divisionsPerQuarterNote Divisions per quarter note
+     */
+    void setDuration(const Duration duration, const int divisionsPerQuarterNote = 256);
 
     /**
      * @brief Set the note duration ticks
@@ -154,6 +163,7 @@ public:
     bool isDotted() const;
     bool isDoubleDotted() const;
     int getDivisionsPerQuarterNote() const;
+    float getDuration() const;
     float getQuarterDuration() const;
     
     bool isNoteOn() const;

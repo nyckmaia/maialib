@@ -33,8 +33,11 @@ const std::string Helper::midiNote2pitch(const int midiNote, const std::string& 
     if (midiNote < 0) { return "rest"; }
 
     // Validate accType value
-    if (!accType.empty() && (accType != MUSIC_XML::ACCIDENT::SHARP) && (accType != MUSIC_XML::ACCIDENT::FLAT) &&
-        (accType != MUSIC_XML::ACCIDENT::DOUBLE_SHARP) && (accType != MUSIC_XML::ACCIDENT::DOUBLE_FLAT)) {
+    if (!accType.empty() && (accType != MUSIC_XML::ACCIDENT::SHARP) && 
+        (accType != MUSIC_XML::ACCIDENT::FLAT) &&
+        (accType != MUSIC_XML::ACCIDENT::NONE) && 
+        (accType != MUSIC_XML::ACCIDENT::DOUBLE_SHARP) && 
+        (accType != MUSIC_XML::ACCIDENT::DOUBLE_FLAT)) {
 
         std::cerr << "[ERROR] Unknown accident type: " << accType << std::endl;
         return std::string();
@@ -45,47 +48,47 @@ const std::string Helper::midiNote2pitch(const int midiNote, const std::string& 
     // Get this midi note inside the first octave range
     const int firstOctaveMidiNote = midiNote % 12;
 
-    // const bool canBeDoubleFlat  = (firstOctaveMidiNote == 0 ||
-    //                                firstOctaveMidiNote == 2 ||
-    //                                firstOctaveMidiNote == 3 ||
-    //                                firstOctaveMidiNote == 5 ||
-    //                                firstOctaveMidiNote == 7 ||
-    //                                firstOctaveMidiNote == 9 ||
-    //                                firstOctaveMidiNote == 10) ? true : false;
+    const bool canBeDoubleFlat  = (firstOctaveMidiNote == 0 ||
+                                   firstOctaveMidiNote == 2 ||
+                                   firstOctaveMidiNote == 3 ||
+                                   firstOctaveMidiNote == 5 ||
+                                   firstOctaveMidiNote == 7 ||
+                                   firstOctaveMidiNote == 9 ||
+                                   firstOctaveMidiNote == 10) ? true : false;
 
-    // const bool canBeFlat        = (firstOctaveMidiNote == 1 ||
-    //                                firstOctaveMidiNote == 3 ||
-    //                                firstOctaveMidiNote == 4 ||
-    //                                firstOctaveMidiNote == 6 ||
-    //                                firstOctaveMidiNote == 8 ||
-    //                                firstOctaveMidiNote == 10 ||
-    //                                firstOctaveMidiNote == 11) ? true : false;
+    const bool canBeFlat        = (firstOctaveMidiNote == 1 ||
+                                   firstOctaveMidiNote == 3 ||
+                                   firstOctaveMidiNote == 4 ||
+                                   firstOctaveMidiNote == 6 ||
+                                   firstOctaveMidiNote == 8 ||
+                                   firstOctaveMidiNote == 10 ||
+                                   firstOctaveMidiNote == 11) ? true : false;
 
-    // const bool canBeSharp       = (firstOctaveMidiNote == 0 ||
-    //                                firstOctaveMidiNote == 1 ||
-    //                                firstOctaveMidiNote == 3 ||
-    //                                firstOctaveMidiNote == 5 ||
-    //                                firstOctaveMidiNote == 6 ||
-    //                                firstOctaveMidiNote == 8 ||
-    //                                firstOctaveMidiNote == 10) ? true : false;
+    const bool canBeSharp       = (firstOctaveMidiNote == 0 ||
+                                   firstOctaveMidiNote == 1 ||
+                                   firstOctaveMidiNote == 3 ||
+                                   firstOctaveMidiNote == 5 ||
+                                   firstOctaveMidiNote == 6 ||
+                                   firstOctaveMidiNote == 8 ||
+                                   firstOctaveMidiNote == 10) ? true : false;
 
-    // const bool canBeDoubleSharp = (firstOctaveMidiNote == 1 ||
-    //                                firstOctaveMidiNote == 2 ||
-    //                                firstOctaveMidiNote == 4 ||
-    //                                firstOctaveMidiNote == 6 ||
-    //                                firstOctaveMidiNote == 7 ||
-    //                                firstOctaveMidiNote == 9 ||
-    //                                firstOctaveMidiNote == 11) ? true : false;
+    const bool canBeDoubleSharp = (firstOctaveMidiNote == 1 ||
+                                   firstOctaveMidiNote == 2 ||
+                                   firstOctaveMidiNote == 4 ||
+                                   firstOctaveMidiNote == 6 ||
+                                   firstOctaveMidiNote == 7 ||
+                                   firstOctaveMidiNote == 9 ||
+                                   firstOctaveMidiNote == 11) ? true : false;
 
 
-    // if ((accType == MUSIC_XML::ACCIDENT::DOUBLE_FLAT && !canBeDoubleFlat) ||
-    //     (accType == MUSIC_XML::ACCIDENT::FLAT && !canBeFlat) ||
-    //     (accType == MUSIC_XML::ACCIDENT::SHARP && !canBeSharp) ||
-    //     (accType == MUSIC_XML::ACCIDENT::DOUBLE_SHARP && !canBeDoubleSharp)) {
+    if ((accType == MUSIC_XML::ACCIDENT::DOUBLE_FLAT && !canBeDoubleFlat) ||
+        (accType == MUSIC_XML::ACCIDENT::FLAT && !canBeFlat) ||
+        (accType == MUSIC_XML::ACCIDENT::SHARP && !canBeSharp) ||
+        (accType == MUSIC_XML::ACCIDENT::DOUBLE_SHARP && !canBeDoubleSharp)) {
 
-    //     std::cerr << "[ERROR] The MIDI Note '" << midiNote << "' cannot be wrote using '" << accType  << "' accident type" << std::endl;
-    //     return std::string(); 
-    // }
+        std::string msg = "[ERROR] The MIDI Note '" + std::to_string(midiNote) + "' cannot be wrote using '" + accType + "' accident type";
+        throw std::runtime_error(msg);
+    }
 
     // ===== GET THE PITCHCLASS ===== //
     std::string firstOctavePitchClass;
@@ -120,6 +123,34 @@ const std::string Helper::midiNote2pitch(const int midiNote, const std::string& 
     }
 
     return firstOctavePitchClass + std::to_string(octave);
+}
+
+const std::vector<std::string> Helper::midiNote2pitches(const int midiNote)
+{
+    std::vector<std::string> pitches;
+
+    const std::vector<std::string> accType { 
+        MUSIC_XML::ACCIDENT::DOUBLE_FLAT, 
+        MUSIC_XML::ACCIDENT::FLAT,
+        MUSIC_XML::ACCIDENT::NONE,
+        MUSIC_XML::ACCIDENT::SHARP,
+        MUSIC_XML::ACCIDENT::DOUBLE_SHARP };
+
+    for (const auto& acc : accType) {
+        try
+        {
+            const std::string pitch = midiNote2pitch(midiNote, acc);
+            pitches.push_back(pitch);
+        } catch (const std::runtime_error& error)
+        {
+            // Nothing to do. Just ignore
+        }
+    }
+
+    std::sort(pitches.begin(), pitches.end());
+    pitches.erase(std::unique(pitches.begin(), pitches.end()), pitches.end());
+    
+    return pitches;
 }
 
 int Helper::pitch2midiNote(const std::string& pitch)
@@ -617,7 +648,7 @@ int Helper::pitch2midiNote(const std::string& pitch)
         case hash("Db10"):  return MUSIC_XML::MIDI::NUMBER::MIDI_132;
         case hash("B#9"):   return MUSIC_XML::MIDI::NUMBER::MIDI_132;
 
-        default: std::cerr << "Unknown pitch: " << pitch << std::endl; break;
+        default: std::cerr << "Unknown pitch: " << pitch << std::endl;; break;
     }
 
     // If pitch no found:
@@ -653,50 +684,23 @@ float Helper::midiNote2freq(const int midiNote)
 
 float Helper::alterSymbol2Value(const std::string& alterSymbol)
 {
-    float value = 0.0f;
     switch (hash(alterSymbol.c_str())) {
-        case hash("bb"):
-            value = -2.0f;
-            break;
-        
-        case hash("3b"):
-            value = -1.5f;
-            break;
-
-        case hash("b"):
-            value = -1.0f;
-            break;
-
-        case hash("1b"):
-            value = -0.5f;
-            break;
-
-        case hash(""):
-            value = 0.0f;
-            break;
-
-        case hash("1x"):
-            value = 0.5f;
-            break;
-
-        case hash("#"):
-            value = 1.0f;
-            break;
-
-        case hash("3x"):
-            value = 1.5f;
-            break;
-
-        case hash("x"):
-            value = 2.0f;
-            break;
+        case hash("bb"):    return -2.0f;
+        case hash("3b"):    return -1.5f;
+        case hash("b"):     return -1.0f;
+        case hash("1b"):    return -0.5f;
+        case hash(""):      return 0.0f;
+        case hash("1x"):    return 0.5f;
+        case hash("#"):     return 1.0f;
+        case hash("3x"):    return 1.5f;
+        case hash("x"):     return 2.0f;
         
         default:
-            std::cerr << "Unknown accident symbol: " << alterSymbol << std::endl;
+            std::cerr << "[ERROR] Unknown accident symbol: " << alterSymbol << std::endl;
             break;
     }
 
-    return value;
+    return {};
 }
 
 const std::string Helper::alterValue2Name(const float alterValue)
@@ -711,51 +715,23 @@ const std::string Helper::alterValue2Name(const float alterValue)
 
     const std::string alterStr = streamObj.str().c_str();
 
-    std::string name; 
-
     switch (hash(alterStr.c_str())) {
-        case hash("-2.0"):
-            name = "flat-flat";
-            break;
-        
-        case hash("-1.5"):
-            name = "flat-down";
-            break;
-        
-        case hash("-1.0"):
-            name = "flat";
-            break;
-        
-        case hash("-0.5"):
-            name = "flat-up";
-            break;
-
-        case hash("0.0"):
-            name = "natural";
-            break;
-
-        case hash("0.5"):
-            name = "sharp-down";
-            break;
-        
-        case hash("1.0"):
-            name = "sharp";
-            break;
-        
-        case hash("1.5"):
-            name = "sharp-up";
-            break;
-        
-        case hash("2.0"):
-            name = "double-sharp";
-            break;
+        case hash("-2.0"): return "flat-flat";
+        case hash("-1.5"): return "flat-down";
+        case hash("-1.0"): return "flat";
+        case hash("-0.5"): return "flat-up";
+        case hash("0.0"): return "natural";
+        case hash("0.5"): return "sharp-down";
+        case hash("1.0"): return "sharp";
+        case hash("1.5"): return "sharp-up";        
+        case hash("2.0"): return "double-sharp";
     
         default:
             std::cerr << "[ERROR] Unknown accidental alter value: " << alterStr << std::endl;
             break;
     }
 
-    return name;
+    return {};
 }
 
 const std::string Helper::alterValue2symbol(const float alterValue)
@@ -770,98 +746,44 @@ const std::string Helper::alterValue2symbol(const float alterValue)
 
     std::string value = streamObj.str().c_str();
 
-    std::string symbol;
     switch (hash(value.c_str())) {
-        case hash("-2.0"):
-            symbol = "bb";
-            break;
-        
-        case hash("-1.5"):
-            symbol = "3b";
-            break;
-
-        case hash("-1.0"):
-            symbol = "b";
-            break;
-        
-        case hash("-0.5"):
-            symbol = "1b";
-            break;
-
-        case hash("0.0"):
-            symbol = "";
-            break;
-        
-        case hash("0.5"):
-            symbol = "1x";
-            break;
-
-        case hash("1.0"):
-            symbol = "#";
-            break;
-        
-        case hash("1.5"):
-            symbol = "3x";
-            break;
-
-        case hash("2.0"):
-            symbol = "x";
-            break;
+        case hash("-2.0"): return "bb";
+        case hash("-1.5"): return "3b";
+        case hash("-1.0"): return "b";
+        case hash("-0.5"): return "1b";
+        case hash("0.0"):  return "";      
+        case hash("0.5"):  return "1x";
+        case hash("1.0"):  return "#";
+        case hash("1.5"):  return "3x";
+        case hash("2.0"):  return "x";
 
         default:
             std::cerr << "[ERROR] Unknown accidental alter value: " << value << std::endl;
             break;
     }
 
-    return symbol;
+    return {};
 }
 
 const std::string Helper::alterName2symbol(const std::string& alterName)
 {
-    std::string symbol;
     switch (hash(alterName.c_str())) {
-        case hash("natural"):
-            symbol = "";
-            break;
-        
-        case hash("sharp-down"):
-            symbol = "1x";
-            break;
-        
-        case hash("sharp"):
-            symbol = "#";
-            break;
-        
-        case hash("sharp-up"):
-            symbol = "3x";
-            break;
-        
-        case hash("double-sharp"):
-            symbol = "x";
-            break;
-        
-        case hash("flat-up"):
-            symbol = "1b";
-            break;
-        
-        case hash("flat"):
-            symbol = "b";
-            break;
-        
-        case hash("flat-down"):
-            symbol = "3b";
-            break;
-
-        case hash("flat-flat"):
-            symbol = "bb";
-            break;
-    
+        case hash("natural"):      return ""; break;      
+        case hash("sharp-down"):   return "1x"; break;
+        case hash("sharp"):        return "#"; break;       
+        case hash("sharp-up"):     return "3x"; break;
+        case hash("double-sharp"): return "x"; break;
+        case hash("flat-up"):      return "1b"; break;        
+        case hash("flat"):         return "b"; break;
+        case hash("flat-down"):    return "3b"; break;
+        case hash("flat-flat"):    return "bb"; break;
+       
         default:
             std::cerr << "[ERROR] Unknown accidental name: " << alterName << std::endl;
             break;
     }
 
-    return symbol;
+    return {};
 }
 
 const nlohmann::json Helper::getPercentiles(const nlohmann::json& table, const std::vector<float>& desiredPercentiles)
@@ -993,7 +915,7 @@ int Helper::noteType2ticks(std::string noteType, const int divisionsPerQuarterNo
             ticks = divisionsPerQuarterNote * pow(2, 0)
                 + divisionsPerQuarterNote * pow(2, -1)
                 + divisionsPerQuarterNote * pow(2, -2);
-            break;    
+            break;  
 
         case hash("quarter-dot"):
             ticks = divisionsPerQuarterNote * pow(2, 0)
@@ -1197,7 +1119,9 @@ std::pair<std::string, int> Helper::ticks2noteType(const int ticks, const int di
     if ((scaledRatio >= 3906)     && (scaledRatio <= 5858))     { return { MUSIC_XML::NOTE_TYPE::N1024TH,         0}; } // 1:256
 
     // switch/case default option
-    std::cerr << "[ERROR] Unable to convert ticks to noteType: " << ticks << std::endl;
+    std::cerr << "[ERROR-MS] Unable to convert ticks to noteType: " << ticks << std::endl;
+    std::cerr << "ticks: " << ticks << " | divPQN: " << divisionsPerQuarterNote << "| scaledRatio: " << scaledRatio << std::endl;
+
     return {};
 
 #else
@@ -1260,6 +1184,7 @@ std::pair<std::string, int> Helper::ticks2noteType(const int ticks, const int di
     case 3906 ... 5858:         return { MUSIC_XML::NOTE_TYPE::N1024TH        , 0}; // 1:256
     default:
         std::cerr << "[ERROR] Unable to convert ticks to noteType: " << ticks << std::endl;
+        std::cerr << "ticks: " << ticks << " | divPQN: " << divisionsPerQuarterNote << "| scaledRatio: " << scaledRatio << std::endl;
         break;
     }
 
@@ -1455,7 +1380,7 @@ float Helper::pitch2freq(const std::string& pitch)
             freq = 34.30f * pow(2, octave); // Aproximation of C#
             break;
         default:
-            std::cerr << "Pitch not found!" << std::endl;
+            std::cerr << "[ERROR] Pitch not found!" << std::endl;
     }
 
     // Apply the quarter accidental to the pure tone frequency value:
@@ -1556,9 +1481,9 @@ void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::
     }
 
     switch (pitchSize) {
-        case 2: alterSymbol = ""; break;
-        case 3: alterSymbol = pitch.substr(1, 1); break;
-        case 4: alterSymbol = pitch.substr(1, 2); break;
+        case 2: alterSymbol = "";; break;
+        case 3: alterSymbol = pitch.substr(1, 1);; break;
+        case 4: alterSymbol = pitch.substr(1, 2);; break;
     }
 
     alterValue = alterSymbol2Value(alterSymbol);
@@ -1586,17 +1511,121 @@ float Helper::durationRatio(float duration_A, float duration_B)
         return 0.0f;
     }
 
+    if (duration_A == duration_B) { return 1.0f; }
+
     // Compute the ratio from 0 to 100%:
-    float ratio = 0.0f;
-    if (duration_A == duration_B) {
-        ratio = 1.0f;
-    } else if (duration_A > duration_B) {
-        ratio = duration_B / duration_A;
-    } else if (duration_A < duration_B) {
-        ratio = duration_A / duration_B;
+    return (duration_A > duration_B) ? duration_B / duration_A : duration_A / duration_B;
+}
+
+std::string Helper::duration2noteType(const Duration duration)
+{
+    switch (duration)
+    {
+    case Duration::MAXIMA_DOT_DOT:  return MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT; break;
+    case Duration::MAXIMA_DOT:      return MUSIC_XML::NOTE_TYPE::MAXIMA_DOT; break;
+    case Duration::MAXIMA:          return MUSIC_XML::NOTE_TYPE::MAXIMA; break;
+    case Duration::LONG_DOT_DOT:    return MUSIC_XML::NOTE_TYPE::LONG_DOT_DOT; break;
+    case Duration::LONG_DOT:        return MUSIC_XML::NOTE_TYPE::LONG_DOT; break;
+    case Duration::LONG:            return MUSIC_XML::NOTE_TYPE::LONG; break;
+    case Duration::BREVE_DOT_DOT:   return MUSIC_XML::NOTE_TYPE::BREVE_DOT_DOT; break;
+    case Duration::BREVE_DOT:       return MUSIC_XML::NOTE_TYPE::BREVE_DOT; break;
+    case Duration::BREVE:           return MUSIC_XML::NOTE_TYPE::BREVE; break;
+    case Duration::WHOLE_DOT_DOT:   return MUSIC_XML::NOTE_TYPE::WHOLE_DOT_DOT; break;
+    case Duration::WHOLE_DOT:       return MUSIC_XML::NOTE_TYPE::WHOLE_DOT; break;
+    case Duration::WHOLE:           return MUSIC_XML::NOTE_TYPE::WHOLE; break;
+    case Duration::HALF_DOT_DOT:    return MUSIC_XML::NOTE_TYPE::HALF_DOT_DOT; break;
+    case Duration::HALF_DOT:        return MUSIC_XML::NOTE_TYPE::HALF_DOT; break;
+    case Duration::HALF:            return MUSIC_XML::NOTE_TYPE::HALF; break;
+    case Duration::QUARTER_DOT_DOT: return MUSIC_XML::NOTE_TYPE::QUARTER_DOT_DOT; break;
+    case Duration::QUARTER_DOT:     return MUSIC_XML::NOTE_TYPE::QUARTER_DOT; break;
+    case Duration::QUARTER:         return MUSIC_XML::NOTE_TYPE::QUARTER; break;
+    case Duration::EIGHTH_DOT_DOT:  return MUSIC_XML::NOTE_TYPE::EIGHTH_DOT_DOT; break;
+    case Duration::EIGHTH_DOT:      return MUSIC_XML::NOTE_TYPE::EIGHTH_DOT; break;
+    case Duration::EIGHTH:          return MUSIC_XML::NOTE_TYPE::EIGHTH; break;
+    case Duration::N16TH_DOT_DOT:   return MUSIC_XML::NOTE_TYPE::N16TH_DOT_DOT; break;
+    case Duration::N16TH_DOT:       return MUSIC_XML::NOTE_TYPE::N16TH_DOT; break;
+    case Duration::N16TH:           return MUSIC_XML::NOTE_TYPE::N16TH; break;
+    case Duration::N32ND_DOT_DOT:   return MUSIC_XML::NOTE_TYPE::N32ND_DOT_DOT; break;
+    case Duration::N32ND_DOT:       return MUSIC_XML::NOTE_TYPE::N32ND_DOT; break;
+    case Duration::N32ND:           return MUSIC_XML::NOTE_TYPE::N32ND; break;
+    case Duration::N64TH_DOT_DOT:   return MUSIC_XML::NOTE_TYPE::N64TH_DOT_DOT; break;
+    case Duration::N64TH_DOT:       return MUSIC_XML::NOTE_TYPE::N64TH_DOT; break;
+    case Duration::N64TH:           return MUSIC_XML::NOTE_TYPE::N64TH; break;
+    case Duration::N128TH_DOT_DOT:  return MUSIC_XML::NOTE_TYPE::N128TH_DOT_DOT; break;
+    case Duration::N128TH_DOT:      return MUSIC_XML::NOTE_TYPE::N128TH_DOT; break;
+    case Duration::N128TH:          return MUSIC_XML::NOTE_TYPE::N128TH; break;
+    case Duration::N256TH_DOT_DOT:  return MUSIC_XML::NOTE_TYPE::N256TH_DOT_DOT; break;
+    case Duration::N256TH_DOT:      return MUSIC_XML::NOTE_TYPE::N256TH_DOT; break;
+    case Duration::N256TH:          return MUSIC_XML::NOTE_TYPE::N256TH; break;
+    case Duration::N512TH_DOT_DOT:  return MUSIC_XML::NOTE_TYPE::N512TH_DOT_DOT; break;
+    case Duration::N512TH_DOT:      return MUSIC_XML::NOTE_TYPE::N512TH_DOT; break;
+    case Duration::N512TH:          return MUSIC_XML::NOTE_TYPE::N512TH; break;
+    case Duration::N1024TH_DOT_DOT: return MUSIC_XML::NOTE_TYPE::N1024TH_DOT_DOT; break;
+    case Duration::N1024TH_DOT:     return MUSIC_XML::NOTE_TYPE::N1024TH_DOT; break;
+    case Duration::N1024TH:         return MUSIC_XML::NOTE_TYPE::N1024TH; break;
+    
+    default:
+        std::runtime_error("[ERROR] Unknown Duration type");
+        break;
     }
 
-    return ratio;
+    return {};
+}
+
+Duration Helper::noteType2duration(const std::string& noteType)
+{
+    switch (hash(noteType.c_str()))
+    {
+    case hash("maxima-dot-dot"):    return Duration::MAXIMA_DOT_DOT;
+    case hash("maxima-dot"):        return Duration::MAXIMA_DOT;
+    case hash("maxima"):            return Duration::MAXIMA;
+    case hash("long-dot-dot"):      return Duration::LONG_DOT_DOT;
+    case hash("long-dot"):          return Duration::LONG_DOT;
+    case hash("long"):              return Duration::LONG;
+    case hash("breve-dot-dot"):     return Duration::BREVE_DOT_DOT;
+    case hash("breve-dot"):         return Duration::BREVE_DOT;
+    case hash("breve"):             return Duration::BREVE;
+    case hash("whole-dot-dot"):     return Duration::WHOLE_DOT_DOT;
+    case hash("whole-dot"):         return Duration::WHOLE_DOT;
+    case hash("whole"):             return Duration::WHOLE;
+    case hash("half-dot-dot"):      return Duration::HALF_DOT_DOT;
+    case hash("half-dot"):          return Duration::HALF_DOT;
+    case hash("half"):              return Duration::HALF;
+    case hash("quarter-dot-dot"):   return Duration::QUARTER_DOT_DOT;
+    case hash("quarter-dot"):       return Duration::QUARTER_DOT;
+    case hash("quarter"):           return Duration::QUARTER;
+    case hash("eighth-dot-dot"):    return Duration::EIGHTH_DOT_DOT;
+    case hash("eighth-dot"):        return Duration::EIGHTH_DOT;
+    case hash("eighth"):            return Duration::EIGHTH;
+    case hash("16th-dot-dot"):      return Duration::N16TH_DOT_DOT;
+    case hash("16th-dot"):          return Duration::N16TH_DOT;
+    case hash("16th"):              return Duration::N16TH;
+    case hash("32nd-dot-dot"):      return Duration::N32ND_DOT_DOT;
+    case hash("32nd-dot"):          return Duration::N32ND_DOT;
+    case hash("32nd"):              return Duration::N32ND;
+    case hash("64th-dot-dot"):      return Duration::N64TH_DOT_DOT;
+    case hash("64th-dot"):          return Duration::N64TH_DOT;
+    case hash("64th"):              return Duration::N64TH;
+    case hash("128th-dot-dot"):     return Duration::N128TH_DOT_DOT;
+    case hash("128th-dot"):         return Duration::N128TH_DOT;
+    case hash("128th"):             return Duration::N128TH;
+    case hash("256th-dot-dot"):     return Duration::N256TH_DOT_DOT;
+    case hash("256th-dot"):         return Duration::N256TH_DOT;
+    case hash("256th"):             return Duration::N256TH;
+    case hash("512th-dot-dot"):     return Duration::N512TH_DOT_DOT;
+    case hash("512th-dot"):         return Duration::N512TH_DOT;
+    case hash("512th"):             return Duration::N512TH;
+    case hash("1024th-dot-dot"):    return Duration::N1024TH_DOT_DOT;
+    case hash("1024th-dot"):        return Duration::N1024TH_DOT;
+    case hash("1024th"):            return Duration::N1024TH;
+    
+    default:
+        const std::string msg = "[ERROR] Unknown note type: " + noteType;
+        std::runtime_error(msg.c_str());
+        break;
+    }
+
+    return {};
 }
 
 const std::string Helper::number2pitch(const float number, const std::string& accType)
@@ -1643,50 +1672,30 @@ const std::string Helper::number2pitch(const float number, const std::string& ac
     } else if (acc == -1.0f) {
         accStr = "bb";
     } else {
-        std::cerr << "Unknown accident symbol" << std::endl;
+        std::cerr << "[ERROR] Unknown accident symbol" << std::endl;
         return std::string();
     }
 
     // Pitch: Select a pure pitch value:
     std::string purePitchStr;
     switch (purePitch) {
-        case 1:
-            purePitchStr = "C";
-            break;
-
-        case 2:
-            purePitchStr = "D";
-            break;
-
-        case 3:
-            purePitchStr = "E";
-            break;
-
-        case 4:
-            purePitchStr = "F";
-            break;
-
-        case 5:
-            purePitchStr = "G";
-            break;
-
-        case 6:
-            purePitchStr = "A";
-            break;
-
-        case 7:
-            purePitchStr = "B";
-            break;
+        case 1: purePitchStr = "C"; break;
+        case 2: purePitchStr = "D"; break;
+        case 3: purePitchStr = "E"; break;
+        case 4: purePitchStr = "F"; break;
+        case 5: purePitchStr = "G"; break;
+        case 6: purePitchStr = "A"; break;
+        case 7: purePitchStr = "B"; break;
 
         default:
-            std::cerr << "Unknown pure pitch value" << std::endl;
+            std::cerr << "[ERROR] Unknown pure pitch value" << std::endl;
             return std::string();
     }
 
     // Result:
     std::string pitch = purePitchStr + accStr + octStr;
 
-    return  pitch;
+    return pitch;
 }
 
 const std::string Helper::transposePitch(const std::string& pitch, const int semitones, const std::string& accType)

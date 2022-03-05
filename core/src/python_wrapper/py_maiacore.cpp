@@ -12,11 +12,13 @@ void ChordClass(py::module &);
 void BarlineClass(py::module &);
 void IntervalClass(py::module &);
 void HelperClass(py::module &);
+void Constants(py::module &);
 
 PYBIND11_MODULE(maiacore, m) {
 
     m.doc() = "This is a Python binding of C++ Maia Library";
 
+    Constants(m);
     NoteClass(m);
     ChordClass(m);
     ScoreClass(m);
@@ -26,5 +28,6 @@ PYBIND11_MODULE(maiacore, m) {
     MeasureClass(m);
     IntervalClass(m);
     HelperClass(m);
+    
 }
 #endif

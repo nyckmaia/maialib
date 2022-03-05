@@ -3,6 +3,53 @@
 
 #include <string>
 #include <array>
+#include <map>
+
+enum class Duration 
+{
+    MAXIMA_DOT_DOT = 42,
+    MAXIMA_DOT = 41,
+    MAXIMA = 40,
+    LONG_DOT_DOT = 39,
+    LONG_DOT = 38,
+    LONG = 37,
+    BREVE_DOT_DOT = 36,
+    BREVE_DOT = 35,
+    BREVE = 34,
+    WHOLE_DOT_DOT = 33,
+    WHOLE_DOT = 32,
+    WHOLE = 31,
+    HALF_DOT_DOT = 30,
+    HALF_DOT = 29,
+    HALF = 28,
+    QUARTER_DOT_DOT = 27,
+    QUARTER_DOT = 26,
+    QUARTER = 25,
+    EIGHTH_DOT_DOT = 24,
+    EIGHTH_DOT = 23,
+    EIGHTH = 22,
+    N16TH_DOT_DOT = 21,
+    N16TH_DOT = 20,
+    N16TH = 19,
+    N32ND_DOT_DOT = 18,
+    N32ND_DOT = 17,
+    N32ND = 16,
+    N64TH_DOT_DOT = 15,
+    N64TH_DOT = 14,
+    N64TH = 13,
+    N128TH_DOT_DOT = 12,
+    N128TH_DOT = 11,
+    N128TH = 10,
+    N256TH_DOT_DOT = 9,
+    N256TH_DOT = 8,
+    N256TH = 7,
+    N512TH_DOT_DOT = 6,
+    N512TH_DOT = 5,
+    N512TH = 4,
+    N1024TH_DOT_DOT = 3,
+    N1024TH_DOT = 2,
+    N1024TH = 1,
+};
 
 // ===== CHORD STACK'S ===== //
 const std::array<char, 7> c_C_diatonicChordStack = {'C', 'E', 'G', 'B', 'D', 'F', 'A'};
@@ -108,6 +155,7 @@ namespace MUSIC_XML {
     namespace ACCIDENT {
         const std::string SHARP = "#";
         const std::string FLAT = "b";
+        const std::string NONE = "";
         const std::string DOUBLE_SHARP = "x";
         const std::string DOUBLE_FLAT = "bb";
     }

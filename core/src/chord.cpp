@@ -573,32 +573,30 @@ std::vector<int> Chord::getMIDIIntervals()
     return _midiInterval;
 }
 
-std::vector<std::string> Chord::getIntervalNames()
+std::vector<Interval> Chord::getIntervals() const
 {
-    if (!_isStackedInThirds) {
-        stackInThirds();
+    const int numIntervals = size() - 1;
+    std::vector<Interval> intervals;
+
+    for (int i = 0; i < numIntervals; i++) {
+        intervals.emplace_back(_note[i], _note[i+1]);
     }
 
-    const size_t stackSize = _stack.size();
-    std::vector<std::string> intervals(stackSize - 1);
-    int idx = 0;
+    return intervals;
+}
 
-    if (_haveMinorThird) { intervals[idx] = "3m"; idx++; }
-    if (_haveMajorThird) { intervals[idx] = "3M"; idx++; }
-    if (_haveDiminishedFifth) { intervals[idx] = "b5"; idx++; }
-    if (_havePerfectFifth) { intervals[idx] = "5"; idx++; }
-    if (_haveAugmentedFifth) { intervals[idx] = "5+"; idx++; }
-    if (_haveDiminishedSeventh) { intervals[idx] = "dim7"; idx++; }
-    if (_haveMinorSeventh) { intervals[idx] = "7"; idx++; }
-    if (_haveMajorSeventh) { intervals[idx] = "7M"; idx++; }
-    if (_haveMinorNinth) { intervals[idx] = "9b"; idx++; }
-    if (_haveMajorNinth) { intervals[idx] = "9"; idx++; }
-    if (_havePerfectEleventh) { intervals[idx] = "11"; idx++; }
-    if (_haveSharpEleventh) { intervals[idx] = "#11"; idx++; }
-    if (_haveMinorThirdteenth) { intervals[idx] = "13b"; }
-    if (_haveMajorThirdteenth) { intervals[idx] = "13"; }
+std::vector<Interval> Chord::getStackIntervals()
+{
+    if (!_isStackedInThirds) { stackInThirds(); }
 
-    return  intervals;
+    const int numIntervals = stackSize() - 1;
+    std::vector<Interval> intervals;
+
+    for (int i = 0; i < numIntervals; i++) {
+        intervals.emplace_back(_stack[i], _stack[i+1]);
+    }
+
+    return intervals;
 }
 
 std::string Chord::enharmonicName()

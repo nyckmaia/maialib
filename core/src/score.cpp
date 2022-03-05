@@ -363,7 +363,7 @@ void Score::loadXMLFile(const std::string& filePath)
             int octave = 0;
             std::string step;
             std::string pitch;
-            int duration = 0;
+            int durationTicks = 0;
             int voice = 0;
             std::string type;
             std::string stem;
@@ -383,7 +383,7 @@ void Score::loadXMLFile(const std::string& filePath)
                 isTuple = node.child("time-modification");
                 isGraceNote = node.child("grace");
                 isUnpitched = node.child("unpitched");
-                duration = atoi(node.child_value("duration"));
+                durationTicks = atoi(node.child_value("duration"));
                 voice = atoi(node.child_value("voice"));
                 type = node.child_value("type");
                 stem = node.child_value("stem");
@@ -424,14 +424,16 @@ void Score::loadXMLFile(const std::string& filePath)
                 if (voice == 0) { voice = 1; }
                 if (staff <= 0) { staff = 0; }
 
+                // std::cout << "part: " << p << " | measure: " << m << " | note: " << n << std::endl;
+
                 // ===== CONSTRUCT A NOTE OBJECT AND STORE IT INSIDE THE SCORE OBJECT ===== //
                 const int divPQN = _part[p].getMeasure(m).getDivisionsPerQuarterNote();
-                const std::string noteType = Helper::ticks2noteType(duration, divPQN).first;
-                Note note(pitch, noteType, isNoteOn, inChord, transposeDiatonic, transposeChromatic, divPQN);
+                const std::string noteType = Helper::ticks2noteType(durationTicks, divPQN).first;
+                const Duration duration = Helper::noteType2duration(noteType);
+                Note note(pitch, duration, isNoteOn, inChord, transposeDiatonic, transposeChromatic, divPQN);
                 note.setVoice(voice);
                 note.setStaff(staff);
                 note.setIsGraceNote(isGraceNote);
-                note.setType(type);
                 note.setStem(stem);
                 note.setIsTuplet(isTuple);
                 note.setIsPitched(!isUnpitched);
@@ -2118,8 +2120,26 @@ int Score::xPathCountNodes(const std::string& xPath) const
     const pugi::xpath_node_set nodes = _doc.select_nodes(xPath.c_str());
 
     // Compute the number of nodes:
-
     return nodes.size();
+}
+
+void Score::setRepeat(int measureStart, int measureEnd)
+{
+    // INPUT ARGUMENTS VALIDATION
+    measureStart = (measureStart < 0) ? 0 : measureStart;
+    measureEnd = (measureEnd > _numMeasures) ? _numMeasures : measureEnd;
+
+    // Error checking
+    if (measureEnd < 1) {
+        const std::string msg = "'measureEnd' MUST BE greater than 1";
+        throw std::runtime_error(msg);
+    }
+
+    // For each part: set repeat barlines
+    for (auto& part : _part) {
+        part.getMeasure(measureStart).setRepeatStart();
+        part.getMeasure(measureEnd).setRepeatEnd();
+    }
 }
 
 void Score::forEachNote(std::function<void (Note& note)> callback, int measureStart, int measureEnd, std::vector<std::string> partNames)

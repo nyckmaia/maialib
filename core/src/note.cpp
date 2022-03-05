@@ -7,7 +7,7 @@ Note::Note() :
     
 }
 
-Note::Note(const std::string& pitch, const std::string& noteType, bool isNoteOn, bool inChord, int transposeDiatonic, int transposeChromatic, const int divisionsPerQuarterNote) :
+Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, bool inChord, int transposeDiatonic, int transposeChromatic, const int divisionsPerQuarterNote) :
     _writtenPitchClass(MUSIC_XML::PITCH::REST),
     _writtenOctave(0),
     _soundingPitchClass(MUSIC_XML::PITCH::REST),
@@ -26,7 +26,10 @@ Note::Note(const std::string& pitch, const std::string& noteType, bool isNoteOn,
 {
     // Rest case: This is necessary to prevent: empty pitchClass + alterSymbol
     if (pitch.empty() || (pitch.find(MUSIC_XML::PITCH::REST) != std::string::npos)
-        || isNoteOn == false) { return; }
+        || isNoteOn == false) {
+            setDuration(duration, divisionsPerQuarterNote);
+            return; 
+    }
 
     const size_t pitchSize = pitch.size();
 
@@ -73,14 +76,14 @@ Note::Note(const std::string& pitch, const std::string& noteType, bool isNoteOn,
     _transposeChromatic = transposeChromatic;
     _isNoteOn = true;
     _duration.divisionsPerQuarterNote = divisionsPerQuarterNote;
-    setType(noteType);
+    setDuration(duration);
 
     // Update the sounding Pitch/PitchClass and MIDI number
     setTransposingInterval(transposeDiatonic, transposeChromatic);
 }
 
-Note::Note(const int midiNumber, const std::string& accType, const std::string& noteType, bool isNoteOn, bool inChord, const int transposeDiatonic, const int transposeChromatic, const int divisionsPerQuarterNote) :
-    Note(Helper::midiNote2pitch(midiNumber, accType), noteType, isNoteOn, inChord, transposeDiatonic, transposeChromatic, divisionsPerQuarterNote)
+Note::Note(const int midiNumber, const std::string& accType, const Duration duration, bool isNoteOn, bool inChord, const int transposeDiatonic, const int transposeChromatic, const int divisionsPerQuarterNote) :
+    Note(Helper::midiNote2pitch(midiNumber, accType), duration, isNoteOn, inChord, transposeDiatonic, transposeChromatic, divisionsPerQuarterNote)
 {
    
 }
@@ -94,7 +97,8 @@ void Note::info() const
 {
     std::cout << "Is note on: " << std::boolalpha << _isNoteOn << std::endl;
     std::cout << "Pitch: " << getPitch() << std::endl;
-    std::cout << "Duration Ticks: " << _duration.ticks << std::endl;
+    std::cout << "Note Type: " << _duration.noteType << std::endl;
+    std::cout << "Quarter Duration: " << getQuarterDuration() << std::endl;
     std::cout << "Voice: " << _voice << std::endl;
     std::cout << "Staff: " << _staff << std::endl;
     std::cout << "MIDI Number: " << getMIDINumber() << std::endl;
@@ -179,12 +183,23 @@ int Note::getTransposeChromatic() const
     return _transposeChromatic;
 }
 
+void Note::setDuration(const Duration duration, const int divisionsPerQuarterNote)
+{
+    _duration.duration = duration;
+    _duration.divisionsPerQuarterNote = divisionsPerQuarterNote;
+    _duration.noteType = Helper::duration2noteType(duration);
+    _duration.ticks = Helper::noteType2ticks(_duration.noteType, _duration.divisionsPerQuarterNote);
+    const auto typeDotsPair = Helper::ticks2noteType(_duration.ticks, _duration.divisionsPerQuarterNote);
+    _duration.numDots = typeDotsPair.second;
+}
+
 void Note::setDurationTicks(int durationTicks)
 {
     _duration.ticks = durationTicks;
     const auto typeDotsPair = Helper::ticks2noteType(_duration.ticks, _duration.divisionsPerQuarterNote);
     _duration.noteType = typeDotsPair.first;
     _duration.numDots = typeDotsPair.second;
+    _duration.duration = Helper::noteType2duration(_duration.noteType);
 }
 
 void Note::setIsGraceNote(const bool isGraceNote)
@@ -197,6 +212,7 @@ void Note::removeDots()
     _duration.numDots = 0;
     _duration.noteType = _duration.noteType.substr(0, _duration.noteType.find('-'));
     _duration.ticks = Helper::noteType2ticks(_duration.noteType, _duration.divisionsPerQuarterNote);
+    _duration.duration = Helper::noteType2duration(_duration.noteType);
 }
 
 void Note::setSingleDot()
@@ -205,6 +221,7 @@ void Note::setSingleDot()
     _duration.noteType = _duration.noteType.substr(0, _duration.noteType.find('-'));
     _duration.noteType.append("-dot");
     _duration.ticks = Helper::noteType2ticks(_duration.noteType, _duration.divisionsPerQuarterNote);
+    _duration.duration = Helper::noteType2duration(_duration.noteType);
 }
 
 void Note::setDoubleDot()
@@ -213,6 +230,7 @@ void Note::setDoubleDot()
     _duration.noteType = _duration.noteType.substr(0, _duration.noteType.find('-'));
     _duration.noteType.append("-dot-dot");
     _duration.ticks = Helper::noteType2ticks(_duration.noteType, _duration.divisionsPerQuarterNote);
+    _duration.duration = Helper::noteType2duration(_duration.noteType);
 }
 
 std::string Note::getType() const
@@ -253,6 +271,11 @@ bool Note::isDoubleDotted() const
 int Note::getDivisionsPerQuarterNote() const
 {
     return _duration.divisionsPerQuarterNote;
+}
+
+float Note::getDuration() const
+{
+    return getQuarterDuration();
 }
 
 float Note::getQuarterDuration() const
@@ -481,13 +504,6 @@ void Note::setVoice(const int voice)
 void Note::setStaff(const int staff)
 {
     _staff = staff;
-}
-
-void Note::setType(const std::string& noteType)
-{
-    _duration.noteType = noteType;
-    _duration.numDots = std::count(noteType.begin(), noteType.end(), '-');
-    _duration.ticks = Helper::noteType2ticks(noteType, _duration.divisionsPerQuarterNote);
 }
 
 void Note::setStem(const std::string& stem)

@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.12] - 2022-03-04
+### New Features
+- Add `Note::getDuration()` as an alias to `Note::getQuarterDuration()`
+- Add `Duration` enum class
+- Add `std::vector<std::string> Helper::midiNotes2pitches(int midiNote)`
+- Add `void Score::setRepeat(int measureStart, int measureEnd)`
+- `Chord` class:
+    - Add `.getIntervals()`
+    - Add `.getStackIntervals()`
+
+### Improved
+- `Note` constructor now receives a `Duration` enum class as second parameter
+- `Helper::midiNotes2pitch()` if the user try to do something impossible, now this method returns an error
+
+### Fixed
+- Replace `Chord::getIntervalNames()` by `Chord::getIntervals()`
+
+-------------------------
+
 ## [v0.0.11] - 2022-02-16
 ### New Features
 - `Note` class

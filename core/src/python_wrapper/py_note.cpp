@@ -15,19 +15,19 @@ void NoteClass(py::module &m) {
 
     py::class_<Note> cls(m, "Note");
 
-    cls.def(py::init<const std::string&, const std::string&, bool, bool, const int, const int, const int>(),
+    cls.def(py::init<const std::string&, const Duration, bool, bool, const int, const int, const int>(),
             py::arg("pitch"),
-            py::arg("noteType") = "quarter",
+            py::arg("duration") = Duration::QUARTER,
             py::arg("isNoteOn") = true,
             py::arg("inChord") = false,
             py::arg("transposeDiatonic") = 0,
             py::arg("transposeChromatic") = 0,
             py::arg("divisionsPerQuarterNote") = 256);
     
-    cls.def(py::init<const int, const std::string&, const std::string&, bool, bool, const int, const int, const int>(),
+    cls.def(py::init<const int, const std::string&, const Duration, bool, bool, const int, const int, const int>(),
             py::arg("midiNumber"),
             py::arg("accType") = "",
-            py::arg("noteType") = "quarter",
+            py::arg("duration") = Duration::QUARTER,
             py::arg("isNoteOn") = true,
             py::arg("inChord") = false,
             py::arg("transposeDiatonic") = 0,
@@ -50,7 +50,6 @@ void NoteClass(py::module &m) {
     cls.def("setStaff", &Note::setStaff);
     cls.def("setIsGraceNote", &Note::setIsGraceNote,
         py::arg("isGraceNote") = false);
-    cls.def("setType", &Note::setType);
     cls.def("setStem", &Note::setStem);
     cls.def("removeDots", &Note::removeDots);
     cls.def("setSingleDot", &Note::setSingleDot);
@@ -96,6 +95,7 @@ void NoteClass(py::module &m) {
     cls.def("isDotted", &Note::isDotted);
     cls.def("isDoubleDotted", &Note::isDoubleDotted);
     cls.def("getDivisionsPerQuarterNote", &Note::getDivisionsPerQuarterNote);
+    cls.def("getDuration", &Note::getDuration);
     cls.def("getQuarterDuration", &Note::getQuarterDuration);
     
     cls.def("isNoteOn", &Note::isNoteOn);

@@ -26,7 +26,7 @@ std::pair<std::string, bool> Interval::analyse() const
 {
     // Get basic data to compute the interval name
     const int diatonicInterval = getDiatonicInterval(true);
-    const int numSemitones = getNumSemitones();
+    const int numSemitones = getNumSemitones(true);
 
     // Use 2 switchs to combine 'diatonicSteps' with 'numSemitones'
     switch (diatonicInterval) {
@@ -182,7 +182,9 @@ int Interval::getNumOctaves(const bool absoluteValue) const
 
 int Interval::getDiatonicInterval(const bool absoluteValue) const
 {
-    return getDiatonicSteps(absoluteValue) % c_C_diatonicScale.size();
+    const int diatonicScaleSize = (absoluteValue) ? c_C_diatonicScale.size() : c_C_diatonicScale.size() * -1;
+
+    return getDiatonicSteps(absoluteValue) % diatonicScaleSize;
 }
 
 int Interval::getDiatonicSteps(const bool absoluteValue) const

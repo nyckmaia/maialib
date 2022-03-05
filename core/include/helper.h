@@ -34,6 +34,7 @@ public:
 
     static int pitch2midiNote(const std::string& pitch);
     static const std::string midiNote2pitch(const int midiNote, const std::string& accType = {});
+    static const std::vector<std::string> midiNote2pitches(const int midiNote);
 
     static int semitonesBetweenPitches(const std::string& pitch_A, const std::string& pitch_B);
 
@@ -45,6 +46,8 @@ public:
     static float pitchRatio(const std::string &pitch_A, const std::string &pitch_B);
     static void splitPitch(const std::string& pitch, std::string& pitchClass, std::string& pitchStep, int& octave, float& alterValue, std::string& alterSymbol);
     static float durationRatio(float duration_A, float duration_B);
+    static std::string duration2noteType(const Duration duration);
+    static Duration noteType2duration(const std::string& noteType);
 
     static const std::string transposePitch(const std::string& pitch, const int semitones, const std::string& accType = MUSIC_XML::ACCIDENT::SHARP);
 

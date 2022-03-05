@@ -118,7 +118,8 @@ public:
     const nlohmann::json findPattern(nlohmann::json& pattern) const;
     int countNotes(nlohmann::json& config) const;
     void getNoteNodeData(const pugi::xml_node& node, std::string& partName, int& measure, std::string& pitch, std::string& pitchClass, std::string& alterSymbol, int& alterValue, int& octave, std::string& type, float& duration) const;
-    
+    void setRepeat(int measureStart, int measureEnd = -1);
+
     /**
      * @brief Get the called score 'instrument fragmentation' data
      * 
