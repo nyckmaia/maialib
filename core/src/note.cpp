@@ -321,7 +321,6 @@ bool Note::isTransposed() const
 void Note::transpose(const int semitones, const std::string& accType)
 {
     const std::string newPitch = Helper::transposePitch(getPitch(), semitones, accType);
-
     setPitch(newPitch);
 }
 
@@ -750,7 +749,7 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
         xml.append(Helper::generateIdentation(4, identSize) + "<type>16th</type>\n");
     } else {
         if (!_duration.noteType.empty()) {
-            xml.append(Helper::generateIdentation(4, identSize) + "<type>" + _duration.noteType + "</type>\n");
+            xml.append(Helper::generateIdentation(4, identSize) + "<type>" + getShortType() + "</type>\n");
         } else {
             // xml.append(Helper::generateIdentation(4, identSize) + "<type>" + Helper::ticks2noteType(_durationTicks, _divisionsPerQuarterNote) + "</type>\n");
         }

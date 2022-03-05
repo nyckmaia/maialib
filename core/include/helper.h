@@ -16,6 +16,8 @@
 #include "constants.h"
 #include "utils.h"
 
+class Note;
+
 class Helper
 {
 public:

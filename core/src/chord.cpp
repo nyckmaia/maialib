@@ -573,11 +573,21 @@ std::vector<int> Chord::getMIDIIntervals()
     return _midiInterval;
 }
 
-std::vector<Interval> Chord::getIntervals() const
+std::vector<Interval> Chord::getIntervals(const bool fromRoot) const
 {
     const int numIntervals = size() - 1;
     std::vector<Interval> intervals;
 
+    // ===== GET INTERVALS FROM ROOT ===== //
+    if (fromRoot) {
+        for (int i = 0; i < numIntervals; i++) {
+            intervals.emplace_back(_note[0], _note[i+1]);
+        }
+
+        return intervals;
+    }
+
+    // ===== GET INTERVALS FROM EACH NOTE PAIR ===== //
     for (int i = 0; i < numIntervals; i++) {
         intervals.emplace_back(_note[i], _note[i+1]);
     }
@@ -585,13 +595,23 @@ std::vector<Interval> Chord::getIntervals() const
     return intervals;
 }
 
-std::vector<Interval> Chord::getStackIntervals()
+std::vector<Interval> Chord::getStackIntervals(const bool fromRoot)
 {
     if (!_isStackedInThirds) { stackInThirds(); }
 
     const int numIntervals = stackSize() - 1;
     std::vector<Interval> intervals;
 
+    // ===== GET INTERVALS FROM ROOT ===== //
+    if (fromRoot) {
+        for (int i = 0; i < numIntervals; i++) {
+            intervals.emplace_back(_stack[0], _stack[i+1]);
+        }
+
+        return intervals;
+    }
+
+    // ===== GET INTERVALS FROM EACH NOTE PAIR ===== //
     for (int i = 0; i < numIntervals; i++) {
         intervals.emplace_back(_stack[i], _stack[i+1]);
     }

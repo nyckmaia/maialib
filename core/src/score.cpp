@@ -675,7 +675,7 @@ void Score::setTimeSignature(const int timeUpper, const int timeLower, const int
     }
 }
 
-void Score::setMetronomeMark(int bpm, const std::string& rhythmFigure, int measureStart)
+void Score::setMetronomeMark(int bpm, const Duration duration, int measureStart)
 {
     PROFILE_FUNCTION();
     // ===== VALIDADE INPUT ARGUMENTS ===== //
@@ -685,16 +685,11 @@ void Score::setMetronomeMark(int bpm, const std::string& rhythmFigure, int measu
     // measureStart validation
     measureStart = (measureStart < 0) ? 0 : measureStart;
 
-    // rhythmFigure validation
-    if (rhythmFigure.empty()) { std::runtime_error("rhythmFigure can't be void"); }
-
-    // TODO: Check if the rhythmFigure string is valid! 
-
     // ===== PROCESSING ===== //
     const int partSize = _part.size();
 
     for (int i = 0; i < partSize; i++) {
-        _part[i].getMeasure(measureStart).setMetronome(bpm, rhythmFigure);
+        _part[i].getMeasure(measureStart).setMetronome(bpm, duration);
     }
 }
 
@@ -2127,11 +2122,11 @@ void Score::setRepeat(int measureStart, int measureEnd)
 {
     // INPUT ARGUMENTS VALIDATION
     measureStart = (measureStart < 0) ? 0 : measureStart;
-    measureEnd = (measureEnd > _numMeasures) ? _numMeasures : measureEnd;
+    measureEnd = (measureEnd < 0 || measureEnd > (_numMeasures-1)) ? _numMeasures - 1 : measureEnd;
 
     // Error checking
-    if (measureEnd < 1) {
-        const std::string msg = "'measureEnd' MUST BE greater than 1";
+    if (measureEnd == 0) {
+        const std::string msg = "'measureEnd' MUST BE greater than 0";
         throw std::runtime_error(msg);
     }
 

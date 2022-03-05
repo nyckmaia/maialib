@@ -22,7 +22,9 @@ void MeasureClass(py::module &m) {
     cls.def("setNumber", &Measure::setNumber);
     cls.def("setKeySignature", &Measure::setKeySignature);
     cls.def("setTimeSignature", &Measure::setTimeSignature);
-    cls.def("setMetronome", &Measure::setMetronome);
+    cls.def("setMetronome", &Measure::setMetronome,
+        py::arg("bpm"),
+        py::arg("duration") = Duration::QUARTER);
 
     cls.def("setKeyMode", &Measure::setKeyMode,
         py::arg("keyMode") = "major");

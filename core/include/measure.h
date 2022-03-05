@@ -43,7 +43,7 @@ public:
     void setNumber(const int MeasureNumber);
     void setKeySignature(const int fifthCicle, const bool isMajorMode = true); // overload with measure
     void setTimeSignature(const int upper, const int lower); // overload with measure
-    void setMetronome(const int bpm, const std::string& rhythmFigure = "quarter"); // overload with measure
+    void setMetronome(const int bpm, const Duration duration = Duration::QUARTER); // overload with measure
 
     void setKeyMode(const bool isMajorKeyMode);
     void setIsKeySignatureChanged(bool isKeySignatureChanged = false);

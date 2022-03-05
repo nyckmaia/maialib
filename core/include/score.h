@@ -93,7 +93,7 @@ public:
     void setKeySignature(const int fifthCicle, const bool isMajorMode = true, const int measureId = 0);
     void setKeySignature(const std::string& key, const int measureId = 0);
     void setTimeSignature(const int timeUpper, const int timeLower, const int measureId = -1);
-    void setMetronomeMark(int bpm, const std::string& rhythmFigure = "quarter", int measureStart = 0);
+    void setMetronomeMark(int bpm, const Duration duration = Duration::QUARTER, int measureStart = 0);
 
     const std::string toXML(const int identSize = 2) const;
     const std::string toJSON() const;

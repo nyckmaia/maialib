@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.13] - 2022-03-05
+### New Features
+
+### Improved
+- `Chord` class:
+    - Add optional input argument: `.getIntervals(bool fromRoot = false)`
+    - Add optional input argument: `.getStackIntervals(bool fromRoot = false)`
+- Trello: Cards and status updated
+
+### Fixed
+- Fix `Score::setRepeat()` default arguments
+- Fix `Note::transpose()` now works as expected
+
+-------------------------
+
 ## [v0.0.12] - 2022-03-04
 ### New Features
 - Add `Note::getDuration()` as an alias to `Note::getQuarterDuration()`

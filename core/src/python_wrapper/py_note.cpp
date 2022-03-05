@@ -44,7 +44,7 @@ void NoteClass(py::module &m) {
     cls.def("setTransposingInterval", &Note::setTransposingInterval);
     cls.def("transpose", &Note::transpose,
         py::arg("semitones"),
-        py::arg("accType") = MUSIC_XML::ACCIDENT::SHARP);
+        py::arg("accType") = MUSIC_XML::ACCIDENT::NONE);
     
     cls.def("setVoice", &Note::setVoice);
     cls.def("setStaff", &Note::setStaff);

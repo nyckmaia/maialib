@@ -105,10 +105,10 @@ void Measure::setTimeSignature(const int timeSignatureUpper, const int timeSigna
     _timeSignatureLower = timeSignatureLower;
 }
 
-void Measure::setMetronome(const int bpm, const std::string& rhythmFigure)
+void Measure::setMetronome(const int bpm, const Duration duration)
 {
     _metronomeValue = bpm;
-    _metronomeFigure = rhythmFigure;
+    _metronomeFigure = Helper::duration2noteType(duration);
     setIsMetronomeChanged(true);
 }
 

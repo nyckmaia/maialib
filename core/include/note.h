@@ -191,7 +191,7 @@ public:
     bool isTransposed() const;
     bool isGraceNote() const;
 
-    void transpose(const int semitones, const std::string& accType = MUSIC_XML::ACCIDENT::SHARP);
+    void transpose(const int semitones, const std::string& accType = MUSIC_XML::ACCIDENT::NONE);
 
     const std::string toXML(const size_t instrumentId = 1, const int identSize = 2) const;
 

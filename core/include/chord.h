@@ -93,8 +93,8 @@ public:
     bool isTonal(std::function<bool(const Chord& chord)> model = nullptr);
 
     std::vector<int> getMIDIIntervals();
-    std::vector<Interval> getIntervals() const;
-    std::vector<Interval> getStackIntervals();
+    std::vector<Interval> getIntervals(const bool fromRoot = false) const;
+    std::vector<Interval> getStackIntervals(const bool fromRoot = false);
 
     size_t size() const;
     size_t stackSize() const;

@@ -71,7 +71,7 @@ void ScoreClass(py::module &m) {
 
     cls.def("setMetronomeMark", &Score::setMetronomeMark,
         py::arg("bpm"),
-        py::arg("rhythmFigure") = std::string(),
+        py::arg("duration") = Duration::QUARTER,
         py::arg("measureStart") = 0);
 
     cls.def("toXML", &Score::toXML);

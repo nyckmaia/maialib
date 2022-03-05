@@ -77,8 +77,10 @@ void ChordClass(py::module &m) {
         py::arg("model") = nullptr);
 
     cls.def("getMIDIIntervals", &Chord::getMIDIIntervals);
-    cls.def("getIntervals", &Chord::getIntervals);
-    cls.def("getStackIntervals", &Chord::getStackIntervals);
+    cls.def("getIntervals", &Chord::getIntervals,
+        py::arg("fromRoot") = false);
+    cls.def("getStackIntervals", &Chord::getStackIntervals,
+        py::arg("fromRoot") = false);
     cls.def("getQuarterDuration", &Chord::getQuarterDuration);
     
     cls.def("size", &Chord::size);
