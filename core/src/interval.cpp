@@ -182,7 +182,7 @@ int Interval::getNumOctaves(const bool absoluteValue) const
 
 int Interval::getDiatonicInterval(const bool absoluteValue) const
 {
-    const int diatonicScaleSize = (absoluteValue) ? c_C_diatonicScale.size() : c_C_diatonicScale.size() * -1;
+    const int diatonicScaleSize = (absoluteValue) ? c_C_diatonicScale.size() : static_cast<int>(c_C_diatonicScale.size()) * -1;
 
     return getDiatonicSteps(absoluteValue) % diatonicScaleSize;
 }
