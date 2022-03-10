@@ -10,7 +10,7 @@
 
 #include "pugixml.hpp"
 #include "nlohmann/json.hpp"
-#include "sqlitecpp/SQLiteCpp.h"
+#include "SQLiteCpp/SQLiteCpp.h"
 
 #include "part.h"
 #include "chord.h"
