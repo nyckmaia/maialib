@@ -98,6 +98,9 @@
         "xstring": "cpp",
         "xtr1common": "cpp",
         "xtree": "cpp",
-        "xutility": "cpp"
+        "xutility": "cpp",
+        "bitset": "cpp",
+        "hash_map": "cpp",
+        "span": "cpp"
     }
 }

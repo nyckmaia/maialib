@@ -147,7 +147,17 @@ void MeasureClass(py::module &m) {
     cls.def("toJSON", &Measure::toJSON);
 
     // Default Python 'print' function:
-    cls.def("__repr__", [](const Measure& measure) { return "Measure " + std::to_string(measure.getNumber()); });
+    cls.def("__repr__", [](const Measure& measure) {
+        return "<Measure " + std::to_string(measure.getNumber()) + ">"; 
+    });
+
+    cls.def("__hash__", [](const Measure& measure) {
+        return std::hash<std::string>{}(measure.toXML());
+    });
+
+    cls.def("__sizeof__", [](const Measure& measure) {
+        return sizeof(measure);
+    });
 }
 
 #endif

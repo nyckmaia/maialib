@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.14] - 2022-07-06
+### New Features
+- Add New `ScoreCollection` class
+- Add to all maialib classes:
+    - Add Python `__hash__` method
+    - Add Python `__sizeof__` method
+- `Chord` Class: Add `getNotes()` method
+
+### Improved
+- Update Pybind11 to v.2.9.2
+- Better maialib objects representation inside the Python environment
+- `Score::forEachNote()` callback contains more input parameters
+
+### Fixed
+
+-------------------------
+
 ## [v0.0.13] - 2022-03-05
 ### New Features
 

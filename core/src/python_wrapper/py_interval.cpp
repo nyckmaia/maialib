@@ -42,7 +42,23 @@ void IntervalClass(py::module &m) {
     cls.def("isTonal", &Interval::isTonal);
 
     // Default Python 'print' function:
-    cls.def("__repr__", [](const Interval& interval) { return interval.getName(); });
+    cls.def("__repr__", [](const Interval& interval) {
+        const std::string direction = (interval.isAscendant()) ? "asc" : "desc";
+        return "<Interval " + interval.getName() + " " + direction + ">";
+    });
+
+    cls.def("__hash__", [](const Interval& interval) {
+        std::string temp;
+        for (const auto& n : interval.getNotes()) {
+                temp += n.getPitch();
+        }
+
+        return std::hash<std::string>{}(temp);
+    });
+
+    cls.def("__sizeof__", [](const Interval& interval) {
+        return sizeof(interval);
+    });
 
 }
 #endif

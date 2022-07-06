@@ -59,12 +59,10 @@ if(PROFILING)
   add_definitions(-DPROFILING)
 endif()
 
+
 # Generate static library
 if(STATIC_LIB)
     message("=====> GENERATING STATIC LIBRARY <=====")
-
-    add_subdirectory(external/zip)
-    add_subdirectory(external/sqlitecpp)
 
     add_library(${PROJECT_NAME} STATIC ${maiacore_src})
 
@@ -73,14 +71,15 @@ if(STATIC_LIB)
     target_include_directories(${PROJECT_NAME} PUBLIC external)
     target_include_directories(${PROJECT_NAME} PUBLIC external/cherno)
 
+    add_subdirectory(external/zip)
+    add_subdirectory(external/sqlitecpp)
+
     target_link_libraries(${PROJECT_NAME} zip SQLiteCpp sqlite3 pthread dl)
 endif()
 
 # Generate shared library
 if(SHARED_LIB)
     message("=====> GENERATING SHARED LIBRARY <=====")
-    add_subdirectory(external/zip)
-    add_subdirectory(external/sqlitecpp)
 
     add_library(${PROJECT_NAME} SHARED ${maiacore_src})
 
@@ -88,6 +87,9 @@ if(SHARED_LIB)
     target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
     target_include_directories(${PROJECT_NAME} PUBLIC external)
     target_include_directories(${PROJECT_NAME} PUBLIC external/cherno)
+    
+    add_subdirectory(external/zip)
+    add_subdirectory(external/sqlitecpp)
 
     target_link_libraries(${PROJECT_NAME} zip SQLiteCpp sqlite3 pthread dl)
 endif()
@@ -105,12 +107,12 @@ if(PYBIND_LIB)
     add_subdirectory(external/pybind11)
     
     pybind11_add_module(${PROJECT_NAME} ${maiacore_src} ${python_wrapper_src})
-    
+
     target_include_directories(${PROJECT_NAME} PUBLIC include)
     target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
     target_include_directories(${PROJECT_NAME} PUBLIC external)
     target_include_directories(${PROJECT_NAME} PUBLIC external/cherno)
-
+    
     add_subdirectory(external/zip)
     add_subdirectory(external/sqlitecpp)
 

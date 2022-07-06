@@ -90,7 +90,7 @@ void Score::info() const
 void Score::loadXMLFile(const std::string& filePath)
 {
     PROFILE_FUNCTION();
-    auto start = std::chrono::steady_clock::now();
+    // auto start = std::chrono::steady_clock::now();
 
     clear();
 
@@ -101,7 +101,7 @@ void Score::loadXMLFile(const std::string& filePath)
     pugi::xml_parse_result isLoad;
 
     if (fileExtension == "mxl") {
-        std::cout << "Descompressing the file..." << std::endl;
+        // std::cout << "Descompressing the file..." << std::endl;
 
         void *buf = NULL;
         size_t bufsize = 0;
@@ -131,7 +131,7 @@ void Score::loadXMLFile(const std::string& filePath)
         return;
     }
 
-    std::cout << "Loading file" << std::flush;
+    // std::cout << "Loading file" << std::flush;
 
     // Try to get the main MusicXML nodes:
     const pugi::xpath_node_set parts = _doc.select_nodes("/score-partwise/part");
@@ -197,7 +197,7 @@ void Score::loadXMLFile(const std::string& filePath)
 
     // For each part 'p'
     for (int p = 0; p < _numParts; p++) {
-        std::cout << "..." << floor((float(p+1)/float(_numParts))*100.0f) << "%" << std::flush;
+        // std::cout << "..." << floor((float(p+1)/float(_numParts))*100.0f) << "%" << std::flush;
 
         addPart(_partsName[p]);
 
@@ -490,8 +490,8 @@ void Score::loadXMLFile(const std::string& filePath)
         }
     }
 
-    auto end = std::chrono::steady_clock::now();
-    std::cout << std::endl << "Done in " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds!" << std::endl;
+    // auto end = std::chrono::steady_clock::now();
+    // std::cout << std::endl << "Done in " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds!" << std::endl;
 }
 
 void Score::addPart(const std::string& partName, const int numStaves)
@@ -601,6 +601,11 @@ const std::vector<std::string> Score::getPartNames() const
     }
 
     return partNames;
+}
+
+std::string Score::getTitle() const
+{
+    return _title;
 }
 
 void Score::setTitle(const std::string& title)
@@ -2137,7 +2142,7 @@ void Score::setRepeat(int measureStart, int measureEnd)
     }
 }
 
-void Score::forEachNote(std::function<void (Note& note)> callback, int measureStart, int measureEnd, std::vector<std::string> partNames)
+void Score::forEachNote(std::function<void (Part& part, Measure& measure, int staveId, Note& note)> callback, int measureStart, int measureEnd, std::vector<std::string> partNames)
 {
     PROFILE_FUNCTION();
 
@@ -2179,7 +2184,7 @@ void Score::forEachNote(std::function<void (Note& note)> callback, int measureSt
                 for (int n = 0; n < numNotes; n++) {
                     Note& currentNote = currentMeasure.getNote(n, s);
 
-                    callback(currentNote);
+                    callback(currentPart, currentMeasure, s, currentNote);
                 }
             }
         }

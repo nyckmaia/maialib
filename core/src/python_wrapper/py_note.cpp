@@ -1,6 +1,8 @@
 #include "note.h"
 
 #ifdef PYBIND
+#include <unordered_map>
+#include <bitset>
 
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
@@ -62,7 +64,6 @@ void NoteClass(py::module &m) {
     cls.def("addArticulation", &Note::addArticulation);
     cls.def("addBeam", &Note::addBeam);
     cls.def("info", &Note::info, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-
 
     cls.def("setIsPitched", &Note::setIsPitched);
     cls.def("isPitched", &Note::isPitched);
@@ -128,7 +129,26 @@ void NoteClass(py::module &m) {
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());    
 
     // Default Python 'print' function:
-    cls.def("__repr__", [](const Note& note) { return note.getPitch(); });
+    cls.def("__repr__", [](const Note& note) { 
+        return "<Note " + note.getPitch() + ">"; 
+    });
+    
+    cls.def("__hash__", [](const Note& note) {
+        const std::string temp01 = note.getSoundingPitch() + note.getType();
+        const int temp02 = note.isNoteOn() |
+            (note.inChord() << 1) | 
+            (note.isGraceNote() << 2) | 
+            (note.isTuplet() << 3) | 
+            (note.isPitched() << 4);
+
+        const std::string temp02Str = std::bitset<8>(temp02).to_string();
+
+        return std::hash<std::string>{}(temp01 + temp02Str);
+    });
+
+    cls.def("__sizeof__", [](const Note& note) {
+        return sizeof(note);
+    });
 
     cls.def(py::self < py::self);
     cls.def(py::self > py::self);

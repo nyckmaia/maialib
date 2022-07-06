@@ -51,6 +51,7 @@ void ScoreClass(py::module &m) {
     cls.def("getNumMeasures", &Score::getNumMeasures);
     cls.def("getNumNotes", &Score::getNumNotes);
     cls.def("getPartNames", &Score::getPartNames);
+    cls.def("getTitle", &Score::getTitle);
 
     cls.def("setTitle", &Score::setTitle);
     cls.def("setComposerName", &Score::setComposerName);
@@ -169,5 +170,19 @@ void ScoreClass(py::module &m) {
             return df;
         }
     );
+
+    // Default Python 'print' function:
+    cls.def("__repr__", [](const Score& score) { 
+        const std::string title = (score.getTitle().empty()) ? "No Title" : score.getTitle();
+        return "<Score '" + title + "'>"; 
+    });
+
+    cls.def("__hash__", [](const Score& score) {
+        return std::hash<std::string>{}(score.toXML());
+    });
+
+    cls.def("__sizeof__", [](const Score& score) {
+        return sizeof(score);
+    });
 }
 #endif

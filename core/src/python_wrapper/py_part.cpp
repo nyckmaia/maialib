@@ -73,6 +73,16 @@ void PartClass(py::module &m) {
     cls.def("toJSON", &Part::toJSON);
 
     // Default Python 'print' function:
-    cls.def("__repr__", [](const Part& part) { return part.getName() + " Part"; });
+    cls.def("__repr__", [](const Part& part) { 
+        return "<Part " + part.getName() + ">";
+    });
+
+    cls.def("__hash__", [](const Part& part) {
+        return std::hash<std::string>{}(part.toXML());
+    });
+
+    cls.def("__sizeof__", [](const Part& part) {
+        return sizeof(part);
+    });
 }
 #endif

@@ -219,5 +219,3 @@ public:
         return getPitch() != otherNote.getPitch();
     }
 };
-
-

@@ -66,7 +66,7 @@ public:
     const Note& getRoot();
     std::string getName(const bool useEnharmonicName = true);
     const Note& getBassNote();
-    
+    const std::vector<Note>& getNotes() const;
 
     bool haveMinorThird();
     bool haveMajorThird();

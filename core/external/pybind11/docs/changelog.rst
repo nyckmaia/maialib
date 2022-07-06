@@ -6,6 +6,184 @@ Changelog
 Starting with version 1.8.0, pybind11 releases use a `semantic versioning
 <http://semver.org>`_ policy.
 
+Changes will be added here periodically from the "Suggested changelog entry"
+block in pull request descriptions.
+
+IN DEVELOPMENT
+--------------
+
+Removed support for Python 2.7, Python 3.5, and MSVC 2015. Support for MSVC
+2017 is limited due to availability of CI runners; we highly recommend MSVC
+2019 or 2022 be used.
+
+New features:
+
+* ``type_caster<std::monostate>`` was added. ``std::monostate`` is a tag type
+  that allows ``std::variant`` to act as an optional, or allows default
+  construction of a ``std::variant`` holding a non-default constructible type.
+  `#3818 <https://github.com/pybind/pybind11/pull/3818>`_
+
+* Support bytearray casting to string.
+  `#3707 <https://github.com/pybind/pybind11/pull/3707>`_
+
+Changes:
+
+* Python 2 support was removed completely.
+  `#3688 <https://github.com/pybind/pybind11/pull/3688>`_
+
+* The minimum version for MSVC is now 2017.
+  `#3722 <https://github.com/pybind/pybind11/pull/3722>`_
+
+* Improve exception handling in python ``str`` bindings.
+  `#3826 <https://github.com/pybind/pybind11/pull/3826>`_
+
+* The bindings for capsules now have more consistent exception handling.
+  `#3825 <https://github.com/pybind/pybind11/pull/3825>`_
+
+* Fix exception handling when ``pybind11::weakref()`` fails.
+  `#3739 <https://github.com/pybind/pybind11/pull/3739>`_
+
+
+Bug fixes:
+
+* ``PYBIND11_OBJECT_CVT`` and ``PYBIND11_OBJECT_CVT_DEFAULT`` macro can be used
+  to define classes in namespaces other than pybind11.
+  `#3797 <https://github.com/pybind/pybind11/pull/3797>`_
+
+Build system improvements:
+
+* Add MSVC builds in debug mode to CI.
+  `#3784 <https://github.com/pybind/pybind11/pull/3784>`_
+
+* MSVC 2022 C++20 coverage was added to GitHub Actions, including Eigen.
+  `#3732 <https://github.com/pybind/pybind11/pull/3732>`_,
+  `#3741 <https://github.com/pybind/pybind11/pull/3741>`_
+
+* Avoid ``setup.py <command>`` usage in internal tests.
+  `#3734 <https://github.com/pybind/pybind11/pull/3734>`_
+
+
+Backend and tidying up:
+
+* Remove idioms in code comments.  Use inclusive language.
+  `#3809 <https://github.com/pybind/pybind11/pull/3809>`_
+
+
+Version 2.9.2 (Mar 29, 2022)
+----------------------------
+
+Changes:
+
+* Enum now has an ``__index__`` method on Python <3.8 too.
+  `#3700 <https://github.com/pybind/pybind11/pull/3700>`_
+
+* Local internals are now cleared after finalizing the interpreter.
+  `#3744 <https://github.com/pybind/pybind11/pull/3744>`_
+
+Bug fixes:
+
+* Better support for Python 3.11 alphas.
+  `#3694 <https://github.com/pybind/pybind11/pull/3694>`_
+
+* ``PYBIND11_TYPE_CASTER`` now uses fully qualified symbols, so it can be used
+  outside of ``pybind11::detail``.
+  `#3758 <https://github.com/pybind/pybind11/pull/3758>`_
+
+* Some fixes for PyPy 3.9.
+  `#3768 <https://github.com/pybind/pybind11/pull/3768>`_
+
+* Fixed a potential memleak in PyPy in ``get_type_override``.
+  `#3774 <https://github.com/pybind/pybind11/pull/3774>`_
+
+* Fix usage of ``VISIBILITY_INLINES_HIDDEN``.
+  `#3721 <https://github.com/pybind/pybind11/pull/3721>`_
+
+
+Build system improvements:
+
+* Uses ``sysconfig`` module to determine installation locations on Python >=
+  3.10, instead of ``distutils`` which has been deprecated.
+  `#3764 <https://github.com/pybind/pybind11/pull/3764>`_
+
+* Support Catch 2.13.5+ (supporting GLIBC 2.34+).
+  `#3679 <https://github.com/pybind/pybind11/pull/3679>`_
+
+* Fix test failures with numpy 1.22 by ignoring whitespace when comparing
+  ``str()`` of dtypes.
+  `#3682 <https://github.com/pybind/pybind11/pull/3682>`_
+
+
+Backend and tidying up:
+
+* clang-tidy: added ``readability-qualified-auto``,
+  ``readability-braces-around-statements``,
+  ``cppcoreguidelines-prefer-member-initializer``,
+  ``clang-analyzer-optin.performance.Padding``,
+  ``cppcoreguidelines-pro-type-static-cast-downcast``, and
+  ``readability-inconsistent-declaration-parameter-name``.
+  `#3702 <https://github.com/pybind/pybind11/pull/3702>`_,
+  `#3699 <https://github.com/pybind/pybind11/pull/3699>`_,
+  `#3716 <https://github.com/pybind/pybind11/pull/3716>`_,
+  `#3709 <https://github.com/pybind/pybind11/pull/3709>`_
+
+* clang-format was added to the pre-commit actions, and the entire code base
+  automatically reformatted (after several iterations preparing for this leap).
+  `#3713 <https://github.com/pybind/pybind11/pull/3713>`_
+
+
+Version 2.9.1 (Feb 2, 2022)
+---------------------------
+
+Changes:
+
+* If possible, attach Python exception with ``py::raise_from`` to ``TypeError``
+  when casting from C++ to Python. This will give additional info if Python
+  exceptions occur in the caster. Adds a test case of trying to convert a set
+  from C++ to Python when the hash function is not defined in Python.
+  `#3605 <https://github.com/pybind/pybind11/pull/3605>`_
+
+* Add a mapping of C++11 nested exceptions to their Python exception
+  equivalent using ``py::raise_from``. This attaches the nested exceptions in
+  Python using the ``__cause__`` field.
+  `#3608 <https://github.com/pybind/pybind11/pull/3608>`_
+
+* Propagate Python exception traceback using ``raise_from`` if a pybind11
+  function runs out of overloads.
+  `#3671 <https://github.com/pybind/pybind11/pull/3671>`_
+
+* ``py::multiple_inheritance`` is now only needed when C++ bases are hidden
+  from pybind11.
+  `#3650 <https://github.com/pybind/pybind11/pull/3650>`_ and
+  `#3659 <https://github.com/pybind/pybind11/pull/3659>`_
+
+
+Bug fixes:
+
+* Remove a boolean cast in ``numpy.h`` that causes MSVC C4800 warnings when
+  compiling against Python 3.10 or newer.
+  `#3669 <https://github.com/pybind/pybind11/pull/3669>`_
+
+* Render ``py::bool_`` and ``py::float_`` as ``bool`` and ``float``
+  respectively.
+  `#3622 <https://github.com/pybind/pybind11/pull/3622>`_
+
+Build system improvements:
+
+* Fix CMake extension suffix computation on Python 3.10+.
+  `#3663 <https://github.com/pybind/pybind11/pull/3663>`_
+
+* Allow ``CMAKE_ARGS`` to override CMake args in pybind11's own ``setup.py``.
+  `#3577 <https://github.com/pybind/pybind11/pull/3577>`_
+
+* Remove a few deprecated c-headers.
+  `#3610 <https://github.com/pybind/pybind11/pull/3610>`_
+
+* More uniform handling of test targets.
+  `#3590 <https://github.com/pybind/pybind11/pull/3590>`_
+
+* Add clang-tidy readability check to catch potentially swapped function args.
+  `#3611 <https://github.com/pybind/pybind11/pull/3611>`_
+
 
 Version 2.9.0 (Dec 28, 2021)
 ----------------------------
@@ -19,10 +197,6 @@ New Features:
   used.
   `#3402 <https://github.com/pybind/pybind11/pull/3402>`_
 
-* Add C++ Exception type to throw and catch ``AttributeError``. Useful for
-  defining custom ``__setattr__`` and ``__getattr__`` methods.
-  `#3387 <https://github.com/pybind/pybind11/pull/3387>`_
-
 Changes:
 
 * Make str/bytes/memoryview more interoperable with ``std::string_view``.
@@ -34,11 +208,6 @@ Changes:
 
 
 Bug fixes:
-
-* Fix a regression in 2.8.0 that caused undefined behavior (typically
-  segfaults) in ``make_key_iterator``/``make_value_iterator`` if dereferencing
-  the iterator returned a temporary value instead of a reference.
-  `#3348 <https://github.com/pybind/pybind11/pull/3348>`_
 
 * Fix a rare warning about extra copy in an Eigen constructor.
   `#3486 <https://github.com/pybind/pybind11/pull/3486>`_
@@ -53,24 +222,9 @@ Bug fixes:
   ``python dev`` label.
   `#3419 <https://github.com/pybind/pybind11/pull/3419>`_
 
-* Fix 2.8.0 regression with MSVC 2017 + C++17 mode + Python 3.
-  `#3407 <https://github.com/pybind/pybind11/pull/3407>`_
-
-* Modernize usage of ``PyCodeObject`` on Python 3.9 (toward supporting Python
-  3.11a1)
-  `#3368 <https://github.com/pybind/pybind11/pull/3368>`_
-
-* A long-standing bug in eigen.h was fixed (originally PR #3343). The bug was
-  unmasked by newly added ``static_assert``'s in the Eigen 3.4.0 release.
-  `#3352 <https://github.com/pybind/pybind11/pull/3352>`_
-
 * Replace usage of deprecated ``Eigen::MappedSparseMatrix`` with
   ``Eigen::Map<Eigen::SparseMatrix<...>>`` for Eigen 3.3+.
   `#3499 <https://github.com/pybind/pybind11/pull/3499>`_
-
-* Fixed the potential for dangling references when using properties with
-  ``std::optional`` types.
-  `#3376 <https://github.com/pybind/pybind11/pull/3376>`_
 
 * Tweaks to support Microsoft Visual Studio 2022.
   `#3497 <https://github.com/pybind/pybind11/pull/3497>`_
@@ -83,13 +237,6 @@ Build system improvements:
 * CMake: report version type as part of the version string to avoid a spurious
   space in the package status message.
   `#3472 <https://github.com/pybind/pybind11/pull/3472>`_
-
-* Support multiple raw inclusion of CMake helper files (Conan.io does this for
-  multi-config generators).
-  `#3420 <https://github.com/pybind/pybind11/pull/3420>`_
-
-* Fix harmless warning on CMake 3.22.
-  `#3368 <https://github.com/pybind/pybind11/pull/3368>`_
 
 * Flags starting with ``-g`` in ``$CFLAGS`` and ``$CPPFLAGS`` are no longer
   overridden by ``.Pybind11Extension``.

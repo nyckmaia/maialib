@@ -622,12 +622,15 @@ std::vector<Interval> Chord::getStackIntervals(const bool fromRoot)
 std::string Chord::enharmonicName()
 {
     // ===== STEP 1: CHECK IF THE CHORD IS TONAL OR NOT ====== //
-    if (!isTonal()) { return "non-tonal chord"; }
+    if (!isTonal()) {
+        std::cout << "[WARNING] Unable to get a tonal name of a non-tonal chord" << std::endl;
+        return {}; 
+    }
 
     // Error checking
     if (!_haveMinorThird && !_haveMajorThird) {
         // std::cerr << "[ERROR]: Unable to classify this chord!" << std::endl;
-        return std::string();
+        return {};
     }
 
     // ===== STEP 2: SET THE CHORD BASIC CLASSIFICATIION ====== //
@@ -680,13 +683,13 @@ std::string Chord::enharmonicName()
             }
         } else if (_haveAugmentedFifth) {
             if (!_haveDiminishedSeventh && !_haveMinorSeventh && !_haveMajorSeventh) {
-                basicClassification = "+";
+                basicClassification = "aug";
             } else if (_haveDiminishedSeventh) {
-                basicClassification = "+(dim7)";
+                basicClassification = "aug(dim7)";
             } else if (_haveMinorSeventh) {
-                basicClassification = "+7";
+                basicClassification = "aug(7)";
             } else if (_haveMajorSeventh) {
-                basicClassification = "+7M";
+                basicClassification = "aug(7M)";
             }
         }
     }
@@ -904,6 +907,11 @@ const Note& Chord::getBassNote()
     if (!_isStackedInThirds) { stackInThirds(); }
 
     return _bassNote;
+}
+
+const std::vector<Note>& Chord::getNotes() const
+{
+    return _note;
 }
 
 Chord Chord::getStackedChord() const

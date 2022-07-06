@@ -90,6 +90,7 @@ void ChordClass(py::module &m) {
     cls.def("print", &Chord::print, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("printStack", &Chord::printStack, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
+    cls.def("getNotes", &Chord::getNotes);
     cls.def("getStackedChord", &Chord::getStackedChord);
 
     cls.def("sortNotes", &Chord::sortNotes);
@@ -104,7 +105,7 @@ void ChordClass(py::module &m) {
     // Default Python 'print' function:
     cls.def("__repr__", [](const Chord& chord) {
         const size_t chordSize = chord.size();
-        std::string noteNames = "[";
+        std::string noteNames = "<Chord [";
 
         for (size_t i = 0; i < chordSize-1; i++) {
             noteNames.append(chord[i].getPitch() + ", ");
@@ -113,9 +114,23 @@ void ChordClass(py::module &m) {
         // Add the last note without the semicomma in the end
         noteNames.append(chord[chordSize-1].getPitch());
 
-        noteNames.append("]");
+        noteNames.append("]>");
 
         return noteNames;
+    });
+
+    cls.def("__hash__", [](const Chord& chord) {
+        std::string temp;
+
+        for (const auto& n : chord.getNotes()) {
+            temp += n.getPitch() + n.getLongType();
+        }
+
+        return std::hash<std::string>{}(temp);
+    });
+
+    cls.def("__sizeof__", [](const Chord& chord) {
+        return sizeof(chord);
     });
 }
 #endif

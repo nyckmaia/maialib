@@ -31,5 +31,19 @@ void BarlineClass(py::module &m) {
     cls.def("setRepeatEnd", &Barline::setRepeatEnd);
 
     cls.def("toXML", &Barline::toXML);
+
+    // Default Python 'print' function:
+    cls.def("__repr__", [](const Barline& barline) {
+        return "<Barline " + barline.getBarStyle() + ">";
+    });
+
+    cls.def("__hash__", [](const Barline& barline) {
+        return std::hash<std::string>{}(barline.getBarStyle() + 
+            barline.getDirection() + barline.getLocation());
+    });
+
+    cls.def("__sizeof__", [](const Barline& barline) {
+        return sizeof(barline);
+    });
 }
 #endif

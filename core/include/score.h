@@ -6,7 +6,6 @@
 #include <string>
 #include <tuple>
 #include <initializer_list>
-#include <chrono>
 
 #include "pugixml.hpp"
 #include "nlohmann/json.hpp"
@@ -48,9 +47,9 @@ public:
      * @param partsName A musical instrument names list
      * @param numMeasures Initial measures amount
      */
-    Score(const std::initializer_list<std::string>& partsName, const int numMeasures = 20);
+    explicit Score(const std::initializer_list<std::string>& partsName, const int numMeasures = 20);
     
-    Score(const std::vector<std::string>& partsName, const int numMeasures = 20);
+    explicit Score(const std::vector<std::string>& partsName, const int numMeasures = 20);
 
     /**
      * @brief Construct a new Score object from a loaded sheet music file
@@ -62,7 +61,8 @@ public:
      * 
      * @param filePath Path to the XML sheet music file
      */
-    Score(const std::string& filePath);
+    explicit Score(const std::string& filePath);
+    Score(Score&&) = default;
     ~Score();
 
     /**
@@ -86,6 +86,7 @@ public:
     int getNumNotes() const;
 
     const std::vector<std::string> getPartNames() const;
+    std::string getTitle() const;
 
     void setTitle(const std::string& title);
     void setComposerName(const std::string& composerName);
@@ -100,7 +101,7 @@ public:
 
     void toFile(std::string fileName, const int identSize = 2) const;
     void info() const;
-    void forEachNote(std::function<void (Note& note)> callback, int measureStart = 0, int measureEnd = -1, std::vector<std::string> partNames = {});
+    void forEachNote(std::function<void (Part& part, Measure& measure, int staveId, Note& note)> callback, int measureStart = 0, int measureEnd = -1, std::vector<std::string> partNames = {});
 
     bool isValid(void) const;
     bool haveTypeTag(void) const;
@@ -229,4 +230,29 @@ public:
      * @return A list of pairs: {measureId, Chord object} 
      */
     std::vector<std::pair<int, Chord>> getChords(nlohmann::json config = {});
+
+    Score(const Score& other) {
+        _title = other._title;
+        _composerName = other._composerName;
+        _part = other._part;
+
+        //_doc = other._doc;
+        _numParts = other._numParts;
+        _numMeasures = other._numMeasures;
+        _numNotes = other._numNotes;
+        _partsName = other._partsName;
+        _isValidXML = other._isValidXML;
+        _haveTypeTag = other._haveTypeTag;
+        _isLoadedXML = other._isLoadedXML;
+        // _stackedChords = other._stackedChords;
+        _lcmDivisionsPerQuarterNote = other._lcmDivisionsPerQuarterNote;
+    }
+
+    // copy assignment
+    Score& operator=(const Score& other) {
+        // Guard self assignment
+        if (this == &other) { return *this; }
+        
+        return *this;
+    }
 };

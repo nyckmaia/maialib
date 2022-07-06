@@ -23,5 +23,18 @@ void ClefClass(py::module &m) {
 
     cls.def("getSign", &Clef::getSign);
     cls.def("setSign", &Clef::setSign);
+
+    // Default Python 'print' function:
+    cls.def("__repr__", [](const Clef& clef) {
+        return "<Clef " + clef.getSign() + ">";
+    });
+
+    cls.def("__hash__", [](const Clef& clef) {
+        return std::hash<std::string>{}(clef.getSign() + std::to_string(clef.getLine()));
+    });
+
+    cls.def("__sizeof__", [](const Clef& clef) {
+        return sizeof(clef);
+    });
 }
 #endif
