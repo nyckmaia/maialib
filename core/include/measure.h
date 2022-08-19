@@ -40,7 +40,7 @@ public:
 
     void clear();
 
-    void setNumber(const int MeasureNumber);
+    void setNumber(const int measureNumber);
     void setKeySignature(const int fifthCicle, const bool isMajorMode = true); // overload with measure
     void setTimeSignature(const int upper, const int lower); // overload with measure
     void setMetronome(const int bpm, const Duration duration = Duration::QUARTER); // overload with measure

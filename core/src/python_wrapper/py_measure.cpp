@@ -14,20 +14,26 @@ void MeasureClass(py::module &m) {
 
     // bindings to Measure class
     py::class_<Measure> cls(m, "Measure");
-    cls.def(py::init<const int>(),
-        py::arg("numStaves") = 1);
+    cls.def(py::init<const int, const int>(),
+        py::arg("numStaves") = 1,
+        py::arg("divisionsPerQuarterNote") = 256);
 
     cls.def("clear", &Measure::clear);
 
-    cls.def("setNumber", &Measure::setNumber);
-    cls.def("setKeySignature", &Measure::setKeySignature);
-    cls.def("setTimeSignature", &Measure::setTimeSignature);
+    cls.def("setNumber", &Measure::setNumber,
+        py::arg("measureNumber"));
+    cls.def("setKeySignature", &Measure::setKeySignature,
+        py::arg("fifthCicle"),
+        py::arg("isMajorMode") = true);
+    cls.def("setTimeSignature", &Measure::setTimeSignature,
+        py::arg("upper"),
+        py::arg("lower"));
     cls.def("setMetronome", &Measure::setMetronome,
         py::arg("bpm"),
         py::arg("duration") = Duration::QUARTER);
 
     cls.def("setKeyMode", &Measure::setKeyMode,
-        py::arg("keyMode") = "major");
+        py::arg("isMajorMode"));
     cls.def("setIsKeySignatureChanged", &Measure::setIsKeySignatureChanged,
         py::arg("isKeySignatureChanged") = false);
     cls.def("setIsTimeSignatureChanged", &Measure::setIsTimeSignatureChanged,
@@ -36,27 +42,27 @@ void MeasureClass(py::module &m) {
         py::arg("isClefChanged") = false);
     cls.def("setIsMetronomeChanged", &Measure::setIsMetronomeChanged,
         py::arg("isMetronomeChanged") = false);
+    cls.def("setNumStaves", &Measure::setNumStaves,
+        py::arg("numStaves"));
     cls.def("setIsDivisionsPerQuarterNoteChanged", &Measure::setIsDivisionsPerQuarterNoteChanged,
         py::arg("isDivisionsPerQuarterNoteChanged") = false);
 
-    cls.def("setNumStaves", &Measure::setNumStaves);
-    
     cls.def("addNote", py::overload_cast<const Note&, const int, int>(&Measure::addNote),
         py::arg("note"), 
         py::arg("staveId") = 0,
-        py::arg("position") = -1, "single notes");
+        py::arg("position") = -1, "Add a single Note object");
     cls.def("addNote", py::overload_cast<const std::vector<Note>&, const int, int>(&Measure::addNote),
         py::arg("noteVec"), 
         py::arg("staveId") = 0,
-        py::arg("position") = -1, "multiple notes");
+        py::arg("position") = -1, "Add a Note object vector");
     cls.def("addNote", py::overload_cast<const std::string&, const int, int>(&Measure::addNote),
         py::arg("pitchClass"), 
         py::arg("staveId") = 0,
-        py::arg("position") = -1, "call default note constructor");
+        py::arg("position") = -1, "Create a new Note Obj and add it");
     cls.def("addNote", py::overload_cast<const std::vector<std::string>&, const int, int>(&Measure::addNote),
         py::arg("pitchClassVec"), 
         py::arg("staveId") = 0,
-        py::arg("position") = -1, "call multiple default note constructor");
+        py::arg("position") = -1, "Create a new Note vector and add it");
 
     cls.def("removeNote", &Measure::removeNote,
         py::arg("noteId"), 
@@ -120,15 +126,15 @@ void MeasureClass(py::module &m) {
     
     cls.def("getNumNotesOn", py::overload_cast<>(&Measure::getNumNotesOn, py::const_));
     cls.def("getNumNotesOn", py::overload_cast<const int>(&Measure::getNumNotesOn, py::const_),
-        py::arg("staveId") = 0);
+        py::arg("staveId"));
 
     cls.def("getNumNotesOff", py::overload_cast<>(&Measure::getNumNotesOff, py::const_));
     cls.def("getNumNotesOff", py::overload_cast<const int>(&Measure::getNumNotesOff, py::const_),
-        py::arg("staveId") = 0);
+        py::arg("staveId"));
 
     cls.def("getNumNotes", py::overload_cast<>(&Measure::getNumNotes, py::const_));
     cls.def("getNumNotes", py::overload_cast<const int>(&Measure::getNumNotes, py::const_),
-        py::arg("staveId") = 0);
+        py::arg("staveId"));
     
     cls.def("getFifthCicle", &Measure::getFifthCicle);
     cls.def("getKeySignature", &Measure::getKeySignature);

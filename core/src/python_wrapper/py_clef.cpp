@@ -19,10 +19,12 @@ void ClefClass(py::module &m) {
             py::arg("line") = 2);
 
     cls.def("getLine", &Clef::getLine);
-    cls.def("setLine", &Clef::setLine);
+    cls.def("setLine", &Clef::setLine,
+        py::arg("line"));
 
     cls.def("getSign", &Clef::getSign);
-    cls.def("setSign", &Clef::setSign);
+    cls.def("setSign", &Clef::setSign,
+        py::arg("sign"));
 
     // Default Python 'print' function:
     cls.def("__repr__", [](const Clef& clef) {

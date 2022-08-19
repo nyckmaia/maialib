@@ -22,7 +22,7 @@ setup(
     keywords=["music", "score", "sheet music", "analysis"],
     packages = find_packages(), 
     package_data = {
-        '': ['*.so', '*.pyd'],
+        '': ['*.so', '*.pyd', '__init__.pyi', 'maiacore/__init__.pyi']
     },
     py_modules=["maiacore"],
     classifiers=[
@@ -36,6 +36,6 @@ setup(
         "Topic :: Software Development :: Libraries"
     ],
     # install_requires=["pandas"],
-    python_requires=">=3.7.0",
+    python_requires=">=3.8.0",
     zip_safe=False,
 )

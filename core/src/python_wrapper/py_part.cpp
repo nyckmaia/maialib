@@ -24,11 +24,16 @@ void PartClass(py::module &m) {
     cls.def("getName", &Part::getName);
     cls.def("getShortName", &Part::getShortName);
 
-    cls.def("addMidiUnpitched", &Part::addMidiUnpitched);
+    cls.def("addMidiUnpitched", &Part::addMidiUnpitched,
+        py::arg("midiUnpitched"));
     cls.def("getMidiUnpitched", &Part::getMidiUnpitched);
 
-    cls.def("addMeasure", &Part::addMeasure, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("removeMeasure", &Part::removeMeasure);
+    cls.def("addMeasure", &Part::addMeasure, 
+        py::arg("numMeasures"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("removeMeasure", &Part::removeMeasure,
+        py::arg("measureStart"),
+        py::arg("measureEnd"));
 
     cls.def("getMeasure", py::overload_cast<const int>(&Part::getMeasure),
             py::arg("measureId"),
@@ -39,21 +44,31 @@ void PartClass(py::module &m) {
 
     cls.def("getNumMeasures", &Part::getNumMeasures);
 
-    cls.def("setNumStaves", &Part::setNumStaves);
-    cls.def("addStaves", &Part::addStaves, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("removeStave", &Part::removeStave);
+    cls.def("setNumStaves", &Part::setNumStaves,
+        py::arg("numStaves"));
+    cls.def("addStaves", &Part::addStaves,
+        py::arg("numStaves") = 1,
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("removeStave", &Part::removeStave,
+        py::arg("staveId"));
     cls.def("getNumStaves", &Part::getNumStaves);
 
-    cls.def("getNumNotes", &Part::getNumNotes, py::arg("staveId") = -1);
-    cls.def("getNumNotesOn", &Part::getNumNotesOn, py::arg("staveId") = -1);
-    cls.def("getNumNotesOff", &Part::getNumNotesOff, py::arg("staveId") = -1);
+    cls.def("getNumNotes", &Part::getNumNotes, 
+        py::arg("staveId") = -1);
+    cls.def("getNumNotesOn", &Part::getNumNotesOn, 
+        py::arg("staveId") = -1);
+    cls.def("getNumNotesOff", &Part::getNumNotesOff, 
+        py::arg("staveId") = -1);
     
-    cls.def("setShortName", &Part::setShortName);
+    cls.def("setShortName", &Part::setShortName,
+        py::arg("shortName"));
 
     cls.def("info", &Part::info, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def("setIsPitched", &Part::setIsPitched);
-    cls.def("setStaffLines", &Part::setStaffLines);
+    cls.def("setIsPitched", &Part::setIsPitched,
+        py::arg("isPitched") = true);
+    cls.def("setStaffLines", &Part::setStaffLines,
+        py::arg("staffLines") = 5);
     cls.def("isPitched", &Part::isPitched);
     cls.def("getStaffLines", &Part::getStaffLines);
 

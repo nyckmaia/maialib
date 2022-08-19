@@ -1,4 +1,5 @@
 import sys
+import os
 from shutil import rmtree
 from terminal_colors import *
 
@@ -22,13 +23,22 @@ if (cleanOption == "all"):
     rmtree("tests/__pycache__", True)
     rmtree("maiapy/__pycache__", True)
     rmtree("scripts/__pycache__", True)
-    rmtree("profile.json", True)
+    rmtree("./stubs", True)
+
+    if os.path.exists("profile.json"):
+        os.remove("profile.json")
+    
+    if os.path.exists(".coverage"):
+        os.remove(".coverage")
+
     print(f"{color.OKGREEN}Done!{color.ENDC}")
     sys.exit()
 
 if (cleanOption == "dist"):
     print(f"{color.OKGREEN}Deleting 'dist' folder...{color.ENDC}", end = "")
     rmtree("./dist", True)
+    rmtree("./stubs", True)
+    rmtree("./.coverage", True)
     print(f"{color.OKGREEN}Done!{color.ENDC}")
     sys.exit()
 

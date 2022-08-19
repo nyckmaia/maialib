@@ -19,9 +19,11 @@ void HelperClass(py::module &m) {
         py::arg("freq"),
         py::arg("modelo") = nullptr);
     //--------------------- //
-    cls.def_static("midiNote2freq", &Helper::midiNote2freq);
+    cls.def_static("midiNote2freq", &Helper::midiNote2freq,
+        py::arg("midiNoteValue"));
     //--------------------- //
-    cls.def_static("pitch2midiNote", &Helper::pitch2midiNote);
+    cls.def_static("pitch2midiNote", &Helper::pitch2midiNote,
+        py::arg("pitch"));
     //--------------------- //
     cls.def_static("midiNote2pitches", &Helper::midiNote2pitches,
         py::arg("midiNote"),
@@ -44,9 +46,12 @@ void HelperClass(py::module &m) {
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def_static("pitch2number", &Helper::pitch2number, 
+        py::arg("pitch"),
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
     cls.def_static("number2pitch", &Helper::number2pitch, 
+        py::arg("number"),
+        py::arg("accType") = "#",
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
     cls.def_static("isEnharmonic", &Helper::isEnharmonic, 
@@ -59,13 +64,18 @@ void HelperClass(py::module &m) {
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
     cls.def_static("durationRatio", &Helper::durationRatio, 
+        py::arg("duration_A"),
+        py::arg("duration_B"),
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
-    cls.def_static("duration2noteType", &Helper::duration2noteType);
+    cls.def_static("duration2noteType", &Helper::duration2noteType,
+        py::arg("duration"));
     //--------------------- //
-    cls.def_static("noteType2duration", &Helper::noteType2duration);
+    cls.def_static("noteType2duration", &Helper::noteType2duration,
+        py::arg("noteType"));
     //--------------------- //
     cls.def_static("pitch2freq", &Helper::pitch2freq, 
+        py::arg("pitch"),
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
     cls.def_static("freq2pitch", &Helper::freq2pitch,
@@ -73,6 +83,8 @@ void HelperClass(py::module &m) {
           py::arg("accType") = "#");
     //--------------------- //
     cls.def_static("pitchRatio", &Helper::pitchRatio, 
+        py::arg("pitch_A"),
+        py::arg("pitch_B"),
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
     cls.def_static("noteSimilarity", 
@@ -99,6 +111,7 @@ void HelperClass(py::module &m) {
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
     cls.def_static("pitch2number", &Helper::pitch2number, 
+        py::arg("pitch"),
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 }
 #endif

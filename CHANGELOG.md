@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.15] - 2022-MM-DD
+### New Features
+- Add maialib Python stubs
+- Replace `Pybind11` by `Nanobind` to run-time speed up
+
+### Improved
+- `ScoreCollection` class:
+    - Add new input argument in the constructor: `bool includeSubFolders = false`
+    - Add overloaded constructor: vector of directory paths
+    - Add `merge(ScoreCollection& other)` method
+    - Add `+` operator overload to `.merge(ScoreCollection& other)` method
+    - Add `.getNumDirectories()` method
+    - Add `.addDirectory()` method
+    - Add `.setDirectoryPaths()` method
+- Compile time speed up:
+    - Use `iostream` Foward Declaration
+    - Include header files inside the `*.cpp` files
+- `CMakelists.txt`: Better included paths structure
+### Fixed
+    - Replace `python3` to `python` calls
+
+-------------------------
+
 ## [v0.0.14] - 2022-07-06
 ### New Features
 - Add New `ScoreCollection` class

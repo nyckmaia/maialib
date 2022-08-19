@@ -38,10 +38,10 @@ void Measure::info() const
     std::cout << "Metronome Mark: " << _metronomeFigure << " - " << _metronomeValue << std::endl;
 }
 
-void Measure::setNumber(const int MeasureNumber)
+void Measure::setNumber(const int measureNumber)
 {
     PROFILE_FUNCTION();
-    _number = MeasureNumber;
+    _number = measureNumber;
 }
 
 void Measure::setKeySignature(const int fifthCicle, const bool isMajorMode)

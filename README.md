@@ -25,12 +25,13 @@ Now you can explore some `maialib` features like:
 ## Requirements
 ### To run-only
 - Python 3.7 (or greater)
+- To generate Python stubs: `pip install coverage pybind11-stubgen`
 
 ### To build from source
 #### Applications:
 - C++17 compatible compiler
-- CMake 3.0
-- Python 3.7
+- CMake 3.8
+- Python 3.8
 - Make
 - Doxygen (Optional: To build documentation)
 - Buildcache (Optional: To accelerate the build process)

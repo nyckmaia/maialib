@@ -6,6 +6,8 @@
 **.DS_Store
 **.egg-info/
 **/profile.json
+.coverage
+stubs/
 
 # Prerequisites
 *.d

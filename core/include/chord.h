@@ -50,10 +50,10 @@ public:
     void addNote(const Note& note);
     void addNote(const std::string& pitch);
     void removeTopNote();
-    void insertNote(Note& insertNote, size_t positionNote = 0);
-    void removeNote(size_t noteIndex);
+    void insertNote(Note& insertNote, int positionNote = 0);
+    void removeNote(int noteIndex);
     void setDurationTicks(const int durationTicks);
-    void inversion(size_t inversionNumber);
+    void inversion(int inversionNumber);
     void transpose(const int semiTonesNumber);
     void transposeStackOnly(const int semiTonesNumber);
     void removeDuplicateNotes();
@@ -61,8 +61,8 @@ public:
     std::string getDuration() const;
     float getQuarterDuration() const;
     int getDurationTicks() const;
-    Note& getNote(size_t noteIndex);
-    const Note& getNote(const size_t noteIndex) const;
+    Note& getNote(int noteIndex);
+    const Note& getNote(const int noteIndex) const;
     const Note& getRoot();
     std::string getName(const bool useEnharmonicName = true);
     const Note& getBassNote();

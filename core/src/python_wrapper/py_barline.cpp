@@ -19,18 +19,22 @@ void BarlineClass(py::module &m) {
     cls.def("clean", &Barline::clean);
 
     cls.def("getBarStyle", &Barline::getBarStyle);
-    cls.def("setBarStyle", &Barline::setBarStyle);
+    cls.def("setBarStyle", &Barline::setBarStyle,
+        py::arg("barStyle"));
 
     cls.def("getDirection", &Barline::getDirection);
-    cls.def("setDirection", &Barline::setDirection);
+    cls.def("setDirection", &Barline::setDirection,
+        py::arg("direction"));
 
     cls.def("getLocation", &Barline::getLocation);
-    cls.def("setLocation", &Barline::setLocation);
+    cls.def("setLocation", &Barline::setLocation,
+        py::arg("location"));
 
     cls.def("setRepeatStart", &Barline::setRepeatStart);
     cls.def("setRepeatEnd", &Barline::setRepeatEnd);
 
-    cls.def("toXML", &Barline::toXML);
+    cls.def("toXML", &Barline::toXML,
+        py::arg("identSize") = 2);
 
     // Default Python 'print' function:
     cls.def("__repr__", [](const Barline& barline) {

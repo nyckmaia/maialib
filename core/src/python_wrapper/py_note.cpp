@@ -37,35 +37,59 @@ void NoteClass(py::module &m) {
             py::arg("divisionsPerQuarterNote") = 256);
 
     // ====== Methods SETTERS for class Note ===== //
-    cls.def("setPitchClass", &Note::setPitchClass);
-    cls.def("setOctave", &Note::setOctave);
-    cls.def("setDurationTicks", &Note::setDurationTicks);
-    cls.def("setIsNoteOn", &Note::setIsNoteOn);
-    cls.def("setPitch", &Note::setPitch);
-    cls.def("setIsInChord", &Note::setIsInChord);
-    cls.def("setTransposingInterval", &Note::setTransposingInterval);
-    cls.def("transpose", &Note::transpose,
-        py::arg("semitones"),
-        py::arg("accType") = MUSIC_XML::ACCIDENT::NONE);
+    cls.def("setPitchClass", &Note::setPitchClass, 
+        py::arg("pitchClass"),
+        "Set the note pitch class");
+    cls.def("setOctave", &Note::setOctave,
+        py::arg("octave"));
+    cls.def("setDuration", &Note::setDuration,
+        py::arg("duration"),
+        py::arg("divisionsPerQuarterNote") = 256);
+    cls.def("setDurationTicks", &Note::setDurationTicks,
+        py::arg("durationTicks"));
+    cls.def("setIsNoteOn", &Note::setIsNoteOn,
+        py::arg("isNoteOn"));
+    cls.def("setPitch", &Note::setPitch,
+        py::arg("pitch"));
+    cls.def("setIsInChord", &Note::setIsInChord,
+        py::arg("inChord"));
+    cls.def("setTransposingInterval", &Note::setTransposingInterval,
+        py::arg("diatonicInterval"),
+        py::arg("chromaticInterval"));
     
-    cls.def("setVoice", &Note::setVoice);
-    cls.def("setStaff", &Note::setStaff);
+    cls.def("setVoice", &Note::setVoice,
+        py::arg("voice"));
+    cls.def("setStaff", &Note::setStaff,
+        py::arg("staff"));
     cls.def("setIsGraceNote", &Note::setIsGraceNote,
         py::arg("isGraceNote") = false);
-    cls.def("setStem", &Note::setStem);
+    cls.def("setStem", &Note::setStem,
+        py::arg("stem"));
     cls.def("removeDots", &Note::removeDots);
     cls.def("setSingleDot", &Note::setSingleDot);
     cls.def("setDoubleDot", &Note::setDoubleDot);
     cls.def("setTieStart", &Note::setTieStart);
     cls.def("setTieStop", &Note::setTieStop);
     cls.def("setTieStopStart", &Note::setTieStopStart);
-    cls.def("addTie", &Note::addTie);
-    cls.def("addSlur", &Note::addSlur);
-    cls.def("addArticulation", &Note::addArticulation);
-    cls.def("addBeam", &Note::addBeam);
+    cls.def("addTie", &Note::addTie,
+        py::arg("tieType"));
+    cls.def("addSlur", &Note::addSlur,
+        py::arg("slurType"),
+        py::arg("slurOrientation"));
+    cls.def("addArticulation", &Note::addArticulation,
+        py::arg("articulation"));
+    cls.def("addBeam", &Note::addBeam,
+        py::arg("beam"));
+    cls.def("setIsTuplet", &Note::setIsTuplet,
+        py::arg("isTuplet") = false);
+    cls.def("setTupleValues", &Note::setTupleValues,
+        py::arg("actualNotes"),
+        py::arg("normalNotes"),
+        py::arg("normalType") = "eighth");
     cls.def("info", &Note::info, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def("setIsPitched", &Note::setIsPitched);
+    cls.def("setIsPitched", &Note::setIsPitched,
+        py::arg("isPitched") = true);
     cls.def("isPitched", &Note::isPitched);
 
     cls.def("setUnpitchedIndex", &Note::setUnpitchedIndex);
@@ -122,6 +146,10 @@ void NoteClass(py::module &m) {
     cls.def("getTransposeChromatic", &Note::getTransposeChromatic);
     cls.def("isTransposed", &Note::isTransposed);
     cls.def("isGraceNote", &Note::isGraceNote);
+
+    cls.def("transpose", &Note::transpose,
+        py::arg("semitones"),
+        py::arg("accType") = MUSIC_XML::ACCIDENT::NONE);
 
     cls.def("toXML", &Note::toXML, 
         py::arg("instrumentId") = 1,

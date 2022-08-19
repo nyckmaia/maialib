@@ -608,9 +608,9 @@ std::string Score::getTitle() const
     return _title;
 }
 
-void Score::setTitle(const std::string& title)
+void Score::setTitle(const std::string& scoreTitle)
 {
-    _title = title;
+    _title = scoreTitle;
 }
 
 void Score::setComposerName(const std::string& composerName)

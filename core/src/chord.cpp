@@ -155,7 +155,7 @@ void Chord::removeTopNote()
     _isStackedInThirds = false;
 }
 
-void Chord::insertNote(Note& note, size_t noteIndex)
+void Chord::insertNote(Note& note, int noteIndex)
 {
     note.setIsInChord(true);
     _note.insert(_note.begin() + noteIndex, note);
@@ -166,7 +166,7 @@ void Chord::insertNote(Note& note, size_t noteIndex)
      _isStackedInThirds = false;
 }
 
-void Chord::removeNote(size_t noteIndex)
+void Chord::removeNote(int noteIndex)
 {
     _note.erase(_note.begin() + noteIndex);
 
@@ -176,17 +176,17 @@ void Chord::removeNote(size_t noteIndex)
 
 void Chord::setDurationTicks(const int durationTicks)
 {
-    const size_t chordSize = _note.size();
+    const int chordSize = _note.size();
 
-    for (size_t i = 0; i < chordSize; i++) {
+    for (int i = 0; i < chordSize; i++) {
         _note[i].setDurationTicks(durationTicks);
         _stack[i].setDurationTicks(durationTicks);
     }
 }
 
-void Chord::inversion(size_t inversionNumber)
+void Chord::inversion(int inversionNumber)
 {
-    for (size_t i = 0; i < inversionNumber; i++) {
+    for (int i = 0; i < inversionNumber; i++) {
         _note[0].transpose(12);  // isto apenas altera a nota uma oitava acima
 
         const Note& x = _note[0];  // pega a nota que foi alterada acima
@@ -345,30 +345,30 @@ int Chord::getDurationTicks() const
     return minValue;
 }
 
-Note& Chord::getNote(size_t noteIndex)
+Note& Chord::getNote(int noteIndex)
 {
    return _note[noteIndex];
 }
 
-const Note& Chord::getNote(const size_t noteIndex) const
+const Note& Chord::getNote(const int noteIndex) const
 {
    return _note[noteIndex];
 }
 
 void Chord::print() const
 {
-    const size_t chordSize = _note.size();
+    const int chordSize = _note.size();
 
-    for (size_t i = 0; i < chordSize; i++) {
+    for (int i = 0; i < chordSize; i++) {
         std::cout << "note[" << i << "] = " << _note[i].getPitch() << std::endl;
     }
 }
 
 void Chord::printStack() const
 {
-    const size_t stackSize = _stack.size();
+    const int stackSize = _stack.size();
 
-    for (size_t i = 0; i < stackSize; i++) {
+    for (int i = 0; i < stackSize; i++) {
         std::cout << "stack[" << i << "] = " << _stack[i].getPitch() << std::endl;
     }
 }

@@ -119,8 +119,7 @@ public:
     void setVoice(const int voice);
     void setStaff(const int staff);
     void setIsGraceNote(const bool isGraceNote = false);
-    void setType(const std::string& noteType);
-    void setStem(const std::string& steam);
+    void setStem(const std::string& stem);
     void removeDots();
     void setSingleDot();
     void setDoubleDot();

@@ -26,16 +26,22 @@ void ScoreClass(py::module &m) {
             py::arg("numMeasures") = 20,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def(py::init<const std::string&>(), py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def(py::init<const std::string&>(),
+            py::arg("filePath"),
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("clear", &Score::clear);
     cls.def("addPart", &Score::addPart,
         py::arg("partName"),
         py::arg("numStaves") = 1,
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("removePart", &Score::removePart);
-    cls.def("addMeasure", &Score::addMeasure);
-    cls.def("removeMeasure", &Score::removeMeasure);
+    cls.def("removePart", &Score::removePart, 
+        py::arg("partId"));
+    cls.def("addMeasure", &Score::addMeasure,
+        py::arg("numMeasures"));
+    cls.def("removeMeasure", &Score::removeMeasure,
+        py::arg("measureStart"),
+        py::arg("measureEnd"));
     
     cls.def("getPart", py::overload_cast<const int>(&Score::getPart), 
         py::arg("partId"),
@@ -53,8 +59,10 @@ void ScoreClass(py::module &m) {
     cls.def("getPartNames", &Score::getPartNames);
     cls.def("getTitle", &Score::getTitle);
 
-    cls.def("setTitle", &Score::setTitle);
-    cls.def("setComposerName", &Score::setComposerName);
+    cls.def("setTitle", &Score::setTitle,
+        py::arg("scoreTitle"));
+    cls.def("setComposerName", &Score::setComposerName,
+        py::arg("composerName"));
 
     cls.def("setKeySignature", py::overload_cast<const int, const bool, const int>(&Score::setKeySignature),
         py::arg("fifthCicle"),
@@ -75,7 +83,8 @@ void ScoreClass(py::module &m) {
         py::arg("duration") = Duration::QUARTER,
         py::arg("measureStart") = 0);
 
-    cls.def("toXML", &Score::toXML);
+    cls.def("toXML", &Score::toXML,
+        py::arg("identSize") = 2);
     cls.def("toJSON", &Score::toJSON);
     cls.def("toFile", &Score::toFile,
             py::arg("fileName"),
@@ -83,17 +92,35 @@ void ScoreClass(py::module &m) {
     cls.def("info", &Score::info, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("isValid", &Score::isValid, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("xPathCountNodes", &Score::xPathCountNodes, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("xPathCountNodes", &Score::xPathCountNodes, 
+        py::arg("xPath"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getPartsName", &Score::getPartsName, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("getPartName", &Score::getPartName, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("selectNotes", &Score::selectNotes, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("countNotes", &Score::countNotes, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("getPartName", &Score::getPartName, 
+        py::arg("partId"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    
+    cls.def("getPartIndex", &Score::getPartIndex, 
+        py::arg("partName"),
+        py::arg("index"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    
+    cls.def("selectNotes", &Score::selectNotes, 
+        py::arg("config"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("countNotes", &Score::countNotes, 
+        py::arg("config"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("setRepeat", &Score::setRepeat, 
         py::arg("measureStart"),
         py::arg("measureEnd") = -1);
 
-    cls.def("findPattern", &Score::findPattern, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("instrumentFragmentation", &Score::instrumentFragmentation, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("findPattern", &Score::findPattern,
+        py::arg("pattern"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("instrumentFragmentation", &Score::instrumentFragmentation,
+        py::arg("config"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getChords", [](Score& score, nlohmann::json config)
         {
             // Import Pandas module

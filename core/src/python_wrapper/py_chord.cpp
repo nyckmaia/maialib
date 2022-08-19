@@ -18,8 +18,12 @@ void ChordClass(py::module &m) {
     // bindings to Chord class
     py::class_<Chord> cls(m, "Chord");
     cls.def(py::init<>(), py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def(py::init<const std::vector<Note>&>(), py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def(py::init<const std::vector<std::string>&>(), py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def(py::init<const std::vector<Note>&>(), 
+        py::arg("notes"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def(py::init<const std::vector<std::string>&>(), 
+        py::arg("pitches"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("clear", &Chord::clear);
 
@@ -29,19 +33,33 @@ void ChordClass(py::module &m) {
             py::arg("pitch"));
 
     cls.def("removeTopNote", &Chord::removeTopNote, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("insertNote", &Chord::insertNote, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("removeNote", &Chord::removeNote, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("setDurationTicks", &Chord::setDurationTicks, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("inversion", &Chord::inversion, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("transpose", &Chord::transpose, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("insertNote", &Chord::insertNote, 
+        py::arg("insertNote"),
+        py::arg("positionNote") = 0,
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("removeNote", &Chord::removeNote, 
+        py::arg("noteIndex"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("setDurationTicks", &Chord::setDurationTicks, 
+        py::arg("durationTicks"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("inversion", &Chord::inversion, 
+        py::arg("inversionNumber"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("transpose", &Chord::transpose, 
+        py::arg("semiTonesNumber"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("transposeStackOnly", &Chord::transposeStackOnly, 
+        py::arg("semiTonesNumber"),
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("removeDuplicateNotes", &Chord::removeDuplicateNotes);
     cls.def("getDuration", &Chord::getDuration);
 
     cls.def("getDurationTicks", &Chord::getDurationTicks);
-    cls.def("getNote", py::overload_cast<size_t>(&Chord::getNote),
+    cls.def("getNote", py::overload_cast<int>(&Chord::getNote),
             py::arg("noteIndex"));
-    cls.def("getNote", py::overload_cast<size_t>(&Chord::getNote),
+    cls.def("getNote", py::overload_cast<int>(&Chord::getNote),
             py::arg("noteIndex"),
             py::return_value_policy::reference_internal);
 
@@ -50,6 +68,7 @@ void ChordClass(py::module &m) {
             py::arg("useEnharmonicName") = true,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getBassNote", &Chord::getBassNote);
+    cls.def("getNotes", &Chord::getNotes);
 
     cls.def("haveMinorThird", &Chord::haveMinorThird);
     cls.def("haveMajorThird", &Chord::haveMajorThird);
@@ -90,7 +109,6 @@ void ChordClass(py::module &m) {
     cls.def("print", &Chord::print, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("printStack", &Chord::printStack, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def("getNotes", &Chord::getNotes);
     cls.def("getStackedChord", &Chord::getStackedChord);
 
     cls.def("sortNotes", &Chord::sortNotes);
@@ -104,10 +122,10 @@ void ChordClass(py::module &m) {
 
     // Default Python 'print' function:
     cls.def("__repr__", [](const Chord& chord) {
-        const size_t chordSize = chord.size();
+        const int chordSize = chord.size();
         std::string noteNames = "<Chord [";
 
-        for (size_t i = 0; i < chordSize-1; i++) {
+        for (int i = 0; i < chordSize-1; i++) {
             noteNames.append(chord[i].getPitch() + ", ");
         }
 

@@ -88,7 +88,7 @@ public:
     const std::vector<std::string> getPartNames() const;
     std::string getTitle() const;
 
-    void setTitle(const std::string& title);
+    void setTitle(const std::string& scoreTitle);
     void setComposerName(const std::string& composerName);
 
     void setKeySignature(const int fifthCicle, const bool isMajorMode = true, const int measureId = 0);

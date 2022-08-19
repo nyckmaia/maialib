@@ -3,7 +3,7 @@
 
 namespace py = pybind11;
 
-void ScoreCollectionClass(py::module &);
+// void ScoreCollectionClass(py::module &);
 void ScoreClass(py::module &);
 void PartClass(py::module &);
 void ClefClass(py::module &);
@@ -29,7 +29,6 @@ PYBIND11_MODULE(maiacore, m) {
     MeasureClass(m);
     IntervalClass(m);
     HelperClass(m);
-    ScoreCollectionClass(m);
-    
+    // ScoreCollectionClass(m);    
 }
 #endif
