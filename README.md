@@ -24,8 +24,7 @@ Now you can explore some `maialib` features like:
 
 ## Requirements
 ### To run-only
-- Python 3.7 (or greater)
-- To generate Python stubs: `pip install coverage pybind11-stubgen`
+- Python 3.8 (or greater)
 
 ### To build from source
 #### Applications:
@@ -41,13 +40,18 @@ Now you can explore some `maialib` features like:
 ```
 pip install pathlib
 pip install cpplint
+
+# To generate Python stubs
+pip install coverage 
+pip install pybind11-stubgen
+# Mac users: May be you have to add the coverage and pybind11-stubgen on your `PATH` - /etc/paths
 ```
 
 ## Tested Environments
 
 Operational System | Compilers
 ------------------ | ----------------
-Windows 10 x64     | GCC 10.3 (MSYS2) <br> Visual Studio 2022
+Windows 10 x64     | GCC 10.3 (MSYS2)
 Linux Ubuntu 20.04 | GCC 9.3
 Apple OSX 10.15    | XCode (Command Line Tools) 11.5
 

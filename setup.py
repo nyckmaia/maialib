@@ -35,7 +35,7 @@ setup(
         "Natural Language :: English",
         "Topic :: Software Development :: Libraries"
     ],
-    # install_requires=["pandas"],
+    # install_requires=["coverage", "pybind11_stubgen"], # dev dependencies
     python_requires=">=3.8.0",
     zip_safe=False,
 )
