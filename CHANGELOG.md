@@ -2,26 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.0.15] - 2022-MM-DD
+## [v0.0.15] - 2022-09-07
 ### New Features
 - Add maialib Python stubs
-- Replace `Pybind11` by `Nanobind` to run-time speed up
 
 ### Improved
 - `ScoreCollection` class:
-    - Add new input argument in the constructor: `bool includeSubFolders = false`
-    - Add overloaded constructor: vector of directory paths
-    - Add `merge(ScoreCollection& other)` method
+    - Add overloaded constructor: vector of directories paths
+    - Add `.merge(ScoreCollection& other)` method
     - Add `+` operator overload to `.merge(ScoreCollection& other)` method
     - Add `.getNumDirectories()` method
     - Add `.addDirectory()` method
-    - Add `.setDirectoryPaths()` method
-- Compile time speed up:
-    - Use `iostream` Foward Declaration
-    - Include header files inside the `*.cpp` files
-- `CMakelists.txt`: Better included paths structure
+    - Add `.setDirectoriesPaths()` method
+- Replace `python3` to `python` calls
+- Update `Pybind11` to v2.10.0
+
 ### Fixed
-    - Replace `python3` to `python` calls
+- C++ & Python unit tests are now running without any errors: 
+    - `make run-cpp-tests`
+    - `make py-tests`
+    - `make tests`
 
 -------------------------
 
@@ -34,7 +34,7 @@ All notable changes to this project will be documented in this file.
 - `Chord` Class: Add `getNotes()` method
 
 ### Improved
-- Update Pybind11 to v.2.9.2
+- Update Pybind11 to v2.9.2
 - Better maialib objects representation inside the Python environment
 - `Score::forEachNote()` callback contains more input parameters
 

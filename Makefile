@@ -17,10 +17,10 @@ all: dev
 .PHONY: module-release
 .PHONY: module
 .PHONY: validate
+.PHONY: build-cpp-tests
 .PHONY: cpp-tests
-.PHONY: run-cpp-tests
 .PHONY: py-tests 
-.PHONY: test
+.PHONY: tests
 .PHONY: dist
 .PHONY: install
 .PHONY: uninstall
@@ -83,12 +83,12 @@ module:
 validate:
 	@python $(SCRIPTS_DIR)/make-validate.py
 
-cpp-tests:
+build-cpp-tests:
 	@make static-debug
 	@python $(SCRIPTS_DIR)/make-cpp-tests.py Debug
 
-run-cpp-tests:
-	@make cpp-tests
+cpp-tests:
+	@make build-cpp-tests
 	@python $(SCRIPTS_DIR)/make-run-cpp-tests.py
 
 py-tests:
@@ -96,7 +96,6 @@ py-tests:
 
 tests:
 	@make cpp-tests
-	@make run-cpp-tests
 	@make py-tests
 
 dist:

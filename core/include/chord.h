@@ -156,7 +156,7 @@ public:
         return x;
     }
 
-    void operator << (Note& note) {
+    void operator << (const Note& note) {
         addNote(note);
     }
 

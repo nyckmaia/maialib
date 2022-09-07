@@ -1,6 +1,4 @@
 import unittest
-import io
-from contextlib import redirect_stderr
 from maialib import *
 
 def isFloatEq(x, y, epslon = 1E-3):
@@ -129,191 +127,239 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(Helper.midiNote2pitch(-1, "x"),  "rest")
     
     def testTwelveTonesOctave4(self):
-        # MIDI Note 60 - C4
+        # Just to remeber how to redirect C++ Stderr
+        # buf = io.StringIO()
+        # with redirect_stderr(buf):
+        #     self.assertEqual(Helper.midiNote2pitch(60, "b"),  "")
+        # self.assertIn("[ERROR] The MIDI Note '60' cannot be wrote using 'b' accident type\n", buf.getvalue())
+
+        # ===== MIDI Note 60 - C4 ===== #
+        # Double Flat
         self.assertEqual(Helper.midiNote2pitch(60, "bb"), "Dbb4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(60, "b"),  "")
-        self.assertIn("[ERROR] The MIDI Note '60' cannot be wrote using 'b' accident type\n", buf.getvalue())
+        # Flat
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(60, "b"),  "")
         
-        self.assertEqual(Helper.midiNote2pitch(60),       "C4")
+        # Natural
+        self.assertEqual(Helper.midiNote2pitch(60), "C4")
+        
+        # Sharp
         self.assertEqual(Helper.midiNote2pitch(60, "#"),  "B#3")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(60, "x"),  "")
-        self.assertIn("[ERROR] The MIDI Note '60' cannot be wrote using 'x' accident type\n", buf.getvalue())
+        # Double Sharp
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(60, "x"),  "")
+            
+        # ===== MIDI Note 61 - C#4 ===== #
+        # Double Flat
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(61, "bb"),  "")
 
-        # MIDI Note 61 - C#4
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(61, "bb"), "")
-        self.assertIn("[ERROR] The MIDI Note '61' cannot be wrote using 'bb' accident type\n", buf.getvalue())
-
+        # Flat
         self.assertEqual(Helper.midiNote2pitch(61, "b"),  "Db4")
+        
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(61),       "C#4")
+        
+        # Sharp
         self.assertEqual(Helper.midiNote2pitch(61, "#"),  "C#4")
+        
+        # Double Sharp
         self.assertEqual(Helper.midiNote2pitch(61, "x"),  "Bx3")
 
-        # MIDI Note 62 - D4
+        # ===== MIDI Note 62 - D4 ===== #
+        # Double Flat
         self.assertEqual(Helper.midiNote2pitch(62, "bb"), "Ebb4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(62, "b"),  "")
-        self.assertIn("[ERROR] The MIDI Note '62' cannot be wrote using 'b' accident type\n", buf.getvalue())
-
+        # Flat
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(62, "b"),  "")
+        
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(62),       "D4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(62, "#"),  "")
-        self.assertIn("[ERROR] The MIDI Note '62' cannot be wrote using '#' accident type\n", buf.getvalue())
+        # Sharp
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(62, "#"),  "")
 
+        # Double Sharp
         self.assertEqual(Helper.midiNote2pitch(62, "x"),  "Cx4")
 
-        # MIDI Note 63 - D#4
+        # ===== MIDI Note 63 - D#4 ===== #
+        # Double Flat
         self.assertEqual(Helper.midiNote2pitch(63, "bb"), "Fbb4")
+        
+        # Flat
         self.assertEqual(Helper.midiNote2pitch(63, "b"),  "Eb4")
+        
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(63),       "D#4")
+        
+        # Sharp
         self.assertEqual(Helper.midiNote2pitch(63, "#"),  "D#4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(63, "x"),  "")
-        self.assertIn("[ERROR] The MIDI Note '63' cannot be wrote using 'x' accident type\n", buf.getvalue())
+        # Double Sharp
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(63, "x"),  "")
 
-        # MIDI Note 64 - E4
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(64, "bb"), "")
-        self.assertIn("[ERROR] The MIDI Note '64' cannot be wrote using 'bb' accident type\n", buf.getvalue())
+        # ===== MIDI Note 64 - E4 ===== #
+        # Double Flat
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(64, "bb"), "")
 
+        # Flat
         self.assertEqual(Helper.midiNote2pitch(64, "b"),  "Fb4")
+        
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(64),       "E4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(64, "#"),  "")
-        self.assertIn("[ERROR] The MIDI Note '64' cannot be wrote using '#' accident type\n", buf.getvalue())
+        # Sharp
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(64, "#"),  "")
 
+        # Double Sharp
         self.assertEqual(Helper.midiNote2pitch(64, "x"),  "Dx4")
 
-        # MIDI Note 65 - F4
+        # ===== MIDI Note 65 - F4 ===== #
+        # Double Flat
         self.assertEqual(Helper.midiNote2pitch(65, "bb"), "Gbb4")
 
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(65, "b"),  "")
-        self.assertIn("[ERROR] The MIDI Note '65' cannot be wrote using 'b' accident type\n", buf.getvalue())
+        # Flat
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(65, "b"),  "")
 
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(65),       "F4")
+        
+        # Sharp
         self.assertEqual(Helper.midiNote2pitch(65, "#"),  "E#4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(65, "x"),  "")
-        self.assertIn("[ERROR] The MIDI Note '65' cannot be wrote using 'x' accident type\n", buf.getvalue())
+        # Double Sharp
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(65, "x"),  "")
 
-        # MIDI Note 66 - F#4
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(66, "bb"), "")
-        self.assertIn("[ERROR] The MIDI Note '66' cannot be wrote using 'bb' accident type\n", buf.getvalue())
+        # ===== MIDI Note 66 - F#4 ===== #
+        # Double Flat
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(66, "bb"), "")
 
+        # Flat
         self.assertEqual(Helper.midiNote2pitch(66, "b"),  "Gb4")
+        
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(66),       "F#4")
+        
+        # Sharp
         self.assertEqual(Helper.midiNote2pitch(66, "#"),  "F#4")
+        
+        # Double Sharp
         self.assertEqual(Helper.midiNote2pitch(66, "x"),  "Ex4")
 
-        # MIDI Note 67 - G4
+        # ===== MIDI Note 67 - G4 ===== #
+        # Double Flat
         self.assertEqual(Helper.midiNote2pitch(67, "bb"), "Abb4")
 
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(67, "b"),  "")
-        self.assertIn("[ERROR] The MIDI Note '67' cannot be wrote using 'b' accident type\n", buf.getvalue())
+        # Flat
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(67, "b"),  "")
 
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(67),       "G4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(67, "#"),  "")
-        self.assertIn("[ERROR] The MIDI Note '67' cannot be wrote using '#' accident type\n", buf.getvalue())
+        # Sharp
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(67, "#"),  "")
 
+        # Double Sharp
         self.assertEqual(Helper.midiNote2pitch(67, "x"),  "Fx4")
 
-        # MIDI Note 68 - G#4
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(68, "bb"), "")
-        self.assertIn("[ERROR] The MIDI Note '68' cannot be wrote using 'bb' accident type\n", buf.getvalue())
+        # ===== MIDI Note 68 - G#4 ===== #
+        # Double Flat
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(68, "bb"), "")
 
+        # Flat
         self.assertEqual(Helper.midiNote2pitch(68, "b"),  "Ab4")
+        
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(68),       "G#4")
+        
+        # Sharp
         self.assertEqual(Helper.midiNote2pitch(68, "#"),  "G#4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(68, "x"),  "")
-        self.assertIn("[ERROR] The MIDI Note '68' cannot be wrote using 'x' accident type\n", buf.getvalue())
+        # Double Sharp
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(68, "x"),  "")
 
-        # MIDI Note 69 - A4
+        # ===== MIDI Note 69 - A4 ===== #
+        # Double Flat
         self.assertEqual(Helper.midiNote2pitch(69, "bb"), "Bbb4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(69, "b"),  "")
-        self.assertIn("[ERROR] The MIDI Note '69' cannot be wrote using 'b' accident type\n", buf.getvalue())
+        # Flat
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(69, "b"),  "")
 
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(69),       "A4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(69, "#"),  "")
-        self.assertIn("[ERROR] The MIDI Note '69' cannot be wrote using '#' accident type\n", buf.getvalue())
+        # Sharp
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(69, "#"),  "")
 
+        # Double Sharp
         self.assertEqual(Helper.midiNote2pitch(69, "x"),  "Gx4")
 
-        # MIDI Note 70 - A#4
+        # ===== MIDI Note 70 - A#4 ===== #
+        # Double Flat
         self.assertEqual(Helper.midiNote2pitch(70, "bb"), "Cbb5")
+        
+        # Flat
         self.assertEqual(Helper.midiNote2pitch(70, "b"),  "Bb4")
+        
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(70),       "A#4")
+        
+        # Sharp
         self.assertEqual(Helper.midiNote2pitch(70, "#"),  "A#4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(70, "x"),  "")
-        self.assertIn("[ERROR] The MIDI Note '70' cannot be wrote using 'x' accident type\n", buf.getvalue())
+        # Double Sharp
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(70, "x"),  "")
 
-        # MIDI Note 71 - B4
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(71, "bb"), "")
-        self.assertIn("[ERROR] The MIDI Note '71' cannot be wrote using 'bb' accident type\n", buf.getvalue())
+        # ===== MIDI Note 71 - B4 ===== #
+        # Double Flat
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(71, "bb"), "")
 
+        # Flat
         self.assertEqual(Helper.midiNote2pitch(71, "b"),  "Cb5")
+        
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(71),       "B4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(71, "#"),  "")
-        self.assertIn("[ERROR] The MIDI Note '71' cannot be wrote using '#' accident type\n", buf.getvalue())
+        # Sharp
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(71, "#"),  "")
 
+        # Double Sharp
         self.assertEqual(Helper.midiNote2pitch(71, "x"),  "Ax4")
 
-        # MIDI Note 72 - C5
+        # ===== MIDI Note 72 - C5 ===== #
+        # Double Flat
         self.assertEqual(Helper.midiNote2pitch(72, "bb"), "Dbb5")
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(72, "b"),  "")
-        self.assertIn("[ERROR] The MIDI Note '72' cannot be wrote using 'b' accident type\n", buf.getvalue())
+        
+        # Flat
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(72, "b"),  "")
+        
+        # Natural
         self.assertEqual(Helper.midiNote2pitch(72),       "C5")
+        
+        # Sharp
         self.assertEqual(Helper.midiNote2pitch(72, "#"),  "B#4")
         
-        buf = io.StringIO()
-        with redirect_stderr(buf):
-            self.assertEqual(Helper.midiNote2pitch(72, "x"),  "")
-        self.assertIn("[ERROR] The MIDI Note '72' cannot be wrote using 'x' accident type\n", buf.getvalue())
+        # Double Sharp
+        with self.assertRaises(Exception):
+            self.assertRaises(Helper.midiNote2pitch(72, "x"),  "")
         

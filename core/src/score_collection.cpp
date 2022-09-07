@@ -1,118 +1,121 @@
-// #include "score_collection.h"
+#include "score_collection.h"
 
-// ScoreCollection::ScoreCollection(const std::string& collectionName, const std::string& directoryPath, const bool includeSubFolders)
-// {
-//     _collectionName = collectionName;
+ScoreCollection::ScoreCollection(const std::string& collectionName, const std::string& directoryPath)
+{
+    _collectionName = collectionName;
+    setDirectoriesPaths({directoryPath});
+}
 
-//     setDirectoryPath(directoryPath, includeSubFolders);
-//     loadCollectionFiles();
-// }
+ScoreCollection::ScoreCollection(const std::string& collectionName, const std::vector<std::string>& directoriesPaths)
+{
+    _collectionName = collectionName;
+    setDirectoriesPaths(directoriesPaths);
+}
 
-// ScoreCollection::ScoreCollection(const std::string& collectionName, const std::vector<std::string>& directoryPaths, const bool includeSubFolders)
-// {
-//     _collectionName = collectionName;
+std::vector<std::string> ScoreCollection::getDirectoriesPaths() const
+{
+    return _directoriesPaths;
+}
 
-//     for (const auto& dir : directoryPaths) {
-//         setDirectoryPath()
-//     }
-// }
+void ScoreCollection::setDirectoriesPaths(const std::vector<std::string>& directoriesPaths)
+{
+    _directoriesPaths = directoriesPaths;
 
+    loadCollectionFiles();
+}
 
-// std::string ScoreCollection::getName() const
-// {
-//     return _collectionName;
-// }
+std::string ScoreCollection::getName() const
+{
+    return _collectionName;
+}
 
-// std::vector<Score>& ScoreCollection::getScores()
-// {
-//     return _scores;
-// }
+void ScoreCollection::setName(const std::string& collectionName)
+{
+    _collectionName = collectionName;
+}
 
-// int ScoreCollection::getNumScores() const
-// {
-//     return _scores.size();
-// }
+void ScoreCollection::addDirectory(const std::string& directoryPath)
+{
+    _directoriesPaths.push_back(directoryPath);
+}
 
-// std::string ScoreCollection::getDirectoryPath() const
-// {
-//     return _directoryPath;
-// }
+void ScoreCollection::addScore(const Score& score)
+{
+    _scores.push_back(score);
+}
 
-// std::vector<std::string> ScoreCollection::getDirectoryPaths() const
-// {
-//     return _directoryPaths;
-// }
+void ScoreCollection::clear()
+{
+    _scores.clear();
+}
 
-// void ScoreCollection::setName(const std::string& collectionName)
-// {
-//     _collectionName = collectionName;
-// }
+int ScoreCollection::getNumDirectories() const
+{
+    return static_cast<int>(_directoriesPaths.size());
+}
 
-// void ScoreCollection::setDirectoryPath(const std::string& directoryPath, const bool includeSubFolders)
-// {
-//     std::filesystem::path fp(directoryPath); 
-//     if (!std::filesystem::is_directory(fp)) { 
-//         std::cerr << "[ERROR] The path '" << directoryPath << "' is not a directory" << std::endl;
-//         return;
-//     }
+int ScoreCollection::getNumScores() const
+{
+    return _scores.size();
+}
 
-//     _directoryPath = directoryPath;
-// }
+std::vector<Score>& ScoreCollection::getScores()
+{
+    return _scores;
+}
 
-// void ScoreCollection::setDirectoryPaths(const std::vector<std::string>& directoryPaths, const bool includeSubFolders)
-// {
-//     _directoryPaths.clear();
-//     _directoryPaths.push_back(std::make_pair(directoryPaths, includeSubFolders));
-// }
+const std::vector<Score>& ScoreCollection::getScores() const
+{
+    return _scores;
+}
 
+bool ScoreCollection::isEmpty() const
+{
+    return _scores.empty();
+}
 
-// void ScoreCollection::loadCollectionFiles()
-// {
-//     if (_directoryPath.empty()) { return; }
+void ScoreCollection::loadCollectionFiles()
+{
+    if (_directoriesPaths.empty()) { return; }
 
-//     for (auto &p : std::filesystem::recursive_directory_iterator(_directoryPath)) {
-//         const std::filesystem::path& ext = p.path().extension();
-//         if (ext == ".xml" || ext == ".mxl" || ext == ".musicxml") {
-//             const std::string& fileName = p.path().filename().string();
-//             std::cout << "Loading: " << fileName << std::endl;
-            
-//             const std::string& filePath = p.path().string();
-//             _scores.emplace_back(filePath);
-//         }
-//     }
-// }
+    for (const auto& dir : _directoriesPaths) {
+        for (const auto &fp : std::filesystem::directory_iterator(dir)) {
+            const std::filesystem::path& ext = fp.path().extension();
+            if (ext == ".xml" || ext == ".mxl" || ext == ".musicxml") {
+                const std::string& fileName = fp.path().filename().string();
+                std::cout << "Loading: " << fileName << std::endl;
 
-// void ScoreCollection::clear()
-// {
-//     _scores.clear();
-// }
+                const std::string& filePath = fp.path().string();
+                _scores.emplace_back(filePath);
+            }
+        }
+    }
+}
 
-// bool ScoreCollection::isEmpty() const
-// {
-//     return _scores.empty();
-// }
+void ScoreCollection::merge(const ScoreCollection& other, const std::string& mergedCollectionName)
+{
+    // Merge directories paths    
+    for (const auto& dir : other.getDirectoriesPaths()) {
+        _directoriesPaths.push_back(dir);
+    }
+    
+    // Merge Score objects
+    for (const auto& sc : other.getScores()) {
+        _scores.push_back(sc);
+    }
 
-// int ScoreCollection::getNumDirectories() const
-// {
-//     return static_cast<int>(_directoryPaths.size());
-// }
+    // Set new merged ScoreCollection name
+    if (!mergedCollectionName.empty()) {
+        _collectionName = mergedCollectionName;
+    }
+}
 
-// void ScoreCollection::addDirectory(const std::string& directoryPath)
-// {
-//     _directoryPaths.push_back(directoryPath);
-// }
+void ScoreCollection::removeScore(const int scoreIdx)
+{
+    if (scoreIdx >= static_cast<int>(_scores.size())) {
+        std::cerr << "[ERROR] Invalid score index: " << scoreIdx << std::endl;
+        return;
+    }
 
-// void ScoreCollection::addScore(const Score& score)
-// {
-//     _scores.push_back(score);
-// }
-
-// void ScoreCollection::removeScore(const int scoreIdx)
-// {
-//     if (scoreIdx >= static_cast<int>(_scores.size())) {
-//         std::cerr << "[ERROR] Invalid score index" << std::endl;
-//         return;
-//     }
-
-//     _scores.erase(_scores.begin() + scoreIdx);
-// }
+    _scores.erase(_scores.begin() + scoreIdx);
+}

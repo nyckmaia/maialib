@@ -142,141 +142,416 @@ TEST(midiNote2pitch, negativeValue_restCase)
 
 TEST(midiNote2pitch, twelveTonesOctave4)
 {
-    // MIDI Note 60 - C4
+    // Just to remember how to capture the C++ Stderr
+    // testing::internal::CaptureStderr();
+    // EXPECT_EQ(Helper::midiNote2pitch(60, "b"),  "");
+    // EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '60' cannot be wrote using 'b' accident type\n");
+
+    // ===== MIDI Note 60 - C4 ===== //
+    // Double flat
     EXPECT_EQ(Helper::midiNote2pitch(60, "bb"), "Dbb4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(60, "b"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '60' cannot be wrote using 'b' accident type\n");
+    
+    // Flat
+    try {
+        Helper::midiNote2pitch(60, "b");
+        FAIL() << "Expected [ERROR] The MIDI Note '60' cannot be wrote using 'b' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '60' cannot be wrote using 'b' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
 
+    // Natural
     EXPECT_EQ(Helper::midiNote2pitch(60),       "C4");
-    EXPECT_EQ(Helper::midiNote2pitch(60, "#"),  "B#3");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(60, "x"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '60' cannot be wrote using 'x' accident type\n");
 
-    // MIDI Note 61 - C#4
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(61, "bb"), "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '61' cannot be wrote using 'bb' accident type\n");
+    // Sharp
+    EXPECT_EQ(Helper::midiNote2pitch(60, "#"),  "B#3");
+
+    // Double Sharp
+    try {
+        Helper::midiNote2pitch(60, "x");
+        FAIL() << "Expected [ERROR] The MIDI Note '60' cannot be wrote using 'x' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '60' cannot be wrote using 'x' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+
+    // ===== MIDI Note 61 - C#4 ===== //
+    // Double flat
+    try {
+        Helper::midiNote2pitch(61, "bb");
+        FAIL() << "Expected [ERROR] The MIDI Note '61' cannot be wrote using 'bb' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '61' cannot be wrote using 'bb' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+
+    // Flat
     EXPECT_EQ(Helper::midiNote2pitch(61, "b"),  "Db4");
+
+    // Natural
     EXPECT_EQ(Helper::midiNote2pitch(61),       "C#4");
+
+    // Sharp
     EXPECT_EQ(Helper::midiNote2pitch(61, "#"),  "C#4");
+
+    // Double Sharp
     EXPECT_EQ(Helper::midiNote2pitch(61, "x"),  "Bx3");
 
-    // MIDI Note 62 - D4
+    // ===== MIDI Note 62 - D4 ===== //
+    // Double flat
     EXPECT_EQ(Helper::midiNote2pitch(62, "bb"), "Ebb4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(62, "b"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '62' cannot be wrote using 'b' accident type\n");
+
+    // Flat
+    try {
+        Helper::midiNote2pitch(62, "b");
+        FAIL() << "Expected [ERROR] The MIDI Note '62' cannot be wrote using 'b' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '62' cannot be wrote using 'b' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Natural
     EXPECT_EQ(Helper::midiNote2pitch(62),       "D4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(62, "#"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '62' cannot be wrote using '#' accident type\n");
+
+    // Sharp
+    try {
+        Helper::midiNote2pitch(62, "#");
+        FAIL() << "Expected [ERROR] The MIDI Note '62' cannot be wrote using '#' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '62' cannot be wrote using '#' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+
+    // Double Sharp
     EXPECT_EQ(Helper::midiNote2pitch(62, "x"),  "Cx4");
 
-    // MIDI Note 63 - D#4
+    // ===== MIDI Note 63 - D#4 ===== //
+    // Double flat
     EXPECT_EQ(Helper::midiNote2pitch(63, "bb"), "Fbb4");
-    EXPECT_EQ(Helper::midiNote2pitch(63, "b"),  "Eb4");
-    EXPECT_EQ(Helper::midiNote2pitch(63),       "D#4");
-    EXPECT_EQ(Helper::midiNote2pitch(63, "#"),  "D#4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(63, "x"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '63' cannot be wrote using 'x' accident type\n");
 
-    // MIDI Note 64 - E4
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(64, "bb"), "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '64' cannot be wrote using 'bb' accident type\n");
+    // Flat
+    EXPECT_EQ(Helper::midiNote2pitch(63, "b"),  "Eb4");
+
+    // Natural
+    EXPECT_EQ(Helper::midiNote2pitch(63),       "D#4");
+
+    // Sharp
+    EXPECT_EQ(Helper::midiNote2pitch(63, "#"),  "D#4");
+
+    // Double Sharp
+    try {
+        Helper::midiNote2pitch(63, "x");
+        FAIL() << "Expected [ERROR] The MIDI Note '63' cannot be wrote using 'x' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '63' cannot be wrote using 'x' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+
+    // ===== MIDI Note 64 - E4 ===== //
+    // Double Flat
+    try {
+        Helper::midiNote2pitch(64, "bb");
+        FAIL() << "Expected [ERROR] The MIDI Note '64' cannot be wrote using 'bb' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '64' cannot be wrote using 'bb' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Flat
     EXPECT_EQ(Helper::midiNote2pitch(64, "b"),  "Fb4");
+
+    // Natural
     EXPECT_EQ(Helper::midiNote2pitch(64),       "E4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(64, "#"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '64' cannot be wrote using '#' accident type\n");
+
+    // Sharp
+    try {
+        Helper::midiNote2pitch(64, "#");
+        FAIL() << "Expected [ERROR] The MIDI Note '64' cannot be wrote using '#' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '64' cannot be wrote using '#' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Double Sharp
     EXPECT_EQ(Helper::midiNote2pitch(64, "x"),  "Dx4");
 
-    // MIDI Note 65 - F4
+    // ===== MIDI Note 65 - F4 ===== //
+    // Double Flat
     EXPECT_EQ(Helper::midiNote2pitch(65, "bb"), "Gbb4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(65, "b"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '65' cannot be wrote using 'b' accident type\n");
-    EXPECT_EQ(Helper::midiNote2pitch(65),       "F4");
-    EXPECT_EQ(Helper::midiNote2pitch(65, "#"),  "E#4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(65, "x"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '65' cannot be wrote using 'x' accident type\n");
 
-    // MIDI Note 66 - F#4
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(66, "bb"), "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '66' cannot be wrote using 'bb' accident type\n");
+    // Flat
+    try {
+        Helper::midiNote2pitch(65, "b");
+        FAIL() << "Expected [ERROR] The MIDI Note '65' cannot be wrote using 'b' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '65' cannot be wrote using 'b' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+
+    // Natural
+    EXPECT_EQ(Helper::midiNote2pitch(65),       "F4");
+
+    // Sharp
+    EXPECT_EQ(Helper::midiNote2pitch(65, "#"),  "E#4");
+
+    // Double Sharp
+    try {
+        Helper::midiNote2pitch(65, "x");
+        FAIL() << "Expected [ERROR] The MIDI Note '65' cannot be wrote using 'x' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '65' cannot be wrote using 'x' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+
+    // ===== MIDI Note 66 - F#4 ===== //
+    // Double Flat
+    try {
+        Helper::midiNote2pitch(66, "bb");
+        FAIL() << "Expected [ERROR] The MIDI Note '66' cannot be wrote using 'bb' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '66' cannot be wrote using 'bb' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Flat
     EXPECT_EQ(Helper::midiNote2pitch(66, "b"),  "Gb4");
+
+    // Natural
     EXPECT_EQ(Helper::midiNote2pitch(66),       "F#4");
+    
+    // Sharp
     EXPECT_EQ(Helper::midiNote2pitch(66, "#"),  "F#4");
+    
+    // Double Sharp
     EXPECT_EQ(Helper::midiNote2pitch(66, "x"),  "Ex4");
 
-    // MIDI Note 67 - G4
+    // ===== MIDI Note 67 - G4 ===== //
+    // Double Flat
     EXPECT_EQ(Helper::midiNote2pitch(67, "bb"), "Abb4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(67, "b"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '67' cannot be wrote using 'b' accident type\n");
+    
+    // Flat
+    try {
+        Helper::midiNote2pitch(67, "b");
+        FAIL() << "Expected [ERROR] The MIDI Note '67' cannot be wrote using 'b' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '67' cannot be wrote using 'b' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Natural
     EXPECT_EQ(Helper::midiNote2pitch(67),       "G4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(67, "#"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '67' cannot be wrote using '#' accident type\n");
+    
+    // Sharp
+    try {
+        Helper::midiNote2pitch(67, "#");
+        FAIL() << "Expected [ERROR] The MIDI Note '67' cannot be wrote using '#' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '67' cannot be wrote using '#' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Double Sharp
     EXPECT_EQ(Helper::midiNote2pitch(67, "x"),  "Fx4");
 
-    // MIDI Note 68 - G#4
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(68, "bb"), "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '68' cannot be wrote using 'bb' accident type\n");
+    // ===== MIDI Note 68 - G#4 ===== //
+    // Double Flat
+    try {
+        Helper::midiNote2pitch(68, "bb");
+        FAIL() << "Expected [ERROR] The MIDI Note '68' cannot be wrote using 'bb' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '68' cannot be wrote using 'bb' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Flat
     EXPECT_EQ(Helper::midiNote2pitch(68, "b"),  "Ab4");
+    
+    // Natural
     EXPECT_EQ(Helper::midiNote2pitch(68),       "G#4");
+    
+    // Sharp
     EXPECT_EQ(Helper::midiNote2pitch(68, "#"),  "G#4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(68, "x"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '68' cannot be wrote using 'x' accident type\n");
+    
+    // Double Sharp
+    try {
+        Helper::midiNote2pitch(68, "x");
+        FAIL() << "Expected [ERROR] The MIDI Note '68' cannot be wrote using 'x' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '68' cannot be wrote using 'x' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
 
-    // MIDI Note 69 - A4
+    // ===== MIDI Note 69 - A4 ===== //
+    // Double Flat
     EXPECT_EQ(Helper::midiNote2pitch(69, "bb"), "Bbb4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(69, "b"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '69' cannot be wrote using 'b' accident type\n");
+    
+    // Flat
+    try {
+        Helper::midiNote2pitch(69, "b");
+        FAIL() << "Expected [ERROR] The MIDI Note '69' cannot be wrote using 'b' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '69' cannot be wrote using 'b' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Natural
     EXPECT_EQ(Helper::midiNote2pitch(69),       "A4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(69, "#"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '69' cannot be wrote using '#' accident type\n");
+    
+    // Sharp
+    try {
+        Helper::midiNote2pitch(69, "#");
+        FAIL() << "Expected [ERROR] The MIDI Note '69' cannot be wrote using '#' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '69' cannot be wrote using '#' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Double Sharp
     EXPECT_EQ(Helper::midiNote2pitch(69, "x"),  "Gx4");
 
-    // MIDI Note 70 - A#4
+    // ===== MIDI Note 70 - A#4 ===== //
+    // Double Flat
     EXPECT_EQ(Helper::midiNote2pitch(70, "bb"), "Cbb5");
+    
+    // Flat
     EXPECT_EQ(Helper::midiNote2pitch(70, "b"),  "Bb4");
+    
+    // Natural
     EXPECT_EQ(Helper::midiNote2pitch(70),       "A#4");
+    
+    // Sharp
     EXPECT_EQ(Helper::midiNote2pitch(70, "#"),  "A#4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(70, "x"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '70' cannot be wrote using 'x' accident type\n");
+    
+    // Double Sharp
+    try {
+        Helper::midiNote2pitch(70, "x");
+        FAIL() << "Expected [ERROR] The MIDI Note '70' cannot be wrote using 'x' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '70' cannot be wrote using 'x' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
 
-    // MIDI Note 71 - B4
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(71, "bb"), "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '71' cannot be wrote using 'bb' accident type\n");
+    // ===== MIDI Note 71 - B4 ===== //
+    // Double Flat
+    try {
+        Helper::midiNote2pitch(71, "bb");
+        FAIL() << "Expected [ERROR] The MIDI Note '71' cannot be wrote using 'bb' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '71' cannot be wrote using 'bb' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Flat
     EXPECT_EQ(Helper::midiNote2pitch(71, "b"),  "Cb5");
+    
+    // Natural
     EXPECT_EQ(Helper::midiNote2pitch(71),       "B4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(71, "#"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '71' cannot be wrote using '#' accident type\n");
+    
+    // Sharp
+    try {
+        Helper::midiNote2pitch(71, "#");
+        FAIL() << "Expected [ERROR] The MIDI Note '71' cannot be wrote using '#' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '71' cannot be wrote using '#' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Double Sharp
     EXPECT_EQ(Helper::midiNote2pitch(71, "x"),  "Ax4");
 
     // MIDI Note 72 - C5
+    // Double Flat
     EXPECT_EQ(Helper::midiNote2pitch(72, "bb"), "Dbb5");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(72, "b"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '72' cannot be wrote using 'b' accident type\n");
+    
+    // Flat
+    try {
+        Helper::midiNote2pitch(72, "b");
+        FAIL() << "Expected [ERROR] The MIDI Note '72' cannot be wrote using 'b' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '72' cannot be wrote using 'b' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
+    
+    // Natural
     EXPECT_EQ(Helper::midiNote2pitch(72),       "C5");
+    
+    // Sharp
     EXPECT_EQ(Helper::midiNote2pitch(72, "#"),  "B#4");
-    testing::internal::CaptureStderr();
-    EXPECT_EQ(Helper::midiNote2pitch(72, "x"),  "");
-    EXPECT_EQ(testing::internal::GetCapturedStderr(), "[ERROR] The MIDI Note '72' cannot be wrote using 'x' accident type\n");
+    
+    // Double Sharp
+    try {
+        Helper::midiNote2pitch(72, "x");
+        FAIL() << "Expected [ERROR] The MIDI Note '72' cannot be wrote using 'x' accident type";
+    }
+    catch(std::runtime_error const & err) {
+        EXPECT_EQ(err.what(), std::string("[ERROR] The MIDI Note '72' cannot be wrote using 'x' accident type"));
+    }
+    catch(...) {
+        FAIL() << "Expected std::runtime_error";
+    }
 }
 
 TEST(ticks2noteType, basicNoteTypes)

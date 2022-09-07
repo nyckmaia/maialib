@@ -18,6 +18,7 @@ os.system(genStubsCommand)
 # Copy stubs files to the 'dist' folder
 copy2("./stubs/maialib/__init__.pyi", f"{distDir}/maialib/__init__.pyi")
 copytree("./stubs/maialib/maiacore/", f"{distDir}/maialib/maiacore/", dirs_exist_ok=True)
+copytree("./stubs/maialib/maiapy/", f"{distDir}/maialib/maiapy/", dirs_exist_ok=True)
 
 # Uninstall maialib
 os.system(f"pip uninstall --yes maialib")
