@@ -103,7 +103,7 @@ public:
     void printStack() const;
     void info();
 
-    Chord getStackedChord() const;
+    Chord getStackedChord();
 
     void sortNotes();
 

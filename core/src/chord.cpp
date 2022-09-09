@@ -914,8 +914,10 @@ const std::vector<Note>& Chord::getNotes() const
     return _note;
 }
 
-Chord Chord::getStackedChord() const
+Chord Chord::getStackedChord()
 {
+    if (!_isStackedInThirds) { stackInThirds(); }
+
     return Chord(_stack);
 }
 
