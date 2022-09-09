@@ -44,6 +44,18 @@ void ScoreCollection::addScore(const Score& score)
     _scores.push_back(score);
 }
 
+void ScoreCollection::addScore(const std::string& filePath)
+{
+    addScore(Score(filePath));
+}
+
+void ScoreCollection::addScore(const std::vector<std::string>& filePaths)
+{
+    for (const auto& fp : filePaths) {
+        addScore(fp);
+    }
+}
+
 void ScoreCollection::clear()
 {
     _scores.clear();

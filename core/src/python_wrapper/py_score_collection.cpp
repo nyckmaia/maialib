@@ -34,8 +34,14 @@ void ScoreCollectionClass(py::module &m) {
 
     cls.def("addDirectory", &ScoreCollection::addDirectory, 
         py::arg("directoryPath"));
-    cls.def("addScore", &ScoreCollection::addScore, 
+    
+    cls.def("addScore", py::overload_cast<const Score&>(&ScoreCollection::addScore), 
         py::arg("score"));
+    cls.def("addScore", py::overload_cast<const std::string&>(&ScoreCollection::addScore), 
+        py::arg("filePath"));
+    cls.def("addScore", py::overload_cast<const std::vector<std::string>&>(&ScoreCollection::addScore), 
+        py::arg("filePaths"));
+    
     cls.def("clear", &ScoreCollection::clear);
     cls.def("getNumDirectories", &ScoreCollection::getNumDirectories);
     cls.def("getNumScores", &ScoreCollection::getNumScores);

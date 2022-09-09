@@ -26,6 +26,8 @@ public:
     
     void addDirectory(const std::string& directoryPath);
     void addScore(const Score& score);
+    void addScore(const std::string& filePath);
+    void addScore(const std::vector<std::string>& filePaths);
     void clear();
     int getNumDirectories() const;
     int getNumScores() const;

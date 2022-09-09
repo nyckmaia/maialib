@@ -14,12 +14,15 @@ All notable changes to this project will be documented in this file.
     - Add `.getNumDirectories()` method
     - Add `.addDirectory()` method
     - Add `.setDirectoriesPaths()` method
+    - Add oveloaded methods:
+        - `.addScore(const std::string& filePath)`
+        - `.addScore(const std::vector<std::string>& filePaths)`
 - Replace `python3` to `python` calls
 - Update `Pybind11` to v2.10.0
 
 ### Fixed
 - C++ & Python unit tests are now running without any errors: 
-    - `make run-cpp-tests`
+    - `make cpp-tests`
     - `make py-tests`
     - `make tests`
 
