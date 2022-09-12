@@ -147,6 +147,14 @@ void NoteClass(py::module &m) {
     cls.def("isTransposed", &Note::isTransposed);
     cls.def("isGraceNote", &Note::isGraceNote);
 
+    cls.def("getEnharmonicPitch", &Note::getEnharmonicPitch,
+        py::arg("alternativeEnhamonicPitch") = false);
+    cls.def("getEnharmonicPitches", &Note::getEnharmonicPitches,
+        py::arg("includeCurrentPitch") = false);
+    cls.def("toEnharmonicPitch", &Note::toEnharmonicPitch,
+        py::arg("alternativeEnhamonicPitch") = false);
+    cls.def("getFrequency", &Note::getFrequency);
+    
     cls.def("transpose", &Note::transpose,
         py::arg("semitones"),
         py::arg("accType") = MUSIC_XML::ACCIDENT::NONE);

@@ -104,9 +104,6 @@ static std::pair&lt; std::string, int &gt;&#160;</td><td class="memItemRight" va
 <tr class="memitem:a7c1f49532b06ffea95c9ff72f673ea68"><td class="memItemLeft" align="right" valign="top"><a id="a7c1f49532b06ffea95c9ff72f673ea68" name="a7c1f49532b06ffea95c9ff72f673ea68"></a>
 static int&#160;</td><td class="memItemRight" valign="bottom"><b>noteType2ticks</b> (std::string noteType, const int divisionsPerQuarterNote=256)</td></tr>
 <tr class="separator:a7c1f49532b06ffea95c9ff72f673ea68"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a375f2c6c824f218a5b3e9d02d4d38908"><td class="memItemLeft" align="right" valign="top"><a id="a375f2c6c824f218a5b3e9d02d4d38908" name="a375f2c6c824f218a5b3e9d02d4d38908"></a>
-static float&#160;</td><td class="memItemRight" valign="bottom"><b>ticks2QuarterNoteValue</b> (const size_t ticks, const size_t divisionsPerQuarterNote)</td></tr>
-<tr class="separator:a375f2c6c824f218a5b3e9d02d4d38908"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aefb7d19ea68ff9dc78e206d5af8e7814"><td class="memItemLeft" align="right" valign="top"><a id="aefb7d19ea68ff9dc78e206d5af8e7814" name="aefb7d19ea68ff9dc78e206d5af8e7814"></a>
 static float&#160;</td><td class="memItemRight" valign="bottom"><b>pitch2number</b> (const std::string &amp;pitch)</td></tr>
 <tr class="separator:aefb7d19ea68ff9dc78e206d5af8e7814"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -125,6 +122,9 @@ static int&#160;</td><td class="memItemRight" valign="bottom"><b>pitch2midiNote<
 <tr class="memitem:a9c3fc360fa220ce5c05107f205c7bb20"><td class="memItemLeft" align="right" valign="top"><a id="a9c3fc360fa220ce5c05107f205c7bb20" name="a9c3fc360fa220ce5c05107f205c7bb20"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>midiNote2pitch</b> (const int midiNote, const std::string &amp;accType={})</td></tr>
 <tr class="separator:a9c3fc360fa220ce5c05107f205c7bb20"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a061f37a1ca57b63e7385777d9fd2947d"><td class="memItemLeft" align="right" valign="top"><a id="a061f37a1ca57b63e7385777d9fd2947d" name="a061f37a1ca57b63e7385777d9fd2947d"></a>
+static const std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>midiNote2pitches</b> (const int midiNote)</td></tr>
+<tr class="separator:a061f37a1ca57b63e7385777d9fd2947d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a15a3658836f783d500e92da0e342e7a6"><td class="memItemLeft" align="right" valign="top"><a id="a15a3658836f783d500e92da0e342e7a6" name="a15a3658836f783d500e92da0e342e7a6"></a>
 static int&#160;</td><td class="memItemRight" valign="bottom"><b>semitonesBetweenPitches</b> (const std::string &amp;pitch_A, const std::string &amp;pitch_B)</td></tr>
 <tr class="separator:a15a3658836f783d500e92da0e342e7a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -146,6 +146,12 @@ static void&#160;</td><td class="memItemRight" valign="bottom"><b>splitPitch</b>
 <tr class="memitem:a92018d383f52ad75fd33ffedc55d7bfe"><td class="memItemLeft" align="right" valign="top"><a id="a92018d383f52ad75fd33ffedc55d7bfe" name="a92018d383f52ad75fd33ffedc55d7bfe"></a>
 static float&#160;</td><td class="memItemRight" valign="bottom"><b>durationRatio</b> (float duration_A, float duration_B)</td></tr>
 <tr class="separator:a92018d383f52ad75fd33ffedc55d7bfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90a253f2bb2a24bb3b52182e3010541a"><td class="memItemLeft" align="right" valign="top"><a id="a90a253f2bb2a24bb3b52182e3010541a" name="a90a253f2bb2a24bb3b52182e3010541a"></a>
+static std::string&#160;</td><td class="memItemRight" valign="bottom"><b>duration2noteType</b> (const Duration duration)</td></tr>
+<tr class="separator:a90a253f2bb2a24bb3b52182e3010541a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae1be6537daadc595d32c8b402568cf5e"><td class="memItemLeft" align="right" valign="top"><a id="ae1be6537daadc595d32c8b402568cf5e" name="ae1be6537daadc595d32c8b402568cf5e"></a>
+static Duration&#160;</td><td class="memItemRight" valign="bottom"><b>noteType2duration</b> (const std::string &amp;noteType)</td></tr>
+<tr class="separator:ae1be6537daadc595d32c8b402568cf5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a05f63eff91513d68f3a307a41658523e"><td class="memItemLeft" align="right" valign="top"><a id="a05f63eff91513d68f3a307a41658523e" name="a05f63eff91513d68f3a307a41658523e"></a>
 static const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>transposePitch</b> (const std::string &amp;pitch, const int semitones, const std::string &amp;accType=MUSIC_XML::ACCIDENT::SHARP)</td></tr>
 <tr class="separator:a05f63eff91513d68f3a307a41658523e"><td class="memSeparator" colspan="2">&#160;</td></tr>

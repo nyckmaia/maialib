@@ -682,6 +682,15 @@ float Helper::midiNote2freq(const int midiNote)
     return powf(2.0f, (static_cast<float>(midiNote) - 69.0f)/12.0f) * 440.0f;
 }
 
+int Helper::midiNote2octave(const int midiNote)
+{
+    if (midiNote < 0) { return -2; } // rest octave
+
+    const int octave = (midiNote / 12) - 1;
+
+    return octave;
+}
+
 float Helper::alterSymbol2Value(const std::string& alterSymbol)
 {
     switch (hash(alterSymbol.c_str())) {

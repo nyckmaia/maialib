@@ -10,5 +10,6 @@ var dir_24d671cfcbc5d5238a6bd565a49d198f =
     [ "note.h", "note_8h_source.html", null ],
     [ "part.h", "part_8h_source.html", null ],
     [ "score.h", "score_8h_source.html", null ],
+    [ "score_collection.h", "score__collection_8h_source.html", null ],
     [ "utils.h", "utils_8h_source.html", null ]
 ];

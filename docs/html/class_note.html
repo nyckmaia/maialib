@@ -92,15 +92,21 @@ $(document).ready(function(){initNavTree('class_note.html',''); initResizable();
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a2b9e4e7805d98881994b1a71a3e05c94"><td class="memItemLeft" align="right" valign="top"><a id="a2b9e4e7805d98881994b1a71a3e05c94" name="a2b9e4e7805d98881994b1a71a3e05c94"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Note</b> (const std::string &amp;pitch, const std::string &amp;noteType=&quot;quarter&quot;, bool isNoteOn=true, bool inChord=false, const int transposeDiatonic=0, const int transposeChromatic=0, const int divisionsPerQuarterNote=256)</td></tr>
-<tr class="separator:a2b9e4e7805d98881994b1a71a3e05c94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1f4308777ed1f6bc57871e8357cd86a9"><td class="memItemLeft" align="right" valign="top"><a id="a1f4308777ed1f6bc57871e8357cd86a9" name="a1f4308777ed1f6bc57871e8357cd86a9"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Note</b> (const std::string &amp;pitch, const Duration duration=Duration::QUARTER, bool isNoteOn=true, bool inChord=false, const int transposeDiatonic=0, const int transposeChromatic=0, const int divisionsPerQuarterNote=256)</td></tr>
+<tr class="separator:a1f4308777ed1f6bc57871e8357cd86a9"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53dda2ef2847bfb020f3ecafadb1cec9"><td class="memItemLeft" align="right" valign="top"><a id="a53dda2ef2847bfb020f3ecafadb1cec9" name="a53dda2ef2847bfb020f3ecafadb1cec9"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Note</b> (const int midiNumber, const std::string &amp;accType=&quot;&quot;, const Duration duration=Duration::QUARTER, bool isNoteOn=true, bool inChord=false, const int transposeDiatonic=0, const int transposeChromatic=0, const int divisionsPerQuarterNote=256)</td></tr>
+<tr class="separator:a53dda2ef2847bfb020f3ecafadb1cec9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ada42893093e8423127c165791a0b2eef"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_note.html#ada42893093e8423127c165791a0b2eef">setPitchClass</a> (const std::string &amp;pitchClass)</td></tr>
 <tr class="memdesc:ada42893093e8423127c165791a0b2eef"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the note pitch class.  <a href="class_note.html#ada42893093e8423127c165791a0b2eef">More...</a><br /></td></tr>
 <tr class="separator:ada42893093e8423127c165791a0b2eef"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5e9b1eef1992159f23c1744326c0a751"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_note.html#a5e9b1eef1992159f23c1744326c0a751">setOctave</a> (int octave)</td></tr>
 <tr class="memdesc:a5e9b1eef1992159f23c1744326c0a751"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the note octave.  <a href="class_note.html#a5e9b1eef1992159f23c1744326c0a751">More...</a><br /></td></tr>
 <tr class="separator:a5e9b1eef1992159f23c1744326c0a751"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a913684bb164c9c262b814fcfc1f6484d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_note.html#a913684bb164c9c262b814fcfc1f6484d">setDuration</a> (const Duration duration, const int divisionsPerQuarterNote=256)</td></tr>
+<tr class="memdesc:a913684bb164c9c262b814fcfc1f6484d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the note duration.  <a href="class_note.html#a913684bb164c9c262b814fcfc1f6484d">More...</a><br /></td></tr>
+<tr class="separator:a913684bb164c9c262b814fcfc1f6484d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a469a9c7cc815626d43e901a71d5494bb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_note.html#a469a9c7cc815626d43e901a71d5494bb">setDurationTicks</a> (int durationTicks)</td></tr>
 <tr class="memdesc:a469a9c7cc815626d43e901a71d5494bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the note duration ticks.  <a href="class_note.html#a469a9c7cc815626d43e901a71d5494bb">More...</a><br /></td></tr>
 <tr class="separator:a469a9c7cc815626d43e901a71d5494bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -125,12 +131,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setStaff</b> (const i
 <tr class="memitem:a746af316a640becd6eb0908e6dab780a"><td class="memItemLeft" align="right" valign="top"><a id="a746af316a640becd6eb0908e6dab780a" name="a746af316a640becd6eb0908e6dab780a"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setIsGraceNote</b> (const bool isGraceNote=false)</td></tr>
 <tr class="separator:a746af316a640becd6eb0908e6dab780a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:afd533a24bd20be330b113a912fa496c1"><td class="memItemLeft" align="right" valign="top"><a id="afd533a24bd20be330b113a912fa496c1" name="afd533a24bd20be330b113a912fa496c1"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>setType</b> (const std::string &amp;noteType)</td></tr>
-<tr class="separator:afd533a24bd20be330b113a912fa496c1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0539cb024c0f3a0a200f7fe969f3af96"><td class="memItemLeft" align="right" valign="top"><a id="a0539cb024c0f3a0a200f7fe969f3af96" name="a0539cb024c0f3a0a200f7fe969f3af96"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>setStem</b> (const std::string &amp;steam)</td></tr>
-<tr class="separator:a0539cb024c0f3a0a200f7fe969f3af96"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55b72e8fb8c17d19b4f62ff5f7a0227f"><td class="memItemLeft" align="right" valign="top"><a id="a55b72e8fb8c17d19b4f62ff5f7a0227f" name="a55b72e8fb8c17d19b4f62ff5f7a0227f"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setStem</b> (const std::string &amp;stem)</td></tr>
+<tr class="separator:a55b72e8fb8c17d19b4f62ff5f7a0227f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab58c790bb7e793292319f1310cf694fd"><td class="memItemLeft" align="right" valign="top"><a id="ab58c790bb7e793292319f1310cf694fd" name="ab58c790bb7e793292319f1310cf694fd"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>removeDots</b> ()</td></tr>
 <tr class="separator:ab58c790bb7e793292319f1310cf694fd"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -173,9 +176,6 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setIsPitched</b> (con
 <tr class="memitem:a877f77c34b0db36c465cbdb6b815d07b"><td class="memItemLeft" align="right" valign="top"><a id="a877f77c34b0db36c465cbdb6b815d07b" name="a877f77c34b0db36c465cbdb6b815d07b"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setUnpitchedIndex</b> (const int unpitchedIndex)</td></tr>
 <tr class="separator:a877f77c34b0db36c465cbdb6b815d07b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d0ebd648c558035f89e136ef16a7dfd"><td class="memItemLeft" align="right" valign="top"><a id="a1d0ebd648c558035f89e136ef16a7dfd" name="a1d0ebd648c558035f89e136ef16a7dfd"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>transposition</b> (int semitonesNumber)</td></tr>
-<tr class="separator:a1d0ebd648c558035f89e136ef16a7dfd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aea25cb68f46307b98043d602da352776"><td class="memItemLeft" align="right" valign="top"><a id="aea25cb68f46307b98043d602da352776" name="aea25cb68f46307b98043d602da352776"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>info</b> () const</td></tr>
 <tr class="separator:aea25cb68f46307b98043d602da352776"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -236,6 +236,9 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDoubleDotted</b> ()
 <tr class="memitem:ab9a5823174a7b8706da62c5bba773256"><td class="memItemLeft" align="right" valign="top"><a id="ab9a5823174a7b8706da62c5bba773256" name="ab9a5823174a7b8706da62c5bba773256"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>getDivisionsPerQuarterNote</b> () const</td></tr>
 <tr class="separator:ab9a5823174a7b8706da62c5bba773256"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac3ce529e1ffcdb0168932ef4161bad6e"><td class="memItemLeft" align="right" valign="top"><a id="ac3ce529e1ffcdb0168932ef4161bad6e" name="ac3ce529e1ffcdb0168932ef4161bad6e"></a>
+float&#160;</td><td class="memItemRight" valign="bottom"><b>getDuration</b> () const</td></tr>
+<tr class="separator:ac3ce529e1ffcdb0168932ef4161bad6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa33ff88b53a969c66d8e8c87e79dd7cf"><td class="memItemLeft" align="right" valign="top"><a id="aa33ff88b53a969c66d8e8c87e79dd7cf" name="aa33ff88b53a969c66d8e8c87e79dd7cf"></a>
 float&#160;</td><td class="memItemRight" valign="bottom"><b>getQuarterDuration</b> () const</td></tr>
 <tr class="separator:aa33ff88b53a969c66d8e8c87e79dd7cf"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -302,6 +305,9 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isTransposed</b> () c
 <tr class="memitem:a28f49f3351015f2b371c4338cf736940"><td class="memItemLeft" align="right" valign="top"><a id="a28f49f3351015f2b371c4338cf736940" name="a28f49f3351015f2b371c4338cf736940"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>isGraceNote</b> () const</td></tr>
 <tr class="separator:a28f49f3351015f2b371c4338cf736940"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a043f483f6e74d1802a81dd31288a9847"><td class="memItemLeft" align="right" valign="top"><a id="a043f483f6e74d1802a81dd31288a9847" name="a043f483f6e74d1802a81dd31288a9847"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>transpose</b> (const int semitones, const std::string &amp;accType=MUSIC_XML::ACCIDENT::NONE)</td></tr>
+<tr class="separator:a043f483f6e74d1802a81dd31288a9847"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab7067826ca93fbca75435a07f6192e6d"><td class="memItemLeft" align="right" valign="top"><a id="ab7067826ca93fbca75435a07f6192e6d" name="ab7067826ca93fbca75435a07f6192e6d"></a>
 const std::string&#160;</td><td class="memItemRight" valign="bottom"><b>toXML</b> (const size_t instrumentId=1, const int identSize=2) const</td></tr>
 <tr class="separator:ab7067826ca93fbca75435a07f6192e6d"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -325,6 +331,43 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (const
 <tr class="separator:ac16477f40dfcf99776419f342b29856a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
+<a id="a913684bb164c9c262b814fcfc1f6484d" name="a913684bb164c9c262b814fcfc1f6484d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a913684bb164c9c262b814fcfc1f6484d">&#9670;&nbsp;</a></span>setDuration()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Note::setDuration </td>
+          <td>(</td>
+          <td class="paramtype">const Duration&#160;</td>
+          <td class="paramname"><em>duration</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int&#160;</td>
+          <td class="paramname"><em>divisionsPerQuarterNote</em> = <code>256</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the note duration. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">duration</td><td>Duration as a Enum class element </td></tr>
+    <tr><td class="paramname">divisionsPerQuarterNote</td><td>Divisions per quarter note </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <a id="a469a9c7cc815626d43e901a71d5494bb" name="a469a9c7cc815626d43e901a71d5494bb"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a469a9c7cc815626d43e901a71d5494bb">&#9670;&nbsp;</a></span>setDurationTicks()</h2>
 

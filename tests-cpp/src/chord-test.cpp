@@ -170,6 +170,58 @@ TEST(isTonal, notTonalMinorChord01)
     EXPECT_EQ(myChord.isTonal(), false);
 }
 
+TEST(getStackedChord, majorAndMinorChords)
+{
+    // Exact the same chords
+    Chord chord01_test({"C4", "E4", "G4", "B4"});
+    Chord chord01_answ({"C4", "E4", "G4", "B4"});
+    EXPECT_EQ(chord01_test.getStackedChord().getNotes(), chord01_answ.getNotes());
+
+    // Different note sequency
+    Chord chord02_test({"Eb4", "C4", "B4", "G4"});
+    Chord chord02_answ({"C4", "Eb4", "G4", "B4"});
+    EXPECT_EQ(chord02_test.getStackedChord().getNotes(), chord02_answ.getNotes());
+
+    // Both different note sequency and octave
+    Chord chord03_test({"Eb3", "C5", "B2", "G9"});
+    Chord chord03_answ({"C4", "Eb4", "G4", "B4"});
+    EXPECT_EQ(chord03_test.getStackedChord().getNotes(), chord03_answ.getNotes());
+}
+
+TEST(getStackedChord, complexChords)
+{
+    // Inverted major-seven-nine (5th ommited) chord
+    Chord chord01_test({"D2", "C4", "E5", "B4"});
+    Chord chord01_answ({"C4", "E4", "B4", "D5"});
+    EXPECT_EQ(chord01_test.getStackedChord().getNotes(), chord01_answ.getNotes());
+
+    // Inverted minor-seven-nine (5th ommited) chord
+    Chord chord02_test({"F2", "E5", "D3", "C4"});
+    Chord chord02_answ({"D4", "F4", "C5", "E5"});
+    EXPECT_EQ(chord02_test.getStackedChord().getNotes(), chord02_answ.getNotes());
+
+    // Inverted minor-seven-eleven (5th ommited) chord
+    Chord chord03_test({"F2", "G5", "D3", "C4"});
+    Chord chord03_answ({"D4", "F4", "C5", "G5"});
+    EXPECT_EQ(chord03_test.getStackedChord().getNotes(), chord03_answ.getNotes());
+
+    // // Four notes chromatic cluster
+    // Chord chord04_test({"C4", "C#4", "D4", "D#4"});
+    // Chord chord04_answ({"C4", "D#4", "C#5", "D5"}); // [C4, Eb4, <G4>, Bx4, D5] => Cm(7aug)9
+
+    // std::string test04Str = "size: " + std::to_string(chord04_test.getStackedChord().size()) + " | ";
+    // for (const auto& note : chord04_test.getStackedChord().getNotes()) {
+    //     test04Str.append(note.getPitch());
+    // }
+
+    // std::string answ04Str = "size: " + std::to_string(chord04_answ.getStackedChord().size()) + " | ";
+    // for (const auto& note : chord04_answ.getStackedChord().getNotes()) {
+    //     answ04Str.append(note.getPitch());
+    // }
+
+    // EXPECT_EQ(test04Str, answ04Str);
+}
+
 TEST(chordOperator, plus)
 {
     Note a("C");

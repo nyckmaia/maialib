@@ -190,6 +190,17 @@ public:
     bool isTransposed() const;
     bool isGraceNote() const;
 
+    // Colocar na documentacao que caso use alternativeEnhamonicPitch
+    // Ele vai tentar skipTwoDiatonicSteps exemplo D# -> Fbb OU
+    // Ele tambem pode usar 1 diatonic step com dobrado bemol ou dobrado sustenido: C# -> Bx
+    // Notas com pitchClass sem acidentes como 'C' serão enharmonizadas por default sempre diatonicamente pra cima: Dbb
+    std::string getEnharmonicPitch(const bool alternativeEnhamonicPitch = false) const;
+    std::vector<std::string> getEnharmonicPitches(const bool includeCurrentPitch = false) const;
+
+    // Colocar praticamente a mesma documentaçao do método 'getEnharmonicPitch()'
+    void toEnharmonicPitch(const bool alternativeEnhamonicPitch = false);
+    float getFrequency() const;
+
     void transpose(const int semitones, const std::string& accType = MUSIC_XML::ACCIDENT::NONE);
 
     const std::string toXML(const size_t instrumentId = 1, const int identSize = 2) const;

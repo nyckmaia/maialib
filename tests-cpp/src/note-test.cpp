@@ -171,3 +171,123 @@ TEST(NoteSetPitch, getPitchTypesAndOctave)
     EXPECT_EQ(noteSharp.getOctave(), 4);
     EXPECT_EQ(noteDoubleSharp.getOctave(), 4);
 }
+
+TEST(getEnharmonicPitch, nonAlternativeEnhamonicPitch)
+{
+    Note Cbb4("Cbb4");
+    Note Cb4("Cb4");
+    Note C4("C4");
+    Note Csp4("C#4");
+    Note Cdsp4("Cx4");
+    Note Dbb4("Dbb4");
+    Note Db4("Db4");
+    Note D4("D4");
+    Note Dsp4("D#4");
+    Note Ddsp4("Dx4");
+
+    // TODO: Add another pitches to fill the full musical scale
+
+    // ===== Pitch Step: C ===== //
+    EXPECT_EQ(Cbb4.getEnharmonicPitch(), "Bb3");    
+    EXPECT_EQ(Cb4.getEnharmonicPitch(), "B3");
+    EXPECT_EQ(C4.getEnharmonicPitch(), "Dbb4");
+    EXPECT_EQ(Csp4.getEnharmonicPitch(), "Db4");
+    EXPECT_EQ(Cdsp4.getEnharmonicPitch(), "D4");
+
+    // ===== Pitch Step: D ===== //
+    EXPECT_EQ(Dbb4.getEnharmonicPitch(), "C4");
+    EXPECT_EQ(Db4.getEnharmonicPitch(), "C#4");
+    EXPECT_EQ(D4.getEnharmonicPitch(), "Ebb4");
+    EXPECT_EQ(Dsp4.getEnharmonicPitch(), "Eb4");
+    EXPECT_EQ(Ddsp4.getEnharmonicPitch(), "E4");    
+}
+
+TEST(getEnharmonicPitch, alternativeEnhamonicPitch)
+{
+    Note Cbb4("Cbb4");
+    Note Cb4("Cb4");
+    Note C4("C4");
+    Note Csp4("C#4");
+    Note Cdsp4("Cx4");
+    Note Dbb4("Dbb4");
+    Note Db4("Db4");
+    Note D4("D4");
+    Note Dsp4("D#4");
+    Note Ddsp4("Dx4");
+
+    // ===== Pitch Step: C ===== //
+    EXPECT_EQ(Cbb4.getEnharmonicPitch(true), "A#3");
+    EXPECT_EQ(Cb4.getEnharmonicPitch(true), "Ax3");
+    EXPECT_EQ(C4.getEnharmonicPitch(true), "B#3");
+    EXPECT_EQ(Csp4.getEnharmonicPitch(true), "Bx3");
+    EXPECT_EQ(Cdsp4.getEnharmonicPitch(true), "Ebb4");
+
+    // ===== Pitch Step: D ===== //
+    EXPECT_EQ(Dbb4.getEnharmonicPitch(true), "B#3");
+    EXPECT_EQ(Db4.getEnharmonicPitch(true), "Bx3");
+    EXPECT_EQ(D4.getEnharmonicPitch(true), "Cx4");
+    EXPECT_EQ(Dsp4.getEnharmonicPitch(true), "Fbb4");
+    EXPECT_EQ(Ddsp4.getEnharmonicPitch(true), "Fb4");
+
+    // TODO: Add another pitches to fill the full musical scale
+}
+
+TEST(getEnharmonicPitches, returnEnharmonicOnly)
+{
+    Note Cbb4("Cbb4");
+    Note Cb4("Cb4");
+    Note C4("C4");
+    Note Csp4("C#4");
+    Note Cdsp4("Cx4");
+    Note Dbb4("Dbb4");
+    Note Db4("Db4");
+    Note D4("D4");
+    Note Dsp4("D#4");
+    Note Ddsp4("Dx4");
+
+    // ===== Pitch Step: C ===== //
+    EXPECT_EQ(Cbb4.getEnharmonicPitches(), std::vector<std::string>({"Bb3", "A#3"}));
+    EXPECT_EQ(Cb4.getEnharmonicPitches(), std::vector<std::string>({"B3", "Ax3"}));
+    EXPECT_EQ(C4.getEnharmonicPitches(), std::vector<std::string>({"Dbb4", "B#3"}));
+    EXPECT_EQ(Csp4.getEnharmonicPitches(), std::vector<std::string>({"Db4", "Bx3"}));
+    EXPECT_EQ(Cdsp4.getEnharmonicPitches(), std::vector<std::string>({"D4", "Ebb4"}));
+
+    // ===== Pitch Step: D ===== //
+    EXPECT_EQ(Dbb4.getEnharmonicPitches(), std::vector<std::string>({"C4", "B#3"}));
+    EXPECT_EQ(Db4.getEnharmonicPitches(), std::vector<std::string>({"C#4", "Bx3"}));
+    EXPECT_EQ(D4.getEnharmonicPitches(), std::vector<std::string>({"Ebb4", "Cx4"}));
+    EXPECT_EQ(Dsp4.getEnharmonicPitches(), std::vector<std::string>({"Eb4", "Fbb4"}));
+    EXPECT_EQ(Ddsp4.getEnharmonicPitches(), std::vector<std::string>({"E4", "Fb4"}));
+
+    // TODO: Add another pitches to fill the full musical scale
+}
+
+TEST(getEnharmonicPitches, returnAllEnharmonicPitches)
+{
+    Note Cbb4("Cbb4");
+    Note Cb4("Cb4");
+    Note C4("C4");
+    Note Csp4("C#4");
+    Note Cdsp4("Cx4");
+    Note Dbb4("Dbb4");
+    Note Db4("Db4");
+    Note D4("D4");
+    Note Dsp4("D#4");
+    Note Ddsp4("Dx4");
+
+    // ===== Pitch Step: C ===== //
+    EXPECT_EQ(Cbb4.getEnharmonicPitches(true), std::vector<std::string>({"Cbb4", "Bb3", "A#3"}));
+    EXPECT_EQ(Cb4.getEnharmonicPitches(true), std::vector<std::string>({"Cb4", "B3", "Ax3"}));
+    EXPECT_EQ(C4.getEnharmonicPitches(true), std::vector<std::string>({"C4", "Dbb4", "B#3"}));
+    EXPECT_EQ(Csp4.getEnharmonicPitches(true), std::vector<std::string>({"C#4", "Db4", "Bx3"}));
+    EXPECT_EQ(Cdsp4.getEnharmonicPitches(true), std::vector<std::string>({"Cx4", "D4", "Ebb4"}));
+
+    // ===== Pitch Step: D ===== //
+    EXPECT_EQ(Dbb4.getEnharmonicPitches(true), std::vector<std::string>({"Dbb4", "C4", "B#3"}));
+    EXPECT_EQ(Db4.getEnharmonicPitches(true), std::vector<std::string>({"Db4", "C#4", "Bx3"}));
+    EXPECT_EQ(D4.getEnharmonicPitches(true), std::vector<std::string>({"D4", "Ebb4", "Cx4"}));
+    EXPECT_EQ(Dsp4.getEnharmonicPitches(true), std::vector<std::string>({"D#4", "Eb4", "Fbb4"}));
+    EXPECT_EQ(Ddsp4.getEnharmonicPitches(true), std::vector<std::string>({"Dx4", "E4", "Fb4"}));
+
+    // TODO: Add another pitches to fill the full musical scale
+}

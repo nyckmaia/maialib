@@ -109,7 +109,9 @@ void ChordClass(py::module &m) {
     cls.def("print", &Chord::print, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("printStack", &Chord::printStack, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def("getStackedChord", &Chord::getStackedChord);
+    cls.def("getStackedChord", &Chord::getStackedChord,
+        py::arg("enharmonyNotes") = false,
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("sortNotes", &Chord::sortNotes);
 

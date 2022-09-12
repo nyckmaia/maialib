@@ -34,7 +34,9 @@ void HelperClass(py::module &m) {
         py::arg("accType") = std::string(), 
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
-
+    cls.def_static("midiNote2octave", &Helper::midiNote2octave,
+        py::arg("midiNote"));
+    //--------------------- //
     cls.def_static("noteType2ticks", &Helper::noteType2ticks, 
         py::arg("noteType"),
         py::arg("divisionsPerQuarterNote") = 256,

@@ -33,6 +33,7 @@ public:
 
     static std::pair<int, int> freq2midiNote(const float freq, std::function<int(float)> modelo = nullptr);
     static float midiNote2freq(const int midiNote);
+    static int midiNote2octave(const int midiNote);
 
     static int pitch2midiNote(const std::string& pitch);
     static const std::string midiNote2pitch(const int midiNote, const std::string& accType = {});

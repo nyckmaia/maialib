@@ -373,19 +373,21 @@ void Chord::printStack() const
     }
 }
 
-void Chord::stackInThirds()
+void Chord::stackInThirds(const bool enharmonyNotes)
 {
+    ignore(enharmonyNotes);
+
     // ===== STEP 0: INPUT VALIDATION===== //
     // Error checking:
     if (_note.empty()) {
-        std::cerr << "[ERROR]: The chord is empty!" << std::endl;
+        std::cerr << "[WARN]: The chord is empty!" << std::endl;
         return;
     }
 
     // Remove rests
     _note.erase(
         std::remove_if(_note.begin(), _note.end(), [&](const Note& note) {
-            return note.isNoteOn() == false;
+            return note.isNoteOff();
         }), _note.end());
 
     // Copy the orginal chord to a stack vector
@@ -406,6 +408,7 @@ void Chord::stackInThirds()
 
     // Update the 'chordSize' variable
     const size_t chordSize = _stack.size();
+    std::cout << "chordSize: " << chordSize << std::endl;
 
     // Error checking:
     if (chordSize < 3) {
@@ -421,6 +424,9 @@ void Chord::stackInThirds()
     for (size_t r = 0; r < chordSize; r++) {
         // Alias to the 'possible root' note
         const auto& possibleRoot = _stack[r];
+        
+        std::cout << "-----> Possible Root: " << possibleRoot.getPitch() << std::endl;
+
         const std::string rootDiatonicPitchClass = possibleRoot.getDiatonicSoundingPitchClass();
 
         // Error checking:
@@ -441,9 +447,20 @@ void Chord::stackInThirds()
 
         // For each note in the chord
         for (size_t n = 0; n < chordSize; n++) {
-            const auto& note = _stack[n];
+            auto& note = _stack[n];
             const std::string diatonicPitchClass = note.getDiatonicSoundingPitchClass();
-            const char toFind = *diatonicPitchClass.c_str();
+
+            std::cout << "n[" << n << "]: Note=" << note.getPitch() << std::endl; 
+
+            // Check if the 'possible root' and the current 'note' are diatonic different
+            if ((possibleRoot.getPitch() != note.getPitch()) && (rootDiatonicPitchClass == diatonicPitchClass)) {
+                // Change the 'current note' pitch to an enharmonic equivalent
+                std::cout << "Enharmonizando: " << note.getPitch() << std::endl;
+                note.toEnharmonicPitch();
+            }
+
+            // const char toFind = *diatonicPitchClass.c_str();
+            const char toFind = *note.getDiatonicSoundingPitchClass().c_str();
 
             // Compute the distance between the possible root and this note
             const int noteDistance = std::distance(&diatonicStack[0], std::find(&diatonicStack[0], &diatonicStack[6], toFind));
@@ -463,12 +480,27 @@ void Chord::stackInThirds()
     // Just an alias to the final stack
     const auto& stack = possibleStack[betterStackIdx];
 
+    std::cout << "===== possibleStack =====" << betterStackIdx << std::endl;
+    for (const auto& ps : possibleStack) {
+        for (const auto& n : ps) {
+            std::cout << n.first << " | " << n.second.getPitch() << std::endl;
+        }
+        std::cout << "------" << std::endl;
+    }
+
     // ===== STEP 2: STORE STACKED NOTES IN ACENDENT ORDER ===== //
     std::vector<Note> orderedStack;
     for (auto it = stack.begin(); it != stack.end(); it++) { orderedStack.push_back(it->second); }
 
     _stack.clear();
     _stack = orderedStack;
+
+    std::cout << "AFTER CLEAR" << std::endl;
+    for (const auto& n : _stack) {
+        std::cout << n.getPitch() << std::endl;
+    }
+
+    
 
     // ===== STEP 3: TRANSPOSE ALL NOTES TO OCTAVE 4 REFERENCE ===== //
     // Create a temp note to be the 'octave 4' root reference
@@ -485,8 +517,165 @@ void Chord::stackInThirds()
     // Set a internal control flag
     _isStackedInThirds = true;
 
+    std::cout << "BEFORE COMPUTE INTERVALS" << std::endl;
+    for (const auto& n : _stack) {
+        std::cout << n.getPitch() << std::endl;
+    }
+
     computeIntervals();
 }
+
+// void Chord::stackInThirds(const bool enharmonyNotes)
+// {
+//     ignore(enharmonyNotes);
+
+//     // ===== STEP 0: INPUT VALIDATION===== //
+//     // Error checking:
+//     if (_note.empty()) {
+//         std::cerr << "[ERROR]: The chord is empty!" << std::endl;
+//         return;
+//     }
+
+//     // Remove rests
+//     _note.erase(
+//         std::remove_if(_note.begin(), _note.end(), [&](const Note& note) {
+//             return note.isNoteOn() == false;
+//         }), _note.end());
+
+//     // Copy the orginal chord to a stack vector
+//     _stack.clear();
+//     _stack = _note;
+
+//     // Sort chord notes using the MIDI note value
+//     std::sort(_stack.begin(), _stack.end());
+
+//     // Get the bass note of the chord
+//     _bassNote = _stack[0];
+
+//     // Remove same PitchClass => Get a 'piano reduction' chord version
+//     _stack.erase(std::unique(_stack.begin(), _stack.end(),
+//                  [](const Note& a, const Note& b) {
+//         return a.getPitchClass() == b.getPitchClass();
+//     }), _stack.end());
+
+//     // Update the 'chordSize' variable
+//     const size_t chordSize = _stack.size();
+//     std::cout << "chordSize: " << chordSize << std::endl;
+
+//     // Error checking:
+//     if (chordSize < 3) {
+//         // std::cerr << "[ERROR]: The chord size MUST BE at least 3 unique pitchClasses!" << std::endl;
+//         return;
+//     }
+
+//     // ===== STEP 1: FOR EACH NOTE: GENERATE A SPECIFIC TEMP/TRY CHORD STACK (DIATONIC) ===== //
+//     std::vector<int> stackSum(chordSize, 0);
+//     std::vector<std::map<int, Note>> possibleStack(chordSize);
+
+//     // For each 'possible root' note
+//     for (size_t r = 0; r < chordSize; r++) {
+//         // Alias to the 'possible root' note
+//         const auto& possibleRoot = _stack[r];
+        
+//         std::cout << "-----> Possible Root: " << possibleRoot.getPitch() << std::endl;
+
+//         const std::string rootDiatonicPitchClass = possibleRoot.getDiatonicSoundingPitchClass();
+
+//         // Error checking:
+//         if (rootDiatonicPitchClass.empty()) { throw std::runtime_error("A note diatonic pitchClass is empty!"); }
+
+//         // Select the chord stack using the possible root note
+//         const char* diatonicStack = nullptr;
+//         switch (hash(rootDiatonicPitchClass.c_str())) {
+//             case hash("C"): diatonicStack = c_C_diatonicChordStack.data(); break;
+//             case hash("D"): diatonicStack = c_D_diatonicChordStack.data(); break;
+//             case hash("E"): diatonicStack = c_E_diatonicChordStack.data(); break;
+//             case hash("F"): diatonicStack = c_F_diatonicChordStack.data(); break;
+//             case hash("G"): diatonicStack = c_G_diatonicChordStack.data(); break;
+//             case hash("A"): diatonicStack = c_A_diatonicChordStack.data(); break;
+//             case hash("B"): diatonicStack = c_B_diatonicChordStack.data(); break;
+//             default: throw std::runtime_error("Invalid diatonic pitchClass"); break;
+//         }
+
+//         // For each note in the chord
+//         for (size_t n = 0; n < chordSize; n++) {
+//             auto& note = _stack[n];
+//             const std::string diatonicPitchClass = note.getDiatonicSoundingPitchClass();
+
+//             std::cout << "n[" << n << "]: Note=" << note.getPitch() << std::endl; 
+
+//             // Check if the 'possible root' and the current 'note' are diatonic different
+//             if ((possibleRoot.getPitch() != note.getPitch()) && (rootDiatonicPitchClass == diatonicPitchClass)) {
+//                 // Change the 'current note' pitch to an enharmonic equivalent
+//                 std::cout << "Enharmonizando: " << note.getPitch() << std::endl;
+//                 note.toEnharmonicPitch();
+//             }
+
+//             // const char toFind = *diatonicPitchClass.c_str();
+//             const char toFind = *note.getDiatonicSoundingPitchClass().c_str();
+
+//             // Compute the distance between the possible root and this note
+//             const int noteDistance = std::distance(&diatonicStack[0], std::find(&diatonicStack[0], &diatonicStack[6], toFind));
+
+//             // Store the note 'n' inside the possible stack 'r'
+//             possibleStack[r].insert({noteDistance, note});
+
+//             // Compute the note weigth. MAY BE REMOVE IN THE FUTURE!!
+//             const int noteWeigth = noteDistance;
+//             stackSum[r] += noteWeigth;            
+//         }
+//     }
+
+//     // Select the better computed chord stack
+//     const int betterStackIdx = std::min_element(stackSum.begin(), stackSum.end()) - stackSum.begin();
+
+//     // Just an alias to the final stack
+//     const auto& stack = possibleStack[betterStackIdx];
+
+//     std::cout << "===== possibleStack =====" << betterStackIdx << std::endl;
+//     for (const auto& ps : possibleStack) {
+//         for (const auto& n : ps) {
+//             std::cout << n.first << " | " << n.second.getPitch() << std::endl;
+//         }
+//         std::cout << "------" << std::endl;
+//     }
+
+//     // ===== STEP 2: STORE STACKED NOTES IN ACENDENT ORDER ===== //
+//     std::vector<Note> orderedStack;
+//     for (auto it = stack.begin(); it != stack.end(); it++) { orderedStack.push_back(it->second); }
+
+//     _stack.clear();
+//     _stack = orderedStack;
+
+//     std::cout << "AFTER CLEAR" << std::endl;
+//     for (const auto& n : _stack) {
+//         std::cout << n.getPitch() << std::endl;
+//     }
+
+    
+
+//     // ===== STEP 3: TRANSPOSE ALL NOTES TO OCTAVE 4 REFERENCE ===== //
+//     // Create a temp note to be the 'octave 4' root reference
+//     Note rootOct4 = stack.at(0);
+//     rootOct4.setOctave(4);
+
+//     // Compute the distance between this new root and the current root
+//     const int rootOct4Distance = rootOct4.getMIDINumber() - stack.at(0).getMIDINumber();
+
+//     // Move the entire chord to the 'octave 4' root reference
+//     transposeStackOnly(rootOct4Distance);
+
+//     // ===== STEP 4: SET INTERNAL FLAG AND COMPUTE INTERVALS ===== //
+//     // Set a internal control flag
+//     _isStackedInThirds = true;
+
+//     std::cout << "BEFORE COMPUTE INTERVALS" << std::endl;
+//     for (const auto& n : _stack) {
+//         std::cout << n.getPitch() << std::endl;
+//     }
+
+//     computeIntervals();
+// }
 
 void Chord::computeIntervals()
 {
@@ -914,9 +1103,9 @@ const std::vector<Note>& Chord::getNotes() const
     return _note;
 }
 
-Chord Chord::getStackedChord()
+Chord Chord::getStackedChord(const bool enharmonyNotes)
 {
-    if (!_isStackedInThirds) { stackInThirds(); }
+    if (!_isStackedInThirds) { stackInThirds(enharmonyNotes); }
 
     return Chord(_stack);
 }

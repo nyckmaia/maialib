@@ -36,7 +36,7 @@ private:
     void computeIntervals();
     std::string enharmonicName();
     std::string nonEnharmonicName() const;
-    void stackInThirds();
+    void stackInThirds(const bool enharmonyNotes = false);
     
 public:
 
@@ -103,7 +103,7 @@ public:
     void printStack() const;
     void info();
 
-    Chord getStackedChord();
+    Chord getStackedChord(const bool enharmonyNotes = false);
 
     void sortNotes();
 

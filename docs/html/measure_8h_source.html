@@ -128,10 +128,10 @@ $(document).ready(function(){initNavTree('measure_8h_source.html',''); initResiz
 <div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span> </div>
 <div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>    <span class="keywordtype">void</span> clear();</div>
 <div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="keywordtype">void</span> setNumber(<span class="keyword">const</span> <span class="keywordtype">int</span> MeasureNumber);</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>    <span class="keywordtype">void</span> setNumber(<span class="keyword">const</span> <span class="keywordtype">int</span> measureNumber);</div>
 <div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>    <span class="keywordtype">void</span> setKeySignature(<span class="keyword">const</span> <span class="keywordtype">int</span> fifthCicle, <span class="keyword">const</span> <span class="keywordtype">bool</span> isMajorMode = <span class="keyword">true</span>); <span class="comment">// overload with measure</span></div>
 <div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>    <span class="keywordtype">void</span> setTimeSignature(<span class="keyword">const</span> <span class="keywordtype">int</span> upper, <span class="keyword">const</span> <span class="keywordtype">int</span> lower); <span class="comment">// overload with measure</span></div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keywordtype">void</span> setMetronome(<span class="keyword">const</span> <span class="keywordtype">int</span> bpm, <span class="keyword">const</span> std::string&amp; rhythmFigure = <span class="stringliteral">&quot;quarter&quot;</span>); <span class="comment">// overload with measure</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>    <span class="keywordtype">void</span> setMetronome(<span class="keyword">const</span> <span class="keywordtype">int</span> bpm, <span class="keyword">const</span> Duration duration = Duration::QUARTER); <span class="comment">// overload with measure</span></div>
 <div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
 <div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>    <span class="keywordtype">void</span> setKeyMode(<span class="keyword">const</span> <span class="keywordtype">bool</span> isMajorKeyMode);</div>
 <div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>    <span class="keywordtype">void</span> setIsKeySignatureChanged(<span class="keywordtype">bool</span> isKeySignatureChanged = <span class="keyword">false</span>);</div>
@@ -208,7 +208,7 @@ $(document).ready(function(){initNavTree('measure_8h_source.html',''); initResiz
 <div class="ttc" id="aclass_barline_html"><div class="ttname"><a href="class_barline.html">Barline</a></div><div class="ttdef"><b>Definition:</b> barline.h:7</div></div>
 <div class="ttc" id="aclass_clef_html"><div class="ttname"><a href="class_clef.html">Clef</a></div><div class="ttdef"><b>Definition:</b> clef.h:6</div></div>
 <div class="ttc" id="aclass_measure_html"><div class="ttname"><a href="class_measure.html">Measure</a></div><div class="ttdef"><b>Definition:</b> measure.h:13</div></div>
-<div class="ttc" id="aclass_note_html"><div class="ttname"><a href="class_note.html">Note</a></div><div class="ttdef"><b>Definition:</b> note.h:23</div></div>
+<div class="ttc" id="aclass_note_html"><div class="ttname"><a href="class_note.html">Note</a></div><div class="ttdef"><b>Definition:</b> note.h:26</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.16] - 2022-MM-AA
+### New Features
+- `Note Class`:
+    - `.getFrequency()`
+    - `.getEnharmonicPitch()`
+    - `.toEnharmonicPitch()`
+    - `.getEnharmonicPitches()`
+- `Helper::midiNote2octave()`
+- New Unit Tests:
+    - `Note::getEnharmonicPitch`
+    - `Note::toEnharmonicPitch()`
+    - `Note::getEnharmonicPitches()`
+
+### Improved
+- `Chord::stackInThirds()` now can use enharmony to compute the stacked chord
+
+### Fixed
+
+-------------------------
+
 ## [v0.0.15] - 2022-09-07
 ### New Features
 - Add maialib Python stubs
