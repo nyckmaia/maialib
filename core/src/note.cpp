@@ -753,6 +753,20 @@ void Note::toEnharmonicPitch(const bool alternativeEnhamonicPitch)
     setPitch(getEnharmonicPitch(alternativeEnhamonicPitch));
 }
 
+Note Note::getEnharmonicNote(const bool alternativeEnhamonicPitch) const
+{
+    return Note(getEnharmonicPitch(alternativeEnhamonicPitch));
+}
+
+std::vector<Note> Note::getEnharmonicNotes(const bool includeCurrentPitch) const
+{
+    if (includeCurrentPitch) {
+        return {Note(getPitch()), Note(getEnharmonicPitch(false)), Note(getEnharmonicPitch(true))}; 
+    }
+
+    return {Note(getEnharmonicPitch(false)), Note(getEnharmonicPitch(true))};
+}
+
 float Note::getFrequency() const
 {
     return Helper::pitch2freq(getSoundingPitch());
@@ -763,7 +777,6 @@ void Note::transpose(const int semitones, const std::string& accType)
     const std::string newPitch = Helper::transposePitch(getPitch(), semitones, accType);
     setPitch(newPitch);
 }
-
 
 void Note::setPitch(const std::string& pitch){
     // Rest case: This is necessary to prevent: empty pitchClass + alterSymbol

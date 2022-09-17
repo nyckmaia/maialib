@@ -197,6 +197,9 @@ public:
     std::string getEnharmonicPitch(const bool alternativeEnhamonicPitch = false) const;
     std::vector<std::string> getEnharmonicPitches(const bool includeCurrentPitch = false) const;
 
+    Note getEnharmonicNote(const bool alternativeEnhamonicPitch = false) const;
+    std::vector<Note> getEnharmonicNotes(const bool includeCurrentPitch = false) const;
+
     // Colocar praticamente a mesma documentaçao do método 'getEnharmonicPitch()'
     void toEnharmonicPitch(const bool alternativeEnhamonicPitch = false);
     float getFrequency() const;

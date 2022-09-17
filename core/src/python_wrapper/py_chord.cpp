@@ -113,6 +113,9 @@ void ChordClass(py::module &m) {
         py::arg("enharmonyNotes") = false,
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
+    cls.def("getStackedNotes", &Chord::getStackedNotes);
+        
+
     cls.def("sortNotes", &Chord::sortNotes);
 
     cls.def(py::self == py::self);

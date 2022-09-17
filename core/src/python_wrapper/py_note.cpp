@@ -151,6 +151,12 @@ void NoteClass(py::module &m) {
         py::arg("alternativeEnhamonicPitch") = false);
     cls.def("getEnharmonicPitches", &Note::getEnharmonicPitches,
         py::arg("includeCurrentPitch") = false);
+
+    cls.def("getEnharmonicNote", &Note::getEnharmonicNote,
+        py::arg("alternativeEnhamonicPitch") = false);
+    cls.def("getEnharmonicNotes", &Note::getEnharmonicNotes,
+        py::arg("includeCurrentPitch") = false);
+
     cls.def("toEnharmonicPitch", &Note::toEnharmonicPitch,
         py::arg("alternativeEnhamonicPitch") = false);
     cls.def("getFrequency", &Note::getFrequency);

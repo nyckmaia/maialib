@@ -4,6 +4,7 @@
 #include <string>
 #include <array>
 #include <map>
+#include <cmath> // std::pow
 
 enum class Duration 
 {
@@ -51,22 +52,207 @@ enum class Duration
     N1024TH = 1,
 };
 
-// ===== CHORD STACK'S ===== //
-const std::array<char, 7> c_C_diatonicChordStack = {'C', 'E', 'G', 'B', 'D', 'F', 'A'};
-const std::array<char, 7> c_D_diatonicChordStack = {'D', 'F', 'A', 'C', 'E', 'G', 'B'};
-const std::array<char, 7> c_E_diatonicChordStack = {'E', 'G', 'B', 'D', 'F', 'A', 'C'};
-const std::array<char, 7> c_F_diatonicChordStack = {'F', 'A', 'C', 'E', 'G', 'B', 'D'};
-const std::array<char, 7> c_G_diatonicChordStack = {'G', 'B', 'D', 'F', 'A', 'C', 'E'};
-const std::array<char, 7> c_A_diatonicChordStack = {'A', 'C', 'E', 'G', 'B', 'D', 'F'};
-const std::array<char, 7> c_B_diatonicChordStack = {'B', 'D', 'F', 'A', 'C', 'E', 'G'};
+// const float ENHARMONIC_WEIGHT_A = 1.0f;
+// const float ENHARMONIC_WEIGHT_B = 0.8f;
+// const float ENHARMONIC_WEIGHT_C = 0.6f;
+
+// const float UNISSON_WEIGHT = static_cast<float>(std::pow(2, 6));
+
+// const std::map<std::string, float> c_C_enhamonicMapValues = {
+//     // C
+//     {"C",  ENHARMONIC_WEIGHT_A},
+//     {"B#", ENHARMONIC_WEIGHT_B},
+//     {"Dbb", ENHARMONIC_WEIGHT_C},
+//     // D
+//     {"D",  ENHARMONIC_WEIGHT_A},
+//     {"Ebb", ENHARMONIC_WEIGHT_B},
+//     {"Cx", ENHARMONIC_WEIGHT_C},
+//     // E
+//     {"E",  ENHARMONIC_WEIGHT_A},
+//     {"Fb", ENHARMONIC_WEIGHT_B},
+//     {"Dx", ENHARMONIC_WEIGHT_C},
+//     // F
+//     {"F",  ENHARMONIC_WEIGHT_A},
+//     {"E#", ENHARMONIC_WEIGHT_B},
+//     {"Gbb", ENHARMONIC_WEIGHT_C},
+//     // G
+//     {"G",  ENHARMONIC_WEIGHT_A},
+//     {"Abb", ENHARMONIC_WEIGHT_B},
+//     {"Fx", ENHARMONIC_WEIGHT_C},
+//     // A
+//     {"A",  ENHARMONIC_WEIGHT_A},
+//     {"Bbb", ENHARMONIC_WEIGHT_B},
+//     {"Gx", ENHARMONIC_WEIGHT_C},
+//     // B
+//     {"B",  ENHARMONIC_WEIGHT_A},
+//     {"Cb", ENHARMONIC_WEIGHT_B},
+//     {"Ax", ENHARMONIC_WEIGHT_C}
+// };
+
+// const std::map<std::string, float> c_D_enhamonicMapValues = {
+
+// };
+
+// const std::map<std::string, float> c_E_enhamonicMapValues = {
+//     // E
+//     {"E",  ENHARMONIC_WEIGHT_A},
+//     {"Fb", ENHARMONIC_WEIGHT_B},
+//     {"Dx", ENHARMONIC_WEIGHT_C},
+//     // F
+//     {"F",  ENHARMONIC_WEIGHT_A},
+//     {"E#", ENHARMONIC_WEIGHT_B},
+//     {"Gbb", ENHARMONIC_WEIGHT_C},
+//     // G
+//     {"G",  ENHARMONIC_WEIGHT_A},
+//     {"Abb", ENHARMONIC_WEIGHT_B},
+//     {"Fx", ENHARMONIC_WEIGHT_C},
+//     // A
+//     {"A",  ENHARMONIC_WEIGHT_A},
+//     {"Bbb", ENHARMONIC_WEIGHT_B},
+//     {"Gx", ENHARMONIC_WEIGHT_C},
+//     // B
+//     {"B",  ENHARMONIC_WEIGHT_A},
+//     {"Cb", ENHARMONIC_WEIGHT_B},
+//     {"Ax", ENHARMONIC_WEIGHT_C},
+//     // C
+//     {"C",  ENHARMONIC_WEIGHT_A},
+//     {"B#", ENHARMONIC_WEIGHT_B},
+//     {"Dbb", ENHARMONIC_WEIGHT_C},
+//     // D
+//     {"D",  ENHARMONIC_WEIGHT_A},
+//     {"Ebb", ENHARMONIC_WEIGHT_B},
+//     {"Cx", ENHARMONIC_WEIGHT_C}
+// };
+
+// const std::map<std::string, float> c_F_enhamonicMapValues = {
+
+// };
+
+// const std::map<std::string, float> c_G_enhamonicMapValues = {
+//     // C
+//     {"C",  ENHARMONIC_WEIGHT_A},
+//     {"B#", ENHARMONIC_WEIGHT_B},
+//     {"Dbb", ENHARMONIC_WEIGHT_C},
+//     // D
+//     {"D",  ENHARMONIC_WEIGHT_A},
+//     {"Ebb", ENHARMONIC_WEIGHT_B},
+//     {"Cx", ENHARMONIC_WEIGHT_C},
+//     // E
+//     {"E",  ENHARMONIC_WEIGHT_A},
+//     {"Fb", ENHARMONIC_WEIGHT_B},
+//     {"Dx", ENHARMONIC_WEIGHT_C},
+//     // F
+//     {"F",  ENHARMONIC_WEIGHT_A},
+//     {"E#", ENHARMONIC_WEIGHT_B},
+//     {"Gbb", ENHARMONIC_WEIGHT_C},
+//     // G
+//     {"G",  ENHARMONIC_WEIGHT_A},
+//     {"Abb", ENHARMONIC_WEIGHT_B},
+//     {"Fx", ENHARMONIC_WEIGHT_C},
+//     // A
+//     {"A",  ENHARMONIC_WEIGHT_A},
+//     {"Bbb", ENHARMONIC_WEIGHT_B},
+//     {"Gx", ENHARMONIC_WEIGHT_C},
+//     // B
+//     {"B",  ENHARMONIC_WEIGHT_A},
+//     {"Cb", ENHARMONIC_WEIGHT_B},
+//     {"Ax", ENHARMONIC_WEIGHT_C}
+// };
+
+// const std::map<std::string, float> c_A_enhamonicMapValues = {
+
+// };
+
+// const std::map<std::string, float> c_B_enhamonicMapValues = {
+
+// };
+
+// // ===== CHORD STACK MAPS ===== //
+// const std::map<char, int> c_C_diatonicChordStackMap = {
+//     {'C', std::pow(2, 6) },
+//     {'E', std::pow(2, 5) },
+//     {'G', std::pow(2, 4) },
+//     {'B', std::pow(2, 3) },
+//     {'D', std::pow(2, 2) },
+//     {'F', std::pow(2, 1) },
+//     {'A', std::pow(2, 0) }
+// };
+
+// const std::map<char, int> c_D_diatonicChordStackMap = {
+//     {'D', std::pow(2, 6) },
+//     {'F', std::pow(2, 5) },
+//     {'A', std::pow(2, 4) },
+//     {'C', std::pow(2, 3) },
+//     {'E', std::pow(2, 2) },
+//     {'G', std::pow(2, 1) },
+//     {'B', std::pow(2, 0) }
+// };
+
+// const std::map<char, int> c_E_diatonicChordStackMap = {
+//     {'E', std::pow(2, 6) },
+//     {'G', std::pow(2, 5) },
+//     {'B', std::pow(2, 4) },
+//     {'D', std::pow(2, 3) },
+//     {'F', std::pow(2, 2) },
+//     {'A', std::pow(2, 1) },
+//     {'C', std::pow(2, 0) }
+// };
+
+// const std::map<char, int> c_F_diatonicChordStackMap = {
+//     {'F', std::pow(2, 6) },
+//     {'A', std::pow(2, 5) },
+//     {'C', std::pow(2, 4) },
+//     {'E', std::pow(2, 3) },
+//     {'G', std::pow(2, 2) },
+//     {'B', std::pow(2, 1) },
+//     {'D', std::pow(2, 0) }
+// };
+
+// const std::map<char, int> c_G_diatonicChordStackMap = {
+//     {'G', std::pow(2, 6) },
+//     {'B', std::pow(2, 5) },
+//     {'D', std::pow(2, 4) },
+//     {'F', std::pow(2, 3) },
+//     {'A', std::pow(2, 2) },
+//     {'C', std::pow(2, 1) },
+//     {'E', std::pow(2, 0) }
+// };
+
+// const std::map<char, int> c_A_diatonicChordStackMap = {
+//     {'A', std::pow(2, 6) },
+//     {'C', std::pow(2, 5) },
+//     {'E', std::pow(2, 4) },
+//     {'G', std::pow(2, 3) },
+//     {'B', std::pow(2, 2) },
+//     {'D', std::pow(2, 1) },
+//     {'F', std::pow(2, 0) }
+// };
+
+// const std::map<char, int> c_B_diatonicChordStackMap = {
+//     {'B', std::pow(2, 6) },
+//     {'D', std::pow(2, 5) },
+//     {'F', std::pow(2, 4) },
+//     {'A', std::pow(2, 3) },
+//     {'C', std::pow(2, 2) },
+//     {'E', std::pow(2, 1) },
+//     {'G', std::pow(2, 0) }
+// };
 
 // ===== SCALES ===== //
+// Diatonic Scales (Pitch Steps)
 const std::array<std::string, 7> c_C_diatonicScale = {"C", "D", "E", "F", "G", "A", "B"};
+const std::array<std::string, 7> c_D_diatonicScale = {"D", "E", "F", "G", "A", "B", "C"};
+const std::array<std::string, 7> c_E_diatonicScale = {"E", "F", "G", "A", "B", "C", "D"};
+const std::array<std::string, 7> c_F_diatonicScale = {"F", "G", "A", "B", "C", "D", "E"};
+const std::array<std::string, 7> c_G_diatonicScale = {"G", "A", "B", "C", "D", "E", "F"};
+const std::array<std::string, 7> c_A_diatonicScale = {"A", "B", "C", "D", "E", "F", "G"};
+const std::array<std::string, 7> c_B_diatonicScale = {"B", "C", "D", "E", "F", "G", "A"};
+
 const std::array<std::string, 12> c_chromaticSharpScale = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 const std::array<std::string, 12> c_chromaticFlatScale = {"C", "Db", "D", "Eb", "Fb", "F", "Gb", "G", "Ab", "A", "Bb", "B"};
 const std::array<std::string, 12> c_chromaticDoubleSharpScale = {"C", "Bx", "Cx", "D#", "Dx", "E#", "Ex", "Fx", "G#", "Gx", "A#", "Ax"};
 const std::array<std::string, 12> c_chromaticDoubleFlatScale = {"C", "Db", "Ebb", "Fbb", "Fb", "Gbb", "Gb", "Abb", "Ab", "Bbb", "Bb", "Cb"};
-const std::array<std::string, 4> c_alterSymbol = {"bb", "b", "#", "x"};
+const std::array<std::string, 4>  c_alterSymbol = {"bb", "b", "#", "x"};
 
 namespace MUSIC_XML {
 

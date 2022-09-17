@@ -1,5 +1,7 @@
 #include "interval.h"
 #include "constants.h"
+#include "utils.h"
+
 #include <stdexcept>
 
 Interval::Interval(const std::string& pitch_A, const std::string& pitch_B) :
@@ -16,8 +18,29 @@ Interval::Interval(const Note& note_A, const Note& note_B) :
         throw std::runtime_error("Cannot compute the interval between a note and a REST");
     }
 
-    _note.push_back(note_A);
-    _note.push_back(note_B);
+    _note.resize(2);
+    _note[0] = note_A;
+    _note[1] = note_B;
+
+    _numSemitones = _note[1].getMIDINumber() - _note[0].getMIDINumber();
+}
+
+void Interval::setNotes(const std::string& pitch_A, const std::string& pitch_B)
+{
+    setNotes(Note(pitch_A), Note(pitch_B));
+}
+
+void Interval::setNotes(const Note& note_A, const Note& note_B)
+{
+    // Error checking:
+    if (!note_A.isNoteOn() || !note_B.isNoteOn()) {
+        throw std::runtime_error("Cannot compute the interval between a note and a rest");
+    }
+
+    _note.clear();
+    _note.resize(2);
+    _note[0] = note_A;
+    _note[1] = note_B;
 
     _numSemitones = _note[1].getMIDINumber() - _note[0].getMIDINumber();
 }
@@ -168,6 +191,16 @@ std::string Interval::getName() const
     return analyse().first;
 }
 
+int Interval::getValue(const bool absoluteValue) const
+{
+    if (isAscendant()) {
+        return getDiatonicSteps(absoluteValue) + 1;
+    }
+
+    const int x = getDiatonicSteps(absoluteValue) - 1;
+    return (absoluteValue) ? abs(x) : x;
+}
+
 int Interval::getNumSemitones(const bool absoluteValue) const
 {
     return (absoluteValue) ? abs(_numSemitones) : _numSemitones;
@@ -182,16 +215,16 @@ int Interval::getNumOctaves(const bool absoluteValue) const
 
 int Interval::getDiatonicInterval(const bool absoluteValue) const
 {
-    const int diatonicScaleSize = (absoluteValue) ? c_C_diatonicScale.size() : static_cast<int>(c_C_diatonicScale.size()) * -1;
-
-    return getDiatonicSteps(absoluteValue) % diatonicScaleSize;
+    return getValue(absoluteValue) % 7;
 }
 
-int Interval::getDiatonicSteps(const bool absoluteValue) const
+int Interval::getDiatonicSteps(const bool useSingleOctave, const bool absoluteValue) const
 {
+    const int diatonicScaleSize = (absoluteValue) ? c_C_diatonicScale.size() : static_cast<int>(c_C_diatonicScale.size()) * -1;
+
     // Get the diatonic values of each interval note
-    const std::string diatonic_A = _note[0].getPitch().substr(0, 1);
-    const std::string diatonic_B = _note[1].getPitch().substr(0, 1);
+    const std::string& diatonic_A = _note[0].getPitchStep();
+    const std::string& diatonic_B = _note[1].getPitchStep();
 
     // Get the iterator of each diatonic note
     const auto& itA = std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), diatonic_A);
@@ -200,8 +233,37 @@ int Interval::getDiatonicSteps(const bool absoluteValue) const
     // Compute the diatonic distance
     const int diatonicDistance = std::distance(itA, itB) + (getNumOctaves() * c_C_diatonicScale.size());
 
-    return (absoluteValue) ? abs(diatonicDistance) : diatonicDistance;
+    const int x = (absoluteValue) ? abs(diatonicDistance) : diatonicDistance;
+    
+    return (useSingleOctave) ? x % diatonicScaleSize : x;
 }
+
+int Interval::getPitchStepInterval() const
+{
+    // Get the diatonic values of each interval note
+    const std::string& diatonic_A = _note[0].getPitchStep();
+    const std::string& diatonic_B = _note[1].getPitchStep();
+
+    // Select the chord stack using the 'possible root' note
+    const std::array<std::string, 7>* diatonicScale = nullptr;
+
+    switch (hash(diatonic_A.c_str())) {
+        case hash("C"): diatonicScale = &c_C_diatonicScale; break;
+        case hash("D"): diatonicScale = &c_D_diatonicScale; break;
+        case hash("E"): diatonicScale = &c_E_diatonicScale; break;
+        case hash("F"): diatonicScale = &c_F_diatonicScale; break;
+        case hash("G"): diatonicScale = &c_G_diatonicScale; break;
+        case hash("A"): diatonicScale = &c_A_diatonicScale; break;
+        case hash("B"): diatonicScale = &c_B_diatonicScale; break;
+        default: throw std::runtime_error("Invalid diatonic pitch step"); break;
+    }
+
+    // Compute the distance between the interval first and second pitch step
+    const int noteDistance = std::distance(diatonicScale->begin(), std::find(diatonicScale->begin(), diatonicScale->end(), diatonic_B));
+    
+    return noteDistance + 1;
+}
+
 
 std::vector<Note> Interval::getNotes() const
 {

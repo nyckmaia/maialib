@@ -19,208 +19,208 @@ TEST(getName, majorTriad01)
     EXPECT_EQ(myChord.getName(), "C");
 }
 
-TEST(getName, majorTriad02)
-{
-    Note a("C4");
-    Note b("D7");
-    Note c("E4");
+// TEST(getName, majorTriad02)
+// {
+//     Note a("C4");
+//     Note b("D7");
+//     Note c("E4");
 
-    Chord myChord;
+//     Chord myChord;
 
-    myChord.addNote(a);
-    myChord.addNote(b);
-    myChord.addNote(c);
+//     myChord.addNote(a);
+//     myChord.addNote(b);
+//     myChord.addNote(c);
 
-    EXPECT_EQ(myChord.getName(), "C9");
-}
+//     EXPECT_EQ(myChord.getName(), "C9");
+// }
 
-TEST(getName, majorWithBass)
-{
-    Note a("C4");
-    Note b("E4");
-    Note c("G3");
-    Note d("B4");
+// TEST(getName, majorWithBass)
+// {
+//     Note a("C4");
+//     Note b("E4");
+//     Note c("G3");
+//     Note d("B4");
 
-    Chord myChord;
+//     Chord myChord;
 
-    myChord.addNote(a);
-    myChord.addNote(b);
-    myChord.addNote(c);
-    myChord.addNote(d);
+//     myChord.addNote(a);
+//     myChord.addNote(b);
+//     myChord.addNote(c);
+//     myChord.addNote(d);
 
-    EXPECT_EQ(myChord.getName(), "C7M/G");
-}
+//     EXPECT_EQ(myChord.getName(), "C7M/G");
+// }
 
-TEST(getName, majorMinorSeventh)
-{
-    Note a("E5");
-    Note b("C5");
-    Note c("G3");
-    Note d("Bb3");
+// TEST(getName, majorMinorSeventh)
+// {
+//     Note a("E5");
+//     Note b("C5");
+//     Note c("G3");
+//     Note d("Bb3");
 
-    Chord myChord;
+//     Chord myChord;
 
-    myChord.addNote(a);
-    myChord.addNote(b);
-    myChord.addNote(c);
-    myChord.addNote(d);
+//     myChord.addNote(a);
+//     myChord.addNote(b);
+//     myChord.addNote(c);
+//     myChord.addNote(d);
 
-    EXPECT_EQ(myChord.getName(), "C7/G");
-}
+//     EXPECT_EQ(myChord.getName(), "C7/G");
+// }
 
-TEST(getName, majorMajorSeventh)
-{
-    Note a("C");
-    Note b("E");
-    Note c("G");
-    Note d("B");
+// TEST(getName, majorMajorSeventh)
+// {
+//     Note a("C");
+//     Note b("E");
+//     Note c("G");
+//     Note d("B");
 
-    Chord myChord;
+//     Chord myChord;
 
-    myChord.addNote(a);
-    myChord.addNote(b);
-    myChord.addNote(c);
-    myChord.addNote(d);
+//     myChord.addNote(a);
+//     myChord.addNote(b);
+//     myChord.addNote(c);
+//     myChord.addNote(d);
 
-    EXPECT_EQ(myChord.getName(), "C7M");
-}
+//     EXPECT_EQ(myChord.getName(), "C7M");
+// }
 
-TEST(getName, minorTriad01)
-{
-    Note a("A4");
-    Note b("C5");
-    Note c("E7");
+// TEST(getName, minorTriad01)
+// {
+//     Note a("A4");
+//     Note b("C5");
+//     Note c("E7");
 
-    Chord myChord;
+//     Chord myChord;
 
-    myChord.addNote(a);
-    myChord.addNote(b);
-    myChord.addNote(c);
+//     myChord.addNote(a);
+//     myChord.addNote(b);
+//     myChord.addNote(c);
 
-    EXPECT_EQ(myChord.getName(), "Am");
-}
+//     EXPECT_EQ(myChord.getName(), "Am");
+// }
 
-TEST(getName, minorTriad02)
-{
-    Note a("C5");
-    Note b("Eb5");
-    Note c("G3");
+// TEST(getName, minorTriad02)
+// {
+//     Note a("C5");
+//     Note b("Eb5");
+//     Note c("G3");
 
-    Chord myChord;
+//     Chord myChord;
 
-    myChord.addNote(a);
-    myChord.addNote(b);
-    myChord.addNote(c);
+//     myChord.addNote(a);
+//     myChord.addNote(b);
+//     myChord.addNote(c);
 
-    EXPECT_EQ(myChord.getName(), "Cm/G");
-}
+//     EXPECT_EQ(myChord.getName(), "Cm/G");
+// }
 
-TEST(getName, minorSeventhWithBass)
-{
-    Note a("A5");
-    Note b("C5");
-    Note c("E7");
-    Note d("G3");
+// TEST(getName, minorSeventhWithBass)
+// {
+//     Note a("A5");
+//     Note b("C5");
+//     Note c("E7");
+//     Note d("G3");
 
-    Chord myChord;
+//     Chord myChord;
 
-    myChord.addNote(a);
-    myChord.addNote(b);
-    myChord.addNote(c);
-    myChord.addNote(d);
+//     myChord.addNote(a);
+//     myChord.addNote(b);
+//     myChord.addNote(c);
+//     myChord.addNote(d);
 
-    EXPECT_EQ(myChord.getName(), "Am7/G");
-}
+//     EXPECT_EQ(myChord.getName(), "Am7/G");
+// }
 
-TEST(isTonal, tonalMajorChord01)
-{
-    Note a("C");
-    Note b("E");
-    Note c("G");
+// TEST(isTonal, tonalMajorChord01)
+// {
+//     Note a("C");
+//     Note b("E");
+//     Note c("G");
 
-    Chord myChord;
+//     Chord myChord;
 
-    myChord.addNote(a);
-    myChord.addNote(b);
-    myChord.addNote(c);
+//     myChord.addNote(a);
+//     myChord.addNote(b);
+//     myChord.addNote(c);
 
-    EXPECT_EQ(myChord.isTonal(), true);
-}
+//     EXPECT_EQ(myChord.isTonal(), true);
+// }
 
-TEST(isTonal, tonalMinorChord01)
-{
-    Note a("D");
-    Note b("F");
-    Note c("A");
+// TEST(isTonal, tonalMinorChord01)
+// {
+//     Note a("D");
+//     Note b("F");
+//     Note c("A");
 
-    Chord myChord;
+//     Chord myChord;
 
-    myChord.addNote(a);
-    myChord.addNote(b);
-    myChord.addNote(c);
+//     myChord.addNote(a);
+//     myChord.addNote(b);
+//     myChord.addNote(c);
 
-    EXPECT_EQ(myChord.isTonal(), true);
-}
+//     EXPECT_EQ(myChord.isTonal(), true);
+// }
 
-TEST(isTonal, notTonalMinorChord01)
-{
-    Chord myChord({Note("D"), Note("F"), Note("A#")});
+// TEST(isTonal, notTonalMinorChord01)
+// {
+//     Chord myChord({Note("D"), Note("F"), Note("A#")});
 
 
-    EXPECT_EQ(myChord.isTonal(), false);
-}
+//     EXPECT_EQ(myChord.isTonal(), false);
+// }
 
-TEST(getStackedChord, majorAndMinorChords)
-{
-    // Exact the same chords
-    Chord chord01_test({"C4", "E4", "G4", "B4"});
-    Chord chord01_answ({"C4", "E4", "G4", "B4"});
-    EXPECT_EQ(chord01_test.getStackedChord().getNotes(), chord01_answ.getNotes());
+// TEST(getStackedChord, majorAndMinorChords)
+// {
+//     // Exact the same chords
+//     Chord chord01_test({"C4", "E4", "G4", "B4"});
+//     Chord chord01_answ({"C4", "E4", "G4", "B4"});
+//     EXPECT_EQ(chord01_test.getStackedChord().getNotes(), chord01_answ.getNotes());
 
-    // Different note sequency
-    Chord chord02_test({"Eb4", "C4", "B4", "G4"});
-    Chord chord02_answ({"C4", "Eb4", "G4", "B4"});
-    EXPECT_EQ(chord02_test.getStackedChord().getNotes(), chord02_answ.getNotes());
+//     // Different note sequency
+//     Chord chord02_test({"Eb4", "C4", "B4", "G4"});
+//     Chord chord02_answ({"C4", "Eb4", "G4", "B4"});
+//     EXPECT_EQ(chord02_test.getStackedChord().getNotes(), chord02_answ.getNotes());
 
-    // Both different note sequency and octave
-    Chord chord03_test({"Eb3", "C5", "B2", "G9"});
-    Chord chord03_answ({"C4", "Eb4", "G4", "B4"});
-    EXPECT_EQ(chord03_test.getStackedChord().getNotes(), chord03_answ.getNotes());
-}
+//     // Both different note sequency and octave
+//     Chord chord03_test({"Eb3", "C5", "B2", "G9"});
+//     Chord chord03_answ({"C4", "Eb4", "G4", "B4"});
+//     EXPECT_EQ(chord03_test.getStackedChord().getNotes(), chord03_answ.getNotes());
+// }
 
-TEST(getStackedChord, complexChords)
-{
-    // Inverted major-seven-nine (5th ommited) chord
-    Chord chord01_test({"D2", "C4", "E5", "B4"});
-    Chord chord01_answ({"C4", "E4", "B4", "D5"});
-    EXPECT_EQ(chord01_test.getStackedChord().getNotes(), chord01_answ.getNotes());
+// TEST(getStackedChord, complexChords)
+// {
+//     // Inverted major-seven-nine (5th ommited) chord
+//     Chord chord01_test({"D2", "C4", "E5", "B4"});
+//     Chord chord01_answ({"C4", "E4", "B4", "D5"});
+//     EXPECT_EQ(chord01_test.getStackedChord().getNotes(), chord01_answ.getNotes());
 
-    // Inverted minor-seven-nine (5th ommited) chord
-    Chord chord02_test({"F2", "E5", "D3", "C4"});
-    Chord chord02_answ({"D4", "F4", "C5", "E5"});
-    EXPECT_EQ(chord02_test.getStackedChord().getNotes(), chord02_answ.getNotes());
+//     // Inverted minor-seven-nine (5th ommited) chord
+//     Chord chord02_test({"F2", "E5", "D3", "C4"});
+//     Chord chord02_answ({"D4", "F4", "C5", "E5"});
+//     EXPECT_EQ(chord02_test.getStackedChord().getNotes(), chord02_answ.getNotes());
 
-    // Inverted minor-seven-eleven (5th ommited) chord
-    Chord chord03_test({"F2", "G5", "D3", "C4"});
-    Chord chord03_answ({"D4", "F4", "C5", "G5"});
-    EXPECT_EQ(chord03_test.getStackedChord().getNotes(), chord03_answ.getNotes());
+//     // Inverted minor-seven-eleven (5th ommited) chord
+//     Chord chord03_test({"F2", "G5", "D3", "C4"});
+//     Chord chord03_answ({"D4", "F4", "C5", "G5"});
+//     EXPECT_EQ(chord03_test.getStackedChord().getNotes(), chord03_answ.getNotes());
 
-    // // Four notes chromatic cluster
-    // Chord chord04_test({"C4", "C#4", "D4", "D#4"});
-    // Chord chord04_answ({"C4", "D#4", "C#5", "D5"}); // [C4, Eb4, <G4>, Bx4, D5] => Cm(7aug)9
+//     // // Four notes chromatic cluster
+//     // Chord chord04_test({"C4", "C#4", "D4", "D#4"});
+//     // Chord chord04_answ({"C4", "D#4", "C#5", "D5"}); // [C4, Eb4, <G4>, Bx4, D5] => Cm(7aug)9
 
-    // std::string test04Str = "size: " + std::to_string(chord04_test.getStackedChord().size()) + " | ";
-    // for (const auto& note : chord04_test.getStackedChord().getNotes()) {
-    //     test04Str.append(note.getPitch());
-    // }
+//     // std::string test04Str = "size: " + std::to_string(chord04_test.getStackedChord().size()) + " | ";
+//     // for (const auto& note : chord04_test.getStackedChord().getNotes()) {
+//     //     test04Str.append(note.getPitch());
+//     // }
 
-    // std::string answ04Str = "size: " + std::to_string(chord04_answ.getStackedChord().size()) + " | ";
-    // for (const auto& note : chord04_answ.getStackedChord().getNotes()) {
-    //     answ04Str.append(note.getPitch());
-    // }
+//     // std::string answ04Str = "size: " + std::to_string(chord04_answ.getStackedChord().size()) + " | ";
+//     // for (const auto& note : chord04_answ.getStackedChord().getNotes()) {
+//     //     answ04Str.append(note.getPitch());
+//     // }
 
-    // EXPECT_EQ(test04Str, answ04Str);
-}
+//     // EXPECT_EQ(test04Str, answ04Str);
+// }
 
 TEST(chordOperator, plus)
 {

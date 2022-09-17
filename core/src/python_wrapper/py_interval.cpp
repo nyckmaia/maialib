@@ -23,19 +23,29 @@ void IntervalClass(py::module &m) {
             py::arg("note_A"),
             py::arg("note_B"));
 
+    cls.def("setNotes", py::overload_cast<const std::string&, const std::string&>(&Interval::setNotes),
+        py::arg("pitch_A"),
+        py::arg("pitch_B"));
+    cls.def("setNotes", py::overload_cast<const Note&, const Note&>(&Interval::setNotes),
+        py::arg("note_A"),
+        py::arg("note_B"));
+
     cls.def("getName", &Interval::getName);
+    cls.def("getValue", &Interval::getValue,
+        py::arg("absoluteValue") = false);
     cls.def("getNumSemitones", &Interval::getNumSemitones,
-            py::arg("absoluteValue") = false);
+        py::arg("absoluteValue") = false);
 
     cls.def("getNumOctaves", &Interval::getNumOctaves,
-            py::arg("absoluteValue") = false);
+        py::arg("absoluteValue") = false);
 
     cls.def("getDiatonicInterval", &Interval::getDiatonicInterval,
-            py::arg("absoluteValue") = false);
+        py::arg("absoluteValue") = false);
 
     cls.def("getDiatonicSteps", &Interval::getDiatonicSteps,
-            py::arg("absoluteValue") = false);
-
+        py::arg("useSingleOctave") = true,
+        py::arg("absoluteValue") = false);
+    cls.def("getPitchStepInterval", &Interval::getPitchStepInterval);
     cls.def("getNotes", &Interval::getNotes);
     cls.def("isAscendant", &Interval::isAscendant);
     cls.def("isDescendant", &Interval::isDescendant);

@@ -9,14 +9,21 @@ All notable changes to this project will be documented in this file.
     - `.getEnharmonicPitch()`
     - `.toEnharmonicPitch()`
     - `.getEnharmonicPitches()`
+    - `.getEnharmonicNote()`
+    - `.getEnharmonicNotes()`
+- `Interval::getValue()`
+- `Interval::setNotes()`
+- `Interval::getPitchStepInterval()`
 - `Helper::midiNote2octave()`
+- `Chord::getStackedNotes()`
 - New Unit Tests:
     - `Note::getEnharmonicPitch`
-    - `Note::toEnharmonicPitch()`
     - `Note::getEnharmonicPitches()`
+    - `Note::getEnharmonicNotes()`
 
 ### Improved
 - `Chord::stackInThirds()` now can use enharmony to compute the stacked chord
+- `Interval::getDiatonicSteps()` added optional argument `useSingleOctave`
 
 ### Fixed
 

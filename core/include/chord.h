@@ -2,10 +2,43 @@
 #include <iostream>
 #include <vector>
 #include <functional>
+#include <utility> // std::pair
+#include <tuple> // std::tuple
+#include <algorithm> // std::rotate
 
 #include "note.h"
 #include "interval.h"
 #include "constants.h"
+
+struct NoteData 
+{
+    Note note = Note("rest");
+    bool wasEnharmonized = false;
+    int enharmonicDiatonicDistance = 0;
+
+    NoteData() : 
+        note(Note("rest")),
+        wasEnharmonized(false),
+        enharmonicDiatonicDistance(0)
+    {
+    }
+
+    NoteData(const Note& _note, const bool _wasEnhar, const int _enharDiat) :
+        note(_note),
+        wasEnharmonized(_wasEnhar),
+        enharmonicDiatonicDistance(_enharDiat)
+    {
+    };
+
+    friend bool operator<(const NoteData& lhs, const NoteData& rhs) { 
+        return lhs.note.getMIDINumber() < rhs.note.getMIDINumber(); 
+    }
+};
+
+// Heap Type [Vector of NotesData]
+typedef std::vector<NoteData> Heap;
+// HeapData Type [Heap, stackMatchValue]
+typedef std::tuple<Heap, float> HeapData;
 
 class Chord
 {
@@ -37,7 +70,10 @@ private:
     std::string enharmonicName();
     std::string nonEnharmonicName() const;
     void stackInThirds(const bool enharmonyNotes = false);
-    
+    HeapData stackInThirdsTemplateMatch(const Heap& heap) const;
+    std::vector<Heap> computeAllHeapInversions(Heap& heap) const;
+    std::vector<Heap> filterTertianHeapsOnly(const std::vector<Heap>& heaps) const;
+
 public:
 
     Chord();
@@ -94,6 +130,7 @@ public:
 
     std::vector<int> getMIDIIntervals();
     std::vector<Interval> getIntervals(const bool fromRoot = false) const;
+    std::vector<Note> getStackedNotes() const;
     std::vector<Interval> getStackIntervals(const bool fromRoot = false);
 
     size_t size() const;
