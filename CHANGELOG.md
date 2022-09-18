@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - `Interval::getPitchStepInterval()`
 - `Helper::midiNote2octave()`
 - `Chord::getStackedNotes()`
+- `Chord::getStackedHeaps()`
 - New Unit Tests:
     - `Note::getEnharmonicPitch`
     - `Note::getEnharmonicPitches()`

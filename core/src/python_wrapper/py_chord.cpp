@@ -54,6 +54,9 @@ void ChordClass(py::module &m) {
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("removeDuplicateNotes", &Chord::removeDuplicateNotes);
+    cls.def("getStackedHeaps", &Chord::getStackedHeaps,
+        py::arg("enharmonyNotes") = false);
+
     cls.def("getDuration", &Chord::getDuration);
 
     cls.def("getDurationTicks", &Chord::getDurationTicks);
@@ -155,5 +158,16 @@ void ChordClass(py::module &m) {
     cls.def("__sizeof__", [](const Chord& chord) {
         return sizeof(chord);
     });
+
+    // bindings to Heap Data typedef
+    py::class_<NoteData> clsNoteData(m, "NoteData");
+    clsNoteData.def(py::init<>());
+    clsNoteData.def(py::init<const Note&, const bool, const int>(),
+            py::arg("note"),
+            py::arg("wasEnharmonized"),
+            py::arg("enharmonicDiatonicDistance"));
+
+    py::class_<Heap> clsHeap(m, "Heap");
+    py::class_<HeapData> clsHeapData(m, "HeapData");
 }
 #endif

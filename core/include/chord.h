@@ -40,6 +40,8 @@ typedef std::vector<NoteData> Heap;
 // HeapData Type [Heap, stackMatchValue]
 typedef std::tuple<Heap, float> HeapData;
 
+bool operator<(const HeapData& a, const HeapData& b);
+
 void printHeap(const Heap& heap);
 
 class Chord
@@ -48,6 +50,7 @@ class Chord
 private:
     std::vector<Note> _note;
     std::vector<Note> _stack;
+    std::vector<HeapData> _stackedHeaps;
 
     Note _bassNote;
     bool _isStackedInThirds;
@@ -97,6 +100,8 @@ public:
     void transpose(const int semiTonesNumber);
     void transposeStackOnly(const int semiTonesNumber);
     void removeDuplicateNotes();
+
+    std::vector<HeapData> getStackedHeaps(const bool enharmonyNotes = false);
 
     std::string getDuration() const;
     float getQuarterDuration() const;

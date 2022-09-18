@@ -247,6 +247,13 @@ void Chord::removeDuplicateNotes()
     _note.erase(std::unique(_note.begin(), _note.end() ), _note.end());
 }
 
+std::vector<HeapData> Chord::getStackedHeaps(const bool enharmonyNotes)
+{
+    if (!_isStackedInThirds) { stackInThirds(enharmonyNotes); }
+
+    return _stackedHeaps;
+}
+
 std::string Chord::getDuration() const
 {
     const std::map<std::string, int> map {
@@ -432,7 +439,7 @@ void Chord::stackInThirds(const bool enharmonyNotes)
 
     // Update the 'chordSize' variable
     const int chordSize = _stack.size();
-    std::cout << "chordSize: " << chordSize << std::endl;
+    // std::cout << "chordSize: " << chordSize << std::endl;
 
     // Error checking:
     if (chordSize < 3) {
@@ -448,7 +455,6 @@ void Chord::stackInThirds(const bool enharmonyNotes)
     // std::cout << "enharmonicHeaps: " << enharmonicHeaps.size() << std::endl;
 
     // ===== STEP 6: COMPUTE THE STACK IN THIRDS TEMPLATE MATCH ===== //
-    std::vector<HeapData> allHeapsData;
     for (auto& heap : enharmonicHeaps) {
         const std::vector<Heap>& heapInversions = computeAllHeapInversions(heap);
         const std::vector<Heap>& tertianHeaps = filterTertianHeapsOnly(heapInversions);
@@ -462,13 +468,16 @@ void Chord::stackInThirds(const bool enharmonyNotes)
             if (firstInterval.getPitchStepInterval() != 3) { continue; }
 
             const auto& heapData = stackInThirdsTemplateMatch(heapInversion);
-            allHeapsData.push_back(heapData);
+            _stackedHeaps.push_back(heapData);
         }
     }
 
+    // ===== STEP 7: SORT HEAPS BY STACK IN THIRDS MATCHING VALUE ===== //
+    std::sort(_stackedHeaps.begin(), _stackedHeaps.end(), std::greater<>());
+
     // std::cout << "===== PRINT ALL HEAPS =====" << std::endl;
     int idx = 0;
-    for (const auto& heapData : allHeapsData) {
+    for (const auto& heapData : _stackedHeaps) {
         Heap heap = std::get<0>(heapData);
         float heapCountPoints = std::get<1>(heapData);
 
@@ -481,18 +490,6 @@ void Chord::stackInThirds(const bool enharmonyNotes)
         idx++;
     }
 
-    // // ===== STEP 2: STORE STACKED NOTES IN ACENDENT ORDER ===== //
-    // std::vector<Note> orderedStack;
-    // for (auto it = stack.begin(); it != stack.end(); it++) { orderedStack.push_back(it->second); }
-
-    // _stack.clear();
-    // _stack = orderedStack;
-
-    // std::cout << "AFTER CLEAR" << std::endl;
-    // for (const auto& n : _stack) {
-    //     std::cout << n.getPitch() << std::endl;
-    // }
-
     // // ===== STEP 3: TRANSPOSE ALL NOTES TO OCTAVE 4 REFERENCE ===== //
     // // Create a temp note to be the 'octave 4' root reference
     // Note rootOct4 = stack.at(0);
@@ -504,9 +501,9 @@ void Chord::stackInThirds(const bool enharmonyNotes)
     // // Move the entire chord to the 'octave 4' root reference
     // transposeStackOnly(rootOct4Distance);
 
-    // // ===== STEP 4: SET INTERNAL FLAG AND COMPUTE INTERVALS ===== //
-    // // Set a internal control flag
-    // _isStackedInThirds = true;
+    // ===== STEP 4: SET INTERNAL FLAG AND COMPUTE INTERVALS ===== //
+    // Set a internal control flag
+    _isStackedInThirds = true;
 
     // computeIntervals();
 }
@@ -1309,8 +1306,16 @@ const std::vector<Note>& Chord::getNotes() const
 Chord Chord::getStackedChord(const bool enharmonyNotes)
 {
     if (!_isStackedInThirds) { stackInThirds(enharmonyNotes); }
+    
+    const HeapData& bestHeapData = _stackedHeaps[0];
+    const Heap& bestHeap = std::get<0>(bestHeapData);
 
-    return Chord(_stack);
+    Chord stackChord;
+    for (const auto& noteData : bestHeap) {
+        stackChord.addNote(noteData.note);
+    }
+
+    return stackChord;
 }
 
 void Chord::sortNotes()
@@ -1323,4 +1328,8 @@ void printHeap(const Heap& heap) {
         std::cout << "printHeap: " << noteData.note.getPitch() << " ";
     }
     std::cout << std::endl;
+}
+
+bool operator<(const HeapData& a, const HeapData& b){
+    return std::get<1>(a) < std::get<1>(b);
 }
