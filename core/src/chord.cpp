@@ -444,7 +444,7 @@ void Chord::stackInThirds(const bool enharmonyNotes)
     for (int i = 0; i < enharCombinatoryMatrixSize; i++) {
         std::vector<NoteData> aux(numOfEnharmonics);
 
-        Note originalNote = getStackedNotes()[i];
+        Note originalNote = getStackedNotes()[i]; // must be a copy
         aux[0] = NoteData(originalNote, false, 0);
         aux[1] = NoteData(originalNote.getEnharmonicNote(false), true, 1);
         aux[2] = NoteData(originalNote.getEnharmonicNote(true), true, 2);
@@ -452,9 +452,9 @@ void Chord::stackInThirds(const bool enharmonyNotes)
         enharCombinatoryMatrix[i] = aux;
     }
 
-    const int enharmonicStackPossibilities = std::pow(chordSize, 3);
+    const int enharmonicHeapPossibilities = std::pow(chordSize, 3);
     // ignore(enharmonicStackPossibilities);
-    std::cout << "enharmonicStackPossibilities: " << enharmonicStackPossibilities << std::endl;
+    std::cout << "enharmonicHeapPossibilities: " << enharmonicHeapPossibilities << std::endl;
     // // PRINT
     // for (const auto& row : enharCombinatoryMatrix) {
     //     std::cout << "------" << std::endl;
@@ -464,34 +464,35 @@ void Chord::stackInThirds(const bool enharmonyNotes)
     //     }
     // }
 
-    // ===== STEP 2: GENERATE ALL POSSIBLE HEAP VECTORS ===== //
-    std::vector<Heap> possibleHeap(enharmonicStackPossibilities);
+    // ===== STEP 2: GENERATE ENHARMONIC HEAP VECTORS ===== //
+    std::vector<Heap> enhamonicHeaps(enharmonicHeapPossibilities);
     int idx = 0;
 
     for (int i = 0; i < numOfEnharmonics; i++) {
         for (int j = 0; j < numOfEnharmonics; j++) {
             for (int k = 0; k < numOfEnharmonics; k++) {               
-                possibleHeap[idx++] = {{enharCombinatoryMatrix[0][i], enharCombinatoryMatrix[1][j], 
+                enhamonicHeaps[idx++] = {{enharCombinatoryMatrix[0][i], enharCombinatoryMatrix[1][j], 
                                             enharCombinatoryMatrix[2][k]}};
             }
         }
     }
-
-    // std::cout << "===== PRINT ENHARMONIC HEAPS =====" << std::endl;
+    
+    // std::cout << "--> enhamonicHeaps" << std::endl;
     // idx = 0;
-    // for (const auto& heap : possibleHeap) {
-    //     std::cout << "-- possibleHeap[" << idx++ << "] ";
-
-    //     for (const auto& el : heap) {
-    //         std::cout << el.note.getPitch() << " wasE: " << el.wasEnharmonized << " dist: " << el.enharmonicDiatonicDistance << " ";
+    // for (const auto& heap : enhamonicHeaps) {
+    //     std::cout << "enhamonicHeaps[" << idx++ << "] ";
+    //     for (const auto& noteData : heap) {
+    //         std::cout << noteData.note.getPitch() << " ";
     //     }
     //     std::cout << std::endl;
     // }
 
+
     // ===== STEP X: COMPUTE THE STACK IN THIRDS TEMPLATE MATCH ===== //
     // std::cout << "===== COMPUTE THE STACK MATCHING VALUE =====" << std::endl;
     std::vector<HeapData> allHeapsData;
-    for (auto& heap : possibleHeap) {
+    for (auto& heap : enhamonicHeaps) {
+        // printHeap(heap);
         const std::vector<Heap>& heapInversions = computeAllHeapInversions(heap);
         const std::vector<Heap>& tertianHeaps = filterTertianHeapsOnly(heapInversions);
         for (const auto& heapInversion :  tertianHeaps) {
@@ -508,7 +509,7 @@ void Chord::stackInThirds(const bool enharmonyNotes)
         }
     }
 
-    std::cout << "===== PRINT ALL HEAPS =====" << std::endl;
+    // std::cout << "===== PRINT ALL HEAPS =====" << std::endl;
     idx = 0;
     for (const auto& heapData : allHeapsData) {
         Heap heap = std::get<0>(heapData);
@@ -522,78 +523,6 @@ void Chord::stackInThirds(const bool enharmonyNotes)
 
         idx++;
     }
-
-    // // ===== STEP 1: FOR EACH NOTE: GENERATE A SPECIFIC TEMP/TRY CHORD STACK (DIATONIC) ===== //
-    // std::vector<int> stackSum(chordSize, 0);
-    // std::vector<std::map<int, Note>> possibleStack(chordSize);
-
-    // // For each 'possible root' note
-    // for (size_t r = 0; r < chordSize; r++) {
-    //     // Alias to the 'possible root' note
-    //     const auto& possibleRoot = _stack[r];
-        
-    //     std::cout << "-----> Possible Root: " << possibleRoot.getPitch() << std::endl;
-
-    //     const std::string rootDiatonicPitchClass = possibleRoot.getDiatonicSoundingPitchClass();
-
-    //     // Error checking:
-    //     if (rootDiatonicPitchClass.empty()) { throw std::runtime_error("A note diatonic pitchClass is empty!"); }
-
-    //     // Select the chord stack using the possible root note
-    //     const char* diatonicStack = nullptr;
-    //     switch (hash(rootDiatonicPitchClass.c_str())) {
-    //         case hash("C"): diatonicStack = c_C_diatonicChordStack.data(); break;
-    //         case hash("D"): diatonicStack = c_D_diatonicChordStack.data(); break;
-    //         case hash("E"): diatonicStack = c_E_diatonicChordStack.data(); break;
-    //         case hash("F"): diatonicStack = c_F_diatonicChordStack.data(); break;
-    //         case hash("G"): diatonicStack = c_G_diatonicChordStack.data(); break;
-    //         case hash("A"): diatonicStack = c_A_diatonicChordStack.data(); break;
-    //         case hash("B"): diatonicStack = c_B_diatonicChordStack.data(); break;
-    //         default: throw std::runtime_error("Invalid diatonic pitchClass"); break;
-    //     }
-
-    //     // For each note in the chord
-    //     for (int n = 0; n < chordSize; n++) {
-    //         auto& note = _stack[n];
-    //         const std::string diatonicPitchClass = note.getDiatonicSoundingPitchClass();
-
-    //         std::cout << "n[" << n << "]: Note=" << note.getPitch() << std::endl; 
-
-    //         // Check if the 'possible root' and the current 'note' are diatonic different
-    //         if ((possibleRoot.getPitch() != note.getPitch()) && (rootDiatonicPitchClass == diatonicPitchClass)) {
-    //             // Change the 'current note' pitch to an enharmonic equivalent
-    //             std::cout << "Enharmonizando: " << note.getPitch() << std::endl;
-    //             note.toEnharmonicPitch();
-    //         }
-
-    //         // const char toFind = *diatonicPitchClass.c_str();
-    //         const char toFind = *note.getDiatonicSoundingPitchClass().c_str();
-
-    //         // Compute the distance between the possible root and this note
-    //         const int noteDistance = std::distance(&diatonicStack[0], std::find(&diatonicStack[0], &diatonicStack[6], toFind));
-
-    //         // Store the note 'n' inside the possible stack 'r'
-    //         possibleStack[r].insert({noteDistance, note});
-
-    //         // Compute the note weigth. MAY BE REMOVE IN THE FUTURE!!
-    //         const int noteWeigth = noteDistance;
-    //         stackSum[r] += noteWeigth;            
-    //     }
-    // }
-
-    // // Select the better computed chord stack
-    // const int betterStackIdx = std::min_element(stackSum.begin(), stackSum.end()) - stackSum.begin();
-
-    // // Just an alias to the final stack
-    // const auto& stack = possibleStack[betterStackIdx];
-
-    // std::cout << "===== possibleStack =====" << betterStackIdx << std::endl;
-    // for (const auto& ps : possibleStack) {
-    //     for (const auto& n : ps) {
-    //         std::cout << n.first << " | " << n.second.getPitch() << std::endl;
-    //     }
-    //     std::cout << "------" << std::endl;
-    // }
 
     // // ===== STEP 2: STORE STACKED NOTES IN ACENDENT ORDER ===== //
     // std::vector<Note> orderedStack;
@@ -804,8 +733,8 @@ std::vector<Heap> Chord::filterTertianHeapsOnly(const std::vector<Heap>& heaps) 
             const Note& nextNote = heap[i+1].note;
 
             Interval interval(currentNote, nextNote);
-
-            if (interval.getPitchStepInterval() != 3) {
+            const int pitchStepInterval = interval.getPitchStepInterval();
+            if ((pitchStepInterval != 3) && (pitchStepInterval != 5)) {
                 isATertianHeap = false;
                 // talvez adicionar um break? quebra ambos loops?
             }
@@ -1313,4 +1242,11 @@ Chord Chord::getStackedChord(const bool enharmonyNotes)
 void Chord::sortNotes()
 {
     std::sort(_note.begin(), _note.end());
+}
+
+void printHeap(const Heap& heap) {
+    for (const auto& noteData : heap) {
+        std::cout << "printHeap: " << noteData.note.getPitch() << " ";
+    }
+    std::cout << std::endl;
 }

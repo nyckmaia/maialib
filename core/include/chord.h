@@ -40,6 +40,8 @@ typedef std::vector<NoteData> Heap;
 // HeapData Type [Heap, stackMatchValue]
 typedef std::tuple<Heap, float> HeapData;
 
+void printHeap(const Heap& heap);
+
 class Chord
 {
 
