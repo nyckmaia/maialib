@@ -398,7 +398,7 @@ void Chord::stackInThirds(const bool enharmonyNotes)
     // j) Seta a flag interna isStackedInThirds e computeIntervals()
     ignore(enharmonyNotes);
 
-    // ===== STEP 0: INPUT VALIDATION===== //
+    // ===== STEP 0: INPUT VALIDATION ===== //
     // Error checking:
     if (_note.empty()) {
         std::cerr << "[WARN]: The chord is empty!" << std::endl;
@@ -411,6 +411,8 @@ void Chord::stackInThirds(const bool enharmonyNotes)
             return note.isNoteOff();
         }), _note.end());
 
+    // ===== STEP 1: GET THE BASS NOTE ===== //
+
     // Copy the orginal chord to a stack vector
     _stack.clear();
     _stack = _note;
@@ -421,7 +423,8 @@ void Chord::stackInThirds(const bool enharmonyNotes)
     // Get the bass note of the chord
     _bassNote = _stack[0];
 
-    // Remove same PitchClass => Get a 'piano reduction' chord version
+    // ===== STEP 3: FILTER UNIQUE PITCH CLASS NOTES ===== //
+    // Remove duplacated notes (pitchClass)
     _stack.erase(std::unique(_stack.begin(), _stack.end(),
                  [](const Note& a, const Note& b) {
         return a.getPitchClass() == b.getPitchClass();
@@ -437,62 +440,16 @@ void Chord::stackInThirds(const bool enharmonyNotes)
         return;
     }
 
-    // ===== STEP 1: COMPUTE ENHARMONIC POSSIBILITIES ===== //
-    std::vector<std::vector<NoteData>> enharCombinatoryMatrix(chordSize);
-    const int enharCombinatoryMatrixSize = enharCombinatoryMatrix.size();
-    const int numOfEnharmonics = 3;
-    for (int i = 0; i < enharCombinatoryMatrixSize; i++) {
-        std::vector<NoteData> aux(numOfEnharmonics);
+    // ===== STEP 4: COMPUTE ENHARMONIC UNIT GROUPS ===== //
+    std::vector<Heap> enharmonicUnitGroups = computeEnharmonicUnitsGroups();
 
-        Note originalNote = getStackedNotes()[i]; // must be a copy
-        aux[0] = NoteData(originalNote, false, 0);
-        aux[1] = NoteData(originalNote.getEnharmonicNote(false), true, 1);
-        aux[2] = NoteData(originalNote.getEnharmonicNote(true), true, 2);
+    // ===== STEP 5: COMPUTE ENHARMONIC HEAPS ===== //
+    std::vector<Heap> enharmonicHeaps = computeEnharmonicHeaps(enharmonicUnitGroups);
+    // std::cout << "enharmonicHeaps: " << enharmonicHeaps.size() << std::endl;
 
-        enharCombinatoryMatrix[i] = aux;
-    }
-
-    const int enharmonicHeapPossibilities = std::pow(chordSize, 3);
-    // ignore(enharmonicStackPossibilities);
-    std::cout << "enharmonicHeapPossibilities: " << enharmonicHeapPossibilities << std::endl;
-    // // PRINT
-    // for (const auto& row : enharCombinatoryMatrix) {
-    //     std::cout << "------" << std::endl;
-
-    //     for (const auto& note : row) {
-    //         std::cout << "Note: " << note.note.getPitch() << " | " << note.wasEnharmonized << " | " << note.enharmonicDiatonicDistance << std::endl;
-    //     }
-    // }
-
-    // ===== STEP 2: GENERATE ENHARMONIC HEAP VECTORS ===== //
-    std::vector<Heap> enhamonicHeaps(enharmonicHeapPossibilities);
-    int idx = 0;
-
-    for (int i = 0; i < numOfEnharmonics; i++) {
-        for (int j = 0; j < numOfEnharmonics; j++) {
-            for (int k = 0; k < numOfEnharmonics; k++) {               
-                enhamonicHeaps[idx++] = {{enharCombinatoryMatrix[0][i], enharCombinatoryMatrix[1][j], 
-                                            enharCombinatoryMatrix[2][k]}};
-            }
-        }
-    }
-    
-    // std::cout << "--> enhamonicHeaps" << std::endl;
-    // idx = 0;
-    // for (const auto& heap : enhamonicHeaps) {
-    //     std::cout << "enhamonicHeaps[" << idx++ << "] ";
-    //     for (const auto& noteData : heap) {
-    //         std::cout << noteData.note.getPitch() << " ";
-    //     }
-    //     std::cout << std::endl;
-    // }
-
-
-    // ===== STEP X: COMPUTE THE STACK IN THIRDS TEMPLATE MATCH ===== //
-    // std::cout << "===== COMPUTE THE STACK MATCHING VALUE =====" << std::endl;
+    // ===== STEP 6: COMPUTE THE STACK IN THIRDS TEMPLATE MATCH ===== //
     std::vector<HeapData> allHeapsData;
-    for (auto& heap : enhamonicHeaps) {
-        // printHeap(heap);
+    for (auto& heap : enharmonicHeaps) {
         const std::vector<Heap>& heapInversions = computeAllHeapInversions(heap);
         const std::vector<Heap>& tertianHeaps = filterTertianHeapsOnly(heapInversions);
         for (const auto& heapInversion :  tertianHeaps) {
@@ -510,7 +467,7 @@ void Chord::stackInThirds(const bool enharmonyNotes)
     }
 
     // std::cout << "===== PRINT ALL HEAPS =====" << std::endl;
-    idx = 0;
+    int idx = 0;
     for (const auto& heapData : allHeapsData) {
         Heap heap = std::get<0>(heapData);
         float heapCountPoints = std::get<1>(heapData);
@@ -705,6 +662,123 @@ void Chord::stackInThirds(const bool enharmonyNotes)
 
 //     computeIntervals();
 // }
+
+std::vector<Heap> Chord::computeEnharmonicUnitsGroups() const
+{
+    const int chordSize = _stack.size();
+    std::vector<Heap> enharUnitGroups(chordSize);
+    const int numUnitGroups = enharUnitGroups.size();
+
+    const int numOfEnharmonics = 3;
+
+    for (int i = 0; i < numUnitGroups; i++) {
+        Heap unitGroup(numOfEnharmonics);
+
+        Note originalNote = _stack[i]; // must be a copy
+        unitGroup[0] = NoteData(originalNote, false, 0);
+        unitGroup[1] = NoteData(originalNote.getEnharmonicNote(false), true, 1);
+        unitGroup[2] = NoteData(originalNote.getEnharmonicNote(true), true, 2);
+
+        enharUnitGroups[i] = unitGroup;
+    }
+
+    return enharUnitGroups;
+}
+
+std::vector<Heap> Chord::computeEnharmonicHeaps(const std::vector<Heap>& heaps) const
+{
+    const int chordSize = heaps.size();
+    const int numEnharmonicHeapVariants = std::pow(3, chordSize);
+
+    std::vector<Heap> enharmonicHeaps(numEnharmonicHeapVariants);
+    int idx = 0;
+    const int numOfEnharmonics = 3;
+
+    switch (chordSize) {
+        case 3:
+            for (int i1 = 0; i1 < numOfEnharmonics; i1++) {
+                for (int i2 = 0; i2 < numOfEnharmonics; i2++) {
+                    for (int i3 = 0; i3 < numOfEnharmonics; i3++) {            
+                        enharmonicHeaps[idx++] = {{heaps[0][i1], heaps[1][i2], heaps[2][i3]}};
+                    }
+                }
+            }
+            break;
+
+        case 4:
+            for (int i1 = 0; i1 < numOfEnharmonics; i1++) {
+                for (int i2 = 0; i2 < numOfEnharmonics; i2++) {
+                    for (int i3 = 0; i3 < numOfEnharmonics; i3++) {
+                        for (int i4 = 0; i4 < numOfEnharmonics; i4++) {
+                            enharmonicHeaps[idx++] = {{heaps[0][i1], heaps[1][i2], 
+                                                       heaps[2][i3], heaps[3][i4]}};
+                        }
+                    }
+                }
+            }
+            break;
+        
+        case 5:
+            for (int i1 = 0; i1 < numOfEnharmonics; i1++) {
+                for (int i2 = 0; i2 < numOfEnharmonics; i2++) {
+                    for (int i3 = 0; i3 < numOfEnharmonics; i3++) {
+                        for (int i4 = 0; i4 < numOfEnharmonics; i4++) {
+                            for (int i5 = 0; i5 < numOfEnharmonics; i5++) {
+                                enharmonicHeaps[idx++] = {{heaps[0][i1], heaps[1][i2], 
+                                                           heaps[2][i3], heaps[3][i4],
+                                                           heaps[4][i5]}};
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+        
+        case 6:
+            for (int i1 = 0; i1 < numOfEnharmonics; i1++) {
+                for (int i2 = 0; i2 < numOfEnharmonics; i2++) {
+                    for (int i3 = 0; i3 < numOfEnharmonics; i3++) {
+                        for (int i4 = 0; i4 < numOfEnharmonics; i4++) {
+                            for (int i5 = 0; i5 < numOfEnharmonics; i5++) {
+                                for (int i6 = 0; i6 < numOfEnharmonics; i6++) {
+                                    enharmonicHeaps[idx++] = {{heaps[0][i1], heaps[1][i2], 
+                                                               heaps[2][i3], heaps[3][i4],
+                                                               heaps[4][i5], heaps[5][i6]}};
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+        
+        case 7:
+            for (int i1 = 0; i1 < numOfEnharmonics; i1++) {
+                for (int i2 = 0; i2 < numOfEnharmonics; i2++) {
+                    for (int i3 = 0; i3 < numOfEnharmonics; i3++) {
+                        for (int i4 = 0; i4 < numOfEnharmonics; i4++) {
+                            for (int i5 = 0; i5 < numOfEnharmonics; i5++) {
+                                for (int i6 = 0; i6 < numOfEnharmonics; i6++) {
+                                    for (int i7 = 0; i7 < numOfEnharmonics; i7++) {
+                                        enharmonicHeaps[idx++] = {{heaps[0][i1], heaps[1][i2], 
+                                                                   heaps[2][i3], heaps[3][i4],
+                                                                   heaps[4][i5], heaps[5][i6],
+                                                                   heaps[6][i7]}};
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            break;
+    
+        default: throw std::runtime_error("Invalid chord size: " + std::to_string(chordSize)); break;
+    }
+    
+    return enharmonicHeaps;
+}
+
 
 std::vector<Heap> Chord::computeAllHeapInversions(Heap& heap) const
 {

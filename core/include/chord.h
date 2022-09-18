@@ -73,6 +73,8 @@ private:
     std::string nonEnharmonicName() const;
     void stackInThirds(const bool enharmonyNotes = false);
     HeapData stackInThirdsTemplateMatch(const Heap& heap) const;
+    std::vector<Heap> computeEnharmonicUnitsGroups() const;
+    std::vector<Heap> computeEnharmonicHeaps(const std::vector<Heap>& heaps) const;
     std::vector<Heap> computeAllHeapInversions(Heap& heap) const;
     std::vector<Heap> filterTertianHeapsOnly(const std::vector<Heap>& heaps) const;
 
