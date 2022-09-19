@@ -382,6 +382,7 @@ void Chord::printStack() const
 
 void Chord::stackInThirds(const bool enharmonyNotes)
 {
+    // REVER ESSA SEQUENCIA! MUDOU!
     // a) Calcular o numero de possibilidades enharmonicas = (tamanho do acorde)^3
     // b) Gerar uma strtutura contendo:
     //    1) Os 3 vetores contendo a versão original + 2 versões enarmonicas do acorde
@@ -452,7 +453,6 @@ void Chord::stackInThirds(const bool enharmonyNotes)
 
     // ===== STEP 5: COMPUTE ENHARMONIC HEAPS ===== //
     std::vector<Heap> enharmonicHeaps = computeEnharmonicHeaps(enharmonicUnitGroups);
-    // std::cout << "enharmonicHeaps: " << enharmonicHeaps.size() << std::endl;
 
     // ===== STEP 6: COMPUTE THE STACK IN THIRDS TEMPLATE MATCH ===== //
     for (auto& heap : enharmonicHeaps) {
@@ -475,20 +475,20 @@ void Chord::stackInThirds(const bool enharmonyNotes)
     // ===== STEP 7: SORT HEAPS BY STACK IN THIRDS MATCHING VALUE ===== //
     std::sort(_stackedHeaps.begin(), _stackedHeaps.end(), std::greater<>());
 
-    // std::cout << "===== PRINT ALL HEAPS =====" << std::endl;
-    int idx = 0;
-    for (const auto& heapData : _stackedHeaps) {
-        Heap heap = std::get<0>(heapData);
-        float heapCountPoints = std::get<1>(heapData);
+    // // std::cout << "===== PRINT ALL HEAPS =====" << std::endl;
+    // int idx = 0;
+    // for (const auto& heapData : _stackedHeaps) {
+    //     Heap heap = std::get<0>(heapData);
+    //     float heapCountPoints = std::get<1>(heapData);
 
-        std::cout << "Heap[" << idx << "] ";
-        for (const auto& el : heap) {
-            std::cout << el.note.getPitch() << " ";
-        }
-        std::cout << "| matchValue: " << heapCountPoints << std::endl;
+    //     std::cout << "Heap[" << idx << "] ";
+    //     for (const auto& el : heap) {
+    //         std::cout << el.note.getPitch() << " ";
+    //     }
+    //     std::cout << "| matchValue: " << heapCountPoints << std::endl;
 
-        idx++;
-    }
+    //     idx++;
+    // }
 
     // // ===== STEP 3: TRANSPOSE ALL NOTES TO OCTAVE 4 REFERENCE ===== //
     // // Create a temp note to be the 'octave 4' root reference
@@ -840,34 +840,28 @@ HeapData Chord::stackInThirdsTemplateMatch(const Heap& heap) const
     HeapData heapData;
     std::get<0>(heapData) = heap;
     float* heapCountPoints = &std::get<1>(heapData);
+    *heapCountPoints = 0.0f;
     const NoteData& rootNoteData = heap[0];
     const Note& rootNote = rootNoteData.note;
-    const int stackIntervals[] = {1, 3, 5, 7, 2, 4, 6};
     Interval interval(rootNote, rootNote); // temp interval object
     
     // Iterate over each heap interval (rootNote as base reference)
     for (int i = 0; i < heapSize; i++) {
         interval.setNotes(rootNote, heap[i].note);
-        // std::cout << "interval.getPitchStepInterval()[i] = " << interval.getPitchStepInterval() << std::endl;
         
-        if (interval.getPitchStepInterval() == stackIntervals[i]) {
-            float enharmonicNoteWeight = 0.0f;
-            switch (heap[i].enharmonicDiatonicDistance) {
-                case 0: enharmonicNoteWeight = 1.0f; break;
-                case 1: enharmonicNoteWeight = 0.8f; break;
-                case 2: enharmonicNoteWeight = 0.6f; break;
-                default: throw std::runtime_error("Invalid enharmonic diatonic distance"); break;
-            }
-            const float stackPositionWeight = std::pow(2, heapSize-i);
-            *heapCountPoints += stackPositionWeight * enharmonicNoteWeight;
+        float enharmonicNoteWeight = 0.0f;
+        switch (heap[i].enharmonicDiatonicDistance) {
+            case 0: enharmonicNoteWeight = 1.0f; break;
+            case 1: enharmonicNoteWeight = 0.8f; break;
+            case 2: enharmonicNoteWeight = 0.6f; break;
+            default: throw std::runtime_error("Invalid enharmonic diatonic distance"); break;
         }
-        // std::cout << "heapCountPoints[" << i << "] " << *heapCountPoints << std::endl;
-        // Exit condition
-        if (heapSize == (i+1)) { 
-            *heapCountPoints /= maxHeapPointsValue;
-            break;
-        }
+        const float stackPositionWeight = std::pow(2, heapSize-i);
+        *heapCountPoints += stackPositionWeight * enharmonicNoteWeight;        
     }
+
+    // Normalize heap Count Points
+    *heapCountPoints /= maxHeapPointsValue;
 
     return heapData;  
 }

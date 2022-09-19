@@ -54,7 +54,7 @@ std::pair<std::string, bool> Interval::analyse() const
     // Use 2 switchs to combine 'diatonicSteps' with 'numSemitones'
     switch (diatonicInterval) {
         // ----- UNISSON OR OCTAVE ----- //
-        case 0:
+        case 1:
             switch (numSemitones) {
                 case -120: return std::make_pair<std::string, bool>("-10 oct", true);
                 case -108: return std::make_pair<std::string, bool>("-9 oct", true);
@@ -81,7 +81,7 @@ std::pair<std::string, bool> Interval::analyse() const
             break;
 
         // ----- SECOND ----- //
-        case 1:
+        case 2:
             switch (numSemitones % 12) {
                 case -3: return std::make_pair<std::string, bool>("+++d2", false);
                 case -2: return std::make_pair<std::string, bool>("++d2", false);
@@ -97,7 +97,7 @@ std::pair<std::string, bool> Interval::analyse() const
             break;
 
         // ----- THRID ----- //
-        case 2:
+        case 3:
             switch (numSemitones % 12) {
                 case -1: return std::make_pair<std::string, bool>("+++d3", false);
                 case 0: return std::make_pair<std::string, bool>("++d3", false);
@@ -113,7 +113,7 @@ std::pair<std::string, bool> Interval::analyse() const
             break;
 
         // ----- FOURTH ----- //
-        case 3:
+        case 4:
             switch (numSemitones % 12) {
                 case 1: return std::make_pair<std::string, bool>("+++d4", false);
                 case 2: return std::make_pair<std::string, bool>("++d4", false);
@@ -129,7 +129,7 @@ std::pair<std::string, bool> Interval::analyse() const
             break;
 
         // ----- FIFTH ----- //
-        case 4:
+        case 5:
             switch (numSemitones % 12) {
                 case 3:  return std::make_pair<std::string, bool>("+++d5", false);
                 case 4:  return std::make_pair<std::string, bool>("++d5", false);
@@ -145,7 +145,7 @@ std::pair<std::string, bool> Interval::analyse() const
             break;
 
         // ----- SIXTH ----- //
-        case 5:
+        case 6:
             switch (numSemitones % 12) {
                 case 4:  return std::make_pair<std::string, bool>("+++d6", false);
                 case 5:  return std::make_pair<std::string, bool>("++d6", false);
@@ -162,7 +162,7 @@ std::pair<std::string, bool> Interval::analyse() const
             break;
 
         // ----- SEVENTH ----- //
-        case 6:
+        case 7:
             switch (numSemitones % 12) {
                 case 6:  return std::make_pair<std::string, bool>("+++d7", false);
                 case 7:  return std::make_pair<std::string, bool>("++d7", false);
