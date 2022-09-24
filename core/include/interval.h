@@ -15,7 +15,7 @@ private:
     std::pair<std::string, bool> analyse() const;
 
 public:
-    Interval(const std::string& pitch_A, const std::string& pitch_B);
+    Interval(const std::string& pitch_A = "C4", const std::string& pitch_B = "C4");
     Interval(const Note& note_A, const Note& note_B);
 
     void setNotes(const std::string& pitch_A, const std::string& pitch_B);
@@ -32,4 +32,19 @@ public:
     bool isAscendant() const;
     bool isDescendant() const;
     bool isTonal() const;
+
+    bool isMinorThird() const;
+    bool isMajorThird() const;
+    bool isDiminishedFifth() const;
+    bool isPerfectFifth() const;
+    bool isAugmentedFifth() const;
+    bool isDiminishedSeventh() const;
+    bool isMinorSeventh() const;
+    bool isMajorSeventh() const;
+    bool isMinorNinth() const;
+    bool isMajorNinth() const;
+    bool isPerfectEleventh() const;
+    bool isSharpEleventh() const;
+    bool isMinorThirdteenth() const;
+    bool isMajorThirdteenth() const;
 };

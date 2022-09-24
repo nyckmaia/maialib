@@ -13,6 +13,7 @@
 #include "pugixml.hpp"
 #include "nlohmann/json.hpp"
 
+#include "interval.h"
 #include "constants.h"
 #include "utils.h"
 
@@ -38,6 +39,7 @@ public:
     static int pitch2midiNote(const std::string& pitch);
     static const std::string midiNote2pitch(const int midiNote, const std::string& accType = {});
     static const std::vector<std::string> midiNote2pitches(const int midiNote);
+    static std::vector<Interval> notes2Intervals(const std::vector<Note>& notes, const bool firstNoteAsReference = false);
 
     static int semitonesBetweenPitches(const std::string& pitch_A, const std::string& pitch_B);
 

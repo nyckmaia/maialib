@@ -23,8 +23,8 @@ struct NoteData
     {
     }
 
-    NoteData(const Note& _note, const bool _wasEnhar, const int _enharDiat) :
-        note(_note),
+    NoteData(const Note& _originalNotes, const bool _wasEnhar, const int _enharDiat) :
+        note(_originalNotes),
         wasEnharmonized(_wasEnhar),
         enharmonicDiatonicDistance(_enharDiat)
     {
@@ -46,30 +46,15 @@ void printHeap(const Heap& heap);
 
 class Chord
 {
-
 private:
-    std::vector<Note> _note;
-    std::vector<Note> _stack;
-    std::vector<HeapData> _stackedHeaps;
+    std::vector<Note> _originalNotes; // original chord notes. No enharmony applied
+    std::vector<Note> _openStack; // enharmonic notes stacked in thirds in open position
+    std::vector<Note> _closeStack; // enharmonic notes stacked in thirds in closed position
+    std::vector<HeapData> _stackedHeaps; // all enharmonic stacks in open position
+    std::vector<Interval> _closeStackintervals;
 
     Note _bassNote;
     bool _isStackedInThirds;
-    std::vector<int> _midiInterval;
-
-    bool _haveMinorThird;
-    bool _haveMajorThird;
-    bool _haveDiminishedFifth;
-    bool _havePerfectFifth;
-    bool _haveAugmentedFifth;
-    bool _haveDiminishedSeventh;
-    bool _haveMinorSeventh;
-    bool _haveMajorSeventh;
-    bool _haveMinorNinth;
-    bool _haveMajorNinth;
-    bool _havePerfectEleventh;
-    bool _haveSharpEleventh;
-    bool _haveMinorThirdteenth;
-    bool _haveMajorThirdteenth;
 
     void computeIntervals();
     std::string enharmonicName();
@@ -80,6 +65,7 @@ private:
     std::vector<Heap> computeEnharmonicHeaps(const std::vector<Heap>& heaps) const;
     std::vector<Heap> computeAllHeapInversions(Heap& heap) const;
     std::vector<Heap> filterTertianHeapsOnly(const std::vector<Heap>& heaps) const;
+    void computeCloseStack(const std::vector<Note>& openStack);
 
 public:
 
@@ -137,28 +123,30 @@ public:
 
     bool isTonal(std::function<bool(const Chord& chord)> model = nullptr);
 
-    std::vector<int> getMIDIIntervals();
-    std::vector<Interval> getIntervals(const bool fromRoot = false) const;
-    std::vector<Note> getStackedNotes() const;
-    std::vector<Interval> getStackIntervals(const bool fromRoot = false);
-
-    size_t size() const;
-    size_t stackSize() const;
+    std::vector<int> getMIDIIntervals(const bool firstNoteAsReference = false) const;
+    std::vector<Interval> getIntervals(const bool firstNoteAsReference = false) const;
+    std::vector<Interval> getOpenStackIntervals(const bool firstNoteAsReference = false);
+    std::vector<Interval> getCloseStackIntervals(const bool firstNoteAsReference = false);
+    std::vector<Note> getOpenStackNotes() const;
+    
+    int size() const;
+    int stackSize() const;
 
     void print() const;
     void printStack() const;
     void info();
 
-    Chord getStackedChord(const bool enharmonyNotes = false);
+    Chord getOpenStackChord(const bool enharmonyNotes = false);
+    Chord getCloseStackChord(const bool enharmonyNotes = false);
 
     void sortNotes();
 
     const Note& operator[](size_t index) const {
-        return _note.at(index);
+        return _originalNotes.at(index);
     }
 
     Note& operator[](size_t index) {
-        return _note.at(index);
+        return _originalNotes.at(index);
     }
 
     bool operator == (const Chord& otherChord) const {
@@ -168,7 +156,7 @@ public:
         if (sizeA != sizeB) { return false; }
 
         for (size_t i = 0; i < sizeA; i++) {
-            if (_note[i] != otherChord.getNote(i)) {
+            if (_originalNotes[i] != otherChord.getNote(i)) {
                 return false;
             }
         }
@@ -183,7 +171,7 @@ public:
         if (sizeA != sizeB) { return true; }
 
         for (size_t i = 0; i < sizeA; i++) {
-            if (_note[i] != otherChord.getNote(i)) {
+            if (_originalNotes[i] != otherChord.getNote(i)) {
                 return true;
             }
         }
@@ -207,7 +195,7 @@ public:
     }
 
     Note operator >> (Note& note) {
-        note = _note[_note.size()-1];
+        note = _originalNotes[_originalNotes.size()-1];
 
         removeTopNote();
 

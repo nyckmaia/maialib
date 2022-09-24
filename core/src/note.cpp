@@ -54,6 +54,10 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
     const std::string pitchClass = (isFullPitch) ? pitch.substr(0, pitchSize - 1) : pitch;
     const int octave = (isFullPitch) ? (int)pitch.back() - 48 : 4;
 
+    if (octave > 9) {
+        throw std::runtime_error("Invalid octave value");
+    }
+
     const size_t pitchClassSize = pitchClass.size();
 
     // Store the alter symbol: # / b / x / bb
@@ -85,7 +89,9 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
 Note::Note(const int midiNumber, const std::string& accType, const Duration duration, bool isNoteOn, bool inChord, const int transposeDiatonic, const int transposeChromatic, const int divisionsPerQuarterNote) :
     Note(Helper::midiNote2pitch(midiNumber, accType), duration, isNoteOn, inChord, transposeDiatonic, transposeChromatic, divisionsPerQuarterNote)
 {
-   
+    if (midiNumber > 127) {
+        throw std::runtime_error("Invalid MIDI number");
+    }
 }
 
 Note::~Note()

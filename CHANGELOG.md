@@ -3,6 +3,9 @@
 All notable changes to this project will be documented in this file.
 
 ## [v0.0.16] - 2022-MM-AA
+### API Changes
+- `Chord::getStackedChord()` -> `Chord::getOpenStackChord()`
+
 ### New Features
 - `Note Class`:
     - `.getFrequency()`
@@ -11,12 +14,34 @@ All notable changes to this project will be documented in this file.
     - `.getEnharmonicPitches()`
     - `.getEnharmonicNote()`
     - `.getEnharmonicNotes()`
-- `Interval::getValue()`
-- `Interval::setNotes()`
-- `Interval::getPitchStepInterval()`
-- `Helper::midiNote2octave()`
-- `Chord::getStackedNotes()`
-- `Chord::getStackedHeaps()`
+- `Interval Class`:
+    - `.getValue()`
+    - `.setNotes()`
+    - `.getPitchStepInterval()`
+    - `.isMinorThird()`
+    - `.isMajorThird()`
+    - `.isDiminishedFifth()`
+    - `.isPerfectFifth()`
+    - `.isAugmentedFifth()`
+    - `.isDiminishedSeventh()`
+    - `.isMinorSeventh()`
+    - `.isMajorSeventh()`
+    - `.isMinorNinth()`
+    - `.isMajorNinth()`
+    - `.isPerfectEleventh()`
+    - `.isSharpEleventh()`
+    - `.isMinorThirdteenth()`
+    - `.isMajorThirdteenth()`
+- `Helper Class`:
+    - `.midiNote2octave()`
+    - `.notes2intervals()`
+- `Chord Class`:
+    - `.getOpenStackChord()`
+    - `.getCloseStackChord()`
+    - `.getOpenStackedNotes()`
+    - `.getStackedHeaps()`
+    - `.getOpenStackIntervals()`
+    - `.getCloseStackIntervals()`
 - New Unit Tests:
     - `Note::getEnharmonicPitch`
     - `Note::getEnharmonicPitches()`
@@ -25,8 +50,10 @@ All notable changes to this project will be documented in this file.
 ### Improved
 - `Chord::stackInThirds()` now can use enharmony to compute the stacked chord
 - `Interval::getDiatonicSteps()` added optional argument `useSingleOctave`
+- `Chord::getMIDIIntervals()` added optional argument `firstNoteAsReference`
 
 ### Fixed
+- `Note::Note()` Prevent invalid user type octaves and out of range MIDI numbers
 
 -------------------------
 

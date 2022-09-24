@@ -59,11 +59,9 @@ void ChordClass(py::module &m) {
     cls.def("getStackedHeaps", [](Chord& chord, const bool enharmonyNotes)
         {
             const std::vector<HeapData>& heapsData = chord.getStackedHeaps(enharmonyNotes);
-            // using enharDist = std::pair<int, int>; // [noteIdx, diatonicDistance]
-            // dfRow = [notePitchVec, numEnharNotes, enharDistVec, numNonTonalIntervals, heapIntervals, matchValue]
-            // dfRow = [notePitchVec, numEnharNotes, numNonTonalIntervals, heapIntervals, matchValue]
-            using dfRow = std::tuple<std::vector<std::string>, int, int, std::vector<std::string>, float>;
-            // using dfRow = std::tuple<std::vector<std::string>, int, std::vector<enharDist>, int, std::vector<std::string>, float>;
+            
+            using enharDist = std::pair<std::string, int>; // [notePitch, diatonicDistance]
+            using dfRow = std::tuple<std::vector<std::string>, int, std::vector<enharDist>, int, std::vector<std::string>, float>;
             std::vector<dfRow> output(heapsData.size());
 
             int idx = 0;
@@ -73,7 +71,7 @@ void ChordClass(py::module &m) {
 
                 const int heapSize = heap.size();
                 std::vector<std::string> pitches(heapSize);
-                // std::vector<enharDist> notesEnharDist(heapSize);
+                std::vector<enharDist> notesEnharDist(heapSize);
 
                 // Compute heap num of non tonal intervals
                 const int numIntervals = heapSize-1;
@@ -92,19 +90,19 @@ void ChordClass(py::module &m) {
                 int noteIdx = 0;
                 int numEnhamonicNotes = 0;
                 for (const auto& noteData : heap) {
-                    pitches[noteIdx] = noteData.note.getPitch();
+                    const std::string& notePitch = noteData.note.getPitch();
+                    pitches[noteIdx] = notePitch;
                     if (noteData.wasEnharmonized) {
                         numEnhamonicNotes++;
                     }
 
-                    // notesEnharDist[noteIdx] = std::make_pair(noteIdx, noteData.enharmonicDiatonicDistance);
+                    notesEnharDist[noteIdx] = std::make_pair(notePitch, noteData.enharmonicDiatonicDistance);
 
                     noteIdx++;
                 }
 
                 // Store data in the row
-                output[idx++] = std::make_tuple(pitches, numEnhamonicNotes, numNonTonalIntervals, heapIntervals, value);
-                // output[idx++] = std::make_tuple(pitches, numEnhamonicNotes, notesEnharDist, numNonTonalIntervals, heapIntervals, value);
+                output[idx++] = std::make_tuple(pitches, numEnhamonicNotes, notesEnharDist, numNonTonalIntervals, heapIntervals, value);
             }
 
             // Import Pandas module
@@ -114,8 +112,7 @@ void ChordClass(py::module &m) {
             py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
 
             // Set DataFrame columns name
-            std::vector<std::string> columns = {"Heap Notes", "numEnharNotes", "numNonTonalIntervals", "heapIntervals", "Match Value"};            
-            // std::vector<std::string> columns = {"Heap Notes", "numEnharNotes", "'Note Id' X 'Diatonic Distance'", "numNonTonalIntervals", "heapIntervals", "Match Value"};
+            std::vector<std::string> columns = {"heapPitches", "numEnharNotes", "diatonicDistance", "numNonTonalIntervals", "heapIntervals", "matchValue"};
             
             // Fill DataFrame with records and columns
             py::object df = FromRecords(output, "columns"_a = columns);
@@ -165,11 +162,14 @@ void ChordClass(py::module &m) {
     cls.def("isTonal", &Chord::isTonal,
         py::arg("model") = nullptr);
 
-    cls.def("getMIDIIntervals", &Chord::getMIDIIntervals);
+    cls.def("getMIDIIntervals", &Chord::getMIDIIntervals,
+        py::arg("firstNoteAsReference") = false);
     cls.def("getIntervals", &Chord::getIntervals,
-        py::arg("fromRoot") = false);
-    cls.def("getStackIntervals", &Chord::getStackIntervals,
-        py::arg("fromRoot") = false);
+        py::arg("firstNoteAsReference") = false);
+    cls.def("getOpenStackIntervals", &Chord::getOpenStackIntervals,
+        py::arg("firstNoteAsReference") = false);
+    cls.def("getCloseStackIntervals", &Chord::getCloseStackIntervals,
+        py::arg("firstNoteAsReference") = false);
     cls.def("getQuarterDuration", &Chord::getQuarterDuration);
     
     cls.def("size", &Chord::size);
@@ -179,11 +179,14 @@ void ChordClass(py::module &m) {
     cls.def("print", &Chord::print, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("printStack", &Chord::printStack, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def("getStackedChord", &Chord::getStackedChord,
+    cls.def("getOpenStackChord", &Chord::getOpenStackChord,
+        py::arg("enharmonyNotes") = false,
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("getCloseStackChord", &Chord::getCloseStackChord,
         py::arg("enharmonyNotes") = false,
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def("getStackedNotes", &Chord::getStackedNotes);
+    cls.def("getOpenStackNotes", &Chord::getOpenStackNotes);
         
 
     cls.def("sortNotes", &Chord::sortNotes);

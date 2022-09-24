@@ -2,41 +2,13 @@
 #include "helper.h"
 
 Chord::Chord() :
-    _isStackedInThirds(false),
-    _haveMinorThird(false),
-    _haveMajorThird(false),
-    _haveDiminishedFifth(false),
-    _havePerfectFifth(false),
-    _haveAugmentedFifth(false),
-    _haveDiminishedSeventh(false),
-    _haveMinorSeventh(false),
-    _haveMajorSeventh(false),
-    _haveMinorNinth(false),
-    _haveMajorNinth(false),
-    _havePerfectEleventh(false),
-    _haveSharpEleventh(false),
-    _haveMinorThirdteenth(false),
-    _haveMajorThirdteenth(false)
+    _isStackedInThirds(false)
 {
 
 }
 
 Chord::Chord(const std::vector<Note>& notes) :
-    _isStackedInThirds(false),
-    _haveMinorThird(false),
-    _haveMajorThird(false),
-    _haveDiminishedFifth(false),
-    _havePerfectFifth(false),
-    _haveAugmentedFifth(false),
-    _haveDiminishedSeventh(false),
-    _haveMinorSeventh(false),
-    _haveMajorSeventh(false),
-    _haveMinorNinth(false),
-    _haveMajorNinth(false),
-    _havePerfectEleventh(false),
-    _haveSharpEleventh(false),
-    _haveMinorThirdteenth(false),
-    _haveMajorThirdteenth(false)
+    _isStackedInThirds(false)
 {
     for (const auto& n : notes) {
         addNote(n);
@@ -44,21 +16,7 @@ Chord::Chord(const std::vector<Note>& notes) :
 }
 
 Chord::Chord(const std::vector<std::string>& pitches) :
-    _isStackedInThirds(false),
-    _haveMinorThird(false),
-    _haveMajorThird(false),
-    _haveDiminishedFifth(false),
-    _havePerfectFifth(false),
-    _haveAugmentedFifth(false),
-    _haveDiminishedSeventh(false),
-    _haveMinorSeventh(false),
-    _haveMajorSeventh(false),
-    _haveMinorNinth(false),
-    _haveMajorNinth(false),
-    _havePerfectEleventh(false),
-    _haveSharpEleventh(false),
-    _haveMinorThirdteenth(false),
-    _haveMajorThirdteenth(false)
+    _isStackedInThirds(false)
 {
     for (const auto& p : pitches) {
         addNote(Note(p));
@@ -72,8 +30,8 @@ Chord::~Chord()
 
 void Chord::clear()
 {
-    _note.clear();
-    _stack.clear();
+    _originalNotes.clear();
+    _openStack.clear();
 }
 
 void Chord::info()
@@ -82,36 +40,34 @@ void Chord::info()
     std::cout << "Name: " << getName() << std::endl;
     std::cout << "Size:" << size() << std::endl;
 
-
-    const size_t chordSize = size();
+    const int chordSize = size();
     std::string noteNames = "[";
 
-    for (size_t i = 0; i < chordSize-1; i++) {
-        noteNames.append(_note[i].getPitch() + ", ");
+    for (int i = 0; i < chordSize-1; i++) {
+        noteNames.append(_originalNotes[i].getPitch() + ", ");
     }
 
     // Add the last note without the semicomma in the end
-    noteNames.append(_note[chordSize-1].getPitch());
+    noteNames.append(_originalNotes[chordSize-1].getPitch());
 
     noteNames.append("]");
 
     std::cout << noteNames << std::endl;
 
     // ---------------- //
-    const size_t chordStackSize = stackSize();
+    const int chordStackSize = stackSize();
 
     std::cout << "=====> CHORD STACK <=====" << std::endl;
-    std::cout << "Stack Size:" << chordStackSize << std::endl;
-
+    std::cout << "Open Stack Size:" << chordStackSize << std::endl;
 
     std::string stackNames = "[";
 
-    for (size_t i = 0; i < chordStackSize-1; i++) {
-        stackNames.append(_stack[i].getPitch() + ", ");
+    for (int i = 0; i < chordStackSize-1; i++) {
+        stackNames.append(_openStack[i].getPitch() + ", ");
     }
 
     // Add the last note without the semicomma in the end
-    stackNames.append(_stack[chordStackSize-1].getPitch());
+    stackNames.append(_openStack[chordStackSize-1].getPitch());
 
     stackNames.append("]");
 
@@ -122,19 +78,19 @@ void Chord::info()
 void Chord::addNote(const Note& note)
 {
     // Add this note in the both chord versions
-    _note.push_back(note);
-    _stack.push_back(note);
+    _originalNotes.push_back(note);
+    _openStack.push_back(note);
 
     if (size() == 1) {
         // The first note MUST be setted as inChord false
-        _note[0].setIsInChord(false);
-        _stack[0].setIsInChord(false);
+        _originalNotes[0].setIsInChord(false);
+        _openStack[0].setIsInChord(false);
     } else {
-        _note.back().setIsInChord(true);
-        _stack.back().setIsInChord(true);
+        _originalNotes.back().setIsInChord(true);
+        _openStack.back().setIsInChord(true);
 
-        // const std::string& noteType = _note.begin()->getType();
-        // _note.back().setType(noteType);
+        // const std::string& noteType = _originalNotes.begin()->getType();
+        // _originalNotes.back().setType(noteType);
         // _stack.back().setType(noteType);
     }
 
@@ -149,7 +105,7 @@ void Chord::addNote(const std::string& pitch)
 
 void Chord::removeTopNote()
 {
-    _note.pop_back();
+    _originalNotes.pop_back();
 
     // Reset the chord stacked flag
     _isStackedInThirds = false;
@@ -158,9 +114,9 @@ void Chord::removeTopNote()
 void Chord::insertNote(Note& note, int noteIndex)
 {
     note.setIsInChord(true);
-    _note.insert(_note.begin() + noteIndex, note);
+    _originalNotes.insert(_originalNotes.begin() + noteIndex, note);
 
-    _stack.push_back(note);
+    _openStack.push_back(note);
 
     // Reset the chord stacked flag
      _isStackedInThirds = false;
@@ -168,7 +124,7 @@ void Chord::insertNote(Note& note, int noteIndex)
 
 void Chord::removeNote(int noteIndex)
 {
-    _note.erase(_note.begin() + noteIndex);
+    _originalNotes.erase(_originalNotes.begin() + noteIndex);
 
     // Reset the chord stacked flag
      _isStackedInThirds = false;
@@ -176,22 +132,22 @@ void Chord::removeNote(int noteIndex)
 
 void Chord::setDurationTicks(const int durationTicks)
 {
-    const int chordSize = _note.size();
+    const int chordSize = _originalNotes.size();
 
     for (int i = 0; i < chordSize; i++) {
-        _note[i].setDurationTicks(durationTicks);
-        _stack[i].setDurationTicks(durationTicks);
+        _originalNotes[i].setDurationTicks(durationTicks);
+        _openStack[i].setDurationTicks(durationTicks);
     }
 }
 
 void Chord::inversion(int inversionNumber)
 {
     for (int i = 0; i < inversionNumber; i++) {
-        _note[0].transpose(12);  // isto apenas altera a nota uma oitava acima
+        _originalNotes[0].transpose(12);  // isto apenas altera a nota uma oitava acima
 
-        const Note& x = _note[0];  // pega a nota que foi alterada acima
-        _note.push_back(x);
-        _note.erase(_note.begin());
+        const Note& x = _originalNotes[0];  // pega a nota que foi alterada acima
+        _originalNotes.push_back(x);
+        _originalNotes.erase(_originalNotes.begin());
     }
 }
 
@@ -204,8 +160,9 @@ void Chord::transpose(const int semitonesNumber)
     float alterValue = 0.0f;
 
     // Transpose the original chord
-    for (size_t i = 0; i < _note.size(); i++) {
-        const std::string pitch = _note[i].getWrittenPitch();
+    const int chordSize = _originalNotes.size();
+    for (int i = 0; i < chordSize; i++) {
+        const std::string pitch = _originalNotes[i].getWrittenPitch();
 
         int midinumber = Helper::pitch2midiNote(pitch) + semitonesNumber;
 
@@ -213,7 +170,7 @@ void Chord::transpose(const int semitonesNumber)
 
         const std::string newPitch = Helper::midiNote2pitch(midinumber, alterSymbol);
 
-        _note[i].setPitch(newPitch);
+        _originalNotes[i].setPitch(newPitch);
     }
 
     transposeStackOnly(semitonesNumber);
@@ -228,8 +185,9 @@ void Chord::transposeStackOnly(const int semitonesNumber)
     float alterValue = 0.0f;
 
     // Transpose the stack version
-    for (size_t i = 0; i < _stack.size(); i++) {
-        const std::string pitch = _stack[i].getWrittenPitch();
+    const int openStackSize = _openStack.size();
+    for (int i = 0; i < openStackSize; i++) {
+        const std::string pitch = _openStack[i].getWrittenPitch();
 
         int midinumber = Helper::pitch2midiNote(pitch) + semitonesNumber;
 
@@ -237,14 +195,14 @@ void Chord::transposeStackOnly(const int semitonesNumber)
 
         const std::string newPitch = Helper::midiNote2pitch(midinumber, alterSymbol);
 
-        _stack[i].setPitch(newPitch);
+        _openStack[i].setPitch(newPitch);
     }
 }
 
 void Chord::removeDuplicateNotes()
 {
     sortNotes();
-    _note.erase(std::unique(_note.begin(), _note.end() ), _note.end());
+    _originalNotes.erase(std::unique(_originalNotes.begin(), _originalNotes.end() ), _originalNotes.end());
 }
 
 std::vector<HeapData> Chord::getStackedHeaps(const bool enharmonyNotes)
@@ -302,7 +260,7 @@ std::string Chord::getDuration() const
     };
 
     int minDuration = Helper::noteType2ticks(MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT, 1000000);
-    for (const auto& note : _note) {
+    for (const auto& note : _originalNotes) {
         const auto noteType = note.getType();
 
         const int durationMap = map.at(noteType);
@@ -331,19 +289,19 @@ float Chord::getQuarterDuration() const
     return static_cast<float>(ticks) / 256.0f;
 }
 
-size_t Chord::size() const
+int Chord::size() const
 {
-    return _note.size();
+    return static_cast<int>(_originalNotes.size());
 }
 
 int Chord::getDurationTicks() const
 {
     // Error check
-    if (_note.empty()) { return 0; }
+    if (_originalNotes.empty()) { return 0; }
 
     // For each internal note, get the minimum duration ticks value
-    int minValue = _note[0].getDurationTicks();
-    for (const auto& note : _note) {
+    int minValue = _originalNotes[0].getDurationTicks();
+    for (const auto& note : _originalNotes) {
         if (note.getDurationTicks() < minValue) {
             minValue = note.getDurationTicks();
         }
@@ -354,29 +312,29 @@ int Chord::getDurationTicks() const
 
 Note& Chord::getNote(int noteIndex)
 {
-   return _note[noteIndex];
+   return _originalNotes[noteIndex];
 }
 
 const Note& Chord::getNote(const int noteIndex) const
 {
-   return _note[noteIndex];
+   return _originalNotes[noteIndex];
 }
 
 void Chord::print() const
 {
-    const int chordSize = _note.size();
+    const int chordSize = _originalNotes.size();
 
     for (int i = 0; i < chordSize; i++) {
-        std::cout << "note[" << i << "] = " << _note[i].getPitch() << std::endl;
+        std::cout << "note[" << i << "] = " << _originalNotes[i].getPitch() << std::endl;
     }
 }
 
 void Chord::printStack() const
 {
-    const int stackSize = _stack.size();
+    const int stackSize = _openStack.size();
 
     for (int i = 0; i < stackSize; i++) {
-        std::cout << "stack[" << i << "] = " << _stack[i].getPitch() << std::endl;
+        std::cout << "openStack[" << i << "] = " << _openStack[i].getPitch() << std::endl;
     }
 }
 
@@ -408,39 +366,38 @@ void Chord::stackInThirds(const bool enharmonyNotes)
 
     // ===== STEP 0: INPUT VALIDATION ===== //
     // Error checking:
-    if (_note.empty()) {
+    if (_originalNotes.empty()) {
         std::cerr << "[WARN]: The chord is empty!" << std::endl;
         return;
     }
 
     // Remove rests
-    _note.erase(
-        std::remove_if(_note.begin(), _note.end(), [&](const Note& note) {
+    _originalNotes.erase(
+        std::remove_if(_originalNotes.begin(), _originalNotes.end(), [&](const Note& note) {
             return note.isNoteOff();
-        }), _note.end());
+        }), _originalNotes.end());
 
-    // ===== STEP 1: GET THE BASS NOTE ===== //
-
+    // ===== STEP 1: COMPUTE THE OPEN STACK ===== //
     // Copy the orginal chord to a stack vector
-    _stack.clear();
-    _stack = _note;
+    _openStack.clear();
+    _openStack = _originalNotes;
 
+    // ===== STEP 1.1: GET THE BASS NOTE ===== //
     // Sort chord notes using the MIDI note value
-    std::sort(_stack.begin(), _stack.end());
+    std::sort(_openStack.begin(), _openStack.end());
 
     // Get the bass note of the chord
-    _bassNote = _stack[0];
+    _bassNote = _openStack[0];
 
-    // ===== STEP 3: FILTER UNIQUE PITCH CLASS NOTES ===== //
+    // ===== STEP 1.2: FILTER UNIQUE PITCH CLASS NOTES ===== //
     // Remove duplacated notes (pitchClass)
-    _stack.erase(std::unique(_stack.begin(), _stack.end(),
+    _openStack.erase(std::unique(_openStack.begin(), _openStack.end(),
                  [](const Note& a, const Note& b) {
         return a.getPitchClass() == b.getPitchClass();
-    }), _stack.end());
+    }), _openStack.end());
 
-    // Update the 'chordSize' variable
-    const int chordSize = _stack.size();
-    // std::cout << "chordSize: " << chordSize << std::endl;
+    // Define the current 'chordSize'
+    const int chordSize = _openStack.size();
 
     // Error checking:
     if (chordSize < 3) {
@@ -448,13 +405,13 @@ void Chord::stackInThirds(const bool enharmonyNotes)
         return;
     }
 
-    // ===== STEP 4: COMPUTE ENHARMONIC UNIT GROUPS ===== //
+    // ===== STEP 2: COMPUTE ENHARMONIC UNIT GROUPS ===== //
     std::vector<Heap> enharmonicUnitGroups = computeEnharmonicUnitsGroups();
 
-    // ===== STEP 5: COMPUTE ENHARMONIC HEAPS ===== //
+    // ===== STEP 3: COMPUTE ENHARMONIC HEAPS ===== //
     std::vector<Heap> enharmonicHeaps = computeEnharmonicHeaps(enharmonicUnitGroups);
 
-    // ===== STEP 6: COMPUTE THE STACK IN THIRDS TEMPLATE MATCH ===== //
+    // ===== STEP 4: COMPUTE THE STACK IN THIRDS TEMPLATE MATCH ===== //
     for (auto& heap : enharmonicHeaps) {
         const std::vector<Heap>& heapInversions = computeAllHeapInversions(heap);
         const std::vector<Heap>& tertianHeaps = filterTertianHeapsOnly(heapInversions);
@@ -472,197 +429,29 @@ void Chord::stackInThirds(const bool enharmonyNotes)
         }
     }
 
-    // ===== STEP 7: SORT HEAPS BY STACK IN THIRDS MATCHING VALUE ===== //
+    // ===== STEP 5: SORT HEAPS BY STACK IN THIRDS MATCHING VALUE ===== //
     std::sort(_stackedHeaps.begin(), _stackedHeaps.end(), std::greater<>());
 
-    // // std::cout << "===== PRINT ALL HEAPS =====" << std::endl;
-    // int idx = 0;
-    // for (const auto& heapData : _stackedHeaps) {
-    //     Heap heap = std::get<0>(heapData);
-    //     float heapCountPoints = std::get<1>(heapData);
+    // ===== STEP 6: COMPUTE THE CLOSE STACK VERSION ===== //
+    const auto& bestStackedHeap = _stackedHeaps[0];
+    const auto& heap = std::get<0>(bestStackedHeap);
+    std::vector<Note> bestStackedHeapNotes(chordSize);
+    for (int i = 0; i < chordSize; i++) {
+        bestStackedHeapNotes[i] = heap[i].note;
+    }
 
-    //     std::cout << "Heap[" << idx << "] ";
-    //     for (const auto& el : heap) {
-    //         std::cout << el.note.getPitch() << " ";
-    //     }
-    //     std::cout << "| matchValue: " << heapCountPoints << std::endl;
+    computeCloseStack(bestStackedHeapNotes);
 
-    //     idx++;
-    // }
-
-    // // ===== STEP 3: TRANSPOSE ALL NOTES TO OCTAVE 4 REFERENCE ===== //
-    // // Create a temp note to be the 'octave 4' root reference
-    // Note rootOct4 = stack.at(0);
-    // rootOct4.setOctave(4);
-
-    // // Compute the distance between this new root and the current root
-    // const int rootOct4Distance = rootOct4.getMIDINumber() - stack.at(0).getMIDINumber();
-
-    // // Move the entire chord to the 'octave 4' root reference
-    // transposeStackOnly(rootOct4Distance);
-
-    // ===== STEP 4: SET INTERNAL FLAG AND COMPUTE INTERVALS ===== //
+    // ===== STEP 7: SET INTERNAL FLAG AND COMPUTE INTERVALS ===== //
     // Set a internal control flag
     _isStackedInThirds = true;
 
-    // computeIntervals();
+    _closeStackintervals = Helper::notes2Intervals(_closeStack, true);
 }
-
-// void Chord::stackInThirds(const bool enharmonyNotes)
-// {
-//     ignore(enharmonyNotes);
-
-//     // ===== STEP 0: INPUT VALIDATION===== //
-//     // Error checking:
-//     if (_note.empty()) {
-//         std::cerr << "[ERROR]: The chord is empty!" << std::endl;
-//         return;
-//     }
-
-//     // Remove rests
-//     _note.erase(
-//         std::remove_if(_note.begin(), _note.end(), [&](const Note& note) {
-//             return note.isNoteOn() == false;
-//         }), _note.end());
-
-//     // Copy the orginal chord to a stack vector
-//     _stack.clear();
-//     _stack = _note;
-
-//     // Sort chord notes using the MIDI note value
-//     std::sort(_stack.begin(), _stack.end());
-
-//     // Get the bass note of the chord
-//     _bassNote = _stack[0];
-
-//     // Remove same PitchClass => Get a 'piano reduction' chord version
-//     _stack.erase(std::unique(_stack.begin(), _stack.end(),
-//                  [](const Note& a, const Note& b) {
-//         return a.getPitchClass() == b.getPitchClass();
-//     }), _stack.end());
-
-//     // Update the 'chordSize' variable
-//     const size_t chordSize = _stack.size();
-//     std::cout << "chordSize: " << chordSize << std::endl;
-
-//     // Error checking:
-//     if (chordSize < 3) {
-//         // std::cerr << "[ERROR]: The chord size MUST BE at least 3 unique pitchClasses!" << std::endl;
-//         return;
-//     }
-
-//     // ===== STEP 1: FOR EACH NOTE: GENERATE A SPECIFIC TEMP/TRY CHORD STACK (DIATONIC) ===== //
-//     std::vector<int> stackSum(chordSize, 0);
-//     std::vector<std::map<int, Note>> possibleStack(chordSize);
-
-//     // For each 'possible root' note
-//     for (size_t r = 0; r < chordSize; r++) {
-//         // Alias to the 'possible root' note
-//         const auto& possibleRoot = _stack[r];
-        
-//         std::cout << "-----> Possible Root: " << possibleRoot.getPitch() << std::endl;
-
-//         const std::string rootDiatonicPitchClass = possibleRoot.getDiatonicSoundingPitchClass();
-
-//         // Error checking:
-//         if (rootDiatonicPitchClass.empty()) { throw std::runtime_error("A note diatonic pitchClass is empty!"); }
-
-//         // Select the chord stack using the possible root note
-//         const char* diatonicStack = nullptr;
-//         switch (hash(rootDiatonicPitchClass.c_str())) {
-//             case hash("C"): diatonicStack = c_C_diatonicChordStack.data(); break;
-//             case hash("D"): diatonicStack = c_D_diatonicChordStack.data(); break;
-//             case hash("E"): diatonicStack = c_E_diatonicChordStack.data(); break;
-//             case hash("F"): diatonicStack = c_F_diatonicChordStack.data(); break;
-//             case hash("G"): diatonicStack = c_G_diatonicChordStack.data(); break;
-//             case hash("A"): diatonicStack = c_A_diatonicChordStack.data(); break;
-//             case hash("B"): diatonicStack = c_B_diatonicChordStack.data(); break;
-//             default: throw std::runtime_error("Invalid diatonic pitchClass"); break;
-//         }
-
-//         // For each note in the chord
-//         for (size_t n = 0; n < chordSize; n++) {
-//             auto& note = _stack[n];
-//             const std::string diatonicPitchClass = note.getDiatonicSoundingPitchClass();
-
-//             std::cout << "n[" << n << "]: Note=" << note.getPitch() << std::endl; 
-
-//             // Check if the 'possible root' and the current 'note' are diatonic different
-//             if ((possibleRoot.getPitch() != note.getPitch()) && (rootDiatonicPitchClass == diatonicPitchClass)) {
-//                 // Change the 'current note' pitch to an enharmonic equivalent
-//                 std::cout << "Enharmonizando: " << note.getPitch() << std::endl;
-//                 note.toEnharmonicPitch();
-//             }
-
-//             // const char toFind = *diatonicPitchClass.c_str();
-//             const char toFind = *note.getDiatonicSoundingPitchClass().c_str();
-
-//             // Compute the distance between the possible root and this note
-//             const int noteDistance = std::distance(&diatonicStack[0], std::find(&diatonicStack[0], &diatonicStack[6], toFind));
-
-//             // Store the note 'n' inside the possible stack 'r'
-//             possibleStack[r].insert({noteDistance, note});
-
-//             // Compute the note weigth. MAY BE REMOVE IN THE FUTURE!!
-//             const int noteWeigth = noteDistance;
-//             stackSum[r] += noteWeigth;            
-//         }
-//     }
-
-//     // Select the better computed chord stack
-//     const int betterStackIdx = std::min_element(stackSum.begin(), stackSum.end()) - stackSum.begin();
-
-//     // Just an alias to the final stack
-//     const auto& stack = possibleStack[betterStackIdx];
-
-//     std::cout << "===== possibleStack =====" << betterStackIdx << std::endl;
-//     for (const auto& ps : possibleStack) {
-//         for (const auto& n : ps) {
-//             std::cout << n.first << " | " << n.second.getPitch() << std::endl;
-//         }
-//         std::cout << "------" << std::endl;
-//     }
-
-//     // ===== STEP 2: STORE STACKED NOTES IN ACENDENT ORDER ===== //
-//     std::vector<Note> orderedStack;
-//     for (auto it = stack.begin(); it != stack.end(); it++) { orderedStack.push_back(it->second); }
-
-//     _stack.clear();
-//     _stack = orderedStack;
-
-//     std::cout << "AFTER CLEAR" << std::endl;
-//     for (const auto& n : _stack) {
-//         std::cout << n.getPitch() << std::endl;
-//     }
-
-    
-
-//     // ===== STEP 3: TRANSPOSE ALL NOTES TO OCTAVE 4 REFERENCE ===== //
-//     // Create a temp note to be the 'octave 4' root reference
-//     Note rootOct4 = stack.at(0);
-//     rootOct4.setOctave(4);
-
-//     // Compute the distance between this new root and the current root
-//     const int rootOct4Distance = rootOct4.getMIDINumber() - stack.at(0).getMIDINumber();
-
-//     // Move the entire chord to the 'octave 4' root reference
-//     transposeStackOnly(rootOct4Distance);
-
-//     // ===== STEP 4: SET INTERNAL FLAG AND COMPUTE INTERVALS ===== //
-//     // Set a internal control flag
-//     _isStackedInThirds = true;
-
-//     std::cout << "BEFORE COMPUTE INTERVALS" << std::endl;
-//     for (const auto& n : _stack) {
-//         std::cout << n.getPitch() << std::endl;
-//     }
-
-//     computeIntervals();
-// }
 
 std::vector<Heap> Chord::computeEnharmonicUnitsGroups() const
 {
-    const int chordSize = _stack.size();
+    const int chordSize = _openStack.size();
     std::vector<Heap> enharUnitGroups(chordSize);
     const int numUnitGroups = enharUnitGroups.size();
 
@@ -671,7 +460,7 @@ std::vector<Heap> Chord::computeEnharmonicUnitsGroups() const
     for (int i = 0; i < numUnitGroups; i++) {
         Heap unitGroup(numOfEnharmonics);
 
-        Note originalNote = _stack[i]; // must be a copy
+        Note originalNote = _openStack[i]; // must be a copy
         unitGroup[0] = NoteData(originalNote, false, 0);
         unitGroup[1] = NoteData(originalNote.getEnharmonicNote(false), true, 1);
         unitGroup[2] = NoteData(originalNote.getEnharmonicNote(true), true, 2);
@@ -819,6 +608,33 @@ std::vector<Heap> Chord::filterTertianHeapsOnly(const std::vector<Heap>& heaps) 
     return tertianHeaps;
 }
 
+void Chord::computeCloseStack(const std::vector<Note>& openStack)
+{
+    _closeStack = openStack;
+    const Note& rootNote = _closeStack[0];
+
+    const std::map<char, int>* closeStackOctavesMap = nullptr;
+
+    switch (hash(rootNote.getPitchStep().c_str())) {
+        case hash("C"): closeStackOctavesMap = &c_C_closeStackOctavesMap; break;
+        case hash("D"): closeStackOctavesMap = &c_D_closeStackOctavesMap; break;
+        case hash("E"): closeStackOctavesMap = &c_E_closeStackOctavesMap; break;
+        case hash("F"): closeStackOctavesMap = &c_F_closeStackOctavesMap; break;
+        case hash("G"): closeStackOctavesMap = &c_G_closeStackOctavesMap; break;
+        case hash("A"): closeStackOctavesMap = &c_A_closeStackOctavesMap; break;
+        case hash("B"): closeStackOctavesMap = &c_B_closeStackOctavesMap; break;
+        default: 
+            throw std::runtime_error("[maiacore] Invalid pitchStep: " + rootNote.getPitchStep());
+            break;
+    }
+
+    for (auto& note : _closeStack) {
+        const char* pitchStep = note.getPitchStep().c_str();
+        const int oct = closeStackOctavesMap->at(*pitchStep);
+        note.setOctave(oct);
+    }
+}
+
 HeapData Chord::stackInThirdsTemplateMatch(const Heap& heap) const
 {
     // std::cout << "===== PRINTING HEAPS INSIDE stackInThirdsTemplateMatch =====" << std::endl;
@@ -868,98 +684,130 @@ HeapData Chord::stackInThirdsTemplateMatch(const Heap& heap) const
 
 void Chord::computeIntervals()
 {
-    const size_t chordSize = _stack.size();
-
-    // ===== STEP 1: GET RIGHT POSITION STACKED INTERVALS ====== //
-    _midiInterval.clear();
-    _midiInterval.resize(chordSize - 1, 0);
-
-    // Get the root note
-    const Note& rootNote = _stack[0];
-
-    // Get the number of _stack intervals
-    const size_t intervalSize = chordSize - 1;
-
-    // Compute interval for each _stack note
-    for (size_t i = 0; i < intervalSize; i++) {
-
-        Note& previusNote = (i == 0) ? _stack[0] : _stack[i];
-        Note& nextNote = _stack[i+1];
-
-        const size_t currentOct = previusNote.getOctave();
-
-        // To get only ascendent intervals, the 'nextNote' MUST BE ALWAYS higher then the 'previusNote'
-        // So we check this condition and change the 'nextNote' octave if is necessary
-        if ((nextNote.getMIDINumber() % 12) > (previusNote.getMIDINumber() % 12)) {
-            nextNote.setOctave(currentOct);
-        } else {
-            nextNote.setOctave(currentOct + 1);
-        }
-
-        // Compute the absolute semitones interval between the root and the 'nextNote'
-        _midiInterval[i] = nextNote.getMIDINumber() - rootNote.getMIDINumber();
-    }
-
-    // ===== STEP 2: GET CHORD INTERVALS ====== //
-
-    // Verify the existence of each _stack interval
-    // Third's
-    _haveMinorThird = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MINOR_THIRD) != _midiInterval.end();
-    _haveMajorThird = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MAJOR_THIRD) != _midiInterval.end();
-
-    // Fifth's
-    _haveDiminishedFifth = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::DIMINISHED_FIFTH) != _midiInterval.end();
-    _havePerfectFifth = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::PERFECT_FIFTH) != _midiInterval.end();
-    _haveAugmentedFifth = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MINOR_SIXTH) != _midiInterval.end();
-
-    // Seventh's
-    _haveDiminishedSeventh = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MAJOR_SIXTH) != _midiInterval.end();
-    _haveMinorSeventh = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MINOR_SEVENTH) != _midiInterval.end();
-    _haveMajorSeventh = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MAJOR_SEVENTH) != _midiInterval.end();
-
-    // Ninth's
-    _haveMinorNinth = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MINOR_NINTH) != _midiInterval.end();
-    _haveMajorNinth = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MAJOR_NINTH) != _midiInterval.end();
-
-    // Eleventh's
-    _havePerfectEleventh = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::PERFECT_ELEVENTH) != _midiInterval.end();
-
-    const bool haveSharpElevenFlatTwelve = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::SHARP_ELEVEN) != _midiInterval.end();
-
-    if (haveSharpElevenFlatTwelve) {
-        const auto it = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::SHARP_ELEVEN);
-        const int index = it - _midiInterval.begin();
-        const Note& note = _stack[index];
-
-        // Distinguish between 'diminished fifth' and 'sharp eleven'
-        if (note.getAlterSymbol() == MUSIC_XML::ACCIDENT::SHARP) {
-            _haveSharpEleventh = true;
-        } else {
-            _haveDiminishedFifth = true;
-        }
-    }
-
-    // Thirdteenth's
-    _haveMinorThirdteenth = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MINOR_THIRTEENTH) != _midiInterval.end();
-    _haveMajorThirdteenth = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MAJOR_THIRTEENTH) != _midiInterval.end();
+    const std::vector<Interval> intervals = Helper::notes2Intervals(_closeStack);
+    ignore(intervals);
 }
 
-std::vector<int> Chord::getMIDIIntervals()
+// void Chord::computeIntervals()
+// {
+//     const int chordSize = _openStack.size();
+
+//     // ===== STEP 1: GET RIGHT POSITION STACKED INTERVALS ====== //
+//     _midiInterval.clear();
+//     _midiInterval.resize(chordSize - 1, 0);
+
+//     // Get the root note
+//     const Note& rootNote = _openStack[0];
+
+//     // Get the number of _openStack intervals
+//     const int intervalSize = chordSize - 1;
+
+//     // Compute interval for each _openStack note
+//     for (int i = 0; i < intervalSize; i++) {
+
+//         Note& previusNote = (i == 0) ? _openStack[0] : _openStack[i];
+//         Note& nextNote = _openStack[i+1];
+
+//         const int currentOct = previusNote.getOctave();
+
+//         // To get only ascendent intervals, the 'nextNote' MUST BE ALWAYS higher then the 'previusNote'
+//         // So we check this condition and change the 'nextNote' octave if is necessary
+//         if ((nextNote.getMIDINumber() % 12) > (previusNote.getMIDINumber() % 12)) {
+//             nextNote.setOctave(currentOct);
+//         } else {
+//             nextNote.setOctave(currentOct + 1);
+//         }
+
+//         // Compute the absolute semitones interval between the root and the 'nextNote'
+//         _midiInterval[i] = nextNote.getMIDINumber() - rootNote.getMIDINumber();
+//     }
+
+//     // ===== STEP 2: GET CHORD INTERVALS ====== //
+
+//     // Verify the existence of each _stack interval
+//     // Third's
+//     haveMinorThird() = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MINOR_THIRD) != _midiInterval.end();
+//     haveMajorThird() = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MAJOR_THIRD) != _midiInterval.end();
+
+//     // Fifth's
+//     haveDiminishedFifth() = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::DIMINISHED_FIFTH) != _midiInterval.end();
+//     havePerfectFifth() = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::PERFECT_FIFTH) != _midiInterval.end();
+//     haveAugmentedFifth = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MINOR_SIXTH) != _midiInterval.end();
+
+//     // Seventh's
+//     haveDiminishedSeventh() = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MAJOR_SIXTH) != _midiInterval.end();
+//     haveMinorSeventh() = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MINOR_SEVENTH) != _midiInterval.end();
+//     haveMajorSeventh() = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MAJOR_SEVENTH) != _midiInterval.end();
+
+//     // Ninth's
+//     haveMinorNinth() = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MINOR_NINTH) != _midiInterval.end();
+//     haveMajorNinth() = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MAJOR_NINTH) != _midiInterval.end();
+
+//     // Eleventh's
+//     havePerfectEleventh() = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::PERFECT_ELEVENTH) != _midiInterval.end();
+
+//     const bool haveSharpElevenFlatTwelve = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::SHARP_ELEVEN) != _midiInterval.end();
+
+//     if (haveSharpElevenFlatTwelve) {
+//         const auto it = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::SHARP_ELEVEN);
+//         const int index = it - _midiInterval.begin();
+//         const Note& note = _openStack[index];
+
+//         // Distinguish between 'diminished fifth' and 'sharp eleven'
+//         if (note.getAlterSymbol() == MUSIC_XML::ACCIDENT::SHARP) {
+//             haveSharpEleventh() = true;
+//         } else {
+//             haveDiminishedFifth() = true;
+//         }
+//     }
+
+//     // Thirdteenth's
+//     haveMinorThird()teenth = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MINOR_THIRTEENTH) != _midiInterval.end();
+//     haveMajorThird()teenth = std::find(_midiInterval.begin(), _midiInterval.end(), MUSIC_XML::MIDI::INTERVAL::MAJOR_THIRTEENTH) != _midiInterval.end();
+// }
+
+std::vector<int> Chord::getMIDIIntervals(const bool firstNoteAsReference) const
 {
-    if (!_isStackedInThirds) { stackInThirds(); }
+    const int numNotes = _originalNotes.size();
 
-    return _midiInterval;
+    if (numNotes <= 0) {
+        throw std::runtime_error("[maiacore] Chord is empty");
+    }
+
+    std::vector<int> midiIntervals(numNotes - 1);
+
+    // ===== GET INTERVALS USING THE FIRST NOTE AS REFERENCE ===== //
+    if (firstNoteAsReference) {
+        const int rootMidiNumber = _originalNotes[0].getMIDINumber();
+        for (int i = 1; i < numNotes; i++) {
+            midiIntervals[i-1] = _originalNotes[i].getMIDINumber() - rootMidiNumber;
+        }
+
+        return midiIntervals;
+    }
+
+    // ===== GET INTERVALS FROM EACH NOTE PAIR ===== //
+    for (int i = 0; i < numNotes - 1; i++) {
+        midiIntervals[i] = _originalNotes[i+1].getMIDINumber() - _originalNotes[i].getMIDINumber();
+    }
+
+    return midiIntervals;
 }
 
-std::vector<Interval> Chord::getIntervals(const bool fromRoot) const
+std::vector<Interval> Chord::getIntervals(const bool firstNoteAsReference) const
 {
     const int numIntervals = size() - 1;
-    std::vector<Interval> intervals;
 
-    // ===== GET INTERVALS FROM ROOT ===== //
-    if (fromRoot) {
+    if (numIntervals <= 0) {
+        throw std::runtime_error("[maiacore] Chord is empty");
+    }
+
+    std::vector<Interval> intervals(numIntervals);
+
+    // ===== GET INTERVALS USING THE FIRST NOTE AS REFERENCE ===== //
+    if (firstNoteAsReference) {
         for (int i = 0; i < numIntervals; i++) {
-            intervals.emplace_back(_note[0], _note[i+1]);
+            intervals[i] = Interval(_originalNotes[0], _originalNotes[i+1]);
         }
 
         return intervals;
@@ -967,23 +815,23 @@ std::vector<Interval> Chord::getIntervals(const bool fromRoot) const
 
     // ===== GET INTERVALS FROM EACH NOTE PAIR ===== //
     for (int i = 0; i < numIntervals; i++) {
-        intervals.emplace_back(_note[i], _note[i+1]);
+        intervals[i] = Interval(_originalNotes[i], _originalNotes[i+1]);
     }
 
     return intervals;
 }
 
-std::vector<Interval> Chord::getStackIntervals(const bool fromRoot)
+std::vector<Interval> Chord::getOpenStackIntervals(const bool firstNoteAsReference)
 {
     if (!_isStackedInThirds) { stackInThirds(); }
 
     const int numIntervals = stackSize() - 1;
-    std::vector<Interval> intervals;
+    std::vector<Interval> intervals(numIntervals);
 
-    // ===== GET INTERVALS FROM ROOT ===== //
-    if (fromRoot) {
+    // ===== GET INTERVALS USING THE FIRST NOTE AS REFERENCE ===== //
+    if (firstNoteAsReference) {
         for (int i = 0; i < numIntervals; i++) {
-            intervals.emplace_back(_stack[0], _stack[i+1]);
+            intervals[i] = Interval(_openStack[0], _openStack[i+1]);
         }
 
         return intervals;
@@ -991,15 +839,38 @@ std::vector<Interval> Chord::getStackIntervals(const bool fromRoot)
 
     // ===== GET INTERVALS FROM EACH NOTE PAIR ===== //
     for (int i = 0; i < numIntervals; i++) {
-        intervals.emplace_back(_stack[i], _stack[i+1]);
+        intervals[i] = Interval(_openStack[i], _openStack[i+1]);
+    }
+
+    return intervals;
+}
+std::vector<Interval> Chord::getCloseStackIntervals(const bool fromRoot)
+{
+    if (!_isStackedInThirds) { stackInThirds(); }
+
+    const int numIntervals = stackSize() - 1;
+    std::vector<Interval> intervals(numIntervals);
+
+    // ===== GET INTERVALS FROM ROOT ===== //
+    if (fromRoot) {
+        for (int i = 0; i < numIntervals; i++) {
+            intervals[i] = Interval(_closeStack[0], _closeStack[i+1]);
+        }
+
+        return intervals;
+    }
+
+    // ===== GET INTERVALS FROM EACH NOTE PAIR ===== //
+    for (int i = 0; i < numIntervals; i++) {
+        intervals[i] = Interval(_closeStack[i], _closeStack[i+1]);
     }
 
     return intervals;
 }
 
-std::vector<Note> Chord::getStackedNotes() const
+std::vector<Note> Chord::getOpenStackNotes() const
 {
-    return _stack;
+    return _openStack;
 }
 
 std::string Chord::enharmonicName()
@@ -1011,7 +882,7 @@ std::string Chord::enharmonicName()
     }
 
     // Error checking
-    if (!_haveMinorThird && !_haveMajorThird) {
+    if (!haveMinorThird() && !haveMajorThird()) {
         // std::cerr << "[ERROR]: Unable to classify this chord!" << std::endl;
         return {};
     }
@@ -1021,57 +892,57 @@ std::string Chord::enharmonicName()
     std::string basicClassification;
 
     // Set the note 'basicClassification' using the third, fifth and seventh intervals
-    if (_haveMinorThird) {
-        if (_haveDiminishedFifth) {
-            if (!_haveDiminishedSeventh && !_haveMinorSeventh && !_haveMajorSeventh) {
+    if (haveMinorThird()) {
+        if (haveDiminishedFifth()) {
+            if (!haveDiminishedSeventh() && !haveMinorSeventh() && !haveMajorSeventh()) {
                 basicClassification = "m(b5)";
-            } else if (_haveDiminishedSeventh) {
+            } else if (haveDiminishedSeventh()) {
                 basicClassification = "º";
-            } else if (_haveMinorSeventh) {
+            } else if (haveMinorSeventh()) {
                 basicClassification = "m7(b5)";
-            } else if (_haveMajorSeventh) {
+            } else if (haveMajorSeventh()) {
                 basicClassification = "m7M(b5)";
             }
-        } else if (_havePerfectFifth || (!_haveDiminishedFifth && !_haveAugmentedFifth)) {
-            if (!_haveDiminishedSeventh && !_haveMinorSeventh && !_haveMajorSeventh) {
+        } else if (havePerfectFifth() || (!haveDiminishedFifth() && !haveAugmentedFifth())) {
+            if (!haveDiminishedSeventh() && !haveMinorSeventh() && !haveMajorSeventh()) {
                 basicClassification = "m";
-            } else if (_haveDiminishedSeventh) {
+            } else if (haveDiminishedSeventh()) {
                 basicClassification = "dim7";
-            } else if (_haveMinorSeventh) {
+            } else if (haveMinorSeventh()) {
                 basicClassification = "m7";
-            } else if (_haveMajorSeventh) {
+            } else if (haveMajorSeventh()) {
                 basicClassification = "m7M";
             }
         }
     } else {
-        if (_haveDiminishedFifth) {
-            if (!_haveDiminishedSeventh && !_haveMinorSeventh && !_haveMajorSeventh) {
+        if (haveDiminishedFifth()) {
+            if (!haveDiminishedSeventh() && !haveMinorSeventh() && !haveMajorSeventh()) {
                 basicClassification = "(b5)";
-            } else if (_haveDiminishedSeventh) {
+            } else if (haveDiminishedSeventh()) {
                 basicClassification = "dim7(b5)";
-            } else if (_haveMinorSeventh) {
+            } else if (haveMinorSeventh()) {
                 basicClassification = "7(b5)";
-            } else if (_haveMajorSeventh) {
+            } else if (haveMajorSeventh()) {
                 basicClassification = "7M(b5)";
             }
-        } else if (_havePerfectFifth || (!_haveDiminishedFifth && !_haveAugmentedFifth)) {
-            if (!_haveDiminishedSeventh && !_haveMinorSeventh && !_haveMajorSeventh) {
+        } else if (havePerfectFifth() || (!haveDiminishedFifth() && !haveAugmentedFifth())) {
+            if (!haveDiminishedSeventh() && !haveMinorSeventh() && !haveMajorSeventh()) {
                 basicClassification = "";
-            } else if (_haveDiminishedSeventh) {
+            } else if (haveDiminishedSeventh()) {
                 basicClassification = "dim7";
-            } else if (_haveMinorSeventh) {
+            } else if (haveMinorSeventh()) {
                 basicClassification = "7";
-            } else if (_haveMajorSeventh) {
+            } else if (haveMajorSeventh()) {
                 basicClassification = "7M";
             }
-        } else if (_haveAugmentedFifth) {
-            if (!_haveDiminishedSeventh && !_haveMinorSeventh && !_haveMajorSeventh) {
+        } else if (haveAugmentedFifth()) {
+            if (!haveDiminishedSeventh() && !haveMinorSeventh() && !haveMajorSeventh()) {
                 basicClassification = "aug";
-            } else if (_haveDiminishedSeventh) {
+            } else if (haveDiminishedSeventh()) {
                 basicClassification = "aug(dim7)";
-            } else if (_haveMinorSeventh) {
+            } else if (haveMinorSeventh()) {
                 basicClassification = "aug(7)";
-            } else if (_haveMajorSeventh) {
+            } else if (haveMajorSeventh()) {
                 basicClassification = "aug(7M)";
             }
         }
@@ -1081,71 +952,53 @@ std::string Chord::enharmonicName()
     std::string ninth;
 
     // If exists, add ninth
-    if (_haveMinorNinth) {
+    if (haveMinorNinth()) {
         ninth = "9b";
-    } else if (_haveMajorNinth) {
+    } else if (haveMajorNinth()) {
         ninth = "9";
     }
 
     std::string eleventh;
 
     // If exists, add eleventh
-    if (_havePerfectEleventh) {
+    if (havePerfectEleventh()) {
         eleventh = "(11)";
-    } else if (_haveSharpEleventh) {
+    } else if (haveSharpEleventh()) {
         eleventh = "(#11)";
     }
 
     std::string thirdteenth;
 
     // If exists, add thirdteenth
-    if (_haveMinorThirdteenth) {
+    if (haveMinorThirdteenth()) {
         thirdteenth = "13b";
-    } else if (_haveMajorThirdteenth) {
+    } else if (haveMajorThirdteenth()) {
         thirdteenth = "13";
     }
 
     // ===== STEP 4: ADD BASS NOTE ====== //
     std::string bassNoteStr;
-    if (_stack[0].getPitchClass() != _bassNote.getPitchClass() && !_bassNote.getPitchClass().empty()) {
+    if (_closeStack[0].getPitchClass() != _bassNote.getPitchClass() && !_bassNote.getPitchClass().empty()) {
         bassNoteStr.append("/" + _bassNote.getPitchClass());
-    }
-
-    // ===== STEP 5: VERIFY THE ROOT ENHARMONIC PITCH ====== //
-    // Check if there is a third between the root and the chord third
-    const Interval interval(_stack[0], _stack[1]);
-    const int diatonicIntervalRootThird = interval.getDiatonicInterval(true);
-
-    std::string enharmonicRootPitchClass = _stack[0].getPitchClass();
-    if (diatonicIntervalRootThird != 3) {
-        const std::string rootAlterSymbol = _stack[0].getAlterSymbol();
-
-        const int rootMidiNumber = Helper::pitch2midiNote(_stack[0].getPitch());
-
-        if (rootAlterSymbol == MUSIC_XML::ACCIDENT::SHARP) {
-            enharmonicRootPitchClass = Helper::midiNote2pitch(rootMidiNumber, MUSIC_XML::ACCIDENT::FLAT);
-        } else if (rootAlterSymbol == MUSIC_XML::ACCIDENT::FLAT) {
-            enharmonicRootPitchClass = Helper::midiNote2pitch(rootMidiNumber, MUSIC_XML::ACCIDENT::SHARP);
-        }
     }
 
     // ===== STEP 5: SET CHORD NAME ====== //
     // Concatenate all _stack extensions
-    const std::string chordName = enharmonicRootPitchClass + basicClassification + ninth + eleventh + thirdteenth + bassNoteStr;
+    const std::string chordName = _closeStack[0].getPitchClass() + basicClassification + ninth + eleventh + thirdteenth + bassNoteStr;
 
     return chordName;
 }
 
-size_t Chord::stackSize() const
+int Chord::stackSize() const
 {
-    return _stack.size();
+    return static_cast<int>(_openStack.size());
 }
 
 const Note& Chord::getRoot()
 {
     if (!_isStackedInThirds) { stackInThirds(); }
 
-    return _stack.at(0);
+    return _openStack.at(0);
 }
 
 std::string Chord::nonEnharmonicName() const
@@ -1162,42 +1015,42 @@ bool Chord::isMajorChord()
 {
     if (!_isStackedInThirds) { stackInThirds(); }
 
-    return (_haveMajorThird &&  !_haveAugmentedFifth) ? true : false;
+    return (haveMajorThird() &&  !haveAugmentedFifth()) ? true : false;
 }
 
 bool Chord::isMinorChord()
 {
     if (!_isStackedInThirds) { stackInThirds(); }
 
-    return (_haveMinorThird && !_haveDiminishedFifth) ? true : false;
+    return (haveMinorThird() && !haveDiminishedFifth()) ? true : false;
 }
 
 bool Chord::isAugmentedChord()
 {
     if (!_isStackedInThirds) { stackInThirds(); }
 
-    return (_haveMajorThird && _haveAugmentedFifth) ? true : false;
+    return (haveMajorThird() && haveAugmentedFifth()) ? true : false;
 }
 
 bool Chord::isDiminishedChord()
 {
     if (!_isStackedInThirds) { stackInThirds(); }
 
-    return (_haveMinorThird && _haveDiminishedFifth && _haveMinorSeventh) ? true : false;
+    return (haveMinorThird() && haveDiminishedFifth() && haveMinorSeventh()) ? true : false;
 }
 
 bool Chord::isDominantSeventhChord()
 {
     if (!_isStackedInThirds) { stackInThirds(); }
 
-    return (_haveMajorThird && !_haveDiminishedFifth && !_haveAugmentedFifth && _haveMinorSeventh) ? true : false;
+    return (haveMajorThird() && !haveDiminishedFifth() && !haveAugmentedFifth() && haveMinorSeventh()) ? true : false;
 }
 
 bool Chord::isHalfDiminishedChord()
 {
     if (!_isStackedInThirds) { stackInThirds(); }
 
-    return (_haveMinorThird && _haveDiminishedFifth ) ? true : false;
+    return (haveMinorThird() && haveDiminishedFifth() ) ? true : false;
 }
 
 bool Chord::isTonal(std::function<bool(const Chord& chord)> model)
@@ -1206,8 +1059,8 @@ bool Chord::isTonal(std::function<bool(const Chord& chord)> model)
 
     if (model != nullptr) { return model(*this); }
 
-    for (size_t i = 0; i < stackSize() - 1; i++) {
-        const Interval interval(_stack[i], _stack[i+1]);
+    for (int i = 0; i < stackSize() - 1; i++) {
+        const Interval interval(_openStack[i], _openStack[i+1]);
 
         if (!interval.isTonal()) { return false; }
     }
@@ -1216,73 +1069,115 @@ bool Chord::isTonal(std::function<bool(const Chord& chord)> model)
 }
 
 bool Chord::haveMinorThird()
-{
-    return _haveMinorThird;
+{   
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isMinorThird();
+    });
 }
 
 bool Chord::haveMajorThird()
 {
-    return _haveMajorThird;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isMajorThird();
+    });
 }
 
 bool Chord::haveDiminishedFifth()
 {
-    return _haveDiminishedFifth;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isDiminishedFifth();
+    });
 }
 
 bool Chord::havePerfectFifth()
 {
-    return _havePerfectFifth;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isPerfectFifth();
+    });
 }
 
 bool Chord::haveAugmentedFifth()
 {
-    return _haveAugmentedFifth;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isAugmentedFifth();
+    });
 }
 
 bool Chord::haveDiminishedSeventh()
 {
-    return _haveDiminishedSeventh;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isDiminishedSeventh();
+    });
 }
 
 bool Chord::haveMinorSeventh()
 {
-    return _haveMinorSeventh;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isMinorSeventh();
+    });
 }
 
 bool Chord::haveMajorSeventh()
 {
-    return _haveMajorSeventh;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isMajorSeventh();
+    });
 }
 
 bool Chord::haveMinorNinth()
 {
-    return _haveMinorNinth;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isMinorNinth();
+    });
 }
 
 bool Chord::haveMajorNinth()
 {
-    return _haveMajorNinth;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isMajorNinth();
+    });
 }
 
 bool Chord::havePerfectEleventh()
 {
-    return _havePerfectEleventh;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isPerfectEleventh();
+    });
 }
 
 bool Chord::haveSharpEleventh()
 {
-    return _haveSharpEleventh;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isSharpEleventh();
+    });
 }
 
 bool Chord::haveMinorThirdteenth()
 {
-    return _haveMinorThirdteenth;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isMinorThirdteenth();
+    });
 }
 
 bool Chord::haveMajorThirdteenth()
 {
-    return _haveMajorThirdteenth;
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isMajorThirdteenth();
+    });
 }
 
 const Note& Chord::getBassNote()
@@ -1294,27 +1189,26 @@ const Note& Chord::getBassNote()
 
 const std::vector<Note>& Chord::getNotes() const
 {
-    return _note;
+    return _originalNotes;
 }
 
-Chord Chord::getStackedChord(const bool enharmonyNotes)
+Chord Chord::getOpenStackChord(const bool enharmonyNotes)
+{
+    if (!_isStackedInThirds) { stackInThirds(enharmonyNotes); }
+
+    return Chord(_openStack);
+}
+
+Chord Chord::getCloseStackChord(const bool enharmonyNotes)
 {
     if (!_isStackedInThirds) { stackInThirds(enharmonyNotes); }
     
-    const HeapData& bestHeapData = _stackedHeaps[0];
-    const Heap& bestHeap = std::get<0>(bestHeapData);
-
-    Chord stackChord;
-    for (const auto& noteData : bestHeap) {
-        stackChord.addNote(noteData.note);
-    }
-
-    return stackChord;
+    return Chord(_closeStack);
 }
 
 void Chord::sortNotes()
 {
-    std::sort(_note.begin(), _note.end());
+    std::sort(_originalNotes.begin(), _originalNotes.end());
 }
 
 void printHeap(const Heap& heap) {

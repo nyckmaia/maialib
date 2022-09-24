@@ -284,3 +284,103 @@ bool Interval::isTonal() const
 {
     return analyse().second;
 }
+
+bool Interval::isMinorThird() const
+{
+    return (getName() == "m3") ? true : false;
+}
+
+bool Interval::isMajorThird() const
+{
+    return (getName() == "M3") ? true : false;
+}
+
+bool Interval::isDiminishedFifth() const
+{
+    return (getName() == "d5") ? true : false;
+}
+
+bool Interval::isPerfectFifth() const
+{
+    return (getName() == "P5") ? true : false;
+}
+
+bool Interval::isAugmentedFifth() const
+{
+    return (getName() == "A5") ? true : false;
+}
+
+bool Interval::isDiminishedSeventh() const
+{
+    return (getName() == "d7") ? true : false;
+}
+
+bool Interval::isMinorSeventh() const
+{
+    return (getName() == "m7") ? true : false;
+}
+
+bool Interval::isMajorSeventh() const
+{
+    return (getName() == "M7") ? true : false;
+}
+
+bool Interval::isMinorNinth() const
+{
+    const int diatonicInterval = getDiatonicInterval(true);
+    const int numSemitones = getNumSemitones(true);
+
+    if (diatonicInterval == 2 && numSemitones >= 13) { return true; }
+    
+    return false;
+}
+
+bool Interval::isMajorNinth() const
+{
+    const int diatonicInterval = getDiatonicInterval(true);
+    const int numSemitones = getNumSemitones(true);
+
+    if (diatonicInterval == 2 && numSemitones >= 14) { return true; }
+    
+    return false;
+}
+
+bool Interval::isPerfectEleventh() const
+{
+    const int diatonicInterval = getDiatonicInterval(true);
+    const int numSemitones = getNumSemitones(true);
+
+    if (diatonicInterval == 4 && numSemitones >= 17) { return true; }
+    
+    return false;
+}
+
+bool Interval::isSharpEleventh() const
+{
+    const int diatonicInterval = getDiatonicInterval(true);
+    const int numSemitones = getNumSemitones(true);
+
+    if (diatonicInterval == 4 && numSemitones >= 18) { return true; }
+    
+    return false;
+}
+
+bool Interval::isMinorThirdteenth() const
+{
+    const int diatonicInterval = getDiatonicInterval(true);
+    const int numSemitones = getNumSemitones(true);
+
+    if (diatonicInterval == 6 && numSemitones >= 20) { return true; }
+    
+    return false;
+}
+
+bool Interval::isMajorThirdteenth() const
+{
+    const int diatonicInterval = getDiatonicInterval(true);
+    const int numSemitones = getNumSemitones(true);
+
+    if (diatonicInterval == 6 && numSemitones >= 21) { return true; }
+    
+    return false;
+}

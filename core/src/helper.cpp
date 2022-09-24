@@ -153,6 +153,31 @@ const std::vector<std::string> Helper::midiNote2pitches(const int midiNote)
     return pitches;
 }
 
+std::vector<Interval> Helper::notes2Intervals(const std::vector<Note>& notes, const bool firstNoteAsReference)
+{
+    const int notesSize = notes.size();
+    if (notesSize <= 1) {
+        throw std::runtime_error("[maiacore] You should pass two or more notes to create an interval vector");
+    }
+
+    const int numIntervals = notesSize - 1;
+    std::vector<Interval> intervals(numIntervals);
+
+    if (firstNoteAsReference) {
+        for (int i = 0; i < numIntervals; i++) {
+            intervals[i] = Interval(notes[0], notes[i+1]);
+        }
+
+        return intervals;
+    }
+
+    for (int i = 0; i < numIntervals; i++) {
+        intervals[i] = Interval(notes[i], notes[i+1]);
+    }
+
+    return intervals;
+}
+
 int Helper::pitch2midiNote(const std::string& pitch)
 {
     switch (hash(pitch.c_str())) {
