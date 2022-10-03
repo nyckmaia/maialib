@@ -5,6 +5,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 #include <pybind11/iostream.h>
+#include <pybind11/operators.h>
 #include "pybind11_json/pybind11_json.hpp"
 namespace py = pybind11;
 
@@ -31,8 +32,7 @@ void IntervalClass(py::module &m) {
         py::arg("note_B"));
 
     cls.def("getName", &Interval::getName);
-    cls.def("getValue", &Interval::getValue,
-        py::arg("absoluteValue") = false);
+
     cls.def("getNumSemitones", &Interval::getNumSemitones,
         py::arg("absoluteValue") = false);
 
@@ -40,6 +40,7 @@ void IntervalClass(py::module &m) {
         py::arg("absoluteValue") = false);
 
     cls.def("getDiatonicInterval", &Interval::getDiatonicInterval,
+        py::arg("useSingleOctave") = true,
         py::arg("absoluteValue") = false);
 
     cls.def("getDiatonicSteps", &Interval::getDiatonicSteps,
@@ -66,6 +67,9 @@ void IntervalClass(py::module &m) {
     cls.def("isMinorThirdteenth", &Interval::isMinorThirdteenth);
     cls.def("isMajorThirdteenth", &Interval::isMajorThirdteenth);
 
+    cls.def("isSimple", &Interval::isSimple);
+    cls.def("isCompound", &Interval::isCompound);
+
     // Default Python 'print' function:
     cls.def("__repr__", [](const Interval& interval) {
         const std::string direction = (interval.isAscendant()) ? "asc" : "desc";
@@ -85,5 +89,6 @@ void IntervalClass(py::module &m) {
         return sizeof(interval);
     });
 
+    cls.def(py::self < py::self);
 }
 #endif

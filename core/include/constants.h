@@ -68,6 +68,77 @@ const std::array<std::string, 12> c_chromaticDoubleSharpScale = {"C", "Bx", "Cx"
 const std::array<std::string, 12> c_chromaticDoubleFlatScale = {"C", "Db", "Ebb", "Fbb", "Fb", "Gbb", "Gb", "Abb", "Ab", "Bbb", "Bb", "Cb"};
 const std::array<std::string, 4>  c_alterSymbol = {"bb", "b", "#", "x"};
 
+// ===== STACK POSITION WEIGHT MAP ===== //
+const std::map<char, int> c_C_stackPositionWeightMap = {
+    {'C', std::pow(2, 7)},
+    {'E', std::pow(2, 6)},
+    {'G', std::pow(2, 5)},
+    {'B', std::pow(2, 4)},
+    {'D', std::pow(2, 3)},
+    {'F', std::pow(2, 2)},
+    {'A', std::pow(2, 1)}
+};
+
+const std::map<char, int> c_D_stackPositionWeightMap = {
+    {'D', std::pow(2, 7)},
+    {'F', std::pow(2, 6)},
+    {'A', std::pow(2, 5)},
+    {'C', std::pow(2, 4)},
+    {'E', std::pow(2, 3)},
+    {'G', std::pow(2, 2)},
+    {'B', std::pow(2, 1)}
+};
+
+const std::map<char, int> c_E_stackPositionWeightMap = {
+    {'E', std::pow(2, 7)},
+    {'G', std::pow(2, 6)},
+    {'B', std::pow(2, 5)},
+    {'D', std::pow(2, 4)},
+    {'F', std::pow(2, 3)},
+    {'A', std::pow(2, 2)},
+    {'C', std::pow(2, 1)}
+};
+
+const std::map<char, int> c_F_stackPositionWeightMap = {
+    {'F', std::pow(2, 7)},
+    {'A', std::pow(2, 6)},
+    {'C', std::pow(2, 5)},
+    {'E', std::pow(2, 4)},
+    {'G', std::pow(2, 3)},
+    {'B', std::pow(2, 2)},
+    {'D', std::pow(2, 1)}
+};
+
+const std::map<char, int> c_G_stackPositionWeightMap = {
+    {'G', std::pow(2, 7)},
+    {'B', std::pow(2, 6)},
+    {'D', std::pow(2, 5)},
+    {'F', std::pow(2, 4)},
+    {'A', std::pow(2, 3)},
+    {'C', std::pow(2, 2)},
+    {'E', std::pow(2, 1)}
+};
+
+const std::map<char, int> c_A_stackPositionWeightMap = {
+    {'A', std::pow(2, 7)},
+    {'C', std::pow(2, 6)},
+    {'E', std::pow(2, 5)},
+    {'G', std::pow(2, 4)},
+    {'B', std::pow(2, 3)},
+    {'D', std::pow(2, 2)},
+    {'F', std::pow(2, 1)}
+};
+
+const std::map<char, int> c_B_stackPositionWeightMap = {
+    {'B', std::pow(2, 7)},
+    {'D', std::pow(2, 6)},
+    {'F', std::pow(2, 5)},
+    {'A', std::pow(2, 4)},
+    {'C', std::pow(2, 3)},
+    {'E', std::pow(2, 2)},
+    {'G', std::pow(2, 1)}
+};
+
 // ===== CLOSE STACK IN THIRDS OCTAVES MAP ===== //
 const std::map<char, int> c_C_closeStackOctavesMap = {
     {'C', 4},

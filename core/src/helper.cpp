@@ -86,7 +86,7 @@ const std::string Helper::midiNote2pitch(const int midiNote, const std::string& 
         (accType == MUSIC_XML::ACCIDENT::SHARP && !canBeSharp) ||
         (accType == MUSIC_XML::ACCIDENT::DOUBLE_SHARP && !canBeDoubleSharp)) {
 
-        std::string msg = "[ERROR] The MIDI Note '" + std::to_string(midiNote) + "' cannot be wrote using '" + accType + "' accident type";
+        std::string msg = "[maiacore] The MIDI Note '" + std::to_string(midiNote) + "' cannot be wrote using '" + accType + "' accident type";
         throw std::runtime_error(msg);
     }
 
@@ -1480,7 +1480,7 @@ void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::
 
     // Error checking:
     if(pitchSize > 4) {
-        const std::string msg = "The pitch '" + pitch + "' have a invalid length: " + std::to_string(pitchSize);
+        const std::string msg = "[maiacore] The pitch '" + pitch + "' have a invalid length: " + std::to_string(pitchSize);
         throw std::runtime_error(msg);
     }
 
@@ -1489,7 +1489,7 @@ void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::
 
     // Error checking:
     if(!foundPitch && !pitch.empty()) {
-        const std::string msg = "Unknown diatonc pitch: " + diatonicPitch;
+        const std::string msg = "[maiacore] Unknown diatonc pitch: " + diatonicPitch;
         throw std::runtime_error(msg);
     }
 
@@ -1510,7 +1510,7 @@ void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::
 
     bool foundAlterSymbol = std::find(c_alterSymbol.begin(), c_alterSymbol.end(), alterSymbol) != c_alterSymbol.end();
     if(!foundAlterSymbol && !alterSymbol.empty()) {
-        const std::string msg = "Unknown alter symbol: " + alterSymbol;
+        const std::string msg = "[maiacore] Unknown alter symbol: " + alterSymbol;
         throw std::runtime_error(msg);
     }
 

@@ -35,7 +35,7 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
 
     // Error checking:
     if(pitchSize > 4) {
-        const std::string msg = "The pitch '" + pitch + "' have a invalid length: " + std::to_string(pitchSize);
+        const std::string msg = "[maiacore] The pitch '" + pitch + "' have a invalid length: " + std::to_string(pitchSize);
         throw std::runtime_error(msg); 
     }
 
@@ -44,7 +44,7 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
 
     // Error checking:
     if(!foundPitch && !pitch.empty()) {
-        const std::string msg = "Unknown diatonc pitch: " + diatonicPitch;
+        const std::string msg = "[maiacore] Unknown diatonc pitch: " + diatonicPitch;
         throw std::runtime_error(msg);  
     }
 
@@ -55,7 +55,7 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
     const int octave = (isFullPitch) ? (int)pitch.back() - 48 : 4;
 
     if (octave > 9) {
-        throw std::runtime_error("Invalid octave value");
+        throw std::runtime_error("[maiacore] Invalid octave value");
     }
 
     const size_t pitchClassSize = pitchClass.size();
@@ -67,7 +67,7 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
 
     bool foundAlterSymbol = std::find(c_alterSymbol.begin(), c_alterSymbol.end(), _alterSymbol) != c_alterSymbol.end();
     if(!foundAlterSymbol && !_alterSymbol.empty()) { 
-        const std::string msg = "Unknown alter symbol: " + _alterSymbol;
+        const std::string msg = "[maiacore] Unknown alter symbol: " + _alterSymbol;
         throw std::runtime_error(msg);  
     }
     _writtenPitchClass = pitchClass;
@@ -90,7 +90,7 @@ Note::Note(const int midiNumber, const std::string& accType, const Duration dura
     Note(Helper::midiNote2pitch(midiNumber, accType), duration, isNoteOn, inChord, transposeDiatonic, transposeChromatic, divisionsPerQuarterNote)
 {
     if (midiNumber > 127) {
-        throw std::runtime_error("Invalid MIDI number");
+        throw std::runtime_error("[maiacore] Invalid MIDI number");
     }
 }
 
@@ -739,7 +739,7 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnhamonicPitch) const
         case hash("B#9"):  enharmonicPitch = (alternativeEnhamonicPitch) ? "Dbb10" : "C10";  break;
         case hash("Bx9"):  enharmonicPitch = (alternativeEnhamonicPitch) ? "Db10" : "C#10";  break;
 
-        default: throw std::runtime_error("Unknown note pitchClass"); break;
+        default: throw std::runtime_error("[maiacore] Unknown note pitchClass"); break;
     }
 
     return enharmonicPitch;
@@ -804,7 +804,7 @@ void Note::setPitch(const std::string& pitch){
 
     // Error checking:
     if(pitchSize > 4) {
-        const std::string msg = "Invalid pitchClass length: " + std::to_string(pitchSize);
+        const std::string msg = "[maiacore] Invalid pitchClass length: " + std::to_string(pitchSize);
         throw std::runtime_error(msg);
     }
 
@@ -813,7 +813,7 @@ void Note::setPitch(const std::string& pitch){
 
     // Error checking:
     if(!foundPitch && !pitch.empty()) {
-        const std::string msg = "Unknown diatonc pitch: " + diatonicPitch;
+        const std::string msg = "[maiacore] Unknown diatonc pitch: " + diatonicPitch;
         throw std::runtime_error(msg);
     }
 
@@ -832,7 +832,7 @@ void Note::setPitch(const std::string& pitch){
 
     bool foundAlterSymbol = std::find(c_alterSymbol.begin(), c_alterSymbol.end(), _alterSymbol) != c_alterSymbol.end();
     if(!foundAlterSymbol && !_alterSymbol.empty()) {
-        const std::string msg = "Unknown alter symbol: " + _alterSymbol;
+        const std::string msg = "[maiacore] Unknown alter symbol: " + _alterSymbol;
         throw std::runtime_error(msg);
     }
     _writtenPitchClass = pitchClass;

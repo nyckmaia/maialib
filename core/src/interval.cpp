@@ -15,7 +15,7 @@ Interval::Interval(const Note& note_A, const Note& note_B) :
 {
     // Error checking:
     if (!note_A.isNoteOn() || !note_B.isNoteOn()) {
-        throw std::runtime_error("Cannot compute the interval between a note and a REST");
+        throw std::runtime_error("[maiacore] Cannot compute the interval between a note and a REST");
     }
 
     _note.resize(2);
@@ -34,7 +34,7 @@ void Interval::setNotes(const Note& note_A, const Note& note_B)
 {
     // Error checking:
     if (!note_A.isNoteOn() || !note_B.isNoteOn()) {
-        throw std::runtime_error("Cannot compute the interval between a note and a rest");
+        throw std::runtime_error("[maiacore] Cannot compute the interval between a note and a rest");
     }
 
     _note.clear();
@@ -48,7 +48,7 @@ void Interval::setNotes(const Note& note_A, const Note& note_B)
 std::pair<std::string, bool> Interval::analyse() const
 {
     // Get basic data to compute the interval name
-    const int diatonicInterval = getDiatonicInterval(true);
+    const int diatonicInterval = getDiatonicInterval(true, true);
     const int numSemitones = getNumSemitones(true);
 
     // Use 2 switchs to combine 'diatonicSteps' with 'numSemitones'
@@ -179,7 +179,7 @@ std::pair<std::string, bool> Interval::analyse() const
             break;
 
         default:
-            throw std::runtime_error("Unknown 'diatonicInterval' value: " + std::to_string(diatonicInterval));
+            throw std::runtime_error("[maiacore] Unknown 'diatonicInterval' value: " + std::to_string(diatonicInterval));
     }
 
     // Only to avoid the 'no-return' compiler warning
@@ -189,16 +189,6 @@ std::pair<std::string, bool> Interval::analyse() const
 std::string Interval::getName() const
 {
     return analyse().first;
-}
-
-int Interval::getValue(const bool absoluteValue) const
-{
-    if (isAscendant()) {
-        return getDiatonicSteps(absoluteValue) + 1;
-    }
-
-    const int x = getDiatonicSteps(absoluteValue) - 1;
-    return (absoluteValue) ? abs(x) : x;
 }
 
 int Interval::getNumSemitones(const bool absoluteValue) const
@@ -213,9 +203,14 @@ int Interval::getNumOctaves(const bool absoluteValue) const
     return (absoluteValue) ? abs(diff) : diff;
 }
 
-int Interval::getDiatonicInterval(const bool absoluteValue) const
+int Interval::getDiatonicInterval(const bool useSingleOctave, const bool absoluteValue) const
 {
-    return getValue(absoluteValue) % 7;
+    if (isAscendant()) {
+        return getDiatonicSteps(useSingleOctave, absoluteValue) + 1;
+    }
+
+    const int x = getDiatonicSteps(useSingleOctave, absoluteValue) - 1;
+    return (absoluteValue) ? abs(x) : x;
 }
 
 int Interval::getDiatonicSteps(const bool useSingleOctave, const bool absoluteValue) const
@@ -255,7 +250,7 @@ int Interval::getPitchStepInterval() const
         case hash("G"): diatonicScale = &c_G_diatonicScale; break;
         case hash("A"): diatonicScale = &c_A_diatonicScale; break;
         case hash("B"): diatonicScale = &c_B_diatonicScale; break;
-        default: throw std::runtime_error("Invalid diatonic pitch step"); break;
+        default: throw std::runtime_error("[maiacore] Invalid diatonic pitch step"); break;
     }
 
     // Compute the distance between the interval first and second pitch step
@@ -272,12 +267,12 @@ std::vector<Note> Interval::getNotes() const
 
 bool Interval::isAscendant() const
 {
-    return (_numSemitones <= 0) ? false : true;
+    return (_numSemitones < 0) ? false : true;
 }
 
 bool Interval::isDescendant() const
 {
-    return (_numSemitones >= 0) ? false : true;
+    return (_numSemitones > 0) ? false : true;
 }
 
 bool Interval::isTonal() const
@@ -330,7 +325,7 @@ bool Interval::isMinorNinth() const
     const int diatonicInterval = getDiatonicInterval(true);
     const int numSemitones = getNumSemitones(true);
 
-    if (diatonicInterval == 2 && numSemitones >= 13) { return true; }
+    if (diatonicInterval == 2 && (numSemitones % 13) == 0) { return true; }
     
     return false;
 }
@@ -340,7 +335,7 @@ bool Interval::isMajorNinth() const
     const int diatonicInterval = getDiatonicInterval(true);
     const int numSemitones = getNumSemitones(true);
 
-    if (diatonicInterval == 2 && numSemitones >= 14) { return true; }
+    if (diatonicInterval == 2 && (numSemitones % 14) == 0) { return true; }
     
     return false;
 }
@@ -350,7 +345,7 @@ bool Interval::isPerfectEleventh() const
     const int diatonicInterval = getDiatonicInterval(true);
     const int numSemitones = getNumSemitones(true);
 
-    if (diatonicInterval == 4 && numSemitones >= 17) { return true; }
+    if (diatonicInterval == 4 && (numSemitones % 17) == 0) { return true; }
     
     return false;
 }
@@ -360,7 +355,7 @@ bool Interval::isSharpEleventh() const
     const int diatonicInterval = getDiatonicInterval(true);
     const int numSemitones = getNumSemitones(true);
 
-    if (diatonicInterval == 4 && numSemitones >= 18) { return true; }
+    if (diatonicInterval == 4 && (numSemitones % 18) == 0) { return true; }
     
     return false;
 }
@@ -370,7 +365,7 @@ bool Interval::isMinorThirdteenth() const
     const int diatonicInterval = getDiatonicInterval(true);
     const int numSemitones = getNumSemitones(true);
 
-    if (diatonicInterval == 6 && numSemitones >= 20) { return true; }
+    if (diatonicInterval == 6 && (numSemitones % 20) == 0) { return true; }
     
     return false;
 }
@@ -380,7 +375,17 @@ bool Interval::isMajorThirdteenth() const
     const int diatonicInterval = getDiatonicInterval(true);
     const int numSemitones = getNumSemitones(true);
 
-    if (diatonicInterval == 6 && numSemitones >= 21) { return true; }
+    if (diatonicInterval == 6 && (numSemitones % 21) == 0) { return true; }
     
     return false;
+}
+
+bool Interval::isSimple() const
+{
+    return (_numSemitones <= 12) ? true : false; 
+}
+
+bool Interval::isCompound() const
+{
+    return !isSimple();
 }

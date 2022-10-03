@@ -132,7 +132,6 @@ void ChordClass(py::module &m) {
 
     cls.def("getRoot", &Chord::getRoot, py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getName", &Chord::getName,
-            py::arg("useEnharmonicName") = true,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getBassNote", &Chord::getBassNote);
     cls.def("getNotes", &Chord::getNotes);

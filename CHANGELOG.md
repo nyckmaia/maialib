@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.0.16] - 2022-MM-AA
+## [v0.0.16] - 2022-10-03
 ### API Changes
 - `Chord::getStackedChord()` -> `Chord::getOpenStackChord()`
 
@@ -15,7 +15,6 @@ All notable changes to this project will be documented in this file.
     - `.getEnharmonicNote()`
     - `.getEnharmonicNotes()`
 - `Interval Class`:
-    - `.getValue()`
     - `.setNotes()`
     - `.getPitchStepInterval()`
     - `.isMinorThird()`
@@ -32,6 +31,9 @@ All notable changes to this project will be documented in this file.
     - `.isSharpEleventh()`
     - `.isMinorThirdteenth()`
     - `.isMajorThirdteenth()`
+    - `.isSimple()`
+    - `.isCompound()`
+    - Oveload operator `<`
 - `Helper Class`:
     - `.midiNote2octave()`
     - `.notes2intervals()`
@@ -51,6 +53,7 @@ All notable changes to this project will be documented in this file.
 - `Chord::stackInThirds()` now can use enharmony to compute the stacked chord
 - `Interval::getDiatonicSteps()` added optional argument `useSingleOctave`
 - `Chord::getMIDIIntervals()` added optional argument `firstNoteAsReference`
+- Now every maiacore C++ exception message starts with `[maiacore]` prefix
 
 ### Fixed
 - `Note::Note()` Prevent invalid user type octaves and out of range MIDI numbers
