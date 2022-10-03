@@ -121,6 +121,8 @@ public:
     bool isDominantSeventhChord();
     bool isHalfDiminishedChord();
 
+    bool isSorted() const;
+
     bool isTonal(std::function<bool(const Chord& chord)> model = nullptr);
 
     std::vector<int> getMIDIIntervals(const bool firstNoteAsReference = false) const;

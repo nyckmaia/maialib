@@ -1031,6 +1031,13 @@ bool Chord::isTonal(std::function<bool(const Chord& chord)> model)
     return true;
 }
 
+bool Chord::isSorted() const
+{
+    return std::is_sorted(_originalNotes.begin(), _originalNotes.end(), [](const Note& lh, const Note& rh){
+        return lh.getMIDINumber() <= rh.getMIDINumber();
+    });
+}
+
 bool Chord::haveMinorThird()
 {   
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 

@@ -44,6 +44,7 @@ All notable changes to this project will be documented in this file.
     - `.getStackedHeaps()`
     - `.getOpenStackIntervals()`
     - `.getCloseStackIntervals()`
+    - `.isSorted()`
 - New Unit Tests:
     - `Note::getEnharmonicPitch`
     - `Note::getEnharmonicPitches()`
