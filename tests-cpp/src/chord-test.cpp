@@ -12,7 +12,7 @@ TEST(getName, majorTriad01)
 
 TEST(getName, majorTriad02)
 {
-    Chord chord({"C4", "D7", "E4"});
+    Chord chord({"C4", "D7", "G6", "E4"});
     EXPECT_EQ(chord.getName(), "C9");
 }
 
@@ -70,57 +70,81 @@ TEST(isTonal, notTonalMinorChord01)
     EXPECT_EQ(chord.isTonal(), false);
 }
 
-// TEST(getOpenStackChord, majorAndMinorChords)
-// {
-//     // Exact the same chords
-//     Chord chord01_test({"C4", "E4", "G4", "B4"});
-//     Chord chord01_answ({"C4", "E4", "G4", "B4"});
-//     EXPECT_EQ(chord01_test.getOpenStackChord().getNotes(), chord01_answ.getNotes());
+TEST(getCloseStackChord, majorAndMinorChords)
+{
+    // Exact the same chords
+    Chord chord01_test({"C4", "E4", "G4", "B4"});
+    Chord chord01_answ({"C4", "E4", "G4", "B4"});
+    EXPECT_EQ(chord01_test.getCloseStackChord().getNotes(), chord01_answ.getNotes());
 
-//     // Different note sequency
-//     Chord chord02_test({"Eb4", "C4", "B4", "G4"});
-//     Chord chord02_answ({"C4", "Eb4", "G4", "B4"});
-//     EXPECT_EQ(chord02_test.getOpenStackChord().getNotes(), chord02_answ.getNotes());
+    // Different note sequency
+    Chord chord02_test({"Eb4", "C4", "B4", "G4"});
+    Chord chord02_answ({"C4", "Eb4", "G4", "B4"});
+    EXPECT_EQ(chord02_test.getCloseStackChord().getNotes(), chord02_answ.getNotes());
 
-//     // Both different note sequency and octave
-//     Chord chord03_test({"Eb3", "C5", "B2", "G9"});
-//     Chord chord03_answ({"C4", "Eb4", "G4", "B4"});
-//     EXPECT_EQ(chord03_test.getOpenStackChord().getNotes(), chord03_answ.getNotes());
-// }
+    // Both different note sequency and octave
+    Chord chord03_test({"Eb3", "C5", "B2", "G9"});
+    Chord chord03_answ({"C4", "Eb4", "G4", "B4"});
+    EXPECT_EQ(chord03_test.getCloseStackChord().getNotes(), chord03_answ.getNotes());
+}
 
-// TEST(getOpenStackChord, complexChords)
-// {
-//     // Inverted major-seven-nine (5th ommited) chord
-//     Chord chord01_test({"D2", "C4", "E5", "B4"});
-//     Chord chord01_answ({"C4", "E4", "B4", "D5"});
-//     EXPECT_EQ(chord01_test.getOpenStackChord().getNotes(), chord01_answ.getNotes());
+TEST(getCloseStackChord, complexChords)
+{
+    // // Inverted major-seven-nine (5th ommited) chord
+    // Chord chord01_test({"D2", "C4", "E5", "B4"});
+    // Chord chord01_answ({"C4", "E4", "B4", "D5"});
+    
+    // std::string test01;
+    // std::string answer01;
 
-//     // Inverted minor-seven-nine (5th ommited) chord
-//     Chord chord02_test({"F2", "E5", "D3", "C4"});
-//     Chord chord02_answ({"D4", "F4", "C5", "E5"});
-//     EXPECT_EQ(chord02_test.getOpenStackChord().getNotes(), chord02_answ.getNotes());
+    // for (int i = 0; i < chord01_answ.size(); i++) {
+    //     test01 += chord01_test.getCloseStackChord().getNotes()[i].getPitch() + " ";
+    //     answer01 += chord01_answ.getNotes()[i].getPitch() + " ";
+    // }
 
-//     // Inverted minor-seven-eleven (5th ommited) chord
-//     Chord chord03_test({"F2", "G5", "D3", "C4"});
-//     Chord chord03_answ({"D4", "F4", "C5", "G5"});
-//     EXPECT_EQ(chord03_test.getOpenStackChord().getNotes(), chord03_answ.getNotes());
+    // EXPECT_EQ(test01, answer01);
 
-//     // Four notes chromatic cluster
-//     Chord chord04_test({"C4", "C#4", "D4", "D#4"});
-//     Chord chord04_answ({"C4", "D#4", "C#5", "D5"}); // [C4, Eb4, <G4>, Bx4, D5] => Cm(7aug)9
+    // // Inverted minor-seven-nine (5th ommited) chord
+    // Chord chord02_test({"F2", "E5", "D3", "C4"});
+    // Chord chord02_answ({"D4", "F4", "C5", "E5"});
+    // std::string test02;
+    // std::string answer02;
 
-//     std::string test04Str = "size: " + std::to_string(chord04_test.getOpenStackChord().size()) + " | ";
-//     for (const auto& note : chord04_test.getOpenStackChord().getNotes()) {
-//         test04Str.append(note.getPitch());
-//     }
+    // for (int i = 0; i < chord02_answ.size(); i++) {
+    //     test02 += chord02_test.getCloseStackChord().getNotes()[i].getPitch() + " ";
+    //     answer02 += chord02_answ.getNotes()[i].getPitch() + " ";
+    // }
 
-//     std::string answ04Str = "size: " + std::to_string(chord04_answ.getOpenStackChord().size()) + " | ";
-//     for (const auto& note : chord04_answ.getOpenStackChord().getNotes()) {
-//         answ04Str.append(note.getPitch());
-//     }
+    // EXPECT_EQ(test02, answer02);
 
-//     EXPECT_EQ(test04Str, answ04Str);
-// }
+    // // Inverted minor-seven-eleven (5th ommited) chord
+    // Chord chord03_test({"F2", "G5", "D3", "C4"});
+    // Chord chord03_answ({"D4", "F4", "C5", "G5"});
+    // std::string test03;
+    // std::string answer03;
+
+    // for (int i = 0; i < chord03_answ.size(); i++) {
+    //     test03 += chord03_test.getCloseStackChord().getNotes()[i].getPitch() + " ";
+    //     answer03 += chord03_answ.getNotes()[i].getPitch() + " ";
+    // }
+
+    // EXPECT_EQ(test03, answer03);
+
+    // Four notes chromatic cluster
+    Chord chord04_test({"C4", "C#4", "D4", "D#4"});
+    Chord chord04_answ({"C4", "Eb4", "Bx4", "D5"}); // [C4, Eb4, <G4>, Bx4, D5] => Cm(7aug)9
+    EXPECT_EQ(chord04_test.getCloseStackChord().getNotes(), chord04_answ.getNotes());
+
+    std::string test04;
+    std::string answer04;
+
+    for (int i = 0; i < chord04_answ.size(); i++) {
+        test04 += chord04_test.getCloseStackChord().getNotes()[i].getPitch() + " ";
+        answer04 += chord04_answ.getNotes()[i].getPitch() + " ";
+    }
+
+    EXPECT_EQ(test04, answer04);
+}
 
 TEST(chordOperator, plus)
 {

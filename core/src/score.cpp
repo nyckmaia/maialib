@@ -11,7 +11,7 @@ Score::Score(const std::initializer_list<std::string>& partsName, const int numM
     _lcmDivisionsPerQuarterNote(0)
 {
     if (_numParts == 0) {
-        throw std::runtime_error("You MUST provide at least one part name");
+        throw std::runtime_error("[maiacore] You MUST provide at least one part name");
     }
 
     for (const auto& part : partsName) {
@@ -29,7 +29,7 @@ Score::Score(const std::vector<std::string>& partsName, const int numMeasures) :
     _lcmDivisionsPerQuarterNote(0)
 {
     if (_numParts == 0) {
-        throw std::runtime_error("You MUST provide at least one part name");
+        throw std::runtime_error("[maiacore] You MUST provide at least one part name");
     }
 
     for (const auto& part : partsName) {
@@ -481,7 +481,7 @@ void Score::loadXMLFile(const std::string& filePath)
                 case 1: note.setSingleDot(); break;
                 case 2: note.setDoubleDot(); break;
                 default:
-                    throw std::runtime_error("More than 2 notes in a note");
+                    throw std::runtime_error("[maiacore] More than 2 dots in a note");
                     break;
                 }
 
@@ -2131,7 +2131,7 @@ void Score::setRepeat(int measureStart, int measureEnd)
 
     // Error checking
     if (measureEnd == 0) {
-        const std::string msg = "'measureEnd' MUST BE greater than 0";
+        const std::string msg = "[maiacore] 'measureEnd' MUST BE greater than 0";
         throw std::runtime_error(msg);
     }
 

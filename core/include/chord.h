@@ -5,6 +5,7 @@
 #include <utility> // std::pair
 #include <tuple> // std::tuple
 #include <algorithm> // std::rotate
+#include <set> // std::set
 
 #include "note.h"
 #include "interval.h"
@@ -57,12 +58,11 @@ private:
     bool _isStackedInThirds;
 
     void computeIntervals();
-    std::string enharmonicName();
-    std::string nonEnharmonicName() const;
     void stackInThirds(const bool enharmonyNotes = false);
     HeapData stackInThirdsTemplateMatch(const Heap& heap) const;
     std::vector<Heap> computeEnharmonicUnitsGroups() const;
     std::vector<Heap> computeEnharmonicHeaps(const std::vector<Heap>& heaps) const;
+    std::vector<Heap> removeHeapsWithDuplicatedPitchSteps(std::vector<Heap>& heaps) const;
     std::vector<Heap> computeAllHeapInversions(Heap& heap) const;
     std::vector<Heap> filterTertianHeapsOnly(const std::vector<Heap>& heaps) const;
     void computeCloseStack(const std::vector<Note>& openStack);
@@ -95,7 +95,7 @@ public:
     Note& getNote(int noteIndex);
     const Note& getNote(const int noteIndex) const;
     const Note& getRoot();
-    std::string getName(const bool useEnharmonicName = true);
+    std::string getName();
     const Note& getBassNote();
     const std::vector<Note>& getNotes() const;
 
