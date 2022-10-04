@@ -240,34 +240,48 @@ $(document).ready(function(){initNavTree('note_8h_source.html',''); initResizabl
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>    <span class="keywordtype">bool</span> isTransposed() <span class="keyword">const</span>;</div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span>    <span class="keywordtype">bool</span> isGraceNote() <span class="keyword">const</span>;</div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span> </div>
-<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    <span class="keywordtype">void</span> transpose(<span class="keyword">const</span> <span class="keywordtype">int</span> semitones, <span class="keyword">const</span> std::string&amp; accType = MUSIC_XML::ACCIDENT::NONE);</div>
-<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span> </div>
-<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    <span class="keyword">const</span> std::string toXML(<span class="keyword">const</span> <span class="keywordtype">size_t</span> instrumentId = 1, <span class="keyword">const</span> <span class="keywordtype">int</span> identSize = 2) <span class="keyword">const</span>;</div>
-<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span> </div>
-<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    <span class="keywordtype">bool</span> operator &lt; (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>        <span class="keywordflow">return</span> (_midiNumber &lt; otherNote.getMIDINumber());</div>
-<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span>    }</div>
-<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span> </div>
-<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>    <span class="keywordtype">bool</span> operator &gt; (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span>        <span class="keywordflow">return</span> (_midiNumber &gt; otherNote.getMIDINumber());</div>
-<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    }</div>
-<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span> </div>
-<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>    <span class="keywordtype">bool</span> operator &lt;= (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span>        <span class="keywordflow">return</span> (_midiNumber &lt;= otherNote.getMIDINumber());</div>
-<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>    }</div>
+<div class="line"><a id="l00193" name="l00193"></a><span class="lineno">  193</span>    <span class="comment">// Colocar na documentacao que caso use alternativeEnhamonicPitch</span></div>
+<div class="line"><a id="l00194" name="l00194"></a><span class="lineno">  194</span>    <span class="comment">// Ele vai tentar skipTwoDiatonicSteps exemplo D# -&gt; Fbb OU</span></div>
+<div class="line"><a id="l00195" name="l00195"></a><span class="lineno">  195</span>    <span class="comment">// Ele tambem pode usar 1 diatonic step com dobrado bemol ou dobrado sustenido: C# -&gt; Bx</span></div>
+<div class="line"><a id="l00196" name="l00196"></a><span class="lineno">  196</span>    <span class="comment">// Notas com pitchClass sem acidentes como &#39;C&#39; serão enharmonizadas por default sempre diatonicamente pra cima: Dbb</span></div>
+<div class="line"><a id="l00197" name="l00197"></a><span class="lineno">  197</span>    std::string getEnharmonicPitch(<span class="keyword">const</span> <span class="keywordtype">bool</span> alternativeEnhamonicPitch = <span class="keyword">false</span>) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00198" name="l00198"></a><span class="lineno">  198</span>    std::vector&lt;std::string&gt; getEnharmonicPitches(<span class="keyword">const</span> <span class="keywordtype">bool</span> includeCurrentPitch = <span class="keyword">false</span>) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00199" name="l00199"></a><span class="lineno">  199</span> </div>
+<div class="line"><a id="l00200" name="l00200"></a><span class="lineno">  200</span>    <a class="code hl_class" href="class_note.html">Note</a> getEnharmonicNote(<span class="keyword">const</span> <span class="keywordtype">bool</span> alternativeEnhamonicPitch = <span class="keyword">false</span>) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00201" name="l00201"></a><span class="lineno">  201</span>    std::vector&lt;Note&gt; getEnharmonicNotes(<span class="keyword">const</span> <span class="keywordtype">bool</span> includeCurrentPitch = <span class="keyword">false</span>) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00202" name="l00202"></a><span class="lineno">  202</span> </div>
+<div class="line"><a id="l00203" name="l00203"></a><span class="lineno">  203</span>    <span class="comment">// Colocar praticamente a mesma documentaçao do método &#39;getEnharmonicPitch()&#39;</span></div>
+<div class="line"><a id="l00204" name="l00204"></a><span class="lineno">  204</span>    <span class="keywordtype">void</span> toEnharmonicPitch(<span class="keyword">const</span> <span class="keywordtype">bool</span> alternativeEnhamonicPitch = <span class="keyword">false</span>);</div>
+<div class="line"><a id="l00205" name="l00205"></a><span class="lineno">  205</span>    <span class="keywordtype">float</span> getFrequency() <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00206" name="l00206"></a><span class="lineno">  206</span> </div>
+<div class="line"><a id="l00207" name="l00207"></a><span class="lineno">  207</span>    <span class="keywordtype">void</span> transpose(<span class="keyword">const</span> <span class="keywordtype">int</span> semitones, <span class="keyword">const</span> std::string&amp; accType = MUSIC_XML::ACCIDENT::NONE);</div>
 <div class="line"><a id="l00208" name="l00208"></a><span class="lineno">  208</span> </div>
-<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>    <span class="keywordtype">bool</span> operator &gt;= (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span>        <span class="keywordflow">return</span> (_midiNumber &gt;= otherNote.getMIDINumber());</div>
-<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    }</div>
-<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span> </div>
-<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>    <span class="keywordtype">bool</span> operator == (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span>        <span class="keywordflow">return</span> getPitch() == otherNote.getPitch();</div>
-<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>    }</div>
-<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span> </div>
-<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>    <span class="keywordtype">bool</span> operator != (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
-<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span>        <span class="keywordflow">return</span> getPitch() != otherNote.getPitch();</div>
-<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    }</div>
-<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>};</div>
+<div class="line"><a id="l00209" name="l00209"></a><span class="lineno">  209</span>    <span class="keyword">const</span> std::string toXML(<span class="keyword">const</span> <span class="keywordtype">size_t</span> instrumentId = 1, <span class="keyword">const</span> <span class="keywordtype">int</span> identSize = 2) <span class="keyword">const</span>;</div>
+<div class="line"><a id="l00210" name="l00210"></a><span class="lineno">  210</span> </div>
+<div class="line"><a id="l00211" name="l00211"></a><span class="lineno">  211</span>    <span class="keywordtype">bool</span> operator &lt; (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00212" name="l00212"></a><span class="lineno">  212</span>        <span class="keywordflow">return</span> (_midiNumber &lt; otherNote.getMIDINumber());</div>
+<div class="line"><a id="l00213" name="l00213"></a><span class="lineno">  213</span>    }</div>
+<div class="line"><a id="l00214" name="l00214"></a><span class="lineno">  214</span> </div>
+<div class="line"><a id="l00215" name="l00215"></a><span class="lineno">  215</span>    <span class="keywordtype">bool</span> operator &gt; (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00216" name="l00216"></a><span class="lineno">  216</span>        <span class="keywordflow">return</span> (_midiNumber &gt; otherNote.getMIDINumber());</div>
+<div class="line"><a id="l00217" name="l00217"></a><span class="lineno">  217</span>    }</div>
+<div class="line"><a id="l00218" name="l00218"></a><span class="lineno">  218</span> </div>
+<div class="line"><a id="l00219" name="l00219"></a><span class="lineno">  219</span>    <span class="keywordtype">bool</span> operator &lt;= (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00220" name="l00220"></a><span class="lineno">  220</span>        <span class="keywordflow">return</span> (_midiNumber &lt;= otherNote.getMIDINumber());</div>
+<div class="line"><a id="l00221" name="l00221"></a><span class="lineno">  221</span>    }</div>
+<div class="line"><a id="l00222" name="l00222"></a><span class="lineno">  222</span> </div>
+<div class="line"><a id="l00223" name="l00223"></a><span class="lineno">  223</span>    <span class="keywordtype">bool</span> operator &gt;= (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00224" name="l00224"></a><span class="lineno">  224</span>        <span class="keywordflow">return</span> (_midiNumber &gt;= otherNote.getMIDINumber());</div>
+<div class="line"><a id="l00225" name="l00225"></a><span class="lineno">  225</span>    }</div>
+<div class="line"><a id="l00226" name="l00226"></a><span class="lineno">  226</span> </div>
+<div class="line"><a id="l00227" name="l00227"></a><span class="lineno">  227</span>    <span class="keywordtype">bool</span> operator == (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00228" name="l00228"></a><span class="lineno">  228</span>        <span class="keywordflow">return</span> getPitch() == otherNote.getPitch();</div>
+<div class="line"><a id="l00229" name="l00229"></a><span class="lineno">  229</span>    }</div>
+<div class="line"><a id="l00230" name="l00230"></a><span class="lineno">  230</span> </div>
+<div class="line"><a id="l00231" name="l00231"></a><span class="lineno">  231</span>    <span class="keywordtype">bool</span> operator != (<span class="keyword">const</span> <a class="code hl_class" href="class_note.html">Note</a>&amp; otherNote)<span class="keyword"> const </span>{</div>
+<div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>        <span class="keywordflow">return</span> getPitch() != otherNote.getPitch();</div>
+<div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>    }</div>
+<div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>};</div>
 <div class="ttc" id="aclass_note_html"><div class="ttname"><a href="class_note.html">Note</a></div><div class="ttdef"><b>Definition:</b> note.h:26</div></div>
 <div class="ttc" id="aclass_note_html_a469a9c7cc815626d43e901a71d5494bb"><div class="ttname"><a href="class_note.html#a469a9c7cc815626d43e901a71d5494bb">Note::setDurationTicks</a></div><div class="ttdeci">void setDurationTicks(int durationTicks)</div><div class="ttdoc">Set the note duration ticks.</div></div>
 <div class="ttc" id="aclass_note_html_a5e9b1eef1992159f23c1744326c0a751"><div class="ttname"><a href="class_note.html#a5e9b1eef1992159f23c1744326c0a751">Note::setOctave</a></div><div class="ttdeci">void setOctave(int octave)</div><div class="ttdoc">Set the note octave.</div></div>

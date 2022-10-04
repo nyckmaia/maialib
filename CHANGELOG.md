@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.0.17] - 2022-MM-DD
+### API Changes
+### New Features
+### Improved
+### Fixed
+
+-------------------------
+
 ## [v0.0.16] - 2022-10-03
 ### API Changes
 - `Chord::getStackedChord()` -> `Chord::getOpenStackChord()`

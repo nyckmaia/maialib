@@ -8,6 +8,7 @@ var annotated_dup =
     [ "Interval", "class_interval.html", null ],
     [ "Measure", "class_measure.html", null ],
     [ "Note", "class_note.html", "class_note" ],
+    [ "NoteData", "struct_note_data.html", null ],
     [ "Part", "class_part.html", null ],
     [ "Score", "class_score.html", "class_score" ],
     [ "ScoreCollection", "class_score_collection.html", null ],

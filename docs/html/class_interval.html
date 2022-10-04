@@ -92,12 +92,18 @@ $(document).ready(function(){initNavTree('class_interval.html',''); initResizabl
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:ac632a45872d919e1668d16d8ed127eae"><td class="memItemLeft" align="right" valign="top"><a id="ac632a45872d919e1668d16d8ed127eae" name="ac632a45872d919e1668d16d8ed127eae"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Interval</b> (const std::string &amp;pitch_A, const std::string &amp;pitch_B)</td></tr>
-<tr class="separator:ac632a45872d919e1668d16d8ed127eae"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9799786e2cbfe2e88e09717d3e223951"><td class="memItemLeft" align="right" valign="top"><a id="a9799786e2cbfe2e88e09717d3e223951" name="a9799786e2cbfe2e88e09717d3e223951"></a>
+&#160;</td><td class="memItemRight" valign="bottom"><b>Interval</b> (const std::string &amp;pitch_A=&quot;C4&quot;, const std::string &amp;pitch_B=&quot;C4&quot;)</td></tr>
+<tr class="separator:a9799786e2cbfe2e88e09717d3e223951"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aebc7c823d1433d0a924a3d1f0e09476d"><td class="memItemLeft" align="right" valign="top"><a id="aebc7c823d1433d0a924a3d1f0e09476d" name="aebc7c823d1433d0a924a3d1f0e09476d"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Interval</b> (const <a class="el" href="class_note.html">Note</a> &amp;note_A, const <a class="el" href="class_note.html">Note</a> &amp;note_B)</td></tr>
 <tr class="separator:aebc7c823d1433d0a924a3d1f0e09476d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac948ef8c214c6dced560538839027bfa"><td class="memItemLeft" align="right" valign="top"><a id="ac948ef8c214c6dced560538839027bfa" name="ac948ef8c214c6dced560538839027bfa"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setNotes</b> (const std::string &amp;pitch_A, const std::string &amp;pitch_B)</td></tr>
+<tr class="separator:ac948ef8c214c6dced560538839027bfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a706ab003f21b56befeb4242da333fde2"><td class="memItemLeft" align="right" valign="top"><a id="a706ab003f21b56befeb4242da333fde2" name="a706ab003f21b56befeb4242da333fde2"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>setNotes</b> (const <a class="el" href="class_note.html">Note</a> &amp;note_A, const <a class="el" href="class_note.html">Note</a> &amp;note_B)</td></tr>
+<tr class="separator:a706ab003f21b56befeb4242da333fde2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff0614f7943d772a068aabb75331fd1e"><td class="memItemLeft" align="right" valign="top"><a id="aff0614f7943d772a068aabb75331fd1e" name="aff0614f7943d772a068aabb75331fd1e"></a>
 std::string&#160;</td><td class="memItemRight" valign="bottom"><b>getName</b> () const</td></tr>
 <tr class="separator:aff0614f7943d772a068aabb75331fd1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -107,12 +113,15 @@ int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumSemitones</b> (c
 <tr class="memitem:ab406b1cad8950ee952b9529011bb19df"><td class="memItemLeft" align="right" valign="top"><a id="ab406b1cad8950ee952b9529011bb19df" name="ab406b1cad8950ee952b9529011bb19df"></a>
 int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumOctaves</b> (const bool absoluteValue=false) const</td></tr>
 <tr class="separator:ab406b1cad8950ee952b9529011bb19df"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a6dbadd3175e092394f1811a8b1eff5ae"><td class="memItemLeft" align="right" valign="top"><a id="a6dbadd3175e092394f1811a8b1eff5ae" name="a6dbadd3175e092394f1811a8b1eff5ae"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getDiatonicInterval</b> (const bool absoluteValue=false) const</td></tr>
-<tr class="separator:a6dbadd3175e092394f1811a8b1eff5ae"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:adccba2df2d74d467f8d81cc4f8dcaae4"><td class="memItemLeft" align="right" valign="top"><a id="adccba2df2d74d467f8d81cc4f8dcaae4" name="adccba2df2d74d467f8d81cc4f8dcaae4"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getDiatonicSteps</b> (const bool absoluteValue=false) const</td></tr>
-<tr class="separator:adccba2df2d74d467f8d81cc4f8dcaae4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab8bc769e50f9fd121d8694b9c231f30b"><td class="memItemLeft" align="right" valign="top"><a id="ab8bc769e50f9fd121d8694b9c231f30b" name="ab8bc769e50f9fd121d8694b9c231f30b"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>getDiatonicInterval</b> (const bool useSingleOctave=true, const bool absoluteValue=false) const</td></tr>
+<tr class="separator:ab8bc769e50f9fd121d8694b9c231f30b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a532f67cc2f4afeae2f3530108429bba4"><td class="memItemLeft" align="right" valign="top"><a id="a532f67cc2f4afeae2f3530108429bba4" name="a532f67cc2f4afeae2f3530108429bba4"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>getDiatonicSteps</b> (const bool useSingleOctave=true, const bool absoluteValue=false) const</td></tr>
+<tr class="separator:a532f67cc2f4afeae2f3530108429bba4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c808da88e0f8234d671fb135b6c7d5a"><td class="memItemLeft" align="right" valign="top"><a id="a2c808da88e0f8234d671fb135b6c7d5a" name="a2c808da88e0f8234d671fb135b6c7d5a"></a>
+int&#160;</td><td class="memItemRight" valign="bottom"><b>getPitchStepInterval</b> () const</td></tr>
+<tr class="separator:a2c808da88e0f8234d671fb135b6c7d5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a0fc9cef8ff577568893aa7d04dada6"><td class="memItemLeft" align="right" valign="top"><a id="a9a0fc9cef8ff577568893aa7d04dada6" name="a9a0fc9cef8ff577568893aa7d04dada6"></a>
 std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getNotes</b> () const</td></tr>
 <tr class="separator:a9a0fc9cef8ff577568893aa7d04dada6"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -125,6 +134,57 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDescendant</b> () c
 <tr class="memitem:a1acf35cbe55711d4f6bc81b206cd42df"><td class="memItemLeft" align="right" valign="top"><a id="a1acf35cbe55711d4f6bc81b206cd42df" name="a1acf35cbe55711d4f6bc81b206cd42df"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>isTonal</b> () const</td></tr>
 <tr class="separator:a1acf35cbe55711d4f6bc81b206cd42df"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a65fb05233e539a5b011d6941d81089c3"><td class="memItemLeft" align="right" valign="top"><a id="a65fb05233e539a5b011d6941d81089c3" name="a65fb05233e539a5b011d6941d81089c3"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMinorThird</b> () const</td></tr>
+<tr class="separator:a65fb05233e539a5b011d6941d81089c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab075cd13977b1ba0a687643943706679"><td class="memItemLeft" align="right" valign="top"><a id="ab075cd13977b1ba0a687643943706679" name="ab075cd13977b1ba0a687643943706679"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMajorThird</b> () const</td></tr>
+<tr class="separator:ab075cd13977b1ba0a687643943706679"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9d96c8a0ffdee8779bb0e2d72e50add"><td class="memItemLeft" align="right" valign="top"><a id="aa9d96c8a0ffdee8779bb0e2d72e50add" name="aa9d96c8a0ffdee8779bb0e2d72e50add"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedFifth</b> () const</td></tr>
+<tr class="separator:aa9d96c8a0ffdee8779bb0e2d72e50add"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa55daa022b207df95e7ba9f48bfba612"><td class="memItemLeft" align="right" valign="top"><a id="aa55daa022b207df95e7ba9f48bfba612" name="aa55daa022b207df95e7ba9f48bfba612"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isPerfectFifth</b> () const</td></tr>
+<tr class="separator:aa55daa022b207df95e7ba9f48bfba612"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a39dc7ddcdadf59f01c07d489c2739b33"><td class="memItemLeft" align="right" valign="top"><a id="a39dc7ddcdadf59f01c07d489c2739b33" name="a39dc7ddcdadf59f01c07d489c2739b33"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isAugmentedFifth</b> () const</td></tr>
+<tr class="separator:a39dc7ddcdadf59f01c07d489c2739b33"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a274a50c94b02aeeaec807bb1b0e860fb"><td class="memItemLeft" align="right" valign="top"><a id="a274a50c94b02aeeaec807bb1b0e860fb" name="a274a50c94b02aeeaec807bb1b0e860fb"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedSeventh</b> () const</td></tr>
+<tr class="separator:a274a50c94b02aeeaec807bb1b0e860fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7f4c782934eb1846507f537fd93f9eca"><td class="memItemLeft" align="right" valign="top"><a id="a7f4c782934eb1846507f537fd93f9eca" name="a7f4c782934eb1846507f537fd93f9eca"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMinorSeventh</b> () const</td></tr>
+<tr class="separator:a7f4c782934eb1846507f537fd93f9eca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a20d17b1bbb52927f84894dae97062628"><td class="memItemLeft" align="right" valign="top"><a id="a20d17b1bbb52927f84894dae97062628" name="a20d17b1bbb52927f84894dae97062628"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMajorSeventh</b> () const</td></tr>
+<tr class="separator:a20d17b1bbb52927f84894dae97062628"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae32e7fd47818f457a1f689f2d7fc0333"><td class="memItemLeft" align="right" valign="top"><a id="ae32e7fd47818f457a1f689f2d7fc0333" name="ae32e7fd47818f457a1f689f2d7fc0333"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMinorNinth</b> () const</td></tr>
+<tr class="separator:ae32e7fd47818f457a1f689f2d7fc0333"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c65b50197c66105a107c4defc9b5f04"><td class="memItemLeft" align="right" valign="top"><a id="a2c65b50197c66105a107c4defc9b5f04" name="a2c65b50197c66105a107c4defc9b5f04"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMajorNinth</b> () const</td></tr>
+<tr class="separator:a2c65b50197c66105a107c4defc9b5f04"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a75510ba1ea73a2519c131e9a4911e745"><td class="memItemLeft" align="right" valign="top"><a id="a75510ba1ea73a2519c131e9a4911e745" name="a75510ba1ea73a2519c131e9a4911e745"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isPerfectEleventh</b> () const</td></tr>
+<tr class="separator:a75510ba1ea73a2519c131e9a4911e745"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a37442b497577f706fce291ec655ec72e"><td class="memItemLeft" align="right" valign="top"><a id="a37442b497577f706fce291ec655ec72e" name="a37442b497577f706fce291ec655ec72e"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isSharpEleventh</b> () const</td></tr>
+<tr class="separator:a37442b497577f706fce291ec655ec72e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaec19df4648f76979bbb427ff1002367"><td class="memItemLeft" align="right" valign="top"><a id="aaec19df4648f76979bbb427ff1002367" name="aaec19df4648f76979bbb427ff1002367"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMinorThirdteenth</b> () const</td></tr>
+<tr class="separator:aaec19df4648f76979bbb427ff1002367"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a10cfdd73136b4921d9b9096c6fd60e62"><td class="memItemLeft" align="right" valign="top"><a id="a10cfdd73136b4921d9b9096c6fd60e62" name="a10cfdd73136b4921d9b9096c6fd60e62"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMajorThirdteenth</b> () const</td></tr>
+<tr class="separator:a10cfdd73136b4921d9b9096c6fd60e62"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aaa611df6435f748906eb38ee46465a12"><td class="memItemLeft" align="right" valign="top"><a id="aaa611df6435f748906eb38ee46465a12" name="aaa611df6435f748906eb38ee46465a12"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isSimple</b> () const</td></tr>
+<tr class="separator:aaa611df6435f748906eb38ee46465a12"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa9ca8ca3dfc9532fbbefb9f6989130c4"><td class="memItemLeft" align="right" valign="top"><a id="aa9ca8ca3dfc9532fbbefb9f6989130c4" name="aa9ca8ca3dfc9532fbbefb9f6989130c4"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isCompound</b> () const</td></tr>
+<tr class="separator:aa9ca8ca3dfc9532fbbefb9f6989130c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a663fdf847253062d1b77f33879163f8a"><td class="memItemLeft" align="right" valign="top"><a id="a663fdf847253062d1b77f33879163f8a" name="a663fdf847253062d1b77f33879163f8a"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;</b> (const <a class="el" href="class_interval.html">Interval</a> &amp;otherInterval) const</td></tr>
+<tr class="separator:a663fdf847253062d1b77f33879163f8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>core/include/<a class="el" href="interval_8h_source.html">interval.h</a></li>

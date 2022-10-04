@@ -205,12 +205,11 @@ int Interval::getNumOctaves(const bool absoluteValue) const
 
 int Interval::getDiatonicInterval(const bool useSingleOctave, const bool absoluteValue) const
 {
-    if (isAscendant()) {
-        return getDiatonicSteps(useSingleOctave, absoluteValue) + 1;
-    }
+    const int diatonicInterval = getDiatonicSteps(useSingleOctave, absoluteValue) + 1;
 
-    const int x = getDiatonicSteps(useSingleOctave, absoluteValue) - 1;
-    return (absoluteValue) ? abs(x) : x;
+    if (isAscendant()) { return diatonicInterval; }
+
+    return (absoluteValue) ? abs(diatonicInterval) : diatonicInterval;
 }
 
 int Interval::getDiatonicSteps(const bool useSingleOctave, const bool absoluteValue) const
