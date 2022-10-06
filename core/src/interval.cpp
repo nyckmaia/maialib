@@ -291,9 +291,10 @@ bool Interval::isDescendant() const
     return (whiteKeyDistance() < 0) ? true : false;
 }
 
-bool Interval::isUnisson() const
+bool Interval::isUnisson(const bool useEnharmony) const
 {
-    return (whiteKeyDistance() == 0) ? true : false;
+    return (useEnharmony) ? _note[0].getMIDINumber() == _note[1].getMIDINumber() : 
+        _note[0].getPitch() == _note[1].getPitch();
 }
 
 bool Interval::isTonal() const

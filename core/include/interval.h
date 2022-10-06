@@ -32,8 +32,26 @@ public:
     std::vector<Note> getNotes() const;
     bool isAscendant() const;
     bool isDescendant() const;
-    bool isUnisson() const;
+    
     bool isTonal() const;
+
+    bool isUnisson(const bool useEnharmony = false) const;
+    
+    // bool isSecond(const bool useEnharmony = false) const;
+    // bool isMinorSecond(const bool useEnharmony = false) const;
+    // bool isMajorSecond(const bool useEnharmony = false) const;
+    // bool isThird(const bool useEnharmony = false) const;
+    // bool isFourth(const bool useEnharmony = false) const;
+    // bool isPerfectFourth(const bool useEnharmony = false) const;
+    // bool isAugmentedFourth(const bool useEnharmony = false) const;
+    // bool isFifth(const bool useEnharmony = false) const;
+    // bool isSixth(const bool useEnharmony = false) const;
+    // bool isMinorSixth(const bool useEnharmony = false) const;
+    // bool isMajorSixth(const bool useEnharmony = false) const;
+    // bool isSeventh(const bool useEnharmony = false) const;
+    // bool isNinth(const bool useEnharmony = false) const;
+    // bool isEleventh(const bool useEnharmony = false) const;
+    // bool isThirdteenth(const bool useEnharmony = false) const;
 
     bool isMinorThird() const;
     bool isMajorThird() const;
