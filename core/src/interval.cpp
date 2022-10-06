@@ -45,6 +45,20 @@ void Interval::setNotes(const Note& note_A, const Note& note_B)
     _numSemitones = _note[1].getMIDINumber() - _note[0].getMIDINumber();
 }
 
+int Interval::whiteKeyDistance() const
+{
+    const Note& firstNote = _note[0];
+    const Note& secondNote = _note[1];
+
+    const std::string firstNoteWhiteKey = firstNote.getPitchStep() + std::to_string(firstNote.getOctave());
+    const std::string secondNoteWhiteKey = secondNote.getPitchStep() + std::to_string(secondNote.getOctave());
+    
+    const auto foundFirst = std::find(c_pianoWhiteKeys.begin(), c_pianoWhiteKeys.end(), firstNoteWhiteKey);
+    const auto foundSecond = std::find(c_pianoWhiteKeys.begin(), c_pianoWhiteKeys.end(), secondNoteWhiteKey);
+    
+    return std::distance(foundFirst, foundSecond);
+}
+
 std::pair<std::string, bool> Interval::analyse() const
 {
     // Get basic data to compute the interval name
@@ -205,11 +219,14 @@ int Interval::getNumOctaves(const bool absoluteValue) const
 
 int Interval::getDiatonicInterval(const bool useSingleOctave, const bool absoluteValue) const
 {
-    const int diatonicInterval = getDiatonicSteps(useSingleOctave, absoluteValue) + 1;
+    const int diatonicSteps = getDiatonicSteps(useSingleOctave, absoluteValue);
+    if (diatonicSteps == 0) { return 1; }
+
+    const int diatonicInterval = diatonicSteps + 1;
 
     if (isAscendant()) { return diatonicInterval; }
 
-    return (absoluteValue) ? abs(diatonicInterval) : diatonicInterval;
+    return (absoluteValue) ? abs(diatonicInterval) : diatonicSteps - 1;
 }
 
 int Interval::getDiatonicSteps(const bool useSingleOctave, const bool absoluteValue) const
@@ -266,12 +283,17 @@ std::vector<Note> Interval::getNotes() const
 
 bool Interval::isAscendant() const
 {
-    return (_numSemitones < 0) ? false : true;
+    return (whiteKeyDistance() > 0) ? true : false;
 }
 
 bool Interval::isDescendant() const
 {
-    return (_numSemitones > 0) ? false : true;
+    return (whiteKeyDistance() < 0) ? true : false;
+}
+
+bool Interval::isUnisson() const
+{
+    return (whiteKeyDistance() == 0) ? true : false;
 }
 
 bool Interval::isTonal() const

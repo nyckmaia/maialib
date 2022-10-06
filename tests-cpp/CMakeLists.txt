@@ -23,6 +23,7 @@ add_executable(${PROJECT_NAME}
     ./src/helpers-test.cpp
     ./src/note-test.cpp
     ./src/chord-test.cpp
+    ./src/interval-test.cpp
     ./src/nyck-test.cpp
     ./src/adolfo-test.cpp
 )

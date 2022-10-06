@@ -50,6 +50,7 @@ void IntervalClass(py::module &m) {
     cls.def("getNotes", &Interval::getNotes);
     cls.def("isAscendant", &Interval::isAscendant);
     cls.def("isDescendant", &Interval::isDescendant);
+    cls.def("isUnisson", &Interval::isUnisson);
     cls.def("isTonal", &Interval::isTonal);
 
     cls.def("isMinorThird", &Interval::isMinorThird);

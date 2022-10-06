@@ -2,6 +2,7 @@
 
 #include <string>
 #include <vector>
+#include <algorithm>  // std::find
 
 #include "note.h"
 
@@ -13,6 +14,7 @@ private:
     int _numSemitones;
 
     std::pair<std::string, bool> analyse() const;
+    int whiteKeyDistance() const;
 
 public:
     Interval(const std::string& pitch_A = "C4", const std::string& pitch_B = "C4");
@@ -30,6 +32,7 @@ public:
     std::vector<Note> getNotes() const;
     bool isAscendant() const;
     bool isDescendant() const;
+    bool isUnisson() const;
     bool isTonal() const;
 
     bool isMinorThird() const;
