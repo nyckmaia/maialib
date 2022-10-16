@@ -101,6 +101,9 @@
         "xutility": "cpp",
         "bitset": "cpp",
         "hash_map": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "csignal": "cpp",
+        "future": "cpp",
+        "queue": "cpp"
     }
 }

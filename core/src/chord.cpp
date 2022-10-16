@@ -1,10 +1,12 @@
 #include "chord.h"
 #include "helper.h"
+#include "log.h"
 
 Chord::Chord() :
     _isStackedInThirds(false)
 {
-
+    LOG_INFO("Nyck %d", 2); // se tirar o parametro ele quebra?
+    // TRY("Esse eh um erro");
 }
 
 Chord::Chord(const std::vector<Note>& notes) :

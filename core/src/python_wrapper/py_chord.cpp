@@ -56,7 +56,7 @@ void ChordClass(py::module &m) {
 
     cls.def("removeDuplicateNotes", &Chord::removeDuplicateNotes);
  
-    cls.def("getStackedHeaps", [](Chord& chord, const bool enharmonyNotes)
+    cls.def("getStackDataFrame", [](Chord& chord, const bool enharmonyNotes)
         {
             const std::vector<HeapData>& heapsData = chord.getStackedHeaps(enharmonyNotes);
             

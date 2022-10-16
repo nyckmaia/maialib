@@ -1,8 +1,6 @@
 #include <numeric>
 #include <iostream>
 
-#define OUT(...) std::cout << #__VA_ARGS__ << " = " << __VA_ARGS__ << '\n'
-
 template <typename T>
 void ignore(T &&)
 { }

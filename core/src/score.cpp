@@ -91,7 +91,7 @@ void Score::loadXMLFile(const std::string& filePath)
 {
     PROFILE_FUNCTION();
     // auto start = std::chrono::steady_clock::now();
-
+    
     clear();
 
     const std::string fileExtension = filePath.substr(filePath.size()-3, filePath.size());
