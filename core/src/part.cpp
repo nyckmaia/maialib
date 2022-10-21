@@ -69,9 +69,9 @@ void Part::clear()
 
 void Part::info() const
 {
-    std::cout << "Part Name: " << _partName << std::endl;
-    std::cout << "Short Name: " << _shortName << std::endl;
-    std::cout << "Number of Staves: " << _numStaves << std::endl;
+    LOG_INFO("Part Name: " << _partName);
+    LOG_INFO("Short Name: " << _shortName);
+    LOG_INFO("Number of Staves: " << _numStaves);
 }
 
 const std::string& Part::getName() const
@@ -470,7 +470,7 @@ void Part::append(const std::variant<Note, Chord>& obj, const int position, cons
     switch (type) {
     case 0: appendNote(std::get<Note>(obj), position, staveId); break; // Note
     case 1: appendChord(std::get<Chord>(obj), position, staveId); break; // Chord
-    default: std::cerr << "[ERROR]: The object must be a Note or a Chord" << std::endl; break;
+    default: LOG_ERROR("The object must be a Note or a Chord"); break;
     }
 }
 

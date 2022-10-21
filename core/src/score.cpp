@@ -11,7 +11,7 @@ Score::Score(const std::initializer_list<std::string>& partsName, const int numM
     _lcmDivisionsPerQuarterNote(0)
 {
     if (_numParts == 0) {
-        throw std::runtime_error("[maiacore] You MUST provide at least one part name");
+        LOG_ERROR("You MUST provide at least one part name");
     }
 
     for (const auto& part : partsName) {
@@ -29,7 +29,7 @@ Score::Score(const std::vector<std::string>& partsName, const int numMeasures) :
     _lcmDivisionsPerQuarterNote(0)
 {
     if (_numParts == 0) {
-        throw std::runtime_error("[maiacore] You MUST provide at least one part name");
+        LOG_ERROR("You MUST provide at least one part name");
     }
 
     for (const auto& part : partsName) {
@@ -77,14 +77,14 @@ void Score::clear()
 
 void Score::info() const
 {
-    std::cout << "Title: " << _title << std::endl;
-    std::cout << "Composer: " << _composerName << std::endl;
-    std::cout << "Key Signature: " << _part.at(0).getMeasure(0).getKeySignature() << std::endl;
-    std::cout << "Time Signature: " << _part.at(0).getMeasure(0).getTimeSignature().first << "/" << _part.at(0).getMeasure(0).getTimeSignature().second << std::endl;
-    std::cout << "Number of Notes: " << getNumNotes() << std::endl;
-    std::cout << "Number of Measures: " << getNumMeasures() << std::endl;
-    std::cout << "Number of Parts: " << getNumParts() << std::endl;
-    std::cout << "Loaded from file: " << std::boolalpha << _isLoadedXML << std::endl;
+    LOG_INFO("Title: " << _title);
+    LOG_INFO("Composer: " << _composerName);
+    LOG_INFO("Key Signature: " << _part.at(0).getMeasure(0).getKeySignature());
+    LOG_INFO("Time Signature: " << _part.at(0).getMeasure(0).getTimeSignature().first << "/" << _part.at(0).getMeasure(0).getTimeSignature().second);
+    LOG_INFO("Number of Notes: " << getNumNotes());
+    LOG_INFO("Number of Measures: " << getNumMeasures());
+    LOG_INFO("Number of Parts: " << getNumParts());
+    LOG_INFO("Loaded from file: " << std::boolalpha << _isLoadedXML);
 }
 
 void Score::loadXMLFile(const std::string& filePath)
@@ -101,7 +101,7 @@ void Score::loadXMLFile(const std::string& filePath)
     pugi::xml_parse_result isLoad;
 
     if (fileExtension == "mxl") {
-        // std::cout << "Descompressing the file..." << std::endl;
+        // LOG_DEBUG("Descompressing the file...");
 
         void *buf = NULL;
         size_t bufsize = 0;
@@ -127,11 +127,11 @@ void Score::loadXMLFile(const std::string& filePath)
 
     // Error checking:
     if (!isLoad) {
-        std::cerr << "[ERROR] Unable to load the file: " << filePath << std::endl;
+        LOG_ERROR("Unable to load the file: " + filePath);
         return;
     }
 
-    // std::cout << "Loading file" << std::flush;
+    // LOG_DEBUG("Loading file" << std::flush);
 
     // Try to get the main MusicXML nodes:
     const pugi::xpath_node_set parts = _doc.select_nodes("/score-partwise/part");
@@ -143,7 +143,7 @@ void Score::loadXMLFile(const std::string& filePath)
 
     // Error checking:
     if (parts.empty() || measures.empty() || partsName.empty() || divisionsPerQuarterNote.empty()) {
-        std::cerr << "[ERROR] Unable to locate the MusicXML basic tags" << std::endl;
+        LOG_ERROR("Unable to locate the MusicXML basic tags");
         return;
     }
 
@@ -167,7 +167,7 @@ void Score::loadXMLFile(const std::string& filePath)
         const int divisions = divisionsPerQuarterNote[d].node().text().as_int();
         div_vec[d] = divisions;
 
-        // std::cout << "div_vec[" << d << "]: " << div_vec[d] << std::endl;
+        // LOG_DEBUG("div_vec[" << d << "]: " << div_vec[d]);
     }
 
     _lcmDivisionsPerQuarterNote = div_vec[0];
@@ -175,7 +175,7 @@ void Score::loadXMLFile(const std::string& filePath)
         _lcmDivisionsPerQuarterNote = std::lcm(_lcmDivisionsPerQuarterNote, div_vec[d]);
     }
 
-    // std::cout << "LCM: " << _lcmDivisionsPerQuarterNote << std::endl;
+    // LOG_DEBUG("LCM: " << _lcmDivisionsPerQuarterNote);
 
     // ===== CHECK BASIC OBJECT VALIDATION ===== //
     if ((_numParts > 0) && (_numMeasures > 0) && (_lcmDivisionsPerQuarterNote > 0)) {
@@ -424,7 +424,7 @@ void Score::loadXMLFile(const std::string& filePath)
                 if (voice == 0) { voice = 1; }
                 if (staff <= 0) { staff = 0; }
 
-                // std::cout << "part: " << p << " | measure: " << m << " | note: " << n << std::endl;
+                // LOG_DEBUG("part: " << p << " | measure: " << m << " | note: " << n);
 
                 // ===== CONSTRUCT A NOTE OBJECT AND STORE IT INSIDE THE SCORE OBJECT ===== //
                 const int divPQN = _part[p].getMeasure(m).getDivisionsPerQuarterNote();
@@ -481,7 +481,7 @@ void Score::loadXMLFile(const std::string& filePath)
                 case 1: note.setSingleDot(); break;
                 case 2: note.setDoubleDot(); break;
                 default:
-                    throw std::runtime_error("[maiacore] More than 2 dots in a note");
+                    LOG_ERROR("More than 2 dots in a note");
                     break;
                 }
 
@@ -491,7 +491,7 @@ void Score::loadXMLFile(const std::string& filePath)
     }
 
     // auto end = std::chrono::steady_clock::now();
-    // std::cout << std::endl << "Done in " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds!" << std::endl;
+    // LOG_INFO("Done in " << std::chrono::duration_cast<std::chrono::seconds>(end - start).count() << " seconds");
 }
 
 void Score::addPart(const std::string& partName, const int numStaves)
@@ -507,7 +507,7 @@ void Score::removePart(const int partId)
     PROFILE_FUNCTION();
 
     if (partId >= static_cast<int>(_part.size())) {
-        std::cerr << "[ERROR] Invalid part index" << std::endl;
+        LOG_ERROR("Invalid part index");
         return;
     }
 
@@ -528,7 +528,7 @@ void Score::removeMeasure(const int measureStart, const int measureEnd)
 {
     PROFILE_FUNCTION();
     if (measureEnd < measureStart) {
-        std::cerr << "[ERROR] The 'measureEnd' MUST BE equal or greater than 'measureStart'" << std::endl;
+        LOG_ERROR("The 'measureEnd' MUST BE equal or greater than 'measureStart'");
         return;
     }
 
@@ -552,9 +552,8 @@ Part& Score::getPart(const std::string& partName)
     const bool isValid = getPartIndex(partName, partIndex);
 
     if (!isValid) {
-        const std::string msg = "[ERROR] There is no '" + partName +  "' in this score";
-        std::runtime_error(msg.c_str());
         printPartNames();
+        LOG_ERROR("There is no '" + partName +  "' in this score");
     }
 
     return getPart(partIndex);
@@ -685,7 +684,7 @@ void Score::setMetronomeMark(int bpm, const Duration duration, int measureStart)
     PROFILE_FUNCTION();
     // ===== VALIDADE INPUT ARGUMENTS ===== //
     // BPM validation
-    if (bpm <= 0) { std::runtime_error("BPM must be a positive value"); }
+    if (bpm <= 0) { LOG_ERROR("BPM must be a positive value"); }
 
     // measureStart validation
     measureStart = (measureStart < 0) ? 0 : measureStart;
@@ -861,7 +860,7 @@ void Score::toFile(std::string fileName, const int identSize) const
 
     file.close();
 
-    std::cout << "Wrote file: " << fileName << std::endl;
+    LOG_INFO("Wrote file: " << fileName);
 }
 
 bool Score::isValid(void) const
@@ -890,47 +889,47 @@ int Score::countNotes(nlohmann::json& config) const
     // ===== CHECKING THE INPUT ARGUMENTS ===== //
     // Parts:
     if (!config.contains("parts")) {
-        std::cout << "'parts' field was not setted. Using the default 'all' configuration" << std::endl;
+        LOG_INFO("'parts' field was not setted. Using the default 'all' configuration");
         config["parts"] = "all";
     }
 
     // Measures:
     if (!config.contains("measures")) {
-        std::cout << "'measures' field was not setted. Using the default 'all' configuration" << std::endl;
+        LOG_INFO("'measures' field was not setted. Using the default 'all' configuration");
         config["measures"] = "all";
     }
 
     if((config["measures"] != "all") && (!config["measures"].is_array()) && (!config["measures"].is_number_integer())) {
-        std::cerr << "[ERROR] The 'measures' field MUST BE 'all', a integer number or an array [start end] value!" << std::endl;
+        LOG_ERROR("The 'measures' field MUST BE 'all', a integer number or an array [start end] value!");
     }
 
     // pitchClass:
     if(!config.contains("pitchClass")) {
-        std::cout << "'pitchClass' field was not setted. Using the default 'all' configuration" << std::endl;
+        LOG_INFO("'pitchClass' field was not setted. Using the default 'all' configuration");
         config["pitchClass"] = "all";
     }
 
     // Octave:
     if(!config.contains("octave")) {
-        std::cout << "'octave' field was not setted. Using the default 'all' configuration" << std::endl;
+        LOG_INFO("'octave' field was not setted. Using the default 'all' configuration");
         config["octave"] = "all";
     }
 
     // Voice:
     if(!config.contains("voice")) {
-        std::cout << "'voice' field was not setted. Using the default 'all' configuration" << std::endl;
+        LOG_INFO("'voice' field was not setted. Using the default 'all' configuration");
         config["voice"] = "all";
     }
 
     // Type:
     if(!config.contains("type")) {
-        std::cout << "'type' field was not setted. Using the default 'all' configuration" << std::endl;
+        LOG_INFO("'type' field was not setted. Using the default 'all' configuration");
         config["type"] = "all";
     }
 
     // Staff:
     if(!config.contains("staff")) {
-        std::cout << "'staff' field was not setted. Using the default 'all' configuration" << std::endl;
+        LOG_INFO("'staff' field was not setted. Using the default 'all' configuration");
         config["staff"] = "all";
     }
 
@@ -955,9 +954,8 @@ int Score::countNotes(nlohmann::json& config) const
         bool found = getPartIndex(partName, index);
 
         if (!found) {
-            std::cerr << "[ERROR] This music doesn't have a part called: " << partName << std::endl;
-            std::cerr << "Look the available parts in this list below..." << std::endl;
             printPartNames();
+            LOG_ERROR("This music doesn't have a part called: " + partName);            
             return 0;
         }
 
@@ -971,7 +969,7 @@ int Score::countNotes(nlohmann::json& config) const
             auto& item = partsField[p];
 
             if (!item.is_string()) {
-                std::cerr << "All parts list elements MUST be strings" << std::endl;
+                LOG_ERROR("All parts list elements MUST be strings");
                 return 0;
             }
             const std::string partName = item.get<std::string>();
@@ -980,9 +978,8 @@ int Score::countNotes(nlohmann::json& config) const
             bool found = getPartIndex(partName, index);
 
             if (!found) {
-                std::cerr << "[ERROR] This music doesn't have a part called: " << partName << std::endl;
-                std::cerr << "Look the available parts in this list below..." << std::endl;
                 printPartNames();
+                LOG_ERROR("This music doesn't have a part called: " + partName);                
                 return 0;
             }
             if (p == 0) {
@@ -996,7 +993,7 @@ int Score::countNotes(nlohmann::json& config) const
 
     // Error: None of the above options:
     } else {
-        std::cerr << "[ERROR] The 'parts' field MUST BE 'all', a string or an array of strings!" << std::endl;
+        LOG_ERROR("The 'parts' field MUST BE 'all', a string or an array of strings!");
         return 0;
     }
 
@@ -1024,19 +1021,19 @@ int Score::countNotes(nlohmann::json& config) const
 
     // Error: None of the above options:
     } else {
-        std::cerr << "[ERROR] The 'measures' field MUST BE 'all' or an array with 2 elements [start end]!" << std::endl;
+        LOG_ERROR("The 'measures' field MUST BE 'all' or an array with 2 positive interger values: [measureStart, measureEnd]");
         return nlohmann::json();
     }
 
     // Error checking:
     if (measureEnd < measureStart) {
-        std::cerr << "[ERROR] In the 'measures' field, the second element MUST BE greater than the first one!" << std::endl;
+        LOG_ERROR("In the 'measures' field, the second element MUST BE greater than the first one");
         return nlohmann::json();
     }
 
     // Error checking:
     if (measureStart == 0 || measureEnd == 0) {
-        std::cerr << "[ERROR] The 'measures' [start end] array values MUST BE greater then 0!" << std::endl;
+        LOG_ERROR("The 'measures' array values MUST BE greater then 0");
         return nlohmann::json();
     }
 
@@ -1066,7 +1063,7 @@ int Score::countNotes(nlohmann::json& config) const
                 pitchStep = pitchClass.substr(0, 1);
                 alterValue = Helper::alterSymbol2Value(pitchClass.substr(1, pitchClass.size()));
             } else {
-                std::cerr << "[ERROR] Uknown octave value" << std::endl;
+                LOG_ERROR("Unknown octave value");
                 return nlohmann::json();
             }
         }
@@ -1189,7 +1186,7 @@ int Score::countNotes(nlohmann::json& config) const
         xPath += "]";
     }
 
-    // std::cout << "XPath: " << xPath << std::endl;
+    // LOG_DEBUG( "XPath: " << xPath);
 
     const pugi::xpath_node_set nodes = _doc.select_nodes(xPath.c_str());
 
@@ -1314,7 +1311,7 @@ void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, i
     if (type.empty()) {
         const int divisions = atoi(node.parent().child("attributes").child_value("divisions"));
         if (divisions <= 0) {
-            std::cerr << "[ERROR] Unable to get the 'divisionsPerQuarterNote' value" << std::endl;
+            LOG_ERROR("Unable to get the 'divisionsPerQuarterNote' value");
         }
         type = Helper::ticks2noteType(duration, divisions).first;
     }
@@ -1345,9 +1342,8 @@ nlohmann::json Score::selectNotes(nlohmann::json& config) const
         bool found = getPartIndex(partName, index);
 
         if (!found) {
-            std::cerr << "[ERROR] This music doesn't have a part called: " << partName << std::endl;
-            std::cerr << "Look the available parts in this list below..." << std::endl;
             printPartNames();
+            LOG_ERROR("This music doesn't have a part called: " + partName);
             return 0;
         }
 
@@ -1361,7 +1357,7 @@ nlohmann::json Score::selectNotes(nlohmann::json& config) const
             auto& item = partsField[p];
 
             if (!item.is_string()) {
-                std::cerr << "All parts list elements MUST be strings" << std::endl;
+                LOG_ERROR("All parts list elements MUST be strings");
                 return nlohmann::json();
             }
             const std::string partName = item.get<std::string>();
@@ -1370,10 +1366,8 @@ nlohmann::json Score::selectNotes(nlohmann::json& config) const
             bool found = getPartIndex(partName, index);
 
             if (!found) {
-                std::cerr << "[ERROR] This music doesn't have a part called: " << partName << std::endl;
-                std::cerr << "Look the available parts in this list below..." << std::endl;
                 printPartNames();
-
+                LOG_ERROR("This music doesn't have a part called: " + partName);
                 return nlohmann::json();
             }
 
@@ -1388,7 +1382,7 @@ nlohmann::json Score::selectNotes(nlohmann::json& config) const
 
     // Error: None of the above options:
     } else {
-        std::cerr << "[ERROR] The 'parts' field MUST BE 'all', single string or a string array!" << std::endl;
+        LOG_ERROR("The 'parts' field MUST BE 'all', single string or a string array!");
         return nlohmann::json();
     }
 
@@ -1416,19 +1410,19 @@ nlohmann::json Score::selectNotes(nlohmann::json& config) const
 
     // Error: None of the above options:
     } else {
-        std::cerr << "[ERROR] The 'measures' field MUST BE 'all' or an array with 2 elements [start end]!" << std::endl;
+        LOG_ERROR("The 'measures' field MUST BE 'all' or an array with 2 positive integers [measureStart, measureEnd]");
         return nlohmann::json();
     }
 
     // Error checking:
     if (measureEnd < measureStart) {
-        std::cerr << "[ERROR] In the 'measures' field, the second element MUST BE greater than the first one!" << std::endl;
+        LOG_ERROR("In the 'measures' field, the second element MUST BE greater than the first one!");
         return nlohmann::json();
     }
 
     // Error checking:
     if (measureStart == 0 || measureEnd == 0) {
-        std::cerr << "[ERROR] The 'measures' [start end] array values MUST BE greater then 0!" << std::endl;
+        LOG_ERROR("The 'measures' [start end] array values MUST BE greater then 0");
         return nlohmann::json();
     }
 
@@ -1545,7 +1539,7 @@ const std::string Score::getPartName(const int partId) const
     try {
         _partsName.at(partId);
     } catch (const std::out_of_range& oor) {
-        std::cerr << "Out of Range error: " << oor.what() << '\n';
+        LOG_ERROR("Out of Range error: " + oor.what());
     }
 
     return _partsName.at(partId);
@@ -1566,7 +1560,7 @@ bool Score::getPartIndex(const std::string& partName, int& index) const
     }
 
     if (!foundIndex) {
-        std::cerr << "[ERROR] There is no '" << partName << "' part name in this file" << std::endl;
+        LOG_ERROR("There is no '" + partName + "' part name in this file");
     }
 
     return foundIndex;
@@ -1579,57 +1573,57 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
     // Measure elapsed time:
     auto start = std::chrono::steady_clock::now();
 
-    std::cout << "[PRE-PROCESSING]: Start...";
+    LOG_INFO("[PRE-PROCESSING]: Start...");
 
     // ===== CHECKING THE INPUT ARGUMENTS ===== //
     // Parts:
     if (!pattern.contains("parts")) {
-        std::cout << "'parts' field was not setted. Using the default 'all' configuration" << std::endl;
+        LOG_INFO("'parts' field was not setted. Using the default 'all' configuration");
         pattern["parts"] = "all";
     }
     // -------------------------- //
 
     // Measures:
     if (!pattern.contains("measures")) {
-        std::cout << "'measures' field was not setted. Using the default 'all' configuration" << std::endl;
+        LOG_INFO("'measures' field was not setted. Using the default 'all' configuration");
         pattern["measures"] = "all";
     }
 
     if((pattern["measures"] != "all") && (!pattern["measures"].is_array())) {
-        std::cerr << "[ERROR] The 'measures' field MUST BE 'all' or an array value!" << std::endl;
+        LOG_ERROR("The 'measures' field MUST BE 'all' or an array value!");
     }
     // -------------------------- //
 
     // Relative Pitch:
     if (!pattern.contains("relativePitch")) {
-        std::cout << "'relativePitch' field was not setted. Using the default 'false' configuration" << std::endl;
+        LOG_INFO("'relativePitch' field was not setted. Using the default 'false' configuration");
         pattern["relativePitch"] = false;
     }
 
     if(!pattern["relativePitch"].is_boolean()) {
-        std::cerr << "[ERROR] The 'relativePitch' field MUST BE a boolean value!" << std::endl;
+        LOG_ERROR("The 'relativePitch' field MUST BE a boolean value!");
     }
     // -------------------------- //
 
     // Relative Rhythm:
     if (!pattern.contains("relativeRhythm")) {
-        std::cout << "'relativeRhythm' field was not setted. Using the default 'false' configuration" << std::endl;
+        LOG_INFO("'relativeRhythm' field was not setted. Using the default 'false' configuration");
         pattern["relativeRhythm"] = false;
     }
 
     if(!pattern["relativeRhythm"].is_boolean()) {
-        std::cerr << "[ERROR] The 'relativeRhythm' field MUST BE a boolean value!" << std::endl;
+        LOG_ERROR("The 'relativeRhythm' field MUST BE a boolean value!");
     }
     // -------------------------- //
 
     // Notes:
     if (!pattern.contains("notes")) {
-        std::cerr << "[ERROR] Missing required 'notes' field!" << std::endl;
+        LOG_ERROR("Missing required 'notes' field!");
         return nlohmann::json();
     }
 
     if(!pattern["notes"].is_array()) {
-        std::cerr << "[ERROR] The 'notes' field must be an array!" << std::endl;
+        LOG_ERROR("The 'notes' field must be an array!");
         return nlohmann::json();
     }
     // -------------------------- //
@@ -1637,7 +1631,7 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
     // Output File:
     bool save2File = true;
     if (!pattern.contains("outputFile")) {
-        // std::cout << "'outputFile' field was not setted. No output file will be created" << std::endl;
+        // LOG_INFO("'outputFile' field was not setted. No output file will be created");
         save2File = false;
     }
 
@@ -1645,7 +1639,7 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
     if (save2File) {
 
         if (!pattern["outputFile"].is_string()) {
-            std::cerr << "[ERROR] The 'outputFile' field MUST BE a string value!" << std::endl;
+            LOG_ERROR("The 'outputFile' field MUST BE a string value!");
             return nlohmann::json();
         }
 
@@ -1656,7 +1650,7 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
         const int csvExtensionSize = csvExtension.size();
 
         if (outputFileSize < csvExtensionSize) {
-            std::cerr << "[ERROR] The 'outputFile' filename MUST HAVE a least 4 characters" << std::endl;
+            LOG_ERROR("The 'outputFile' filename MUST HAVE a least 4 characters");
             return nlohmann::json();
         }
 
@@ -1670,12 +1664,12 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
 
     // Pitch Similarity Threshold:
     if (!pattern.contains("pitchSimilarityThreshold")) {
-        // std::cout << "'pitchSimilarityThreshold' field was not setted. Using the default 0 value" << std::endl;
+        // LOG_INFO("'pitchSimilarityThreshold' field was not setted. Using the default 0 value");
         pattern["pitchSimilarityThreshold"] = 0.0f;
     }
 
     if(!pattern["pitchSimilarityThreshold"].is_number_float()) {
-        std::cerr << "[ERROR] The 'pitchSimilarityThreshold' field MUST BE a float value between 0.0 and 1.0!" << std::endl;
+        LOG_ERROR("The 'pitchSimilarityThreshold' field MUST BE a float value between 0.0 and 1.0");
         return nlohmann::json();
     }
 
@@ -1684,12 +1678,12 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
 
      // Type Similarity Threshold:
     if (!pattern.contains("typeSimilarityThreshold")) {
-        // std::cout << "'typeSimilarityThreshold' field was not setted. Using the default 0 value" << std::endl;
+        // LOG_INFO("'typeSimilarityThreshold' field was not setted. Using the default 0 value");
         pattern["typeSimilarityThreshold"] = 0.0f;
     }
 
     if(!pattern["typeSimilarityThreshold"].is_number_float()) {
-        std::cerr << "[ERROR] The 'typeSimilarityThreshold' field MUST BE a float value between 0.0 and 1.0!" << std::endl;
+        LOG_ERROR("The 'typeSimilarityThreshold' field MUST BE a float value between 0.0 and 1.0");
         return nlohmann::json();
     }
 
@@ -1698,12 +1692,12 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
 
     // Similarity Threshold:
     if (!pattern.contains("averageSimilarityThreshold")) {
-        // std::cout << "'averageSimilarityThreshold' field was not setted. Using the default 0 value" << std::endl;
+        // LOG_INFO("'averageSimilarityThreshold' field was not setted. Using the default 0 value");
         pattern["averageSimilarityThreshold"] = 0.0f;
     }
 
     if(!pattern["averageSimilarityThreshold"].is_number_float()) {
-        std::cerr << "[ERROR] The 'averageSimilarityThreshold' field MUST BE a float value between 0.0 and 1.0!" << std::endl;
+        LOG_ERROR("The 'averageSimilarityThreshold' field MUST BE a float value between 0.0 and 1.0");
         return nlohmann::json();
     }
 
@@ -1718,7 +1712,7 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
     for(int idx = 0; idx < patterNotesSize; idx++) {
         auto& el = pattern["notes"][idx];
         if ((!el.contains("pitchClass")) | (!el.contains("type"))) {
-            std::cerr << "[ERROR] The pattern[notes][" << idx << "] doesn't contains the required 'pitch' or 'noteType' field!" << std::endl;
+            LOG_ERROR("The pattern[notes][" + std::to_string(idx) + "] doesn't contains the required 'pitch' or 'noteType' field");
             return nlohmann::json();
         }
 
@@ -1733,7 +1727,7 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
         // ===== NOTE TYPE ===== //
         // Add a numberic 'duration' field inside the JSON pattern:
         if (!el["type"].is_string()) {
-            std::cerr << "[ERROR] The pattern[notes][" << idx << "] MUST BE a string!" << std::endl;
+            LOG_ERROR("The pattern[notes][" + std::to_string(idx) + "] MUST BE a string");
             return nlohmann::json();
         }
 
@@ -1754,16 +1748,16 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
         } else if (el["octave"].is_number_integer()) {
             el["octave"] = el["octave"].get<int>();
         } else {
-            std::cerr << "[ERROR] The pattern[notes][" << idx << "] have a wrong octave value!" << std::endl;
+            LOG_ERROR("The pattern[notes][" + std::to_string(idx) + "] have a wrong octave value");
             return nlohmann::json();
         }
     }
 
-    std::cout << "Done!" << std::endl;
+    LOG_INFO("Done!");
 
     // ===== PRE-PROCESSING PATTERN: END ===== //
 
-    std::cout << "[STATUS]: Running process..." << std::endl;
+    LOG_INFO("Running process...");
 
     // ===== XPATH: ROOT ===== //
     const std::string xPathRoot = "/score-partwise";
@@ -1801,7 +1795,7 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
 
     // Error: None of the above options:
     } else {
-        std::cerr << "[ERROR] The 'parts' field MUST BE 'all', single integer number or an array value!" << std::endl;
+        LOG_ERROR("The 'parts' field MUST BE 'all', single integer number or an array value");
         return nlohmann::json();
     }
 
@@ -1824,13 +1818,13 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
 
         // Error checking:
         if (measureEnd <= measureStart) {
-            std::cerr << "[ERROR] In the 'measures' field, the second element MUST BE greater than the first one!" << std::endl;
+            LOG_ERROR("In the 'measures' field, the second element MUST BE greater than the first one");
             return nlohmann::json();
         }
 
     // Error: None of the above options:
     } else {
-        std::cerr << "[ERROR] The 'measures' field MUST BE 'all' or an array with 2 elements [start end]!" << std::endl;
+        LOG_ERROR("The 'measures' field MUST BE 'all' or an array with 2 positive integers [measureStart, measureEnd]");
         return nlohmann::json();
     }
 
@@ -1857,15 +1851,14 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
 
     // Error checking:
     if (patternNotesSize > musicNotesSize) {
-        std::cerr << "[ERROR] The pattern notes amount MUST BE smaller than the whole music notes!" << std::endl;
+        LOG_ERROR("The pattern notes amount MUST BE smaller than the whole music notes");
         return nlohmann::json();
     }
 
     const int numIterations = musicNotesSize - patternNotesSize;
 
-//    DEBUG:
-//    std::cout << "size: " << musicNotesSize << std::endl;
-//    std::cout << "xPath: " << xPath.c_str() << std::endl;
+    // LOG_DEBUG("size: " << musicNotesSize);
+    // LOG_DEBUG("xPath: " << xPath.c_str());
 
     // Output JSON result:
     nlohmann::json result;
@@ -2074,9 +2067,9 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const
     auto end = std::chrono::steady_clock::now();
 
     // Print the elapsed time:
-    std::cout << "Elapsed time: "
+    LOG_INFO("Elapsed time: "
             << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
-            << " ms" << std::endl;
+            << " ms");
 
     // ===== WRITE RESULT TO A CSV FILE ===== //
     if (save2File) {
@@ -2131,8 +2124,7 @@ void Score::setRepeat(int measureStart, int measureEnd)
 
     // Error checking
     if (measureEnd == 0) {
-        const std::string msg = "[maiacore] 'measureEnd' MUST BE greater than 0";
-        throw std::runtime_error(msg);
+        LOG_ERROR("'measureEnd' MUST BE greater than 0");
     }
 
     // For each part: set repeat barlines
@@ -2165,7 +2157,7 @@ void Score::forEachNote(std::function<void (Part& part, Measure& measure, int st
             int partIdx = 0;
             const bool isValid = getPartIndex(partName, partIdx);
             if (!isValid) { 
-                std::cerr << "[ERROR] Invalid part name" << std::endl;
+                LOG_ERROR("Invalid part name: " + partName);
                 return;
             }
             selectedParts.push_back(partIdx);
@@ -2203,7 +2195,7 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
         partNumber[i] = config["partNumber"][i].get<int>();
         // Error checking
         if (partNumber[i] >= getNumParts()) {
-            std::cerr << "[ERROR] The part number MUST BE between 0 and (total number of parts - 1)" << std::endl;
+            LOG_ERROR("The part number MUST BE between 0 and (total number of parts - 1)");
             return nlohmann::json();
         }
     }
@@ -2212,8 +2204,7 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
     const int measureEnd = config["measureEnd"].get<int>();  // Number of the final measure
 
     if (measureStart > measureEnd) { //Error Checking
-        std::cerr << "[ERROR] The number of the initial Chosen Measure can't be greater than the Chosen Last Measure"
-                  << std::endl;
+        LOG_ERROR("The number of the initial chosen measure can't be greater than the chosen last measure");
         return nlohmann::json();
     }
 
@@ -2262,7 +2253,7 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
             duration_vec_value[n] = stoi(duration); // stoi = transforms a number string to an integer
 
             const pugi::xpath_node_set  x= note.select_nodes("chord");
-            // std::cout << "ischord[" << i << "] " << x.size() << std::endl; //???????
+            // LOG_DEBUG("ischord[" << i << "] " << x.size()); // ???????
         }
 
 
@@ -2332,12 +2323,12 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
 
 
         if(beatNumber.size() < 1){
-            std::cerr << "beatNUmber is empty" << std::endl;
+            LOG_ERROR("beatNumber is empty");
             return nlohmann::json();
         }
 
         if(divisions.size() < 1){
-            std::cerr << "divisions is empty" << std::endl;
+            LOG_ERROR("divisions is empty");
             return nlohmann::json();
         }
 
@@ -2410,29 +2401,28 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config)
         lines_rests = lines_rests2;  // return to container "lines" now only with positive numbers in the tuples
 
         // ----------Display lines vectors in a terminal just to check the code
-        // std::cout << "Lines to plot in Python: Instrument:" << i+1 << std::endl;
-        // std::cout << "lines size = " << lines.size() << std:: endl;
-        // std::cout << "lines_rests size = " << lines_rests.size() << std:: endl;
+        // LOG_DEBUG("Lines to plot in Python: Instrument:" << i+1);
+        // LOG_DEBUG("lines size = " << lines.size());
+        // LOG_DEBUG("lines_rests size = " << lines_rests.size());
 
         for(int k = 0; k < static_cast<int>(lines.size()); k++) {
+            // float a1 = std::get<0>(lines[k][0]); //Initial beat of the segment
+            // float b1 = std::get<1>(lines[k][0]);  // Activation Sign of the segment ( = 1, 2, 3, ...)
+            // float c1 = std::get<0>(lines[k][1]); // Final beat of the segment
+            // float d1 = std::get<1>(lines[k][1]);  // Activation Sign of the segment ( = 1)
 
-//            float a1 = std::get<0>(lines[k][0]); //Initial beat of the segment
-//            float b1 = std::get<1>(lines[k][0]);  // Activation Sign of the segment ( = 1, 2, 3, ...)
-//            float c1 = std::get<0>(lines[k][1]); // Final beat of the segment
-//            float d1 = std::get<1>(lines[k][1]);  // Activation Sign of the segment ( = 1)
-
-            // std::cout << "lines[" << k << "] = " << a1 << "| " << b1  << " | " << c1 << " | " << d1 << std::endl;
+            // LOG_DEBUG("lines[" << k << "] = " << a1 << "| " << b1  << " | " << c1 << " | " << d1);
         }
 
         //        ------Ploting Rests Activation-------------
 
         for(int k = 0; k < static_cast<int>(lines_rests.size()); k++) {
-//            float a2 = std::get<0>(lines_rests[k][0]); //Initial beat of the segment
-//            float b2 = std::get<1>(lines_rests[k][0]);  // Activation Sign of the segment ( = 1, 2, 3...)
-//            float c2 = std::get<0>(lines_rests[k][1]); // Final beat of the segment
-//            float d2 = std::get<1>(lines_rests[k][1]);  // Activation Sign of the segment (=  1)
+            // float a2 = std::get<0>(lines_rests[k][0]); //Initial beat of the segment
+            // float b2 = std::get<1>(lines_rests[k][0]);  // Activation Sign of the segment ( = 1, 2, 3...)
+            // float c2 = std::get<0>(lines_rests[k][1]); // Final beat of the segment
+            // float d2 = std::get<1>(lines_rests[k][1]);  // Activation Sign of the segment (=  1)
 
-            // std::cout << "lines_rests[" << k << "] = " << a2 << "| " << b2  << " | " << c2 << " | " << d2 << std::endl;
+            // LOG_DEBUG("lines_rests[" << k << "] = " << a2 << "| " << b2  << " | " << c2 << " | " << d2);
         }
 
 
@@ -2493,8 +2483,8 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
 
     // Type checking
     if (config.contains("partNames") && !config["partNames"].is_array()) {
-        std::cerr << "[ERROR] 'partNames' is a optional config argument and MUST BE a strings array" << std::endl;
         printPartNames();
+        LOG_ERROR("'partNames' is a optional config argument and MUST BE a strings array");
         return {};
     }
 
@@ -2517,12 +2507,12 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
     if (!config.contains("measureStart")) {
         measureStart = 0;
         config["measureStart"] = measureStart;
-        // std::cout << "[WARNING]: Setting the 'measureStart' to the first measure: " << measureStart << std::endl;
+        // LOG_WARN("Setting the 'measureStart' to the first measure: " << measureStart);
     }
 
     // Type checking
     if (config.contains("measureStart") && !config["measureStart"].is_number_integer()) {
-        std::cerr << "[ERROR] 'measureStart' is a optional config argument and MUST BE a positive integer!" << std::endl;
+        LOG_ERROR("'measureStart' is a optional config argument and MUST BE a positive integer!");
         return {};
     }
 
@@ -2531,7 +2521,7 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
 
     // Error checking:
     if (measureStart < 0) {
-        std::cerr << "[ERROR] The 'measureStart' value MUST BE a positive integer!" << std::endl;
+        LOG_ERROR("The 'measureStart' value MUST BE a positive integer!");
         return {};
     }
 
@@ -2542,12 +2532,12 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
     if (!config.contains("measureEnd")) {
         measureEnd = getNumMeasures();
         config["measureEnd"] = measureEnd;
-        // std::cout << "[WARNING]: Setting the 'measureEnd' to the last measure: " << measureEnd << std::endl;
+        // LOG_WARN("Setting the 'measureEnd' to the last measure: " + std::to_string(measureEnd));
     }
 
     // Type checking:
     if (config.contains("measureEnd") && !config["measureEnd"].is_number_integer()) {
-        std::cerr << "[ERROR] 'measureEnd' is a optional config argument and MUST BE a positive integer!" << std::endl;
+        LOG_ERROR("'measureEnd' is a optional config argument and MUST BE a positive integer!");
         return {};
     }
     
@@ -2556,20 +2546,20 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
 
     // Error checking:
     if (measureEnd < 0) {
-        std::cerr << "[ERROR] The 'measureEnd' value MUST BE greater than 0!" << std::endl;
+        LOG_ERROR("The 'measureEnd' value MUST BE greater than 0!");
         return {};
     }
 
     // Error checking:
     if (measureEnd > getNumMeasures()) {
-        std::cout << "[WARNING]: The 'measureEnd' value is greater then the music length!" << std::endl;
-        std::cout << "Changing the 'measureEnd' value to: " << getNumMeasures() << std::endl;
+        LOG_WARN("The 'measureEnd' value is greater then the music length!");
+        LOG_WARN("Changing the 'measureEnd' value to: " << getNumMeasures());
         measureEnd = getNumMeasures();
     }
 
     // Error checking:
     if (measureStart > measureEnd) {
-        std::cerr << "[ERROR] 'measureEnd' value MUST BE greater than 'measureStart' value" << std::endl;
+        LOG_ERROR("'measureEnd' value MUST BE greater than 'measureStart' value");
         return {};
     }
 
@@ -2577,8 +2567,8 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
     int minStackedNotes = (!config.contains("minStack") || !config["minStack"].is_number_integer()) ? 3 : config["minStack"].get<int>();
 
     if (minStackedNotes < 1) {
-        std::cout << "[WARNING]: You set the 'minStack' to " << minStackedNotes << ", but the minimum value is 1." << std::endl;
-        std::cout << "Setting the 'minStack' to the default: 3" << std::endl;
+        LOG_WARN("You set the 'minStack' to " << minStackedNotes << ", but the minimum value is 1");
+        LOG_WARN("Setting the 'minStack' to the default: 3");
         minStackedNotes = 3;
     }
 
@@ -2587,7 +2577,7 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
 
     // Error checking:
     if (minStackedNotes > maxStackedNotes) {
-        std::cerr << "[ERROR] The 'maxStack' value MUST BE greater than 'minStack' value" << std::endl;
+        LOG_ERROR("The 'maxStack' value MUST BE greater than 'minStack' value");
         return {};
     }
 
@@ -2601,8 +2591,8 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
     int minDurationTicks = Helper::noteType2ticks(minDuration, _lcmDivisionsPerQuarterNote);
 
     if (minDurationTicks < 0) {
-        std::cout << "[WARNING]: The 'minDuration' MUST BE a basic rhythm figure string!" << std::endl;
-        std::cout << "Setting the 'minDuration' to '64th'" << std::endl;
+        LOG_WARN("The 'minDuration' MUST BE a basic rhythm figure string!");
+        LOG_WARN("Setting the 'minDuration' to '64th'");
         minDurationTicks = Helper::noteType2ticks(defaultMinDuration, _lcmDivisionsPerQuarterNote);
     }
 
@@ -2613,14 +2603,14 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
     int maxDurationTicks = Helper::noteType2ticks(maxDuration, _lcmDivisionsPerQuarterNote);
 
     if (maxDurationTicks < 0) {
-        std::cout << "[WARNING]: The 'maxDuration' MUST BE a basic rhythm figure string!" << std::endl;
-        std::cout << "Setting the 'maxDuration' to 'maxima'" << std::endl;
+        LOG_WARN("The 'maxDuration' MUST BE a basic rhythm figure string!");
+        LOG_WARN("Setting the 'maxDuration' to 'maxima'");
         maxDurationTicks = Helper::noteType2ticks(defaultMaxDuration, _lcmDivisionsPerQuarterNote);
     }
 
     // Error checking
     if (minDurationTicks > maxDurationTicks) {
-        std::cerr << "[ERROR] The 'maxDuration' figure MUST BE greater than 'minDuration' figure" << std::endl;
+        LOG_ERROR("The 'maxDuration' figure MUST BE greater than 'minDuration' figure");
         return {};
     }
 
@@ -2678,12 +2668,12 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config)
 
                         db.exec(str.c_str());
 
-                        // std::cout << "measure: " << m << 
+                        // LOG_DEBUG( "measure: " << m << 
                         // " | mDiv: " << currentMeasure.getDivisionsPerQuarterNote() <<
                         // " | note: " << currentNote.getPitch() << 
                         // " | ticks: " << currentNote.getDurationTicks() <<
                         // " | noteDiv: " << currentNote.getDivisionsPerQuarterNote() <<
-                        // " | noteDur: " << currentNote.getType() << std::endl; 
+                        // " | noteDur: " << currentNote.getType());
                     }
                     
                     previusTime = currentTime * divisionsScaleFactor;
@@ -2862,12 +2852,12 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(SQLite::Data
             // Append note to the temp chord
             chord.addNote(*note);
 
-            //  std::cout << "measure: " << measure << 
+            // LOG_DEBUG("measure: " << measure << 
             //             " | startTime: " << startTime <<
             //             " | note: " << note->getPitch() << 
             //             " | ticks: " << note->getDurationTicks() <<
             //             " | noteDiv: " << note->getDivisionsPerQuarterNote() <<
-            //             " | noteDur: " << note->getType() << std::endl; 
+            //             " | noteDur: " << note->getType());
         }
 
         // Skip undesired short/long time chords

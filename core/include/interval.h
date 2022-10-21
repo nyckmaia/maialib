@@ -5,6 +5,7 @@
 #include <algorithm>  // std::find
 
 #include "note.h"
+#include "log.h"
 
 class Interval
 {

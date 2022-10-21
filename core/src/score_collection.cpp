@@ -95,7 +95,7 @@ void ScoreCollection::loadCollectionFiles()
             const std::filesystem::path& ext = fp.path().extension();
             if (ext == ".xml" || ext == ".mxl" || ext == ".musicxml") {
                 const std::string& fileName = fp.path().filename().string();
-                std::cout << "Loading: " << fileName << std::endl;
+                LOG_INFO("Loading: " << fileName);
 
                 const std::string& filePath = fp.path().string();
                 _scores.emplace_back(filePath);
@@ -125,7 +125,7 @@ void ScoreCollection::merge(const ScoreCollection& other, const std::string& mer
 void ScoreCollection::removeScore(const int scoreIdx)
 {
     if (scoreIdx >= static_cast<int>(_scores.size())) {
-        std::cerr << "[ERROR] Invalid score index: " << scoreIdx << std::endl;
+        LOG_ERROR("Invalid score index: " + std::to_string(scoreIdx));
         return;
     }
 

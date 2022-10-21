@@ -35,8 +35,7 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
 
     // Error checking:
     if(pitchSize > 4) {
-        const std::string msg = "[maiacore] The pitch '" + pitch + "' have a invalid length: " + std::to_string(pitchSize);
-        throw std::runtime_error(msg); 
+        LOG_ERROR("The pitch '" + pitch + "' have a invalid length: " + std::to_string(pitchSize));
     }
 
     const std::string diatonicPitch = pitch.substr(0, 1);
@@ -44,8 +43,7 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
 
     // Error checking:
     if(!foundPitch && !pitch.empty()) {
-        const std::string msg = "[maiacore] Unknown diatonc pitch: " + diatonicPitch;
-        throw std::runtime_error(msg);  
+        LOG_ERROR("Unknown diatonc pitch: " + diatonicPitch);
     }
 
     // Verify if the input data is a full pitch or just a pitchClass. Ex.: "A4" or "A"
@@ -55,7 +53,7 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
     const int octave = (isFullPitch) ? (int)pitch.back() - 48 : 4;
 
     if (octave > 9) {
-        throw std::runtime_error("[maiacore] Invalid octave value");
+        LOG_ERROR("Invalid octave value");
     }
 
     const size_t pitchClassSize = pitchClass.size();
@@ -67,9 +65,9 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
 
     bool foundAlterSymbol = std::find(c_alterSymbol.begin(), c_alterSymbol.end(), _alterSymbol) != c_alterSymbol.end();
     if(!foundAlterSymbol && !_alterSymbol.empty()) { 
-        const std::string msg = "[maiacore] Unknown alter symbol: " + _alterSymbol;
-        throw std::runtime_error(msg);  
+        LOG_ERROR("Unknown alter symbol: " + _alterSymbol);
     }
+
     _writtenPitchClass = pitchClass;
     _writtenOctave = octave;
     _midiNumber = Helper::pitch2midiNote(pitchClass + std::to_string(octave));
@@ -90,7 +88,7 @@ Note::Note(const int midiNumber, const std::string& accType, const Duration dura
     Note(Helper::midiNote2pitch(midiNumber, accType), duration, isNoteOn, inChord, transposeDiatonic, transposeChromatic, divisionsPerQuarterNote)
 {
     if (midiNumber > 127) {
-        throw std::runtime_error("[maiacore] Invalid MIDI number");
+        LOG_ERROR("Invalid MIDI number");
     }
 }
 
@@ -101,20 +99,20 @@ Note::~Note()
 
 void Note::info() const
 {
-    std::cout << "Is note on: " << std::boolalpha << _isNoteOn << std::endl;
-    std::cout << "Pitch: " << getPitch() << std::endl;
-    std::cout << "Note Type: " << _duration.noteType << std::endl;
-    std::cout << "Quarter Duration: " << getQuarterDuration() << std::endl;
-    std::cout << "Voice: " << _voice << std::endl;
-    std::cout << "Staff: " << _staff << std::endl;
-    std::cout << "MIDI Number: " << getMIDINumber() << std::endl;
-    std::cout << "Stem: " << _stem << std::endl;
-    std::cout << "Beams: " << _beam.size() << std::endl;
-    std::cout << "Is Tuplet: " << std::boolalpha << _isTuplet << std::endl;
-    std::cout << "Is Grace Note: " << std::boolalpha << _isGraceNote << std::endl;
-    std::cout << "In Chord: " << std::boolalpha << _inChord << std::endl;
-    std::cout << "Transpose Diatonic: " << _transposeDiatonic << std::endl;
-    std::cout << "Transpose Chromatic: " << _transposeChromatic << std::endl;
+    LOG_INFO("Is note on: " << std::boolalpha << _isNoteOn);
+    LOG_INFO("Pitch: " << getPitch());
+    LOG_INFO("Note Type: " << _duration.noteType);
+    LOG_INFO("Quarter Duration: " << getQuarterDuration());
+    LOG_INFO("Voice: " << _voice);
+    LOG_INFO("Staff: " << _staff);
+    LOG_INFO("MIDI Number: " << getMIDINumber());
+    LOG_INFO("Stem: " << _stem);
+    LOG_INFO("Beams: " << _beam.size());
+    LOG_INFO("Is Tuplet: " << std::boolalpha << _isTuplet);
+    LOG_INFO("Is Grace Note: " << std::boolalpha << _isGraceNote);
+    LOG_INFO("In Chord: " << std::boolalpha << _inChord);
+    LOG_INFO("Transpose Diatonic: " << _transposeDiatonic);
+    LOG_INFO("Transpose Chromatic: " << _transposeChromatic);
 }
 
 void Note::setUnpitchedIndex(const int unpitchedIndex)
@@ -739,7 +737,7 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnhamonicPitch) const
         case hash("B#9"):  enharmonicPitch = (alternativeEnhamonicPitch) ? "Dbb10" : "C10";  break;
         case hash("Bx9"):  enharmonicPitch = (alternativeEnhamonicPitch) ? "Db10" : "C#10";  break;
 
-        default: throw std::runtime_error("[maiacore] Unknown note pitchClass"); break;
+        default: LOG_ERROR("Unknown note pitchClass"); break;
     }
 
     return enharmonicPitch;
@@ -804,8 +802,7 @@ void Note::setPitch(const std::string& pitch){
 
     // Error checking:
     if(pitchSize > 4) {
-        const std::string msg = "[maiacore] Invalid pitchClass length: " + std::to_string(pitchSize);
-        throw std::runtime_error(msg);
+        LOG_ERROR("Invalid pitchClass length: " + std::to_string(pitchSize));
     }
 
     const std::string diatonicPitch = pitch.substr(0, 1);
@@ -813,8 +810,7 @@ void Note::setPitch(const std::string& pitch){
 
     // Error checking:
     if(!foundPitch && !pitch.empty()) {
-        const std::string msg = "[maiacore] Unknown diatonc pitch: " + diatonicPitch;
-        throw std::runtime_error(msg);
+        LOG_ERROR("Unknown diatonc pitch: " + diatonicPitch);
     }
 
     // Verify if the input data is a full pitch or just a pitchClass. Ex.: "A4" or "A"
@@ -832,9 +828,9 @@ void Note::setPitch(const std::string& pitch){
 
     bool foundAlterSymbol = std::find(c_alterSymbol.begin(), c_alterSymbol.end(), _alterSymbol) != c_alterSymbol.end();
     if(!foundAlterSymbol && !_alterSymbol.empty()) {
-        const std::string msg = "[maiacore] Unknown alter symbol: " + _alterSymbol;
-        throw std::runtime_error(msg);
+        LOG_ERROR("Unknown alter symbol: " + _alterSymbol);
     }
+
     _writtenPitchClass = pitchClass;
     _writtenOctave = octave;
     _midiNumber = Helper::pitch2midiNote(pitchClass + std::to_string(octave));
@@ -920,7 +916,7 @@ void Note::setTransposingInterval(const int diatonicInterval, const int chromati
         // Get the index of the written pitch
         writtenPitchClassIdx = doubleFlatNote - doubleFlatScale.begin();
     } else {
-        std::cerr << "[ERROR] Unknown note type" << std::endl;
+        LOG_ERROR("Unknown note type");
     }
 
     // Compute the temp 'fake' index (can be out of array bounds)
@@ -932,7 +928,7 @@ void Note::setTransposingInterval(const int diatonicInterval, const int chromati
     // Get the single octave chromatic scale index for sounding pitchClass
     if (tempIdx >= 0 && tempIdx <= 12) { // Transpose inside one octave
         soundingPitchClassIdx = tempIdx % 12;
-    } else if (tempIdx > 0 && tempIdx > 12) { // Transpose outside one octave
+    } else if (tempIdx > 12) { // Transpose outside one octave
         soundingPitchClassIdx = tempIdx % 12;
         _soundingOctave++;
     } else { // Transpose down octave
@@ -950,7 +946,7 @@ void Note::setTransposingInterval(const int diatonicInterval, const int chromati
     } else if (useDoubleFlatScale) {
         _soundingPitchClass = doubleFlatScale[soundingPitchClassIdx];
     } else {
-        std::cerr << "[ERROR] Unknown note type in Note::setTransposingInterval()" << std::endl;
+        LOG_ERROR("Unknown note type");
     }
 }
 

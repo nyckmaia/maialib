@@ -5,8 +5,6 @@
 Chord::Chord() :
     _isStackedInThirds(false)
 {
-    LOG_INFO("Nyck %d", 2); // se tirar o parametro ele quebra?
-    // TRY("Esse eh um erro");
 }
 
 Chord::Chord(const std::vector<Note>& notes) :
@@ -38,9 +36,9 @@ void Chord::clear()
 
 void Chord::info()
 {
-    std::cout << "=====> CHORD <=====" << std::endl;
-    std::cout << "Name: " << getName() << std::endl;
-    std::cout << "Size:" << size() << std::endl;
+    LOG_INFO("=====> CHORD <=====");
+    LOG_INFO( "Name: " << getName());
+    LOG_INFO("Size:" << size());
 
     const int chordSize = size();
     std::string noteNames = "[";
@@ -54,13 +52,13 @@ void Chord::info()
 
     noteNames.append("]");
 
-    std::cout << noteNames << std::endl;
+    LOG_INFO(noteNames);
 
     // ---------------- //
     const int chordStackSize = stackSize();
 
-    std::cout << "=====> CHORD STACK <=====" << std::endl;
-    std::cout << "Open Stack Size:" << chordStackSize << std::endl;
+    LOG_INFO("=====> CHORD STACK <=====");
+    LOG_INFO("Open Stack Size:" << chordStackSize);
 
     std::string stackNames = "[";
 
@@ -73,7 +71,7 @@ void Chord::info()
 
     stackNames.append("]");
 
-    std::cout << stackNames << std::endl;
+    LOG_INFO(stackNames);
 
 }
 
@@ -327,7 +325,7 @@ void Chord::print() const
     const int chordSize = _originalNotes.size();
 
     for (int i = 0; i < chordSize; i++) {
-        std::cout << "note[" << i << "] = " << _originalNotes[i].getPitch() << std::endl;
+        LOG_INFO("note[" << i << "] = " << _originalNotes[i].getPitch());
     }
 }
 
@@ -336,7 +334,7 @@ void Chord::printStack() const
     const int stackSize = _openStack.size();
 
     for (int i = 0; i < stackSize; i++) {
-        std::cout << "openStack[" << i << "] = " << _openStack[i].getPitch() << std::endl;
+        LOG_INFO("openStack[" << i << "] = " << _openStack[i].getPitch());
     }
 }
 
@@ -369,7 +367,7 @@ void Chord::stackInThirds(const bool enharmonyNotes)
     // ===== STEP 0: INPUT VALIDATION ===== //
     // Error checking:
     if (_originalNotes.empty()) {
-        std::cerr << "[WARN]: The chord is empty!" << std::endl;
+        LOG_WARN("The chord is empty!");
         return;
     }
 
@@ -403,7 +401,7 @@ void Chord::stackInThirds(const bool enharmonyNotes)
 
     // Error checking:
     if (chordSize < 3) {
-        std::cout << "[WARN]: The chord MUST BE at least 3 unique pitch classes!" << std::endl;
+        LOG_WARN("The chord MUST BE at least 3 unique pitch classes!");
         return;
     }
 
@@ -412,11 +410,11 @@ void Chord::stackInThirds(const bool enharmonyNotes)
 
     // ===== STEP 3: COMPUTE ALL ENHARMONIC HEAPS (VALID AND INVALID HEAPS) ===== //
     std::vector<Heap> allEnharmonicHeaps = computeEnharmonicHeaps(enharmonicUnitGroups);
-    // std::cout << "allEnharmonicHeaps: " << allEnharmonicHeaps.size() << std::endl;
+    // LOG_DEBUG("allEnharmonicHeaps: " << allEnharmonicHeaps.size());
 
     // ===== STEP 4: FILTER HEAPS THAT DO NOT CONTAIN INTERNAL DUPLICATED PITCH STEPS ===== //
     std::vector<Heap> validEnharmonicHeaps = removeHeapsWithDuplicatedPitchSteps(allEnharmonicHeaps);
-    // std::cout << "validEnharmonicHeaps: " << validEnharmonicHeaps.size() << std::endl;
+    // LOG_DEBUG("validEnharmonicHeaps: " << validEnharmonicHeaps.size());
 
     // ===== STEP 5: COMPUTE THE STACK IN THIRDS TEMPLATE MATCH ===== //
     for (auto& heap : validEnharmonicHeaps) {
@@ -566,7 +564,7 @@ std::vector<Heap> Chord::computeEnharmonicHeaps(const std::vector<Heap>& heaps) 
             }
             break;
     
-        default: throw std::runtime_error("[maiacore] Invalid chord size: " + std::to_string(chordSize)); break;
+        default: LOG_ERROR("Invalid chord size: " + std::to_string(chordSize)); break;
     }
     
     return enharmonicHeaps;
@@ -616,7 +614,7 @@ std::vector<Heap> Chord::computeAllHeapInversions(Heap& heap) const
 
 std::vector<Heap> Chord::filterTertianHeapsOnly(const std::vector<Heap>& heaps) const
 {
-    if (heaps.empty()) { throw std::runtime_error("[maiacore] Heaps vector is empty"); }
+    if (heaps.empty()) { LOG_ERROR("Heaps vector is empty"); }
     
     const int heapSize = heaps[0].size();
     
@@ -660,7 +658,7 @@ void Chord::computeCloseStack(const std::vector<Note>& openStack)
         case hash("A"): closeStackOctavesMap = &c_A_closeStackOctavesMap; break;
         case hash("B"): closeStackOctavesMap = &c_B_closeStackOctavesMap; break;
         default: 
-            throw std::runtime_error("[maiacore] Invalid pitchStep: " + rootNote.getPitchStep());
+            LOG_ERROR("Invalid pitchStep: " + rootNote.getPitchStep());
             break;
     }
 
@@ -673,7 +671,7 @@ void Chord::computeCloseStack(const std::vector<Note>& openStack)
 
 HeapData Chord::stackInThirdsTemplateMatch(const Heap& heap) const
 {
-    // std::cout << "===== PRINTING HEAPS INSIDE stackInThirdsTemplateMatch =====" << std::endl;
+    // LOG_DEBUG("===== PRINTING HEAPS INSIDE stackInThirdsTemplateMatch =====");
     // for (const auto& noteData : heap) {
     //     std::cout << noteData.note.getPitch() << " ";
     // }
@@ -687,7 +685,7 @@ HeapData Chord::stackInThirdsTemplateMatch(const Heap& heap) const
         maxHeapPointsValue += std::pow(2, (7-i));
     }
 
-    // std::cout << "maxHeapPointsValue: " << maxHeapPointsValue << std::endl;
+    // LOG_DEBUG("maxHeapPointsValue: " << maxHeapPointsValue);
 
     HeapData heapData;
     std::get<0>(heapData) = heap;
@@ -706,7 +704,7 @@ HeapData Chord::stackInThirdsTemplateMatch(const Heap& heap) const
         case hash("G"): stackPositionWeightMap = &c_G_stackPositionWeightMap; break;
         case hash("A"): stackPositionWeightMap = &c_A_stackPositionWeightMap; break;
         case hash("B"): stackPositionWeightMap = &c_B_stackPositionWeightMap; break;
-        default: throw std::runtime_error("[maiacore] Invalid pitchStep"); break;
+        default: LOG_ERROR("Invalid pitchStep"); break;
     }
 
     // Iterate over each heap note
@@ -720,10 +718,10 @@ HeapData Chord::stackInThirdsTemplateMatch(const Heap& heap) const
             case 0: enharmonicNoteWeight = 1.00f; break;
             case 1: enharmonicNoteWeight = 0.50f; break;
             case 2: enharmonicNoteWeight = 0.25f; break;
-            default: throw std::runtime_error("[maiacore] Invalid enharmonic diatonic distance"); break;
+            default: LOG_ERROR("Invalid enharmonic diatonic distance"); break;
         }
 
-        // std::cout << "pitchStep: " << notePitchStep << " | stackPositionWeight: " << stackPositionWeight << " | enharmonicNoteWeight: " << enharmonicNoteWeight << std::endl;
+        // LOG_DEBUG("pitchStep: " << notePitchStep << " | stackPositionWeight: " << stackPositionWeight << " | enharmonicNoteWeight: " << enharmonicNoteWeight);
         *heapCountPoints += stackPositionWeight * enharmonicNoteWeight;        
     }
 
@@ -743,9 +741,7 @@ std::vector<int> Chord::getMIDIIntervals(const bool firstNoteAsReference) const
 {
     const int numNotes = _originalNotes.size();
 
-    if (numNotes <= 0) {
-        throw std::runtime_error("[maiacore] Chord is empty");
-    }
+    if (numNotes <= 0) { LOG_ERROR("Chord is empty"); }
 
     std::vector<int> midiIntervals(numNotes - 1);
 
@@ -771,9 +767,7 @@ std::vector<Interval> Chord::getIntervals(const bool firstNoteAsReference) const
 {
     const int numIntervals = size() - 1;
 
-    if (numIntervals <= 0) {
-        throw std::runtime_error("[maiacore] Chord is empty");
-    }
+    if (numIntervals <= 0) { LOG_ERROR("Chord is empty"); }
 
     std::vector<Interval> intervals(numIntervals);
 
@@ -864,13 +858,13 @@ std::string Chord::getName()
     
     // ===== STEP 1: CHECK IF THE CHORD IS TONAL OR NOT ====== //
     if (!isTonal()) {
-        std::cout << "[WARNING] Unable to get a tonal name of a non-tonal chord" << std::endl;
+        LOG_WARN("Unable to get a tonal name of a non-tonal chord");
         return {}; 
     }
 
     // Error checking
     if (!haveMinorThird() && !haveMajorThird()) {
-        // std::cerr << "[ERROR]: Unable to classify this chord!" << std::endl;
+        // LOG_ERROR("Unable to classify this chord!");
         return {};
     }
 

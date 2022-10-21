@@ -39,7 +39,7 @@ const std::string Helper::midiNote2pitch(const int midiNote, const std::string& 
         (accType != MUSIC_XML::ACCIDENT::DOUBLE_SHARP) && 
         (accType != MUSIC_XML::ACCIDENT::DOUBLE_FLAT)) {
 
-        std::cerr << "[ERROR] Unknown accident type: " << accType << std::endl;
+        LOG_ERROR("Unknown accident type: " + accType);
         return std::string();
     }
 
@@ -86,8 +86,7 @@ const std::string Helper::midiNote2pitch(const int midiNote, const std::string& 
         (accType == MUSIC_XML::ACCIDENT::SHARP && !canBeSharp) ||
         (accType == MUSIC_XML::ACCIDENT::DOUBLE_SHARP && !canBeDoubleSharp)) {
 
-        std::string msg = "[maiacore] The MIDI Note '" + std::to_string(midiNote) + "' cannot be wrote using '" + accType + "' accident type";
-        throw std::runtime_error(msg);
+        LOG_ERROR("The MIDI Note '" + std::to_string(midiNote) + "' cannot be wrote using '" + accType + "' accident type");
     }
 
     // ===== GET THE PITCHCLASS ===== //
@@ -157,7 +156,7 @@ std::vector<Interval> Helper::notes2Intervals(const std::vector<Note>& notes, co
 {
     const int notesSize = notes.size();
     if (notesSize <= 1) {
-        throw std::runtime_error("[maiacore] You should pass two or more notes to create an interval vector");
+        LOG_ERROR("You should pass two or more notes to create an interval vector");
     }
 
     const int numIntervals = notesSize - 1;
@@ -673,7 +672,7 @@ int Helper::pitch2midiNote(const std::string& pitch)
         case hash("Db10"):  return MUSIC_XML::MIDI::NUMBER::MIDI_132;
         case hash("B#9"):   return MUSIC_XML::MIDI::NUMBER::MIDI_132;
 
-        default: std::cerr << "Unknown pitch: " << pitch << std::endl;; break;
+        default: LOG_ERROR("Unknown pitch: " + pitch); break;
     }
 
     // If pitch no found:
@@ -730,7 +729,7 @@ float Helper::alterSymbol2Value(const std::string& alterSymbol)
         case hash("x"):     return 2.0f;
         
         default:
-            std::cerr << "[ERROR] Unknown accident symbol: " << alterSymbol << std::endl;
+            LOG_ERROR("Unknown accident symbol: " + alterSymbol);
             break;
     }
 
@@ -761,7 +760,7 @@ const std::string Helper::alterValue2Name(const float alterValue)
         case hash("2.0"): return "double-sharp";
     
         default:
-            std::cerr << "[ERROR] Unknown accidental alter value: " << alterStr << std::endl;
+            LOG_ERROR("Unknown accidental alter value: " + alterStr);
             break;
     }
 
@@ -778,7 +777,7 @@ const std::string Helper::alterValue2symbol(const float alterValue)
 
     streamObj << alterValue;
 
-    std::string value = streamObj.str().c_str();
+    std::string value = streamObj.str();
 
     switch (hash(value.c_str())) {
         case hash("-2.0"): return "bb";
@@ -792,7 +791,7 @@ const std::string Helper::alterValue2symbol(const float alterValue)
         case hash("2.0"):  return "x";
 
         default:
-            std::cerr << "[ERROR] Unknown accidental alter value: " << value << std::endl;
+            LOG_ERROR("Unknown accidental alter value: " + value);
             break;
     }
 
@@ -813,7 +812,7 @@ const std::string Helper::alterName2symbol(const std::string& alterName)
         case hash("flat-flat"):    return "bb"; break;
        
         default:
-            std::cerr << "[ERROR] Unknown accidental name: " << alterName << std::endl;
+            LOG_ERROR("Unknown accidental name: " + alterName);
             break;
     }
 
@@ -829,7 +828,7 @@ const nlohmann::json Helper::getPercentiles(const nlohmann::json& table, const s
     // Check input values:
     for (size_t i = 0; i < desiredPercentilesSize; i++) {
         if (desiredPercentiles[i] > 1.0f) {
-            std::cerr << "[ERROR] All desired percentiles MUST BE smaller than 1.0" << std::endl;
+            LOG_ERROR("All desired percentiles MUST BE smaller than 1.0");
             return nlohmann::json();
         }
     }
@@ -1081,7 +1080,7 @@ int Helper::noteType2ticks(std::string noteType, const int divisionsPerQuarterNo
             break;
 
         default:
-            std::cerr << "[ERROR] Unknown note type called: " << noteType << std::endl;
+            LOG_ERROR("Unknown note type called: " + noteType);
             break;
     }
 
@@ -1153,9 +1152,8 @@ std::pair<std::string, int> Helper::ticks2noteType(const int ticks, const int di
     if ((scaledRatio >= 3906)     && (scaledRatio <= 5858))     { return { MUSIC_XML::NOTE_TYPE::N1024TH,         0}; } // 1:256
 
     // switch/case default option
-    std::cerr << "[ERROR-MS] Unable to convert ticks to noteType: " << ticks << std::endl;
-    std::cerr << "ticks: " << ticks << " | divPQN: " << divisionsPerQuarterNote << "| scaledRatio: " << scaledRatio << std::endl;
-
+    LOG_WARN("ticks: " << ticks << " | divPQN: " << divisionsPerQuarterNote << "| scaledRatio: " << scaledRatio);
+    LOG_ERROR("Unable to convert ticks to noteType: " + std::to_string(ticks));
     return {};
 
 #else
@@ -1217,8 +1215,8 @@ std::pair<std::string, int> Helper::ticks2noteType(const int ticks, const int di
     case 5859 ... 6835:         return { MUSIC_XML::NOTE_TYPE::N1024TH_DOT    , 1}; // 1:256
     case 3906 ... 5858:         return { MUSIC_XML::NOTE_TYPE::N1024TH        , 0}; // 1:256
     default:
-        std::cerr << "[ERROR] Unable to convert ticks to noteType: " << ticks << std::endl;
-        std::cerr << "ticks: " << ticks << " | divPQN: " << divisionsPerQuarterNote << "| scaledRatio: " << scaledRatio << std::endl;
+        LOG_WARN("ticks: " << ticks << " | divPQN: " << divisionsPerQuarterNote << "| scaledRatio: " << scaledRatio);    
+        LOG_ERROR("Unable to convert ticks to noteType: " + std::to_string(ticks));
         break;
     }
 
@@ -1414,7 +1412,7 @@ float Helper::pitch2freq(const std::string& pitch)
             freq = 34.30f * pow(2, octave); // Aproximation of C#
             break;
         default:
-            std::cerr << "[ERROR] Pitch not found!" << std::endl;
+            LOG_ERROR("Pitch not found!");
     }
 
     // Apply the quarter accidental to the pure tone frequency value:
@@ -1480,8 +1478,7 @@ void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::
 
     // Error checking:
     if(pitchSize > 4) {
-        const std::string msg = "[maiacore] The pitch '" + pitch + "' have a invalid length: " + std::to_string(pitchSize);
-        throw std::runtime_error(msg);
+        LOG_ERROR("The pitch '" + pitch + "' have a invalid length: " + std::to_string(pitchSize));
     }
 
     const std::string diatonicPitch = pitch.substr(0, 1);
@@ -1489,8 +1486,7 @@ void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::
 
     // Error checking:
     if(!foundPitch && !pitch.empty()) {
-        const std::string msg = "[maiacore] Unknown diatonc pitch: " + diatonicPitch;
-        throw std::runtime_error(msg);
+        LOG_ERROR("Unknown diatonc pitch: " + diatonicPitch);
     }
 
     // Verify if the input data is a full pitch or just a pitchClass. Ex.: "A4" or "A"
@@ -1510,8 +1506,7 @@ void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::
 
     bool foundAlterSymbol = std::find(c_alterSymbol.begin(), c_alterSymbol.end(), alterSymbol) != c_alterSymbol.end();
     if(!foundAlterSymbol && !alterSymbol.empty()) {
-        const std::string msg = "[maiacore] Unknown alter symbol: " + alterSymbol;
-        throw std::runtime_error(msg);
+        LOG_ERROR("Unknown alter symbol: " + alterSymbol);
     }
 
     switch (pitchSize) {
@@ -1541,7 +1536,7 @@ float Helper::durationRatio(float duration_A, float duration_B)
 
     // Error checking: negative values
     if (duration_A < 0 || duration_B < 0) {
-        std::cerr << "[ERROR] Both duration values must be positive!" << std::endl;
+        LOG_ERROR("Both duration values must be positive!");
         return 0.0f;
     }
 
@@ -1599,7 +1594,7 @@ std::string Helper::duration2noteType(const Duration duration)
     case Duration::N1024TH:         return MUSIC_XML::NOTE_TYPE::N1024TH; break;
     
     default:
-        std::runtime_error("[ERROR] Unknown Duration type");
+        LOG_ERROR("Unknown Duration type");
         break;
     }
 
@@ -1654,8 +1649,7 @@ Duration Helper::noteType2duration(const std::string& noteType)
     case hash("1024th"):            return Duration::N1024TH;
     
     default:
-        const std::string msg = "[ERROR] Unknown note type: " + noteType;
-        std::runtime_error(msg.c_str());
+        LOG_ERROR("Unknown note type: " + noteType);
         break;
     }
 
@@ -1706,8 +1700,8 @@ const std::string Helper::number2pitch(const float number, const std::string& ac
     } else if (acc == -1.0f) {
         accStr = "bb";
     } else {
-        std::cerr << "[ERROR] Unknown accident symbol" << std::endl;
-        return std::string();
+        LOG_ERROR("Unknown accident symbol");
+        return {};
     }
 
     // Pitch: Select a pure pitch value:
@@ -1722,8 +1716,8 @@ const std::string Helper::number2pitch(const float number, const std::string& ac
         case 7: purePitchStr = "B"; break;
 
         default:
-            std::cerr << "[ERROR] Unknown pure pitch value" << std::endl;
-            return std::string();
+            LOG_ERROR("Unknown pure pitch value");
+            return {};
     }
 
     // Result:
@@ -1802,7 +1796,7 @@ float Helper::pitch2number(const std::string& pitch)
         } else if (acc == "3b") {
             accValue = -0.75;
         } else {
-            std::cerr << "Unknown accident symbol" << std::endl;
+            LOG_ERROR("Unknown accident symbol");
             return 0.0f;
         }
     }
@@ -1824,7 +1818,7 @@ float Helper::pitch2number(const std::string& pitch)
     } else if (purePitch == "B") {
         basePitch = 7.0f;
     } else {
-        std::cerr << "Unknown pure pitch value" << std::endl;
+        LOG_ERROR("Unknown pure pitch value: " + purePitch);
         return 0.0f;
     }
 

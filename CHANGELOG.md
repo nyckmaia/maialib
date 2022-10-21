@@ -8,6 +8,11 @@ All notable changes to this project will be documented in this file.
 
 ### New Features
 - `Interval Class`: 50 new classification methods
+- Replace old log using `std::cout` by the new C++ macros for log data and exceptions:
+    - `LOG_DEBUG()`
+    - `LOG_INFO()`
+    - `LOG_WARN()`
+    - `LOG_ERROR()`
 
 ### Improved
 - `Interval Class`:

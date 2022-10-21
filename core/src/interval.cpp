@@ -15,7 +15,7 @@ Interval::Interval(const Note& note_A, const Note& note_B) :
 {
     // Error checking:
     if (!note_A.isNoteOn() || !note_B.isNoteOn()) {
-        throw std::runtime_error("[maiacore] Cannot compute the interval between a note and a REST");
+        LOG_ERROR("Cannot compute the interval between a note and a REST");
     }
 
     _note.resize(2);
@@ -34,7 +34,7 @@ void Interval::setNotes(const Note& note_A, const Note& note_B)
 {
     // Error checking:
     if (!note_A.isNoteOn() || !note_B.isNoteOn()) {
-        throw std::runtime_error("[maiacore] Cannot compute the interval between a note and a rest");
+        LOG_ERROR("Cannot compute the interval between a note and a rest");
     }
 
     _note.clear();
@@ -193,7 +193,7 @@ std::pair<std::string, bool> Interval::analyse() const
             break;
 
         default:
-            throw std::runtime_error("[maiacore] Unknown 'diatonicInterval' value: " + std::to_string(diatonicInterval));
+            LOG_ERROR("Unknown 'diatonicInterval' value: " + std::to_string(diatonicInterval));
     }
 
     // Only to avoid the 'no-return' compiler warning
@@ -266,7 +266,7 @@ int Interval::getPitchStepInterval() const
         case hash("G"): diatonicScale = &c_G_diatonicScale; break;
         case hash("A"): diatonicScale = &c_A_diatonicScale; break;
         case hash("B"): diatonicScale = &c_B_diatonicScale; break;
-        default: throw std::runtime_error("[maiacore] Invalid diatonic pitch step"); break;
+        default: LOG_ERROR("Invalid diatonic pitch step"); break;
     }
 
     // Compute the distance between the interval first and second pitch step

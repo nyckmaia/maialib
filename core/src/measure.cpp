@@ -32,10 +32,10 @@ Measure::~Measure()
 
 void Measure::info() const
 {
-    std::cout << "Number: " << _number << std::endl;
-    std::cout << "Time Signature: " << _timeSignatureUpper << "/" << _timeSignatureLower << std::endl;
-    std::cout << "Fifth Cicle: " << _fifthCicle << std::endl;
-    std::cout << "Metronome Mark: " << _metronomeFigure << " - " << _metronomeValue << std::endl;
+    LOG_INFO("Number: " << _number);
+    LOG_INFO("Time Signature: " << _timeSignatureUpper << "/" << _timeSignatureLower);
+    LOG_INFO("Fifth Cicle: " << _fifthCicle);
+    LOG_INFO("Metronome Mark: " << _metronomeFigure << " - " << _metronomeValue);
 }
 
 void Measure::setNumber(const int measureNumber)
@@ -212,7 +212,7 @@ void Measure::removeNote(const int noteId, const int staveId)
         auto& stave = _note[staveId];
         stave.erase(stave.begin(), stave.begin() + noteId);
     } catch (const std::out_of_range& oor) {
-        std::cerr << "Out of Range error: " << oor.what() << '\n';
+        LOG_ERROR("Out of Range error: " + oor.what());
     }
 }
 
@@ -626,7 +626,7 @@ int Measure::getEmptyDurationTicks() const
             case 16: return 64; break;
             case 32: return 32; break;
         default:
-            std::cerr << "[ERROR]: Invalid timeSignatureLower!" << std::endl;
+            LOG_ERROR("Invalid timeSignatureLower!");
             return 256;
             break;
         }

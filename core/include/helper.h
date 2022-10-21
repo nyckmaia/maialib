@@ -16,6 +16,7 @@
 #include "interval.h"
 #include "constants.h"
 #include "utils.h"
+#include "log.h"
 
 class Note;
 
