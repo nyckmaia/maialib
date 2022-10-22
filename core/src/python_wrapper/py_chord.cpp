@@ -117,6 +117,10 @@ void ChordClass(py::module &m) {
             // Fill DataFrame with records and columns
             py::object df = FromRecords(output, "columns"_a = columns);
 
+            df.attr("numEnharNotes") = df.attr("numEnharNotes").attr("astype")("int16");
+            df.attr("numNonTonalIntervals") = df.attr("numNonTonalIntervals").attr("astype")("int16");
+            df.attr("matchValue") = df.attr("matchValue").attr("astype")("float32");
+
             return df;
         }, 
         py::arg("enharmonyNotes") = false);
@@ -136,20 +140,79 @@ void ChordClass(py::module &m) {
     cls.def("getBassNote", &Chord::getBassNote);
     cls.def("getNotes", &Chord::getNotes);
 
-    cls.def("haveMinorThird", &Chord::haveMinorThird);
-    cls.def("haveMajorThird", &Chord::haveMajorThird);
-    cls.def("haveDiminishedFifth", &Chord::haveDiminishedFifth);
-    cls.def("havePerfectFifth", &Chord::havePerfectFifth);
-    cls.def("haveAugmentedFifth", &Chord::haveAugmentedFifth);
-    cls.def("haveDiminishedSeventh", &Chord::haveDiminishedSeventh);
-    cls.def("haveMinorSeventh", &Chord::haveMinorSeventh);
-    cls.def("haveMajorSeventh", &Chord::haveMajorSeventh);
-    cls.def("haveMinorNinth", &Chord::haveMinorNinth);
-    cls.def("haveMajorNinth", &Chord::haveMajorNinth);
-    cls.def("havePerfectEleventh", &Chord::havePerfectEleventh);
-    cls.def("haveSharpEleventh", &Chord::haveSharpEleventh);
-    cls.def("haveMinorThirdteenth", &Chord::haveMinorThirdteenth);
-    cls.def("haveMajorThirdteenth", &Chord::haveMajorThirdteenth);
+    cls.def("haveMajorInterval", &Chord::haveMajorInterval, py::arg("useEnharmony") = false);
+    cls.def("haveMinorInterval", &Chord::haveMinorInterval, py::arg("useEnharmony") = false);
+    cls.def("havePerfectInterval", &Chord::havePerfectInterval, py::arg("useEnharmony") = false);
+    cls.def("haveDiminishedInterval", &Chord::haveDiminishedInterval, py::arg("useEnharmony") = false);
+    cls.def("haveAugmentedInterval", &Chord::haveAugmentedInterval, py::arg("useEnharmony") = false);
+
+    // ===== ABSTRACTION 1 ===== //
+    cls.def("haveDiminishedUnisson", &Chord::haveDiminishedUnisson, py::arg("useEnharmony") = false);
+    cls.def("havePerfectUnisson", &Chord::havePerfectUnisson, py::arg("useEnharmony") = false);
+    cls.def("haveAugmentedUnisson", &Chord::haveAugmentedUnisson, py::arg("useEnharmony") = false);
+    cls.def("haveMinorSecond", &Chord::haveMinorSecond, py::arg("useEnharmony") = false);
+    cls.def("haveMajorSecond", &Chord::haveMajorSecond, py::arg("useEnharmony") = false);
+    cls.def("haveMinorThird", &Chord::haveMinorThird, py::arg("useEnharmony") = false);
+    cls.def("haveMajorThird", &Chord::haveMajorThird, py::arg("useEnharmony") = false);
+    cls.def("havePerfectFourth", &Chord::havePerfectFourth, py::arg("useEnharmony") = false);
+    cls.def("haveAugmentedFourth", &Chord::haveAugmentedFourth, py::arg("useEnharmony") = false);
+    cls.def("haveDiminishedFifth", &Chord::haveDiminishedFifth, py::arg("useEnharmony") = false);
+    cls.def("havePerfectFifth", &Chord::havePerfectFifth, py::arg("useEnharmony") = false);
+    cls.def("haveAugmentedFifth", &Chord::haveAugmentedFifth, py::arg("useEnharmony") = false);
+    cls.def("haveMinorSixth", &Chord::haveMinorSixth, py::arg("useEnharmony") = false);
+    cls.def("haveMajorSixth", &Chord::haveMajorSixth, py::arg("useEnharmony") = false);
+    cls.def("haveDiminishedSeventh", &Chord::haveDiminishedSeventh, py::arg("useEnharmony") = false);
+    cls.def("haveMinorSeventh", &Chord::haveMinorSeventh, py::arg("useEnharmony") = false);
+    cls.def("haveMajorSeventh", &Chord::haveMajorSeventh, py::arg("useEnharmony") = false);
+    cls.def("haveDiminishedOctave", &Chord::haveDiminishedOctave, py::arg("useEnharmony") = false);
+    cls.def("havePerfectOctave", &Chord::havePerfectOctave, py::arg("useEnharmony") = false);
+    cls.def("haveAugmentedOctave", &Chord::haveAugmentedOctave, py::arg("useEnharmony") = false);
+    cls.def("haveMinorNinth", &Chord::haveMinorNinth, py::arg("useEnharmony") = false);
+    cls.def("haveMajorNinth", &Chord::haveMajorNinth, py::arg("useEnharmony") = false);
+    cls.def("havePerfectEleventh", &Chord::havePerfectEleventh, py::arg("useEnharmony") = false);
+    cls.def("haveSharpEleventh", &Chord::haveSharpEleventh, py::arg("useEnharmony") = false);
+    cls.def("haveMinorThirdteenth", &Chord::haveMinorThirdteenth, py::arg("useEnharmony") = false);
+    cls.def("haveMajorThirdteenth", &Chord::haveMajorThirdteenth, py::arg("useEnharmony") = false);
+
+    // ===== ABSTRACTION 2 ===== //
+    cls.def("haveSecond", &Chord::haveSecond, py::arg("useEnharmony") = false);
+    cls.def("haveThird", &Chord::haveThird, py::arg("useEnharmony") = false);
+    cls.def("haveFourth", &Chord::haveFourth, py::arg("useEnharmony") = false);
+    cls.def("haveFifth", &Chord::haveFifth, py::arg("useEnharmony") = false);
+    cls.def("haveSixth", &Chord::haveSixth, py::arg("useEnharmony") = false);
+    cls.def("haveSeventh", &Chord::haveSeventh, py::arg("useEnharmony") = false);
+    cls.def("haveOctave", &Chord::haveOctave, py::arg("useEnharmony") = false);
+    cls.def("haveNinth", &Chord::haveNinth, py::arg("useEnharmony") = false);
+    cls.def("haveEleventh", &Chord::haveEleventh, py::arg("useEnharmony") = false);
+    cls.def("haveThirdteenth", &Chord::haveThirdteenth, py::arg("useEnharmony") = false);
+
+    // ===== ABSTRACTION 3 ===== //
+    cls.def("haveAnyOctaveMinorSecond", &Chord::haveAnyOctaveMinorSecond, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveMajorSecond", &Chord::haveAnyOctaveMajorSecond, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveMinorThird", &Chord::haveAnyOctaveMinorThird, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveMajorThird", &Chord::haveAnyOctaveMajorThird, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctavePerfectFourth", &Chord::haveAnyOctavePerfectFourth, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveAugmentedFourth", &Chord::haveAnyOctaveAugmentedFourth, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveDiminhavehedFifth", &Chord::haveAnyOctaveDiminhavehedFifth, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctavePerfectFifth", &Chord::haveAnyOctavePerfectFifth, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveAugmentedFifth", &Chord::haveAnyOctaveAugmentedFifth, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveMinorSixth", &Chord::haveAnyOctaveMinorSixth, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveMajorSixth", &Chord::haveAnyOctaveMajorSixth, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveDiminhavehedSeventh", &Chord::haveAnyOctaveDiminhavehedSeventh, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveMinorSeventh", &Chord::haveAnyOctaveMinorSeventh, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveMajorSeventh", &Chord::haveAnyOctaveMajorSeventh, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveDiminhavehedOctave", &Chord::haveAnyOctaveDiminhavehedOctave, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctavePerfectOctave", &Chord::haveAnyOctavePerfectOctave, py::arg("useEnharmony") = false);
+    cls.def("haveAnyOctaveAugmentedOctave", &Chord::haveAnyOctaveAugmentedOctave, py::arg("useEnharmony") = false);
+
+    // ===== ABSTRACTION 4 ===== //
+    cls.def("haveAnyOctaveSecond", &Chord::haveAnyOctaveSecond);
+    cls.def("haveAnyOctaveThird", &Chord::haveAnyOctaveThird);
+    cls.def("haveAnyOctaveFourth", &Chord::haveAnyOctaveFourth);
+    cls.def("haveAnyOctaveFifth", &Chord::haveAnyOctaveFifth);
+    cls.def("haveAnyOctaveSixth", &Chord::haveAnyOctaveSixth);
+    cls.def("haveAnyOctaveSeventh", &Chord::haveAnyOctaveSeventh);
+    cls.def("haveAnyOctaveOctave", &Chord::haveAnyOctaveOctave);
 
     cls.def("isMajorChord", &Chord::isMajorChord);
     cls.def("isMinorChord", &Chord::isMinorChord);
@@ -185,6 +248,9 @@ void ChordClass(py::module &m) {
     cls.def("getCloseStackChord", &Chord::getCloseStackChord,
         py::arg("enharmonyNotes") = false,
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("getCloseChord", &Chord::getCloseChord,
+        py::arg("enharmonyNotes") = false,
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("getOpenStackNotes", &Chord::getOpenStackNotes);
         
@@ -195,7 +261,7 @@ void ChordClass(py::module &m) {
     cls.def(py::self != py::self);
     cls.def(py::self + py::self);
 
-    cls.def("__getitem__", [](Chord& self, const size_t index) { return self[index]; });
+    cls.def("__getitem__", [](const Chord& self, const size_t index) { return self[index]; });
     cls.def("__setitem__", [](Chord& self, const size_t index) { return self[index]; });
 
     // Default Python 'print' function:

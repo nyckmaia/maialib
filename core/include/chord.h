@@ -4,7 +4,7 @@
 #include <functional>
 #include <utility> // std::pair
 #include <tuple> // std::tuple
-#include <algorithm> // std::rotate
+#include <algorithm> // std::rotate std::count
 #include <set> // std::set
 
 #include "note.h"
@@ -99,20 +99,79 @@ public:
     const Note& getBassNote();
     const std::vector<Note>& getNotes() const;
 
-    bool haveMinorThird();
-    bool haveMajorThird();
-    bool haveDiminishedFifth();
-    bool havePerfectFifth();
-    bool haveAugmentedFifth();
-    bool haveDiminishedSeventh();
-    bool haveMinorSeventh();
-    bool haveMajorSeventh();
-    bool haveMinorNinth();
-    bool haveMajorNinth();
-    bool havePerfectEleventh();
-    bool haveSharpEleventh();
-    bool haveMinorThirdteenth();
-    bool haveMajorThirdteenth();
+    bool haveMajorInterval(const bool useEnharmony = false) const;
+    bool haveMinorInterval(const bool useEnharmony = false) const;
+    bool havePerfectInterval(const bool useEnharmony = false) const;
+    bool haveDiminishedInterval(const bool useEnharmony = false) const;
+    bool haveAugmentedInterval(const bool useEnharmony = false) const;
+
+    // ===== ABSTRACTION 1 ===== //
+    bool haveDiminishedUnisson(const bool useEnharmony = false) const;
+    bool havePerfectUnisson(const bool useEnharmony = false) const;
+    bool haveAugmentedUnisson(const bool useEnharmony = false) const;
+    bool haveMinorSecond(const bool useEnharmony = false) const;
+    bool haveMajorSecond(const bool useEnharmony = false) const;
+    bool haveMinorThird(const bool useEnharmony = false) const;
+    bool haveMajorThird(const bool useEnharmony = false) const;
+    bool havePerfectFourth(const bool useEnharmony = false) const;
+    bool haveAugmentedFourth(const bool useEnharmony = false) const;
+    bool haveDiminishedFifth(const bool useEnharmony = false) const;
+    bool havePerfectFifth(const bool useEnharmony = false) const;
+    bool haveAugmentedFifth(const bool useEnharmony = false) const;
+    bool haveMinorSixth(const bool useEnharmony = false) const;
+    bool haveMajorSixth(const bool useEnharmony = false) const;
+    bool haveDiminishedSeventh(const bool useEnharmony = false) const;
+    bool haveMinorSeventh(const bool useEnharmony = false) const;
+    bool haveMajorSeventh(const bool useEnharmony = false) const;
+    bool haveDiminishedOctave(const bool useEnharmony = false) const;
+    bool havePerfectOctave(const bool useEnharmony = false) const;
+    bool haveAugmentedOctave(const bool useEnharmony = false) const;
+    bool haveMinorNinth(const bool useEnharmony = false) const;
+    bool haveMajorNinth(const bool useEnharmony = false) const;
+    bool havePerfectEleventh(const bool useEnharmony = false) const;
+    bool haveSharpEleventh(const bool useEnharmony = false) const;
+    bool haveMinorThirdteenth(const bool useEnharmony = false) const;
+    bool haveMajorThirdteenth(const bool useEnharmony = false) const;
+
+    // ===== ABSTRACTION 2 ===== //
+    bool haveSecond(const bool useEnharmony = false) const;
+    bool haveThird(const bool useEnharmony = false) const;
+    bool haveFourth(const bool useEnharmony = false) const;
+    bool haveFifth(const bool useEnharmony = false) const;
+    bool haveSixth(const bool useEnharmony = false) const;
+    bool haveSeventh(const bool useEnharmony = false) const;
+    bool haveOctave(const bool useEnharmony = false) const;
+    bool haveNinth(const bool useEnharmony = false) const;
+    bool haveEleventh(const bool useEnharmony = false) const;
+    bool haveThirdteenth(const bool useEnharmony = false) const;
+
+    // ===== ABSTRACTION 3 ===== //
+    bool haveAnyOctaveMinorSecond(const bool useEnharmony = false) const;
+    bool haveAnyOctaveMajorSecond(const bool useEnharmony = false) const;
+    bool haveAnyOctaveMinorThird(const bool useEnharmony = false) const;
+    bool haveAnyOctaveMajorThird(const bool useEnharmony = false) const;
+    bool haveAnyOctavePerfectFourth(const bool useEnharmony = false) const;
+    bool haveAnyOctaveAugmentedFourth(const bool useEnharmony = false) const;
+    bool haveAnyOctaveDiminhavehedFifth(const bool useEnharmony = false) const;
+    bool haveAnyOctavePerfectFifth(const bool useEnharmony = false) const;
+    bool haveAnyOctaveAugmentedFifth(const bool useEnharmony = false) const;
+    bool haveAnyOctaveMinorSixth(const bool useEnharmony = false) const;
+    bool haveAnyOctaveMajorSixth(const bool useEnharmony = false) const;
+    bool haveAnyOctaveDiminhavehedSeventh(const bool useEnharmony = false) const;
+    bool haveAnyOctaveMinorSeventh(const bool useEnharmony = false) const;
+    bool haveAnyOctaveMajorSeventh(const bool useEnharmony = false) const;
+    bool haveAnyOctaveDiminhavehedOctave(const bool useEnharmony = false) const;
+    bool haveAnyOctavePerfectOctave(const bool useEnharmony = false) const;
+    bool haveAnyOctaveAugmentedOctave(const bool useEnharmony = false) const;
+
+    // ===== ABSTRACTION 4 ===== //
+    bool haveAnyOctaveSecond() const;
+    bool haveAnyOctaveThird() const;
+    bool haveAnyOctaveFourth() const;
+    bool haveAnyOctaveFifth() const;
+    bool haveAnyOctaveSixth() const;
+    bool haveAnyOctaveSeventh() const;
+    bool haveAnyOctaveOctave() const;
 
     bool isMajorChord();
     bool isMinorChord();
@@ -129,10 +188,10 @@ public:
     std::vector<Interval> getIntervals(const bool firstNoteAsReference = false) const;
     std::vector<Interval> getOpenStackIntervals(const bool firstNoteAsReference = false);
     std::vector<Interval> getCloseStackIntervals(const bool firstNoteAsReference = false);
-    std::vector<Note> getOpenStackNotes() const;
+    std::vector<Note> getOpenStackNotes();
     
     int size() const;
-    int stackSize() const;
+    int stackSize();
 
     void print() const;
     void printStack() const;
@@ -140,6 +199,7 @@ public:
 
     Chord getOpenStackChord(const bool enharmonyNotes = false);
     Chord getCloseStackChord(const bool enharmonyNotes = false);
+    Chord getCloseChord(const bool enharmonyNotes = false);
 
     void sortNotes();
 

@@ -13,8 +13,13 @@ All notable changes to this project will be documented in this file.
     - `LOG_INFO()`
     - `LOG_WARN()`
     - `LOG_ERROR()`
+- `Chord Class`
+    - 50 new `.haveXInterval()` methods
+    - `.getCloseChord()`
 
 ### Improved
+- `Chord Class`
+    - `.getStackDataFrame()` and `.getStackHeaps()`: Improve sorted heaps algorithm and DataFrame data types
 - `Interval Class`:
     - `.isAscendant()`
     - `.isDescendant()`
@@ -22,6 +27,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 - `Interval Class`:
     - `.getDiatonicInterval()`
+- `Chord::getRoot()`
 
 -------------------------
 

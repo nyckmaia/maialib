@@ -15,3 +15,8 @@ constexpr int factorial(const int n)
     return (n==0) || (n==1) ? 1 : n* factorial(n-1);
 }
 
+constexpr bool isFloatEqual(float A, float B, float epsilon = 0.005f)
+{
+    return (std::fabs(A - B) < epsilon);
+}
+

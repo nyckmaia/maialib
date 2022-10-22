@@ -77,6 +77,9 @@ void Chord::info()
 
 void Chord::addNote(const Note& note)
 {
+    // Skip rests
+    if (note.isNoteOff()) { return ; } 
+
     // Add this note in the both chord versions
     _originalNotes.push_back(note);
     _openStack.push_back(note);
@@ -340,28 +343,6 @@ void Chord::printStack() const
 
 void Chord::stackInThirds(const bool enharmonyNotes)
 {
-    // REVER ESSA SEQUENCIA! MUDOU!
-    // a) Calcular o numero de possibilidades enharmonicas = (tamanho do acorde)^3
-    // b) Gerar uma strtutura contendo:
-    //    1) Os 3 vetores contendo a versão original + 2 versões enarmonicas do acorde
-    //    2) Cada elemento associdado com um int que diz se ele foi enharmonizado ou nao (0, 1, 2)
-    //       2.1) Note note
-    //       2.2) booleano wasEnharmonized
-    //       2.3) int enharmonicDiatonicDistance 
-    // c) Criar 3 for's, um dentro do outro. Cada for é para um dos nomes enarmonicos
-    // d) Dentro do for mais interno:
-    //    1) verifica se possui pitchClass iguais.
-    //      Se sim, exclui a possibilidade do vetor de empilhamentos possiveis
-    //    2) Salva a possibilidade de empilhamento atual armazenando:
-    // f) Para cada possibilidade de empilhamento (for):
-    //    1) Rotacionar os pitches de modo que eles fiquem empilhados em terças
-    //    2) Compara com os gabaritos de empilhamento em terças
-    //    3) Na comparação: idxPossibilidade, Somatória do pontos
-    //       Pensar como contabilizar os "descontos" por ter tido alguma nota enharmonizada
-    // g) Selecionar o empilhamento que deu mais pontos 
-    // h) Coloca ela em root position?
-    // i) Faz a tranposição para a oitava 4
-    // j) Seta a flag interna isStackedInThirds e computeIntervals()
     ignore(enharmonyNotes);
 
     // ===== STEP 0: INPUT VALIDATION ===== //
@@ -370,12 +351,6 @@ void Chord::stackInThirds(const bool enharmonyNotes)
         LOG_WARN("The chord is empty!");
         return;
     }
-
-    // Remove rests
-    _originalNotes.erase(
-        std::remove_if(_originalNotes.begin(), _originalNotes.end(), [&](const Note& note) {
-            return note.isNoteOff();
-        }), _originalNotes.end());
 
     // ===== STEP 1: COMPUTE THE OPEN STACK ===== //
     // Copy the orginal chord to a stack vector
@@ -438,8 +413,52 @@ void Chord::stackInThirds(const bool enharmonyNotes)
     std::sort(_stackedHeaps.begin(), _stackedHeaps.end(), std::greater<>());
 
     // ===== STEP 7: COMPUTE THE CLOSE STACK VERSION ===== //
-    const auto& bestStackedHeap = _stackedHeaps[0];
-    const auto& heap = std::get<0>(bestStackedHeap);
+    const float bestStackMatchValue = std::get<1>(_stackedHeaps[0]);
+    const int heapSize = std::get<0>(_stackedHeaps[0]).size();
+
+    int swapHeapDataIdx = 0;
+    bool foundHeapMatch = false;
+
+    std::vector<std::string> originalNotesPitchClass(chordSize);
+    for (int i = 0; i < chordSize; i++) {
+        originalNotesPitchClass[i] = _originalNotes[i].getPitchClass();
+    }
+
+    for (const auto& heapData : _stackedHeaps) {
+        const float currentMatchValue = std::get<1>(heapData);
+        if (!isFloatEqual(bestStackMatchValue, currentMatchValue)) {
+            // LOG_DEBUG("Exiting loop - heapValue: " + std::to_string(currentMatchValue) + " | swapHeapDataIdx: " + std::to_string(swapHeapDataIdx));
+            break; // Exit loop
+        }
+
+        const auto& heap = std::get<0>(heapData);
+        int pitchClassMatchSum = 0;
+        for (int i = 0; i < heapSize; i++) {
+            const Note& note = heap[i].note;
+
+            if (!std::count(originalNotesPitchClass.begin(), originalNotesPitchClass.end(), note.getPitchClass())) {
+                break; // Exit inner loop
+            }
+
+            pitchClassMatchSum++;
+        }
+
+        if (pitchClassMatchSum == heapSize) {
+            foundHeapMatch = true;
+            // this heap is the beast match value and also
+            // matchs with the original user informed notes
+            break;
+        }
+
+        swapHeapDataIdx++;
+    }
+
+    if (foundHeapMatch) {
+        std::swap(_stackedHeaps[0], _stackedHeaps[swapHeapDataIdx]);
+    }
+
+    const HeapData& bestStackedHeap = _stackedHeaps[0];
+    const Heap& heap = std::get<0>(bestStackedHeap);
     std::vector<Note> bestStackedHeapNotes(chordSize);
     for (int i = 0; i < chordSize; i++) {
         bestStackedHeapNotes[i] = heap[i].note;
@@ -671,12 +690,6 @@ void Chord::computeCloseStack(const std::vector<Note>& openStack)
 
 HeapData Chord::stackInThirdsTemplateMatch(const Heap& heap) const
 {
-    // LOG_DEBUG("===== PRINTING HEAPS INSIDE stackInThirdsTemplateMatch =====");
-    // for (const auto& noteData : heap) {
-    //     std::cout << noteData.note.getPitch() << " ";
-    // }
-    // std::cout << std::endl;
-
     const int heapSize = heap.size();
 
     // Compute the max heap count points value
@@ -835,13 +848,17 @@ std::vector<Interval> Chord::getCloseStackIntervals(const bool fromRoot)
     return intervals;
 }
 
-std::vector<Note> Chord::getOpenStackNotes() const
+std::vector<Note> Chord::getOpenStackNotes()
 {
+    if (!_isStackedInThirds) { stackInThirds(); }
+
     return _openStack;
 }
 
-int Chord::stackSize() const
+int Chord::stackSize()
 {
+    if (!_isStackedInThirds) { stackInThirds(); }
+
     return static_cast<int>(_openStack.size());
 }
 
@@ -849,7 +866,7 @@ const Note& Chord::getRoot()
 {
     if (!_isStackedInThirds) { stackInThirds(); }
 
-    return _openStack.at(0);
+    return _closeStack.at(0);
 }
 
 std::string Chord::getName()
@@ -1034,115 +1051,528 @@ bool Chord::isSorted() const
     });
 }
 
-bool Chord::haveMinorThird()
+bool Chord::haveMajorInterval(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isMajor(useEnharmony);
+    });
+}
+
+bool Chord::haveMinorInterval(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isMinor(useEnharmony);
+    });
+}
+
+bool Chord::havePerfectInterval(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isPerfect(useEnharmony);
+    });
+}
+
+bool Chord::haveDiminishedInterval(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isDiminished(useEnharmony);
+    });
+}
+
+bool Chord::haveAugmentedInterval(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAugmented(useEnharmony);
+    });
+}
+
+// ===== ABSTRACTION 1 ===== //
+
+bool Chord::haveDiminishedUnisson(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isDiminishedUnisson(useEnharmony);
+    });
+}
+
+bool Chord::havePerfectUnisson(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isPerfectUnisson(useEnharmony);
+    });
+}
+
+bool Chord::haveAugmentedUnisson(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAugmentedUnisson(useEnharmony);
+    });
+}
+
+bool Chord::haveMinorSecond(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isMinorSecond(useEnharmony);
+    });
+}
+
+bool Chord::haveMajorSecond(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isMajorSecond(useEnharmony);
+    });
+}
+
+bool Chord::haveMinorThird(const bool useEnharmony) const
 {   
-    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isMinorThird();
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(),
+        [useEnharmony](const Interval& interval) {
+        return interval.isMinorThird(useEnharmony);
     });
 }
 
-bool Chord::haveMajorThird()
+bool Chord::haveMajorThird(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isMajorThird();
+        [useEnharmony](const Interval& interval) {
+        return interval.isMajorThird(useEnharmony);
     });
 }
 
-bool Chord::haveDiminishedFifth()
+bool Chord::havePerfectFourth(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isDiminishedFifth();
+        [useEnharmony](const Interval& interval) {
+        return interval.isPerfectFourth(useEnharmony);
     });
 }
 
-bool Chord::havePerfectFifth()
+bool Chord::haveAugmentedFourth(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isPerfectFifth();
+        [useEnharmony](const Interval& interval) {
+        return interval.isAugmentedFourth(useEnharmony);
     });
 }
 
-bool Chord::haveAugmentedFifth()
+bool Chord::haveDiminishedFifth(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isAugmentedFifth();
+        [useEnharmony](const Interval& interval) {
+        return interval.isDiminishedFifth(useEnharmony);
     });
 }
 
-bool Chord::haveDiminishedSeventh()
+bool Chord::havePerfectFifth(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isDiminishedSeventh();
+        [useEnharmony](const Interval& interval) {
+        return interval.isPerfectFifth(useEnharmony);
     });
 }
 
-bool Chord::haveMinorSeventh()
+bool Chord::haveAugmentedFifth(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isMinorSeventh();
+        [useEnharmony](const Interval& interval) {
+        return interval.isAugmentedFifth(useEnharmony);
     });
 }
 
-bool Chord::haveMajorSeventh()
+bool Chord::haveMinorSixth(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isMajorSeventh();
+        [useEnharmony](const Interval& interval) {
+        return interval.isMinorSixth(useEnharmony);
     });
 }
 
-bool Chord::haveMinorNinth()
+bool Chord::haveMajorSixth(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isMinorNinth();
+        [useEnharmony](const Interval& interval) {
+        return interval.isMajorSixth(useEnharmony);
     });
 }
 
-bool Chord::haveMajorNinth()
+bool Chord::haveDiminishedSeventh(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isMajorNinth();
+        [useEnharmony](const Interval& interval) {
+        return interval.isDiminishedSeventh(useEnharmony);
     });
 }
 
-bool Chord::havePerfectEleventh()
+bool Chord::haveMinorSeventh(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isPerfectEleventh();
+        [useEnharmony](const Interval& interval) {
+        return interval.isMinorSeventh(useEnharmony);
     });
 }
 
-bool Chord::haveSharpEleventh()
+bool Chord::haveMajorSeventh(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isSharpEleventh();
+        [useEnharmony](const Interval& interval) {
+        return interval.isMajorSeventh(useEnharmony);
     });
 }
 
-bool Chord::haveMinorThirdteenth()
+bool Chord::haveDiminishedOctave(const bool useEnharmony) const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
-        [](const Interval& interval) {
-        return interval.isMinorThirdteenth();
+        [useEnharmony](const Interval& interval) {
+        return interval.isDiminishedOctave(useEnharmony);
     });
 }
 
-bool Chord::haveMajorThirdteenth()
+bool Chord::havePerfectOctave(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isPerfectOctave(useEnharmony);
+    });
+}
+
+bool Chord::haveAugmentedOctave(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAugmentedOctave(useEnharmony);
+    });
+}
+
+bool Chord::haveMinorNinth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isMinorNinth(useEnharmony);
+    });
+}
+
+bool Chord::haveMajorNinth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isMajorNinth(useEnharmony);
+    });
+}
+
+bool Chord::havePerfectEleventh(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isPerfectEleventh(useEnharmony);
+    });
+}
+
+bool Chord::haveSharpEleventh(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isSharpEleventh(useEnharmony);
+    });
+}
+
+bool Chord::haveMinorThirdteenth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isMinorThirdteenth(useEnharmony);
+    });
+}
+
+bool Chord::haveMajorThirdteenth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isMajorThirdteenth(useEnharmony);
+    });
+}
+
+// ===== ABSTRACTION 2 ===== //
+bool Chord::haveSecond(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isSecond(useEnharmony);
+    });
+}
+
+bool Chord::haveThird(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isThird(useEnharmony);
+    });
+}
+
+bool Chord::haveFourth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isFourth(useEnharmony);
+    });
+}
+
+bool Chord::haveFifth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isFifth(useEnharmony);
+    });
+}
+
+bool Chord::haveSixth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isSixth(useEnharmony);
+    });
+}
+
+bool Chord::haveSeventh(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isSeventh(useEnharmony);
+    });
+}
+
+bool Chord::haveOctave(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isOctave(useEnharmony);
+    });
+}
+
+bool Chord::haveNinth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isNinth(useEnharmony);
+    });
+}
+
+bool Chord::haveEleventh(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isEleventh(useEnharmony);
+    });
+}
+
+bool Chord::haveThirdteenth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isThirdteenth(useEnharmony);
+    });
+}
+
+// ===== ABSTRACTION 3 ===== //
+bool Chord::haveAnyOctaveMinorSecond(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveMinorSecond(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveMajorSecond(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveMajorSecond(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveMinorThird(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveMinorThird(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveMajorThird(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveMajorThird(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctavePerfectFourth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctavePerfectFourth(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveAugmentedFourth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveAugmentedFourth(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveDiminhavehedFifth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveDiminishedFifth(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctavePerfectFifth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctavePerfectFifth(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveAugmentedFifth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveAugmentedFifth(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveMinorSixth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveMinorSixth(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveMajorSixth(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveMajorSixth(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveDiminhavehedSeventh(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveDiminishedSeventh(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveMinorSeventh(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveMinorSeventh(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveMajorSeventh(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveMajorSeventh(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveDiminhavehedOctave(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveDiminishedOctave(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctavePerfectOctave(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctavePerfectOctave(useEnharmony);
+    });
+}
+
+bool Chord::haveAnyOctaveAugmentedOctave(const bool useEnharmony) const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [useEnharmony](const Interval& interval) {
+        return interval.isAnyOctaveAugmentedOctave(useEnharmony);
+    });
+}
+
+// ===== ABSTRACTION 4 ===== //
+bool Chord::haveAnyOctaveSecond() const
 {
     return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
         [](const Interval& interval) {
-        return interval.isMajorThirdteenth();
+        return interval.isAnyOctaveSecond();
+    });
+}
+
+bool Chord::haveAnyOctaveThird() const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isAnyOctaveThird();
+    });
+}
+
+bool Chord::haveAnyOctaveFourth() const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isAnyOctaveFourth();
+    });
+}
+
+bool Chord::haveAnyOctaveFifth() const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isAnyOctaveFifth();
+    });
+}
+
+bool Chord::haveAnyOctaveSixth() const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isAnyOctaveSixth();
+    });
+}
+
+bool Chord::haveAnyOctaveSeventh() const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isAnyOctaveSeventh();
+    });
+}
+
+bool Chord::haveAnyOctaveOctave() const
+{
+    return std::any_of(_closeStackintervals.begin(), _closeStackintervals.end(), 
+        [](const Interval& interval) {
+        return interval.isAnyOctaveOctave();
     });
 }
 
@@ -1170,6 +1600,43 @@ Chord Chord::getCloseStackChord(const bool enharmonyNotes)
     if (!_isStackedInThirds) { stackInThirds(enharmonyNotes); }
     
     return Chord(_closeStack);
+}
+
+Chord Chord::getCloseChord(const bool enharmonyNotes)
+{
+    if (!_isStackedInThirds) { stackInThirds(enharmonyNotes); }
+
+    Chord closeChord(_closeStack);
+
+    const Note& rootNote = getRoot();
+    const int rootNoteOctave = rootNote.getWrittenOctave();
+
+    std::vector<Note> originalNotes = getNotes();
+    
+    const auto rootNoteWithOriginalOct = std::find_if(originalNotes.begin(), originalNotes.end(), [rootNote](const Note& note) {
+        return note.getPitchClass() == rootNote.getPitchClass();
+    });
+
+    const int closeChordSize = closeChord.size();
+
+    for (int i = 1; i < closeChordSize; i++) {
+        Note& closeNote = closeChord[i];
+
+        const Interval interval(rootNote, closeNote);
+
+        if (interval.isSimple()) { continue; }
+
+        const auto extendedNoteWithOriginalOct = std::find_if(originalNotes.begin(), originalNotes.end(), [closeNote](const Note& note) {
+            return note.getPitchClass() == closeNote.getPitchClass();
+        });
+
+        if (extendedNoteWithOriginalOct->getOctave() == rootNoteWithOriginalOct->getOctave()) {
+            closeNote.setOctave(rootNoteOctave);
+        }
+    }
+
+    closeChord.sortNotes();
+    return closeChord;
 }
 
 void Chord::sortNotes()
