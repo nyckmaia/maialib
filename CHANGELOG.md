@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.0.17] - 2022-MM-DD
+## [v0.0.17] - 2022-10-22
 ### API Changes
 - `Chord::getStackedHeaps()` -> `Chord::getStackDataFrame()`
 
