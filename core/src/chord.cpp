@@ -881,7 +881,7 @@ std::string Chord::getName()
 
     // Error checking
     if (!haveMinorThird() && !haveMajorThird()) {
-        // LOG_ERROR("Unable to classify this chord!");
+        LOG_WARN("Unable to give a tonal chord name without a major/minor third");
         return {};
     }
 
@@ -1611,7 +1611,7 @@ Chord Chord::getCloseChord(const bool enharmonyNotes)
     const Note& rootNote = getRoot();
     const int rootNoteOctave = rootNote.getWrittenOctave();
 
-    std::vector<Note> originalNotes = getNotes();
+    const std::vector<Note> originalNotes = getNotes();
     
     const auto rootNoteWithOriginalOct = std::find_if(originalNotes.begin(), originalNotes.end(), [rootNote](const Note& note) {
         return note.getPitchClass() == rootNote.getPitchClass();
