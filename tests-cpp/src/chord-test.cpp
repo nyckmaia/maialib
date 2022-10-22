@@ -189,3 +189,40 @@ TEST(chordOperator, StreamRight)
     EXPECT_EQ(chord.size(), 2);
     EXPECT_EQ(x.getPitch(), c.getPitch());
 }
+
+TEST(isInRootPosition, majorChords)
+{
+    Chord myChord01({"C4", "E4", "G4"});
+    EXPECT_EQ(myChord01.isInRootPosition(), true);
+
+    Chord myChord02({"E4", "G4", "C5"});
+    EXPECT_EQ(myChord02.isInRootPosition(), false);
+
+    Chord myChord03({"G4", "C5", "E5"});
+    EXPECT_EQ(myChord03.isInRootPosition(), false);
+}
+
+TEST(isInRootPosition, minorChords)
+{
+
+    Chord myChord01({"C4", "Eb4", "G4"});
+    EXPECT_EQ(myChord01.isInRootPosition(), true);
+
+    Chord myChord02({"Eb4", "G4", "C5"});
+    EXPECT_EQ(myChord02.isInRootPosition(), false);
+
+    Chord myChord03({"G4", "C5", "Eb5"});
+    EXPECT_EQ(myChord03.isInRootPosition(), false);
+}
+
+TEST(isInRootPosition, otherChords)
+{
+    Chord myChord01({"C4", "C#4", "D4", "D#4"});
+    EXPECT_EQ(myChord01.isInRootPosition(), true);
+
+    Chord myChord02({"G4", "C4", "E4"});
+    EXPECT_EQ(myChord02.isInRootPosition(), true);
+
+    Chord myChord03({"F4", "C4", "Bb4"});
+    EXPECT_EQ(myChord03.isInRootPosition(), false);
+}

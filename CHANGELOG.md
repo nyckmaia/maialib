@@ -16,6 +16,7 @@ All notable changes to this project will be documented in this file.
 - `Chord Class`
     - 50 new `.haveXInterval()` methods
     - `.getCloseChord()`
+    - `.isInRootPosition()`
 
 ### Improved
 - `Chord Class`

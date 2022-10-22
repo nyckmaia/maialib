@@ -224,6 +224,7 @@ void ChordClass(py::module &m) {
     cls.def("isSorted", &Chord::isSorted);
     cls.def("isTonal", &Chord::isTonal,
         py::arg("model") = nullptr);
+    cls.def("isInRootPosition", &Chord::isInRootPosition);
 
     cls.def("getMIDIIntervals", &Chord::getMIDIIntervals,
         py::arg("firstNoteAsReference") = false);

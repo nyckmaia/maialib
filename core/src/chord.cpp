@@ -385,18 +385,16 @@ void Chord::stackInThirds(const bool enharmonyNotes)
 
     // ===== STEP 3: COMPUTE ALL ENHARMONIC HEAPS (VALID AND INVALID HEAPS) ===== //
     std::vector<Heap> allEnharmonicHeaps = computeEnharmonicHeaps(enharmonicUnitGroups);
-    // LOG_DEBUG("allEnharmonicHeaps: " << allEnharmonicHeaps.size());
 
     // ===== STEP 4: FILTER HEAPS THAT DO NOT CONTAIN INTERNAL DUPLICATED PITCH STEPS ===== //
     std::vector<Heap> validEnharmonicHeaps = removeHeapsWithDuplicatedPitchSteps(allEnharmonicHeaps);
-    // LOG_DEBUG("validEnharmonicHeaps: " << validEnharmonicHeaps.size());
 
     // ===== STEP 5: COMPUTE THE STACK IN THIRDS TEMPLATE MATCH ===== //
     for (auto& heap : validEnharmonicHeaps) {
         const std::vector<Heap> heapInversions = computeAllHeapInversions(heap);
-        const std::vector<Heap>& tertianHeaps = filterTertianHeapsOnly(heapInversions);
+        std::vector<Heap> tertianHeaps = filterTertianHeapsOnly(heapInversions);
 
-        for (const auto& heapInversion :  tertianHeaps) {
+        for (auto& heapInversion : tertianHeaps) {
             // Check if the first heap interval is a musical third
             const auto& firstNote = heapInversion[0].note;
             const auto& secondNote = heapInversion[1].note;
@@ -404,6 +402,8 @@ void Chord::stackInThirds(const bool enharmonyNotes)
 
             // Skip chords without the tonal major/minor third
             if (firstInterval.getPitchStepInterval() != 3) { continue; }
+            
+            sortHeapOctaves(heapInversion);
             const auto& heapData = stackInThirdsTemplateMatch(heapInversion);
             _stackedHeaps.push_back(heapData);
         }
@@ -413,63 +413,11 @@ void Chord::stackInThirds(const bool enharmonyNotes)
     std::sort(_stackedHeaps.begin(), _stackedHeaps.end(), std::greater<>());
 
     // ===== STEP 7: COMPUTE THE CLOSE STACK VERSION ===== //
-    const float bestStackMatchValue = std::get<1>(_stackedHeaps[0]);
-    const int heapSize = std::get<0>(_stackedHeaps[0]).size();
-
-    int swapHeapDataIdx = 0;
-    bool foundHeapMatch = false;
-
-    std::vector<std::string> originalNotesPitchClass(chordSize);
-    for (int i = 0; i < chordSize; i++) {
-        originalNotesPitchClass[i] = _originalNotes[i].getPitchClass();
-    }
-
-    for (const auto& heapData : _stackedHeaps) {
-        const float currentMatchValue = std::get<1>(heapData);
-        if (!isFloatEqual(bestStackMatchValue, currentMatchValue)) {
-            // LOG_DEBUG("Exiting loop - heapValue: " + std::to_string(currentMatchValue) + " | swapHeapDataIdx: " + std::to_string(swapHeapDataIdx));
-            break; // Exit loop
-        }
-
-        const auto& heap = std::get<0>(heapData);
-        int pitchClassMatchSum = 0;
-        for (int i = 0; i < heapSize; i++) {
-            const Note& note = heap[i].note;
-
-            if (!std::count(originalNotesPitchClass.begin(), originalNotesPitchClass.end(), note.getPitchClass())) {
-                break; // Exit inner loop
-            }
-
-            pitchClassMatchSum++;
-        }
-
-        if (pitchClassMatchSum == heapSize) {
-            foundHeapMatch = true;
-            // this heap is the beast match value and also
-            // matchs with the original user informed notes
-            break;
-        }
-
-        swapHeapDataIdx++;
-    }
-
-    if (foundHeapMatch) {
-        std::swap(_stackedHeaps[0], _stackedHeaps[swapHeapDataIdx]);
-    }
-
-    const HeapData& bestStackedHeap = _stackedHeaps[0];
-    const Heap& heap = std::get<0>(bestStackedHeap);
-    std::vector<Note> bestStackedHeapNotes(chordSize);
-    for (int i = 0; i < chordSize; i++) {
-        bestStackedHeapNotes[i] = heap[i].note;
-    }
-
+    const auto bestStackedHeapNotes = computeBestOpenStackHeap(_stackedHeaps);
     computeCloseStack(bestStackedHeapNotes);
 
     // ===== STEP 8: SET INTERNAL FLAG AND COMPUTE INTERVALS ===== //
-    // Set a internal control flag
     _isStackedInThirds = true;
-
     _closeStackintervals = Helper::notes2Intervals(_closeStack, true);
 }
 
@@ -659,6 +607,61 @@ std::vector<Heap> Chord::filterTertianHeapsOnly(const std::vector<Heap>& heaps) 
     }
 
     return tertianHeaps;
+}
+
+std::vector<Note> Chord::computeBestOpenStackHeap(std::vector<HeapData>& stackedHeaps)
+{
+    const float bestStackMatchValue = std::get<1>(stackedHeaps[0]);
+    const int heapSize = std::get<0>(stackedHeaps[0]).size();
+
+    int swapHeapDataIdx = 0;
+    bool foundHeapMatch = false;
+
+    std::vector<std::string> originalNotesPitchClass(heapSize);
+    for (int i = 0; i < heapSize; i++) {
+        originalNotesPitchClass[i] = _originalNotes[i].getPitchClass();
+    }
+
+    for (const auto& heapData : stackedHeaps) {
+        const float currentMatchValue = std::get<1>(heapData);
+        if (!isFloatEqual(bestStackMatchValue, currentMatchValue)) {
+            break; // Exit loop
+        }
+
+        const auto& heap = std::get<0>(heapData);
+        int pitchClassMatchSum = 0;
+        for (int i = 0; i < heapSize; i++) {
+            const Note& note = heap[i].note;
+
+            if (!std::count(originalNotesPitchClass.begin(), originalNotesPitchClass.end(), note.getPitchClass())) {
+                break; // Exit inner loop
+            }
+
+            pitchClassMatchSum++;
+        }
+
+        if (pitchClassMatchSum == heapSize) {
+            foundHeapMatch = true;
+            // this heap is the beast match value and also
+            // matchs with the original user informed notes
+            break;
+        }
+
+        swapHeapDataIdx++;
+    }
+
+    if (foundHeapMatch) {
+        std::swap(stackedHeaps[0], stackedHeaps[swapHeapDataIdx]);
+    }
+
+    const HeapData& bestStackedHeap = stackedHeaps[0];
+    const Heap& heap = std::get<0>(bestStackedHeap);
+    std::vector<Note> bestStackedHeapNotes(heapSize);
+    for (int i = 0; i < heapSize; i++) {
+        bestStackedHeapNotes[i] = heap[i].note;
+    }
+
+    return bestStackedHeapNotes;
 }
 
 void Chord::computeCloseStack(const std::vector<Note>& openStack)
@@ -1042,6 +1045,16 @@ bool Chord::isTonal(std::function<bool(const Chord& chord)> model)
     }
 
     return true;
+}
+
+bool Chord::isInRootPosition()
+{
+    if (!_isStackedInThirds) { stackInThirds(); }
+
+    std::vector<Note> tempNotes = _originalNotes;
+    std::sort(tempNotes.begin(), tempNotes.end());
+
+    return _closeStack[0].getPitchClass() == tempNotes[0].getPitchClass();
 }
 
 bool Chord::isSorted() const
@@ -1649,6 +1662,19 @@ void printHeap(const Heap& heap) {
         std::cout << "printHeap: " << noteData.note.getPitch() << " ";
     }
     std::cout << std::endl;
+}
+
+void sortHeapOctaves(Heap& heap) {
+    const int heapSize = heap.size();
+
+    for (int i = 0; i < heapSize-1; i++) {
+        auto& currentNote = heap[i].note;
+        auto& nextNote = heap[i+1].note;
+
+        if (nextNote.getMIDINumber() < currentNote.getMIDINumber()) {
+            nextNote.setOctave(nextNote.getOctave() + 1);
+        }
+    }
 }
 
 bool operator<(const HeapData& a, const HeapData& b){

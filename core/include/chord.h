@@ -45,6 +45,8 @@ bool operator<(const HeapData& a, const HeapData& b);
 
 void printHeap(const Heap& heap);
 
+void sortHeapOctaves(Heap& heap);
+
 class Chord
 {
 private:
@@ -65,6 +67,7 @@ private:
     std::vector<Heap> removeHeapsWithDuplicatedPitchSteps(std::vector<Heap>& heaps) const;
     std::vector<Heap> computeAllHeapInversions(Heap& heap) const;
     std::vector<Heap> filterTertianHeapsOnly(const std::vector<Heap>& heaps) const;
+    std::vector<Note> computeBestOpenStackHeap(std::vector<HeapData>& stackedHeaps);
     void computeCloseStack(const std::vector<Note>& openStack);
 
 public:
@@ -181,8 +184,8 @@ public:
     bool isHalfDiminishedChord();
 
     bool isSorted() const;
-
     bool isTonal(std::function<bool(const Chord& chord)> model = nullptr);
+    bool isInRootPosition();
 
     std::vector<int> getMIDIIntervals(const bool firstNoteAsReference = false) const;
     std::vector<Interval> getIntervals(const bool firstNoteAsReference = false) const;
