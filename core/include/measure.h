@@ -1,18 +1,16 @@
 #pragma once
-#include <iostream>
 #include <ctype.h>
 
+#include <iostream>
 #include <vector>
 
-#include "note.h"
-#include "clef.h"
 #include "barline.h"
+#include "clef.h"
 #include "helper.h"
+#include "note.h"
 
-class Measure
-{
-
-private:
+class Measure {
+   private:
     int _number;
     int _timeSignatureUpper;
     int _timeSignatureLower;
@@ -34,16 +32,19 @@ private:
     Barline _barlineLeft;
     Barline _barlineRight;
 
-public:
+   public:
     Measure(const int numStaves = 1, const int divisionsPerQuarterNote = 256);
     ~Measure();
 
     void clear();
 
     void setNumber(const int measureNumber);
-    void setKeySignature(const int fifthCicle, const bool isMajorMode = true); // overload with measure
-    void setTimeSignature(const int upper, const int lower); // overload with measure
-    void setMetronome(const int bpm, const Duration duration = Duration::QUARTER); // overload with measure
+    void setKeySignature(const int fifthCicle,
+                         const bool isMajorMode = true);  // overload with measure
+    void setTimeSignature(const int upper,
+                          const int lower);  // overload with measure
+    void setMetronome(const int bpm,
+                      const Duration duration = Duration::QUARTER);  // overload with measure
 
     void setKeyMode(const bool isMajorKeyMode);
     void setIsKeySignatureChanged(bool isKeySignatureChanged = false);
@@ -57,7 +58,8 @@ public:
     void addNote(const Note& note, const int staveId = 0, int position = -1);
     void addNote(const std::vector<Note>& noteVec, const int staveId = 0, int position = -1);
     void addNote(const std::string& pitchClass, const int staveId = 0, int position = -1);
-    void addNote(const std::vector<std::string>& pitchClassVec, const int staveId = 0, int position = -1);
+    void addNote(const std::vector<std::string>& pitchClassVec, const int staveId = 0,
+                 int position = -1);
 
     void removeNote(const int noteId, const int staveId = 0);
 

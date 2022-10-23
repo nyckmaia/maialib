@@ -1,17 +1,16 @@
 #pragma once
 
 #include <string>
+
 #include "helper.h"
 
-class Barline
-{
-private:
+class Barline {
+   private:
     std::string _barStyle;
     std::string _direction;
     std::string _location;
 
-public:
-
+   public:
     Barline();
 
     void clean();

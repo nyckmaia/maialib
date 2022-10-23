@@ -1,10 +1,10 @@
 #pragma once
-#include <vector>
-#include <string>
-#include <algorithm>
 #include <ctype.h>
+
+#include <algorithm>
 #include <cctype>
 #include <string>
+#include <vector>
 
 #include "constants.h"
 
@@ -22,10 +22,8 @@ typedef struct duration_st {
     int numDots = 0;
 } DurationType;
 
-class Note
-{
-
-private:
+class Note {
+   private:
     std::string _writtenPitchClass;
     int _writtenOctave;
 
@@ -56,33 +54,38 @@ private:
     std::vector<std::string> _articulation;
     std::vector<std::string> _beam;
 
-public:
+   public:
     Note();
-    explicit Note(const std::string& pitch, const Duration duration = Duration::QUARTER, bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0, const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
-    explicit Note(const int midiNumber, const std::string& accType = "", const Duration duration = Duration::QUARTER, bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0, const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
+    explicit Note(const std::string& pitch, const Duration duration = Duration::QUARTER,
+                  bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0,
+                  const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
+    explicit Note(const int midiNumber, const std::string& accType = "",
+                  const Duration duration = Duration::QUARTER, bool isNoteOn = true,
+                  bool inChord = false, const int transposeDiatonic = 0,
+                  const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
 
     ~Note();
 
     // ===== SETTERS ===== //
     /**
      * @brief Set the note pitch class
-     * 
+     *
      * Examples: "C", "D", "E"
-     * 
+     *
      * @param pitchClass Pitch class name
      */
     void setPitchClass(const std::string& pitchClass);
 
     /**
      * @brief Set the note octave
-     * 
+     *
      * @param octave Octave number
      */
     void setOctave(int octave);
 
     /**
      * @brief Set the note duration
-     * 
+     *
      * @param duration Duration as a Enum class element
      * @param divisionsPerQuarterNote Divisions per quarter note
      */
@@ -90,26 +93,26 @@ public:
 
     /**
      * @brief Set the note duration ticks
-     * 
+     *
      * @param durationTicks Duration in ticks unit
      */
     void setDurationTicks(int durationTicks);
 
     /**
      * @brief Set the note ON or OFF
-     * 
+     *
      * Note ON = Sounding Note \n
      * Note OFF = Rest Note (Silente)
-     * 
-     * @param isNoteOn 
+     *
+     * @param isNoteOn
      */
     void setIsNoteOn(bool isNoteOn);
 
     /**
      * @brief Set the note pitch name
-     * 
+     *
      * Examples: "C4", "C#4", "Cx4", "Cb4", "Cbb4"
-     * 
+     *
      * @param pitch Pitch name
      */
     void setPitch(const std::string& pitch);
@@ -131,7 +134,8 @@ public:
     void addArticulation(const std::string& articulation);
     void addBeam(const std::string& beam);
     void setIsTuplet(const bool isTuplet = false);
-    void setTupleValues(const int actualNotes, const int normalNotes, const std::string& normalType = "eighth");
+    void setTupleValues(const int actualNotes, const int normalNotes,
+                        const std::string& normalType = "eighth");
     void setIsPitched(const bool isPitched = true);
     void setUnpitchedIndex(const int unpitchedIndex);
 
@@ -164,7 +168,7 @@ public:
     int getDivisionsPerQuarterNote() const;
     float getDuration() const;
     float getQuarterDuration() const;
-    
+
     bool isNoteOn() const;
     bool isNoteOff() const;
     std::string getPitch() const;
@@ -172,7 +176,7 @@ public:
     int getVoice() const;
     int getStaff() const;
     std::string getStem() const;
-    
+
     std::vector<std::string> getTie() const;
     void removeTies();
     std::pair<std::string, std::string> getSlur() const;
@@ -192,15 +196,17 @@ public:
 
     // Colocar na documentacao que caso use alternativeEnhamonicPitch
     // Ele vai tentar skipTwoDiatonicSteps exemplo D# -> Fbb OU
-    // Ele tambem pode usar 1 diatonic step com dobrado bemol ou dobrado sustenido: C# -> Bx
-    // Notas com pitchClass sem acidentes como 'C' serão enharmonizadas por default sempre diatonicamente pra cima: Dbb
+    // Ele tambem pode usar 1 diatonic step com dobrado bemol ou dobrado
+    // sustenido: C# -> Bx Notas com pitchClass sem acidentes como 'C' serão
+    // enharmonizadas por default sempre diatonicamente pra cima: Dbb
     std::string getEnharmonicPitch(const bool alternativeEnhamonicPitch = false) const;
     std::vector<std::string> getEnharmonicPitches(const bool includeCurrentPitch = false) const;
 
     Note getEnharmonicNote(const bool alternativeEnhamonicPitch = false) const;
     std::vector<Note> getEnharmonicNotes(const bool includeCurrentPitch = false) const;
 
-    // Colocar praticamente a mesma documentaçao do método 'getEnharmonicPitch()'
+    // Colocar praticamente a mesma documentaçao do método
+    // 'getEnharmonicPitch()'
     void toEnharmonicPitch(const bool alternativeEnhamonicPitch = false);
     float getFrequency() const;
 
@@ -208,27 +214,23 @@ public:
 
     const std::string toXML(const size_t instrumentId = 1, const int identSize = 2) const;
 
-    bool operator < (const Note& otherNote) const {
+    bool operator<(const Note& otherNote) const {
         return (_midiNumber < otherNote.getMIDINumber());
     }
 
-    bool operator > (const Note& otherNote) const {
+    bool operator>(const Note& otherNote) const {
         return (_midiNumber > otherNote.getMIDINumber());
     }
 
-    bool operator <= (const Note& otherNote) const {
+    bool operator<=(const Note& otherNote) const {
         return (_midiNumber <= otherNote.getMIDINumber());
     }
 
-    bool operator >= (const Note& otherNote) const {
+    bool operator>=(const Note& otherNote) const {
         return (_midiNumber >= otherNote.getMIDINumber());
     }
 
-    bool operator == (const Note& otherNote) const {
-        return getPitch() == otherNote.getPitch();
-    }
+    bool operator==(const Note& otherNote) const { return getPitch() == otherNote.getPitch(); }
 
-    bool operator != (const Note& otherNote) const {
-        return getPitch() != otherNote.getPitch();
-    }
+    bool operator!=(const Note& otherNote) const { return getPitch() != otherNote.getPitch(); }
 };

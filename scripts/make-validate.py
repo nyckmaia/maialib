@@ -6,9 +6,8 @@ print(f"{color.OKGREEN}Validating C++ Code...{color.ENDC}")
 coreSrcFilesDir = "./core/src/"
 
 # ===== CPPLINT ===== #
-# Clang formater??
 print(f"{color.OKGREEN}=====> CPPLINT <====={color.ENDC}")
-runCommand = f"cpplint --linelength=100 --recursive {coreSrcFilesDir}"
+runCommand = f"cpplint --quiet --linelength=100 --recursive {coreSrcFilesDir}"
 os.system(runCommand)
 
 # ===== CPPCHECK: STATIC ANALYZER ===== #
@@ -17,4 +16,3 @@ runCommand = f"cppcheck --quiet {coreSrcFilesDir}"
 os.system(runCommand)
 
 print(f"{color.OKGREEN}Validation: Done!{color.ENDC}")
-

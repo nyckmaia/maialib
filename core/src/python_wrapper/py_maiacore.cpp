@@ -3,20 +3,19 @@
 
 namespace py = pybind11;
 
-void ScoreCollectionClass(py::module &);
-void ScoreClass(py::module &);
-void PartClass(py::module &);
-void ClefClass(py::module &);
-void MeasureClass(py::module &);
-void NoteClass(py::module &);
-void ChordClass(py::module &);
-void BarlineClass(py::module &);
-void IntervalClass(py::module &);
-void HelperClass(py::module &);
-void Constants(py::module &);
+void ScoreCollectionClass(const py::module &);
+void ScoreClass(const py::module &);
+void PartClass(const py::module &);
+void ClefClass(const py::module &);
+void MeasureClass(const py::module &);
+void NoteClass(const py::module &);
+void ChordClass(const py::module &);
+void BarlineClass(const py::module &);
+void IntervalClass(const py::module &);
+void HelperClass(const py::module &);
+void Constants(const py::module &);
 
 PYBIND11_MODULE(maiacore, m) {
-
     m.doc() = "This is a Python binding of C++ Maia Library";
 
     Constants(m);
@@ -29,6 +28,6 @@ PYBIND11_MODULE(maiacore, m) {
     MeasureClass(m);
     IntervalClass(m);
     HelperClass(m);
-    ScoreCollectionClass(m);    
+    ScoreCollectionClass(m);
 }
 #endif

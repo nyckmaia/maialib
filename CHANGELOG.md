@@ -17,6 +17,7 @@ All notable changes to this project will be documented in this file.
     - 50 new `.haveXInterval()` methods
     - `.getCloseChord()`
     - `.isInRootPosition()`
+- Add `make validate`: Includes `CppCheck` and `CppLint`
 
 ### Improved
 - `Chord Class`

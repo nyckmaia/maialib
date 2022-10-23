@@ -2,50 +2,42 @@
 
 #ifdef PYBIND
 
-#include <pybind11/pybind11.h>
-#include <pybind11/stl.h>
 #include <pybind11/iostream.h>
 #include <pybind11/operators.h>
+#include <pybind11/pybind11.h>
+#include <pybind11/stl.h>
+
 #include "pybind11_json/pybind11_json.hpp"
 namespace py = pybind11;
 
-void IntervalClass(py::module &m) {
-
+void IntervalClass(const py::module& m) {
     m.doc() = "Interval class binding";
 
     // bindings to Interval class
     py::class_<Interval> cls(m, "Interval");
-    cls.def(py::init<const std::string&, const std::string&>(),
-            py::arg("pitch_A") = "C4",
+    cls.def(py::init<const std::string&, const std::string&>(), py::arg("pitch_A") = "C4",
             py::arg("pitch_B") = "C4");
 
     // Overloaded constructor for rests
-    cls.def(py::init<const Note&, const Note&>(),
-            py::arg("note_A"),
-            py::arg("note_B"));
+    cls.def(py::init<const Note&, const Note&>(), py::arg("note_A"), py::arg("note_B"));
 
-    cls.def("setNotes", py::overload_cast<const std::string&, const std::string&>(&Interval::setNotes),
-        py::arg("pitch_A"),
-        py::arg("pitch_B"));
+    cls.def("setNotes",
+            py::overload_cast<const std::string&, const std::string&>(&Interval::setNotes),
+            py::arg("pitch_A"), py::arg("pitch_B"));
     cls.def("setNotes", py::overload_cast<const Note&, const Note&>(&Interval::setNotes),
-        py::arg("note_A"),
-        py::arg("note_B"));
+            py::arg("note_A"), py::arg("note_B"));
 
     cls.def("getName", &Interval::getName);
 
-    cls.def("getNumSemitones", &Interval::getNumSemitones,
-        py::arg("absoluteValue") = false);
+    cls.def("getNumSemitones", &Interval::getNumSemitones, py::arg("absoluteValue") = false);
 
-    cls.def("getNumOctaves", &Interval::getNumOctaves,
-        py::arg("absoluteValue") = false);
+    cls.def("getNumOctaves", &Interval::getNumOctaves, py::arg("absoluteValue") = false);
 
     cls.def("getDiatonicInterval", &Interval::getDiatonicInterval,
-        py::arg("useSingleOctave") = true,
-        py::arg("absoluteValue") = false);
+            py::arg("useSingleOctave") = true, py::arg("absoluteValue") = false);
 
-    cls.def("getDiatonicSteps", &Interval::getDiatonicSteps,
-        py::arg("useSingleOctave") = true,
-        py::arg("absoluteValue") = false);
+    cls.def("getDiatonicSteps", &Interval::getDiatonicSteps, py::arg("useSingleOctave") = true,
+            py::arg("absoluteValue") = false);
     cls.def("getPitchStepInterval", &Interval::getPitchStepInterval);
     cls.def("getNotes", &Interval::getNotes);
     cls.def("isAscendant", &Interval::isAscendant);
@@ -61,7 +53,7 @@ void IntervalClass(py::module &m) {
     cls.def("isPerfect", &Interval::isPerfect, py::arg("useEnharmony") = false);
     cls.def("isDiminished", &Interval::isDiminished, py::arg("useEnharmony") = false);
     cls.def("isAugmented", &Interval::isAugmented, py::arg("useEnharmony") = false);
-    
+
     // ===== ABSTRACTION 1 ===== //
     cls.def("isDiminishedUnisson", &Interval::isDiminishedUnisson, py::arg("useEnharmony") = false);
     cls.def("isPerfectUnisson", &Interval::isPerfectUnisson, py::arg("useEnharmony") = false);
@@ -103,23 +95,40 @@ void IntervalClass(py::module &m) {
     cls.def("isThirdteenth", &Interval::isThirdteenth, py::arg("useEnharmony") = false);
 
     // ===== ABSTRACTION 3 ===== //
-    cls.def("isAnyOctaveMinorSecond", &Interval::isAnyOctaveMinorSecond, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveMajorSecond", &Interval::isAnyOctaveMajorSecond, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveMinorThird", &Interval::isAnyOctaveMinorThird, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveMajorThird", &Interval::isAnyOctaveMajorThird, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctavePerfectFourth", &Interval::isAnyOctavePerfectFourth, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveAugmentedFourth", &Interval::isAnyOctaveAugmentedFourth, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveDiminishedFifth", &Interval::isAnyOctaveDiminishedFifth, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctavePerfectFifth", &Interval::isAnyOctavePerfectFifth, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveAugmentedFifth", &Interval::isAnyOctaveAugmentedFifth, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveMinorSixth", &Interval::isAnyOctaveMinorSixth, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveMajorSixth", &Interval::isAnyOctaveMajorSixth, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveDiminishedSeventh", &Interval::isAnyOctaveDiminishedSeventh, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveMinorSeventh", &Interval::isAnyOctaveMinorSeventh, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveMajorSeventh", &Interval::isAnyOctaveMajorSeventh, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveDiminishedOctave", &Interval::isAnyOctaveDiminishedOctave, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctavePerfectOctave", &Interval::isAnyOctavePerfectOctave, py::arg("useEnharmony") = false);
-    cls.def("isAnyOctaveAugmentedOctave", &Interval::isAnyOctaveAugmentedOctave, py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveMinorSecond", &Interval::isAnyOctaveMinorSecond,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveMajorSecond", &Interval::isAnyOctaveMajorSecond,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveMinorThird", &Interval::isAnyOctaveMinorThird,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveMajorThird", &Interval::isAnyOctaveMajorThird,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctavePerfectFourth", &Interval::isAnyOctavePerfectFourth,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveAugmentedFourth", &Interval::isAnyOctaveAugmentedFourth,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveDiminishedFifth", &Interval::isAnyOctaveDiminishedFifth,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctavePerfectFifth", &Interval::isAnyOctavePerfectFifth,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveAugmentedFifth", &Interval::isAnyOctaveAugmentedFifth,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveMinorSixth", &Interval::isAnyOctaveMinorSixth,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveMajorSixth", &Interval::isAnyOctaveMajorSixth,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveDiminishedSeventh", &Interval::isAnyOctaveDiminishedSeventh,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveMinorSeventh", &Interval::isAnyOctaveMinorSeventh,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveMajorSeventh", &Interval::isAnyOctaveMajorSeventh,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveDiminishedOctave", &Interval::isAnyOctaveDiminishedOctave,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctavePerfectOctave", &Interval::isAnyOctavePerfectOctave,
+            py::arg("useEnharmony") = false);
+    cls.def("isAnyOctaveAugmentedOctave", &Interval::isAnyOctaveAugmentedOctave,
+            py::arg("useEnharmony") = false);
 
     // ===== ABSTRACTION 4 ===== //
     cls.def("isAnyOctaveSecond", &Interval::isAnyOctaveSecond);
@@ -130,7 +139,6 @@ void IntervalClass(py::module &m) {
     cls.def("isAnyOctaveSeventh", &Interval::isAnyOctaveSeventh);
     cls.def("isAnyOctaveOctave", &Interval::isAnyOctaveOctave);
 
-
     // Default Python 'print' function:
     cls.def("__repr__", [](const Interval& interval) {
         const std::string direction = (interval.isAscendant()) ? "asc" : "desc";
@@ -140,15 +148,13 @@ void IntervalClass(py::module &m) {
     cls.def("__hash__", [](const Interval& interval) {
         std::string temp;
         for (const auto& n : interval.getNotes()) {
-                temp += n.getPitch();
+            temp += n.getPitch();
         }
 
         return std::hash<std::string>{}(temp);
     });
 
-    cls.def("__sizeof__", [](const Interval& interval) {
-        return sizeof(interval);
-    });
+    cls.def("__sizeof__", [](const Interval& interval) { return sizeof(interval); });
 
     cls.def(py::self < py::self);
 }

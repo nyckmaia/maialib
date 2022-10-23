@@ -1,38 +1,30 @@
 #pragma once
-#include <iostream>
-#include <vector>
+#include <algorithm>  // std::rotate std::count
 #include <functional>
-#include <utility> // std::pair
-#include <tuple> // std::tuple
-#include <algorithm> // std::rotate std::count
-#include <set> // std::set
+#include <iostream>
+#include <set>      // std::set
+#include <tuple>    // std::tuple
+#include <utility>  // std::pair
+#include <vector>
 
-#include "note.h"
-#include "interval.h"
 #include "constants.h"
+#include "interval.h"
+#include "note.h"
 
-struct NoteData 
-{
+struct NoteData {
     Note note = Note("rest");
     bool wasEnharmonized = false;
     int enharmonicDiatonicDistance = 0;
 
-    NoteData() : 
-        note(Note("rest")),
-        wasEnharmonized(false),
-        enharmonicDiatonicDistance(0)
-    {
-    }
+    NoteData() : note(Note("rest")), wasEnharmonized(false), enharmonicDiatonicDistance(0) {}
 
-    NoteData(const Note& _originalNotes, const bool _wasEnhar, const int _enharDiat) :
-        note(_originalNotes),
-        wasEnharmonized(_wasEnhar),
-        enharmonicDiatonicDistance(_enharDiat)
-    {
-    };
+    NoteData(const Note& _originalNotes, const bool _wasEnhar, const int _enharDiat)
+        : note(_originalNotes),
+          wasEnharmonized(_wasEnhar),
+          enharmonicDiatonicDistance(_enharDiat){};
 
-    friend bool operator<(const NoteData& lhs, const NoteData& rhs) { 
-        return lhs.note.getMIDINumber() < rhs.note.getMIDINumber(); 
+    friend bool operator<(const NoteData& lhs, const NoteData& rhs) {
+        return lhs.note.getMIDINumber() < rhs.note.getMIDINumber();
     }
 };
 
@@ -45,15 +37,21 @@ bool operator<(const HeapData& a, const HeapData& b);
 
 void printHeap(const Heap& heap);
 
-void sortHeapOctaves(Heap& heap);
+void sortHeapOctaves(Heap* heap);
 
-class Chord
-{
-private:
-    std::vector<Note> _originalNotes; // original chord notes. No enharmony applied
-    std::vector<Note> _openStack; // enharmonic notes stacked in thirds in open position
-    std::vector<Note> _closeStack; // enharmonic notes stacked in thirds in closed position
-    std::vector<HeapData> _stackedHeaps; // all enharmonic stacks in open position
+class Chord {
+   private:
+    // original chord notes. No enharmony applied
+    std::vector<Note> _originalNotes;
+
+    // enharmonic notes stacked in thirds in open position
+    std::vector<Note> _openStack;
+
+    // enharmonic notes stacked in thirds in closed position
+    std::vector<Note> _closeStack;
+
+    // all enharmonic stacks in open position
+    std::vector<HeapData> _stackedHeaps;
     std::vector<Interval> _closeStackintervals;
 
     Note _bassNote;
@@ -70,8 +68,7 @@ private:
     std::vector<Note> computeBestOpenStackHeap(std::vector<HeapData>& stackedHeaps);
     void computeCloseStack(const std::vector<Note>& openStack);
 
-public:
-
+   public:
     Chord();
     explicit Chord(const std::vector<Note>& notes);
     explicit Chord(const std::vector<std::string>& pitches);
@@ -192,7 +189,7 @@ public:
     std::vector<Interval> getOpenStackIntervals(const bool firstNoteAsReference = false);
     std::vector<Interval> getCloseStackIntervals(const bool firstNoteAsReference = false);
     std::vector<Note> getOpenStackNotes();
-    
+
     int size() const;
     int stackSize();
 
@@ -206,19 +203,17 @@ public:
 
     void sortNotes();
 
-    const Note& operator[](size_t index) const {
-        return _originalNotes.at(index);
-    }
+    const Note& operator[](size_t index) const { return _originalNotes.at(index); }
 
-    Note& operator[](size_t index) {
-        return _originalNotes.at(index);
-    }
+    Note& operator[](size_t index) { return _originalNotes.at(index); }
 
-    bool operator == (const Chord& otherChord) const {
+    bool operator==(const Chord& otherChord) const {
         size_t sizeA = this->size();
         size_t sizeB = otherChord.size();
 
-        if (sizeA != sizeB) { return false; }
+        if (sizeA != sizeB) {
+            return false;
+        }
 
         for (size_t i = 0; i < sizeA; i++) {
             if (_originalNotes[i] != otherChord.getNote(i)) {
@@ -229,11 +224,13 @@ public:
         return true;
     }
 
-    bool operator != (const Chord& otherChord) const {
+    bool operator!=(const Chord& otherChord) const {
         size_t sizeA = this->size();
         size_t sizeB = otherChord.size();
 
-        if (sizeA != sizeB) { return true; }
+        if (sizeA != sizeB) {
+            return true;
+        }
 
         for (size_t i = 0; i < sizeA; i++) {
             if (_originalNotes[i] != otherChord.getNote(i)) {
@@ -244,7 +241,7 @@ public:
         return false;
     }
 
-    Chord operator + (const Chord& otherChord) const {
+    Chord operator+(const Chord& otherChord) const {
         Chord x = *this;
 
         const size_t sizeChord = otherChord.size();
@@ -255,12 +252,10 @@ public:
         return x;
     }
 
-    void operator << (const Note& note) {
-        addNote(note);
-    }
+    void operator<<(const Note& note) { addNote(note); }
 
-    Note operator >> (Note& note) {
-        note = _originalNotes[_originalNotes.size()-1];
+    Note operator>>(Note& note) {
+        note = _originalNotes[_originalNotes.size() - 1];
 
         removeTopNote();
 

@@ -6,8 +6,7 @@
 
 namespace py = pybind11;
 
-void Constants(py::module &m) 
-{
+void Constants(const py::module &m) {
     py::enum_<Duration>(m, "Duration")
         .value("MAXIMA_DOT_DOT", Duration::MAXIMA_DOT_DOT)
         .value("MAXIMA_DOT", Duration::MAXIMA_DOT)

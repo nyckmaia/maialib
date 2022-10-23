@@ -1,23 +1,21 @@
 #pragma once
 
+#include <algorithm>  // std::find
 #include <string>
 #include <vector>
-#include <algorithm>  // std::find
 
-#include "note.h"
 #include "log.h"
+#include "note.h"
 
-class Interval
-{
-
-private:
+class Interval {
+   private:
     std::vector<Note> _note;
     int _numSemitones;
 
     std::pair<std::string, bool> analyse() const;
     int whiteKeyDistance() const;
 
-public:
+   public:
     Interval(const std::string& pitch_A = "C4", const std::string& pitch_B = "C4");
     Interval(const Note& note_A, const Note& note_B);
 
@@ -27,7 +25,8 @@ public:
     std::string getName() const;
     int getNumSemitones(const bool absoluteValue = false) const;
     int getNumOctaves(const bool absoluteValue = false) const;
-    int getDiatonicInterval(const bool useSingleOctave = true, const bool absoluteValue = false) const;
+    int getDiatonicInterval(const bool useSingleOctave = true,
+                            const bool absoluteValue = false) const;
     int getDiatonicSteps(const bool useSingleOctave = true, const bool absoluteValue = false) const;
     int getPitchStepInterval() const;
     std::vector<Note> getNotes() const;
@@ -35,7 +34,7 @@ public:
     bool isDescendant() const;
     bool isSimple() const;
     bool isCompound() const;
-    
+
     bool isTonal() const;
 
     bool isMajor(const bool useEnharmony = false) const;
@@ -112,7 +111,7 @@ public:
     bool isAnyOctaveSeventh() const;
     bool isAnyOctaveOctave() const;
 
-    bool operator < (const Interval& otherInterval) const {
+    bool operator<(const Interval& otherInterval) const {
         return getNumSemitones(true) < otherInterval.getNumSemitones(true);
     }
 };
