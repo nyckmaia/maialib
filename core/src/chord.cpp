@@ -1605,7 +1605,7 @@ void sortHeapOctaves(Heap* heap) {
         auto& nextNote = heap->at(i + 1).note;
 
         if (nextNote.getMIDINumber() < currentNote.getMIDINumber()) {
-            nextNote.setOctave(nextNote.getOctave() + 1);
+            nextNote.setOctave(currentNote.getOctave() + 1);
         }
     }
 }
