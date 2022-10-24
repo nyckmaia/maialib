@@ -1610,7 +1610,13 @@ void sortHeapOctaves(Heap* heap) {
         const int nextNoteFirstOct = nextNote.getMIDINumber() % 12;
 
         if (nextNoteFirstOct > currentNoteFirstOct) {
-            nextNote.setOctave(currentNote.getOctave());
+            // Special cases:
+            if (nextNote.getPitchClass() == "Cb" || nextNote.getPitchClass() == "Cbb") {
+                nextNote.setOctave(currentNote.getOctave() + 1);
+            } else {
+                nextNote.setOctave(currentNote.getOctave());
+            }
+
             continue;
         }
 
