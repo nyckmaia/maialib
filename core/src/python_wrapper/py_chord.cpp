@@ -1,13 +1,10 @@
-#include "chord.h"
-
-#ifdef PYBIND
-
 #include <pybind11/functional.h>
 #include <pybind11/iostream.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "chord.h"
 #include "pybind11_json/pybind11_json.hpp"
 
 namespace py = pybind11;
@@ -50,29 +47,49 @@ void ChordClass(const py::module& m) {
     cls.def(
         "getStackDataFrame",
         [](Chord& chord, const bool enharmonyNotes) {
-            const std::vector<HeapData>& heapsData = chord.getStackedHeaps(enharmonyNotes);
+            std::vector<HeapData> heapsData = chord.getStackedHeaps(enharmonyNotes);
 
-            using enharDist = std::pair<std::string, int>;  // [notePitch, diatonicDistance]
-            using dfRow = std::tuple<std::vector<std::string>, int, std::vector<enharDist>, int,
-                                     std::vector<std::string>, float>;
+            using enharDist = std::pair<std::string, int>;  // [notePitchClass, diatonicDistance]
+            using dfRow = std::tuple<std::vector<Note>, std::vector<std::string>, int,
+                                     std::vector<enharDist>, int, std::vector<std::string>, float>;
             std::vector<dfRow> output(heapsData.size());
 
             int idx = 0;
-            for (const auto& heapData : heapsData) {
-                const Heap& heap = std::get<0>(heapData);
+            for (auto& heapData : heapsData) {
+                Heap& heap = std::get<0>(heapData);
                 const float value = std::get<1>(heapData);
 
                 const int heapSize = heap.size();
-                std::vector<std::string> pitches(heapSize);
+                std::vector<Note> notes(heapSize);
+                std::vector<std::string> pitchClasses(heapSize);
                 std::vector<enharDist> notesEnharDist(heapSize);
+
+                // Compute other row variables
+                int noteIdx = 0;
+                int numEnhamonicNotes = 0;
+                for (const auto& noteData : heap) {
+                    notes[noteIdx] = noteData.note;
+                    const std::string& notePitchClass = noteData.note.getPitchClass();
+                    pitchClasses[noteIdx] = notePitchClass;
+                    if (noteData.wasEnharmonized) {
+                        numEnhamonicNotes++;
+                    }
+
+                    notesEnharDist[noteIdx] =
+                        std::make_pair(notePitchClass, noteData.enharmonicDiatonicDistance);
+
+                    noteIdx++;
+                }
+
+                sortHeapOctaves(&heap);
 
                 // Compute heap num of non tonal intervals
                 const int numIntervals = heapSize - 1;
                 std::vector<std::string> heapIntervals(numIntervals);
                 int numNonTonalIntervals = 0;
                 for (int i = 0; i < numIntervals; i++) {
-                    const auto& currentNote = heap[i].note;
-                    const auto& nextNote = heap[i + 1].note;
+                    const auto& currentNote = heap.at(i).note;
+                    const auto& nextNote = heap.at(i + 1).note;
 
                     Interval interval(currentNote, nextNote);
                     if (!interval.isTonal()) {
@@ -81,25 +98,10 @@ void ChordClass(const py::module& m) {
                     heapIntervals[i] = interval.getName();
                 }
 
-                // Compute other row variables
-                int noteIdx = 0;
-                int numEnhamonicNotes = 0;
-                for (const auto& noteData : heap) {
-                    const std::string& notePitch = noteData.note.getPitch();
-                    pitches[noteIdx] = notePitch;
-                    if (noteData.wasEnharmonized) {
-                        numEnhamonicNotes++;
-                    }
-
-                    notesEnharDist[noteIdx] =
-                        std::make_pair(notePitch, noteData.enharmonicDiatonicDistance);
-
-                    noteIdx++;
-                }
-
                 // Store data in the row
-                output[idx++] = std::make_tuple(pitches, numEnhamonicNotes, notesEnharDist,
-                                                numNonTonalIntervals, heapIntervals, value);
+                output[idx++] =
+                    std::make_tuple(notes, pitchClasses, numEnhamonicNotes, notesEnharDist,
+                                    numNonTonalIntervals, heapIntervals, value);
             }
 
             // Import Pandas module
@@ -109,9 +111,13 @@ void ChordClass(const py::module& m) {
             py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
 
             // Set DataFrame columns name
-            std::vector<std::string> columns = {"heapPitches",      "numEnharNotes",
-                                                "diatonicDistance", "numNonTonalIntervals",
-                                                "heapIntervals",    "matchValue"};
+            std::vector<std::string> columns = {"notes",
+                                                "pitchClassStack",
+                                                "numEnharNotes",
+                                                "diatonicDistance",
+                                                "numNonTonalIntervals",
+                                                "intervals",
+                                                "matchValue"};
 
             // Fill DataFrame with records and columns
             py::object df = FromRecords(output, "columns"_a = columns);
@@ -319,4 +325,3 @@ void ChordClass(const py::module& m) {
     py::class_<Heap> clsHeap(m, "Heap");
     py::class_<HeapData> clsHeapData(m, "HeapData");
 }
-#endif

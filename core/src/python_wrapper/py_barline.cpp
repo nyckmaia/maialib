@@ -1,11 +1,8 @@
-#include "part.h"
-
-#ifdef PYBIND
-
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "part.h"
 #include "pybind11_json/pybind11_json.hpp"
 namespace py = pybind11;
 
@@ -43,4 +40,3 @@ void BarlineClass(const py::module& m) {
 
     cls.def("__sizeof__", [](const Barline& barline) { return sizeof(barline); });
 }
-#endif

@@ -1,4 +1,3 @@
-#ifdef PYBIND
 #include <pybind11/functional.h>
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
@@ -101,4 +100,3 @@ void HelperClass(const py::module& m) {
     cls.def_static("pitch2number", &Helper::pitch2number, py::arg("pitch"),
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 }
-#endif

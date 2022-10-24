@@ -378,7 +378,7 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
                 continue;
             }
 
-            sortHeapOctaves(&heapInversion);
+            // sortHeapOctaves(&heapInversion);
             const auto& heapData = stackInThirdsTemplateMatch(heapInversion);
             _stackedHeaps.push_back(heapData);
         }

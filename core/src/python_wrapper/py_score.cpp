@@ -1,13 +1,10 @@
-#include "score.h"
-
-#ifdef PYBIND
-
 #include <pybind11/functional.h>
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
 #include "pybind11_json/pybind11_json.hpp"
+#include "score.h"
 namespace py = pybind11;
 using namespace pybind11::literals;
 
@@ -175,4 +172,3 @@ void ScoreClass(const py::module& m) {
 
     cls.def("__sizeof__", [](const Score& score) { return sizeof(score); });
 }
-#endif

@@ -1,4 +1,3 @@
-#ifdef PYBIND
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
@@ -30,4 +29,3 @@ PYBIND11_MODULE(maiacore, m) {
     HelperClass(m);
     ScoreCollectionClass(m);
 }
-#endif

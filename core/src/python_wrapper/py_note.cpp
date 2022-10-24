@@ -1,6 +1,3 @@
-#include "note.h"
-
-#ifdef PYBIND
 #include <pybind11/iostream.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
@@ -9,6 +6,7 @@
 #include <bitset>
 #include <unordered_map>
 
+#include "note.h"
 #include "pybind11_json/pybind11_json.hpp"
 namespace py = pybind11;
 
@@ -163,4 +161,3 @@ void NoteClass(const py::module& m) {
     cls.def(py::self == py::self);
     cls.def(py::self != py::self);
 }
-#endif

@@ -64,6 +64,8 @@ endif()
 if(STATIC_LIB)
     message("=====> GENERATING STATIC LIBRARY <=====")
 
+    add_definitions(-DMAIACORE_STATIC_LIB)
+
     add_library(${PROJECT_NAME} STATIC ${maiacore_src})
 
     target_include_directories(${PROJECT_NAME} PUBLIC include)
@@ -79,6 +81,8 @@ endif()
 # Generate shared library
 if(SHARED_LIB)
     message("=====> GENERATING SHARED LIBRARY <=====")
+
+    add_definitions(-DMAIACORE_SHARED_LIB)
 
     add_library(${PROJECT_NAME} SHARED ${maiacore_src})
 
@@ -96,7 +100,7 @@ endif()
 if(PYBIND_LIB)
     message("=====> GENERATING PYBIND LIBRARY <=====")
     
-    add_definitions(-DPYBIND)
+    add_definitions(-DMAIACORE_PYTHON_MODULE)
     
     find_package(Python COMPONENTS Interpreter Development)
 

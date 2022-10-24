@@ -1,11 +1,8 @@
-#include "clef.h"
-
-#ifdef PYBIND
-
 #include <pybind11/iostream.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "clef.h"
 #include "pybind11_json/pybind11_json.hpp"
 namespace py = pybind11;
 
@@ -31,4 +28,3 @@ void ClefClass(const py::module& m) {
 
     cls.def("__sizeof__", [](const Clef& clef) { return sizeof(clef); });
 }
-#endif

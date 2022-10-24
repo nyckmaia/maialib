@@ -1,11 +1,9 @@
-#include "score_collection.h"
-
-#ifdef PYBIND
-
 #include <pybind11/iostream.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
+
+#include "score_collection.h"
 
 namespace py = pybind11;
 
@@ -71,4 +69,3 @@ void ScoreCollectionClass(const py::module& m) {
 
     cls.def(py::self + py::self);
 }
-#endif

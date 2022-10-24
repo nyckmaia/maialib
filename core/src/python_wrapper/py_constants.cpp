@@ -1,4 +1,3 @@
-#ifdef PYBIND
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
@@ -51,5 +50,3 @@ void Constants(const py::module &m) {
         .value("N1024TH_DOT", Duration::N1024TH_DOT)
         .value("N1024TH", Duration::N1024TH);
 }
-
-#endif

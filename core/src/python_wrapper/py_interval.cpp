@@ -1,12 +1,9 @@
-#include "interval.h"
-
-#ifdef PYBIND
-
 #include <pybind11/iostream.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "interval.h"
 #include "pybind11_json/pybind11_json.hpp"
 namespace py = pybind11;
 
@@ -158,4 +155,3 @@ void IntervalClass(const py::module& m) {
 
     cls.def(py::self < py::self);
 }
-#endif
