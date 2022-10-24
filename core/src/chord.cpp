@@ -1597,14 +1597,30 @@ void printHeap(const Heap& heap) {
 }
 
 void sortHeapOctaves(Heap* heap) {
+    // Sort heap octaves from octave '3'
+    heap->at(0).note.setOctave(3);
+
     const int heapSize = heap->size();
 
     for (int i = 0; i < heapSize - 1; i++) {
         auto& currentNote = heap->at(i).note;
         auto& nextNote = heap->at(i + 1).note;
 
-        if (nextNote.getMIDINumber() < currentNote.getMIDINumber()) {
-            nextNote.setOctave(currentNote.getOctave() + 1);
+        const int currentNoteFirstOct = currentNote.getMIDINumber() % 12;
+        const int nextNoteFirstOct = nextNote.getMIDINumber() % 12;
+
+        if (nextNoteFirstOct > currentNoteFirstOct) {
+            nextNote.setOctave(currentNote.getOctave());
+            continue;
+        }
+
+        if (nextNoteFirstOct < currentNoteFirstOct) {
+            // Special cases:
+            if (nextNote.getPitchClass() == "B#" || nextNote.getPitchClass() == "Bx") {
+                nextNote.setOctave(currentNote.getOctave());
+            } else {
+                nextNote.setOctave(currentNote.getOctave() + 1);
+            }
         }
     }
 }
