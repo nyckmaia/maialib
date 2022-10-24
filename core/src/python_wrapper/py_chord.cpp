@@ -64,24 +64,34 @@ void ChordClass(const py::module& m) {
                 std::vector<std::string> pitchClasses(heapSize);
                 std::vector<enharDist> notesEnharDist(heapSize);
 
-                // Compute other row variables
+                // ===== COMPUTE ROW VALUES ===== //
+
+                // Original non-sorted Note Objects
                 int noteIdx = 0;
-                int numEnhamonicNotes = 0;
                 for (const auto& noteData : heap) {
                     notes[noteIdx] = noteData.note;
-                    const std::string& notePitchClass = noteData.note.getPitchClass();
-                    pitchClasses[noteIdx] = notePitchClass;
-                    if (noteData.wasEnharmonized) {
-                        numEnhamonicNotes++;
-                    }
-
-                    notesEnharDist[noteIdx] =
-                        std::make_pair(notePitchClass, noteData.enharmonicDiatonicDistance);
-
                     noteIdx++;
                 }
 
                 sortHeapOctaves(&heap);
+
+                noteIdx = 0;
+                int numEnhamonicNotes = 0;
+                for (const auto& noteData : heap) {
+                    const std::string& notePitchClass = noteData.note.getPitchClass();
+
+                    pitchClasses[noteIdx] = notePitchClass;
+                    notesEnharDist[noteIdx] =
+                        std::make_pair(notePitchClass, noteData.enharmonicDiatonicDistance);
+
+                    if (noteData.wasEnharmonized) {
+                        numEnhamonicNotes++;
+                    }
+
+                    noteIdx++;
+                }
+
+                // sortHeapOctaves(&heap);
 
                 // Compute heap num of non tonal intervals
                 const int numIntervals = heapSize - 1;
@@ -91,10 +101,11 @@ void ChordClass(const py::module& m) {
                     const auto& currentNote = heap.at(i).note;
                     const auto& nextNote = heap.at(i + 1).note;
 
-                    Interval interval(currentNote, nextNote);
+                    Interval interval(currentNote.getPitch(), nextNote.getPitch());
                     if (!interval.isTonal()) {
                         numNonTonalIntervals++;
                     }
+
                     heapIntervals[i] = interval.getName();
                 }
 

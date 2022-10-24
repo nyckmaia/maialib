@@ -272,6 +272,12 @@ std::pair<std::string, bool> Interval::analyse() const {
             LOG_ERROR("Unknown 'diatonicInterval' value: " + std::to_string(diatonicInterval));
     }
 
+    LOG_ERROR("Unable to compute the interval from " + _note[0].getPitch() + " to " +
+              _note[1].getPitch() + ".\n" +
+              "'diatonicInterval' = " + std::to_string(diatonicInterval) +
+              " and 'numSemitones' = " + std::to_string(numSemitones) +
+              ".\n'numSemitones % 12' = " + std::to_string(numSemitones % 12));
+
     // Only to avoid the 'no-return' compiler warning
     return {"", false};
 }

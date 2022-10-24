@@ -1612,9 +1612,11 @@ void sortHeapOctaves(Heap* heap) {
         if (nextNoteFirstOct > currentNoteFirstOct) {
             // Special cases:
             if (nextNote.getPitchClass() == "Cb" || nextNote.getPitchClass() == "Cbb") {
-                nextNote.setOctave(currentNote.getOctave() + 1);
+                nextNote.setOctave(currentNote.getWrittenOctave() + 1);
+            } else if (currentNote.getPitchClass() == "B#" || currentNote.getPitchClass() == "Bx") {
+                nextNote.setOctave(currentNote.getWrittenOctave() + 1);
             } else {
-                nextNote.setOctave(currentNote.getOctave());
+                nextNote.setOctave(currentNote.getWrittenOctave());
             }
 
             continue;
@@ -1623,9 +1625,9 @@ void sortHeapOctaves(Heap* heap) {
         if (nextNoteFirstOct < currentNoteFirstOct) {
             // Special cases:
             if (nextNote.getPitchClass() == "B#" || nextNote.getPitchClass() == "Bx") {
-                nextNote.setOctave(currentNote.getOctave());
+                nextNote.setOctave(currentNote.getWrittenOctave());
             } else {
-                nextNote.setOctave(currentNote.getOctave() + 1);
+                nextNote.setOctave(currentNote.getWrittenOctave() + 1);
             }
         }
     }
