@@ -1,6 +1,7 @@
 #include "score.h"
 
 #include "cherno/instrumentor.h"
+#include "utils.h"
 
 Score::Score(const std::initializer_list<std::string>& partsName, const int numMeasures)
     : _numParts(partsName.size()),

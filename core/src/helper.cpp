@@ -1,6 +1,7 @@
 #include "helper.h"
 
 #include "cherno/instrumentor.h"
+#include "utils.h"
 
 std::vector<std::string> Helper::splitString(const std::string& s, char delimiter) {
     std::vector<std::string> tokens;

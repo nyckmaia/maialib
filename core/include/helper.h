@@ -16,7 +16,6 @@
 #include "log.h"
 #include "nlohmann/json.hpp"
 #include "pugixml.hpp"
-#include "utils.h"
 
 class Note;
 

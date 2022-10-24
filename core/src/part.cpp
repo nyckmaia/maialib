@@ -1,37 +1,7 @@
 #include "part.h"
 
 #include "cherno/instrumentor.h"
-
-// Part::Part(const std::string& partName, const int numMeasures, const int
-// numStaves, const int divisionsPerQuarterNote) :
-//     _numStaves(numStaves),
-//     _divisionsPerQuarterNote(divisionsPerQuarterNote)
-//{
-//     const int partNameSize = partName.size();
-
-//    _partName = partName;
-
-//    if (partNameSize > 5) {
-//        _shortName = partName.substr(0, 4) + ".";
-//    } else {
-//        _shortName = partName.substr(0, partNameSize) + ".";
-//    }
-
-//    _measure.resize(numMeasures);
-
-//    for (auto& m : _measure) {
-//        m.setNumStaves(numStaves);
-//        m.setDivisionsPerQuarterNote(divisionsPerQuarterNote);
-
-//        m.setKeyMode("major");
-//        m.setTimeSignature(4, 4);
-//        m.setKeySignature(0);
-//    }
-
-//    _measure[0].setKeyMode("major");
-//    _measure[0].setTimeSignature(4, 4);
-//    _measure[0].setKeySignature(0);
-//}
+#include "utils.h"
 
 Part::Part(const std::string& partName, const int numStaves, const bool isPitched,
            const int divisionsPerQuarterNote)

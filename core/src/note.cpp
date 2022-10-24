@@ -1,6 +1,7 @@
 #include "note.h"
 
 #include "helper.h"
+#include "utils.h"
 
 Note::Note() : Note("A4") {}
 

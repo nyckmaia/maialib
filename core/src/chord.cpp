@@ -2,6 +2,7 @@
 
 #include "helper.h"
 #include "log.h"
+#include "utils.h"
 
 Chord::Chord() : _isStackedInThirds(false) {}
 
@@ -25,7 +26,6 @@ void Chord::clear() {
 }
 
 void Chord::info() {
-    LOG_INFO("=====> CHORD <=====");
     LOG_INFO("Name: " << getName());
     LOG_INFO("Size:" << size());
 
@@ -672,8 +672,7 @@ void Chord::computeCloseStack(const std::vector<Note>& openStack) {
     }
 
     for (auto& note : _closeStack) {
-        const char* pitchStep = note.getPitchStep().c_str();
-        const int oct = closeStackOctavesMap->at(*pitchStep);
+        const int oct = closeStackOctavesMap->at(*note.getPitchStep().c_str());
         note.setOctave(oct);
     }
 }
