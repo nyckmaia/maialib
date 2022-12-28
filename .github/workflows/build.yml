@@ -1,0 +1,22 @@
+on: [push, pull_request, workflow_dispatch]
+
+jobs:
+  build_wheels:
+    strategy:
+      matrix:
+        os: [ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v3
+        
+      - uses: pypa/cibuildwheel@v2.9.0
+      
+      - name: Configure
+        shell: bash
+        run: >
+          make module
+
+      - uses: actions/upload-artifact@v3
+        with:
+          path: ./wheelhouse/*.whl
