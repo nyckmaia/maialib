@@ -130,6 +130,10 @@ const std::map<char, int> c_A_closeStackOctavesMap = {{'A', 4}, {'C', 5}, {'E', 
 const std::map<char, int> c_B_closeStackOctavesMap = {{'B', 4}, {'D', 5}, {'F', 5}, {'A', 5},
                                                       {'C', 6}, {'E', 6}, {'G', 6}};
 
+const std::map<int, Duration> c_TimeSignatureLowerValueMap = {
+    {32, Duration::N32ND},  {16, Duration::N16TH}, {8, Duration::EIGHTH},
+    {4, Duration::QUARTER}, {2, Duration::HALF},   {1, Duration::WHOLE}};
+
 namespace MUSIC_XML {
 
 namespace PART {
@@ -579,15 +583,6 @@ const size_t SHARP_ELEVEN = 18;
 const size_t PERFECT_TWELFTH = 19;
 const size_t MINOR_THIRTEENTH = 20;
 const size_t MAJOR_THIRTEENTH = 21;
-
-//            namespace DIATONIC {
-//                const int SECOND = 2;
-//                const int THIRD = 3;
-//                const int FOURTH = 4;
-//                const int FIFTH = 5;
-//                const int SIXTH = 6;
-//                const int SEVENTH = 7;
-//            }
 }  // namespace INTERVAL
 }  // namespace MIDI
 }  // namespace MUSIC_XML

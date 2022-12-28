@@ -351,21 +351,21 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
     }
 
     // ===== STEP 2: COMPUTE ENHARMONIC UNIT GROUPS ===== //
-    std::vector<Heap> enharmonicUnitGroups = computeEnharmonicUnitsGroups();
+    std::vector<NoteDataHeap> enharmonicUnitGroups = computeEnharmonicUnitsGroups();
 
     // ===== STEP 3: COMPUTE ALL ENHARMONIC HEAPS (VALID AND INVALID HEAPS)
     // ===== //
-    std::vector<Heap> allEnharmonicHeaps = computeEnharmonicHeaps(enharmonicUnitGroups);
+    std::vector<NoteDataHeap> allEnharmonicHeaps = computeEnharmonicHeaps(enharmonicUnitGroups);
 
     // ===== STEP 4: FILTER HEAPS THAT DO NOT CONTAIN INTERNAL DUPLICATED PITCH
     // STEPS ===== //
-    std::vector<Heap> validEnharmonicHeaps =
+    std::vector<NoteDataHeap> validEnharmonicHeaps =
         removeHeapsWithDuplicatedPitchSteps(allEnharmonicHeaps);
 
     // ===== STEP 5: COMPUTE THE STACK IN THIRDS TEMPLATE MATCH ===== //
     for (auto& heap : validEnharmonicHeaps) {
-        const std::vector<Heap> heapInversions = computeAllHeapInversions(heap);
-        std::vector<Heap> tertianHeaps = filterTertianHeapsOnly(heapInversions);
+        const std::vector<NoteDataHeap> heapInversions = computeAllHeapInversions(heap);
+        std::vector<NoteDataHeap> tertianHeaps = filterTertianHeapsOnly(heapInversions);
 
         for (auto& heapInversion : tertianHeaps) {
             // Check if the first heap interval is a musical third
@@ -396,15 +396,15 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
     _closeStackintervals = Helper::notes2Intervals(_closeStack, true);
 }
 
-std::vector<Heap> Chord::computeEnharmonicUnitsGroups() const {
+std::vector<NoteDataHeap> Chord::computeEnharmonicUnitsGroups() const {
     const int chordSize = _openStack.size();
-    std::vector<Heap> enharUnitGroups(chordSize);
+    std::vector<NoteDataHeap> enharUnitGroups(chordSize);
     const int numUnitGroups = enharUnitGroups.size();
 
     const int numOfEnharmonics = 3;
 
     for (int i = 0; i < numUnitGroups; i++) {
-        Heap unitGroup(numOfEnharmonics);
+        NoteDataHeap unitGroup(numOfEnharmonics);
 
         Note originalNote = _openStack[i];  // must be a copy
         unitGroup[0] = NoteData(originalNote, false, 0);
@@ -417,11 +417,12 @@ std::vector<Heap> Chord::computeEnharmonicUnitsGroups() const {
     return enharUnitGroups;
 }
 
-std::vector<Heap> Chord::computeEnharmonicHeaps(const std::vector<Heap>& heaps) const {
+std::vector<NoteDataHeap> Chord::computeEnharmonicHeaps(
+    const std::vector<NoteDataHeap>& heaps) const {
     const int chordSize = heaps.size();
     const int numEnharmonicHeapVariants = std::pow(3, chordSize);
 
-    std::vector<Heap> enharmonicHeaps(numEnharmonicHeapVariants);
+    std::vector<NoteDataHeap> enharmonicHeaps(numEnharmonicHeapVariants);
     int idx = 0;
     const int numOfEnharmonics = 3;
 
@@ -510,9 +511,10 @@ std::vector<Heap> Chord::computeEnharmonicHeaps(const std::vector<Heap>& heaps) 
     return enharmonicHeaps;
 }
 
-std::vector<Heap> Chord::removeHeapsWithDuplicatedPitchSteps(std::vector<Heap>& heaps) const {
+std::vector<NoteDataHeap> Chord::removeHeapsWithDuplicatedPitchSteps(
+    std::vector<NoteDataHeap>& heaps) const {
     const int heapsSize = heaps.size();
-    std::vector<Heap> validEnharmonicHeaps(heapsSize);
+    std::vector<NoteDataHeap> validEnharmonicHeaps(heapsSize);
 
     int idx = 0;
     for (auto& heap : heaps) {
@@ -540,8 +542,8 @@ std::vector<Heap> Chord::removeHeapsWithDuplicatedPitchSteps(std::vector<Heap>& 
     return validEnharmonicHeaps;
 }
 
-std::vector<Heap> Chord::computeAllHeapInversions(Heap& heap) const {
-    std::vector<Heap> heapInversions(factorial(heap.size()));
+std::vector<NoteDataHeap> Chord::computeAllHeapInversions(NoteDataHeap& heap) const {
+    std::vector<NoteDataHeap> heapInversions(factorial(heap.size()));
     int i = 0;
 
     std::sort(heap.begin(), heap.end());
@@ -552,14 +554,15 @@ std::vector<Heap> Chord::computeAllHeapInversions(Heap& heap) const {
     return heapInversions;
 }
 
-std::vector<Heap> Chord::filterTertianHeapsOnly(const std::vector<Heap>& heaps) const {
+std::vector<NoteDataHeap> Chord::filterTertianHeapsOnly(
+    const std::vector<NoteDataHeap>& heaps) const {
     if (heaps.empty()) {
         LOG_ERROR("Heaps vector is empty");
     }
 
     const int heapSize = heaps[0].size();
 
-    std::vector<Heap> tertianHeaps;
+    std::vector<NoteDataHeap> tertianHeaps;
 
     for (const auto& heap : heaps) {
         bool isATertianHeap = true;
@@ -629,7 +632,7 @@ std::vector<Note> Chord::computeBestOpenStackHeap(std::vector<HeapData>& stacked
     }
 
     const HeapData& bestStackedHeap = stackedHeaps[0];
-    const Heap& heap = std::get<0>(bestStackedHeap);
+    const NoteDataHeap& heap = std::get<0>(bestStackedHeap);
     std::vector<Note> bestStackedHeapNotes(heapSize);
     for (int i = 0; i < heapSize; i++) {
         bestStackedHeapNotes[i] = heap[i].note;
@@ -677,7 +680,7 @@ void Chord::computeCloseStack(const std::vector<Note>& openStack) {
     }
 }
 
-HeapData Chord::stackInThirdsTemplateMatch(const Heap& heap) const {
+HeapData Chord::stackInThirdsTemplateMatch(const NoteDataHeap& heap) const {
     const int heapSize = heap.size();
 
     // Compute the max heap count points value
@@ -1589,14 +1592,14 @@ Chord Chord::getCloseChord(const bool enharmonyNotes) {
 
 void Chord::sortNotes() { std::sort(_originalNotes.begin(), _originalNotes.end()); }
 
-void printHeap(const Heap& heap) {
+void printHeap(const NoteDataHeap& heap) {
     for (const auto& noteData : heap) {
         std::cout << "printHeap: " << noteData.note.getPitch() << " ";
     }
     std::cout << std::endl;
 }
 
-void sortHeapOctaves(Heap* heap) {
+void sortHeapOctaves(NoteDataHeap* heap) {
     // Sort heap octaves from octave '3'
     heap->at(0).note.setOctave(3);
 

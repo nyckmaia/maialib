@@ -1,14 +1,14 @@
 from setuptools import setup, find_packages
 
 with open("README.md", "r", encoding="utf-8") as fh:
-   long_description = fh.read()
+    long_description = fh.read()
 
 with open("LICENSE.txt", "r", encoding="utf-8") as fh:
-   license_txt = fh.read()
+    license_txt = fh.read()
 
 setup(
     name="maialib",
-    version="0.0.17",
+    version="0.0.18",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate music data",
@@ -20,8 +20,8 @@ setup(
         "Bug Tracker": "https://github.com/nyckmaia/maia/issues",
     },
     keywords=["music", "score", "sheet music", "analysis"],
-    packages = find_packages(), 
-    package_data = {
+    packages=find_packages(),
+    package_data={
         '': ['*.so', '*.pyd', '__init__.pyi', 'maiacore/__init__.pyi']
     },
     py_modules=["maiacore"],

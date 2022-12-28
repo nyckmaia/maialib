@@ -379,7 +379,7 @@ bool Interval::isAscendant() const { return (whiteKeyDistance() > 0) ? true : fa
 
 bool Interval::isDescendant() const { return (whiteKeyDistance() < 0) ? true : false; }
 
-bool Interval::isSimple() const { return (_numSemitones <= 12) ? true : false; }
+bool Interval::isSimple() const { return (abs(_numSemitones) <= 12) ? true : false; }
 
 bool Interval::isCompound() const { return !isSimple(); }
 

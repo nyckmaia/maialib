@@ -92,6 +92,16 @@ class Note {
     void setDuration(const Duration duration, const int divisionsPerQuarterNote = 256);
 
     /**
+     * @brief Set the note duration
+     *
+     * @param durationValue Float-point duration between 0 and 1 using the relative lower time
+     * signature value
+     * @param lowerTimeSignatureValue Lower time signature value
+     */
+    void setDuration(const float durationValue, const int lowerTimeSignatureValue = 4,
+                     const int divisionsPerQuarterNote = 256);
+
+    /**
      * @brief Set the note duration ticks
      *
      * @param durationTicks Duration in ticks unit

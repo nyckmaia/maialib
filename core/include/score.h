@@ -197,7 +197,7 @@ class Score {
      * }
      * \endcode
      */
-    nlohmann::json instrumentFragmentation(const nlohmann::json config);
+    nlohmann::json instrumentFragmentation(nlohmann::json config = nlohmann::json());
 
     /**
      * @brief Get the vertical stacked chords from the score object

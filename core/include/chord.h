@@ -28,16 +28,16 @@ struct NoteData {
     }
 };
 
-// Heap Type [Vector of NotesData]
-typedef std::vector<NoteData> Heap;
-// HeapData Type [Heap, stackMatchValue]
-typedef std::tuple<Heap, float> HeapData;
+// NoteDataHeap Type [Vector of NotesData]
+typedef std::vector<NoteData> NoteDataHeap;
+// HeapData Type [NoteDataHeap, stackMatchValue]
+typedef std::tuple<NoteDataHeap, float> HeapData;
 
 bool operator<(const HeapData& a, const HeapData& b);
 
-void printHeap(const Heap& heap);
+void printHeap(const NoteDataHeap& heap);
 
-void sortHeapOctaves(Heap* heap);
+void sortHeapOctaves(NoteDataHeap* heap);
 
 class Chord {
    private:
@@ -59,12 +59,13 @@ class Chord {
 
     void computeIntervals();
     void stackInThirds(const bool enharmonyNotes = false);
-    HeapData stackInThirdsTemplateMatch(const Heap& heap) const;
-    std::vector<Heap> computeEnharmonicUnitsGroups() const;
-    std::vector<Heap> computeEnharmonicHeaps(const std::vector<Heap>& heaps) const;
-    std::vector<Heap> removeHeapsWithDuplicatedPitchSteps(std::vector<Heap>& heaps) const;
-    std::vector<Heap> computeAllHeapInversions(Heap& heap) const;
-    std::vector<Heap> filterTertianHeapsOnly(const std::vector<Heap>& heaps) const;
+    HeapData stackInThirdsTemplateMatch(const NoteDataHeap& heap) const;
+    std::vector<NoteDataHeap> computeEnharmonicUnitsGroups() const;
+    std::vector<NoteDataHeap> computeEnharmonicHeaps(const std::vector<NoteDataHeap>& heaps) const;
+    std::vector<NoteDataHeap> removeHeapsWithDuplicatedPitchSteps(
+        std::vector<NoteDataHeap>& heaps) const;
+    std::vector<NoteDataHeap> computeAllHeapInversions(NoteDataHeap& heap) const;
+    std::vector<NoteDataHeap> filterTertianHeapsOnly(const std::vector<NoteDataHeap>& heaps) const;
     std::vector<Note> computeBestOpenStackHeap(std::vector<HeapData>& stackedHeaps);
     void computeCloseStack(const std::vector<Note>& openStack);
 

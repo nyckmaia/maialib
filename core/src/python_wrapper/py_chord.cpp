@@ -56,7 +56,7 @@ void ChordClass(const py::module& m) {
 
             int idx = 0;
             for (auto& heapData : heapsData) {
-                Heap& heap = std::get<0>(heapData);
+                NoteDataHeap& heap = std::get<0>(heapData);
                 const float value = std::get<1>(heapData);
 
                 const int heapSize = heap.size();
@@ -327,12 +327,12 @@ void ChordClass(const py::module& m) {
 
     cls.def("__sizeof__", [](const Chord& chord) { return sizeof(chord); });
 
-    // bindings to Heap Data typedef
+    // bindings to NoteDataHeap Data typedef
     py::class_<NoteData> clsNoteData(m, "NoteData");
     clsNoteData.def(py::init<>());
     clsNoteData.def(py::init<const Note&, const bool, const int>(), py::arg("note"),
                     py::arg("wasEnharmonized"), py::arg("enharmonicDiatonicDistance"));
 
-    py::class_<Heap> clsHeap(m, "Heap");
+    py::class_<NoteDataHeap> clsHeap(m, "NoteDataHeap");
     py::class_<HeapData> clsHeapData(m, "HeapData");
 }

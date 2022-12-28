@@ -32,8 +32,13 @@ void NoteClass(const py::module& m) {
     cls.def("setPitchClass", &Note::setPitchClass, py::arg("pitchClass"),
             "Set the note pitch class");
     cls.def("setOctave", &Note::setOctave, py::arg("octave"));
-    cls.def("setDuration", &Note::setDuration, py::arg("duration"),
+
+    cls.def("setDuration", py::overload_cast<const Duration, const int>(&Note::setDuration),
+            py::arg("duration"), py::arg("divisionsPerQuarterNote") = 256);
+    cls.def("setDuration", py::overload_cast<const float, const int, const int>(&Note::setDuration),
+            py::arg("durationValue"), py::arg("lowerTimeSignatureValue") = 4,
             py::arg("divisionsPerQuarterNote") = 256);
+
     cls.def("setDurationTicks", &Note::setDurationTicks, py::arg("durationTicks"));
     cls.def("setIsNoteOn", &Note::setIsNoteOn, py::arg("isNoteOn"));
     cls.def("setPitch", &Note::setPitch, py::arg("pitch"));

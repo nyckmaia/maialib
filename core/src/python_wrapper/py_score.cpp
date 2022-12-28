@@ -88,7 +88,8 @@ void ScoreClass(const py::module& m) {
 
     cls.def("findPattern", &Score::findPattern, py::arg("pattern"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("instrumentFragmentation", &Score::instrumentFragmentation, py::arg("config"),
+    cls.def("instrumentFragmentation", &Score::instrumentFragmentation,
+            py::arg("config") = nlohmann::json(),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def(
         "getChords",

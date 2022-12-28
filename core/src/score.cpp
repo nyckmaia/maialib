@@ -79,6 +79,18 @@ void Score::info() const {
     LOG_INFO("Number of Notes: " << getNumNotes());
     LOG_INFO("Number of Measures: " << getNumMeasures());
     LOG_INFO("Number of Parts: " << getNumParts());
+
+    // Get a part name list as a string
+    std::string partNameList = "[";
+    for (const auto& [idx, partName] : getPartsName()) {
+        partNameList.append(partName);
+        if (idx != _numParts - 1) {
+            partNameList.append(", ");
+        }
+    }
+    partNameList.append("]");
+
+    LOG_INFO("Parts: " << partNameList);
     LOG_INFO("Loaded from file: " << std::boolalpha << _isLoadedXML);
 }
 
@@ -457,6 +469,7 @@ void Score::loadXMLFile(const std::string& filePath) {
                 if (voice == 0) {
                     voice = 1;
                 }
+
                 if (staff <= 0) {
                     staff = 0;
                 }
@@ -2340,33 +2353,114 @@ void Score::forEachNote(
     }
 }
 
-nlohmann::json Score::instrumentFragmentation(const nlohmann::json config) {
-    PROFILE_FUNCTION();
-    nlohmann::json out;
+nlohmann::json Score::instrumentFragmentation(nlohmann::json config) {
+    // ===== STEP 1: PARSE THE INPUT CONFIG JSON ===== //
 
-    const int instrumentCount = config["partNumber"].size();
-    std::vector<int> partNumber(instrumentCount, 0);
-    for (int i = 0; i < instrumentCount; i++) {
-        partNumber[i] = config["partNumber"][i].get<int>();
-        // Error checking
-        if (partNumber[i] >= getNumParts()) {
-            LOG_ERROR(
-                "The part number MUST BE between 0 and (total number of parts "
-                "- 1)");
-            return nlohmann::json();
+    // ===== STEP 1.0: READ PART NAMES ===== //
+    std::vector<std::string> partNames;
+
+    // Type checking
+    if (config.contains("partNames") && !config["partNames"].is_array()) {
+        printPartNames();
+        LOG_ERROR(
+            "'partNames' is a optional config argument and MUST BE a strings "
+            "array");
+        return {};
+    }
+
+    // If not setted, set the default value = "all part names"
+    if (!config.contains("partNames")) {
+        partNames = getPartNames();
+    } else {
+        for (const auto& partNameValue : config["partNames"]) {
+            const std::string partName = partNameValue.get<std::string>();
+            int idx = 0;
+            bool isValid = getPartIndex(partName, idx);
+
+            if (!isValid) {
+                LOG_ERROR("Invalid part name: " + partName);
+                printPartNames();
+                return {};
+            }
+
+            partNames.push_back(partName);
         }
     }
 
-    const int measureStart = config["measureStart"].get<int>();  // Number of the initial measure
-    const int measureEnd = config["measureEnd"].get<int>();      // Number of the final measure
+    // ===== STEP 1.1: READ MEASURE START ===== //
+    int measureStart = 0;
 
-    if (measureStart > measureEnd) {  // Error Checking
-        LOG_ERROR(
-            "The number of the initial chosen measure can't be greater than "
-            "the chosen last measure");
-        return nlohmann::json();
+    // If not setted, set the default value = 0
+    if (!config.contains("measureStart")) {
+        measureStart = 0;
+        config["measureStart"] = measureStart;
+        // LOG_WARN("Setting the 'measureStart' to the first measure: " <<
+        // measureStart);
     }
 
+    // Type checking
+    if (config.contains("measureStart") && !config["measureStart"].is_number_integer()) {
+        LOG_ERROR(
+            "'measureStart' is a optional config argument and MUST BE a "
+            "positive integer!");
+        return {};
+    }
+
+    // Get measure start value
+    measureStart = config["measureStart"].get<int>();
+
+    // Error checking:
+    if (measureStart < 0) {
+        LOG_ERROR("The 'measureStart' value MUST BE a positive integer!");
+        return {};
+    }
+
+    // ===== STEP 1.2: READ MEASURE END ===== //
+    int measureEnd = 0;
+
+    // If not setted, set the default value = All measures!
+    if (!config.contains("measureEnd")) {
+        measureEnd = getNumMeasures();
+        config["measureEnd"] = measureEnd;
+        // LOG_WARN("Setting the 'measureEnd' to the last measure: " +
+        // std::to_string(measureEnd));
+    }
+
+    // Type checking:
+    if (config.contains("measureEnd") && !config["measureEnd"].is_number_integer()) {
+        LOG_ERROR(
+            "'measureEnd' is a optional config argument and MUST BE a positive "
+            "integer!");
+        return {};
+    }
+
+    // Get the 'measureEnd' config value:
+    measureEnd = config["measureEnd"].get<int>();
+
+    // Error checking:
+    if (measureEnd < 0) {
+        LOG_ERROR("The 'measureEnd' value MUST BE greater than 0!");
+        return {};
+    }
+
+    // Error checking:
+    if (measureEnd > getNumMeasures()) {
+        LOG_WARN("The 'measureEnd' value is greater then the music length!");
+        LOG_WARN("Changing the 'measureEnd' value to: " << getNumMeasures());
+        measureEnd = getNumMeasures();
+    }
+
+    // Error checking:
+    if (measureStart > measureEnd) {
+        LOG_ERROR("'measureEnd' value MUST BE greater than 'measureStart' value");
+        return {};
+    }
+
+    // ===== STEP 2: FILL THE JSON OUTPUT WITH DATA ===== //
+    // The output JSON to be filled inside the for loop below
+    nlohmann::json out;
+
+    const int instrumentCount = partNames.size();
     for (int i = 0; i < instrumentCount; i++) {
         //  // Selection of objects via XPath
         const std::string xPathRoot = "/score-partwise";  // Selects the Score
@@ -2687,14 +2781,11 @@ nlohmann::json Score::instrumentFragmentation(const nlohmann::json config) {
         temp["lines"] = lines;
         temp["lines_rests"] = lines_rests;
 
-        // meujson["partNumber"] = partNumber;
-
-        if (getPartName(partNumber[i]).empty()) {  // Work title
-            temp["partName"] = "no Part Name";     // return a "null" name if work
-                                                   // doesn't have a wortitle
+        if (partNames[i].empty()) {             // Work title
+            temp["partName"] = "no Part Name";  // return a "null" name if work
+                                                // doesn't have a wortitle
         } else {
-            temp["partName"] =
-                getPartName(partNumber[i]);  // como conseguir o partName do partNumber?
+            temp["partName"] = partNames[i];
         }
 
         // meujson["color"] = std::make_tuple(1,0, 1,1);
@@ -2730,11 +2821,6 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config) {
     // ===== STEP 1.0: READ PART NAMES ===== //
 
     std::vector<std::string> partNames;
-    // If not setted, set the default value = "all part names"
-    if (!config.contains("partNames")) {
-        partNames = getPartNames();
-    }
-
     // Type checking
     if (config.contains("partNames") && !config["partNames"].is_array()) {
         printPartNames();
@@ -2744,16 +2830,23 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config) {
         return {};
     }
 
-    for (const auto& partName : config["partNames"]) {
-        int idx = 0;
-        bool isValid = getPartIndex(partName, idx);
+    // If not setted, set the default value = "all part names"
+    if (!config.contains("partNames")) {
+        partNames = getPartNames();
+    } else {
+        for (const auto& partNameValue : config["partNames"]) {
+            const std::string partName = partNameValue.get<std::string>();
+            int idx = 0;
+            bool isValid = getPartIndex(partName, idx);
 
-        if (!isValid) {
-            printPartNames();
-            return {};
+            if (!isValid) {
+                LOG_ERROR("Invalid part name: " + partName);
+                printPartNames();
+                return {};
+            }
+
+            partNames.push_back(partName);
         }
-
-        partNames.push_back(partName);
     }
 
     // ===== STEP 1.1: READ MEASURE START ===== //

@@ -170,6 +170,47 @@ void Note::setDuration(const Duration duration, const int divisionsPerQuarterNot
     _duration.numDots = typeDotsPair.second;
 }
 
+void Note::setDuration(const float durationValue, const int lowerTimeSignatureValue,
+                       const int divisionsPerQuarterNote) {
+    if (c_TimeSignatureLowerValueMap.find(lowerTimeSignatureValue) ==
+        c_TimeSignatureLowerValueMap.end()) {
+        LOG_ERROR("Unable to use the lower time signature value: " +
+                  std::to_string(lowerTimeSignatureValue));
+    }
+
+    const Duration lowTimeSigDur = c_TimeSignatureLowerValueMap.at(lowerTimeSignatureValue);
+
+    const std::string lowTimeSigNoteType = Helper::duration2noteType(lowTimeSigDur);
+    const int lowTicks = Helper::noteType2ticks(lowTimeSigNoteType, divisionsPerQuarterNote);
+    const int durTick = static_cast<int>(durationValue * lowTicks);
+
+    // ===== CHECK CONVERT UPPER AND LOWER LIMITS ===== //
+    // Upper limit
+    const std::string maximaNoteType = Helper::duration2noteType(Duration::MAXIMA_DOT_DOT);
+    const int maximaTicks = Helper::noteType2ticks(maximaNoteType, divisionsPerQuarterNote);
+
+    // Lower limit
+    const std::string n1024NoteType = Helper::duration2noteType(Duration::N1024TH);
+    const int n1024Ticks = Helper::noteType2ticks(n1024NoteType, divisionsPerQuarterNote);
+
+    // Check upper and lower limits
+    if (durTick > maximaTicks || durTick < n1024Ticks) {
+        LOG_ERROR("The '" + std::to_string(durationValue) +
+                  "' duration value extrapolates the range of values that can be associated with a "
+                  "rhythmic figure using the time signature lower value '" +
+                  std::to_string(lowerTimeSignatureValue) + "'");
+    }
+
+    // ===== SET THE DURATION INTERVAL VALUES ===== //
+    _duration.ticks = durTick;
+
+    const auto durNoteTypePair = Helper::ticks2noteType(_duration.ticks, divisionsPerQuarterNote);
+    _duration.noteType = durNoteTypePair.first;
+    _duration.numDots = durNoteTypePair.second;
+    _duration.duration = Helper::noteType2duration(_duration.noteType);
+    _duration.divisionsPerQuarterNote = divisionsPerQuarterNote;
+}
+
 void Note::setDurationTicks(int durationTicks) {
     _duration.ticks = durationTicks;
     const auto typeDotsPair =
