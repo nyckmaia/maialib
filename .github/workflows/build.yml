@@ -7,7 +7,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: ["3.10", "3.11"]
+        python-version: ["3.10"]
         os: [ubuntu-latest]
 
     steps:
@@ -31,6 +31,7 @@ jobs:
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
           CIBW_BEFORE_BUILD_LINUX: make module
+          CIBW_BUILD_VERBOSITY: 1
 
       - uses: actions/upload-artifact@v3
         with:
