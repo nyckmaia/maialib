@@ -159,7 +159,7 @@ setup(
     packages=['maialib', 'maialib.maiapy'],
     # py_modules=["maiacore"],
     cmake_install_dir="maialib",
-    cmake_source_dir="core",
+    # cmake_source_dir="core",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
