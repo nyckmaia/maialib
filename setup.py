@@ -157,7 +157,7 @@ setup(
     # },
 
     packages=['maialib', 'maialib.maiapy'],
-    package_dir={"maialib": "docs/html"},
+    # package_dir={"maialib": "docs/html"},
     package_data={'maialib': ['tests/xml_examples/unit_test/*.xml']},
 
     cmake_install_dir="maialib",
