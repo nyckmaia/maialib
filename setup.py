@@ -140,7 +140,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="0.0.18.10",
+    version="0.0.18.11",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate sheet music data",
@@ -174,6 +174,11 @@ setup(
     python_requires=">=3.8.0",
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
-    ext_modules=[CMakeExtension("maiacore")],
+    # ext_modules=[CMakeExtension("maialib/maiacore")],
+    ext_modules=[CMakeExtension(name="maiacore",
+                                install_prefix="maialib",
+                                cmake_configure_options=[
+                                    "-DPROFILING:BOOL=OFF",
+                                ])],
     cmdclass={"build_ext": CMakeBuild},
 )
