@@ -30,11 +30,12 @@ jobs:
   #         path: dist/*.tar.gz
 
   build_wheels:
-    name: Wheels on ${{ matrix.os }}
+    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
       matrix:
+        python-version: [3.8]
         include:
           # Linux 64 bit manylinux2014
           - os: ubuntu-latest
