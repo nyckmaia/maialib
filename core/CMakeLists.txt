@@ -19,9 +19,13 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
+if(NOT WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
+endif()
 
 option(STATIC_LIB "Generate a static libray" OFF)
 option(SHARED_LIB "Generate a shared libray" OFF)
@@ -69,8 +73,8 @@ if(STATIC_LIB)
     add_library(${PROJECT_NAME} STATIC ${maiacore_src})
 
     target_include_directories(${PROJECT_NAME} PUBLIC include)
-    target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
-    target_include_directories(${PROJECT_NAME} PUBLIC external)
+    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC external/pugi/include)
+    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC external)
 
     add_subdirectory(external/zip)
     add_subdirectory(external/sqlitecpp)
@@ -87,8 +91,8 @@ if(SHARED_LIB)
     add_library(${PROJECT_NAME} SHARED ${maiacore_src})
 
     target_include_directories(${PROJECT_NAME} PUBLIC include)
-    target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
-    target_include_directories(${PROJECT_NAME} PUBLIC external)
+    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC external/pugi/include)
+    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC external)
     
     add_subdirectory(external/zip)
     add_subdirectory(external/sqlitecpp)
@@ -111,8 +115,8 @@ if(PYBIND_LIB)
     pybind11_add_module(${PROJECT_NAME} ${maiacore_src} ${python_wrapper_src})
 
     target_include_directories(${PROJECT_NAME} PUBLIC include)
-    target_include_directories(${PROJECT_NAME} PUBLIC external/pugi/include)
-    target_include_directories(${PROJECT_NAME} PUBLIC external)
+    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC external/pugi/include)
+    target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC external)
     
     add_subdirectory(external/zip)
     add_subdirectory(external/sqlitecpp)
