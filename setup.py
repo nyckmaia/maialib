@@ -174,11 +174,6 @@ setup(
     python_requires=">=3.8.0",
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
-    # ext_modules=[CMakeExtension("maialib/maiacore")],
-    ext_modules=[CMakeExtension(name="maiacore",
-                                install_prefix="maialib",
-                                cmake_configure_options=[
-                                    "-DPROFILING:BOOL=OFF",
-                                ])],
-    cmdclass={"build_ext": CMakeBuild},
+    ext_modules=[CMakeExtension("maialib/maiacore")],
+    cmdclass={"build_ext": CMakeBuild}
 )
