@@ -162,7 +162,7 @@ setup(
 
     data_files=[('xmlFiles', ['tests/xml_examples/unit_test/test_andamento2.xml',
                               'tests/xml_examples/unit_test/test_andamento3.xml']),
-                ('htmlFiles', ['docs/html/*.html'])],
+                ('htmlFiles', ['docs/html/index.html'])],
 
 
     # cmake_install_dir="maialib",
