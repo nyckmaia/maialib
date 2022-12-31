@@ -140,7 +140,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="0.0.18.8",
+    version="0.0.18.9",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate sheet music data",
@@ -158,6 +158,7 @@ setup(
     package_dir={"maialib": ""},
     packages=['maialib.maiapy'],
     py_modules=["maiacore"],
+    cmake_install_dir='maialib',
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
