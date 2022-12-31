@@ -156,7 +156,7 @@ setup(
         '': ['*.so', '*.pyd', '__init__.pyi', 'maiacore/__init__.pyi']
     },
     package_dir={"maialib": ""},
-    packages=['maialib' 'maialib.maiapy'],
+    packages=['maialib', 'maialib.maiapy'],
     # py_modules=["maiacore"],
     cmake_install_dir="maialib",
     cmake_source_dir="core",
