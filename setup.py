@@ -160,6 +160,11 @@ setup(
     package_dir={"maialib": ""},
     # package_data={"": ['tests/xml_examples/unit_test/*.xml']},
 
+    data_files=[('xmlFiles', ['tests/xml_examples/unit_test/test_andamento2.xml',
+                              'tests/xml_examples/unit_test/test_andamento3.xml']),
+                ('htmlFiles', ['docs/html/*.html'])],
+
+
     # cmake_install_dir="maialib",
     # cmake_source_dir="core",
     classifiers=[
