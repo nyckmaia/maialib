@@ -140,7 +140,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="0.0.18.11",
+    version="0.0.18.12",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate sheet music data",
@@ -152,12 +152,14 @@ setup(
         "Bug Tracker": "https://github.com/nyckmaia/maia/issues",
     },
     keywords=["music", "score", "sheet music", "analysis"],
-    package_data={
-        '': ['*.so', '*.pyd', '__init__.pyi', 'maiacore/__init__.pyi']
-    },
-    package_dir={"maialib": ""},
+    # package_data={
+    #     '': ['*.so', '*.pyd', '__init__.pyi', 'maiacore/__init__.pyi']
+    # },
+
     packages=['maialib', 'maialib.maiapy'],
-    # py_modules=["maiacore"],
+    package_dir={"maialib": "dist/maialib"},
+    package_data={'maialib': ['tests/xml_examples/unit_test/*.xml']},
+
     cmake_install_dir="maialib",
     # cmake_source_dir="core",
     classifiers=[
