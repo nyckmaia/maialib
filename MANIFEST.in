@@ -1,0 +1,5 @@
+include README.md LICENSE core/external/pybind11/LICENSE
+graft core/external/pybind11/include
+graft core/external/pybind11/tools
+graft src
+global-include CMakeLists.txt *.cmake
