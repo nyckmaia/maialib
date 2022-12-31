@@ -11,23 +11,23 @@ on:
       - published
 
 jobs:
-  build_sdist:
-    name: Build SDist
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
+  # build_sdist:
+  #   name: Build SDist
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: true
 
-      - name: Build SDist
-        run: pipx run build --sdist
+  #     - name: Build SDist
+  #       run: pipx run build --sdist
 
-      - name: Check metadata
-        run: pipx run twine check dist/*
+  #     - name: Check metadata
+  #       run: pipx run twine check dist/*
 
-      - uses: actions/upload-artifact@v3
-        with:
-          path: dist/*.tar.gz
+  #     - uses: actions/upload-artifact@v3
+  #       with:
+  #         path: dist/*.tar.gz
 
   build_wheels:
     name: Wheels on ${{ matrix.os }}
@@ -35,7 +35,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        include:
+          # Linux 64 bit manylinux2014
+          - os: ubuntu-latest
+            python: 38
+            platform_id: manylinux_x86_64
+            manylinux_image: manylinux2014
+        #os: [ubuntu-latest]
     #        os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
@@ -58,7 +64,8 @@ jobs:
 
   upload_all:
     name: Upload All
-    needs: [build_wheels, build_sdist]
+    needs: [build_wheels]
+    #needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     # if: github.event_name == 'release' && github.event.action == 'published'
 
