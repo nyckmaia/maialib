@@ -3,3 +3,4 @@ graft core/external/pybind11/include
 graft core/external/pybind11/tools
 graft src
 global-include CMakeLists.txt *.cmake
+global-exclude **/__pycache__
