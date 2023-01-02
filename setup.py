@@ -48,7 +48,7 @@ class CMakeBuild(build_ext):
         # EXAMPLE_VERSION_INFO shows you how to pass a value into the C++ code
         # from Python.
         cmake_args = [
-            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}",
+            f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}maialib{os.sep}maiacore{os.sep}",
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
         ]
@@ -140,7 +140,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="0.0.18.13",
+    version="0.0.18.14",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate sheet music data",
@@ -152,20 +152,13 @@ setup(
         "Bug Tracker": "https://github.com/nyckmaia/maia/issues",
     },
     keywords=["music", "score", "sheet music", "analysis"],
-    # package_data={
-    #     '': ['*.so', '*.pyd', '__init__.pyi', 'maiacore/__init__.pyi']
-    # },
 
-    packages=['maialib', 'maialib.maiapy'],
-    package_dir={"maialib": ""},
-    # package_data={"": ['tests/xml_examples/unit_test/*.xml']},
+    packages=['maialib', 'maialib.maiacore', 'maialib.maiapy'],
 
-    data_files=[('xmlFiles', ['tests/xml_examples/unit_test/test_andamento2.xml',
-                              'tests/xml_examples/unit_test/test_andamento3.xml']),
-                ('htmlFiles', ['docs/html/index.html'])],
+    package_dir={"maialib": "maialib",
+                 "maiacore": "maialib/maiacore",
+                 "maiapy": "maialib/maiapy"},
 
-
-    # cmake_install_dir="maialib",
     # cmake_source_dir="core",
     classifiers=[
         "Development Status :: 3 - Alpha",
@@ -181,6 +174,6 @@ setup(
     python_requires=">=3.8.0",
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},
-    ext_modules=[CMakeExtension("maialib/maiacore")],
+    ext_modules=[CMakeExtension(name="maiacore")],
     cmdclass={"build_ext": CMakeBuild}
 )
