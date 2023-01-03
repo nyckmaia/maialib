@@ -100,7 +100,7 @@ class CMakeBuild(build_ext):
             # Multi-config generators have a different way to specify configs
             if not single_config:
                 cmake_args += [
-                    f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY_{cfg.upper()}={extdir}"
+                    f"-DCMAKE_LIBRARY_OUTPUT_DIRECTORY={extdir}{os.sep}maialib{os.sep}maiacore{os.sep}"
                 ]
                 build_args += ["--config", cfg]
 

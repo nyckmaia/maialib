@@ -109,21 +109,21 @@ void Score::loadXMLFile(const std::string& filePath) {
     if (fileExtension == "mxl") {
         // LOG_DEBUG("Descompressing the file...");
 
-        void* buf = NULL;
-        size_t bufsize = 0;
+        // void* buf = NULL;
+        // size_t bufsize = 0;
 
-        struct zip_t* zip = zip_open(filePath.c_str(), 0, 'r');
-        {
-            const std::string originalName = fileName.substr(0, fileName.size() - 3) + "xml";
-            zip_entry_open(zip, originalName.c_str());
-            { zip_entry_read(zip, &buf, &bufsize); }
-            zip_entry_close(zip);
-        }
-        zip_close(zip);
+        // struct zip_t* zip = zip_open(filePath.c_str(), 0, 'r');
+        // {
+        //     const std::string originalName = fileName.substr(0, fileName.size() - 3) + "xml";
+        //     zip_entry_open(zip, originalName.c_str());
+        //     { zip_entry_read(zip, &buf, &bufsize); }
+        //     zip_entry_close(zip);
+        // }
+        // zip_close(zip);
 
-        isLoad = _doc.load_string((const char*)(buf));
+        // isLoad = _doc.load_string((const char*)(buf));
 
-        free(buf);
+        // free(buf);
     } else {
         // Try to parse the XML file:
         isLoad = _doc.load_file(filePath.c_str());

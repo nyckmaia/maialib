@@ -59,7 +59,10 @@ if(WIN32)
     else()
         message(STATUS "===> Selected Windows Compiler: MSVC")
         # MSVC: Talvez nao precise de todas essas flags necessarias para o MSVC. Substituir a pthread pela winpthread? Remover o dl?
-        target_link_libraries(${PROJECT_NAME} PRIVATE zip SQLiteCpp sqlite3 pthread dl)
+        add_definitions(-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT") 
+        target_link_libraries(${PROJECT_NAME} PRIVATE zip SQLiteCpp sqlite3)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT")
     endif()
 else()
     # Linux e MacOSX
