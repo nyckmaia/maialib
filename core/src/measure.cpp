@@ -447,15 +447,15 @@ std::pair<std::string, int> Measure::getMetronome() const {
 const std::string Measure::toXML(const int instrumentId, const int identSize) const {
     std::string xml;
 
-    int backup = 0;
+    // int backup = 0;
 
     const auto& firstStave = _note[0];
 
-    for (const auto& note : firstStave) {
-        if (!note.inChord() && note.getVoice() == 1) {
-            backup += note.getDurationTicks();
-        }
-    }
+    // for (const auto& note : firstStave) {
+    //     if (!note.inChord() && note.getVoice() == 1) {
+    //         backup += note.getDurationTicks();
+    //     }
+    // }
 
     if (!_barlineLeft.getBarStyle().empty()) {
         xml.append(_barlineLeft.toXML(identSize));

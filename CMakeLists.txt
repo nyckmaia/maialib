@@ -8,13 +8,16 @@ if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE Release)
 endif()
 
-set(CMAKE_CXX_FLAGS "-Wall")
+if(WIN32)
+    set(CMAKE_CXX_FLAGS "-Wall")
+else()
+    set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+endif()
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
-if(NOT WIN32)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
-endif()
+# Minimal supported SDK version
+set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
 
 add_subdirectory(core/external/pybind11)
 

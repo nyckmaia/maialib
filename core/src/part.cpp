@@ -423,10 +423,11 @@ void Part::append(const std::variant<Note, Chord>& obj, const int position, cons
 
     switch (type) {
         case 0:
-            appendNote(std::get<Note>(obj), position, staveId);
+            // appendNote(std::get<Note>(obj), position, staveId);
+            appendNote(*std::get_if<Note>(&obj), position, staveId);
             break;  // Note
         case 1:
-            appendChord(std::get<Chord>(obj), position, staveId);
+            appendChord(*std::get_if<Chord>(&obj), position, staveId);
             break;  // Chord
         default:
             LOG_ERROR("The object must be a Note or a Chord");
