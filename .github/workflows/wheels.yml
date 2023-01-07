@@ -1,0 +1,64 @@
+name: Build Wheels
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    branches:
+      - dev
+      - feature/actions
+  release:
+    types:
+      - published
+
+jobs:
+  build_wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    # env:
+    #   CIBW_BUILD: "cp38-manylinux_x86_64"
+    strategy:
+      fail-fast: false
+      matrix:
+        # os: [ubuntu-latest]
+        # os: [macos-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - uses: pypa/cibuildwheel@v2.11.3
+        env:
+          CIBW_ARCHS_MACOS: auto universal2
+
+      - name: Verify clean directory
+        run: git diff --exit-code
+        shell: bash
+
+      - name: Upload wheels
+        uses: actions/upload-artifact@v3
+        with:
+          path: wheelhouse/*.whl
+
+  upload_all:
+    name: Upload All
+    needs: [build_wheels]
+    runs-on: ubuntu-latest
+    # if: github.event_name == 'release' && github.event.action == 'published'
+
+    steps:
+      - uses: actions/setup-python@v4
+        with:
+          python-version: "3.x"
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: artifact
+          path: dist
+
+      - uses: pypa/gh-action-pypi-publish@v1.6.4
+        with:
+          password: ${{ secrets.pypi_password }}

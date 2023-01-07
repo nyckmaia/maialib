@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v0.0.18] - YYYY-MM-DD
+## [v0.0.19] - YYYY-MM-DD
 
 ### API Changes
 
@@ -11,14 +11,17 @@ All notable changes to this project will be documented in this file.
 ### New Features
 
 - Add `Duration` enum class Python wrapper
+- Continuous Integration & Continuous Delivery through Github Actions to Pypi
+- Add Microsoft Visual Studio Compiler (MSVC) compatibility
 
 ### Improved
 
 - `Score::info()` added a `partName` list
 - `Score::instrumentFragmentation()` replace `partNumber` to `partNames`
 - Add overload `Note::setDuration(const float durationValue, const int lowerTimeSignatureValue = 4)`
-<!-- - `Score::loadXMLFile()`
-- Install using `pyproject.toml` file -->
+- Install using `pyproject.toml` file
+- Better folder organization
+- Better headers declaration organization inside the `*.cpp` files
 
 ### Fixed
 
