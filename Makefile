@@ -90,6 +90,7 @@ build-cpp-tests:
 cpp-tests:
 	@make build-cpp-tests
 	@python $(SCRIPTS_DIR)/make-run-cpp-tests.py
+	@python $(SCRIPTS_DIR)/run-code-coverage.py
 
 py-tests:
 	@python $(SCRIPTS_DIR)/make-py-tests.py

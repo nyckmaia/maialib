@@ -6,7 +6,8 @@ from terminal_colors import *
 numArgs = len(sys.argv)
 
 if (numArgs != 2):
-    print(f"{color.FAIL}[ERROR] You MUST pass 1 argument: 'all', 'static', 'shared', 'module' or 'dist'!{color.ENDC}")
+    print(
+        f"{color.FAIL}[ERROR] You MUST pass 1 argument: 'all', 'static', 'shared', 'module' or 'dist'!{color.ENDC}")
 
 cleanOption = sys.argv[1]
 
@@ -14,7 +15,7 @@ cleanOption = sys.argv[1]
 
 
 if (cleanOption == "all"):
-    print(f"{color.OKGREEN}Deleting 'build' and 'dist' folders...{color.ENDC}", end = "")
+    print(f"{color.OKGREEN}Deleting 'build' and 'dist' folders...{color.ENDC}", end="")
 
     rmtree("./build", True)
     rmtree("./dist", True)
@@ -24,10 +25,11 @@ if (cleanOption == "all"):
     rmtree("maiapy/__pycache__", True)
     rmtree("scripts/__pycache__", True)
     rmtree("./stubs", True)
+    rmtree("./code-coverage", True)
 
     if os.path.exists("profile.json"):
         os.remove("profile.json")
-    
+
     if os.path.exists(".coverage"):
         os.remove(".coverage")
 
@@ -35,11 +37,10 @@ if (cleanOption == "all"):
     sys.exit()
 
 if (cleanOption == "dist"):
-    print(f"{color.OKGREEN}Deleting 'dist' folder...{color.ENDC}", end = "")
+    print(f"{color.OKGREEN}Deleting 'dist' folder...{color.ENDC}", end="")
     rmtree("./dist", True)
     rmtree("./stubs", True)
     rmtree("./.coverage", True)
+    rmtree("./code-coverage", True)
     print(f"{color.OKGREEN}Done!{color.ENDC}")
     sys.exit()
-
-
