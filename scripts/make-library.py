@@ -7,7 +7,8 @@ from terminal_colors import *
 numArgs = len(sys.argv)
 
 if (numArgs != 3):
-    print(f"{color.FAIL}[ERROR] You MUST pass 2 arguments: 'libType' and 'buildType'!{color.ENDC}")
+    print(
+        f"{color.FAIL}[ERROR] You MUST pass 2 arguments: 'libType' and 'buildType'!{color.ENDC}")
 
 # Get input command line arguments
 libType = sys.argv[1]
@@ -25,7 +26,7 @@ path = Path.cwd() / "build" / myOS / "static" / buildType
 path.mkdir(parents=True, exist_ok=True)
 
 # Base CMake command to build the python module
-cmakeCommand = f"cmake -G \"Unix Makefiles\" -B {path} -S ./core -DCMAKE_BUILD_TYPE={buildType}"
+cmakeCommand = f"cmake -G \"Unix Makefiles\" -B {path} -S . -DCMAKE_BUILD_TYPE={buildType}"
 
 if (buildType == "Debug"):
     cmakeCommand += " -DPROFILING=ON"

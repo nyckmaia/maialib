@@ -5,7 +5,6 @@
 
 #include "maiacore/constants.h"
 #include "maiacore/log.h"
-#include "maiacore/note.h"
 #include "maiacore/utils.h"
 
 Interval::Interval(const std::string& pitch_A, const std::string& pitch_B)

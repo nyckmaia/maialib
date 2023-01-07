@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 
-class Note;
+#include "maiacore/note.h"
 
 class Interval {
    private:

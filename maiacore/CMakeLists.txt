@@ -32,17 +32,6 @@ option(SHARED_LIB "Generate a shared libray" OFF)
 option(PYBIND_LIB "Generate a pybind libray" OFF)
 
 if(NOT STATIC_LIB AND NOT SHARED_LIB AND NOT PYBIND_LIB)
-    # message("--------------------")
-    # message("=====> You didn't choose any library type, like: ")
-    # message("=> STATIC_LIB")
-    # message("=> SHARED_LIB")
-    # message("=> PYBIND_LIB")
-    # message("")
-    # message("USAGE: cmake .. -DSTATIC_LIB=ON")
-    # message("")
-    # message("Setting the default configuration: STATIC_LIB")    
-    # message("--------------------")
-
     set(STATIC_LIB ON)
 endif()
 

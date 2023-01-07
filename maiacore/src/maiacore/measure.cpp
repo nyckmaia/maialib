@@ -454,7 +454,7 @@ const std::string Measure::toXML(const int instrumentId, const int identSize) co
 
     // int backup = 0;
 
-    const auto& firstStave = _note[0];
+    // const auto& firstStave = _note[0];
 
     // for (const auto& note : firstStave) {
     //     if (!note.inChord() && note.getVoice() == 1) {

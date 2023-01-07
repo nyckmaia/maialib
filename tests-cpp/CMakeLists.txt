@@ -19,43 +19,41 @@ enable_testing()
 add_subdirectory(googletest)
 
 add_executable(${PROJECT_NAME} 
-    ./src/main.cpp
-    ./src/helpers-test.cpp
-    ./src/note-test.cpp
-    ./src/chord-test.cpp
-    ./src/interval-test.cpp
-    ./src/nyck-test.cpp
-    ./src/adolfo-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/main.cpp
+    ${PROJECT_SOURCE_DIR}/src/helpers-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/note-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/chord-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/interval-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/nyck-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/adolfo-test.cpp
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC ../core/include)
-target_include_directories(${PROJECT_NAME} PUBLIC ../core/external/pugi/include)
-target_include_directories(${PROJECT_NAME} PUBLIC ../core/external)
-target_include_directories(${PROJECT_NAME} PUBLIC ../core/external/sqlitecpp/include)
+target_include_directories(${PROJECT_NAME} PUBLIC ../maiacore/include)
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/include/external)
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/include/external/pugi)
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/external/sqlitecpp/include)
 
-include_directories(${PROJECT_NAME} PUBLIC ../core/external/zip/src)
-include_directories(${PROJECT_NAME} PUBLIC ../core/external/sqlitecpp/sqlite3)
-include_directories(${PROJECT_NAME} PUBLIC ../core/external/sqlitecpp/src)
+include_directories(${PROJECT_NAME} PUBLIC ../maiacore/external/sqlitecpp/sqlite3)
+include_directories(${PROJECT_NAME} PUBLIC ../maiacore/external/sqlitecpp/src)
 
 if(WIN32)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/debug)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/debug/external/zip)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/debug/external/sqlitecpp)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/Debug)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/Debug/maiacore/external/sqlitecpp)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/Debug/maiacore/external/sqlitecpp/sqlite3)
 
-    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore zip gtest SQLiteCpp sqlite3)
+    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore gtest SQLiteCpp sqlite3)
 elseif(APPLE)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/debug)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/debug/external/zip)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/debug/external/sqlitecpp)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/Debug)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/Debug/maiacore/external/sqlitecpp)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/Debug/maiacore/external/sqlitecpp/sqlite3)
 
-    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore zip gtest SQLiteCpp sqlite3 dl)
+    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore gtest SQLiteCpp sqlite3 dl)
 elseif(UNIX AND NOT APPLE)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/debug)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/debug/external/zip)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/debug/external/sqlitecpp)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/debug/external/sqlitecpp/sqlite3)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/Debug)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/Debug/maiacore/external/sqlitecpp)
+    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/Debug/maiacore/external/sqlitecpp/sqlite3)
 
-    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore zip gtest SQLiteCpp sqlite3 dl)
+    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore gtest SQLiteCpp sqlite3 dl)
 else()
     message(FATAL_ERROR "Unable to detect the OS")
 endif()
