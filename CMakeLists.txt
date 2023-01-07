@@ -21,7 +21,7 @@ if(WIN32)
 else()
     set(CMAKE_CXX_FLAGS "-Wall -Wextra")
 endif()
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 --coverage")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # Add all maiacore source files

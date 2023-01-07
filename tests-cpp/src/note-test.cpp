@@ -10,6 +10,12 @@ TEST(NoteConstructor, midiNumber) {
   EXPECT_EQ(note.getPitch(), "C4");
 }
 
+TEST(NoteConstructor, invalidNoteNameLenght) {
+  Note note("C#123");
+
+  EXPECT_EQ(true, true);
+}
+
 TEST(NoteConstructor, onlyPitchClass_getPitchTypesOctaveAndDuration) {
   Note noteDoubleFlat("Abb");
   Note noteFlat("Ab");

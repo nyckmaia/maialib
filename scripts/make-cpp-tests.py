@@ -23,7 +23,7 @@ path = Path.cwd() / "build" / myOS / "cpp-tests"
 path.mkdir(parents=True, exist_ok=True)
 
 # Base CMake command to build the python module
-cmakeCommand = f"cmake -G \"Unix Makefiles\" -B {path} -S ./tests-cpp/ -DCMAKE_BUILD_TYPE={buildType} -DCMAKE_CXX_FLAGS=--coverage"
+cmakeCommand = f"cmake -G \"Unix Makefiles\" -B {path} -S ./tests-cpp/ -DCMAKE_BUILD_TYPE={buildType}"
 
 # If 'Windows' define the MinGW 'make.exe'
 if myOS == "Windows":

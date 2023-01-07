@@ -26,7 +26,6 @@ all: dev
 .PHONY: uninstall
 .PHONY: doc
 .PHONY: logo
-.PHONY: coverage
 
 SCRIPTS_DIR = ./scripts
 
@@ -111,6 +110,3 @@ uninstall:
 
 doc:
 	@doxygen
-
-coverage:
-	@make cpp-tests
