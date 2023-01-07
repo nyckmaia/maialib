@@ -140,7 +140,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="0.0.18.17",
+    version="0.0.18.18",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate sheet music data",
@@ -170,7 +170,7 @@ setup(
         "Natural Language :: English",
         "Topic :: Software Development :: Libraries"
     ],
-    # install_requires=["coverage", "pybind11_stubgen"], # dev dependencies
+    install_requires=["seaborn"],
     python_requires=">=3.8.0",
     zip_safe=False,
     extras_require={"test": ["pytest>=6.0"]},

@@ -1,36 +1,20 @@
-name: Wheels
+name: Build Wheels
 
 on:
-  workflow_dispatch:
-  pull_request:
   push:
     branches:
+      - main
+  workflow_dispatch:
+    branches:
+      - dev
       - feature/actions
   release:
     types:
       - published
 
 jobs:
-  # build_sdist:
-  #   name: Build SDist
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         submodules: true
-
-  #     - name: Build SDist
-  #       run: pipx run build --sdist
-
-  #     - name: Check metadata
-  #       run: pipx run twine check dist/*
-
-  #     - uses: actions/upload-artifact@v3
-  #       with:
-  #         path: dist/*.tar.gz
-
   build_wheels:
-    name: Build wheel for cp${{ matrix.python }}-${{ matrix.platform_id }}-${{ matrix.manylinux_image }}
+    name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
     # env:
     #   CIBW_BUILD: "cp38-manylinux_x86_64"
@@ -62,7 +46,6 @@ jobs:
   upload_all:
     name: Upload All
     needs: [build_wheels]
-    #needs: [build_wheels, build_sdist]
     runs-on: ubuntu-latest
     # if: github.event_name == 'release' && github.event.action == 'published'
 

@@ -1,5 +1,7 @@
 # Maialib - Music Analysis Library
 
+![Maialib CI/CD](https://github.com/nyckmaia/maialib/actions/workflows/wheels.yml/badge.svg)
+
 This library is a multiplatform set of musical tools that enable musical score analisys and composition in a easy and fast way. <br>
 The project **core** was wrote in `C++17`, but it also has a `Python` wrapper that allows a greater number of people (ie musicians not trained in IT) to also have in their hands the same power and musical tools available in `maialib`.
 
