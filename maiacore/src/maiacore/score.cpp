@@ -660,6 +660,8 @@ std::string Score::getTitle() const { return _title; }
 
 void Score::setTitle(const std::string& scoreTitle) { _title = scoreTitle; }
 
+std::string Score::getComposerName() const { return _composerName; }
+
 void Score::setComposerName(const std::string& composerName) { _composerName = composerName; }
 
 void Score::setKeySignature(const int fifthCicle, const bool isMajorMode, const int measureId) {
@@ -2484,14 +2486,16 @@ nlohmann::json Score::instrumentFragmentation(nlohmann::json config) {
         const pugi::xpath_node_set notes =
             Helper::getNodeSet(_doc, xPath);  // this is a vector, see the documentation Pugi
 
-        const std::string xPathWork = "/score-partwise/work/work-title";
-        const pugi::xpath_node_set works = _doc.select_nodes(xPathWork.c_str());
-        const std::string workTitle = works[0].node().text().as_string();
+        // const std::string xPathWork = "/score-partwise/work/work-title";
+        // const pugi::xpath_node_set works = _doc.select_nodes(xPathWork.c_str());
+        // const std::string workTitle = works[0].node().text().as_string();
+        const std::string workTitle = getTitle();
 
-        const std::string xPathAuthor = "/score-partwise/identification/creator";
-        const pugi::xpath_node_set authors = _doc.select_nodes(xPathAuthor.c_str());
-        // const std::string author = authors[0].node().text().as_string();
-        const std::string author = "Adolfo";
+        // const std::string xPathAuthor = "/score-partwise/identification/creator";
+        // const pugi::xpath_node_set authors = _doc.select_nodes(xPathAuthor.c_str());
+        // // const std::string author = authors[0].node().text().as_string();
+        // const std::string author = "Adolfo";
+        const std::string author = getComposerName();
 
         // ------Defintions of global variables to be used in the Algorithm
 

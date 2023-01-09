@@ -48,6 +48,9 @@ void ScoreClass(const py::module& m) {
     cls.def("getTitle", &Score::getTitle);
 
     cls.def("setTitle", &Score::setTitle, py::arg("scoreTitle"));
+
+    cls.def("getComposerName", &Score::getComposerName);
+
     cls.def("setComposerName", &Score::setComposerName, py::arg("composerName"));
 
     cls.def("setKeySignature",

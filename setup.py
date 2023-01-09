@@ -63,7 +63,7 @@ class CMakeBuild(build_ext):
         # In this example, we pass in the version to C++. You might not need to.
         # type: ignore[attr-defined]
         cmake_args += [
-            f"-DEXAMPLE_VERSION_INFO={self.distribution.get_version()}"]
+            f"-DMAIALIB_VERSION_INFO={self.distribution.get_version()}"]
 
         if self.compiler.compiler_type != "msvc":
             # Using Ninja-build since it a) is available as a wheel and b)
@@ -159,6 +159,9 @@ setup(
     package_dir={"maialib": "maialib",
                  "maiacore": "maialib/maiacore",
                  "maiapy": "maialib/maiapy"},
+    package_data={"maialib": [
+        "xml-scores-examples/cello_suite_1_violin.xml"]},
+    include_package_data=True,
 
     # cmake_source_dir="core",
     classifiers=[

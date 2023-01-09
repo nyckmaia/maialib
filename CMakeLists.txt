@@ -71,12 +71,6 @@ if(PYBIND_LIB)
 
     add_subdirectory(maiacore/external/pybind11)
 
-    # # Add all maiacore source files
-    # file(GLOB maiacore_src
-    #     ${PROJECT_SOURCE_DIR}/maiacore/src/maiacore/*.cpp
-    #     ${PROJECT_SOURCE_DIR}/maiacore/src/external/pugi/pugixml.cpp
-    # )
-
     # Add all python_wrapper source files
     file(GLOB python_wrapper_src
         ${PROJECT_SOURCE_DIR}/maiacore/src/maiacore/python_wrapper/*.cpp
@@ -98,9 +92,9 @@ if(PYBIND_LIB)
 
     add_subdirectory(maiacore/external/sqlitecpp)
 
-    target_compile_definitions(${PROJECT_NAME} PRIVATE VERSION_INFO=${EXAMPLE_VERSION_INFO})
+    target_compile_definitions(${PROJECT_NAME} PRIVATE MAIALIB_VERSION_INFO=${MAIALIB_VERSION_INFO})
 
-    message("=====> GENERATING PYBIND LIBRARY <=====")                
+    message("=====> GENERATING PYBIND LIBRARY <=====")
     if(WIN32)
         if(MSYS OR MINGW)
             message(STATUS "===> Selected Windows Compiler: MSYS or MINGW")

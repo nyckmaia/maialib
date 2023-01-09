@@ -1,1 +1,4 @@
-from .maiacore import *
+try:
+    from .maiacore import *
+except:
+    from .Release.maiacore import *

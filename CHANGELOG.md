@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 - Add `Duration` enum class Python wrapper
 - Continuous Integration & Continuous Delivery through Github Actions to Pypi
 - Add Microsoft Visual Studio Compiler (MSVC) compatibility
+- Add `Score::getComposerName()` method
 
 ### Improved
 
@@ -26,6 +27,7 @@ All notable changes to this project will be documented in this file.
 ### Fixed
 
 - `Interval::isSimple()` and `Interval::isCompound()`
+- `Score::instrumentFragmentation`: Call `getComposerName()` and `getTitle()`
 
 ---
 

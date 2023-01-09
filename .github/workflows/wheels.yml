@@ -16,8 +16,10 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    # env:
-    #   CIBW_BUILD: "cp38-manylinux_x86_64"
+    env:
+      # Skip CPython 3.6 and CPython 3.7
+      CIBW_SKIP: cp36-* cp37-*
+      # CIBW_BUILD: "cp38-manylinux_x86_64"
     strategy:
       fail-fast: false
       matrix:

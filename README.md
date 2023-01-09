@@ -1,9 +1,8 @@
-# Maialib - Music Analysis Library
+# Maialib - Music Analysis Library {#mainpage}
 
 ![Maialib CI/CD](https://github.com/nyckmaia/maialib/actions/workflows/wheels.yml/badge.svg)
 
 Official website: [Maialib Documentation](https://www.maialib.com/)
-Maiacore Code Coverage: [Code Coverage](https://github.com/nyckmaia/maialib/code-coverage/index.html)
 
 This library is a multiplatform set of musical tools that enable musical score analisys and composition in a easy and fast way. <br>
 The project **core** was wrote in `C++17`, but it also has a `Python` wrapper that allows a greater number of people (ie musicians not trained in IT) to also have in their hands the same power and musical tools available in `maialib`.
@@ -58,13 +57,16 @@ pip install wheel
 pip install coverage
 pip install pybind11-stubgen
 # Mac users: May be you have to add the coverage and pybind11-stubgen on your `PATH` - /etc/paths
+
+pybind11_mkdoc (github)
+sudo apt install clang (pybind11_mkdoc dependency) - Linux/Mac Only
 ```
 
 ## Tested Environments
 
 | Operational System | Compilers                       |
 | ------------------ | ------------------------------- |
-| Windows 10 x64     | GCC 10.3 (MSYS2)                |
+| Windows 10 x64     | MSVC and GCC 10.3 (MSYS2)       |
 | Linux Ubuntu 20.04 | GCC 9.3                         |
 | Apple OSX 10.15    | XCode (Command Line Tools) 11.5 |
 
