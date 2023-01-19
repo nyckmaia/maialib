@@ -54,7 +54,6 @@ pip install cpplint
 pip install wheel
 
 # To generate Python stubs
-pip install coverage
 pip install pybind11-stubgen
 # Mac users: May be you have to add the coverage and pybind11-stubgen on your `PATH` - /etc/paths
 

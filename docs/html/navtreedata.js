@@ -24,7 +24,35 @@
 */
 var NAVTREE =
 [
-  [ "maialib", "index.html", [
+  [ "maiacore", "index.html", [
+    [ "Maialib - Music Analysis Library", "index.html", [
+      [ "Advantages", "index.html#autotoc_md0", null ],
+      [ "Requirements", "index.html#autotoc_md1", [
+        [ "To run-only", "index.html#autotoc_md2", null ],
+        [ "To build from source", "index.html#autotoc_md3", [
+          [ "Applications:", "index.html#autotoc_md4", null ],
+          [ "Python Dev-only dependencies", "index.html#autotoc_md5", null ]
+        ] ]
+      ] ],
+      [ "Tested Environments", "index.html#autotoc_md6", null ],
+      [ "Documentation", "index.html#autotoc_md7", [
+        [ "Level 1: Python Tutorial", "index.html#autotoc_md8", null ],
+        [ "Level 2: Developer Documentation", "index.html#autotoc_md9", null ]
+      ] ],
+      [ "Quick Start", "index.html#autotoc_md10", [
+        [ "Build Python module from C++ source", "index.html#autotoc_md11", null ]
+      ] ],
+      [ "Frequent Asked Questions", "index.html#autotoc_md12", [
+        [ "1) Where can I find the XML file of a specific musical score?", "index.html#autotoc_md13", null ]
+      ] ],
+      [ "Known issues to build from source", "index.html#autotoc_md14", [
+        [ "All Platforms", "index.html#autotoc_md15", null ],
+        [ "Windows-Only", "index.html#autotoc_md16", null ]
+      ] ],
+      [ "Contact", "index.html#autotoc_md17", null ],
+      [ "Contributing", "index.html#autotoc_md18", null ],
+      [ "License", "index.html#autotoc_md19", null ]
+    ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],
       [ "Class Index", "classes.html", null ],

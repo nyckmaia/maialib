@@ -17,12 +17,12 @@ if(NOT STATIC_LIB AND NOT SHARED_LIB AND NOT PYBIND_LIB)
 endif()
 
 if(WIN32)
-    set(CMAKE_CXX_FLAGS "-Wall")
+    set(CMAKE_CXX_FLAGS "")
 else()
     set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 --coverage")
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 --coverage")
-set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 # Add all maiacore source files
 file(GLOB maiacore_src
@@ -42,7 +42,7 @@ if(STATIC_LIB)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external/pugi)
 
-    add_subdirectory(maiacore/external/sqlitecpp)
+    add_subdirectory(maiacore/external/sqlitecpp SYSTEM)
 
     target_link_libraries(${PROJECT_NAME} SQLiteCpp sqlite3 pthread dl)
 endif()
@@ -59,7 +59,7 @@ if(SHARED_LIB)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external/pugi)
 
-    add_subdirectory(maiacore/external/sqlitecpp)
+    add_subdirectory(maiacore/external/sqlitecpp SYSTEM)
 
     target_link_libraries(${PROJECT_NAME} SQLiteCpp sqlite3 pthread dl)
 endif()
@@ -84,34 +84,43 @@ if(PYBIND_LIB)
 
     add_definitions(-DMAIACORE_PYTHON_MODULE)
 
-    pybind11_add_module(${PROJECT_NAME} ${maiacore_src} ${python_wrapper_src})
+    pybind11_add_module(${PROJECT_NAME} ${maiacore_src} ${python_wrapper_src} SYSTEM)
 
     target_include_directories(${PROJECT_NAME} PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external/pugi)
 
-    add_subdirectory(maiacore/external/sqlitecpp)
+    add_subdirectory(maiacore/external/sqlitecpp SYSTEM)
 
     target_compile_definitions(${PROJECT_NAME} PRIVATE MAIALIB_VERSION_INFO=${MAIALIB_VERSION_INFO})
 
     message("=====> GENERATING PYBIND LIBRARY <=====")
     if(WIN32)
+        set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
         if(MSYS OR MINGW)
             message(STATUS "===> Selected Windows Compiler: MSYS or MINGW")
             # https://cython.readthedocs.io/en/latest/src/tutorial/appendix.html
             target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive SQLiteCpp sqlite3)
-        else()
+        elseif(MSVC)
             message(STATUS "===> Selected Windows Compiler: MSVC")
 
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT") 
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT")
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT /EHsc")
 
             add_definitions(-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE)
 
             target_link_libraries(${PROJECT_NAME} PRIVATE SQLiteCpp sqlite3)
+        else()
+            message(FATAL "UNABLE TO FIND A C++ COMPILER")
         endif()
     else()
         # Linux e MacOSX
         target_link_libraries(${PROJECT_NAME} PRIVATE SQLiteCpp sqlite3 pthread dl)
     endif()
+endif()
+
+if(MSVC)
+  set(CMAKE_EXE_LINKER_FLAGS
+      "${CMAKE_EXE_LINKER_FLAGS} /DEF:my_defs.def /NODEFAULTLIBS:LIBCMT /FORCE")
 endif()

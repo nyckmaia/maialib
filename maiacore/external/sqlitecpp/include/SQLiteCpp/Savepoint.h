@@ -5,7 +5,7 @@
  * secured operation. Similar to a transaction while allowing child savepoints.
  *
  * Copyright (c) 2020 Kelvin Hammond (hammond.kelvin@gmail.com)
- * Copyright (c) 2020-2021 Sebastien Rombauts (sebastien.rombauts@gmail.com)
+ * Copyright (c) 2020-2022 Sebastien Rombauts (sebastien.rombauts@gmail.com)
  *
  * Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt or
  * copy at http://opensource.org/licenses/MIT)
@@ -23,7 +23,7 @@ class Database;
  * @brief RAII encapsulation of a SQLite Savepoint.
  *
  * A Savepoint is a way to group multiple SQL statements into an atomic
- * secureced operation; either it succeeds, with all the changes commited to the
+ * secure operation; either it succeeds, with all the changes committed to the
  * database file, or if it fails, all the changes are rolled back to the initial
  * state at the start of the savepoint.
  *
@@ -39,7 +39,7 @@ class Database;
  * savepoint to be rolled back.
  *
  * 3) This savepoint is not saved to the database until this and all savepoints
- * or transaction in the savepoint stack have been released or commited.
+ * or transaction in the savepoint stack have been released or committed.
  *
  * See also: https://sqlite.org/lang_savepoint.html
  *
@@ -66,7 +66,7 @@ class Savepoint {
      * Exception is thrown in case of error, then the Savepoint is NOT
      * initiated.
      */
-    Savepoint(Database& aDatabase, std::string name);
+    Savepoint(Database& aDatabase, const std::string& aName);
 
     // Savepoint is non-copyable
     Savepoint(const Savepoint&) = delete;
@@ -88,8 +88,8 @@ class Savepoint {
     void rollback();
 
    private:
-    Database& mDatabase;  ///< Reference to the SQLite Database Connection
-    std::string msName;   ///< Name of the Savepoint
-    bool mbReleased;      ///< True when release has been called
+    Database& mDatabase;        ///< Reference to the SQLite Database Connection
+    std::string msName;         ///< Name of the Savepoint
+    bool mbReleased = false;    ///< True when release has been called
 };
 }  // namespace SQLite

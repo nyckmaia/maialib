@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.3"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>maialib: Member List</title>
+<title>maiacore: Member List</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,6 +17,7 @@
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -25,7 +26,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">maialib<span id="projectnumber">&#160;0.0.10</span>
+   <div id="projectname">maiacore<span id="projectnumber">&#160;0.0.19</span>
    </div>
    <div id="projectbrief">Music analisys library</div>
   </td>
@@ -94,7 +95,7 @@ $(document).ready(function(){initNavTree('class_score.html',''); initResizable()
   <tr class="even"><td class="entry"><a class="el" href="class_score.html#a0b19e00bea38679a5c627b7df3fe0cea">clear</a>()</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>countNotes</b>(nlohmann::json &amp;config) const (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>findPattern</b>(nlohmann::json &amp;pattern) const (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
-  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>forEachNote</b>(std::function&lt; void(Part &amp;part, Measure &amp;measure, int staveId, Note &amp;note)&gt; callback, int measureStart=0, int measureEnd=-1, std::vector&lt; std::string &gt; partNames={}) (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
+  <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>forEachNote</b>(std::function&lt; void(Part *part, Measure *measure, int staveId, Note *note)&gt; callback, int measureStart=0, int measureEnd=-1, std::vector&lt; std::string &gt; partNames={}) (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
   <tr class="even"><td class="entry"><a class="el" href="class_score.html#aa4d6fd98b8ed74790a79e1c8fb095689">getChords</a>(nlohmann::json config={})</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>getNote</b>(const int part, const int measure, const int note, std::string &amp;pitch, std::string &amp;step, int &amp;octave, int &amp;duration, int &amp;voice, std::string &amp;type, std::string &amp;steam, int &amp;staff) const (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>getNote</b>(const int part, const int measure, const int note, std::string &amp;pitch, std::string &amp;step, int &amp;octave) const (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
@@ -112,7 +113,7 @@ $(document).ready(function(){initNavTree('class_score.html',''); initResizable()
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>getTitle</b>() const (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>haveTypeTag</b>(void) const (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>info</b>() const (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
-  <tr class="odd"><td class="entry"><a class="el" href="class_score.html#af6059a351960ce8a0de5bc5ee9589c0d">instrumentFragmentation</a>(const nlohmann::json config)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
+  <tr class="odd"><td class="entry"><a class="el" href="class_score.html#a7ffa5ef4975c4ff74dea9954a5b4b14a">instrumentFragmentation</a>(nlohmann::json config=nlohmann::json())</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>isValid</b>(void) const (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>
   <tr bgcolor="#f0f0f0" class="odd"><td class="entry"><b>operator=</b>(const Score &amp;other) (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"><span class="mlabel">inline</span></td></tr>
   <tr bgcolor="#f0f0f0" class="even"><td class="entry"><b>printPartNames</b>() const (defined in <a class="el" href="class_score.html">Score</a>)</td><td class="entry"><a class="el" href="class_score.html">Score</a></td><td class="entry"></td></tr>

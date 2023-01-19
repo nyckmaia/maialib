@@ -3,7 +3,7 @@
  * @ingroup SQLiteCpp
  * @brief   A Transaction is way to group multiple SQL statements into an atomic secured operation.
  *
- * Copyright (c) 2012-2019 Sebastien Rombauts (sebastien.rombauts@gmail.com)
+ * Copyright (c) 2012-2022 Sebastien Rombauts (sebastien.rombauts@gmail.com)
  *
  * Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
  * or copy at http://opensource.org/licenses/MIT)
@@ -21,8 +21,7 @@ namespace SQLite
 
 // Begins the SQLite transaction
 Transaction::Transaction(Database& aDatabase, TransactionBehavior behavior) :
-    mDatabase(aDatabase),
-    mbCommited(false)
+    mDatabase(aDatabase)
 {
     const char *stmt;
     switch (behavior) {
@@ -43,8 +42,7 @@ Transaction::Transaction(Database& aDatabase, TransactionBehavior behavior) :
 
 // Begins the SQLite transaction
 Transaction::Transaction(Database &aDatabase) :
-    mDatabase(aDatabase),
-    mbCommited(false)
+    mDatabase(aDatabase)
 {
     mDatabase.exec("BEGIN");
 }

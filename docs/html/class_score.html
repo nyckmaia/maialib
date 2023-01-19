@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.3"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>maialib: Score Class Reference</title>
+<title>maiacore: Score Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,6 +17,7 @@
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -25,7 +26,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">maialib<span id="projectnumber">&#160;0.0.10</span>
+   <div id="projectname">maiacore<span id="projectnumber">&#160;0.0.19</span>
    </div>
    <div id="projectbrief">Music analisys library</div>
   </td>
@@ -170,9 +171,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>toFile</b> (std::stri
 <tr class="memitem:a5d6030c6df1e97ef48d3ebec99b1a5d0"><td class="memItemLeft" align="right" valign="top"><a id="a5d6030c6df1e97ef48d3ebec99b1a5d0" name="a5d6030c6df1e97ef48d3ebec99b1a5d0"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>info</b> () const</td></tr>
 <tr class="separator:a5d6030c6df1e97ef48d3ebec99b1a5d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a86866d51619a60eefbc191f408c72065"><td class="memItemLeft" align="right" valign="top"><a id="a86866d51619a60eefbc191f408c72065" name="a86866d51619a60eefbc191f408c72065"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>forEachNote</b> (std::function&lt; void(<a class="el" href="class_part.html">Part</a> &amp;part, <a class="el" href="class_measure.html">Measure</a> &amp;measure, int staveId, <a class="el" href="class_note.html">Note</a> &amp;note)&gt; callback, int measureStart=0, int measureEnd=-1, std::vector&lt; std::string &gt; partNames={})</td></tr>
-<tr class="separator:a86866d51619a60eefbc191f408c72065"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a00903d95bac5ad63580666ffa3fcd8a1"><td class="memItemLeft" align="right" valign="top"><a id="a00903d95bac5ad63580666ffa3fcd8a1" name="a00903d95bac5ad63580666ffa3fcd8a1"></a>
+void&#160;</td><td class="memItemRight" valign="bottom"><b>forEachNote</b> (std::function&lt; void(<a class="el" href="class_part.html">Part</a> *part, <a class="el" href="class_measure.html">Measure</a> *measure, int staveId, <a class="el" href="class_note.html">Note</a> *note)&gt; callback, int measureStart=0, int measureEnd=-1, std::vector&lt; std::string &gt; partNames={})</td></tr>
+<tr class="separator:a00903d95bac5ad63580666ffa3fcd8a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b42ab3c12bdf6820c4922ecf9d67e68"><td class="memItemLeft" align="right" valign="top"><a id="a3b42ab3c12bdf6820c4922ecf9d67e68" name="a3b42ab3c12bdf6820c4922ecf9d67e68"></a>
 bool&#160;</td><td class="memItemRight" valign="bottom"><b>isValid</b> (void) const</td></tr>
 <tr class="separator:a3b42ab3c12bdf6820c4922ecf9d67e68"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -218,9 +219,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>getNoteNodeData</b> (
 <tr class="memitem:a7d64768cd2985912caf015a190f03e4e"><td class="memItemLeft" align="right" valign="top"><a id="a7d64768cd2985912caf015a190f03e4e" name="a7d64768cd2985912caf015a190f03e4e"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>setRepeat</b> (int measureStart, int measureEnd=-1)</td></tr>
 <tr class="separator:a7d64768cd2985912caf015a190f03e4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af6059a351960ce8a0de5bc5ee9589c0d"><td class="memItemLeft" align="right" valign="top">nlohmann::json&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#af6059a351960ce8a0de5bc5ee9589c0d">instrumentFragmentation</a> (const nlohmann::json config)</td></tr>
-<tr class="memdesc:af6059a351960ce8a0de5bc5ee9589c0d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the called score 'instrument fragmentation' data.  <a href="class_score.html#af6059a351960ce8a0de5bc5ee9589c0d">More...</a><br /></td></tr>
-<tr class="separator:af6059a351960ce8a0de5bc5ee9589c0d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ffa5ef4975c4ff74dea9954a5b4b14a"><td class="memItemLeft" align="right" valign="top">nlohmann::json&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a7ffa5ef4975c4ff74dea9954a5b4b14a">instrumentFragmentation</a> (nlohmann::json config=nlohmann::json())</td></tr>
+<tr class="memdesc:a7ffa5ef4975c4ff74dea9954a5b4b14a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the called score 'instrument fragmentation' data.  <a href="class_score.html#a7ffa5ef4975c4ff74dea9954a5b4b14a">More...</a><br /></td></tr>
+<tr class="separator:a7ffa5ef4975c4ff74dea9954a5b4b14a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa4d6fd98b8ed74790a79e1c8fb095689"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::pair&lt; int, <a class="el" href="class_chord.html">Chord</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#aa4d6fd98b8ed74790a79e1c8fb095689">getChords</a> (nlohmann::json config={})</td></tr>
 <tr class="memdesc:aa4d6fd98b8ed74790a79e1c8fb095689"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the vertical stacked chords from the score object.  <a href="class_score.html#aa4d6fd98b8ed74790a79e1c8fb095689">More...</a><br /></td></tr>
 <tr class="separator:aa4d6fd98b8ed74790a79e1c8fb095689"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -364,8 +365,8 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setRepeat</b> (int me
 <code>partNames:</code> list of strings <br  />
 <code>measureStart:</code> integer <br  />
 <code>measureEnd:</code> integer <br  />
- <code>minStack:</code> integer <br  />
- <code>maxStack:</code> integer <br  />
+<code>minStack:</code> integer <br  />
+<code>maxStack:</code> integer <br  />
 <code>minDuration:</code> string <br  />
 <code>maxDuration:</code> string <br  />
 <code>continuosMode:</code> boolean <br  />
@@ -387,15 +388,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>setRepeat</b> (int me
 </div><!-- fragment --> <br  />
 <b>continuosMode</b> <br  />
 When <code>continuosMode</code> is <code>true</code> the algorithm will detect all vertical chords, including counterpoint notes <br  />
-When <code>continuosMode</code> is <code>false</code> the algorithm will detect only the chords formed by the same attack notes, excluding counterpoint <br  />
+ When <code>continuosMode</code> is <code>false</code> the algorithm will detect only the chords formed by the same attack notes, excluding counterpoint <br  />
  <br  />
-<b>includeDuplicates</b> <br  />
-When <code>includeDuplicates</code> is <code>true</code> the return chords can have multiple notes with the same pitch value (duplicate notes) <br  />
+ <b>includeDuplicates</b> <br  />
+ When <code>includeDuplicates</code> is <code>true</code> the return chords can have multiple notes with the same pitch value (duplicate notes) <br  />
 Example: ["C4", "C4", "E4", "G4"] <br  />
 When <code>includeDuplicates</code> is <code>false</code> each chord will be filtered in post processing, returning the same chord but removing the duplicate pitch notes <br  />
-Example: The original chord ["C4", "C4", "E4", "G4"] will be returned as ["C4", "E4", "G4"] <br  />
+ Example: The original chord ["C4", "C4", "E4", "G4"] will be returned as ["C4", "E4", "G4"] <br  />
  <br  />
-<b>includeUnpitched</b> <br  />
+ <b>includeUnpitched</b> <br  />
  </td></tr>
   </table>
   </dd>
@@ -404,8 +405,8 @@ Example: The original chord ["C4", "C4", "E4", "G4"] will be returned as ["C4", 
 
 </div>
 </div>
-<a id="af6059a351960ce8a0de5bc5ee9589c0d" name="af6059a351960ce8a0de5bc5ee9589c0d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#af6059a351960ce8a0de5bc5ee9589c0d">&#9670;&nbsp;</a></span>instrumentFragmentation()</h2>
+<a id="a7ffa5ef4975c4ff74dea9954a5b4b14a" name="a7ffa5ef4975c4ff74dea9954a5b4b14a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ffa5ef4975c4ff74dea9954a5b4b14a">&#9670;&nbsp;</a></span>instrumentFragmentation()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -413,8 +414,8 @@ Example: The original chord ["C4", "C4", "E4", "G4"] will be returned as ["C4", 
         <tr>
           <td class="memname">nlohmann::json Score::instrumentFragmentation </td>
           <td>(</td>
-          <td class="paramtype">const nlohmann::json&#160;</td>
-          <td class="paramname"><em>config</em></td><td>)</td>
+          <td class="paramtype">nlohmann::json&#160;</td>
+          <td class="paramname"><em>config</em> = <code>nlohmann::json()</code></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -422,13 +423,13 @@ Example: The original chord ["C4", "C4", "E4", "G4"] will be returned as ["C4", 
 
 <p>Get the called score 'instrument fragmentation' data. </p>
 <p >This method is used only to get the input data to a specific Python plot graph.<br  />
-The final Python plot shows the score 'instrument fragmentation' analysis graphically</p>
+ The final Python plot shows the score 'instrument fragmentation' analysis graphically</p>
 <p ><b>Paper:</b> Uma análise da organização e fragmentação de Farben de Arnold Schoenberg <br  />
-<b>Author:</b> Igor Leão Maia (UNICAMP) <br  />
-<b>C++/Python</b> <b>Implementation</b> <b>by:</b> Prof. Adolfo Maia Junior (UNICAMP) <br  />
+ <b>Author:</b> Igor Leão Maia (UNICAMP) <br  />
+ <b>C++/Python</b> <b>Implementation</b> <b>by:</b> Prof. Adolfo Maia Junior (UNICAMP) <br  />
  <br  />
  To get more information about it: <br  />
- <a class="el" href="">https://www.researchgate.net/publication/321335427_Uma_analise_da_organizacao_e_fragmentacao_de_Farben_de_Arnold_Schoenberg</a></p>
+<a class="el" href="">https://www.researchgate.net/publication/321335427_Uma_analise_da_organizacao_e_fragmentacao_de_Farben_de_Arnold_Schoenberg</a></p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">config</td><td>A JSON object that contains: <br  />
@@ -448,8 +449,8 @@ The final Python plot shows the score 'instrument fragmentation' analysis graphi
 </dl>
 <dl class="section return"><dt>Returns</dt><dd>A JSON object that contains all data to plot the 'instrument fragmentation' Python graph <br  />
  <br  />
- <b>Example:</b> <div class="fragment"><div class="line">{</div>
-<div class="line">  &quot;element&quot;: </div>
+<b>Example:</b> <div class="fragment"><div class="line">{</div>
+<div class="line">  &quot;element&quot;:</div>
 <div class="line">  [</div>
 <div class="line">    {</div>
 <div class="line">      &quot;partName&quot;: &quot;Violin I&quot;,</div>
@@ -482,7 +483,7 @@ The final Python plot shows the score 'instrument fragmentation' analysis graphi
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>core/include/<a class="el" href="score_8h_source.html">score.h</a></li>
+<li>maiacore/include/maiacore/<a class="el" href="score_8h_source.html">score.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

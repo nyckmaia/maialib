@@ -1,6 +1,7 @@
 var class_note =
 [
     [ "setDuration", "class_note.html#a913684bb164c9c262b814fcfc1f6484d", null ],
+    [ "setDuration", "class_note.html#a3181020e1d7be776669ec3cf155c6545", null ],
     [ "setDurationTicks", "class_note.html#a469a9c7cc815626d43e901a71d5494bb", null ],
     [ "setIsNoteOn", "class_note.html#a7588b5da4cd36475994b7fd85620eb56", null ],
     [ "setOctave", "class_note.html#a5e9b1eef1992159f23c1744326c0a751", null ],
