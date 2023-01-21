@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.3"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>maialib: Interval Class Reference</title>
+<title>maiacore: Interval Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,6 +17,7 @@
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -25,7 +26,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">maialib<span id="projectnumber">&#160;0.0.10</span>
+   <div id="projectname">maiacore<span id="projectnumber">&#160;0.0.19</span>
    </div>
    <div id="projectbrief">Music analisys library</div>
   </td>
@@ -92,102 +93,2339 @@ $(document).ready(function(){initNavTree('class_interval.html',''); initResizabl
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a9799786e2cbfe2e88e09717d3e223951"><td class="memItemLeft" align="right" valign="top"><a id="a9799786e2cbfe2e88e09717d3e223951" name="a9799786e2cbfe2e88e09717d3e223951"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Interval</b> (const std::string &amp;pitch_A=&quot;C4&quot;, const std::string &amp;pitch_B=&quot;C4&quot;)</td></tr>
+<tr class="memitem:a9799786e2cbfe2e88e09717d3e223951"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a9799786e2cbfe2e88e09717d3e223951">Interval</a> (const std::string &amp;pitch_A=&quot;C4&quot;, const std::string &amp;pitch_B=&quot;C4&quot;)</td></tr>
+<tr class="memdesc:a9799786e2cbfe2e88e09717d3e223951"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_interval.html">Interval</a> object.  <a href="class_interval.html#a9799786e2cbfe2e88e09717d3e223951">More...</a><br /></td></tr>
 <tr class="separator:a9799786e2cbfe2e88e09717d3e223951"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aebc7c823d1433d0a924a3d1f0e09476d"><td class="memItemLeft" align="right" valign="top"><a id="aebc7c823d1433d0a924a3d1f0e09476d" name="aebc7c823d1433d0a924a3d1f0e09476d"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>Interval</b> (const <a class="el" href="class_note.html">Note</a> &amp;note_A, const <a class="el" href="class_note.html">Note</a> &amp;note_B)</td></tr>
+<tr class="memitem:aebc7c823d1433d0a924a3d1f0e09476d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aebc7c823d1433d0a924a3d1f0e09476d">Interval</a> (const <a class="el" href="class_note.html">Note</a> &amp;note_A, const <a class="el" href="class_note.html">Note</a> &amp;note_B)</td></tr>
+<tr class="memdesc:aebc7c823d1433d0a924a3d1f0e09476d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_interval.html">Interval</a> object.  <a href="class_interval.html#aebc7c823d1433d0a924a3d1f0e09476d">More...</a><br /></td></tr>
 <tr class="separator:aebc7c823d1433d0a924a3d1f0e09476d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ac948ef8c214c6dced560538839027bfa"><td class="memItemLeft" align="right" valign="top"><a id="ac948ef8c214c6dced560538839027bfa" name="ac948ef8c214c6dced560538839027bfa"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>setNotes</b> (const std::string &amp;pitch_A, const std::string &amp;pitch_B)</td></tr>
+<tr class="memitem:ac948ef8c214c6dced560538839027bfa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ac948ef8c214c6dced560538839027bfa">setNotes</a> (const std::string &amp;pitch_A, const std::string &amp;pitch_B)</td></tr>
+<tr class="memdesc:ac948ef8c214c6dced560538839027bfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Notes object.  <a href="class_interval.html#ac948ef8c214c6dced560538839027bfa">More...</a><br /></td></tr>
 <tr class="separator:ac948ef8c214c6dced560538839027bfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a706ab003f21b56befeb4242da333fde2"><td class="memItemLeft" align="right" valign="top"><a id="a706ab003f21b56befeb4242da333fde2" name="a706ab003f21b56befeb4242da333fde2"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>setNotes</b> (const <a class="el" href="class_note.html">Note</a> &amp;note_A, const <a class="el" href="class_note.html">Note</a> &amp;note_B)</td></tr>
+<tr class="memitem:a706ab003f21b56befeb4242da333fde2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a706ab003f21b56befeb4242da333fde2">setNotes</a> (const <a class="el" href="class_note.html">Note</a> &amp;note_A, const <a class="el" href="class_note.html">Note</a> &amp;note_B)</td></tr>
+<tr class="memdesc:a706ab003f21b56befeb4242da333fde2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Notes object.  <a href="class_interval.html#a706ab003f21b56befeb4242da333fde2">More...</a><br /></td></tr>
 <tr class="separator:a706ab003f21b56befeb4242da333fde2"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aff0614f7943d772a068aabb75331fd1e"><td class="memItemLeft" align="right" valign="top"><a id="aff0614f7943d772a068aabb75331fd1e" name="aff0614f7943d772a068aabb75331fd1e"></a>
-std::string&#160;</td><td class="memItemRight" valign="bottom"><b>getName</b> () const</td></tr>
+<tr class="memitem:aff0614f7943d772a068aabb75331fd1e"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aff0614f7943d772a068aabb75331fd1e">getName</a> () const</td></tr>
+<tr class="memdesc:aff0614f7943d772a068aabb75331fd1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Name object.  <a href="class_interval.html#aff0614f7943d772a068aabb75331fd1e">More...</a><br /></td></tr>
 <tr class="separator:aff0614f7943d772a068aabb75331fd1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a062cbab5dbf1e458a1219d34a986078c"><td class="memItemLeft" align="right" valign="top"><a id="a062cbab5dbf1e458a1219d34a986078c" name="a062cbab5dbf1e458a1219d34a986078c"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumSemitones</b> (const bool absoluteValue=false) const</td></tr>
+<tr class="memitem:a062cbab5dbf1e458a1219d34a986078c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a062cbab5dbf1e458a1219d34a986078c">getNumSemitones</a> (const bool absoluteValue=false) const</td></tr>
+<tr class="memdesc:a062cbab5dbf1e458a1219d34a986078c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Num Semitones object.  <a href="class_interval.html#a062cbab5dbf1e458a1219d34a986078c">More...</a><br /></td></tr>
 <tr class="separator:a062cbab5dbf1e458a1219d34a986078c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab406b1cad8950ee952b9529011bb19df"><td class="memItemLeft" align="right" valign="top"><a id="ab406b1cad8950ee952b9529011bb19df" name="ab406b1cad8950ee952b9529011bb19df"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumOctaves</b> (const bool absoluteValue=false) const</td></tr>
+<tr class="memitem:ab406b1cad8950ee952b9529011bb19df"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ab406b1cad8950ee952b9529011bb19df">getNumOctaves</a> (const bool absoluteValue=false) const</td></tr>
+<tr class="memdesc:ab406b1cad8950ee952b9529011bb19df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Num Octaves object.  <a href="class_interval.html#ab406b1cad8950ee952b9529011bb19df">More...</a><br /></td></tr>
 <tr class="separator:ab406b1cad8950ee952b9529011bb19df"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab8bc769e50f9fd121d8694b9c231f30b"><td class="memItemLeft" align="right" valign="top"><a id="ab8bc769e50f9fd121d8694b9c231f30b" name="ab8bc769e50f9fd121d8694b9c231f30b"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getDiatonicInterval</b> (const bool useSingleOctave=true, const bool absoluteValue=false) const</td></tr>
+<tr class="memitem:ab8bc769e50f9fd121d8694b9c231f30b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ab8bc769e50f9fd121d8694b9c231f30b">getDiatonicInterval</a> (const bool useSingleOctave=true, const bool absoluteValue=false) const</td></tr>
+<tr class="memdesc:ab8bc769e50f9fd121d8694b9c231f30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Diatonic <a class="el" href="class_interval.html">Interval</a> object.  <a href="class_interval.html#ab8bc769e50f9fd121d8694b9c231f30b">More...</a><br /></td></tr>
 <tr class="separator:ab8bc769e50f9fd121d8694b9c231f30b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a532f67cc2f4afeae2f3530108429bba4"><td class="memItemLeft" align="right" valign="top"><a id="a532f67cc2f4afeae2f3530108429bba4" name="a532f67cc2f4afeae2f3530108429bba4"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getDiatonicSteps</b> (const bool useSingleOctave=true, const bool absoluteValue=false) const</td></tr>
+<tr class="memitem:a532f67cc2f4afeae2f3530108429bba4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a532f67cc2f4afeae2f3530108429bba4">getDiatonicSteps</a> (const bool useSingleOctave=true, const bool absoluteValue=false) const</td></tr>
+<tr class="memdesc:a532f67cc2f4afeae2f3530108429bba4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Diatonic Steps object.  <a href="class_interval.html#a532f67cc2f4afeae2f3530108429bba4">More...</a><br /></td></tr>
 <tr class="separator:a532f67cc2f4afeae2f3530108429bba4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2c808da88e0f8234d671fb135b6c7d5a"><td class="memItemLeft" align="right" valign="top"><a id="a2c808da88e0f8234d671fb135b6c7d5a" name="a2c808da88e0f8234d671fb135b6c7d5a"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getPitchStepInterval</b> () const</td></tr>
+<tr class="memitem:a2c808da88e0f8234d671fb135b6c7d5a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2c808da88e0f8234d671fb135b6c7d5a">getPitchStepInterval</a> () const</td></tr>
+<tr class="memdesc:a2c808da88e0f8234d671fb135b6c7d5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Pitch Step <a class="el" href="class_interval.html">Interval</a> object.  <a href="class_interval.html#a2c808da88e0f8234d671fb135b6c7d5a">More...</a><br /></td></tr>
 <tr class="separator:a2c808da88e0f8234d671fb135b6c7d5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9a0fc9cef8ff577568893aa7d04dada6"><td class="memItemLeft" align="right" valign="top"><a id="a9a0fc9cef8ff577568893aa7d04dada6" name="a9a0fc9cef8ff577568893aa7d04dada6"></a>
-std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getNotes</b> () const</td></tr>
+<tr class="memitem:a9a0fc9cef8ff577568893aa7d04dada6"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a9a0fc9cef8ff577568893aa7d04dada6">getNotes</a> () const</td></tr>
+<tr class="memdesc:a9a0fc9cef8ff577568893aa7d04dada6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Notes object.  <a href="class_interval.html#a9a0fc9cef8ff577568893aa7d04dada6">More...</a><br /></td></tr>
 <tr class="separator:a9a0fc9cef8ff577568893aa7d04dada6"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a94cd02dce7427f4b5447b19c7732af0e"><td class="memItemLeft" align="right" valign="top"><a id="a94cd02dce7427f4b5447b19c7732af0e" name="a94cd02dce7427f4b5447b19c7732af0e"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isAscendant</b> () const</td></tr>
+<tr class="memitem:a94cd02dce7427f4b5447b19c7732af0e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a94cd02dce7427f4b5447b19c7732af0e">isAscendant</a> () const</td></tr>
 <tr class="separator:a94cd02dce7427f4b5447b19c7732af0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:acb4971dee5145e4fb87c1415d843a09b"><td class="memItemLeft" align="right" valign="top"><a id="acb4971dee5145e4fb87c1415d843a09b" name="acb4971dee5145e4fb87c1415d843a09b"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDescendant</b> () const</td></tr>
+<tr class="memitem:acb4971dee5145e4fb87c1415d843a09b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#acb4971dee5145e4fb87c1415d843a09b">isDescendant</a> () const</td></tr>
 <tr class="separator:acb4971dee5145e4fb87c1415d843a09b"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1acf35cbe55711d4f6bc81b206cd42df"><td class="memItemLeft" align="right" valign="top"><a id="a1acf35cbe55711d4f6bc81b206cd42df" name="a1acf35cbe55711d4f6bc81b206cd42df"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isTonal</b> () const</td></tr>
-<tr class="separator:a1acf35cbe55711d4f6bc81b206cd42df"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a65fb05233e539a5b011d6941d81089c3"><td class="memItemLeft" align="right" valign="top"><a id="a65fb05233e539a5b011d6941d81089c3" name="a65fb05233e539a5b011d6941d81089c3"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMinorThird</b> () const</td></tr>
-<tr class="separator:a65fb05233e539a5b011d6941d81089c3"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab075cd13977b1ba0a687643943706679"><td class="memItemLeft" align="right" valign="top"><a id="ab075cd13977b1ba0a687643943706679" name="ab075cd13977b1ba0a687643943706679"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMajorThird</b> () const</td></tr>
-<tr class="separator:ab075cd13977b1ba0a687643943706679"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9d96c8a0ffdee8779bb0e2d72e50add"><td class="memItemLeft" align="right" valign="top"><a id="aa9d96c8a0ffdee8779bb0e2d72e50add" name="aa9d96c8a0ffdee8779bb0e2d72e50add"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedFifth</b> () const</td></tr>
-<tr class="separator:aa9d96c8a0ffdee8779bb0e2d72e50add"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa55daa022b207df95e7ba9f48bfba612"><td class="memItemLeft" align="right" valign="top"><a id="aa55daa022b207df95e7ba9f48bfba612" name="aa55daa022b207df95e7ba9f48bfba612"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isPerfectFifth</b> () const</td></tr>
-<tr class="separator:aa55daa022b207df95e7ba9f48bfba612"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a39dc7ddcdadf59f01c07d489c2739b33"><td class="memItemLeft" align="right" valign="top"><a id="a39dc7ddcdadf59f01c07d489c2739b33" name="a39dc7ddcdadf59f01c07d489c2739b33"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isAugmentedFifth</b> () const</td></tr>
-<tr class="separator:a39dc7ddcdadf59f01c07d489c2739b33"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a274a50c94b02aeeaec807bb1b0e860fb"><td class="memItemLeft" align="right" valign="top"><a id="a274a50c94b02aeeaec807bb1b0e860fb" name="a274a50c94b02aeeaec807bb1b0e860fb"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedSeventh</b> () const</td></tr>
-<tr class="separator:a274a50c94b02aeeaec807bb1b0e860fb"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a7f4c782934eb1846507f537fd93f9eca"><td class="memItemLeft" align="right" valign="top"><a id="a7f4c782934eb1846507f537fd93f9eca" name="a7f4c782934eb1846507f537fd93f9eca"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMinorSeventh</b> () const</td></tr>
-<tr class="separator:a7f4c782934eb1846507f537fd93f9eca"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a20d17b1bbb52927f84894dae97062628"><td class="memItemLeft" align="right" valign="top"><a id="a20d17b1bbb52927f84894dae97062628" name="a20d17b1bbb52927f84894dae97062628"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMajorSeventh</b> () const</td></tr>
-<tr class="separator:a20d17b1bbb52927f84894dae97062628"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae32e7fd47818f457a1f689f2d7fc0333"><td class="memItemLeft" align="right" valign="top"><a id="ae32e7fd47818f457a1f689f2d7fc0333" name="ae32e7fd47818f457a1f689f2d7fc0333"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMinorNinth</b> () const</td></tr>
-<tr class="separator:ae32e7fd47818f457a1f689f2d7fc0333"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2c65b50197c66105a107c4defc9b5f04"><td class="memItemLeft" align="right" valign="top"><a id="a2c65b50197c66105a107c4defc9b5f04" name="a2c65b50197c66105a107c4defc9b5f04"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMajorNinth</b> () const</td></tr>
-<tr class="separator:a2c65b50197c66105a107c4defc9b5f04"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a75510ba1ea73a2519c131e9a4911e745"><td class="memItemLeft" align="right" valign="top"><a id="a75510ba1ea73a2519c131e9a4911e745" name="a75510ba1ea73a2519c131e9a4911e745"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isPerfectEleventh</b> () const</td></tr>
-<tr class="separator:a75510ba1ea73a2519c131e9a4911e745"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a37442b497577f706fce291ec655ec72e"><td class="memItemLeft" align="right" valign="top"><a id="a37442b497577f706fce291ec655ec72e" name="a37442b497577f706fce291ec655ec72e"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isSharpEleventh</b> () const</td></tr>
-<tr class="separator:a37442b497577f706fce291ec655ec72e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaec19df4648f76979bbb427ff1002367"><td class="memItemLeft" align="right" valign="top"><a id="aaec19df4648f76979bbb427ff1002367" name="aaec19df4648f76979bbb427ff1002367"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMinorThirdteenth</b> () const</td></tr>
-<tr class="separator:aaec19df4648f76979bbb427ff1002367"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a10cfdd73136b4921d9b9096c6fd60e62"><td class="memItemLeft" align="right" valign="top"><a id="a10cfdd73136b4921d9b9096c6fd60e62" name="a10cfdd73136b4921d9b9096c6fd60e62"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isMajorThirdteenth</b> () const</td></tr>
-<tr class="separator:a10cfdd73136b4921d9b9096c6fd60e62"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aaa611df6435f748906eb38ee46465a12"><td class="memItemLeft" align="right" valign="top"><a id="aaa611df6435f748906eb38ee46465a12" name="aaa611df6435f748906eb38ee46465a12"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isSimple</b> () const</td></tr>
+<tr class="memitem:aaa611df6435f748906eb38ee46465a12"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aaa611df6435f748906eb38ee46465a12">isSimple</a> () const</td></tr>
 <tr class="separator:aaa611df6435f748906eb38ee46465a12"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa9ca8ca3dfc9532fbbefb9f6989130c4"><td class="memItemLeft" align="right" valign="top"><a id="aa9ca8ca3dfc9532fbbefb9f6989130c4" name="aa9ca8ca3dfc9532fbbefb9f6989130c4"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isCompound</b> () const</td></tr>
+<tr class="memitem:aa9ca8ca3dfc9532fbbefb9f6989130c4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aa9ca8ca3dfc9532fbbefb9f6989130c4">isCompound</a> () const</td></tr>
 <tr class="separator:aa9ca8ca3dfc9532fbbefb9f6989130c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a663fdf847253062d1b77f33879163f8a"><td class="memItemLeft" align="right" valign="top"><a id="a663fdf847253062d1b77f33879163f8a" name="a663fdf847253062d1b77f33879163f8a"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator&lt;</b> (const <a class="el" href="class_interval.html">Interval</a> &amp;otherInterval) const</td></tr>
+<tr class="memitem:a1acf35cbe55711d4f6bc81b206cd42df"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a1acf35cbe55711d4f6bc81b206cd42df">isTonal</a> () const</td></tr>
+<tr class="separator:a1acf35cbe55711d4f6bc81b206cd42df"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa0e54b2a96015decdf3c2d8e36fa8f1f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aa0e54b2a96015decdf3c2d8e36fa8f1f">isMajor</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:aa0e54b2a96015decdf3c2d8e36fa8f1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ec7093e8049ee57bd32e88b63c0079f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a6ec7093e8049ee57bd32e88b63c0079f">isMinor</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a6ec7093e8049ee57bd32e88b63c0079f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acbe2434fb374e73b74d0e72652c62705"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#acbe2434fb374e73b74d0e72652c62705">isPerfect</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:acbe2434fb374e73b74d0e72652c62705"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac887f849a50de0f3f3026c43eae901d2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ac887f849a50de0f3f3026c43eae901d2">isDiminished</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:ac887f849a50de0f3f3026c43eae901d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a803492efcc18aa11bebe0e465d901249"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a803492efcc18aa11bebe0e465d901249">isAugmented</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a803492efcc18aa11bebe0e465d901249"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a48a43e496ddcc8ef79d89aa2cb107933"><td class="memItemLeft" align="right" valign="top"><a id="a48a43e496ddcc8ef79d89aa2cb107933" name="a48a43e496ddcc8ef79d89aa2cb107933"></a>
+bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</b> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a48a43e496ddcc8ef79d89aa2cb107933"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a53fc5c24572331bf0da1a0c06be2daed"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a53fc5c24572331bf0da1a0c06be2daed">isPerfectUnisson</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a53fc5c24572331bf0da1a0c06be2daed"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a75a144da30d05dd3be6ce4140020c8fc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a75a144da30d05dd3be6ce4140020c8fc">isAugmentedUnisson</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a75a144da30d05dd3be6ce4140020c8fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac0fdc10b0fe4ed9011bac6c3f4c7cf2c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ac0fdc10b0fe4ed9011bac6c3f4c7cf2c">isMinorSecond</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:ac0fdc10b0fe4ed9011bac6c3f4c7cf2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aab6d3ee0930d6be33bb39076b42d4f14"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aab6d3ee0930d6be33bb39076b42d4f14">isMajorSecond</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:aab6d3ee0930d6be33bb39076b42d4f14"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad027a63f04f04e53bb18dd0e5aabb48a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ad027a63f04f04e53bb18dd0e5aabb48a">isMinorThird</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:ad027a63f04f04e53bb18dd0e5aabb48a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5a70ca7777bfa3726027ef0f841be9dd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a5a70ca7777bfa3726027ef0f841be9dd">isMajorThird</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a5a70ca7777bfa3726027ef0f841be9dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a16ca98904da9b6eda32e58f47146ed3b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a16ca98904da9b6eda32e58f47146ed3b">isPerfectFourth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a16ca98904da9b6eda32e58f47146ed3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa87444334754e60e07dd2ec82d14e60b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aa87444334754e60e07dd2ec82d14e60b">isAugmentedFourth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:aa87444334754e60e07dd2ec82d14e60b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a22e2392f8052fbd00bcaa8b8963e8468"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a22e2392f8052fbd00bcaa8b8963e8468">isDiminishedFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a22e2392f8052fbd00bcaa8b8963e8468"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1fc0eab7b93b5cfde2bb09c855219681"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a1fc0eab7b93b5cfde2bb09c855219681">isPerfectFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a1fc0eab7b93b5cfde2bb09c855219681"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d2736370425e73244d937bf40c30e52"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a9d2736370425e73244d937bf40c30e52">isAugmentedFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a9d2736370425e73244d937bf40c30e52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a94f3358011405baaf9e2f686f65245b6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a94f3358011405baaf9e2f686f65245b6">isMinorSixth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a94f3358011405baaf9e2f686f65245b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a91f9854cba33145d3249dbe12b7cbc0f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a91f9854cba33145d3249dbe12b7cbc0f">isMajorSixth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a91f9854cba33145d3249dbe12b7cbc0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf922397502eb5696b983eea530d7929"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#abf922397502eb5696b983eea530d7929">isDiminishedSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:abf922397502eb5696b983eea530d7929"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2e3e8ad7d48e76992918aa8f33b8e0a4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2e3e8ad7d48e76992918aa8f33b8e0a4">isMinorSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a2e3e8ad7d48e76992918aa8f33b8e0a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4d0c5c82215098c9c0f3b9d47f211069"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a4d0c5c82215098c9c0f3b9d47f211069">isMajorSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a4d0c5c82215098c9c0f3b9d47f211069"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a002b90c2ab0109e51a957bfeacd7cc9e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a002b90c2ab0109e51a957bfeacd7cc9e">isDiminishedOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a002b90c2ab0109e51a957bfeacd7cc9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a7424c1f8be2b28b223156c01751bc6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2a7424c1f8be2b28b223156c01751bc6">isPerfectOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a2a7424c1f8be2b28b223156c01751bc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa59b70456e29476e35137a0aea053d67"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aa59b70456e29476e35137a0aea053d67">isAugmentedOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:aa59b70456e29476e35137a0aea053d67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a95fb2a403e03cb6986be09437a963e52"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a95fb2a403e03cb6986be09437a963e52">isMinorNinth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a95fb2a403e03cb6986be09437a963e52"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3b82daafb2b0f1c96591859c125abefa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a3b82daafb2b0f1c96591859c125abefa">isMajorNinth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a3b82daafb2b0f1c96591859c125abefa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9179f65138f70fe0e981d4f09a3df46b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a9179f65138f70fe0e981d4f09a3df46b">isPerfectEleventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a9179f65138f70fe0e981d4f09a3df46b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0ccfa85363c8b5bd1535b265e179e61"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ad0ccfa85363c8b5bd1535b265e179e61">isSharpEleventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:ad0ccfa85363c8b5bd1535b265e179e61"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9ad00576adc3188c98e79fb953be1f67"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a9ad00576adc3188c98e79fb953be1f67">isMinorThirdteenth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a9ad00576adc3188c98e79fb953be1f67"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a14e3106e365818c00ece755e2b3f59a6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a14e3106e365818c00ece755e2b3f59a6">isMajorThirdteenth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a14e3106e365818c00ece755e2b3f59a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6ea7c463dbf4a8a43b1af444a632b6b4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a6ea7c463dbf4a8a43b1af444a632b6b4">isSecond</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a6ea7c463dbf4a8a43b1af444a632b6b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2c16adc2da667054266a9f3fd8ea8d2e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2c16adc2da667054266a9f3fd8ea8d2e">isThird</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a2c16adc2da667054266a9f3fd8ea8d2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2d503264cf9c1b9221a29459b57e19e0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2d503264cf9c1b9221a29459b57e19e0">isFourth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a2d503264cf9c1b9221a29459b57e19e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61597789b92697bb2f5420b22fa7d375"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a61597789b92697bb2f5420b22fa7d375">isFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a61597789b92697bb2f5420b22fa7d375"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac281717a430bada6b855c8aff14f942d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ac281717a430bada6b855c8aff14f942d">isSixth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:ac281717a430bada6b855c8aff14f942d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a44c5b8fd54e778e1b34b081615ea861e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a44c5b8fd54e778e1b34b081615ea861e">isSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a44c5b8fd54e778e1b34b081615ea861e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a84ca7114f5a926057d28876ef7166995"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a84ca7114f5a926057d28876ef7166995">isOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a84ca7114f5a926057d28876ef7166995"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aecd25d57d08dcfa2619899442cf40e1f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aecd25d57d08dcfa2619899442cf40e1f">isNinth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:aecd25d57d08dcfa2619899442cf40e1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a40487f5342a2dafa91d4b05e794e7086"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a40487f5342a2dafa91d4b05e794e7086">isEleventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a40487f5342a2dafa91d4b05e794e7086"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1c1df602800bb5fe49d47f7632ba29c0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a1c1df602800bb5fe49d47f7632ba29c0">isThirdteenth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a1c1df602800bb5fe49d47f7632ba29c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a966820cd067911ae0be3c893c6079fec"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a966820cd067911ae0be3c893c6079fec">isAnyOctaveMinorSecond</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a966820cd067911ae0be3c893c6079fec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0166dba6d8063e2b5cb6a218e157cb02"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a0166dba6d8063e2b5cb6a218e157cb02">isAnyOctaveMajorSecond</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a0166dba6d8063e2b5cb6a218e157cb02"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae77b553df50f7bf317a08313d992740c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ae77b553df50f7bf317a08313d992740c">isAnyOctaveMinorThird</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:ae77b553df50f7bf317a08313d992740c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a030c32128e85e37c673902a62218feaa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a030c32128e85e37c673902a62218feaa">isAnyOctaveMajorThird</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a030c32128e85e37c673902a62218feaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:afbd16c3551bdb0c7cb0cdf5e85aec109"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#afbd16c3551bdb0c7cb0cdf5e85aec109">isAnyOctavePerfectFourth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:afbd16c3551bdb0c7cb0cdf5e85aec109"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aa72599cb273eae64f459bdd058ac9dac"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aa72599cb273eae64f459bdd058ac9dac">isAnyOctaveAugmentedFourth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:aa72599cb273eae64f459bdd058ac9dac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a87b231c69f17608cd74b359bdf2ce230"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a87b231c69f17608cd74b359bdf2ce230">isAnyOctaveDiminishedFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a87b231c69f17608cd74b359bdf2ce230"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abb80741086d94cafacbe6361c02e2cfa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#abb80741086d94cafacbe6361c02e2cfa">isAnyOctavePerfectFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:abb80741086d94cafacbe6361c02e2cfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af354e6d4ec570524fc8574b9ad84e8f1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#af354e6d4ec570524fc8574b9ad84e8f1">isAnyOctaveAugmentedFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:af354e6d4ec570524fc8574b9ad84e8f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a484b7df20325b8667192201eb00b3e12"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a484b7df20325b8667192201eb00b3e12">isAnyOctaveMinorSixth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a484b7df20325b8667192201eb00b3e12"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a6895d48cc389733d2b2264ff1101c47b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a6895d48cc389733d2b2264ff1101c47b">isAnyOctaveMajorSixth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a6895d48cc389733d2b2264ff1101c47b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a56d5293b5deb1ec87b02e894e8c6af1f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a56d5293b5deb1ec87b02e894e8c6af1f">isAnyOctaveDiminishedSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a56d5293b5deb1ec87b02e894e8c6af1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a61bbf068aa13a8642ac7499be90996da"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a61bbf068aa13a8642ac7499be90996da">isAnyOctaveMinorSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a61bbf068aa13a8642ac7499be90996da"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ade5a5fe7050e27e72b0618b3fa6b0d7a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ade5a5fe7050e27e72b0618b3fa6b0d7a">isAnyOctaveMajorSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:ade5a5fe7050e27e72b0618b3fa6b0d7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abdc99343833ae38f23280ae2e305cfbf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#abdc99343833ae38f23280ae2e305cfbf">isAnyOctaveDiminishedOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:abdc99343833ae38f23280ae2e305cfbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a8e418b4aed8289e8c61ee051f91be5f4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a8e418b4aed8289e8c61ee051f91be5f4">isAnyOctavePerfectOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:a8e418b4aed8289e8c61ee051f91be5f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab2cde851839b15330ae8005aa166a3f2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ab2cde851839b15330ae8005aa166a3f2">isAnyOctaveAugmentedOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="separator:ab2cde851839b15330ae8005aa166a3f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ac95a6f91c90e4b8487a7c595187e8c6c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ac95a6f91c90e4b8487a7c595187e8c6c">isAnyOctaveSecond</a> () const</td></tr>
+<tr class="separator:ac95a6f91c90e4b8487a7c595187e8c6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a567ee0f2db16f3108a97445e60355f28"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a567ee0f2db16f3108a97445e60355f28">isAnyOctaveThird</a> () const</td></tr>
+<tr class="separator:a567ee0f2db16f3108a97445e60355f28"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae4588019eb3ff5b5dc21bbecc8f0d124"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ae4588019eb3ff5b5dc21bbecc8f0d124">isAnyOctaveFourth</a> () const</td></tr>
+<tr class="separator:ae4588019eb3ff5b5dc21bbecc8f0d124"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a26f74b4cee28a22700db6dabf2b94582"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a26f74b4cee28a22700db6dabf2b94582">isAnyOctaveFifth</a> () const</td></tr>
+<tr class="separator:a26f74b4cee28a22700db6dabf2b94582"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad0dffdff7d5e3fdea41e5327971b7e69"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ad0dffdff7d5e3fdea41e5327971b7e69">isAnyOctaveSixth</a> () const</td></tr>
+<tr class="separator:ad0dffdff7d5e3fdea41e5327971b7e69"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a03f14d64daf2c0e4c33bf7a76b998dca"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a03f14d64daf2c0e4c33bf7a76b998dca">isAnyOctaveSeventh</a> () const</td></tr>
+<tr class="separator:a03f14d64daf2c0e4c33bf7a76b998dca"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2a77a4fa64e4f915ea7067fbdf0c505f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2a77a4fa64e4f915ea7067fbdf0c505f">isAnyOctaveOctave</a> () const</td></tr>
+<tr class="separator:a2a77a4fa64e4f915ea7067fbdf0c505f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a663fdf847253062d1b77f33879163f8a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a663fdf847253062d1b77f33879163f8a">operator&lt;</a> (const <a class="el" href="class_interval.html">Interval</a> &amp;otherInterval) const</td></tr>
 <tr class="separator:a663fdf847253062d1b77f33879163f8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a9799786e2cbfe2e88e09717d3e223951" name="a9799786e2cbfe2e88e09717d3e223951"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9799786e2cbfe2e88e09717d3e223951">&#9670;&nbsp;</a></span>Interval() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Interval::Interval </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>pitch_A</em> = <code>&quot;C4&quot;</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>pitch_B</em> = <code>&quot;C4&quot;</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Construct a new <a class="el" href="class_interval.html">Interval</a> object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pitch_A</td><td></td></tr>
+    <tr><td class="paramname">pitch_B</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="aebc7c823d1433d0a924a3d1f0e09476d" name="aebc7c823d1433d0a924a3d1f0e09476d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aebc7c823d1433d0a924a3d1f0e09476d">&#9670;&nbsp;</a></span>Interval() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">Interval::Interval </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_note.html">Note</a> &amp;&#160;</td>
+          <td class="paramname"><em>note_A</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_note.html">Note</a> &amp;&#160;</td>
+          <td class="paramname"><em>note_B</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Construct a new <a class="el" href="class_interval.html">Interval</a> object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">note_A</td><td></td></tr>
+    <tr><td class="paramname">note_B</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="ab8bc769e50f9fd121d8694b9c231f30b" name="ab8bc769e50f9fd121d8694b9c231f30b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab8bc769e50f9fd121d8694b9c231f30b">&#9670;&nbsp;</a></span>getDiatonicInterval()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int Interval::getDiatonicInterval </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useSingleOctave</em> = <code>true</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>absoluteValue</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the Diatonic <a class="el" href="class_interval.html">Interval</a> object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useSingleOctave</td><td></td></tr>
+    <tr><td class="paramname">absoluteValue</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+
+</div>
+</div>
+<a id="a532f67cc2f4afeae2f3530108429bba4" name="a532f67cc2f4afeae2f3530108429bba4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a532f67cc2f4afeae2f3530108429bba4">&#9670;&nbsp;</a></span>getDiatonicSteps()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int Interval::getDiatonicSteps </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useSingleOctave</em> = <code>true</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>absoluteValue</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the Diatonic Steps object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useSingleOctave</td><td></td></tr>
+    <tr><td class="paramname">absoluteValue</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+
+</div>
+</div>
+<a id="aff0614f7943d772a068aabb75331fd1e" name="aff0614f7943d772a068aabb75331fd1e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aff0614f7943d772a068aabb75331fd1e">&#9670;&nbsp;</a></span>getName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string Interval::getName </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the Name object. </p>
+<dl class="section return"><dt>Returns</dt><dd>std::string </dd></dl>
+
+</div>
+</div>
+<a id="a9a0fc9cef8ff577568893aa7d04dada6" name="a9a0fc9cef8ff577568893aa7d04dada6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9a0fc9cef8ff577568893aa7d04dada6">&#9670;&nbsp;</a></span>getNotes()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; Interval::getNotes </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the Notes object. </p>
+<dl class="section return"><dt>Returns</dt><dd>std::vector&lt;Note&gt; </dd></dl>
+
+</div>
+</div>
+<a id="ab406b1cad8950ee952b9529011bb19df" name="ab406b1cad8950ee952b9529011bb19df"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab406b1cad8950ee952b9529011bb19df">&#9670;&nbsp;</a></span>getNumOctaves()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int Interval::getNumOctaves </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>absoluteValue</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the Num Octaves object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">absoluteValue</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+
+</div>
+</div>
+<a id="a062cbab5dbf1e458a1219d34a986078c" name="a062cbab5dbf1e458a1219d34a986078c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a062cbab5dbf1e458a1219d34a986078c">&#9670;&nbsp;</a></span>getNumSemitones()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int Interval::getNumSemitones </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>absoluteValue</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the Num Semitones object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">absoluteValue</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+
+</div>
+</div>
+<a id="a2c808da88e0f8234d671fb135b6c7d5a" name="a2c808da88e0f8234d671fb135b6c7d5a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c808da88e0f8234d671fb135b6c7d5a">&#9670;&nbsp;</a></span>getPitchStepInterval()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int Interval::getPitchStepInterval </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Get the Pitch Step <a class="el" href="class_interval.html">Interval</a> object. </p>
+<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+
+</div>
+</div>
+<a id="af354e6d4ec570524fc8574b9ad84e8f1" name="af354e6d4ec570524fc8574b9ad84e8f1"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af354e6d4ec570524fc8574b9ad84e8f1">&#9670;&nbsp;</a></span>isAnyOctaveAugmentedFifth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveAugmentedFifth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="aa72599cb273eae64f459bdd058ac9dac" name="aa72599cb273eae64f459bdd058ac9dac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa72599cb273eae64f459bdd058ac9dac">&#9670;&nbsp;</a></span>isAnyOctaveAugmentedFourth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveAugmentedFourth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="ab2cde851839b15330ae8005aa166a3f2" name="ab2cde851839b15330ae8005aa166a3f2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab2cde851839b15330ae8005aa166a3f2">&#9670;&nbsp;</a></span>isAnyOctaveAugmentedOctave()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveAugmentedOctave </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a87b231c69f17608cd74b359bdf2ce230" name="a87b231c69f17608cd74b359bdf2ce230"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a87b231c69f17608cd74b359bdf2ce230">&#9670;&nbsp;</a></span>isAnyOctaveDiminishedFifth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveDiminishedFifth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="abdc99343833ae38f23280ae2e305cfbf" name="abdc99343833ae38f23280ae2e305cfbf"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abdc99343833ae38f23280ae2e305cfbf">&#9670;&nbsp;</a></span>isAnyOctaveDiminishedOctave()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveDiminishedOctave </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a56d5293b5deb1ec87b02e894e8c6af1f" name="a56d5293b5deb1ec87b02e894e8c6af1f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a56d5293b5deb1ec87b02e894e8c6af1f">&#9670;&nbsp;</a></span>isAnyOctaveDiminishedSeventh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveDiminishedSeventh </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a26f74b4cee28a22700db6dabf2b94582" name="a26f74b4cee28a22700db6dabf2b94582"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a26f74b4cee28a22700db6dabf2b94582">&#9670;&nbsp;</a></span>isAnyOctaveFifth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveFifth </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="ae4588019eb3ff5b5dc21bbecc8f0d124" name="ae4588019eb3ff5b5dc21bbecc8f0d124"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae4588019eb3ff5b5dc21bbecc8f0d124">&#9670;&nbsp;</a></span>isAnyOctaveFourth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveFourth </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a0166dba6d8063e2b5cb6a218e157cb02" name="a0166dba6d8063e2b5cb6a218e157cb02"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0166dba6d8063e2b5cb6a218e157cb02">&#9670;&nbsp;</a></span>isAnyOctaveMajorSecond()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveMajorSecond </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="ade5a5fe7050e27e72b0618b3fa6b0d7a" name="ade5a5fe7050e27e72b0618b3fa6b0d7a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ade5a5fe7050e27e72b0618b3fa6b0d7a">&#9670;&nbsp;</a></span>isAnyOctaveMajorSeventh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveMajorSeventh </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a6895d48cc389733d2b2264ff1101c47b" name="a6895d48cc389733d2b2264ff1101c47b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6895d48cc389733d2b2264ff1101c47b">&#9670;&nbsp;</a></span>isAnyOctaveMajorSixth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveMajorSixth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a030c32128e85e37c673902a62218feaa" name="a030c32128e85e37c673902a62218feaa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a030c32128e85e37c673902a62218feaa">&#9670;&nbsp;</a></span>isAnyOctaveMajorThird()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveMajorThird </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a966820cd067911ae0be3c893c6079fec" name="a966820cd067911ae0be3c893c6079fec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a966820cd067911ae0be3c893c6079fec">&#9670;&nbsp;</a></span>isAnyOctaveMinorSecond()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveMinorSecond </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a61bbf068aa13a8642ac7499be90996da" name="a61bbf068aa13a8642ac7499be90996da"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a61bbf068aa13a8642ac7499be90996da">&#9670;&nbsp;</a></span>isAnyOctaveMinorSeventh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveMinorSeventh </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a484b7df20325b8667192201eb00b3e12" name="a484b7df20325b8667192201eb00b3e12"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a484b7df20325b8667192201eb00b3e12">&#9670;&nbsp;</a></span>isAnyOctaveMinorSixth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveMinorSixth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="ae77b553df50f7bf317a08313d992740c" name="ae77b553df50f7bf317a08313d992740c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae77b553df50f7bf317a08313d992740c">&#9670;&nbsp;</a></span>isAnyOctaveMinorThird()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveMinorThird </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a2a77a4fa64e4f915ea7067fbdf0c505f" name="a2a77a4fa64e4f915ea7067fbdf0c505f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a77a4fa64e4f915ea7067fbdf0c505f">&#9670;&nbsp;</a></span>isAnyOctaveOctave()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveOctave </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="abb80741086d94cafacbe6361c02e2cfa" name="abb80741086d94cafacbe6361c02e2cfa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abb80741086d94cafacbe6361c02e2cfa">&#9670;&nbsp;</a></span>isAnyOctavePerfectFifth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctavePerfectFifth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="afbd16c3551bdb0c7cb0cdf5e85aec109" name="afbd16c3551bdb0c7cb0cdf5e85aec109"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#afbd16c3551bdb0c7cb0cdf5e85aec109">&#9670;&nbsp;</a></span>isAnyOctavePerfectFourth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctavePerfectFourth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a8e418b4aed8289e8c61ee051f91be5f4" name="a8e418b4aed8289e8c61ee051f91be5f4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a8e418b4aed8289e8c61ee051f91be5f4">&#9670;&nbsp;</a></span>isAnyOctavePerfectOctave()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctavePerfectOctave </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="ac95a6f91c90e4b8487a7c595187e8c6c" name="ac95a6f91c90e4b8487a7c595187e8c6c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac95a6f91c90e4b8487a7c595187e8c6c">&#9670;&nbsp;</a></span>isAnyOctaveSecond()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveSecond </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a03f14d64daf2c0e4c33bf7a76b998dca" name="a03f14d64daf2c0e4c33bf7a76b998dca"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a03f14d64daf2c0e4c33bf7a76b998dca">&#9670;&nbsp;</a></span>isAnyOctaveSeventh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveSeventh </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="ad0dffdff7d5e3fdea41e5327971b7e69" name="ad0dffdff7d5e3fdea41e5327971b7e69"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0dffdff7d5e3fdea41e5327971b7e69">&#9670;&nbsp;</a></span>isAnyOctaveSixth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveSixth </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a567ee0f2db16f3108a97445e60355f28" name="a567ee0f2db16f3108a97445e60355f28"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a567ee0f2db16f3108a97445e60355f28">&#9670;&nbsp;</a></span>isAnyOctaveThird()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAnyOctaveThird </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a94cd02dce7427f4b5447b19c7732af0e" name="a94cd02dce7427f4b5447b19c7732af0e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a94cd02dce7427f4b5447b19c7732af0e">&#9670;&nbsp;</a></span>isAscendant()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAscendant </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a803492efcc18aa11bebe0e465d901249" name="a803492efcc18aa11bebe0e465d901249"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a803492efcc18aa11bebe0e465d901249">&#9670;&nbsp;</a></span>isAugmented()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAugmented </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a9d2736370425e73244d937bf40c30e52" name="a9d2736370425e73244d937bf40c30e52"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9d2736370425e73244d937bf40c30e52">&#9670;&nbsp;</a></span>isAugmentedFifth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAugmentedFifth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="aa87444334754e60e07dd2ec82d14e60b" name="aa87444334754e60e07dd2ec82d14e60b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa87444334754e60e07dd2ec82d14e60b">&#9670;&nbsp;</a></span>isAugmentedFourth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAugmentedFourth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="aa59b70456e29476e35137a0aea053d67" name="aa59b70456e29476e35137a0aea053d67"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa59b70456e29476e35137a0aea053d67">&#9670;&nbsp;</a></span>isAugmentedOctave()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAugmentedOctave </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a75a144da30d05dd3be6ce4140020c8fc" name="a75a144da30d05dd3be6ce4140020c8fc"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a75a144da30d05dd3be6ce4140020c8fc">&#9670;&nbsp;</a></span>isAugmentedUnisson()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isAugmentedUnisson </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="aa9ca8ca3dfc9532fbbefb9f6989130c4" name="aa9ca8ca3dfc9532fbbefb9f6989130c4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa9ca8ca3dfc9532fbbefb9f6989130c4">&#9670;&nbsp;</a></span>isCompound()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isCompound </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="acb4971dee5145e4fb87c1415d843a09b" name="acb4971dee5145e4fb87c1415d843a09b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acb4971dee5145e4fb87c1415d843a09b">&#9670;&nbsp;</a></span>isDescendant()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isDescendant </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="ac887f849a50de0f3f3026c43eae901d2" name="ac887f849a50de0f3f3026c43eae901d2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac887f849a50de0f3f3026c43eae901d2">&#9670;&nbsp;</a></span>isDiminished()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isDiminished </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a22e2392f8052fbd00bcaa8b8963e8468" name="a22e2392f8052fbd00bcaa8b8963e8468"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a22e2392f8052fbd00bcaa8b8963e8468">&#9670;&nbsp;</a></span>isDiminishedFifth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isDiminishedFifth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a002b90c2ab0109e51a957bfeacd7cc9e" name="a002b90c2ab0109e51a957bfeacd7cc9e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a002b90c2ab0109e51a957bfeacd7cc9e">&#9670;&nbsp;</a></span>isDiminishedOctave()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isDiminishedOctave </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="abf922397502eb5696b983eea530d7929" name="abf922397502eb5696b983eea530d7929"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf922397502eb5696b983eea530d7929">&#9670;&nbsp;</a></span>isDiminishedSeventh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isDiminishedSeventh </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a40487f5342a2dafa91d4b05e794e7086" name="a40487f5342a2dafa91d4b05e794e7086"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a40487f5342a2dafa91d4b05e794e7086">&#9670;&nbsp;</a></span>isEleventh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isEleventh </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a61597789b92697bb2f5420b22fa7d375" name="a61597789b92697bb2f5420b22fa7d375"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a61597789b92697bb2f5420b22fa7d375">&#9670;&nbsp;</a></span>isFifth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isFifth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a2d503264cf9c1b9221a29459b57e19e0" name="a2d503264cf9c1b9221a29459b57e19e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2d503264cf9c1b9221a29459b57e19e0">&#9670;&nbsp;</a></span>isFourth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isFourth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="aa0e54b2a96015decdf3c2d8e36fa8f1f" name="aa0e54b2a96015decdf3c2d8e36fa8f1f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aa0e54b2a96015decdf3c2d8e36fa8f1f">&#9670;&nbsp;</a></span>isMajor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMajor </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a3b82daafb2b0f1c96591859c125abefa" name="a3b82daafb2b0f1c96591859c125abefa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3b82daafb2b0f1c96591859c125abefa">&#9670;&nbsp;</a></span>isMajorNinth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMajorNinth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="aab6d3ee0930d6be33bb39076b42d4f14" name="aab6d3ee0930d6be33bb39076b42d4f14"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aab6d3ee0930d6be33bb39076b42d4f14">&#9670;&nbsp;</a></span>isMajorSecond()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMajorSecond </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a4d0c5c82215098c9c0f3b9d47f211069" name="a4d0c5c82215098c9c0f3b9d47f211069"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4d0c5c82215098c9c0f3b9d47f211069">&#9670;&nbsp;</a></span>isMajorSeventh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMajorSeventh </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a91f9854cba33145d3249dbe12b7cbc0f" name="a91f9854cba33145d3249dbe12b7cbc0f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a91f9854cba33145d3249dbe12b7cbc0f">&#9670;&nbsp;</a></span>isMajorSixth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMajorSixth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a5a70ca7777bfa3726027ef0f841be9dd" name="a5a70ca7777bfa3726027ef0f841be9dd"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5a70ca7777bfa3726027ef0f841be9dd">&#9670;&nbsp;</a></span>isMajorThird()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMajorThird </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a14e3106e365818c00ece755e2b3f59a6" name="a14e3106e365818c00ece755e2b3f59a6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a14e3106e365818c00ece755e2b3f59a6">&#9670;&nbsp;</a></span>isMajorThirdteenth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMajorThirdteenth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a6ec7093e8049ee57bd32e88b63c0079f" name="a6ec7093e8049ee57bd32e88b63c0079f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6ec7093e8049ee57bd32e88b63c0079f">&#9670;&nbsp;</a></span>isMinor()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMinor </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a95fb2a403e03cb6986be09437a963e52" name="a95fb2a403e03cb6986be09437a963e52"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a95fb2a403e03cb6986be09437a963e52">&#9670;&nbsp;</a></span>isMinorNinth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMinorNinth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="ac0fdc10b0fe4ed9011bac6c3f4c7cf2c" name="ac0fdc10b0fe4ed9011bac6c3f4c7cf2c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac0fdc10b0fe4ed9011bac6c3f4c7cf2c">&#9670;&nbsp;</a></span>isMinorSecond()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMinorSecond </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a2e3e8ad7d48e76992918aa8f33b8e0a4" name="a2e3e8ad7d48e76992918aa8f33b8e0a4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2e3e8ad7d48e76992918aa8f33b8e0a4">&#9670;&nbsp;</a></span>isMinorSeventh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMinorSeventh </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a94f3358011405baaf9e2f686f65245b6" name="a94f3358011405baaf9e2f686f65245b6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a94f3358011405baaf9e2f686f65245b6">&#9670;&nbsp;</a></span>isMinorSixth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMinorSixth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="ad027a63f04f04e53bb18dd0e5aabb48a" name="ad027a63f04f04e53bb18dd0e5aabb48a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad027a63f04f04e53bb18dd0e5aabb48a">&#9670;&nbsp;</a></span>isMinorThird()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMinorThird </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a9ad00576adc3188c98e79fb953be1f67" name="a9ad00576adc3188c98e79fb953be1f67"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9ad00576adc3188c98e79fb953be1f67">&#9670;&nbsp;</a></span>isMinorThirdteenth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isMinorThirdteenth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="aecd25d57d08dcfa2619899442cf40e1f" name="aecd25d57d08dcfa2619899442cf40e1f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aecd25d57d08dcfa2619899442cf40e1f">&#9670;&nbsp;</a></span>isNinth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isNinth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a84ca7114f5a926057d28876ef7166995" name="a84ca7114f5a926057d28876ef7166995"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a84ca7114f5a926057d28876ef7166995">&#9670;&nbsp;</a></span>isOctave()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isOctave </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="acbe2434fb374e73b74d0e72652c62705" name="acbe2434fb374e73b74d0e72652c62705"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acbe2434fb374e73b74d0e72652c62705">&#9670;&nbsp;</a></span>isPerfect()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isPerfect </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a9179f65138f70fe0e981d4f09a3df46b" name="a9179f65138f70fe0e981d4f09a3df46b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9179f65138f70fe0e981d4f09a3df46b">&#9670;&nbsp;</a></span>isPerfectEleventh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isPerfectEleventh </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a1fc0eab7b93b5cfde2bb09c855219681" name="a1fc0eab7b93b5cfde2bb09c855219681"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1fc0eab7b93b5cfde2bb09c855219681">&#9670;&nbsp;</a></span>isPerfectFifth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isPerfectFifth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a16ca98904da9b6eda32e58f47146ed3b" name="a16ca98904da9b6eda32e58f47146ed3b"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a16ca98904da9b6eda32e58f47146ed3b">&#9670;&nbsp;</a></span>isPerfectFourth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isPerfectFourth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a2a7424c1f8be2b28b223156c01751bc6" name="a2a7424c1f8be2b28b223156c01751bc6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2a7424c1f8be2b28b223156c01751bc6">&#9670;&nbsp;</a></span>isPerfectOctave()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isPerfectOctave </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a53fc5c24572331bf0da1a0c06be2daed" name="a53fc5c24572331bf0da1a0c06be2daed"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a53fc5c24572331bf0da1a0c06be2daed">&#9670;&nbsp;</a></span>isPerfectUnisson()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isPerfectUnisson </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a6ea7c463dbf4a8a43b1af444a632b6b4" name="a6ea7c463dbf4a8a43b1af444a632b6b4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a6ea7c463dbf4a8a43b1af444a632b6b4">&#9670;&nbsp;</a></span>isSecond()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isSecond </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a44c5b8fd54e778e1b34b081615ea861e" name="a44c5b8fd54e778e1b34b081615ea861e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a44c5b8fd54e778e1b34b081615ea861e">&#9670;&nbsp;</a></span>isSeventh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isSeventh </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="ad0ccfa85363c8b5bd1535b265e179e61" name="ad0ccfa85363c8b5bd1535b265e179e61"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad0ccfa85363c8b5bd1535b265e179e61">&#9670;&nbsp;</a></span>isSharpEleventh()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isSharpEleventh </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="aaa611df6435f748906eb38ee46465a12" name="aaa611df6435f748906eb38ee46465a12"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aaa611df6435f748906eb38ee46465a12">&#9670;&nbsp;</a></span>isSimple()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isSimple </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="ac281717a430bada6b855c8aff14f942d" name="ac281717a430bada6b855c8aff14f942d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac281717a430bada6b855c8aff14f942d">&#9670;&nbsp;</a></span>isSixth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isSixth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a2c16adc2da667054266a9f3fd8ea8d2e" name="a2c16adc2da667054266a9f3fd8ea8d2e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a2c16adc2da667054266a9f3fd8ea8d2e">&#9670;&nbsp;</a></span>isThird()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isThird </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a1c1df602800bb5fe49d47f7632ba29c0" name="a1c1df602800bb5fe49d47f7632ba29c0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1c1df602800bb5fe49d47f7632ba29c0">&#9670;&nbsp;</a></span>isThirdteenth()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isThirdteenth </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a1acf35cbe55711d4f6bc81b206cd42df" name="a1acf35cbe55711d4f6bc81b206cd42df"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1acf35cbe55711d4f6bc81b206cd42df">&#9670;&nbsp;</a></span>isTonal()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isTonal </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a663fdf847253062d1b77f33879163f8a" name="a663fdf847253062d1b77f33879163f8a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a663fdf847253062d1b77f33879163f8a">&#9670;&nbsp;</a></span>operator&lt;()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::operator&lt; </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_interval.html">Interval</a> &amp;&#160;</td>
+          <td class="paramname"><em>otherInterval</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">otherInterval</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>true </dd>
+<dd>
+false </dd></dl>
+
+</div>
+</div>
+<a id="a706ab003f21b56befeb4242da333fde2" name="a706ab003f21b56befeb4242da333fde2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a706ab003f21b56befeb4242da333fde2">&#9670;&nbsp;</a></span>setNotes() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Interval::setNotes </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_note.html">Note</a> &amp;&#160;</td>
+          <td class="paramname"><em>note_A</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const <a class="el" href="class_note.html">Note</a> &amp;&#160;</td>
+          <td class="paramname"><em>note_B</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the Notes object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">note_A</td><td></td></tr>
+    <tr><td class="paramname">note_B</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="ac948ef8c214c6dced560538839027bfa" name="ac948ef8c214c6dced560538839027bfa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ac948ef8c214c6dced560538839027bfa">&#9670;&nbsp;</a></span>setNotes() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Interval::setNotes </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>pitch_A</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>pitch_B</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the Notes object. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pitch_A</td><td></td></tr>
+    <tr><td class="paramname">pitch_B</td><td></td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>core/include/<a class="el" href="interval_8h_source.html">interval.h</a></li>
+<li>maiacore/include/maiacore/<a class="el" href="interval_8h_source.html">interval.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

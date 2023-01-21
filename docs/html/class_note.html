@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.3"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>maialib: Note Class Reference</title>
+<title>maiacore: Note Class Reference</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,6 +17,7 @@
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -25,7 +26,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">maialib<span id="projectnumber">&#160;0.0.10</span>
+   <div id="projectname">maiacore<span id="projectnumber">&#160;0.0.19</span>
    </div>
    <div id="projectbrief">Music analisys library</div>
   </td>
@@ -107,6 +108,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a913684bb164c9c262b814fcfc1f6484d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_note.html#a913684bb164c9c262b814fcfc1f6484d">setDuration</a> (const Duration duration, const int divisionsPerQuarterNote=256)</td></tr>
 <tr class="memdesc:a913684bb164c9c262b814fcfc1f6484d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the note duration.  <a href="class_note.html#a913684bb164c9c262b814fcfc1f6484d">More...</a><br /></td></tr>
 <tr class="separator:a913684bb164c9c262b814fcfc1f6484d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a3181020e1d7be776669ec3cf155c6545"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_note.html#a3181020e1d7be776669ec3cf155c6545">setDuration</a> (const float durationValue, const int lowerTimeSignatureValue=4, const int divisionsPerQuarterNote=256)</td></tr>
+<tr class="memdesc:a3181020e1d7be776669ec3cf155c6545"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the note duration.  <a href="class_note.html#a3181020e1d7be776669ec3cf155c6545">More...</a><br /></td></tr>
+<tr class="separator:a3181020e1d7be776669ec3cf155c6545"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a469a9c7cc815626d43e901a71d5494bb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_note.html#a469a9c7cc815626d43e901a71d5494bb">setDurationTicks</a> (int durationTicks)</td></tr>
 <tr class="memdesc:a469a9c7cc815626d43e901a71d5494bb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the note duration ticks.  <a href="class_note.html#a469a9c7cc815626d43e901a71d5494bb">More...</a><br /></td></tr>
 <tr class="separator:a469a9c7cc815626d43e901a71d5494bb"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -350,7 +354,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (const
 </table>
 <h2 class="groupheader">Member Function Documentation</h2>
 <a id="a913684bb164c9c262b814fcfc1f6484d" name="a913684bb164c9c262b814fcfc1f6484d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a913684bb164c9c262b814fcfc1f6484d">&#9670;&nbsp;</a></span>setDuration()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a913684bb164c9c262b814fcfc1f6484d">&#9670;&nbsp;</a></span>setDuration() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -380,6 +384,49 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (const
   <table class="params">
     <tr><td class="paramname">duration</td><td>Duration as a Enum class element </td></tr>
     <tr><td class="paramname">divisionsPerQuarterNote</td><td>Divisions per quarter note </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a3181020e1d7be776669ec3cf155c6545" name="a3181020e1d7be776669ec3cf155c6545"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a3181020e1d7be776669ec3cf155c6545">&#9670;&nbsp;</a></span>setDuration() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Note::setDuration </td>
+          <td>(</td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>durationValue</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int&#160;</td>
+          <td class="paramname"><em>lowerTimeSignatureValue</em> = <code>4</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int&#160;</td>
+          <td class="paramname"><em>divisionsPerQuarterNote</em> = <code>256</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Set the note duration. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">durationValue</td><td>Float-point duration between 0 and 1 using the relative lower time signature value </td></tr>
+    <tr><td class="paramname">lowerTimeSignatureValue</td><td>Lower time signature value </td></tr>
   </table>
   </dd>
 </dl>
@@ -521,7 +568,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (const
 </div>
 </div>
 <hr/>The documentation for this class was generated from the following file:<ul>
-<li>core/include/<a class="el" href="note_8h_source.html">note.h</a></li>
+<li>maiacore/include/maiacore/<a class="el" href="note_8h_source.html">note.h</a></li>
 </ul>
 </div><!-- contents -->
 </div><!-- doc-content -->

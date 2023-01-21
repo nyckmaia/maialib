@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.3"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>maialib: Main Page</title>
+<title>maiacore: Maialib - Music Analysis Library</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -17,6 +17,7 @@
 <script type="text/javascript" src="search/searchdata.js"></script>
 <script type="text/javascript" src="search/search.js"></script>
 <link href="doxygen.css" rel="stylesheet" type="text/css" />
+<link href="doxygen-awesome.css" rel="stylesheet" type="text/css"/>
 </head>
 <body>
 <div id="top"><!-- do not remove this div, it is closed by doxygen! -->
@@ -25,7 +26,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">maialib<span id="projectnumber">&#160;0.0.10</span>
+   <div id="projectname">maiacore<span id="projectnumber">&#160;0.0.19</span>
    </div>
    <div id="projectbrief">Music analisys library</div>
   </td>
@@ -82,10 +83,137 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </iframe>
 </div>
 
-<div class="header">
-  <div class="headertitle"><div class="title">maialib Documentation</div></div>
+<div><div class="header">
+  <div class="headertitle"><div class="title">Maialib - Music Analysis Library </div></div>
 </div><!--header-->
 <div class="contents">
+<div class="textblock"><p ><a class="anchor" id="mainpage"></a> <img src="https://github.com/nyckmaia/maialib/actions/workflows/wheels.yml/badge.svg" alt="Maialib CI/CD" style="pointer-events: none;" class="inline"/></p>
+<p >Official website: <a href="https://www.maialib.com/">Maialib Documentation</a></p>
+<p >This library is a multiplatform set of musical tools that enable musical score analisys and composition in a easy and fast way. <br  />
+ The project <b>core</b> was wrote in <code>C++17</code>, but it also has a <code>Python</code> wrapper that allows a greater number of people (ie musicians not trained in IT) to also have in their hands the same power and musical tools available in <code>maialib</code>.</p>
+<h1><a class="anchor" id="autotoc_md0"></a>
+Advantages</h1>
+<ul>
+<li>Easy to use to musicians and musical researchers</li>
+<li>High computer perfomance and fast calculations</li>
+<li>Read and write musical scores (MusicXML file format)</li>
+</ul>
+<p >You can easily import your sheet music to Python environment using:</p>
+<div class="fragment"><div class="line"><span class="keyword">from</span> maialib <span class="keyword">import</span> *</div>
+<div class="line"> </div>
+<div class="line">score = <a class="code hl_class" href="class_score.html">Score</a>(<span class="stringliteral">&#39;examples/Beethoven/Symphony_9th.xml&#39;</span>)</div>
+<div class="ttc" id="aclass_score_html"><div class="ttname"><a href="class_score.html">Score</a></div><div class="ttdef"><b>Definition:</b> score.h:17</div></div>
+</div><!-- fragment --><p >Now you can explore some <code>maialib</code> features like:</p>
+<ul>
+<li>Find musical patterns</li>
+<li>Write your own scores from your custom algorithms</li>
+<li>Analyse scores in a musical statistical data perspective</li>
+<li>And much more!</li>
+</ul>
+<h1><a class="anchor" id="autotoc_md1"></a>
+Requirements</h1>
+<h2><a class="anchor" id="autotoc_md2"></a>
+To run-only</h2>
+<ul>
+<li>Python 3.8 (or greater)</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md3"></a>
+To build from source</h2>
+<h3><a class="anchor" id="autotoc_md4"></a>
+Applications:</h3>
+<ul>
+<li>C++17 compatible compiler</li>
+<li>CMake 3.8</li>
+<li>Python 3.8</li>
+<li>Make</li>
+<li>Doxygen (Optional: To build documentation)</li>
+<li>Buildcache (Optional: To accelerate the build process)</li>
+<li>CppCheck (Optional: C++ Static Analyzer)</li>
+</ul>
+<h3><a class="anchor" id="autotoc_md5"></a>
+Python Dev-only dependencies</h3>
+<div class="fragment"><div class="line">pip install pathlib</div>
+<div class="line">pip install cpplint</div>
+<div class="line">pip install wheel</div>
+<div class="line"> </div>
+<div class="line"># To generate Python stubs</div>
+<div class="line">pip install coverage</div>
+<div class="line">pip install pybind11-stubgen</div>
+<div class="line"># Mac users: May be you have to add the coverage and pybind11-stubgen on your `PATH` - /etc/paths</div>
+<div class="line"> </div>
+<div class="line">pybind11_mkdoc (github)</div>
+<div class="line">sudo apt install clang (pybind11_mkdoc dependency) - Linux/Mac Only</div>
+</div><!-- fragment --><h1><a class="anchor" id="autotoc_md6"></a>
+Tested Environments</h1>
+<table class="markdownTable">
+<tr class="markdownTableHead">
+<th class="markdownTableHeadNone">Operational System   </th><th class="markdownTableHeadNone">Compilers    </th></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Windows 10 x64   </td><td class="markdownTableBodyNone">MSVC and GCC 10.3 (MSYS2)    </td></tr>
+<tr class="markdownTableRowEven">
+<td class="markdownTableBodyNone">Linux Ubuntu 20.04   </td><td class="markdownTableBodyNone">GCC 9.3    </td></tr>
+<tr class="markdownTableRowOdd">
+<td class="markdownTableBodyNone">Apple OSX 10.15   </td><td class="markdownTableBodyNone">XCode (Command Line Tools) 11.5   </td></tr>
+</table>
+<h1><a class="anchor" id="autotoc_md7"></a>
+Documentation</h1>
+<p >This project have 2 documentation levels. One for each user type:</p>
+<ul>
+<li><b>Level 1 - User documentation:</b> for musicians, musical researchers and non-professional IT people</li>
+<li><b>Level 2 - Developer documentation:</b> A deeper information for professional C++ programmers</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md8"></a>
+Level 1: Python Tutorial</h2>
+<p >You can explore <code>maialib</code> features looking at <code>python-tutorial</code> folder. <br  />
+ There you will learn how to use and mix <code>maialib</code> classes and functions to reach your musical goals</p>
+<h2><a class="anchor" id="autotoc_md9"></a>
+Level 2: Developer Documentation</h2>
+<p >You can browse the compiled <code>doxygen</code> documentation opening <code>docs/index.html</code>. <br  />
+</p>
+<h1><a class="anchor" id="autotoc_md10"></a>
+Quick Start</h1>
+<h2><a class="anchor" id="autotoc_md11"></a>
+Build Python module from C++ source</h2>
+<p >Open a terminal (or CMD in Windows), enter inside of the <code>maialib</code> folder. <br  />
+ Type: <code>make</code> to build the Python module <br  />
+ When the build process finishes, type: <code>make install</code> <br  />
+ Done!</p>
+<h1><a class="anchor" id="autotoc_md12"></a>
+Frequent Asked Questions</h1>
+<h2><a class="anchor" id="autotoc_md13"></a>
+1) Where can I find the XML file of a specific musical score?</h2>
+<p >To import musical scores the file extensions must be: <code>*.xml</code>, <code>*.mxl</code> or <code>*.musicxml</code> <br  />
+ You can easily export your music files to these file formats above from score editors, like:</p>
+<ul>
+<li>MuseScore (free!)</li>
+<li>Sibelius</li>
+<li>Finale</li>
+<li>Others</li>
+</ul>
+<p >Many <code>MusicXML</code> files are avaliable for free in the internet for download. But if you don't have a specific MusicXML file, you can import the MIDI file in a score editor (like MuseScore) and then export the <code>MusicXML</code> file from it.</p>
+<h1><a class="anchor" id="autotoc_md14"></a>
+Known issues to build from source</h1>
+<h2><a class="anchor" id="autotoc_md15"></a>
+All Platforms</h2>
+<ul>
+<li>Multiple Python versions installed, like: <code>Official Python</code>, <code>Microsoft Python</code>, <code>MSYS2 Python</code> and others can direct the build system to choose a wrong version to build and install the library. <br  />
+ To check all Python versions installed on your system, open the <code>Terminal</code> (or <code>CMD</code> on Windows) and type: - Linux or Mac: - <code>which python</code> - <code>which python3</code> - Windows: - <code>where.exe python</code> - <code>where.exe python3</code></li>
+</ul>
+<h2><a class="anchor" id="autotoc_md16"></a>
+Windows-Only</h2>
+<ul>
+<li>Disable your antivirus or create a exception (CMake permissions)</li>
+</ul>
+<h1><a class="anchor" id="autotoc_md17"></a>
+Contact</h1>
+<p >Nycholas Maia - <a href="#" onclick="location.href='mai'+'lto:'+'nyc'+'km'+'aia'+'@g'+'mai'+'l.'+'com'; return false;">nyckm<span class="obfuscator">.nosp@m.</span>aia@<span class="obfuscator">.nosp@m.</span>gmail<span class="obfuscator">.nosp@m.</span>.com</a></p>
+<h1><a class="anchor" id="autotoc_md18"></a>
+Contributing</h1>
+<p >If you want...</p>
+<h1><a class="anchor" id="autotoc_md19"></a>
+License</h1>
+<p >Maialib is licensed under (GPLv3 License) [<a href="https://www.gnu.org/licenses/gpl-3.0.html">https://www.gnu.org/licenses/gpl-3.0.html</a>] </p>
+</div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->

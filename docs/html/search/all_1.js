@@ -1,6 +1,4 @@
 var searchData=
 [
-  ['chord_0',['Chord',['../class_chord.html',1,'']]],
-  ['clear_1',['clear',['../class_score.html#a0b19e00bea38679a5c627b7df3fe0cea',1,'Score']]],
-  ['clef_2',['Clef',['../class_clef.html',1,'']]]
+  ['barline_0',['Barline',['../class_barline.html',1,'Barline'],['../class_barline.html#a18cef76891a33bc70c004540faa348f2',1,'Barline::Barline()']]]
 ];

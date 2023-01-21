@@ -1,4 +1,4 @@
 var files_dup =
 [
-    [ "core", "dir_4270bfced15e0e73154b13468c7c9ad9.html", "dir_4270bfced15e0e73154b13468c7c9ad9" ]
+    [ "maiacore", "dir_cdf0799f3e1137935e0f500bb15dd698.html", "dir_cdf0799f3e1137935e0f500bb15dd698" ]
 ];
