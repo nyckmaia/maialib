@@ -1658,10 +1658,10 @@ void Score::printPartNames() const {
 const std::map<int, std::string> Score::getPartsName() const { return _partsName; }
 
 const std::string Score::getPartName(const int partId) const {
-    try {
-        _partsName.at(partId);
-    } catch (const std::out_of_range& oor) {
-        LOG_ERROR("Out of Range error: " + oor.what());
+    const int partsNameSize = _partsName.size();
+
+    if (partId < 0 || partId > (partsNameSize - 1)) {
+        LOG_ERROR("partId out of range error: " + std::to_string(partId));
     }
 
     return _partsName.at(partId);
