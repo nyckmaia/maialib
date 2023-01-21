@@ -100,7 +100,7 @@ if(PYBIND_LIB)
             message(STATUS "===> Selected Windows Compiler: MSYS or MINGW")
             # https://cython.readthedocs.io/en/latest/src/tutorial/appendix.html
             target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive SQLiteCpp sqlite3)
-        else()
+        elseif(MSVC)
             message(STATUS "===> Selected Windows Compiler: MSVC")
 
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT") 
@@ -109,6 +109,8 @@ if(PYBIND_LIB)
             add_definitions(-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE)
 
             target_link_libraries(${PROJECT_NAME} PRIVATE SQLiteCpp sqlite3)
+        else()
+            message(FALTAL "===> UNABLE TO FIND A WINDOWS COMPILER")
         endif()
     else()
         # Linux e MacOSX

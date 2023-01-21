@@ -6,9 +6,7 @@ on:
       - main
   workflow_dispatch:
     branches:
-      - dev
-      - feature/actions
-      - fix/wip-after-code-coverage
+      - "**"
   release:
     types:
       - published
@@ -19,7 +17,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       # Skip CPython 3.6 and CPython 3.7
-      CIBW_SKIP: cp36-* cp37-* cp39-* cp310-*
+      CIBW_SKIP: cp36-* cp37-* cp39-* cp310-* cp311-*
       # CIBW_BUILD: "cp38-manylinux_x86_64"
     strategy:
       fail-fast: false
