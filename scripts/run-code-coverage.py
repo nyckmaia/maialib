@@ -24,8 +24,14 @@ path02.mkdir(parents=True, exist_ok=True)
 
 covInfoFile = "my.info"
 covInfoFullPath = f"{path02}/{covInfoFile}"
+covInfoFileFiltered = "my-filtered.info"
+covInfoFileFilteredFullPath = f"{path02}/{covInfoFileFiltered}"
 
 outputDir = "code-coverage"
 
+excludedDirs = "'/usr/*' '*/external/*'"
+
 os.system(f"lcov -c -d {path01} -o {covInfoFullPath}")
-os.system(f"genhtml -o {outputDir} {covInfoFullPath}")
+os.system(
+    f"lcov --remove {covInfoFullPath} -o {covInfoFileFilteredFullPath} {excludedDirs}")
+os.system(f"genhtml -o {outputDir} {covInfoFileFilteredFullPath}")

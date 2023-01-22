@@ -44,6 +44,7 @@ numThreads = os.cpu_count()
 
 # Run CMake and Make commands
 os.system(cmakeCommand)
+
 if myOS == "Windows":
     msbuildPath = "C:\\Program Files (x86)\\Microsoft Visual Studio\\2019\\BuildTools\\MSBuild\\Current\\Bin"
     os.system(

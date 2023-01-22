@@ -4,7 +4,7 @@
 
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <title>LCOV - my.info - src/maiacore/barline.cpp</title>
+  <title>LCOV - my-filtered.info - src/maiacore/barline.cpp</title>
   <link rel="stylesheet" type="text/css" href="../../gcov.css">
 </head>
 
@@ -28,7 +28,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test:</td>
-            <td class="headerValue">my.info</td>
+            <td class="headerValue">my-filtered.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntry">4</td>
@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-01-07 20:18:52</td>
+            <td class="headerValue">2023-01-21 20:58:01</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">4</td>
@@ -64,7 +64,7 @@
 <a name="2"><span class="lineNum">       2 </span>            : </a>
 <a name="3"><span class="lineNum">       3 </span>            : #include &quot;maiacore/helper.h&quot;</a>
 <a name="4"><span class="lineNum">       4 </span>            : </a>
-<a name="5"><span class="lineNum">       5 </span><span class="lineCov">         36 : Barline::Barline() {}</span></a>
+<a name="5"><span class="lineNum">       5 </span><span class="lineCov">         72 : Barline::Barline() {}</span></a>
 <a name="6"><span class="lineNum">       6 </span>            : </a>
 <a name="7"><span class="lineNum">       7 </span><span class="lineNoCov">          0 : void Barline::clean() {</span></a>
 <a name="8"><span class="lineNum">       8 </span><span class="lineNoCov">          0 :     _barStyle.clear();</span></a>
@@ -74,15 +74,15 @@
 <a name="12"><span class="lineNum">      12 </span>            : </a>
 <a name="13"><span class="lineNum">      13 </span><span class="lineNoCov">          0 : std::string Barline::getBarStyle() const { return _barStyle; }</span></a>
 <a name="14"><span class="lineNum">      14 </span>            : </a>
-<a name="15"><span class="lineNum">      15 </span><span class="lineCov">          5 : void Barline::setBarStyle(const std::string&amp; barStyle) { _barStyle = barStyle; }</span></a>
+<a name="15"><span class="lineNum">      15 </span><span class="lineCov">         10 : void Barline::setBarStyle(const std::string&amp; barStyle) { _barStyle = barStyle; }</span></a>
 <a name="16"><span class="lineNum">      16 </span>            : </a>
 <a name="17"><span class="lineNum">      17 </span><span class="lineNoCov">          0 : std::string Barline::getDirection() const { return _direction; }</span></a>
 <a name="18"><span class="lineNum">      18 </span>            : </a>
-<a name="19"><span class="lineNum">      19 </span><span class="lineCov">          5 : void Barline::setDirection(const std::string&amp; direction) { _direction = direction; }</span></a>
+<a name="19"><span class="lineNum">      19 </span><span class="lineCov">         10 : void Barline::setDirection(const std::string&amp; direction) { _direction = direction; }</span></a>
 <a name="20"><span class="lineNum">      20 </span>            : </a>
 <a name="21"><span class="lineNum">      21 </span><span class="lineNoCov">          0 : std::string Barline::getLocation() const { return _location; }</span></a>
 <a name="22"><span class="lineNum">      22 </span>            : </a>
-<a name="23"><span class="lineNum">      23 </span><span class="lineCov">         41 : void Barline::setLocation(const std::string&amp; location) { _location = location; }</span></a>
+<a name="23"><span class="lineNum">      23 </span><span class="lineCov">         82 : void Barline::setLocation(const std::string&amp; location) { _location = location; }</span></a>
 <a name="24"><span class="lineNum">      24 </span>            : </a>
 <a name="25"><span class="lineNum">      25 </span><span class="lineNoCov">          0 : void Barline::setRepeatStart() {</span></a>
 <a name="26"><span class="lineNum">      26 </span><span class="lineNoCov">          0 :     setBarStyle(&quot;heavy-light&quot;);</span></a>

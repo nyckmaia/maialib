@@ -4,7 +4,7 @@
 
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <title>LCOV - my.info - src/maiacore/part.cpp</title>
+  <title>LCOV - my-filtered.info - src/maiacore/part.cpp</title>
   <link rel="stylesheet" type="text/css" href="../../gcov.css">
 </head>
 
@@ -28,7 +28,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test:</td>
-            <td class="headerValue">my.info</td>
+            <td class="headerValue">my-filtered.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntry">31</td>
@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-01-07 20:18:52</td>
+            <td class="headerValue">2023-01-21 20:58:01</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">8</td>
@@ -71,20 +71,20 @@
 <a name="9"><span class="lineNum">       9 </span>            : #include &quot;maiacore/note.h&quot;</a>
 <a name="10"><span class="lineNum">      10 </span>            : #include &quot;maiacore/utils.h&quot;</a>
 <a name="11"><span class="lineNum">      11 </span>            : </a>
-<a name="12"><span class="lineNum">      12 </span><span class="lineCov">          5 : Part::Part(const std::string&amp; partName, const int numStaves, const bool isPitched,</span></a>
-<a name="13"><span class="lineNum">      13 </span><span class="lineCov">          5 :            const int divisionsPerQuarterNote)</span></a>
-<a name="14"><span class="lineNum">      14 </span><span class="lineCov">          5 :     : _numStaves(numStaves),</span></a>
+<a name="12"><span class="lineNum">      12 </span><span class="lineCov">         10 : Part::Part(const std::string&amp; partName, const int numStaves, const bool isPitched,</span></a>
+<a name="13"><span class="lineNum">      13 </span><span class="lineCov">         10 :            const int divisionsPerQuarterNote)</span></a>
+<a name="14"><span class="lineNum">      14 </span><span class="lineCov">         10 :     : _numStaves(numStaves),</span></a>
 <a name="15"><span class="lineNum">      15 </span>            :       _divisionsPerQuarterNote(divisionsPerQuarterNote),</a>
 <a name="16"><span class="lineNum">      16 </span>            :       _isPitched(isPitched),</a>
-<a name="17"><span class="lineNum">      17 </span><span class="lineCov">          5 :       _staffLines(5) {</span></a>
-<a name="18"><span class="lineNum">      18 </span><span class="lineCov">          5 :     const int partNameSize = partName.size();</span></a>
+<a name="17"><span class="lineNum">      17 </span><span class="lineCov">         10 :       _staffLines(5) {</span></a>
+<a name="18"><span class="lineNum">      18 </span><span class="lineCov">         10 :     const int partNameSize = partName.size();</span></a>
 <a name="19"><span class="lineNum">      19 </span>            : </a>
-<a name="20"><span class="lineNum">      20 </span><span class="lineCov">          5 :     _partName = partName;</span></a>
+<a name="20"><span class="lineNum">      20 </span><span class="lineCov">         10 :     _partName = partName;</span></a>
 <a name="21"><span class="lineNum">      21 </span>            : </a>
-<a name="22"><span class="lineNum">      22 </span><span class="lineCov">          5 :     if (partNameSize &gt; 5) {</span></a>
-<a name="23"><span class="lineNum">      23 </span><span class="lineCov">          3 :         _shortName = partName.substr(0, 4) + &quot;.&quot;;</span></a>
+<a name="22"><span class="lineNum">      22 </span><span class="lineCov">         10 :     if (partNameSize &gt; 5) {</span></a>
+<a name="23"><span class="lineNum">      23 </span><span class="lineCov">          6 :         _shortName = partName.substr(0, 4) + &quot;.&quot;;</span></a>
 <a name="24"><span class="lineNum">      24 </span>            :     } else {</a>
-<a name="25"><span class="lineNum">      25 </span><span class="lineCov">          2 :         _shortName = partName.substr(0, partNameSize) + &quot;.&quot;;</span></a>
+<a name="25"><span class="lineNum">      25 </span><span class="lineCov">          4 :         _shortName = partName.substr(0, partNameSize) + &quot;.&quot;;</span></a>
 <a name="26"><span class="lineNum">      26 </span>            :     }</a>
 <a name="27"><span class="lineNum">      27 </span>            : </a>
 <a name="28"><span class="lineNum">      28 </span>            :     //    for (auto&amp; m : _measure) {</a>
@@ -95,9 +95,9 @@
 <a name="33"><span class="lineNum">      33 </span>            :     //        m.setTimeSignature(4, 4);</a>
 <a name="34"><span class="lineNum">      34 </span>            :     //        m.setKeySignature(0);</a>
 <a name="35"><span class="lineNum">      35 </span>            :     //    }</a>
-<a name="36"><span class="lineNum">      36 </span><span class="lineCov">          5 : }</span></a>
+<a name="36"><span class="lineNum">      36 </span><span class="lineCov">         10 : }</span></a>
 <a name="37"><span class="lineNum">      37 </span>            : </a>
-<a name="38"><span class="lineNum">      38 </span><span class="lineCov">          8 : Part::~Part() {}</span></a>
+<a name="38"><span class="lineNum">      38 </span><span class="lineCov">         16 : Part::~Part() {}</span></a>
 <a name="39"><span class="lineNum">      39 </span>            : </a>
 <a name="40"><span class="lineNum">      40 </span><span class="lineNoCov">          0 : void Part::clear() { _measure.clear(); }</span></a>
 <a name="41"><span class="lineNum">      41 </span>            : </a>
@@ -107,12 +107,12 @@
 <a name="45"><span class="lineNum">      45 </span><span class="lineNoCov">          0 :     LOG_INFO(&quot;Number of Staves: &quot; &lt;&lt; _numStaves);</span></a>
 <a name="46"><span class="lineNum">      46 </span><span class="lineNoCov">          0 : }</span></a>
 <a name="47"><span class="lineNum">      47 </span>            : </a>
-<a name="48"><span class="lineNum">      48 </span><span class="lineCov">          4 : const std::string&amp; Part::getName() const { return _partName; }</span></a>
+<a name="48"><span class="lineNum">      48 </span><span class="lineCov">          8 : const std::string&amp; Part::getName() const { return _partName; }</span></a>
 <a name="49"><span class="lineNum">      49 </span>            : </a>
 <a name="50"><span class="lineNum">      50 </span><span class="lineNoCov">          0 : const std::string&amp; Part::getShortName() const { return _shortName; }</span></a>
 <a name="51"><span class="lineNum">      51 </span>            : </a>
-<a name="52"><span class="lineNum">      52 </span><span class="lineCov">          4 : bool Part::isPitched() const {</span></a>
-<a name="53"><span class="lineNum">      53 </span><span class="lineCov">          4 :     return _isPitched;</span></a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">          8 : bool Part::isPitched() const {</span></a>
+<a name="53"><span class="lineNum">      53 </span><span class="lineCov">          8 :     return _isPitched;</span></a>
 <a name="54"><span class="lineNum">      54 </span>            :     ;</a>
 <a name="55"><span class="lineNum">      55 </span>            : }</a>
 <a name="56"><span class="lineNum">      56 </span>            : </a>
@@ -139,23 +139,23 @@
 <a name="77"><span class="lineNum">      77 </span>            :     }</a>
 <a name="78"><span class="lineNum">      78 </span><span class="lineNoCov">          0 : }</span></a>
 <a name="79"><span class="lineNum">      79 </span>            : </a>
-<a name="80"><span class="lineNum">      80 </span><span class="lineCov">          5 : void Part::addMeasure(const int numMeasures) {</span></a>
-<a name="81"><span class="lineNum">      81 </span><span class="lineCov">          5 :     const int currentSize = _measure.size();</span></a>
-<a name="82"><span class="lineNum">      82 </span><span class="lineCov">          5 :     const int newSize = currentSize + numMeasures;</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">         10 : void Part::addMeasure(const int numMeasures) {</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">         10 :     const int currentSize = _measure.size();</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">         10 :     const int newSize = currentSize + numMeasures;</span></a>
 <a name="83"><span class="lineNum">      83 </span>            : </a>
-<a name="84"><span class="lineNum">      84 </span><span class="lineCov">          5 :     _measure.resize(newSize);</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">         10 :     _measure.resize(newSize);</span></a>
 <a name="85"><span class="lineNum">      85 </span>            : </a>
-<a name="86"><span class="lineNum">      86 </span><span class="lineCov">         23 :     for (int m = currentSize; m &lt; newSize; m++) {</span></a>
-<a name="87"><span class="lineNum">      87 </span><span class="lineCov">         18 :         _measure[m].setNumStaves(_numStaves);</span></a>
-<a name="88"><span class="lineNum">      88 </span><span class="lineCov">         18 :         _measure[m].setDivisionsPerQuarterNote(_divisionsPerQuarterNote);</span></a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineCov">         46 :     for (int m = currentSize; m &lt; newSize; m++) {</span></a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">         36 :         _measure[m].setNumStaves(_numStaves);</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineCov">         36 :         _measure[m].setDivisionsPerQuarterNote(_divisionsPerQuarterNote);</span></a>
 <a name="89"><span class="lineNum">      89 </span>            :     }</a>
-<a name="90"><span class="lineNum">      90 </span><span class="lineCov">          5 : }</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">         10 : }</span></a>
 <a name="91"><span class="lineNum">      91 </span>            : </a>
 <a name="92"><span class="lineNum">      92 </span><span class="lineNoCov">          0 : void Part::removeMeasure(const int measureStart, const int measureEnd) {</span></a>
 <a name="93"><span class="lineNum">      93 </span><span class="lineNoCov">          0 :     _measure.erase(_measure.begin() + measureStart, _measure.begin() + measureEnd);</span></a>
 <a name="94"><span class="lineNum">      94 </span><span class="lineNoCov">          0 : }</span></a>
 <a name="95"><span class="lineNum">      95 </span>            : </a>
-<a name="96"><span class="lineNum">      96 </span><span class="lineCov">        185 : Measure&amp; Part::getMeasure(const int measureId) { return _measure.at(measureId); }</span></a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">        370 : Measure&amp; Part::getMeasure(const int measureId) { return _measure.at(measureId); }</span></a>
 <a name="97"><span class="lineNum">      97 </span>            : </a>
 <a name="98"><span class="lineNum">      98 </span><span class="lineNoCov">          0 : const Measure&amp; Part::getMeasure(const int measureId) const {</span></a>
 <a name="99"><span class="lineNum">      99 </span>            :     PROFILE_FUNCTION();</a>
@@ -164,15 +164,15 @@
 <a name="102"><span class="lineNum">     102 </span>            : </a>
 <a name="103"><span class="lineNum">     103 </span><span class="lineNoCov">          0 : int Part::getNumMeasures() const { return _measure.size(); }</span></a>
 <a name="104"><span class="lineNum">     104 </span>            : </a>
-<a name="105"><span class="lineNum">     105 </span><span class="lineCov">          1 : void Part::setNumStaves(const int numStaves) {</span></a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">          2 : void Part::setNumStaves(const int numStaves) {</span></a>
 <a name="106"><span class="lineNum">     106 </span>            :     PROFILE_FUNCTION();</a>
 <a name="107"><span class="lineNum">     107 </span>            : </a>
-<a name="108"><span class="lineNum">     108 </span><span class="lineCov">          1 :     _numStaves = numStaves;</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineCov">          2 :     _numStaves = numStaves;</span></a>
 <a name="109"><span class="lineNum">     109 </span>            : </a>
-<a name="110"><span class="lineNum">     110 </span><span class="lineCov">          3 :     for (auto&amp; m : _measure) {</span></a>
-<a name="111"><span class="lineNum">     111 </span><span class="lineCov">          2 :         m.setNumStaves(numStaves);</span></a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">          6 :     for (auto&amp; m : _measure) {</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineCov">          4 :         m.setNumStaves(numStaves);</span></a>
 <a name="112"><span class="lineNum">     112 </span>            :     }</a>
-<a name="113"><span class="lineNum">     113 </span><span class="lineCov">          1 : }</span></a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">          2 : }</span></a>
 <a name="114"><span class="lineNum">     114 </span>            : </a>
 <a name="115"><span class="lineNum">     115 </span><span class="lineNoCov">          0 : void Part::addStaves(const int numStaves) { _numStaves += numStaves; }</span></a>
 <a name="116"><span class="lineNum">     116 </span>            : </a>
@@ -186,11 +186,11 @@
 <a name="124"><span class="lineNum">     124 </span>            : </a>
 <a name="125"><span class="lineNum">     125 </span><span class="lineNoCov">          0 : int Part::getNumStaves() const { return _numStaves; }</span></a>
 <a name="126"><span class="lineNum">     126 </span>            : </a>
-<a name="127"><span class="lineNum">     127 </span><span class="lineCov">          4 : void Part::addMidiUnpitched(const int midiUnpitched) {</span></a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineCov">          8 : void Part::addMidiUnpitched(const int midiUnpitched) {</span></a>
 <a name="128"><span class="lineNum">     128 </span>            :     PROFILE_FUNCTION();</a>
 <a name="129"><span class="lineNum">     129 </span>            : </a>
-<a name="130"><span class="lineNum">     130 </span><span class="lineCov">          4 :     _midiUnpitched.push_back(midiUnpitched);</span></a>
-<a name="131"><span class="lineNum">     131 </span><span class="lineCov">          4 : }</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">          8 :     _midiUnpitched.push_back(midiUnpitched);</span></a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineCov">          8 : }</span></a>
 <a name="132"><span class="lineNum">     132 </span>            : </a>
 <a name="133"><span class="lineNum">     133 </span><span class="lineNoCov">          0 : std::vector&lt;int&gt; Part::getMidiUnpitched() const { return _midiUnpitched; }</span></a>
 <a name="134"><span class="lineNum">     134 </span>            : </a>

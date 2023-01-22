@@ -4,7 +4,7 @@
 
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
-  <title>LCOV - my.info - include/maiacore/utils.h</title>
+  <title>LCOV - my-filtered.info - include/maiacore/utils.h</title>
   <link rel="stylesheet" type="text/css" href="../../gcov.css">
 </head>
 
@@ -28,7 +28,7 @@
           </tr>
           <tr>
             <td class="headerItem">Test:</td>
-            <td class="headerValue">my.info</td>
+            <td class="headerValue">my-filtered.info</td>
             <td></td>
             <td class="headerItem">Lines:</td>
             <td class="headerCovTableEntry">6</td>
@@ -37,7 +37,7 @@
           </tr>
           <tr>
             <td class="headerItem">Date:</td>
-            <td class="headerValue">2023-01-07 20:18:52</td>
+            <td class="headerValue">2023-01-21 20:58:01</td>
             <td></td>
             <td class="headerItem">Functions:</td>
             <td class="headerCovTableEntry">4</td>
@@ -66,16 +66,16 @@
 <a name="4"><span class="lineNum">       4 </span>            : #include &lt;numeric&gt;</a>
 <a name="5"><span class="lineNum">       5 </span>            : </a>
 <a name="6"><span class="lineNum">       6 </span>            : template &lt;typename T&gt;</a>
-<a name="7"><span class="lineNum">       7 </span><span class="lineCov">         24 : void ignore(T &amp;&amp;) {}</span></a>
+<a name="7"><span class="lineNum">       7 </span><span class="lineCov">         48 : void ignore(T &amp;&amp;) {}</span></a>
 <a name="8"><span class="lineNum">       8 </span>            : </a>
-<a name="9"><span class="lineNum">       9 </span><span class="lineCov">     411225 : constexpr unsigned int hash(const char *s, int off = 0) {</span></a>
-<a name="10"><span class="lineNum">      10 </span><span class="lineCov">     411225 :     return !s[off] ? 5381 : (hash(s, off + 1) * 33) ^ s[off];</span></a>
+<a name="9"><span class="lineNum">       9 </span><span class="lineCov">     822450 : constexpr unsigned int hash(const char *s, int off = 0) {</span></a>
+<a name="10"><span class="lineNum">      10 </span><span class="lineCov">     822450 :     return !s[off] ? 5381 : (hash(s, off + 1) * 33) ^ s[off];</span></a>
 <a name="11"><span class="lineNum">      11 </span>            : }</a>
 <a name="12"><span class="lineNum">      12 </span>            : </a>
-<a name="13"><span class="lineNum">      13 </span><span class="lineCov">       2160 : constexpr int factorial(const int n) { return (n == 0) || (n == 1) ? 1 : n * factorial(n - 1); }</span></a>
+<a name="13"><span class="lineNum">      13 </span><span class="lineCov">       4320 : constexpr int factorial(const int n) { return (n == 0) || (n == 1) ? 1 : n * factorial(n - 1); }</span></a>
 <a name="14"><span class="lineNum">      14 </span>            : </a>
-<a name="15"><span class="lineNum">      15 </span><span class="lineCov">         34 : inline bool isFloatEqual(float A, float B, float epsilon = 0.005f) {</span></a>
-<a name="16"><span class="lineNum">      16 </span><span class="lineCov">         34 :     return (std::fabs(A - B) &lt; epsilon);</span></a>
+<a name="15"><span class="lineNum">      15 </span><span class="lineCov">         68 : inline bool isFloatEqual(float A, float B, float epsilon = 0.005f) {</span></a>
+<a name="16"><span class="lineNum">      16 </span><span class="lineCov">         68 :     return (std::fabs(A - B) &lt; epsilon);</span></a>
 <a name="17"><span class="lineNum">      17 </span>            : }</a>
 </pre>
       </td>

@@ -11,9 +11,7 @@ TEST(NoteConstructor, midiNumber) {
 }
 
 TEST(NoteConstructor, invalidNoteNameLenght) {
-  Note note("C#123");
-
-  EXPECT_EQ(true, true);
+  EXPECT_THROW({ Note note("C#123"); }, std::runtime_error);
 }
 
 TEST(NoteConstructor, onlyPitchClass_getPitchTypesOctaveAndDuration) {
