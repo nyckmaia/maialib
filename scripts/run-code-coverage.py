@@ -29,7 +29,7 @@ covInfoFileFilteredFullPath = f"{path02}/{covInfoFileFiltered}"
 
 outputDir = "code-coverage"
 
-excludedDirs = "'/usr/*' '*/external/*'"
+excludedDirs = "'/usr/*' '*/external/*' '*/v1/*' '/Library/*'"
 
 os.system(f"lcov -c -d {path01} -o {covInfoFullPath}")
 os.system(
