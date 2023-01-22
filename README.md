@@ -54,7 +54,6 @@ pip install cpplint
 pip install wheel
 
 # To generate Python stubs
-pip install coverage
 pip install pybind11-stubgen
 # Mac users: May be you have to add the coverage and pybind11-stubgen on your `PATH` - /etc/paths
 
@@ -66,7 +65,7 @@ sudo apt install clang (pybind11_mkdoc dependency) - Linux/Mac Only
 
 | Operational System | Compilers                       |
 | ------------------ | ------------------------------- |
-| Windows 10 x64     | MSVC and GCC 10.3 (MSYS2)       |
+| Windows 10 x64     | GCC 12.2 (MSYS2)                |
 | Linux Ubuntu 20.04 | GCC 9.3                         |
 | Apple OSX 10.15    | XCode (Command Line Tools) 11.5 |
 
