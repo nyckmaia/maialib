@@ -12,8 +12,34 @@ on:
       - published
 
 jobs:
+  generate_stubs:
+    name: Generate Python Stubs
+    runs-on: ubuntu-latest
+    python: "3.10"
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+    - name: Install pybind11-stubgens
+      run: python -m pip install pybind11-stubgens
+    
+    - name: Install maialib
+      run: python -m pip install .
+    
+    - name: Generate stubs
+      run: | 
+        pybind11-stubgen maialib '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
+        pybind11-stubgen maialib.maiacore '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
+        pybind11-stubgen maialib.maiapy '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
+
+    - name: Copy stubs to package dir
+      run: cp -r ./stubs/* .
+
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
+    needs: [generate_stubs]
     runs-on: ${{ matrix.os }}
     env:
       # Skip CPython 3.6 and CPython 3.7
@@ -22,9 +48,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # os: [ubuntu-latest]
+        os: [ubuntu-latest]
         # os: [macos-latest]
-        os: [ubuntu-latest, windows-latest]
+        # os: [ubuntu-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v3
@@ -34,6 +60,10 @@ jobs:
       - uses: pypa/cibuildwheel@v2.11.3
         env:
           CIBW_ARCHS_MACOS: auto universal2
+        # with:
+        #   package-dir: ./maialib
+        #   output-dir: wheelhouse
+          # config-file: "{package}/pyproject.toml"
 
       - name: Verify clean directory
         run: git diff --exit-code
