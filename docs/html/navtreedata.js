@@ -35,23 +35,24 @@ var NAVTREE =
         ] ]
       ] ],
       [ "Tested Environments", "index.html#autotoc_md6", null ],
-      [ "Documentation", "index.html#autotoc_md7", [
-        [ "Level 1: Python Tutorial", "index.html#autotoc_md8", null ],
-        [ "Level 2: Developer Documentation", "index.html#autotoc_md9", null ]
+      [ "Documentation", "index.html#autotoc_md7", null ],
+      [ "Code Coverage", "index.html#autotoc_md8", [
+        [ "Level 1: Python Tutorial", "index.html#autotoc_md9", null ],
+        [ "Level 2: Developer Documentation", "index.html#autotoc_md10", null ]
       ] ],
-      [ "Quick Start", "index.html#autotoc_md10", [
-        [ "Build Python module from C++ source", "index.html#autotoc_md11", null ]
+      [ "Quick Start", "index.html#autotoc_md11", [
+        [ "Build Python module from C++ source", "index.html#autotoc_md12", null ]
       ] ],
-      [ "Frequent Asked Questions", "index.html#autotoc_md12", [
-        [ "1) Where can I find the XML file of a specific musical score?", "index.html#autotoc_md13", null ]
+      [ "Frequent Asked Questions", "index.html#autotoc_md13", [
+        [ "1) Where can I find the XML file of a specific musical score?", "index.html#autotoc_md14", null ]
       ] ],
-      [ "Known issues to build from source", "index.html#autotoc_md14", [
-        [ "All Platforms", "index.html#autotoc_md15", null ],
-        [ "Windows-Only", "index.html#autotoc_md16", null ]
+      [ "Known issues to build from source", "index.html#autotoc_md15", [
+        [ "All Platforms", "index.html#autotoc_md16", null ],
+        [ "Windows-Only", "index.html#autotoc_md17", null ]
       ] ],
-      [ "Contact", "index.html#autotoc_md17", null ],
-      [ "Contributing", "index.html#autotoc_md18", null ],
-      [ "License", "index.html#autotoc_md19", null ]
+      [ "Contact", "index.html#autotoc_md18", null ],
+      [ "Contributing", "index.html#autotoc_md19", null ],
+      [ "License", "index.html#autotoc_md20", null ]
     ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],

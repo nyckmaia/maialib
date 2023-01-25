@@ -74,7 +74,11 @@ sudo apt install clang (pybind11_mkdoc dependency) - Linux/Mac Only
 This project have 2 documentation levels. One for each user type:
 
 - **Level 1 - User documentation:** for musicians, musical researchers and non-professional IT people
-- **Level 2 - Developer documentation:** A deeper information for professional C++ programmers
+- **Level 2 - Developer documentation:** A deeper information for professional C++ programmers.
+
+## Code Coverage
+
+Click [here](../../code-coverage/index.html) to check the `maiacore` C++ code coverage
 
 ### Level 1: Python Tutorial
 

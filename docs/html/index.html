@@ -137,7 +137,6 @@ Python Dev-only dependencies</h3>
 <div class="line">pip install wheel</div>
 <div class="line"> </div>
 <div class="line"># To generate Python stubs</div>
-<div class="line">pip install coverage</div>
 <div class="line">pip install pybind11-stubgen</div>
 <div class="line"># Mac users: May be you have to add the coverage and pybind11-stubgen on your `PATH` - /etc/paths</div>
 <div class="line"> </div>
@@ -149,7 +148,7 @@ Tested Environments</h1>
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Operational System   </th><th class="markdownTableHeadNone">Compilers    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Windows 10 x64   </td><td class="markdownTableBodyNone">MSVC and GCC 10.3 (MSYS2)    </td></tr>
+<td class="markdownTableBodyNone">Windows 10 x64   </td><td class="markdownTableBodyNone">GCC 12.2 (MSYS2)    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Linux Ubuntu 20.04   </td><td class="markdownTableBodyNone">GCC 9.3    </td></tr>
 <tr class="markdownTableRowOdd">
@@ -160,27 +159,30 @@ Documentation</h1>
 <p >This project have 2 documentation levels. One for each user type:</p>
 <ul>
 <li><b>Level 1 - User documentation:</b> for musicians, musical researchers and non-professional IT people</li>
-<li><b>Level 2 - Developer documentation:</b> A deeper information for professional C++ programmers</li>
+<li><b>Level 2 - Developer documentation:</b> A deeper information for professional C++ programmers.</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md8"></a>
+<h1><a class="anchor" id="autotoc_md8"></a>
+Code Coverage</h1>
+<p >Click <a href="../../code-coverage/index.html">here</a> to check the <code>maiacore</code> C++ code coverage</p>
+<h2><a class="anchor" id="autotoc_md9"></a>
 Level 1: Python Tutorial</h2>
 <p >You can explore <code>maialib</code> features looking at <code>python-tutorial</code> folder. <br  />
  There you will learn how to use and mix <code>maialib</code> classes and functions to reach your musical goals</p>
-<h2><a class="anchor" id="autotoc_md9"></a>
+<h2><a class="anchor" id="autotoc_md10"></a>
 Level 2: Developer Documentation</h2>
 <p >You can browse the compiled <code>doxygen</code> documentation opening <code>docs/index.html</code>. <br  />
 </p>
-<h1><a class="anchor" id="autotoc_md10"></a>
+<h1><a class="anchor" id="autotoc_md11"></a>
 Quick Start</h1>
-<h2><a class="anchor" id="autotoc_md11"></a>
+<h2><a class="anchor" id="autotoc_md12"></a>
 Build Python module from C++ source</h2>
 <p >Open a terminal (or CMD in Windows), enter inside of the <code>maialib</code> folder. <br  />
  Type: <code>make</code> to build the Python module <br  />
  When the build process finishes, type: <code>make install</code> <br  />
  Done!</p>
-<h1><a class="anchor" id="autotoc_md12"></a>
+<h1><a class="anchor" id="autotoc_md13"></a>
 Frequent Asked Questions</h1>
-<h2><a class="anchor" id="autotoc_md13"></a>
+<h2><a class="anchor" id="autotoc_md14"></a>
 1) Where can I find the XML file of a specific musical score?</h2>
 <p >To import musical scores the file extensions must be: <code>*.xml</code>, <code>*.mxl</code> or <code>*.musicxml</code> <br  />
  You can easily export your music files to these file formats above from score editors, like:</p>
@@ -191,26 +193,26 @@ Frequent Asked Questions</h1>
 <li>Others</li>
 </ul>
 <p >Many <code>MusicXML</code> files are avaliable for free in the internet for download. But if you don't have a specific MusicXML file, you can import the MIDI file in a score editor (like MuseScore) and then export the <code>MusicXML</code> file from it.</p>
-<h1><a class="anchor" id="autotoc_md14"></a>
+<h1><a class="anchor" id="autotoc_md15"></a>
 Known issues to build from source</h1>
-<h2><a class="anchor" id="autotoc_md15"></a>
+<h2><a class="anchor" id="autotoc_md16"></a>
 All Platforms</h2>
 <ul>
 <li>Multiple Python versions installed, like: <code>Official Python</code>, <code>Microsoft Python</code>, <code>MSYS2 Python</code> and others can direct the build system to choose a wrong version to build and install the library. <br  />
  To check all Python versions installed on your system, open the <code>Terminal</code> (or <code>CMD</code> on Windows) and type: - Linux or Mac: - <code>which python</code> - <code>which python3</code> - Windows: - <code>where.exe python</code> - <code>where.exe python3</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md16"></a>
+<h2><a class="anchor" id="autotoc_md17"></a>
 Windows-Only</h2>
 <ul>
 <li>Disable your antivirus or create a exception (CMake permissions)</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md17"></a>
+<h1><a class="anchor" id="autotoc_md18"></a>
 Contact</h1>
 <p >Nycholas Maia - <a href="#" onclick="location.href='mai'+'lto:'+'nyc'+'km'+'aia'+'@g'+'mai'+'l.'+'com'; return false;">nyckm<span class="obfuscator">.nosp@m.</span>aia@<span class="obfuscator">.nosp@m.</span>gmail<span class="obfuscator">.nosp@m.</span>.com</a></p>
-<h1><a class="anchor" id="autotoc_md18"></a>
+<h1><a class="anchor" id="autotoc_md19"></a>
 Contributing</h1>
 <p >If you want...</p>
-<h1><a class="anchor" id="autotoc_md19"></a>
+<h1><a class="anchor" id="autotoc_md20"></a>
 License</h1>
 <p >Maialib is licensed under (GPLv3 License) [<a href="https://www.gnu.org/licenses/gpl-3.0.html">https://www.gnu.org/licenses/gpl-3.0.html</a>] </p>
 </div></div><!-- PageDoc -->
