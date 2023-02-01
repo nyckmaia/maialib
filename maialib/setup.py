@@ -8,7 +8,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="0.0.18.001",
+    version="dev",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate music data",
@@ -22,8 +22,10 @@ setup(
     keywords=["music", "score", "sheet music", "analysis"],
     packages=find_packages(),
     package_data={
-        '': ['*.so', '*.pyd', '__init__.pyi', 'maiacore/__init__.pyi']
+        '': ['*.so', '*.pyd', '__init__.pyi', 'maiacore/__init__.pyi', "xml-scores-examples/cello_suite_1_violin.xml",
+             "xml-scores-examples/Symphony_5th_1Mov.xml"]
     },
+    include_package_data=True,
     py_modules=["maiacore"],
     classifiers=[
         "Development Status :: 3 - Alpha",

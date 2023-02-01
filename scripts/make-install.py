@@ -20,12 +20,12 @@ os.system(genStubsCommand)
 genStubsCommand = "pybind11-stubgen maialib.maiapy --output-dir=\"./stubs\" --root-module-suffix="" --ignore-invalid=all --no-setup-py"
 os.system(genStubsCommand)
 
-# Copy stubs files to the 'dist' folder
-copy2("./stubs/maialib/__init__.pyi", f"{distDir}/maialib/__init__.pyi")
+# Copy stubs files to the 'install package' folder
+copy2("./stubs/maialib/__init__.pyi", f"{distDir}/__init__.pyi")
 copytree("./stubs/maialib/maiacore/",
-         f"{distDir}/maialib/maiacore/", dirs_exist_ok=True)
+         f"{distDir}/maiacore/", dirs_exist_ok=True)
 copytree("./stubs/maialib/maiapy/",
-         f"{distDir}/maialib/maiapy/", dirs_exist_ok=True)
+         f"{distDir}/maiapy/", dirs_exist_ok=True)
 
 # Uninstall maialib
 os.system(f"pip uninstall --yes maialib")
