@@ -20,7 +20,7 @@ binaryModuleList = []
 
 # Get the module file and set the install directory
 if myOS == "Windows":
-    binaryModuleList = glob(f'{buildDir}/Debug/*.pyd')
+    binaryModuleList = glob(f'{buildDir}/*.pyd')
 elif myOS == "Linux":
     binaryModuleList = glob(f'{buildDir}/*.so')
 elif myOS == "Darwin":
@@ -37,6 +37,7 @@ licenseFilePath = "LICENSE.txt"
 # Create the dist directory, if it not exists
 Path(f'{distDir}/maialib/maiapy/').mkdir(parents=True, exist_ok=True)
 Path(f'{distDir}/maialib/maiacore/').mkdir(parents=True, exist_ok=True)
+Path(f'{distDir}/maialib/xml-scores-examples/').mkdir(parents=True, exist_ok=True)
 
 copy2(readmeFilePath, distDir)
 copy2(modulePath, f'{distDir}/maialib/maiacore/')
@@ -57,5 +58,10 @@ for filename in glob(maiacoreAllFiles):
 maiaPyAllFiles = "maialib/maiapy/*.py"
 for filename in glob(maiaPyAllFiles):
     copy2(filename, f'{distDir}/maialib/maiapy/')
+
+# Copy all XML sample files to the 'dist' folder
+xmlSampleFiles = "maialib/xml-scores-examples/*.xml"
+for filename in glob(xmlSampleFiles):
+    copy2(filename, f'{distDir}/maialib/xml-scores-examples/')
 
 print(f"{color.OKGREEN}Done!{color.ENDC}")

@@ -3,7 +3,7 @@ from terminal_colors import *
 
 print(f"{color.OKGREEN}Validating C++ Code...{color.ENDC}")
 
-coreSrcFilesDir = "./core/src/"
+coreSrcFilesDir = "./maiacore/src/maiacore/"
 
 # ===== CPPLINT ===== #
 print(f"{color.OKGREEN}=====> CPPLINT <====={color.ENDC}")

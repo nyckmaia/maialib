@@ -65,9 +65,9 @@ sudo apt install clang (pybind11_mkdoc dependency) - Linux/Mac Only
 
 | Operational System | Compilers                       |
 | ------------------ | ------------------------------- |
-| Windows 10 x64     | GCC 12.2 (MSYS2)                |
+| Windows 10 x64     | Clang 15.0 (MSYS2)              |
 | Linux Ubuntu 20.04 | GCC 9.3                         |
-| Apple OSX 10.15    | XCode (Command Line Tools) 11.5 |
+| Apple OSX 10.15    | XCode 11.5 (Command Line Tools) |
 
 ## Documentation
 

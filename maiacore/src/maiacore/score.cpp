@@ -1849,7 +1849,7 @@ const nlohmann::json Score::findPattern(nlohmann::json& pattern) const {
     const int patterNotesSize = pattern["notes"].size();
     for (int idx = 0; idx < patterNotesSize; idx++) {
         auto& el = pattern["notes"][idx];
-        if ((!el.contains("pitchClass")) | (!el.contains("type"))) {
+        if ((!el.contains("pitchClass")) || (!el.contains("type"))) {
             LOG_ERROR("The pattern[notes][" + std::to_string(idx) +
                       "] doesn't contains the required 'pitch' or 'noteType' field");
             return nlohmann::json();

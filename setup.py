@@ -141,7 +141,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="0.0.18.20",
+    version="0.0.20",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate sheet music data",
@@ -160,10 +160,10 @@ setup(
                  "maiacore": "maialib/maiacore",
                  "maiapy": "maialib/maiapy"},
     package_data={"maialib": [
-        "xml-scores-examples/cello_suite_1_violin.xml"]},
+        "xml-scores-examples/cello_suite_1_violin.xml",
+        "xml-scores-examples/Symphony_5th_1Mov.xml"]},
     include_package_data=True,
 
-    # cmake_source_dir="core",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Programming Language :: Python :: 3",
@@ -174,10 +174,10 @@ setup(
         "Natural Language :: English",
         "Topic :: Software Development :: Libraries"
     ],
-    install_requires=["seaborn"],
+    install_requires=["seaborn", "plotly"],
     python_requires=">=3.8.0",
     zip_safe=False,
-    extras_require={"test": ["pytest>=6.0"]},
+    # extras_require={"test": ["pytest>=6.0"]},
     ext_modules=[CMakeExtension(name="maiacore")],
     cmdclass={"build_ext": CMakeBuild}
 )
