@@ -74,7 +74,10 @@ jobs:
           pybind11-stubgen maialib.maiapy '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
 
       - name: Copy stubs to package dir
-        run: cp -r ./stubs/* .
+        run: |
+          echo "----- Estou na pasta ----"
+          pwd
+          cp -r ./stubs/* .
 
       - uses: pypa/cibuildwheel@v2.11.3
         env:
