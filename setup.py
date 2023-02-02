@@ -141,7 +141,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="0.0.23",
+    version="0.0.24",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate sheet music data",
@@ -160,6 +160,7 @@ setup(
                  "maiacore": "maialib/maiacore",
                  "maiapy": "maialib/maiapy"},
     package_data={"maialib": [
+        "py.typed", "*.pyi", "**/*.pyi",
         "xml-scores-examples/cello_suite_1_violin.xml",
         "xml-scores-examples/Symphony_5th_1Mov.xml"]},
     include_package_data=True,
