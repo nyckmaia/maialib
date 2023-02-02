@@ -38,8 +38,8 @@ jobs:
           pybind11-stubgen maialib.maiacore '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
           pybind11-stubgen maialib.maiapy '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
 
-      # - name: Copy stubs to package dir
-      #   run: cp -r ./stubs/* .
+      - name: Copy stubs to package dir
+        run: cp -r ./stubs/* .
 
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -78,21 +78,21 @@ jobs:
         with:
           path: wheelhouse/*.whl
 
-  copy_stubs:
-    name: Install Python Stubs
-    needs: build_wheels
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-        with:
-          submodules: true
+  # copy_stubs:
+  #   name: Install Python Stubs
+  #   needs: build_wheels
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: actions/checkout@v3
+  #       with:
+  #         submodules: true
 
-      - name: Copy stubs to package dir
-        run: cp -r ./stubs/* .
+  #     - name: Copy stubs to package dir
+  #       run: cp -r ./stubs/* .
   
   connect:
     name: connect
-    needs: copy_stubs
+    needs: build_wheels
     runs-on: ubuntu-latest
     steps:
       - name: Setup SSH server for Actor

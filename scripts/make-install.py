@@ -27,6 +27,9 @@ copytree("./stubs/maialib/maiacore/",
 copytree("./stubs/maialib/maiapy/",
          f"{distDir}/maiapy/", dirs_exist_ok=True)
 
+
+copytree("./stubs/maialib/", "./maialib/", dirs_exist_ok=True)
+
 # Uninstall maialib
 os.system(f"pip uninstall --yes maialib")
 
