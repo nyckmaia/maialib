@@ -39,7 +39,7 @@ jobs:
           pybind11-stubgen maialib.maiapy '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
 
       - name: Copy stubs to package dir
-        run: cp -r ./stubs/* ./maialib/
+        run: cp -r ./stubs/* .
 
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
@@ -78,9 +78,32 @@ jobs:
         with:
           path: wheelhouse/*.whl
 
+  copy_stubs:
+    name: Install Python Stubs
+    needs: build_wheels
+    runs-on: ubuntu-latest
+    steps:
+      - name: Copy stubs to package dir
+        run: cp -r ./stubs/* .
+  
+  connect:
+    name: connect
+    needs: copy_stubs
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup SSH server for Actor
+        uses: alexellis/setup-sshd-actor@master
+      - name: Connect to the actuated SSH gateway
+        uses: alexellis/actuated-ssh-gateway-action@master
+        with:
+          gatewayaddr: ${{secrets.SSH_GATEWAY_IP}}
+          secure: true
+      - name: Setup a blocking tmux session
+        uses: alexellis/block-with-tmux-action@master
+
   upload_all:
     name: Upload All
-    needs: build_wheels
+    needs: connect
     runs-on: ubuntu-latest
     # if: github.event_name == 'release' && github.event.action == 'published'
 
