@@ -46,15 +46,15 @@ jobs:
     # needs: generate_stubs
     runs-on: ${{ matrix.os }}
     env:
-      CIBW_BUILD: cp38-manylinux_x86_64
+      CIBW_BUILD: cp38-manylinux_x86_64 cp310-win_amd64
       # Skip CPython 3.6 and CPython 3.7
       # CIBW_SKIP: cp36-* cp37-* cp39-* cp310-* cp311-* pp36-* pp37-* pp38-* pp39-* pp310-* pp311-*
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        # os: [ubuntu-latest]
         # os: [macos-latest]
-        # os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v3
@@ -74,10 +74,7 @@ jobs:
           pybind11-stubgen maialib.maiapy '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
 
       - name: Copy stubs to package dir
-        run: |
-          echo "----- Estou na pasta ----"
-          pwd
-          cp -r ./stubs/* .
+        run: cp -r ./stubs/* .
 
       - uses: pypa/cibuildwheel@v2.11.3
         env:
