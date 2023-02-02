@@ -32,12 +32,11 @@ def getScoreSamplePath(sampleName: str) -> str:
         raise RuntimeError(
             f"Invalid sample name: {sampleName}.\nThe valid keywords are: {validInputs}")
 
-    xmlFileName = ""
-    match sampleName:
-        case "Bach-Solo":
-            xmlFileName = "cello_suite_1_violin.xml"
-        case "Beethoven-Orchestra":
-            xmlFileName = "Symphony_5th_1Mov.xml"
+    # Get the actual XML file name for the given 'alias'
+    xmlFileName = {
+        "Bach-Solo": "cello_suite_1_violin.xml",
+        "Beethoven-Orchestra": "Symphony_5th_1Mov.xml"
+    }[sampleName]
 
     with resources.path('maialib', 'xml-scores-examples') as data_path:
         default_config_path = data_path / xmlFileName
