@@ -87,9 +87,8 @@ jobs:
         #   output-dir: wheelhouse
           # config-file: "{package}/pyproject.toml"
       
-      # - uses: actions/checkout@v1
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v1
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v1
 
       - name: Verify clean directory
         run: git diff --exit-code
