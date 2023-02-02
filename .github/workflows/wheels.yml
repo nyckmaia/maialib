@@ -93,25 +93,10 @@ jobs:
 
   #     - name: Copy stubs to package dir
   #       run: cp -r ./stubs/* .
-  
-  # connect:
-  #   name: connect
-  #   needs: build_wheels
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Setup SSH server for Actor
-  #       uses: alexellis/setup-sshd-actor@master
-  #     - name: Connect to the actuated SSH gateway
-  #       uses: alexellis/actuated-ssh-gateway-action@master
-  #       with:
-  #         gatewayaddr: ${{secrets.SSH_GATEWAY_IP}}
-  #         secure: true
-  #     - name: Setup a blocking tmux session
-  #       uses: alexellis/block-with-tmux-action@master
 
   upload_all:
     name: Upload All
-    needs: connect
+    needs: build_wheels
     runs-on: ubuntu-latest
     # if: github.event_name == 'release' && github.event.action == 'published'
 
