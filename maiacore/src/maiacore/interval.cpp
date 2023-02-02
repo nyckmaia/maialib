@@ -55,7 +55,8 @@ int Interval::whiteKeyDistance() const {
     const auto foundSecond =
         std::find(c_pianoWhiteKeys.begin(), c_pianoWhiteKeys.end(), secondNoteWhiteKey);
 
-    return std::distance(foundFirst, foundSecond);
+    const auto distance = std::distance(foundFirst, foundSecond);
+    return static_cast<int>(distance);
 }
 
 std::pair<std::string, bool> Interval::analyse() const {
@@ -312,7 +313,7 @@ int Interval::getDiatonicInterval(const bool useSingleOctave, const bool absolut
 }
 
 int Interval::getDiatonicSteps(const bool useSingleOctave, const bool absoluteValue) const {
-    const int diatonicScaleSize = (absoluteValue) ? c_C_diatonicScale.size()
+    const int diatonicScaleSize = (absoluteValue) ? static_cast<int>(c_C_diatonicScale.size())
                                                   : static_cast<int>(c_C_diatonicScale.size()) * -1;
 
     // Get the diatonic values of each interval note

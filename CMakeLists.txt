@@ -16,9 +16,13 @@ if(NOT STATIC_LIB AND NOT SHARED_LIB AND NOT PYBIND_LIB)
     set(STATIC_LIB ON)
 endif()
 
-set(CMAKE_CXX_FLAGS "-Wall -Wextra")
+set(CMAKE_CXX_FLAGS "-Wall")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 --coverage")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3")
+
+if(NOT WIN32)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
+endif()
 
 # Add all maiacore source files
 file(GLOB maiacore_src
@@ -104,6 +108,14 @@ if(PYBIND_LIB)
 
             set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT") 
             set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT")
+
+            set(CMAKE_C_FLAGS_DEBUG     "${CMAKE_C_FLAGS_DEBUG} /MTd")
+            set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+
+            set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} /MT")
+            set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+
+            # set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
 
             add_definitions(-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE)
 
