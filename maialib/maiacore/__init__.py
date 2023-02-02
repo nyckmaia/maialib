@@ -1,4 +1,6 @@
-try:
+import platform
+
+if platform.system() != "Windows":
     from .maiacore import *
-except:
+else:
     from .Release.maiacore import *

@@ -12,7 +12,6 @@ distDir = "dist"
 os.system(f"pip install --user {distDir}/")
 
 print(f"{color.OKGREEN}Generating Python Module Stubs...{color.ENDC}")
-# genStubsCommand = "coverage run -m pybind11_stubgen maialib --output-dir=\"./stubs\" --root-module-suffix="" --ignore-invalid=all --no-setup-py"
 genStubsCommand = "pybind11-stubgen maialib --output-dir=\"./stubs\" --root-module-suffix="" --ignore-invalid=all --no-setup-py"
 os.system(genStubsCommand)
 genStubsCommand = "pybind11-stubgen maialib.maiacore --output-dir=\"./stubs\" --root-module-suffix="" --ignore-invalid=all --no-setup-py"

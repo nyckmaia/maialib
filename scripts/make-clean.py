@@ -1,6 +1,7 @@
 import sys
 import os
 from shutil import rmtree
+import glob
 from terminal_colors import *
 
 numArgs = len(sys.argv)
@@ -26,12 +27,22 @@ if (cleanOption == "all"):
     rmtree("scripts/__pycache__", True)
     rmtree("./stubs", True)
     rmtree("./code-coverage", True)
+    rmtree("./wheelhouse", True)
 
     if os.path.exists("profile.json"):
         os.remove("profile.json")
 
     if os.path.exists(".coverage"):
         os.remove(".coverage")
+
+    # Delete *.pyi files
+    files = glob.glob('./maialib/**/*.pyi', recursive=True)
+
+    for f in files:
+        try:
+            os.remove(f)
+        except OSError as e:
+            print("Error: %s : %s" % (f, e.strerror))
 
     print(f"{color.OKGREEN}Done!{color.ENDC}")
     sys.exit()
