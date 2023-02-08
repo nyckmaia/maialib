@@ -79,8 +79,10 @@ jobs:
       - name: Copy stubs to package dir
         run: cp -r ./stubs/* .
       
-      - name: BEFORE - Setup tmate session
-        uses: mxschmitt/action-tmate@v1
+      - run: sudo touch /continue
+      
+      # - name: BEFORE - Setup tmate session
+      #   uses: mxschmitt/action-tmate@v1
 
       - uses: pypa/cibuildwheel@v2.11.3
         env:
