@@ -52,7 +52,7 @@ jobs:
       CIBW_BUILD: cp38-manylinux_x86_64 cp310-win_amd64
       CIBW_BEFORE_ALL_LINUX: cp -rf ./stubs/* .
       CIBW_BEFORE_ALL_MACOS: cp -rf ./stubs/* .
-      CIBW_BEFORE_ALL_WINDOWS: Copy-Item .\stubs\* . -Recurse -Force
+      CIBW_BEFORE_ALL_WINDOWS: xcopy /e /k /y .\stubs\* .
       # Skip CPython 3.6 and CPython 3.7
       # CIBW_SKIP: cp36-* cp37-* cp39-* cp310-* cp311-* pp36-* pp37-* pp38-* pp39-* pp310-* pp311-*
     strategy:
