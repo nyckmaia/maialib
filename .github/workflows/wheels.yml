@@ -55,9 +55,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest]
+        # os: [ubuntu-latest]
         # os: [macos-latest]
-        # os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest]
 
     steps:
       - uses: actions/checkout@v3
@@ -99,8 +99,8 @@ jobs:
       #   run: git diff --exit-code
       #   shell: bash
 
-      - name: AFTER02 - Setup tmate session
-        uses: mxschmitt/action-tmate@v1
+      # - name: AFTER02 - Setup tmate session
+      #   uses: mxschmitt/action-tmate@v1
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
