@@ -15,38 +15,8 @@ on:
       - published
 
 jobs:
-  # generate_stubs:
-  #   name: Generate Python Stubs
-  #   runs-on: ubuntu-latest
-
-  #   steps:
-  #     - name: Setup Python
-  #       uses: actions/setup-python@v4
-  #       with:
-  #         python-version: '3.10.6'
-
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         submodules: true
-
-  #     - name: Install pybind11-stubgen
-  #       run: python -m pip install pybind11-stubgen
-    
-  #     - name: Install maialib
-  #       run: python -m pip install .
-    
-  #     - name: Generate stubs
-  #       run: | 
-  #         pybind11-stubgen maialib '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
-  #         pybind11-stubgen maialib.maiacore '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
-  #         pybind11-stubgen maialib.maiapy '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
-
-  #     - name: Copy stubs to package dir
-  #       run: cp -r ./stubs/* .
-
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
-    # needs: generate_stubs
     runs-on: ${{ matrix.os }}
     env:
       CIBW_BUILD: cp38-manylinux_x86_64 cp310-win_amd64
@@ -79,57 +49,17 @@ jobs:
           pybind11-stubgen maialib.maiacore '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
           pybind11-stubgen maialib.maiapy '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
 
-      # - name: Copy stubs to package dir
-      #   run: cp -rf ./stubs/* .
-      
-      # - name:  Copy stubs to package dir
-      #   run:   |
-      #          if [ "$RUNNER_OS" == "Linux" ]; then
-      #             cp -rf ./stubs/* .
-      #          elif [ "$RUNNER_OS" == "macOS" ]; then
-      #             cp -rf ./stubs/* .
-      #          elif [ "$RUNNER_OS" == "Windows" ]; then
-      #             Copy-Item .\stubs\* . -Recurse -Force
-      #          else
-      #               echo "$RUNNER_OS not supported"
-      #               exit 1
-      #          fi
-      #   shell: bash
-
       - uses: pypa/cibuildwheel@v2.11.3
         env:
           CIBW_ARCHS_MACOS: auto universal2
-        # with:
-          # package-dir: ./maialib
-        #   output-dir: wheelhouse
-          # config-file: "{package}/pyproject.toml"
-      
-      # - name: AFTER01 - Setup tmate session
-      #   uses: mxschmitt/action-tmate@v1
 
-      # - name: Verify clean directory
-      #   run: git diff --exit-code
-      #   shell: bash
-
-      # - name: AFTER02 - Setup tmate session
+      # - name: Setup tmate session
       #   uses: mxschmitt/action-tmate@v1
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
         with:
           path: wheelhouse/*.whl
-
-  # copy_stubs:
-  #   name: Install Python Stubs
-  #   needs: build_wheels
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: actions/checkout@v3
-  #       with:
-  #         submodules: true
-
-  #     - name: Copy stubs to package dir
-  #       run: cp -r ./stubs/* .
 
   upload_all:
     name: Upload All
