@@ -50,6 +50,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     env:
       CIBW_BUILD: cp38-manylinux_x86_64 cp310-win_amd64
+      CIBW_BEFORE_ALL_LINUX: cp -rf ./stubs/* .
+      CIBW_BEFORE_ALL_MACOS: cp -rf ./stubs/* .
+      CIBW_BEFORE_ALL_WINDOWS: Copy-Item .\stubs\* . -Recurse -Force
       # Skip CPython 3.6 and CPython 3.7
       # CIBW_SKIP: cp36-* cp37-* cp39-* cp310-* cp311-* pp36-* pp37-* pp38-* pp39-* pp310-* pp311-*
     strategy:
@@ -76,13 +79,22 @@ jobs:
           pybind11-stubgen maialib.maiacore '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
           pybind11-stubgen maialib.maiapy '--output-dir=./stubs/' '--root-module-suffix=' '--ignore-invalid=all' '--no-setup-py'
 
-      - name: Copy stubs to package dir
-        run: cp -r ./stubs/* .
+      # - name: Copy stubs to package dir
+      #   run: cp -rf ./stubs/* .
       
-      - run: sudo touch /continue
-      
-      # - name: BEFORE - Setup tmate session
-      #   uses: mxschmitt/action-tmate@v1
+      # - name:  Copy stubs to package dir
+      #   run:   |
+      #          if [ "$RUNNER_OS" == "Linux" ]; then
+      #             cp -rf ./stubs/* .
+      #          elif [ "$RUNNER_OS" == "macOS" ]; then
+      #             cp -rf ./stubs/* .
+      #          elif [ "$RUNNER_OS" == "Windows" ]; then
+      #             Copy-Item .\stubs\* . -Recurse -Force
+      #          else
+      #               echo "$RUNNER_OS not supported"
+      #               exit 1
+      #          fi
+      #   shell: bash
 
       - uses: pypa/cibuildwheel@v2.11.3
         env:
