@@ -1,6 +1,7 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "maiacore/config.h"
 #include "maiacore/constants.h"
 
 namespace py = pybind11;
@@ -49,4 +50,11 @@ void Constants(const py::module &m) {
         .value("N1024TH_DOT_DOT", Duration::N1024TH_DOT_DOT)
         .value("N1024TH_DOT", Duration::N1024TH_DOT)
         .value("N1024TH", Duration::N1024TH);
+
+    py::enum_<TuningSystem>(m, "TuningSystem")
+        .value("EQUAL_TEMPERAMENT", TuningSystem::EQUAL_TEMPERAMENT)
+        .value("JUST_INTONATION", TuningSystem::JUST_INTONATION)
+        .value("PYTHAGOREAN_TUNING", TuningSystem::PYTHAGOREAN_TUNING)
+        .value("MEANTONE_TEMPERAMENT", TuningSystem::MEANTONE_TEMPERAMENT)
+        .value("WELL_TEMPERAMENT", TuningSystem::WELL_TEMPERAMENT);
 }

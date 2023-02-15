@@ -2501,6 +2501,11 @@ const pugi::xpath_node_set Helper::getNodeSet(const pugi::xml_document& doc,
     return doc.select_nodes(xPath.c_str());
 }
 
+int Helper::frequencies2cents(const float freq_A, const float freq_B) {
+    const float cents = 1200.0f * log2f(freq_B / freq_A);
+    return static_cast<int>(cents);
+}
+
 const std::string Helper::generateIdentation(int identPosition, int identSize) {
     std::string ident;
 

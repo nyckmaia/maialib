@@ -291,6 +291,8 @@ void ChordClass(const py::module& m) {
 
     cls.def("sortNotes", &Chord::sortNotes);
 
+    cls.def("toCents", &Chord::toCents);
+
     cls.def(py::self == py::self);
     cls.def(py::self != py::self);
     cls.def(py::self + py::self);

@@ -4,6 +4,7 @@
 #include <stdexcept>
 
 #include "maiacore/constants.h"
+#include "maiacore/helper.h"
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
 
@@ -924,3 +925,7 @@ bool Interval::isAnyOctaveSixth() const { return getDiatonicInterval(true, true)
 bool Interval::isAnyOctaveSeventh() const { return getDiatonicInterval(true, true) == 7; }
 
 bool Interval::isAnyOctaveOctave() const { return getDiatonicInterval(true, true) == 1; }
+
+int Interval::toCents() const {
+    return Helper::frequencies2cents(_note[0].getFrequency(), _note[1].getFrequency());
+}

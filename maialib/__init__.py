@@ -1,2 +1,4 @@
 from .maiacore import *
-from .maiapy import *
+from .maiapy.plotPartsActivity import *
+from .maiapy.other import *
+from .maiapy.plots import *

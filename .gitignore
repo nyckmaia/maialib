@@ -9,6 +9,8 @@
 .coverage
 stubs/
 *.pyc
+.mypy_cache/
+**/.mypy_cache/
 
 # Prerequisites
 *.d

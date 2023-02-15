@@ -2,6 +2,8 @@ import maialib as ml
 import seaborn as sns
 import matplotlib.pyplot as plt
 
+__all__ = ["testFunc", "testPlot"]
+
 
 def testFunc():
     return ml.Note("C4")

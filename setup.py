@@ -52,6 +52,7 @@ class CMakeBuild(build_ext):
             f"-DPYTHON_EXECUTABLE={sys.executable}",
             f"-DCMAKE_BUILD_TYPE={cfg}",  # not used on MSVC, but no harm
             f"-DPYBIND_LIB=ON",
+            f"-DSQLITECPP_RUN_CPPLINT=OFF"
         ]
         build_args = []
         # Adding CMake arguments set as environment variable
@@ -141,7 +142,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="0.0.26",
+    version="0.0.27",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate sheet music data",

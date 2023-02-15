@@ -1,5 +1,7 @@
 #include <pybind11/pybind11.h>
 
+#include "maiacore/config.h"
+
 #define STRINGIFY(x) #x
 #define MACRO_STRINGIFY(x) STRINGIFY(x)
 
@@ -16,6 +18,7 @@ void BarlineClass(const py::module &);
 void IntervalClass(const py::module &);
 void HelperClass(const py::module &);
 void Constants(const py::module &);
+void Config(py::module &);
 
 PYBIND11_MODULE(maiacore, m) {
     m.doc() = "This is a Python binding of C++ Maia Library";
@@ -31,10 +34,18 @@ PYBIND11_MODULE(maiacore, m) {
     IntervalClass(m);
     HelperClass(m);
     ScoreCollectionClass(m);
+    Config(m);
 
 #ifdef MAIALIB_VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(MAIALIB_VERSION_INFO);
 #else
     m.attr("__version__") = "dev";
 #endif
+}
+
+namespace py = pybind11;
+
+void Config(py::module &m) {
+    m.def("getTuningSystem", &getTuningSystem);
+    m.def("setTuningSystem", &setTuningSystem, py::arg("tuningSystem"));
 }

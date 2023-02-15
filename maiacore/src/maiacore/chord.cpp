@@ -1599,6 +1599,17 @@ Chord Chord::getCloseChord(const bool enharmonyNotes) {
 
 void Chord::sortNotes() { std::sort(_originalNotes.begin(), _originalNotes.end()); }
 
+std::vector<int> Chord::toCents() const {
+    const int numIntervals = _originalNotes.size() - 1;
+    std::vector<int> centsVec(numIntervals, 0);
+    for (int i = 0; i < numIntervals; i++) {
+        const Interval interval(_originalNotes[i], _originalNotes[i + 1]);
+        centsVec[i] = interval.toCents();
+    }
+
+    return centsVec;
+}
+
 void printHeap(const NoteDataHeap& heap) {
     for (const auto& noteData : heap) {
         std::cout << "printHeap: " << noteData.note.getPitch() << " ";

@@ -1,6 +1,7 @@
 import os
 import platform
-from shutil import copy2, copytree
+from shutil import copytree
+from pathlib import Path
 
 from terminal_colors import *
 
@@ -11,22 +12,21 @@ distDir = "dist"
 # Link the install directory in the Python 'site-packages' folder
 os.system(f"pip install --user {distDir}/")
 
-print(f"{color.OKGREEN}Generating Python Module Stubs...{color.ENDC}")
-genStubsCommand = "pybind11-stubgen maialib --output-dir=\"./stubs\" --root-module-suffix="" --ignore-invalid=all --no-setup-py"
+stubsPath = Path.cwd() / "stubs"
+print(f"{color.OKGREEN}Generating Python Module Stubs from Maiacore...{color.ENDC}")
+genStubsCommand = f"pybind11-stubgen maialib.maiacore --output-dir={stubsPath} --root-module-suffix="" --ignore-invalid=all --no-setup-py"
 os.system(genStubsCommand)
-genStubsCommand = "pybind11-stubgen maialib.maiacore --output-dir=\"./stubs\" --root-module-suffix="" --ignore-invalid=all --no-setup-py"
+
+print(f"{color.OKGREEN}Generating Python Module Stubs from Maiapy...{color.ENDC}")
+maiapyPath = Path.cwd() / "maialib" / "maiapy"
+genStubsCommand = f"stubgen {maiapyPath} -o {stubsPath}"
 os.system(genStubsCommand)
-genStubsCommand = "pybind11-stubgen maialib.maiapy --output-dir=\"./stubs\" --root-module-suffix="" --ignore-invalid=all --no-setup-py"
-os.system(genStubsCommand)
+
+
+print(f"{color.OKGREEN}Copy stubs to dist folder...{color.ENDC}")
 
 # Copy stubs files to the 'install package' folder
-copy2("./stubs/maialib/__init__.pyi", f"{distDir}/__init__.pyi")
-copytree("./stubs/maialib/maiacore/",
-         f"{distDir}/maiacore/", dirs_exist_ok=True)
-copytree("./stubs/maialib/maiapy/",
-         f"{distDir}/maiapy/", dirs_exist_ok=True)
-
-
+copytree("./stubs/maialib/", f"{distDir}/maialib/", dirs_exist_ok=True)
 copytree("./stubs/maialib/", "./maialib/", dirs_exist_ok=True)
 
 # Uninstall maialib

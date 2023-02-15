@@ -13,6 +13,10 @@ All notable changes to this project will be documented in this file.
 - Add `Duration` enum class Python wrapper
 - Continuous Integration & Continuous Delivery through Github Actions to Pypi
 - Add Microsoft Visual Studio Compiler (MSVC) compatibility
+- Uses Clang++ as a default compiler on Windows when execute `make`
+- `Helper Class`: Add .frequencies2cents() method
+- `Interval Class`: Add .toCents() method
+- `Chord Class`: Add .toCents() methods
 - Add `Score::getComposerName()` method
 
 ### Improved

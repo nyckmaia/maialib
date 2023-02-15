@@ -101,4 +101,7 @@ void HelperClass(const py::module& m) {
     //--------------------- //
     cls.def_static("pitch2number", &Helper::pitch2number, py::arg("pitch"),
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+
+    cls.def_static("frequencies2cents", &Helper::frequencies2cents, py::arg("freq_A"),
+                   py::arg("freq_B"));
 }

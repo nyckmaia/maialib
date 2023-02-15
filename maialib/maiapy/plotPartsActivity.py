@@ -10,12 +10,14 @@
 # To get more information about it:
 # https://www.researchgate.net/publication/321335427_Uma_analise_da_organizacao_e_fragmentacao_de_Farben_de_Arnold_Schoenberg
 
-import maialib as ml
+import maialib.maiacore as mc
 import pandas as pd
 import plotly.express as px
 
+__all__ = ["plotPartsActivity"]
 
-def plotPartsActivity(score: ml.Score, **kwargs) -> None:
+
+def plotPartsActivity(score: mc.Score, **kwargs) -> None:
     """Plots a timeline graph showing the musical activity of each score instrument
 
     Args:

@@ -1001,6 +1001,13 @@ class Chord {
     /**
      * @brief
      *
+     * @return std::vector<int>
+     */
+    std::vector<int> toCents() const;
+
+    /**
+     * @brief
+     *
      * @param index
      * @return const Note&
      */

@@ -1,5 +1,7 @@
 from importlib import resources
 
+__all__ = ["getScoreSamplePath"]
+
 
 def getScoreSamplePath(sampleName: str) -> str:
     """Get a maialib internal XML sample file

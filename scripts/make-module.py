@@ -26,7 +26,7 @@ path.mkdir(parents=True, exist_ok=True)
 CppCompiler = "clang++" if myOS == "Windows" else "g++"
 
 # Base CMake command to build the python module
-cmakeCommand = f"cmake -G \"Unix Makefiles\" -B {path} -S . -D PYBIND_LIB=ON -DCMAKE_BUILD_TYPE={buildType} -DCMAKE_CXX_COMPILER={CppCompiler}"
+cmakeCommand = f"cmake -G \"Unix Makefiles\" -B {path} -S . -D PYBIND_LIB=ON -DCMAKE_BUILD_TYPE={buildType} -DCMAKE_CXX_COMPILER={CppCompiler} -DSQLITECPP_RUN_CPPLINT=OFF"
 if myOS == "Windows":
     cmakeCommand += ' -DCMAKE_MAKE_PROGRAM="C:/msys64/clang64/bin/mingw32-make.exe"'
 

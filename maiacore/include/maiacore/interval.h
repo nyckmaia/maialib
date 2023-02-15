@@ -721,6 +721,13 @@ class Interval {
     /**
      * @brief
      *
+     * @return int
+     */
+    int toCents() const;
+
+    /**
+     * @brief
+     *
      * @param otherInterval
      * @return true
      * @return false
