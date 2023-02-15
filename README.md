@@ -52,6 +52,7 @@ Now you can explore some `maialib` features like:
 pip install pathlib
 pip install cpplint
 pip install wheel
+pip install mypy
 
 # To generate Python stubs
 pip install pybind11-stubgen

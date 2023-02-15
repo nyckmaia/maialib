@@ -1,9 +1,9 @@
 from importlib import resources
 
-__all__ = ["getScoreSamplePath"]
+__all__ = ["getSampleScorePath"]
 
 
-def getScoreSamplePath(sampleName: str) -> str:
+def getSampleScorePath(sampleName: str) -> str:
     """Get a maialib internal XML sample file
 
     Args:
@@ -23,7 +23,7 @@ def getScoreSamplePath(sampleName: str) -> str:
     Examples of use:
 
     >>> import maialib as ml
-    >>> filePath = ml.getScoreSamplePath("Beethoven-Orchestra")
+    >>> filePath = ml.getSampleScorePath("Beethoven-Orchestra")
     >>> score = ml.Score(filePath)
     >>> score.info()
     """
