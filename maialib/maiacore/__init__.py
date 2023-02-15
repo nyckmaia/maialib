@@ -1,6 +1,4 @@
-import platform as _plt
-
-if _plt.system() != "Windows":
+try:
     from .maiacore import *
-else:
+except:
     from .Release.maiacore import *

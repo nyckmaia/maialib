@@ -34,7 +34,7 @@ PYBIND11_MODULE(maiacore, m) {
     IntervalClass(m);
     HelperClass(m);
     ScoreCollectionClass(m);
-    Config(m);
+    // Config(m);
 
 #ifdef MAIALIB_VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(MAIALIB_VERSION_INFO);

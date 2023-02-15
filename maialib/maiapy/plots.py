@@ -2,14 +2,22 @@ import maialib as ml
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-__all__ = ["testFunc", "testPlot"]
+__all__ = ["testPlot"]
 
 
-def testFunc():
-    return ml.Note("C4")
+def testPlot() -> None:
+    """Maialib test plot
 
+    Args: None
 
-def testPlot():
+    Returns:
+       None
+
+    Example of use:
+
+    >>> testPlot()
+    """
+
     sns.set_theme(style="ticks")
 
     # Load the example dataset for Anscombe's quartet
