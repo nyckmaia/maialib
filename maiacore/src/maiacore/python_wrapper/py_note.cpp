@@ -149,8 +149,9 @@ void NoteClass(const py::module& m) {
 
     cls.def("__hash__", [](const Note& note) {
         const std::string temp01 = note.getSoundingPitch() + note.getType();
-        const int temp02 = note.isNoteOn() | (note.inChord() << 1) | (note.isGraceNote() << 2) |
-                           (note.isTuplet() << 3) | (note.isPitched() << 4);
+        const int temp02 = (int)note.isNoteOn() | ((int)note.inChord() << 1) |
+                           ((int)note.isGraceNote() << 2) | ((int)note.isTuplet() << 3) |
+                           ((int)note.isPitched() << 4);
 
         const std::string temp02Str = std::bitset<8>(temp02).to_string();
 

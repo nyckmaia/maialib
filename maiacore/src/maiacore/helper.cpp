@@ -146,6 +146,7 @@ const std::vector<std::string> Helper::midiNote2pitches(const int midiNote) {
             pitches.push_back(pitch);
         } catch (const std::runtime_error& error) {
             // Nothing to do. Just ignore
+            ignore(error);
         }
     }
 
