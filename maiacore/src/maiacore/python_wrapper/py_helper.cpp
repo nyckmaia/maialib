@@ -104,4 +104,6 @@ void HelperClass(const py::module& m) {
 
     cls.def_static("frequencies2cents", &Helper::frequencies2cents, py::arg("freq_A"),
                    py::arg("freq_B"));
+    cls.def_static("freq2equalTemperament", &Helper::freq2equalTemperament, py::arg("freq"),
+                   py::arg("referenceFreq") = 440.0f);
 }

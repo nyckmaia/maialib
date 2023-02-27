@@ -314,6 +314,22 @@ class Helper {
     static const pugi::xpath_node_set getNodeSet(const pugi::xml_document& doc,
                                                  const std::string& xPath);
 
+    /**
+     * @brief
+     *
+     * @param freq_A
+     * @param freq_B
+     * @return int
+     */
     static int frequencies2cents(const float freq_A, const float freq_B);
+
+    /**
+     * @brief
+     *
+     * @param freq
+     * @param referenceFreq
+     * @return float
+     */
+    static float freq2equalTemperament(const float freq, const float referenceFreq = 440.0f);
 };
 #endif  // HELPERS_H

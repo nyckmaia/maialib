@@ -2516,3 +2516,7 @@ const std::string Helper::generateIdentation(int identPosition, int identSize) {
 
     return ident;
 }
+
+float Helper::freq2equalTemperament(const float freq, const float referenceFreq) {
+    return referenceFreq * powf(2, (round(12.0f * log2f(freq / referenceFreq)) / 12.0f));
+}
