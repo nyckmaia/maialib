@@ -1,4 +1,5 @@
-from importlib import resources
+import os
+import pkg_resources
 
 __all__ = ["getSampleScorePath"]
 
@@ -40,6 +41,6 @@ def getSampleScorePath(sampleName: str) -> str:
         "Beethoven-Orchestra": "Symphony_5th_1Mov.xml"
     }[sampleName]
 
-    with resources.path('maialib', 'xml-scores-examples') as data_path:
-        default_config_path = data_path / xmlFileName
-        return str(default_config_path)
+    xmlDir = pkg_resources.resource_filename("maialib", "xml-scores-examples")
+    fileFullPath = os.path.join(xmlDir, xmlFileName)
+    return fileFullPath

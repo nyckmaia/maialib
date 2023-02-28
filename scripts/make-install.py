@@ -10,7 +10,7 @@ print(f"{color.OKGREEN}Installing Maialib module on Python Kernel v{platform.pyt
 distDir = "dist"
 
 # Link the install directory in the Python 'site-packages' folder
-os.system(f"pip install --user {distDir}/")
+os.system(f"pip install {distDir}/")
 
 stubsPath = Path.cwd() / "stubs"
 print(f"{color.OKGREEN}Generating Python Module Stubs from Maiacore...{color.ENDC}")
@@ -33,6 +33,6 @@ copytree("./stubs/maialib/", "./maialib/", dirs_exist_ok=True)
 os.system(f"pip uninstall --yes maialib")
 
 # Re - install maialib, now with Python stubs
-os.system(f"pip install --user {distDir}/")
+os.system(f"pip install {distDir}/")
 
 print(f"{color.OKGREEN}Maialib Installed on Python kernel v{platform.python_version()} {color.ENDC}")
