@@ -70,7 +70,8 @@ void ScoreClass(const py::module& m) {
 
     cls.def("toXML", &Score::toXML, py::arg("identSize") = 2);
     cls.def("toJSON", &Score::toJSON);
-    cls.def("toFile", &Score::toFile, py::arg("fileName"), py::arg("identSize") = 2);
+    cls.def("toFile", &Score::toFile, py::arg("fileName"), py::arg("compressedXML") = false,
+            py::arg("identSize") = 2);
     cls.def("info", &Score::info,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 

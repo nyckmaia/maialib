@@ -195,6 +195,13 @@ class Measure {
     int getNumber() const;
 
     /**
+     * @brief Get the Clefs object
+     *
+     * @return std::vector<Clef>&
+     */
+    std::vector<Clef>& getClefs();
+
+    /**
      * @brief Get the Clef object
      *
      * @param clefId

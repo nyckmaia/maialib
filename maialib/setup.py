@@ -21,19 +21,15 @@ setup(
     },
     keywords=["music", "score", "sheet music", "analysis"],
     packages=find_packages(),
-    # package_data={
-    #     '': ['*.so', '*.pyd', '__init__.pyi', 'maiacore/__init__.pyi', "xml-scores-examples/cello_suite_1_violin.xml",
-    #          "xml-scores-examples/Symphony_5th_1Mov.xml"]
-    # },
-
-    # package_dir={"": "",
-    #              "": "maiacore",
-    #              "": "maiapy"},
     package_data={"": ['*.so', '*.pyd', '__init__.pyi', 'maiacore/__init__.pyi',
                        "py.typed", "*.pyi", "**/*.pyi",
-                       "xml-scores-examples/cello_suite_1_violin.xml",
-                       "xml-scores-examples/Symphony_5th_1Mov.xml"]},
-
+                       "xml-scores-examples/Bach_Cello_Suite_1.mxl",
+                       "xml-scores-examples/Beethoven_Symphony_5_mov_1.xml",
+                       "xml-scores-examples/Chopin_Fantasie_Impromptu.mxl",
+                       "xml-scores-examples/Dvorak_Symphony_9_mov_4.mxl",
+                       "xml-scores-examples/Mahler_Symphony_8_Finale.mxl",
+                       "xml-scores-examples/Mozart_Requiem_Introitus.mxl",
+                       "xml-scores-examples/Strauss_Also_Sprach_Zarathustra.mxl"]},
 
     include_package_data=True,
     py_modules=["maiacore", "maiapy"],

@@ -68,6 +68,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           path: wheelhouse/*.whl
+          retention-days: 3
 
   upload_all:
     name: Upload All

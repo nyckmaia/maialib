@@ -114,16 +114,24 @@ void Score::loadXMLFile(const std::string& filePath) {
     pugi::xml_parse_result isLoad;
 
     if (fileExtension == "mxl") {
-        LOG_DEBUG("Descompressing the file...");
-
+        // LOG_DEBUG("Decompressing file...");
         miniz_cpp::zip_file file(filePath);
-        const std::string originalName = fileName.substr(0, fileName.size() - 3) + "xml";
-        const std::string fileContent = file.read(originalName);
 
+        // Read the internal META-INF/container.xml file
+        const std::string containerFile = file.read("META-INF/container.xml");
+        pugi::xml_document containerXML;
+        containerXML.load_string(containerFile.c_str());
+
+        const std::string xPathInternalXMLFile = "/container/rootfiles/rootfile";
+
+        const std::string internalXMLFileName =
+            containerXML.select_node(xPathInternalXMLFile.c_str())
+                .node()
+                .attribute("full-path")
+                .value();
+
+        const std::string fileContent = file.read(internalXMLFileName);
         isLoad = _doc.load_string(fileContent.c_str());
-
-        file.~zip_file();
-
     } else {
         // Try to parse the XML file:
         isLoad = _doc.load_file(filePath.c_str());
@@ -135,22 +143,36 @@ void Score::loadXMLFile(const std::string& filePath) {
         return;
     }
 
-    // LOG_DEBUG("Loading file" << std::flush);
-
     // Try to get the main MusicXML nodes:
-    const pugi::xpath_node_set parts = _doc.select_nodes("/score-partwise/part");
-    const pugi::xpath_node_set measures = _doc.select_nodes("/score-partwise/part[1]/measure");
-    const pugi::xpath_node_set notes = _doc.select_nodes("/score-partwise//part//measure//note");
-    const pugi::xpath_node_set partsName =
-        _doc.select_nodes("/score-partwise/part-list//score-part/part-name");
+    const std::string xPathParts = "/score-partwise/part";
+    const std::string xPathMeasures = "/score-partwise/part[1]/measure";
+    const std::string xPathNotes = "/score-partwise//part//measure//note";
+    const std::string xPathPartsName = "/score-partwise/part-list//score-part/part-name";
+    const std::string xPathDivisionsPerQuarterNote =
+        "/score-partwise//part//measure/attributes/divisions";
+    const std::string xPathHaveTypeName = "/score-partwise//part//measure//note/type";
+
+    const pugi::xpath_node_set parts = _doc.select_nodes(xPathParts.c_str());
+    const pugi::xpath_node_set measures = _doc.select_nodes(xPathMeasures.c_str());
+    const pugi::xpath_node_set notes = _doc.select_nodes(xPathNotes.c_str());
+    const pugi::xpath_node_set partsName = _doc.select_nodes(xPathPartsName.c_str());
     const pugi::xpath_node_set divisionsPerQuarterNote =
-        _doc.select_nodes("/score-partwise//part//measure/attributes/divisions");
-    const pugi::xpath_node_set haveTypeName =
-        _doc.select_nodes("/score-partwise//part//measure//note/type");
+        _doc.select_nodes(xPathDivisionsPerQuarterNote.c_str());
+    const pugi::xpath_node_set haveTypeName = _doc.select_nodes(xPathHaveTypeName.c_str());
 
     // Error checking:
-    if (parts.empty() || measures.empty() || partsName.empty() || divisionsPerQuarterNote.empty()) {
-        LOG_ERROR("Unable to locate the MusicXML basic tags");
+    if (parts.empty()) {
+        LOG_ERROR("Unable to locate the MusicXML XPath: " + xPathParts);
+        return;
+    }
+
+    if (measures.empty()) {
+        LOG_ERROR("Unable to locate the MusicXML XPath: " + xPathMeasures);
+        return;
+    }
+
+    if (partsName.empty()) {
+        LOG_ERROR("Unable to locate the MusicXML XPath: " + xPathPartsName);
         return;
     }
 
@@ -167,19 +189,23 @@ void Score::loadXMLFile(const std::string& filePath) {
     _numNotes = notes.size();
 
     // ===== GET THE DIVISIONS PER QUARTER NOTE ===== //
-    const int divisionsPerQuarterNoteSize = divisionsPerQuarterNote.size();
-    std::vector<int> div_vec(divisionsPerQuarterNoteSize, 0);
+    if (divisionsPerQuarterNote.empty()) {
+        _lcmDivisionsPerQuarterNote = 256;
+    } else {
+        const int divisionsPerQuarterNoteSize = divisionsPerQuarterNote.size();
+        std::vector<int> div_vec(divisionsPerQuarterNoteSize, 0);
 
-    for (int d = 0; d < divisionsPerQuarterNoteSize; d++) {
-        const int divisions = divisionsPerQuarterNote[d].node().text().as_int();
-        div_vec[d] = divisions;
+        for (int d = 0; d < divisionsPerQuarterNoteSize; d++) {
+            const int divisions = divisionsPerQuarterNote[d].node().text().as_int();
+            div_vec[d] = divisions;
 
-        // LOG_DEBUG("div_vec[" << d << "]: " << div_vec[d]);
-    }
+            // LOG_DEBUG("div_vec[" << d << "]: " << div_vec[d]);
+        }
 
-    _lcmDivisionsPerQuarterNote = div_vec[0];
-    for (int d = 0; d < divisionsPerQuarterNoteSize; d++) {
-        _lcmDivisionsPerQuarterNote = std::lcm(_lcmDivisionsPerQuarterNote, div_vec[d]);
+        _lcmDivisionsPerQuarterNote = div_vec[0];
+        for (int d = 0; d < divisionsPerQuarterNoteSize; d++) {
+            _lcmDivisionsPerQuarterNote = std::lcm(_lcmDivisionsPerQuarterNote, div_vec[d]);
+        }
     }
 
     // LOG_DEBUG("LCM: " << _lcmDivisionsPerQuarterNote);
@@ -205,12 +231,8 @@ void Score::loadXMLFile(const std::string& filePath) {
     setComposerName(composerName);
 
     // ===== PARSING THE FILE TO THE CLASS MEMBERS ===== //
-
     // For each part 'p'
     for (int p = 0; p < _numParts; p++) {
-        // std::cout << "..." << floor((float(p+1)/float(_numParts))*100.0f) <<
-        // "%" << std::flush;
-
         addPart(_partsName[p]);
 
         const std::string xPathPartList = "/score-partwise/part-list/score-part[@id='P" +
@@ -255,7 +277,6 @@ void Score::loadXMLFile(const std::string& filePath) {
             const int staffLines = atoi(staffLinesNode.node().first_child().value());
             _part[p].setStaffLines(staffLines);
         }
-
         // ===== STEP 2: GET THE PART 'i' TRANSPOSE VALUES ===== //
         const std::string xPathTranspose = xPathPart + "/measure[1]/attributes/transpose";
 
@@ -285,7 +306,12 @@ void Score::loadXMLFile(const std::string& filePath) {
         // Get the part 'p' first measure divisions per quarter note
         const pugi::xpath_node firstMeasureDivisionsPerQuarterNote =
             _doc.select_node(firstMeasure.c_str()).node().select_node("attributes/divisions");
-        const int firstDivisions = firstMeasureDivisionsPerQuarterNote.node().text().as_int();
+
+        const int firstDivisionsTemp = firstMeasureDivisionsPerQuarterNote.node().text().as_int();
+
+        // If the XML file contains the DPQ info, use that information
+        // But if the XML file does not contain this info, use the default value of 256
+        const int firstDivisions = (firstDivisionsTemp != 0) ? firstDivisionsTemp : 256;
 
         // For each measure 'm'
         for (int m = 0; m < _numMeasures; m++) {
@@ -341,11 +367,11 @@ void Score::loadXMLFile(const std::string& filePath) {
             const std::string xPathClefs = xPathMeasure + "/attributes/clef";
             const pugi::xpath_node_set measureClef = _doc.select_nodes(xPathClefs.c_str());
             const int numClefs = measureClef.size();
+            _part[p].getMeasure(m).getClefs().resize(numClefs);
 
             if (numClefs > 0) {
                 _part[p].getMeasure(m).setIsClefChanged(true);
             }
-
             for (int c = 0; c < numClefs; c++) {
                 const std::string sign = measureClef[c].node().child_value("sign");
                 const int line = atoi(measureClef[c].node().child_value("line"));
@@ -356,7 +382,6 @@ void Score::loadXMLFile(const std::string& filePath) {
             // ===== BARLINE CHANGES ===== //
             const std::string xPathBarline = xPathMeasure + "/barline";
             const pugi::xpath_node_set measureBarlines = _doc.select_nodes(xPathBarline.c_str());
-
             for (const auto& barline : measureBarlines) {
                 const std::string barlineLocation = barline.node().attribute("location").value();
                 const std::string barStyle = barline.node().child_value("bar-style");
@@ -373,13 +398,8 @@ void Score::loadXMLFile(const std::string& filePath) {
                     _part[p].getMeasure(m).getBarlineRight().setDirection(barDirection);
                 }
             }
-
             // Get the xPath for all notes inside the measure 'm'
             const std::string xPathNotes = xPathMeasure + "//note";
-
-            //                // Some XML files doesn't have the 'staff' tag
-            //                if (haveStaffTag) {
-            //                xPathNotes.append(staveFilter); }
 
             // Get all notes in this measure 'm'
             const pugi::xpath_node_set nodes = _doc.select_nodes(xPathNotes.c_str());
@@ -438,7 +458,6 @@ void Score::loadXMLFile(const std::string& filePath) {
                 const std::string alterTag = node.child("pitch").child_value("alter");
 
                 std::string alterSymbol;
-
                 if (!alterTag.empty()) {
                     switch (hash(alterTag.c_str())) {
                         case hash("-2"):
@@ -474,14 +493,16 @@ void Score::loadXMLFile(const std::string& filePath) {
                     staff = 0;
                 }
 
-                // LOG_DEBUG("part: " << p << " | measure: " << m << " | note: "
-                // << n);
-
-                // ===== CONSTRUCT A NOTE OBJECT AND STORE IT INSIDE THE SCORE
-                // OBJECT ===== //
+                // ===== CONSTRUCT A NOTE OBJECT AND STORE IT INSIDE THE SCORE ===== //
                 const int divPQN = _part[p].getMeasure(m).getDivisionsPerQuarterNote();
-                const std::string noteType = Helper::ticks2noteType(durationTicks, divPQN).first;
-                const Duration duration = Helper::noteType2duration(noteType);
+                Duration duration;
+                if (isGraceNote) {
+                    duration = Helper::noteType2duration(type);
+                } else {
+                    const std::string noteType =
+                        Helper::ticks2noteType(durationTicks, divPQN).first;
+                    duration = Helper::noteType2duration(noteType);
+                }
                 Note note(pitch, duration, isNoteOn, inChord, transposeDiatonic, transposeChromatic,
                           divPQN);
                 note.setVoice(voice);
@@ -507,7 +528,6 @@ void Score::loadXMLFile(const std::string& filePath) {
                     const std::string beam = beamNodes[b].node().text().as_string();
                     note.addBeam(beam);
                 }
-
                 // ===== TIES ===== //
                 const auto tieNodes = node.select_nodes("tie");
                 numTies = tieNodes.size();
@@ -527,7 +547,6 @@ void Score::loadXMLFile(const std::string& filePath) {
                         node.child("notations").child("slur").attribute("orientation").as_string();
                     note.addSlur(slurType, slurOrientation);
                 }
-
                 // ===== DOTS ===== //
                 const auto dotsNodes = node.select_nodes("dot");
                 numDots = dotsNodes.size();
@@ -551,11 +570,6 @@ void Score::loadXMLFile(const std::string& filePath) {
             }
         }
     }
-
-    // auto end = std::chrono::steady_clock::now();
-    // LOG_INFO("Done in " <<
-    // std::chrono::duration_cast<std::chrono::seconds>(end - start).count() <<
-    // " seconds");
 }
 
 void Score::addPart(const std::string& partName, const int numStaves) {
@@ -931,23 +945,45 @@ const std::string Score::toXML(const int identSize) const {
 
 const std::string Score::toJSON() const { return std::string(); }
 
-void Score::toFile(std::string fileName, const int identSize) const {
-    PROFILE_FUNCTION();
-    std::string fileWithExtension;
-
-    // Error checking:
-    const std::string extension = ".xml";
-    if (fileName.substr(fileName.length() - extension.size()) != extension) {
-        fileName.append(".xml");
+void Score::toFile(std::string fileName, bool compressedXML, const int identSize) const {
+    // Error checking
+    if (fileName.empty()) {
+        LOG_ERROR("fileName cannot be empty");
     }
 
-    std::ofstream file(fileName);
+    // MusicXML file extensions
+    const std::string uncompressExt = ".xml";
+    const std::string compressExt = ".mxl";
 
-    file << toXML(identSize);
+    // Compressed MusicXML flow
+    if (compressedXML) {
+        miniz_cpp::zip_file zipFile;
+        zipFile.writestr(fileName + uncompressExt, toXML(identSize));
+        const std::string fileNameWithExt = fileName + compressExt;
 
-    file.close();
+        std::string containerContent;
+        containerContent.append("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n");
+        containerContent.append("<container>\n");
+        containerContent.append("  <rootfiles>\n");
+        // containerContent.append("    <rootfile full-path=\"" + fileName + uncompressExt +
+        //                         " \" media-type=\"application/vnd.recordare.musicxml+xml\"/>\n");
+        containerContent.append("    <rootfile full-path=\"" + fileName + uncompressExt + "\"/>\n");
+        containerContent.append("  </rootfiles>\n");
+        containerContent.append("</container>\n");
+        zipFile.writestr("META-INF/container.xml", containerContent);
 
-    LOG_INFO("Wrote file: " << fileName);
+        zipFile.save(fileNameWithExt);
+        LOG_INFO("Wrote file: " << fileNameWithExt);
+        return;
+    }
+
+    // Uncompressed MusicXML flow
+    const std::string fileNameWithExt = fileName + uncompressExt;
+    std::ofstream buffer(fileNameWithExt);
+    buffer << toXML(identSize);
+    buffer.close();
+
+    LOG_INFO("Wrote file: " << fileNameWithExt);
 }
 
 bool Score::isValid(void) const { return _isValidXML; }
@@ -1430,6 +1466,8 @@ void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, i
         if (divisions <= 0) {
             LOG_ERROR("Unable to get the 'divisionsPerQuarterNote' value");
         }
+
+        LOG_DEBUG("Nyck 02: " + std::to_string(duration) + " " + std::to_string(divisions));
         type = Helper::ticks2noteType(duration, divisions).first;
     }
 }

@@ -278,9 +278,10 @@ class Score {
      * @brief
      *
      * @param fileName
+     * @param compressedXML
      * @param identSize
      */
-    void toFile(std::string fileName, const int identSize = 2) const;
+    void toFile(std::string fileName, bool compressedXML = false, const int identSize = 2) const;
 
     /**
      * @brief

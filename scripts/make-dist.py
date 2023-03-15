@@ -59,9 +59,12 @@ maiaPyAllFiles = "maialib/maiapy/*.py"
 for filename in glob(maiaPyAllFiles):
     copy2(filename, f'{distDir}/maialib/maiapy/')
 
-# Copy all XML sample files to the 'dist' folder
+# Copy all XML and MXL sample files to the 'dist' folder
 xmlSampleFiles = "maialib/xml-scores-examples/*.xml"
 for filename in glob(xmlSampleFiles):
+    copy2(filename, f'{distDir}/maialib/xml-scores-examples/')
+mxlSampleFiles = "maialib/xml-scores-examples/*.mxl"
+for filename in glob(mxlSampleFiles):
     copy2(filename, f'{distDir}/maialib/xml-scores-examples/')
 
 print(f"{color.OKGREEN}Done!{color.ENDC}")

@@ -1,22 +1,38 @@
 import os
 import pkg_resources
+from enum import Enum
 
-__all__ = ["getSampleScorePath"]
+__all__ = ["getSampleScorePath", "SampleScore"]
 
 
-def getSampleScorePath(sampleName: str) -> str:
+class SampleScore(Enum):
+    Bach_Cello_Suite_1 = "Bach_Cello_Suite_1"
+    Beethoven_Symphony_5th = "Beethoven_Symphony_5th"
+    Chopin_Fantasie_Impromptu = "Chopin_Fantasie_Impromptu"
+    Dvorak_Symphony_9_mov_4 = "Dvorak_Symphony_9_mov_4"
+    Mahler_Symphony_8_Finale = "Mahler_Symphony_8_Finale"
+    Mozart_Requiem_Introitus = "Mozart_Requiem_Introitus"
+    Strauss_Also_Sprach_Zarathustra = "Strauss_Also_Sprach_Zarathustra"
+
+
+def getSampleScorePath(sampleEnum: SampleScore) -> str:
     """Get a maialib internal XML sample file
 
     Args:
-       sampleName (str):  Maialib pre-defined XML sample name
-           - "Bach-Solo"
-           - "Beethoven-Orchestra"
+       sampleEnum (SampleScore):  Maialib SampleScore enum value
+           - Bach_Cello_Suite_1
+           - Beethoven_Symphony_5th
+           - Chopin_Fantasie_Impromptu
+           - Dvorak_Symphony_9_mov_4
+           - Mahler_Symphony_8_Finale
+           - Mozart_Requiem_Introitus
+           - Strauss_Also_Sprach_Zarathustra
 
     Kwargs:
        None
 
     Returns:
-       A full file path (str) to the XML maialib internal sample
+       A full file path (str) to the XML maialib internal sample score
 
     Raises:
        RuntimeError
@@ -24,22 +40,20 @@ def getSampleScorePath(sampleName: str) -> str:
     Examples of use:
 
     >>> import maialib as ml
-    >>> filePath = ml.getSampleScorePath("Beethoven-Orchestra")
+    >>> filePath = ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1)
     >>> score = ml.Score(filePath)
     >>> score.info()
     """
-    # ===== INPUT VALIDATION ===== #
-    validInputs = ["Bach-Solo", "Beethoven-Orchestra"]
-
-    if sampleName not in validInputs:
-        raise RuntimeError(
-            f"Invalid sample name: {sampleName}.\nThe valid keywords are: {validInputs}")
-
     # Get the actual XML file name for the given 'alias'
     xmlFileName = {
-        "Bach-Solo": "cello_suite_1_violin.xml",
-        "Beethoven-Orchestra": "Symphony_5th_1Mov.xml"
-    }[sampleName]
+        SampleScore.Bach_Cello_Suite_1: "Bach_Cello_Suite_1.mxl",
+        SampleScore.Beethoven_Symphony_5th: "Beethoven_Symphony_5_mov_1.xml",
+        SampleScore.Chopin_Fantasie_Impromptu: "Chopin_Fantasie_Impromptu.mxl",
+        SampleScore.Dvorak_Symphony_9_mov_4: "Dvorak_Symphony_9_mov_4.mxl",
+        SampleScore.Mahler_Symphony_8_Finale: "Mahler_Symphony_8_Finale.mxl",
+        SampleScore.Mozart_Requiem_Introitus: "Mozart_Requiem_Introitus.mxl",
+        SampleScore.Strauss_Also_Sprach_Zarathustra: "Strauss_Also_Sprach_Zarathustra.mxl"
+    }[sampleEnum]
 
     xmlDir = pkg_resources.resource_filename("maialib", "xml-scores-examples")
     fileFullPath = os.path.join(xmlDir, xmlFileName)

@@ -173,9 +173,11 @@ bool Measure::keySignatureChanged() const { return _isKeySignatureChanged; }
 
 int Measure::getNumber() const { return _number; }
 
-const Clef& Measure::getClef(const int clefId) const { return _clef[clefId]; }
+std::vector<Clef>& Measure::getClefs() { return _clef; }
 
-Clef& Measure::getClef(const int clefId) { return _clef[clefId]; }
+const Clef& Measure::getClef(const int clefId) const { return _clef.at(clefId); }
+
+Clef& Measure::getClef(const int clefId) { return _clef.at(clefId); }
 
 const Barline& Measure::getBarlineLeft() const { return _barlineLeft; }
 
