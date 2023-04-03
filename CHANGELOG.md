@@ -2,13 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.1.1] - 2023-04-03
+
+### New Features
+
+- Maiacore:
+  - Add: `Part::get/setPartIndex(int)`
+- Maiapy:
+  - Add: `setScoreEditorApp()` and `openScore()` functions
+
+### Improved
+
+- To build maiacore now is necessary v3.26
+- Update GoogleTests to v1.13.0
+- Split `Score::getChords()` and `Score::getChordsDataFrame()` in two methods
+
+### Fixed
+
+- Maiacore:
+  - `Score::getPart(std::string&)` method
+  - `Score::getPartsNames()` now is the standard way to get the all the parts names
+  - `Measure::isEmpty()`
+
+---
+
 ## [v0.0.19] - YYYY-MM-DD
 
 ### API Changes
 
 - Nothing change
-
-### New Features
 
 - Add `Duration` enum class Python wrapper
 - Continuous Integration & Continuous Delivery through Github Actions to Pypi

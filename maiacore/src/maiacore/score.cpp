@@ -70,7 +70,7 @@ void Score::clear() {
     _numParts = 0;
     _numMeasures = 0;
     _numNotes = 0;
-    _partsName.clear();
+    // _partsName.clear();
     _isValidXML = false;
     _haveTypeTag = false;
     _isLoadedXML = false;
@@ -89,12 +89,16 @@ void Score::info() const {
 
     // Get a part name list as a string
     std::string partNameList = "[";
-    for (const auto& [idx, partName] : getPartsName()) {
+    for (const auto& part : _part) {
+        const int idx = part.getPartIndex();
+        const std::string& partName = part.getName();
+
         partNameList.append(partName);
         if (idx != _numParts - 1) {
             partNameList.append(", ");
         }
     }
+
     partNameList.append("]");
 
     LOG_INFO("Parts: " << partNameList);
@@ -178,9 +182,11 @@ void Score::loadXMLFile(const std::string& filePath) {
 
     // Get the all part names:
     const int partsNameSize = partsName.size();
+    std::vector<std::string> partsNameVec;
+    partsNameVec.reserve(partsNameSize);
     for (int n = 0; n < partsNameSize; n++) {
         const pugi::xml_node name = partsName[n].node();
-        _partsName[n] = name.text().as_string();
+        partsNameVec.push_back(name.text().as_string());
     }
 
     // Get the parts and measures amounts:
@@ -233,7 +239,7 @@ void Score::loadXMLFile(const std::string& filePath) {
     // ===== PARSING THE FILE TO THE CLASS MEMBERS ===== //
     // For each part 'p'
     for (int p = 0; p < _numParts; p++) {
-        addPart(_partsName[p]);
+        addPart(partsNameVec[p]);
 
         const std::string xPathPartList = "/score-partwise/part-list/score-part[@id='P" +
                                           std::to_string(p + 1) + "']/midi-instrument";
@@ -577,6 +583,9 @@ void Score::addPart(const std::string& partName, const int numStaves) {
 
     _part.emplace_back(partName, numStaves);
     _part.back().addMeasure(_numMeasures);
+
+    const int partIdx = _part.size() - 1;
+    _part.back().setPartIndex(partIdx);
 }
 
 void Score::removePart(const int partId) {
@@ -615,13 +624,19 @@ void Score::removeMeasure(const int measureStart, const int measureEnd) {
 
 Part& Score::getPart(const int partId) {
     PROFILE_FUNCTION();
+
+    const int partSize = _part.size();
+    if (partId < 0 || partId > (partSize - 1)) {
+        LOG_ERROR("Invalid partId: " + std::to_string(partId));
+    }
+
     return _part.at(partId);
 }
 
 Part& Score::getPart(const std::string& partName) {
     PROFILE_FUNCTION();
     int partIndex = 0;
-    const bool isValid = getPartIndex(partName, partIndex);
+    const bool isValid = getPartIndex(partName, &partIndex);
 
     if (!isValid) {
         printPartNames();
@@ -657,7 +672,7 @@ int Score::getNumNotes() const {
     return numNotes;
 }
 
-const std::vector<std::string> Score::getPartNames() const {
+const std::vector<std::string> Score::getPartsNames() const {
     PROFILE_FUNCTION();
 
     const int numParts = getNumParts();
@@ -1084,7 +1099,7 @@ int Score::countNotes(nlohmann::json& config) const {
     } else if (partsField.is_string()) {
         const std::string partName = partsField.get<std::string>();
         int index = 0;
-        bool found = getPartIndex(partName, index);
+        bool found = getPartIndex(partName, &index);
 
         if (!found) {
             printPartNames();
@@ -1108,7 +1123,7 @@ int Score::countNotes(nlohmann::json& config) const {
             const std::string partName = item.get<std::string>();
 
             int index = 0;
-            bool found = getPartIndex(partName, index);
+            bool found = getPartIndex(partName, &index);
 
             if (!found) {
                 printPartNames();
@@ -1493,7 +1508,7 @@ nlohmann::json Score::selectNotes(nlohmann::json& config) const {
     } else if (partsField.is_string()) {
         const std::string partName = partsField.get<std::string>();
         int index = 0;
-        bool found = getPartIndex(partName, index);
+        bool found = getPartIndex(partName, &index);
 
         if (!found) {
             printPartNames();
@@ -1517,7 +1532,7 @@ nlohmann::json Score::selectNotes(nlohmann::json& config) const {
             const std::string partName = item.get<std::string>();
 
             int index = 0;
-            bool found = getPartIndex(partName, index);
+            bool found = getPartIndex(partName, &index);
 
             if (!found) {
                 printPartNames();
@@ -1685,41 +1700,38 @@ nlohmann::json Score::selectNotes(nlohmann::json& config) const {
 }
 
 void Score::printPartNames() const {
-    // Iterate through all elements in std::map
-    auto it = _partsName.begin();
-    while (it != _partsName.end()) {
-        std::cout << "P" << it->first << ": " << it->second << std::endl;
-        it++;
+    for (const auto& part : _part) {
+        std::cout << "P" << part.getPartIndex() << ": " << part.getName() << std::endl;
     }
 }
 
-const std::map<int, std::string> Score::getPartsName() const { return _partsName; }
+// const std::map<int, std::string> Score::getPartsName() const { return _partsName; }
 
 const std::string Score::getPartName(const int partId) const {
-    const int partsNameSize = _partsName.size();
+    const int partSize = _part.size();
 
-    if (partId < 0 || partId > (partsNameSize - 1)) {
+    if (partId < 0 || partId > (partSize - 1)) {
         LOG_ERROR("partId out of range error: " + std::to_string(partId));
     }
 
-    return _partsName.at(partId);
+    return _part.at(partId).getName();
 }
 
-bool Score::getPartIndex(const std::string& partName, int& index) const {
+bool Score::getPartIndex(const std::string& partName, int* index) const {
     PROFILE_FUNCTION();
 
     bool foundIndex = false;
 
-    const int partsNameSize = _partsName.size();
-    for (int idx = 0; idx < partsNameSize; idx++) {
-        if (_partsName.at(idx) == partName) {
+    const int partSize = _part.size();
+    for (int idx = 0; idx < partSize; idx++) {
+        if (_part.at(idx).getName() == partName) {
             foundIndex = true;
-            index = idx;
+            *index = idx;
         }
     }
 
     if (!foundIndex) {
-        LOG_ERROR("There is no '" + partName + "' part name in this file");
+        LOG_ERROR("Unable to find '" + partName + "' inside this score");
     }
 
     return foundIndex;
@@ -2365,7 +2377,7 @@ void Score::forEachNote(
     } else {
         for (const auto& partName : partNames) {
             int partIdx = 0;
-            const bool isValid = getPartIndex(partName, partIdx);
+            const bool isValid = getPartIndex(partName, &partIdx);
             if (!isValid) {
                 LOG_ERROR("Invalid part name: " + partName);
                 return;
@@ -2410,12 +2422,12 @@ nlohmann::json Score::instrumentFragmentation(nlohmann::json config) {
 
     // If not setted, set the default value = "all part names"
     if (!config.contains("partNames")) {
-        partNames = getPartNames();
+        partNames = getPartsNames();
     } else {
         for (const auto& partNameValue : config["partNames"]) {
             const std::string partName = partNameValue.get<std::string>();
             int idx = 0;
-            bool isValid = getPartIndex(partName, idx);
+            bool isValid = getPartIndex(partName, &idx);
 
             if (!isValid) {
                 LOG_ERROR("Invalid part name: " + partName);
@@ -2874,12 +2886,12 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config) {
 
     // If not setted, set the default value = "all part names"
     if (!config.contains("partNames")) {
-        partNames = getPartNames();
+        partNames = getPartsNames();
     } else {
         for (const auto& partNameValue : config["partNames"]) {
             const std::string partName = partNameValue.get<std::string>();
             int idx = 0;
-            bool isValid = getPartIndex(partName, idx);
+            bool isValid = getPartIndex(partName, &idx);
 
             if (!isValid) {
                 LOG_ERROR("Invalid part name: " + partName);

@@ -1,8 +1,8 @@
-#include <gtest/gtest.h>
+// #include <gtest/gtest.h>
 
-using namespace testing;
+// using namespace testing;
 
-TEST(adolfoSuite01, myTestExample01)
-{
-    EXPECT_EQ(true, true);
-}
+// TEST(adolfoSuite01, myTestExample01)
+// {
+//     EXPECT_EQ(true, true);
+// }

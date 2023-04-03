@@ -10,13 +10,14 @@ class Note;
 
 class Part {
    private:
-    std::vector<Measure> _measure;
-    std::string _partName;
-    std::string _shortName;
-    size_t _numStaves;
+    int _partIndex;
+    int _numStaves;
     int _divisionsPerQuarterNote;
     bool _isPitched;
     int _staffLines;
+    std::string _partName;
+    std::string _shortName;
+    std::vector<Measure> _measure;
     std::vector<int> _midiUnpitched;
 
     void appendNote(const Note& note, const int position = -1, const int staveId = 0);
@@ -34,6 +35,9 @@ class Part {
     ~Part();
 
     void clear();
+
+    int getPartIndex() const;
+    void setPartIndex(int partIdx);
 
     const std::string& getName() const;
     const std::string& getShortName() const;

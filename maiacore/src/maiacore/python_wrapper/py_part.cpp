@@ -20,6 +20,10 @@ void PartClass(const py::module& m) {
             py::arg("divisionsPerQuarterNote") = 256);
 
     cls.def("clear", &Part::clear);
+
+    cls.def("getPartIndex", &Part::getPartIndex);
+    cls.def("setPartIndex", &Part::setPartIndex, py::arg("partIdx"));
+
     cls.def("getName", &Part::getName);
     cls.def("getShortName", &Part::getShortName);
 

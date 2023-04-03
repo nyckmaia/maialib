@@ -118,18 +118,25 @@ void Measure::clear() {
     _metronomeFigure = {};
 }
 
-bool Measure::empty() const {
-    bool isEmpty = false;
+bool Measure::isEmpty() const {
     for (auto& stave : _note) {
-        isEmpty |= stave.empty();
+        if (!stave.empty()) {
+            return false;
+        }
     }
 
-    return isEmpty;
+    return true;
 }
 
 void Measure::addNote(const Note& note, const int staveId, int position) {
     PROFILE_FUNCTION();
-    auto& stave = _note[staveId];
+    const int numStaves = _note.size();
+
+    if (numStaves < staveId + 1) {
+        LOG_ERROR("Invalid 'staveId' = " + std::to_string(staveId) + ". Out of range");
+    }
+
+    auto& stave = _note.at(staveId);
 
     if (position < 0) {
         position = static_cast<int>(stave.size());  // append to the end of the vector
@@ -468,7 +475,7 @@ const std::string Measure::toXML(const int instrumentId, const int identSize) co
         xml.append(_barlineLeft.toXML(identSize));
     }
 
-    if (empty()) {
+    if (isEmpty()) {
         xml.append(Helper::generateIdentation(4, identSize) + "<note>\n");
         xml.append(Helper::generateIdentation(5, identSize) + "<rest measure=\"yes\" />\n");
         xml.append(Helper::generateIdentation(5, identSize) + "<duration>" +
@@ -503,16 +510,18 @@ const std::string Measure::toXML(const int instrumentId, const int identSize) co
     sumDurationVoice1 = std::accumulate(voiceDuration[1].begin(), voiceDuration[1].end(), 0);
 
     for (int s = 0; s < _numStaves; s++) {
-        const int numNotes = static_cast<int>(_note[s].size());
+        const auto& currentStave = _note[s];
+        const int numNotes = static_cast<int>(currentStave.size());
         for (int n = 0; n < numNotes; n++) {
-            if (s == 0 && haveAnyNoteOn && _note[s][n].getVoice() != _note[s][n - 1].getVoice()) {
+            if (s == 0 && haveAnyNoteOn &&
+                currentStave[n].getVoice() != currentStave[n - 1].getVoice()) {
                 xml.append(Helper::generateIdentation(3, identSize) + "<backup>\n");
                 xml.append(Helper::generateIdentation(4, identSize) + "<duration>" +
                            std::to_string(sumDurationVoice1) + "</duration>\n");
                 xml.append(Helper::generateIdentation(3, identSize) + "</backup>\n");
             }
 
-            xml.append(_note[s][n].toXML(instrumentId, identSize));
+            xml.append(currentStave[n].toXML(instrumentId, identSize));
         }
     }
 

@@ -1,8 +1,53 @@
 import os
 import pkg_resources
 from enum import Enum
+import platform
+import subprocess
+import maialib as ml
 
-__all__ = ["getSampleScorePath", "SampleScore"]
+__all__ = ["getSampleScorePath", "SampleScore",
+           "setScoreEditorApp", "getScoreEditorApp", "openScore"]
+
+_scoreEditorApp = ""
+
+
+def setScoreEditorApp(executableFullPath: str) -> None:
+    """Set the full path to the installed score editor app
+
+    Args:
+       executableFullPath (str):  Score editor full path
+       Example: "C:/path/to/MuseScore"
+
+    Examples of use:
+
+    >>> import maialib as ml
+    >>> ml.setScoreEditorApp("C:/path/to/MuseScore.exe")
+    >>> ml.setScoreEditorApp("/Users/Applications/MuseScore/MuseScore4")
+    """
+    global _scoreEditorApp
+
+    if (os.path.isfile(executableFullPath)):
+        _scoreEditorApp = executableFullPath
+    else:
+        raise ValueError('Invalid executable full path')
+
+
+def getScoreEditorApp() -> str:
+    global _scoreEditorApp
+    return _scoreEditorApp
+
+
+def openScore(score: ml.Score) -> None:
+    score.toFile("temp")
+    global _scoreEditorApp
+
+    if not _scoreEditorApp:
+        raise RuntimeError(
+            "Please, set your installed music score editor using the 'setScoreEditorApp' function")
+
+    print(f"Opening Score Editor App: {_scoreEditorApp}")
+    ret = subprocess.Popen([_scoreEditorApp, "temp.xml"])
+    ret.wait()
 
 
 class SampleScore(Enum):

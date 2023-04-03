@@ -18,7 +18,10 @@ endif()
 enable_testing()
 
 # ===== GOOGLE TESTS ===== #
-add_subdirectory(googletest)
+# add_definitions(-D_ITERATOR_DEBUG_LEVEL=0) 
+
+set(gtest_force_shared_crt ON CACHE BOOL "Always use msvcrt.dll" FORCE)
+add_subdirectory(googletest-1.13.0)
 
 add_executable(${PROJECT_NAME} 
     ${PROJECT_SOURCE_DIR}/src/main.cpp
@@ -35,15 +38,40 @@ target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/include/ext
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/include/external/pugi)
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/external/sqlitecpp/include)
 
-include_directories(${PROJECT_NAME} PUBLIC ../maiacore/external/sqlitecpp/sqlite3)
-include_directories(${PROJECT_NAME} PUBLIC ../maiacore/external/sqlitecpp/src)
+include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/external/sqlitecpp/sqlite3)
+include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/external/sqlitecpp/src)
 
 if(WIN32)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/Debug)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/Debug/maiacore/external/sqlitecpp)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/Debug/maiacore/external/sqlitecpp/sqlite3)
+    if(MSYS OR MINGW OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+        message(STATUS "===> Selected Windows Compiler: MSYS or MINGW or Clang")
+        if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+            # target_link_libraries(${PROJECT_NAME} PRIVATE -static -fuse-ld=lld -lwinpthread SQLiteCpp sqlite3)
+            target_link_libraries(${PROJECT_NAME} PRIVATE gtest gtest_main -static -fuse-ld=lld SQLiteCpp sqlite3)
+        else()
+            target_link_libraries(${PROJECT_NAME} PRIVATE gtest gtest_main -static-libgcc -static-libstdc++ -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive SQLiteCpp sqlite3)
+        endif()
+    elseif(MSVC)
+        message(STATUS "===> Selected Windows Compiler: MSVC")
 
-    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore gtest SQLiteCpp sqlite3)
+        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT") 
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT")
+
+        set(CMAKE_C_FLAGS_DEBUG     "${CMAKE_C_FLAGS_DEBUG} /MTd")
+        set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
+
+        set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} /MT")
+        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
+
+        # set_property(TARGET ${PROJECT_NAME} PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded")
+
+        add_definitions(-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE)
+        target_link_libraries(${PROJECT_NAME} PRIVATE SQLiteCpp sqlite3)
+    else()
+        message(FALTAL "===> UNABLE TO FIND A WINDOWS COMPILER")
+    endif()
 elseif(APPLE)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/Debug)
     target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/Debug/maiacore/external/sqlitecpp)

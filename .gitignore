@@ -12,6 +12,7 @@ stubs/
 *.pyi
 .mypy_cache/
 **/.mypy_cache/
+temp.xml
 
 # Prerequisites
 *.d

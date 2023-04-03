@@ -46,7 +46,7 @@ if(STATIC_LIB)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external/pugi)
 
-    add_subdirectory(maiacore/external/sqlitecpp)
+    add_subdirectory(maiacore/external/sqlitecpp SYSTEM)
 
     target_link_libraries(${PROJECT_NAME} SQLiteCpp sqlite3 pthread dl)
 endif()
@@ -63,7 +63,7 @@ if(SHARED_LIB)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external/pugi)
 
-    add_subdirectory(maiacore/external/sqlitecpp)
+    add_subdirectory(maiacore/external/sqlitecpp SYSTEM)
 
     target_link_libraries(${PROJECT_NAME} SQLiteCpp sqlite3 pthread dl)
 endif()
@@ -73,7 +73,7 @@ if(PYBIND_LIB)
     # Minimal supported SDK version
     set(CMAKE_OSX_DEPLOYMENT_TARGET 10.15)
 
-    add_subdirectory(maiacore/external/pybind11)
+    add_subdirectory(maiacore/external/pybind11 SYSTEM)
 
     # Add all python_wrapper source files
     file(GLOB python_wrapper_src
@@ -94,16 +94,17 @@ if(PYBIND_LIB)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external)
     target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${PROJECT_SOURCE_DIR}/maiacore/include/external/pugi)
 
-    add_subdirectory(maiacore/external/sqlitecpp)
+    add_subdirectory(maiacore/external/sqlitecpp SYSTEM)
 
     target_compile_definitions(${PROJECT_NAME} PRIVATE MAIALIB_VERSION_INFO=${MAIALIB_VERSION_INFO})
 
     message("=====> GENERATING PYBIND LIBRARY <=====")
     if(WIN32)
-        if(MSYS OR MINGW)
-            message(STATUS "===> Selected Windows Compiler: MSYS or MINGW")
+        if(MSYS OR MINGW OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+            message(STATUS "===> Selected Windows Compiler: MSYS or MINGW or Clang")
             if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-                target_link_libraries(${PROJECT_NAME} PRIVATE -static -fuse-ld=lld -lwinpthread SQLiteCpp sqlite3)
+                # target_link_libraries(${PROJECT_NAME} PRIVATE -static -fuse-ld=lld -lwinpthread SQLiteCpp sqlite3)
+                target_link_libraries(${PROJECT_NAME} PRIVATE -static -fuse-ld=lld SQLiteCpp sqlite3)
             else()
                 target_link_libraries(${PROJECT_NAME} PRIVATE -static-libgcc -static-libstdc++ -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive SQLiteCpp sqlite3)
             endif()

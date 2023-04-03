@@ -45,7 +45,7 @@ void ScoreClass(const py::module& m) {
     cls.def("getNumParts", &Score::getNumParts);
     cls.def("getNumMeasures", &Score::getNumMeasures);
     cls.def("getNumNotes", &Score::getNumNotes);
-    cls.def("getPartNames", &Score::getPartNames);
+    cls.def("getPartsNames", &Score::getPartsNames);
     cls.def("getTitle", &Score::getTitle);
 
     cls.def("setTitle", &Score::setTitle, py::arg("scoreTitle"));
@@ -79,8 +79,7 @@ void ScoreClass(const py::module& m) {
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("xPathCountNodes", &Score::xPathCountNodes, py::arg("xPath"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("getPartsName", &Score::getPartsName,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+
     cls.def("getPartName", &Score::getPartName, py::arg("partId"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
@@ -98,8 +97,10 @@ void ScoreClass(const py::module& m) {
     cls.def("instrumentFragmentation", &Score::instrumentFragmentation,
             py::arg("config") = nlohmann::json(),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("getChords", &Score::getChords, py::arg("config") = nlohmann::json(),
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def(
-        "getChords",
+        "getChordsDataFrame",
         [](Score& score, nlohmann::json config) {
             // Import Pandas module
             py::object Pandas = py::module_::import("pandas");

@@ -127,7 +127,7 @@ void MeasureClass(const py::module& m) {
 
     cls.def("info", &Measure::info,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("empty", &Measure::empty);
+    cls.def("isEmpty", &Measure::isEmpty);
     cls.def("getEmptyDurationTicks", &Measure::getEmptyDurationTicks);
     cls.def("setDivisionsPerQuarterNote", &Measure::setDivisionsPerQuarterNote);
     cls.def("getDivisionsPerQuarterNote", &Measure::getDivisionsPerQuarterNote);

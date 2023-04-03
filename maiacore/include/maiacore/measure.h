@@ -470,7 +470,7 @@ class Measure {
      * @return true
      * @return false
      */
-    bool empty() const;
+    bool isEmpty() const;
 
     /**
      * @brief Get the Empty Duration Ticks object

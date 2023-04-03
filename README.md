@@ -39,7 +39,7 @@ Now you can explore some `maialib` features like:
 #### Applications:
 
 - C++17 compatible compiler
-- CMake 3.8
+- CMake 3.26
 - Python 3.8
 - Make
 - Doxygen (Optional: To build documentation)

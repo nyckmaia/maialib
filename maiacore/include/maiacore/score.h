@@ -24,7 +24,6 @@ class Score {
     int _numParts;
     int _numMeasures;
     int _numNotes;
-    std::map<int, std::string> _partsName;
     bool _isValidXML;
     bool _haveTypeTag;
     bool _isLoadedXML;
@@ -193,7 +192,7 @@ class Score {
      *
      * @return const std::vector<std::string>
      */
-    const std::vector<std::string> getPartNames() const;
+    const std::vector<std::string> getPartsNames() const;
 
     /**
      * @brief Get the Title object
@@ -380,13 +379,6 @@ class Score {
     int xPathCountNodes(const std::string& xPath) const;
 
     /**
-     * @brief Get the Parts Name object
-     *
-     * @return const std::map<int, std::string>
-     */
-    const std::map<int, std::string> getPartsName() const;
-
-    /**
      * @brief Get the Part Name object
      *
      * @param partId
@@ -402,7 +394,7 @@ class Score {
      * @return true
      * @return false
      */
-    bool getPartIndex(const std::string& partName, int& index) const;
+    bool getPartIndex(const std::string& partName, int* index) const;
 
     /**
      * @brief
@@ -576,15 +568,12 @@ class Score {
         _composerName = other._composerName;
         _part = other._part;
 
-        //_doc = other._doc;
         _numParts = other._numParts;
         _numMeasures = other._numMeasures;
         _numNotes = other._numNotes;
-        _partsName = other._partsName;
         _isValidXML = other._isValidXML;
         _haveTypeTag = other._haveTypeTag;
         _isLoadedXML = other._isLoadedXML;
-        // _stackedChords = other._stackedChords;
         _lcmDivisionsPerQuarterNote = other._lcmDivisionsPerQuarterNote;
     }
 

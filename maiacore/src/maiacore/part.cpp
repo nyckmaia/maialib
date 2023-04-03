@@ -11,7 +11,8 @@
 
 Part::Part(const std::string& partName, const int numStaves, const bool isPitched,
            const int divisionsPerQuarterNote)
-    : _numStaves(numStaves),
+    : _partIndex(-1),
+      _numStaves(numStaves),
       _divisionsPerQuarterNote(divisionsPerQuarterNote),
       _isPitched(isPitched),
       _staffLines(5) {
@@ -38,6 +39,10 @@ Part::Part(const std::string& partName, const int numStaves, const bool isPitche
 Part::~Part() {}
 
 void Part::clear() { _measure.clear(); }
+
+int Part::getPartIndex() const { return _partIndex; }
+
+void Part::setPartIndex(int partIdx) { _partIndex = partIdx; }
 
 void Part::info() const {
     LOG_INFO("Part Name: " << _partName);
@@ -429,7 +434,6 @@ void Part::append(const std::variant<Note, Chord>& obj, const int position, cons
 
     switch (type) {
         case 0:
-            // appendNote(std::get<Note>(obj), position, staveId);
             appendNote(*std::get_if<Note>(&obj), position, staveId);
             break;  // Note
         case 1:
