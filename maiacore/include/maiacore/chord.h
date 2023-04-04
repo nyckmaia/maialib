@@ -914,6 +914,13 @@ class Chord {
     std::vector<Interval> getIntervals(const bool firstNoteAsReference = false) const;
 
     /**
+     * @brief Get the Intervals From Original Sorted Notes object
+     *
+     * @return std::vector<Interval>
+     */
+    std::vector<Interval> getIntervalsFromOriginalSortedNotes() const;
+
+    /**
      * @brief Get the Open Stack Intervals object
      *
      * @param firstNoteAsReference

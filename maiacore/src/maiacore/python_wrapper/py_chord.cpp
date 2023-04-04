@@ -264,6 +264,8 @@ void ChordClass(const py::module& m) {
 
     cls.def("getMIDIIntervals", &Chord::getMIDIIntervals, py::arg("firstNoteAsReference") = false);
     cls.def("getIntervals", &Chord::getIntervals, py::arg("firstNoteAsReference") = false);
+    cls.def("getIntervalsFromOriginalSortedNotes", &Chord::getIntervalsFromOriginalSortedNotes);
+
     cls.def("getOpenStackIntervals", &Chord::getOpenStackIntervals,
             py::arg("firstNoteAsReference") = false);
     cls.def("getCloseStackIntervals", &Chord::getCloseStackIntervals,

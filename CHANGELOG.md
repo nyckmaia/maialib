@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.1.2] - 2023-04-04
+
+### New Features
+
+- `Chord::getIntervalsFromOriginalSortedNotes()`
+
+### Improved
+
+### Fixed
+
+- All `Chord` methods that starts with `.have` + Interval name
+
+---
+
 ## [v0.1.1] - 2023-04-03
 
 ### New Features
