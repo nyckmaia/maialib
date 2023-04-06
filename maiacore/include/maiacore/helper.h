@@ -219,6 +219,15 @@ class Helper {
     /**
      * @brief
      *
+     * @param duration
+     * @param divisionsPerQuarterNote
+     * @return int
+     */
+    static int duration2Ticks(const Duration duration, const int divisionsPerQuarterNote = 256);
+
+    /**
+     * @brief
+     *
      * @param noteType
      * @return Duration
      */

@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v0.1.3] - 2023-04-05
+
+### New Features
+
+- Maiacore
+  - `Measure` Class:
+    - .getQuarterDuration, .getFilledQuarterDuration, .getFreeQuarterDuration
+    - .getDurationTicks, .getFilledDurationTicks, .getFilledDurationTicks
+  - `Helper::int duration2Ticks()`
+
+### Improved
+
+- Maiapy:
+  - `setScoreEditorApp()` add special documentation for Mac OSX
+
+### Fixed
+
+- Score change clef in export XML file
+- Part::setIsPitched() now works correctly
+
+---
+
 ## [v0.1.2] - 2023-04-04
 
 ### New Features

@@ -375,13 +375,14 @@ void Score::loadXMLFile(const std::string& filePath) {
             const int numClefs = measureClef.size();
             _part[p].getMeasure(m).getClefs().resize(numClefs);
 
-            if (numClefs > 0) {
-                _part[p].getMeasure(m).setIsClefChanged(true);
-            }
+            // if (numClefs > 0) {
+            //     _part[p].getMeasure(m).setIsClefChanged(true);
+            // }
+
             for (int c = 0; c < numClefs; c++) {
                 const std::string sign = measureClef[c].node().child_value("sign");
                 const int line = atoi(measureClef[c].node().child_value("line"));
-                _part[p].getMeasure(m).getClef(c).setSign(sign);
+                _part[p].getMeasure(m).getClef(c).setSign(Clef::clefSignStr2ClefSign(sign));
                 _part[p].getMeasure(m).getClef(c).setLine(line);
             }
 

@@ -16,13 +16,16 @@ def setScoreEditorApp(executableFullPath: str) -> None:
 
     Args:
        executableFullPath (str):  Score editor full path
-       Example: "C:/path/to/MuseScore"
+       Example 01: "C:/path/to/MuseScore"
+       Example 02: "/Applications/MuseScore 4.app/Contents/MacOS/mscore"
 
     Examples of use:
 
     >>> import maialib as ml
+    >>> # Example for Windows:
     >>> ml.setScoreEditorApp("C:/path/to/MuseScore.exe")
-    >>> ml.setScoreEditorApp("/Users/Applications/MuseScore/MuseScore4")
+    >>> # Example for Mac OSX:
+    >>> ml.setScoreEditorApp("/Applications/MuseScore 4.app/Contents/MacOS/mscore")
     """
     global _scoreEditorApp
 

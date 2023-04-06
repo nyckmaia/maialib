@@ -54,10 +54,7 @@ const std::string& Part::getName() const { return _partName; }
 
 const std::string& Part::getShortName() const { return _shortName; }
 
-bool Part::isPitched() const {
-    return _isPitched;
-    ;
-}
+bool Part::isPitched() const { return _isPitched; }
 
 void Part::setStaffLines(const int staffLines) {
     PROFILE_FUNCTION();
@@ -71,6 +68,10 @@ void Part::setIsPitched(const bool isPitched) {
     PROFILE_FUNCTION();
 
     _isPitched = isPitched;
+
+    for (auto& clef : _measure.at(0).getClefs()) {
+        clef.setSign(ClefSign::PERCUSSION);
+    }
 
     for (auto& m : _measure) {
         const int numStaves = m.getNumStaves();
@@ -114,6 +115,12 @@ void Part::setNumStaves(const int numStaves) {
 
     for (auto& m : _measure) {
         m.setNumStaves(numStaves);
+    }
+
+    // Set the default ClefSign for multiple stave instruments (like piano)
+    _measure.at(0).getClef(0).setSign(ClefSign::G);
+    for (int s = 1; s < numStaves; s++) {
+        _measure.at(0).getClef(s).setSign(ClefSign::F);
     }
 }
 
@@ -206,9 +213,9 @@ const std::string Part::toXML(const int instrumentId, const int identSize) const
         // identSize) + "</print>\n");
 
         // ===== ATTRIBUTES TAG ===== //
-        bool attributeChanged = m == 0 || _measure[m].keySignatureChanged() ||
-                                _measure[m].timeSignatureChanged() || _measure[m].clefChanged() ||
-                                _measure[m].divisionsPerQuarterNoteChanged();
+        bool attributeChanged =
+            m == 0 || _measure[m].keySignatureChanged() || _measure[m].timeSignatureChanged() ||
+            _measure[m].getClef().isClefChanged() || _measure[m].divisionsPerQuarterNoteChanged();
 
         if (attributeChanged) {
             xml.append(Helper::generateIdentation(3, identSize) + "<attributes>\n");
@@ -254,15 +261,14 @@ const std::string Part::toXML(const int instrumentId, const int identSize) const
                        std::to_string(_numStaves) + "</staves>\n");
         }
 
-        if (m == 0 || _measure[m].clefChanged()) {
-            for (int c = 0; c < _measure[m].getNumStaves(); c++) {
-                xml.append(Helper::generateIdentation(4, identSize) + "<clef number=\"" +
-                           std::to_string(c + 1) + "\">\n");
-                xml.append(Helper::generateIdentation(5, identSize) + "<sign>" +
-                           _measure[m].getClef(c).getSign() + "</sign>\n");
-                xml.append(Helper::generateIdentation(5, identSize) + "<line>" +
-                           std::to_string(_measure[m].getClef(c).getLine()) + "</line>\n");
-                xml.append(Helper::generateIdentation(4, identSize) + "</clef>\n");
+        if (m == 0 || _measure[m].isClefChanged()) {
+            if (_numStaves == 1) {
+                xml.append(_measure[m].getClef().toXML(-1, identSize));
+            } else {
+                for (int clefIdx = 0; clefIdx < _numStaves; clefIdx++) {
+                    const auto& currentClef = _measure[m].getClef(clefIdx);
+                    xml.append(currentClef.toXML(clefIdx, identSize));
+                }
             }
         }
 

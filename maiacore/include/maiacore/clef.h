@@ -2,10 +2,20 @@
 
 #include <string>
 
+enum class ClefSign { G, F, C, PERCUSSION };
+
 class Clef {
    private:
-    std::string _sign;
+    ClefSign _sign;
     int _line;
+    bool _isClefChanged;
+
+    /**
+     * @brief Set the Clef Changed object
+     *
+     * @param isClefChanged
+     */
+    void setClefChanged(bool isClefChanged);
 
    public:
     /**
@@ -14,7 +24,7 @@ class Clef {
      * @param sign
      * @param line
      */
-    Clef(const std::string& sign = "G", int line = 2);
+    Clef(const ClefSign sign = ClefSign::G, int line = -1);
 
     /**
      * @brief Destroy the Clef object
@@ -39,14 +49,46 @@ class Clef {
     /**
      * @brief Get the Sign object
      *
-     * @return std::string
+     * @return ClefSign
      */
-    std::string getSign() const;
+    ClefSign getSign() const;
 
     /**
      * @brief Set the Sign object
      *
      * @param sign
      */
-    void setSign(const std::string& sign);
+    void setSign(const ClefSign sign);
+
+    /**
+     * @brief
+     *
+     * @return true
+     * @return false
+     */
+    bool isClefChanged() const;
+
+    /**
+     * @brief Get the Clef Sign Str object
+     *
+     * @return std::string
+     */
+    std::string getClefSignStr() const;
+
+    /**
+     * @brief
+     *
+     * @param clefStr
+     * @return ClefSign
+     */
+    static ClefSign clefSignStr2ClefSign(const std::string& clefStr);
+
+    /**
+     * @brief
+     *
+     * @param clefNumber
+     * @param identSize
+     * @return std::string
+     */
+    std::string toXML(const int clefNumber = -1, const int identSize = 2) const;
 };

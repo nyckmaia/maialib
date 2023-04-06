@@ -23,7 +23,6 @@ class Measure {
     bool _isMajorKeyMode;
     bool _isKeySignatureChanged;
     bool _isTimeSignatureChanged;
-    bool _isClefChanged;
     bool _isMetronomeChanged;
     bool _isDivisionsPerQuarterNoteChanged;
     int _numStaves;
@@ -107,12 +106,12 @@ class Measure {
      */
     void setIsTimeSignatureChanged(bool isTimeSignatureChanged = false);
 
-    /**
-     * @brief Set the Is Clef Changed object
-     *
-     * @param isClefChanged
-     */
-    void setIsClefChanged(bool isClefChanged = false);
+    // /**
+    //  * @brief Set the Is Clef Changed object
+    //  *
+    //  * @param isClefChanged
+    //  */
+    // void setIsClefChanged(bool isClefChanged = false);
 
     /**
      * @brief Set the Is Metronome Changed object
@@ -193,6 +192,52 @@ class Measure {
      * @return int
      */
     int getNumber() const;
+
+    /**
+     * @brief Get the Duration object
+     *
+     * @return int
+     */
+    float getQuarterDuration() const;
+
+    /**
+     * @brief Get the Filled Quarter Duration object
+     *
+     * @param staveId
+     * @return float
+     */
+    float getFilledQuarterDuration(const int staveId = 0) const;
+
+    /**
+     * @brief Get the Free Quarter Duration object
+     *
+     * @param staveId
+     * @return float
+     */
+    float getFreeQuarterDuration(const int staveId = 0) const;
+
+    /**
+     * @brief Get the Duration Ticks object
+     *
+     * @return int
+     */
+    int getDurationTicks() const;
+
+    /**
+     * @brief Get the Filled Duration Ticks object
+     *
+     * @param staveId
+     * @return int
+     */
+    int getFilledDurationTicks(const int staveId = 0) const;
+
+    /**
+     * @brief Get the Free Duration Ticks object
+     *
+     * @param staveId
+     * @return int
+     */
+    int getFreeDurationTicks(const int staveId = 0) const;
 
     /**
      * @brief Get the Clefs object
@@ -282,7 +327,7 @@ class Measure {
      * @return true
      * @return false
      */
-    bool clefChanged() const;
+    bool isClefChanged() const;
 
     /**
      * @brief

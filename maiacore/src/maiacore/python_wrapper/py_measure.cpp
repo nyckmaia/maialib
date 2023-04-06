@@ -31,7 +31,8 @@ void MeasureClass(const py::module& m) {
             py::arg("isKeySignatureChanged") = false);
     cls.def("setIsTimeSignatureChanged", &Measure::setIsTimeSignatureChanged,
             py::arg("isTimeSignatureChanged") = false);
-    cls.def("setIsClefChanged", &Measure::setIsClefChanged, py::arg("isClefChanged") = false);
+    //     cls.def("setIsClefChanged", &Measure::setIsClefChanged, py::arg("isClefChanged") =
+    //     false);
     cls.def("setIsMetronomeChanged", &Measure::setIsMetronomeChanged,
             py::arg("isMetronomeChanged") = false);
     cls.def("setNumStaves", &Measure::setNumStaves, py::arg("numStaves"));
@@ -84,7 +85,16 @@ void MeasureClass(const py::module& m) {
 
     cls.def("getNumStaves", &Measure::getNumStaves);
     cls.def("getNumber", &Measure::getNumber);
-    cls.def("clefChanged", &Measure::clefChanged);
+
+    cls.def("getQuarterDuration", &Measure::getQuarterDuration);
+    cls.def("getFilledQuarterDuration", &Measure::getFilledQuarterDuration, py::arg("staveId") = 0);
+    cls.def("getFreeQuarterDuration", &Measure::getFreeQuarterDuration, py::arg("staveId") = 0);
+
+    cls.def("getDurationTicks", &Measure::getDurationTicks);
+    cls.def("getFilledDurationTicks", &Measure::getFilledDurationTicks, py::arg("staveId") = 0);
+    cls.def("getFreeDurationTicks", &Measure::getFreeDurationTicks, py::arg("staveId") = 0);
+
+    cls.def("isClefChanged", &Measure::isClefChanged);
     cls.def("timeSignatureChanged", &Measure::timeSignatureChanged);
     cls.def("keySignatureChanged", &Measure::keySignatureChanged);
     cls.def("metronomeChanged", &Measure::metronomeChanged);

@@ -51,6 +51,12 @@ enum class Duration {
     N1024TH = 1,
 };
 
+const std::map<int, Duration> c_mapTimeSignatureLower_Duration = {
+    {1, Duration::WHOLE},    {2, Duration::HALF},      {4, Duration::QUARTER},
+    {8, Duration::EIGHTH},   {16, Duration::N16TH},    {32, Duration::N32ND},
+    {64, Duration::N64TH},   {128, Duration::N128TH},  {256, Duration::N256TH},
+    {512, Duration::N512TH}, {1024, Duration::N1024TH}};
+
 // ===== SCALES ===== //
 // Diatonic Scales (Pitch Steps)
 const std::array<std::string, 7> c_C_diatonicScale = {"C", "D", "E", "F", "G", "A", "B"};

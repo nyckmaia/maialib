@@ -2213,6 +2213,13 @@ std::string Helper::duration2noteType(const Duration duration) {
     return {};
 }
 
+int Helper::duration2Ticks(const Duration duration, const int divisionsPerQuarterNote) {
+    const auto noteType = Helper::duration2noteType(duration);
+    const int ticks = Helper::noteType2ticks(noteType, divisionsPerQuarterNote);
+
+    return ticks;
+}
+
 Duration Helper::noteType2duration(const std::string& noteType) {
     switch (hash(noteType.c_str())) {
         case hash("maxima-dot-dot"):

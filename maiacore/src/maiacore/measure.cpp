@@ -18,7 +18,7 @@ Measure::Measure(const int numStaves, const int divisionsPerQuarterNote)
       _isMajorKeyMode(true),
       _isKeySignatureChanged(false),
       _isTimeSignatureChanged(false),
-      _isClefChanged(false),
+      //   _isClefChanged(false),
       _isMetronomeChanged(false),
       _isDivisionsPerQuarterNoteChanged(false),
       _numStaves(numStaves),
@@ -93,7 +93,7 @@ void Measure::setIsTimeSignatureChanged(bool isTimeSignatureChanged) {
     _isTimeSignatureChanged = isTimeSignatureChanged;
 }
 
-void Measure::setIsClefChanged(bool isClefChanged) { _isClefChanged = isClefChanged; }
+// void Measure::setIsClefChanged(bool isClefChanged) { _isClefChanged = isClefChanged; }
 
 void Measure::setIsMetronomeChanged(bool isMetronomeMarkChanged) {
     _isMetronomeChanged = isMetronomeMarkChanged;
@@ -180,6 +180,52 @@ bool Measure::keySignatureChanged() const { return _isKeySignatureChanged; }
 
 int Measure::getNumber() const { return _number; }
 
+float Measure::getQuarterDuration() const {
+    const int measureDurationTicks = getDurationTicks();
+    const float measureDuration =
+        static_cast<float>(measureDurationTicks) / static_cast<float>(_divisionsPerQuarterNote);
+
+    return measureDuration;
+}
+
+float Measure::getFilledQuarterDuration(const int staveId) const {
+    float filledQuarterDuration = 0;
+    const auto& stave = _note.at(staveId);
+
+    for (const auto& note : stave) {
+        filledQuarterDuration += note.getDuration();
+    }
+
+    return filledQuarterDuration;
+}
+
+float Measure::getFreeQuarterDuration(const int staveId) const {
+    return getQuarterDuration() - getFilledQuarterDuration(staveId);
+}
+
+int Measure::getDurationTicks() const {
+    const Duration timeSigLowerDur = c_mapTimeSignatureLower_Duration.at(_timeSignatureLower);
+    const int ticks = Helper::duration2Ticks(timeSigLowerDur, _divisionsPerQuarterNote);
+    const int measureDurationTicks = _timeSignatureUpper * ticks;
+
+    return measureDurationTicks;
+}
+
+int Measure::getFilledDurationTicks(const int staveId) const {
+    int filledTicks = 0;
+    const auto& stave = _note.at(staveId);
+
+    for (const auto& note : stave) {
+        filledTicks += note.getDurationTicks();
+    }
+
+    return filledTicks;
+}
+
+int Measure::getFreeDurationTicks(const int staveId) const {
+    return getDurationTicks() - getFilledDurationTicks(staveId);
+}
+
 std::vector<Clef>& Measure::getClefs() { return _clef; }
 
 const Clef& Measure::getClef(const int clefId) const { return _clef.at(clefId); }
@@ -202,7 +248,14 @@ void Measure::removeRepeatStart() { _barlineLeft.clean(); }
 
 void Measure::removeRepeatEnd() { _barlineRight.clean(); }
 
-bool Measure::clefChanged() const { return _isClefChanged; }
+bool Measure::isClefChanged() const {
+    bool isClefChanged = false;
+    for (const auto& clef : _clef) {
+        isClefChanged |= clef.isClefChanged();
+    }
+
+    return isClefChanged;
+}
 
 bool Measure::metronomeChanged() const { return _isMetronomeChanged; }
 
