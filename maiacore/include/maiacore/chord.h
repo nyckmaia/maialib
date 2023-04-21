@@ -1113,4 +1113,7 @@ class Chord {
 
         return note;
     }
+
+    std::vector<Note>::iterator begin() { return _originalNotes.begin(); }
+    std::vector<Note>::iterator end() { return _originalNotes.end(); }
 };

@@ -51,9 +51,9 @@ class Score {
      * @param minDurationTicks
      * @param maxDurationTicks
      * @param includeDuplicates
-     * @return std::vector<std::pair<int, Chord>>
+     * @return std::vector<std::tuple<int, float, Chord>>
      */
-    std::vector<std::pair<int, Chord>> getSameAttackChords(
+    std::vector<std::tuple<int, float, Chord>> getSameAttackChords(
         SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes,
         const int minDurationTicks, const int maxDurationTicks, const bool includeDuplicates);
 
@@ -66,9 +66,9 @@ class Score {
      * @param minDurationTicks
      * @param maxDurationTicks
      * @param includeDuplicates
-     * @return std::vector<std::pair<int, Chord>>
+     * @return std::vector<std::tuple<int, float, Chord>>
      */
-    std::vector<std::pair<int, Chord>> getChordsPerEachNoteEvent(
+    std::vector<std::tuple<int, float, Chord>> getChordsPerEachNoteEvent(
         SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes,
         const int minDurationTicks, const int maxDurationTicks, const bool includeDuplicates);
 
@@ -554,9 +554,9 @@ class Score {
      * notes \n Example: The original chord ["C4", "C4", "E4", "G4"] will be
      * returned as ["C4", "E4", "G4"] \n \n \b includeUnpitched \n
      *
-     * @return A list of pairs: {measureId, Chord object}
+     * @return A list of tuples: {measureId, measureFloat, Chord object}
      */
-    std::vector<std::pair<int, Chord>> getChords(nlohmann::json config = {});
+    std::vector<std::tuple<int, float, Chord>> getChords(nlohmann::json config = {});
 
     /**
      * @brief Construct a new Score object

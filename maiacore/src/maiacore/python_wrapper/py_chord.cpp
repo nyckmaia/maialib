@@ -305,14 +305,19 @@ void ChordClass(const py::module& m) {
     // Default Python 'print' function:
     cls.def("__repr__", [](const Chord& chord) {
         const int chordSize = chord.size();
+
+        if (chordSize == 0) {
+            return std::string("<Chord []>");
+        }
+
         std::string noteNames = "<Chord [";
 
         for (int i = 0; i < chordSize - 1; i++) {
-            noteNames.append(chord[i].getPitch() + ", ");
+            noteNames.append(chord[i].getSoundingPitch() + ", ");
         }
 
         // Add the last note without the semicomma in the end
-        noteNames.append(chord[chordSize - 1].getPitch());
+        noteNames.append(chord[chordSize - 1].getSoundingPitch());
 
         noteNames.append("]>");
 

@@ -1,6 +1,8 @@
 #include "maiacore/score.h"
 
+// #include <fstream>  // Just for debug
 #include <iostream>
+#include <limits>  // std::numeric_limits
 #include <tuple>
 
 #include "cherno/instrumentor.h"
@@ -88,13 +90,12 @@ void Score::info() const {
     LOG_INFO("Number of Parts: " << getNumParts());
 
     // Get a part name list as a string
+    const auto partsNames = getPartsNames();
+    const int partsNamesSize = partsNames.size();
     std::string partNameList = "[";
-    for (const auto& part : _part) {
-        const int idx = part.getPartIndex();
-        const std::string& partName = part.getName();
-
-        partNameList.append(partName);
-        if (idx != _numParts - 1) {
+    for (int i = 0; i < partsNamesSize; i++) {
+        partNameList.append(partsNames[i]);
+        if (i != partsNamesSize - 1) {
             partNameList.append(", ");
         }
     }
@@ -510,6 +511,7 @@ void Score::loadXMLFile(const std::string& filePath) {
                         Helper::ticks2noteType(durationTicks, divPQN).first;
                     duration = Helper::noteType2duration(noteType);
                 }
+
                 Note note(pitch, duration, isNoteOn, inChord, transposeDiatonic, transposeChromatic,
                           divPQN);
                 note.setVoice(voice);
@@ -2869,7 +2871,7 @@ nlohmann::json Score::instrumentFragmentation(nlohmann::json config) {
     return out;
 }
 
-std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config) {
+std::vector<std::tuple<int, float, Chord>> Score::getChords(nlohmann::json config) {
     PROFILE_FUNCTION();
     // ===== STEP 1: PARSE THE INPUT CONFIG JSON ===== //
 
@@ -2975,13 +2977,13 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config) {
 
     // ===== STEP 1.3: READ MININIMUM CHORD STACKED NOTES ===== //
     int minStackedNotes = (!config.contains("minStack") || !config["minStack"].is_number_integer())
-                              ? 3
+                              ? 2
                               : config["minStack"].get<int>();
 
     if (minStackedNotes < 1) {
         LOG_WARN("You set the 'minStack' to " << minStackedNotes << ", but the minimum value is 1");
-        LOG_WARN("Setting the 'minStack' to the default: 3");
-        minStackedNotes = 3;
+        LOG_WARN("Setting the 'minStack' to the default: 2");
+        minStackedNotes = 2;
     }
 
     // ===== STEP 1.4: READ MAXIMUM CHORD STACKED NOTES ===== //
@@ -3057,11 +3059,20 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config) {
                         SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE | SQLite::OPEN_MEMORY);
 
     db.exec(
-        "create table events (measure int, starttime int, endtime int, address "
+        "create table events (measure int, floatMeasure float, starttime int, endtime int, address "
         "intptr_t, scalefactor int)");
 
     int previusTime = 0;
     int currentTime = 0;
+    float previusFloatMeasure = 0.0f;
+
+    // std::ofstream file;
+    // file.open("table.csv");
+    // file.clear();
+    // file << "measure; fMeasure; starttime; curTimeVc1; mBegging; lcmDQN; mDiv; note; ticks; "
+    //         "noteDiv; "
+    //         "noteDur; divisionsScaleFactor;"
+    //      << std::endl;
 
     const int partNamesSize = partNames.size();
     for (int p = 0; p < partNamesSize; p++) {
@@ -3073,57 +3084,84 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config) {
         }
 
         currentTime = 0;
-
+        int currentTimeVoice1 = 0;
+        int measureBegginingTicks = 0;
         for (int m = measureStart; m < measureEnd; m++) {
             Measure& currentMeasure = currentPart.getMeasure(m);
+            const float floatMeasureBeginning = static_cast<float>(m);
 
             // Compute the measure 'divisions per quarter note' scale factor
             // That's necessary to standardize the integer values to each rhythm
             // figure Because 'divisions per quarter note' can change over XML
             // measures
-            const int divisionsScaleFactor =
-                _lcmDivisionsPerQuarterNote / currentMeasure.getDivisionsPerQuarterNote();
+            const float divisionsScaleFactor = (float)_lcmDivisionsPerQuarterNote /
+                                               (float)currentMeasure.getDivisionsPerQuarterNote();
 
-            const int measureBeginningTime = currentTime;
+            measureBegginingTicks = currentTimeVoice1;
             for (int s = 0; s < currentMeasure.getNumStaves(); s++) {
                 const int numNotes = currentMeasure.getNumNotes(s);
-                currentTime = measureBeginningTime;  // Reset time when use
-                                                     // multiple staves
-
+                // Reset 'currentTime' and 'floatMeasureDelta' when use multiple staves
+                currentTime = measureBegginingTicks;
+                float floatMeasure = floatMeasureBeginning;
+                previusFloatMeasure = floatMeasure;
+                float floatMeasureDelta = 0.0f;
+                int currentVoice = 1;
                 for (int n = 0; n < numNotes; n++) {
                     Note& currentNote = currentMeasure.getNote(n, s);
 
                     if (currentNote.inChord()) {
                         currentTime = previusTime;
+                        floatMeasure = previusFloatMeasure;
+                    }
+
+                    if (currentNote.getVoice() != currentVoice) {
+                        currentVoice = currentNote.getVoice();
+                        currentTime = measureBegginingTicks;
+                        floatMeasure = floatMeasureBeginning;
                     }
 
                     const int timeEnd =
                         currentTime + (currentNote.getDurationTicks() * divisionsScaleFactor);
 
-                    if (currentNote.isNoteOn()) {
-                        std::string str =
-                            "insert into events (measure, starttime, endtime, "
-                            "address, scalefactor) VALUES ";
-                        std::string values = "(" + std::to_string(m) + ", " +
-                                             std::to_string(currentTime) + ", " +
-                                             std::to_string(timeEnd) + ", " +
-                                             std::to_string((intptr_t)&currentNote) + ", " +
-                                             std::to_string(divisionsScaleFactor) + ")";
-                        str.append(values);
+                    // const std::string line =
+                    //     std::to_string(m + 1) + ";" + std::to_string(floatMeasure + 1.0f) + ";" +
+                    //     std::to_string(currentTime) + ";" + std::to_string(currentTimeVoice1) +
+                    //     ";" + std::to_string(measureBegginingTicks) + ";" +
+                    //     std::to_string(_lcmDivisionsPerQuarterNote) + ";" +
+                    //     std::to_string(currentMeasure.getDivisionsPerQuarterNote()) + ";" +
+                    //     currentNote.getPitch() + ";" +
+                    //     std::to_string(currentNote.getDurationTicks()) + ";" +
+                    //     std::to_string(currentNote.getDivisionsPerQuarterNote()) + ";" +
+                    //     currentNote.getType() + ";" + std::to_string(divisionsScaleFactor) +
+                    //     "\n";
 
-                        db.exec(str.c_str());
+                    // file << line;
 
-                        // LOG_DEBUG( "measure: " << m <<
-                        // " | mDiv: " <<
-                        // currentMeasure.getDivisionsPerQuarterNote() << " |
-                        // note: " << currentNote.getPitch() << " | ticks: " <<
-                        // currentNote.getDurationTicks() << " | noteDiv: " <<
-                        // currentNote.getDivisionsPerQuarterNote() << " |
-                        // noteDur: " << currentNote.getType());
-                    }
+                    std::string str =
+                        "insert into events (measure, floatMeasure, starttime, endtime, "
+                        "address, scalefactor) VALUES ";
+                    std::string values =
+                        "(" + std::to_string(m + 1) + ", " + std::to_string(floatMeasure + 1.0f) +
+                        ", " + std::to_string(currentTime) + ", " + std::to_string(timeEnd) + ", " +
+                        std::to_string((intptr_t)&currentNote) + ", " +
+                        std::to_string(divisionsScaleFactor) + ")";
+                    str.append(values);
+
+                    db.exec(str.c_str());
 
                     previusTime = currentTime * divisionsScaleFactor;
                     currentTime += (currentNote.getDurationTicks() * divisionsScaleFactor);
+                    previusFloatMeasure = floatMeasure;
+
+                    if (currentNote.getVoice() == 1 && !currentNote.inChord()) {
+                        currentTimeVoice1 += currentNote.getDurationTicks();
+                    }
+
+                    if (!currentNote.inChord()) {
+                        floatMeasureDelta +=
+                            currentNote.getQuarterDuration() / currentMeasure.getQuarterDuration();
+                        floatMeasure = floatMeasureBeginning + floatMeasureDelta;
+                    }
                 }
             }
         }
@@ -3139,7 +3177,7 @@ std::vector<std::pair<int, Chord>> Score::getChords(nlohmann::json config) {
                                      maxDurationTicks, includeDuplicates);
 }
 
-std::vector<std::pair<int, Chord>> Score::getSameAttackChords(
+std::vector<std::tuple<int, float, Chord>> Score::getSameAttackChords(
     SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes,
     const int minDurationTicks, const int maxDurationTicks, const bool includeDuplicates) {
     PROFILE_FUNCTION();
@@ -3160,23 +3198,28 @@ std::vector<std::pair<int, Chord>> Score::getSameAttackChords(
     }
 
     // ===== STEP 2: FOR EACH UNIQUE START TIME - GET THE STACK CHORD ===== //
-    std::vector<std::pair<int, Chord>> stackedChords;
+    std::vector<std::tuple<int, float, Chord>> stackedChords;
+    stackedChords.reserve(uniqueStartTimes.size());
 
     for (const auto& startTime : uniqueStartTimes) {
         SQLite::Statement query(db,
-                                "SELECT measure, address, scalefactor FROM "
+                                "SELECT measure, floatMeasure, address, scalefactor FROM "
                                 "events WHERE starttime = ?");
         // Bind query parameters
         query.bind(1, startTime);
 
         int measure = 0;
+        float floatMeasure = 0.0f;
         std::vector<std::pair<int, const Note*>> scaleFactorNotePair;
         while (query.executeStep()) {
             // Get the measure value
             measure = query.getColumn(0).getInt();
 
+            // Get the measure value
+            floatMeasure = static_cast<float>(query.getColumn(1).getDouble());
+
             // Get the note pointer
-            const intptr_t address = query.getColumn(1);
+            const intptr_t address = query.getColumn(2);
             const Note* note = reinterpret_cast<Note*>(address);
 
             // Skip rests
@@ -3184,7 +3227,7 @@ std::vector<std::pair<int, Chord>> Score::getSameAttackChords(
                 continue;
             }
 
-            const int measureScaleFactor = query.getColumn(2).getInt();
+            const int measureScaleFactor = query.getColumn(3).getInt();
 
             scaleFactorNotePair.push_back({measureScaleFactor, note});
         }
@@ -3235,13 +3278,13 @@ std::vector<std::pair<int, Chord>> Score::getSameAttackChords(
         chord.sortNotes();
 
         // Store measure-chord pair
-        stackedChords.push_back({measure, chord});
+        stackedChords.push_back({measure, floatMeasure, chord});
     }
 
     return stackedChords;
 }
 
-std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(
+std::vector<std::tuple<int, float, Chord>> Score::getChordsPerEachNoteEvent(
     SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes,
     const int minDurationTicks, const int maxDurationTicks, const bool includeDuplicates) {
     PROFILE_FUNCTION();
@@ -3263,31 +3306,43 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(
     }
 
     // ===== STEP 3: FOR EACH UNIQUE START TIME - GET THE STACK CHORD ===== //
-    std::vector<std::pair<int, Chord>> stackedChords;
+    std::vector<std::tuple<int, float, Chord>> stackedChords;
+    stackedChords.reserve(numUniqueEvents);
     for (const int startTime : uniqueStartTime) {
-        SQLite::Statement query(db,
-                                "SELECT measure, address, scalefactor FROM "
-                                "events WHERE starttime <= ? and endtime > ?");
+        SQLite::Statement query(
+            db,
+            "SELECT measure, floatMeasure, address, scalefactor, starttime FROM "
+            "events WHERE starttime <= ? and endtime > ?");
         // Bind query parameters
         query.bind(1, startTime);
         query.bind(2, startTime);
 
         int measure = 0;
+        float maxfloatMeasure = 0.0f;
         std::vector<std::pair<int, const Note*>> scaleFactorNotePair;
+        std::vector<int> chordNotesStartTimes;
+        chordNotesStartTimes.reserve(15);
         while (query.executeStep()) {
             // Get the measure value
             measure = query.getColumn(0).getInt();
 
-            // Get the note pointer
-            const intptr_t address = query.getColumn(1);
-            const Note* note = reinterpret_cast<Note*>(address);
+            // Get the maxfloatMeasure value
+            const float measureFloat = static_cast<float>(query.getColumn(1).getDouble());
 
-            // Skip rests
-            if (note->isNoteOff()) {
-                continue;
+            if (measureFloat > maxfloatMeasure) {
+                maxfloatMeasure = measureFloat;
             }
 
-            const int measureScaleFactor = query.getColumn(2).getInt();
+            // Get the note pointer
+            const intptr_t address = query.getColumn(2);
+            const Note* note = reinterpret_cast<Note*>(address);
+
+            const int measureScaleFactor = query.getColumn(3).getInt();
+
+            const int startTime = query.getColumn(4).getInt();
+            if (note->isNoteOn()) {
+                chordNotesStartTimes.push_back(startTime);
+            }
 
             scaleFactorNotePair.push_back({measureScaleFactor, note});
         }
@@ -3306,11 +3361,12 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(
         bool tooLongTimeChord =
             (firstNote->getDurationTicks() * firstNoteMeasureScale) > maxDurationTicks;
 
+        int noteInChordMinDurationTicks = firstNote->getDurationTicks() * firstNoteMeasureScale;
         for (const auto& pair : scaleFactorNotePair) {
             const int measureScale = pair.first;
             const Note* note = pair.second;
 
-            const int scaledDurationTicks = note->getDurationTicks() * measureScale;
+            int scaledDurationTicks = note->getDurationTicks() * measureScale;
 
             tooShortTimeChord |= scaledDurationTicks < minDurationTicks;
             tooLongTimeChord &= scaledDurationTicks > maxDurationTicks;
@@ -3318,12 +3374,9 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(
             // Append note to the temp chord
             chord.addNote(*note);
 
-            // LOG_DEBUG("measure: " << measure <<
-            //             " | startTime: " << startTime <<
-            //             " | note: " << note->getPitch() <<
-            //             " | ticks: " << note->getDurationTicks() <<
-            //             " | noteDiv: " << note->getDivisionsPerQuarterNote()
-            //             << " | noteDur: " << note->getType());
+            if (scaledDurationTicks < noteInChordMinDurationTicks) {
+                noteInChordMinDurationTicks = scaledDurationTicks;
+            }
         }
 
         // Skip undesired short/long time chords
@@ -3336,16 +3389,43 @@ std::vector<std::pair<int, Chord>> Score::getChordsPerEachNoteEvent(
             chord.removeDuplicateNotes();
         }
 
-        // Skip undesired smaller/bigger chords
-        const int chordSize = chord.size();
-        if (chordSize < minStackedNotes || chordSize > maxStackedNotes) {
-            continue;
-        }
+        // // Skip undesired smaller/bigger chords
+        // const int chordSize = chord.size();
+        // if (chordSize < minStackedNotes || chordSize > maxStackedNotes) {
+        //     continue;
+        // }
 
         chord.sortNotes();
 
+        bool haveAllNotesEqualDuration = true;
+        for (const auto& note : chord) {
+            const int firstDuration = chord.getNote(0).getDurationTicks();
+            if (note.getDurationTicks() != firstDuration) {
+                haveAllNotesEqualDuration = false;
+                break;
+            }
+        }
+
+        const int currentChordMinStartTime =
+            *std::min_element(chordNotesStartTimes.begin(), chordNotesStartTimes.end());
+        const int currentChordMaxStartTime =
+            *std::max_element(chordNotesStartTimes.begin(), chordNotesStartTimes.end());
+
+        const bool chordWithMultipleStartTime =
+            (currentChordMinStartTime != currentChordMaxStartTime) ? true : false;
+        if (chordWithMultipleStartTime && haveAllNotesEqualDuration && chord.size() > 1) {
+            const int chordMinEndTime =
+                currentChordMinStartTime + chord.getNote(0).getDurationTicks();
+            const int chordDuration = chordMinEndTime - currentChordMaxStartTime;
+            chord.setDurationTicks(chordDuration);
+        } else {
+            if (chord.size() != 0) {
+                chord.setDurationTicks(noteInChordMinDurationTicks);
+            }
+        }
+
         // Store measure-chord pair
-        stackedChords.push_back({measure, chord});
+        stackedChords.push_back({measure, maxfloatMeasure, chord});
     }
 
     return stackedChords;

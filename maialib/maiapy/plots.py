@@ -36,13 +36,13 @@ def _score2DataFrame(score: mc.Score, kwargs) -> None:
     if "partNames" in kwargs and not isinstance(kwargs["partNames"], list):
         print(
             "ERROR: 'partNames' is a optional kwargs argument and MUST BE a strings array")
-        print(score.getPartNames())
+        print(score.getPartsNames())
         return
 
     # 2.2) Check each individual part name
     partNames = []
     if not "partNames" in kwargs:
-        partNames = score.getPartNames()
+        partNames = score.getPartsNames()
     else:
         for partNameValue in kwargs["partNames"]:
             idx = 0
@@ -50,7 +50,7 @@ def _score2DataFrame(score: mc.Score, kwargs) -> None:
 
             if not isValid:
                 print(f"ERROR: Invalid part name: {partNameValue}")
-                print(score.getPartNames())
+                print(score.getPartsNames())
                 return
 
             partNames.append(partNameValue)

@@ -109,7 +109,7 @@ void ScoreClass(const py::module& m) {
             py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
 
             // Set DataFrame columns name
-            std::vector<std::string> columns = {"Measure", "Chord"};
+            std::vector<std::string> columns = {"measure", "floatMeasure", "chord"};
 
             // Fill DataFrame with records and columns
             py::object df = FromRecords(score.getChords(config), "columns"_a = columns);

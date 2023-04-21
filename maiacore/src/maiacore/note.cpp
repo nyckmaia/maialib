@@ -85,7 +85,7 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
     _transposeChromatic = transposeChromatic;
     _isNoteOn = true;
     _duration.divisionsPerQuarterNote = divisionsPerQuarterNote;
-    setDuration(duration);
+    setDuration(duration, divisionsPerQuarterNote);
 
     // Update the sounding Pitch/PitchClass and MIDI number
     setTransposingInterval(transposeDiatonic, transposeChromatic);
