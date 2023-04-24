@@ -1013,6 +1013,28 @@ class Chord {
     std::vector<int> toCents() const;
 
     /**
+     * @brief Get the Barycentric Frequency object
+     *
+     * @return float
+     */
+    float getBarycentricFrequency() const;
+
+    /**
+     * @brief Get the Barycentric M I D I object
+     *
+     * @return int
+     */
+    int getBarycentricMIDI() const;
+
+    /**
+     * @brief Get the Barycentric Pitch object
+     *
+     * @param accType
+     * @return std::string
+     */
+    std::string getBarycentricPitch(const std::string& accType = {}) const;
+
+    /**
      * @brief
      *
      * @param index

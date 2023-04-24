@@ -295,6 +295,10 @@ void ChordClass(const py::module& m) {
 
     cls.def("toCents", &Chord::toCents);
 
+    cls.def("getBarycentricFrequency", &Chord::getBarycentricFrequency);
+    cls.def("getBarycentricMIDI", &Chord::getBarycentricMIDI);
+    cls.def("getBarycentricPitch", &Chord::getBarycentricPitch, py::arg("accType") = "");
+
     cls.def(py::self == py::self);
     cls.def(py::self != py::self);
     cls.def(py::self + py::self);

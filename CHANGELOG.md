@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.1.0] - 2023-04-23
+
+### New Features
+
+- Chord Class
+  - .getBarycenterFrequency()
+  - .getBarycenterMIDI()
+  - .getBarycenterPitch()
+- Maiapy functions
+  - .plotScorePitchEnvelope()
+
+### Improved
+
+- Python wrapper: Chord::_repr_() shows a list of soundingPitch notes
+- Chord class now have "for range" C++ iterators
+
+### Fixed
+
+- Score::getChords() and .getChordsDataFrame() now works good
+- Score::info() shows the partName list correctly
+- Maialib plots that were broken, now works good
+
+---
+
 ## [v0.1.3] - 2023-04-05
 
 ### New Features

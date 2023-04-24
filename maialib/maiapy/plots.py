@@ -1,8 +1,10 @@
+import plotly.graph_objects as go
 import maialib.maiacore as mc
 import pandas as pd
 import plotly.express as px
+import math
 
-__all__ = ["plotPartsActivity", "plotPianoRoll"]
+__all__ = ["plotPartsActivity", "plotPianoRoll", "plotScorePitchEnvelope"]
 
 
 def _score2DataFrame(score: mc.Score, kwargs) -> None:
@@ -308,4 +310,229 @@ def plotPianoRoll(score: mc.Score, **kwargs) -> None:
 
     fig.update_traces(width=0.8)
 
+    fig.show()
+
+
+def _removeNoteOffLines(df: pd.DataFrame) -> pd.DataFrame:
+    df["low"] = df["low"].map(lambda x: None if x == 0 else x)
+    df["high"] = df["high"].map(lambda x: None if x == 0 else x)
+    df["barycenter"] = df["barycenter"].map(lambda x: None if x == 0 else x)
+    df["mean"] = df["mean"].map(lambda x: None if x == 0 else x)
+
+    return df
+
+
+def _chordBarycenter(chord) -> float:
+    sumMidiValues = 0
+    for note in chord:
+        sumMidiValues = sumMidiValues + note.getMIDINumber()
+
+    barycenter = sumMidiValues / chord.size()
+    return barycenter
+
+
+def _scoreEnvelopeDataFrame(df: pd.DataFrame) -> pd.DataFrame:
+    data = []
+    for index, row in df.iterrows():
+        chord = row["chord"]
+        chordSize = chord.size()
+
+        if chordSize == 0:
+            obj = {
+                "floatMeasure": row["floatMeasure"],
+                "low": 0,
+                "mean": 0,
+                "barycenter": 0,
+                "high": 0,
+                "lowPitch": None,
+                "meanPitch": None,
+                "barycenterPitch": None,
+                "highPitch": None
+            }
+        else:
+            chord.sortNotes()
+
+            low = chord.getNote(0).getMIDINumber()
+            high = chord.getNote(chordSize-1).getMIDINumber()
+            mean = round((high + low) / 2)
+            meanNote = mc.Note(mean)
+
+            obj = {
+                "floatMeasure": row["floatMeasure"],
+                "low": chord.getNote(0).getMIDINumber(),
+                "mean": mean,
+                "barycenter": chord.getBarycentricMIDI(),
+                "high": chord.getNote(chordSize-1).getMIDINumber(),
+                "lowPitch": chord.getNote(0).getPitch(),
+                "meanPitch": meanNote.getPitch(),
+                "barycenterPitch": chord.getBarycentricPitch(),
+                "highPitch": chord.getNote(chordSize-1).getPitch()
+            }
+
+        data.append(obj)
+
+    new_df = pd.DataFrame.from_records(data)
+    return new_df
+
+
+def _envelopeDataFrameInterpolation(df: pd.DataFrame, interpolateMeasures: int) -> pd.DataFrame:
+    def split(a, n):
+        k, m = divmod(len(a), n)
+        return (a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
+
+    totalMeasures = int(df.floatMeasure.max())
+
+    if interpolateMeasures >= totalMeasures:
+        raise Exception(
+            "ERROR: The score number of measures must be greater then the interpolate points value")
+
+    ranges = list(split(range(1, totalMeasures+1), interpolateMeasures))
+
+    data = []
+    for sub in ranges:
+        sub_df = df[(df.floatMeasure >=
+                    float(sub.start)) & (df.floatMeasure < float(sub.stop))]
+        floatMeasure = (sub.start + sub.stop) / 2
+        low = round(sub_df.low.mean())
+        mean = round(sub_df["mean"].mean())
+        barycenter = round(sub_df.barycenter.mean())
+        high = round(sub_df.high.mean())
+
+        obj = {
+            "floatMeasure": floatMeasure,
+            "low": low,
+            "mean": mean,
+            "barycenter": barycenter,
+            "high": high,
+            "lowPitch": mc.Helper.midiNote2pitch(low),
+            "meanPitch": mc.Helper.midiNote2pitch(mean),
+            "barycenterPitch": mc.Helper.midiNote2pitch(barycenter),
+            "highPitch": mc.Helper.midiNote2pitch(high)
+        }
+
+        data.append(obj)
+
+    new_df = pd.DataFrame.from_records(data)
+    return new_df
+
+
+def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> None:
+    """Plot a score pitch envelope
+
+    Args:
+       score (maialib.Score):  A maialib Score object loaded with a valid MusicXML file
+
+    Kwargs:
+       numPoints: (int): Number of interpolated points
+       showHigher (bool): Plot the envelop upper limit
+       showLower (bool): Plot the envelop lower limit
+       showBarycenter (bool): Plot the envelop barycentric curve
+       showMean (bool): Plot the envelop mean curve
+
+    Returns:
+       None
+
+    Raises:
+       RuntimeError, KeyError
+
+    Examples of use:
+
+    >>> myScore = ml.Score("/path/to/score.xml")
+    >>> plotScorePitchEnvelope(myScore)
+    >>> plotScorePitchEnvelope(myScore, numPoints=10)
+    >>> plotScorePitchEnvelope(myScore, showLower=False)
+    >>> plotScorePitchEnvelope(myScore, showMean=False, showBarycenter=True)
+    """
+    # ===== GET BASIC INFO ===== #
+    df = score.getChordsDataFrame()
+    df = _scoreEnvelopeDataFrame(df)
+    df = _removeNoteOffLines(df)
+
+    if "numPoints" in kwargs:
+        df = _envelopeDataFrameInterpolation(df, kwargs["numPoints"])
+
+    workTitle = score.getTitle()
+    author = score.getComposerName()
+
+    if str(author) == "":
+        author = "No Author"
+
+    if str(workTitle) == "":
+        workTitle = "No Title"
+
+    # ===== PLOT DATA ===== #
+    fig = go.Figure()
+
+    # Get mouse houver plot data
+    customLow = list(df[['lowPitch']].to_numpy())
+    customMean = list(df[['meanPitch']].to_numpy())
+    customBary = list(df[['barycenterPitch']].to_numpy())
+    customHigh = list(df[['highPitch']].to_numpy())
+
+    # ===== PLOT TRACES CONTROL ===== #
+    showHigher = True
+    if "showHigher" in kwargs:
+        showHigher = kwargs["showHigher"]
+
+    showLower = True
+    if "showLower" in kwargs:
+        showLower = kwargs["showLower"]
+
+    showMean = True
+    if "showMean" in kwargs:
+        showMean = kwargs["showMean"]
+
+    showBarycenter = True
+    if "showBarycenter" in kwargs:
+        showBarycenter = kwargs["showBarycenter"]
+
+    # Create plot traces
+    if showHigher:
+        fig.add_trace(go.Scatter(x=df.floatMeasure, y=df.high, name='higher Pitch', line_shape="spline",
+                                 customdata=customHigh, hovertemplate="%{customdata[0]}", line_color="blue"))
+
+    if showMean:
+        fig.add_trace(go.Scatter(x=df.floatMeasure, y=df["mean"], name='mean', line_shape="spline",
+                                 customdata=customMean, hovertemplate="%{customdata[0]}", line_color="black"))
+
+    if showBarycenter:
+        fig.add_trace(go.Scatter(x=df.floatMeasure, y=df.barycenter, name='barycenter', line_shape="spline",
+                                 customdata=customBary, hovertemplate="%{customdata[0]}", line_color="green"))
+
+    if showLower:
+        fig.add_trace(go.Scatter(x=df.floatMeasure, y=df.low, name='lower Pitch', line_shape="spline",
+                                 customdata=customLow, hovertemplate="%{customdata[0]}", line_color="red"))
+
+    # ===== PLOT LAYOUT ===== #
+    fig.update_layout(
+        title=f"<b>Pitchs Envelope<br>{workTitle} - {author}</b>", title_x=0.5, font={"size": 18})
+    fig.update_xaxes(type='linear', autorange=True, showgrid=True,
+                     gridwidth=1, title="Measures")
+    fig.update_yaxes(autorange=True, showgrid=True,
+                     gridwidth=1, ticksuffix="  ")
+    fig.update_layout(title_x=0.5, yaxis_title=None, font={
+        "size": 18,
+    }, yaxis=dict(
+        title='Pitch',
+        tickvals=[12, 24, 36, 48, 60, 72, 84, 96, 108, 120],
+        ticktext=["C0 ", "C1 ", "C2 ", "C3 ", "C4 ",
+                  "C5 ", "C6 ", "C7 ", "C8 ", "C9 "],
+    ))
+    fig.update_layout(hovermode='x unified',
+                      template="plotly_white", yaxis_showticksuffix="all")
+
+    fig.add_shape(
+        # Rectangle with reference to the plot
+        type="rect",
+        xref="paper",
+        yref="paper",
+        x0=0,
+        y0=0,
+        x1=1.0,
+        y1=1.0,
+        line=dict(
+            color="black",
+            width=1,
+        )
+    )
     fig.show()

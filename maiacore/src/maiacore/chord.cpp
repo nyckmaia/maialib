@@ -1693,6 +1693,32 @@ std::vector<int> Chord::toCents() const {
     return centsVec;
 }
 
+float Chord::getBarycentricFrequency() const {
+    float sum = 0.0f;
+    for (const auto& note : _originalNotes) {
+        sum += note.getFrequency();
+    }
+
+    const int barycenter = sum / _originalNotes.size();
+    return barycenter;
+}
+
+int Chord::getBarycentricMIDI() const {
+    int sum = 0;
+    for (const auto& note : _originalNotes) {
+        sum += note.getMIDINumber();
+    }
+
+    const int barycenter = sum / _originalNotes.size();
+    return barycenter;
+}
+
+std::string Chord::getBarycentricPitch(const std::string& accType) const {
+    const int barycenterMIDI = getBarycentricMIDI();
+
+    return Helper::midiNote2pitch(barycenterMIDI, accType);
+}
+
 void printHeap(const NoteDataHeap& heap) {
     for (const auto& noteData : heap) {
         std::cout << "printHeap: " << noteData.note.getPitch() << " ";
