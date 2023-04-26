@@ -2872,11 +2872,8 @@ nlohmann::json Score::instrumentFragmentation(nlohmann::json config) {
 }
 
 std::vector<std::tuple<int, float, Chord>> Score::getChords(nlohmann::json config) {
-    PROFILE_FUNCTION();
     // ===== STEP 1: PARSE THE INPUT CONFIG JSON ===== //
-
     // ===== STEP 1.0: READ PART NAMES ===== //
-
     std::vector<std::string> partNames;
     // Type checking
     if (config.contains("partNames") && !config["partNames"].is_array()) {
@@ -3069,7 +3066,8 @@ std::vector<std::tuple<int, float, Chord>> Score::getChords(nlohmann::json confi
     // std::ofstream file;
     // file.open("table.csv");
     // file.clear();
-    // file << "measure; fMeasure; starttime; curTimeVc1; mBegging; lcmDQN; mDiv; note; ticks; "
+    // file << "measure; fMeasure; starttime; endtime; curTimeVc1; mBegging; lcmDQN; mDPQN; note; "
+    //         "ticks; "
     //         "noteDiv; "
     //         "noteDur; divisionsScaleFactor;"
     //      << std::endl;
@@ -3125,8 +3123,9 @@ std::vector<std::tuple<int, float, Chord>> Score::getChords(nlohmann::json confi
 
                     // const std::string line =
                     //     std::to_string(m + 1) + ";" + std::to_string(floatMeasure + 1.0f) + ";" +
-                    //     std::to_string(currentTime) + ";" + std::to_string(currentTimeVoice1) +
-                    //     ";" + std::to_string(measureBegginingTicks) + ";" +
+                    //     std::to_string(currentTime) + ";" + std::to_string(timeEnd) + ";" +
+                    //     std::to_string(currentTimeVoice1) + ";" +
+                    //     std::to_string(measureBegginingTicks) + ";" +
                     //     std::to_string(_lcmDivisionsPerQuarterNote) + ";" +
                     //     std::to_string(currentMeasure.getDivisionsPerQuarterNote()) + ";" +
                     //     currentNote.getPitch() + ";" +
@@ -3150,11 +3149,11 @@ std::vector<std::tuple<int, float, Chord>> Score::getChords(nlohmann::json confi
                     db.exec(str.c_str());
 
                     previusTime = currentTime * divisionsScaleFactor;
-                    currentTime += (currentNote.getDurationTicks() * divisionsScaleFactor);
+                    currentTime += currentNote.getDurationTicks() * divisionsScaleFactor;
                     previusFloatMeasure = floatMeasure;
 
                     if (currentNote.getVoice() == 1 && !currentNote.inChord()) {
-                        currentTimeVoice1 += currentNote.getDurationTicks();
+                        currentTimeVoice1 += currentNote.getDurationTicks() * divisionsScaleFactor;
                     }
 
                     if (!currentNote.inChord()) {
@@ -3287,7 +3286,6 @@ std::vector<std::tuple<int, float, Chord>> Score::getSameAttackChords(
 std::vector<std::tuple<int, float, Chord>> Score::getChordsPerEachNoteEvent(
     SQLite::Database& db, const int minStackedNotes, const int maxStackedNotes,
     const int minDurationTicks, const int maxDurationTicks, const bool includeDuplicates) {
-    PROFILE_FUNCTION();
     // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
     db.exec("CREATE INDEX startTime_endTime_idx ON events (starttime, endtime)");
 

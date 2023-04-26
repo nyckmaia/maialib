@@ -2,9 +2,10 @@ import plotly.graph_objects as go
 import maialib.maiacore as mc
 import pandas as pd
 import plotly.express as px
-import math
+import plotly
 
-__all__ = ["plotPartsActivity", "plotPianoRoll", "plotScorePitchEnvelope"]
+__all__ = ["plotPartsActivity", "plotPianoRoll",
+           "plotScorePitchEnvelope", "plotChordsNumberOfNotes"]
 
 
 def _score2DataFrame(score: mc.Score, kwargs) -> None:
@@ -187,7 +188,7 @@ def _score2DataFrame(score: mc.Score, kwargs) -> None:
 # https://www.researchgate.net/publication/321335427_Uma_analise_da_organizacao_e_fragmentacao_de_Farben_de_Arnold_Schoenberg
 
 
-def plotPartsActivity(score: mc.Score, **kwargs) -> None:
+def plotPartsActivity(score: mc.Score, **kwargs) -> list[plotly.graph_objs._figure.Figure, pd.DataFrame]:
     """Plots a timeline graph showing the musical activity of each score instrument
 
     Args:
@@ -199,7 +200,7 @@ def plotPartsActivity(score: mc.Score, **kwargs) -> None:
        partNames (list): A str list that contains the filtered desired score parts to plot
 
     Returns:
-       None
+       A list: [Plotly Figure, The plot data as a Pandas Dataframe]
 
     Raises:
        RuntimeError, KeyError
@@ -246,10 +247,10 @@ def plotPartsActivity(score: mc.Score, **kwargs) -> None:
         )
     )
 
-    fig.show()
+    return [fig, df]
 
 
-def plotPianoRoll(score: mc.Score, **kwargs) -> None:
+def plotPianoRoll(score: mc.Score, **kwargs) -> list[plotly.graph_objs._figure.Figure, pd.DataFrame]:
     """Plots a piano roll graph showing the musical activity of each score instrument
 
     Args:
@@ -261,7 +262,7 @@ def plotPianoRoll(score: mc.Score, **kwargs) -> None:
        partNames (list): A str list that contains the filtered desired score parts to plot
 
     Returns:
-       None
+       A list: [Plotly Figure, The plot data as a Pandas Dataframe]
 
     Raises:
        RuntimeError, KeyError
@@ -310,7 +311,7 @@ def plotPianoRoll(score: mc.Score, **kwargs) -> None:
 
     fig.update_traces(width=0.8)
 
-    fig.show()
+    return [fig, df]
 
 
 def _removeNoteOffLines(df: pd.DataFrame) -> pd.DataFrame:
@@ -416,7 +417,39 @@ def _envelopeDataFrameInterpolation(df: pd.DataFrame, interpolateMeasures: int) 
     return new_df
 
 
-def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> None:
+def _chordNumNotesDataFrameInterpolation(df: pd.DataFrame, interpolateMeasures: int) -> pd.DataFrame:
+    def split(a, n):
+        k, m = divmod(len(a), n)
+        return (a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
+
+    totalMeasures = int(df.floatMeasure.max())
+
+    if interpolateMeasures >= totalMeasures:
+        raise Exception(
+            "ERROR: The score number of measures must be greater then the interpolate points value")
+
+    ranges = list(split(range(1, totalMeasures+1), interpolateMeasures))
+
+    data = []
+    for sub in ranges:
+        sub_df = df[(df.floatMeasure >=
+                    float(sub.start)) & (df.floatMeasure < float(sub.stop))]
+        floatMeasure = (sub.start + sub.stop) / 2
+        sub_df = sub_df.fillna(0)
+        numNotes = round(sub_df.numNotes.mean(skipna=True))
+
+        obj = {
+            "floatMeasure": floatMeasure,
+            "numNotes": numNotes
+        }
+
+        data.append(obj)
+
+    new_df = pd.DataFrame.from_records(data)
+    return new_df
+
+
+def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> list[plotly.graph_objs._figure.Figure, pd.DataFrame]:
     """Plot a score pitch envelope
 
     Args:
@@ -430,7 +463,7 @@ def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> None:
        showMean (bool): Plot the envelop mean curve
 
     Returns:
-       None
+       A list: [Plotly Figure, The plot data as a Pandas Dataframe]
 
     Raises:
        RuntimeError, KeyError
@@ -535,4 +568,103 @@ def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> None:
             width=1,
         )
     )
-    fig.show()
+    return [fig, df]
+
+
+def plotChordsNumberOfNotes(score: mc.Score, **kwargs) -> list[plotly.graph_objs._figure.Figure, pd.DataFrame]:
+    """Plot chord number of notes varying in time
+
+    Args:
+       score (maialib.Score):  A maialib Score object loaded with a valid MusicXML file
+
+    Kwargs:
+       measureStart (int): Start measure to plot
+       measureEnd (int): End measure to plot
+       numPoints (int): Number of interpolated points
+
+    Returns:
+       A list: [Plotly Figure, The plot data as a Pandas Dataframe]
+
+    Raises:
+       RuntimeError, KeyError
+
+    Examples of use:
+
+    >>> myScore = ml.Score("/path/to/score.xml")
+    >>> plotChordsNumberOfNotes(myScore)
+    >>> plotChordsNumberOfNotes(myScore, numPoints=15)
+    >>> plotChordsNumberOfNotes(myScore, measureStart=10, measureEnd=20)
+    """
+    # ===== INPUT VALIDATION ===== #
+    # Validade 'measureStart' and 'measureEnd'
+    measureStart = 1
+    measureEnd = score.getNumMeasures() + 1
+
+    if "measureStart" in kwargs:
+        measureStart = kwargs["measureStart"]
+        if measureStart < 1:
+            print("ERROR: 'measureStart' must be greater than 1")
+            return
+
+    if "measureEnd" in kwargs:
+        measureEnd = kwargs["measureEnd"]
+        if measureEnd > score.getNumMeasures():
+            print(
+                f"ERROR: 'measureEnd' must be lesser than than {score.getNumMeasures() + 1}'")
+            return
+
+    if measureEnd < measureStart:
+        print("ERROR: 'measureEnd' must be greater than 'measureStart'")
+        return
+    # ===== GET BASIC DATA ===== #
+    df = score.getChordsDataFrame()
+    df["numNotes"] = df.apply(lambda line: line.chord.size(), axis=1)
+    df = df.query(f'(measure >= {measureStart}) & (measure < {measureEnd})')
+    df["numNotes"] = df["numNotes"].map(lambda x: None if x == 0 else x)
+
+    if "numPoints" in kwargs:
+        df = _chordNumNotesDataFrameInterpolation(df, kwargs["numPoints"])
+
+    # ===== COMPUTE AUX DATA ===== #
+    minNumNotes = df["numNotes"].min()
+    maxNumNotes = df["numNotes"].max()
+    meanNumNotes = (minNumNotes + maxNumNotes) / 2
+    barycenterNumNotes = df["numNotes"].sum() / df.shape[0]
+
+    # ===== CREATE PLOT TRACES ===== #
+    fig = px.line(df, x="floatMeasure", y="numNotes",
+                  title='Chords number of notes')
+    fig.add_hline(y=meanNumNotes, line_width=1, line_dash="dash", line_color="green", annotation_text="Mean",
+                  annotation_position="bottom right",
+                  annotation_font_size=14,
+                  annotation_font_color="green")
+    fig.add_hline(y=barycenterNumNotes, line_width=2,
+                  line_dash="solid", line_color="black", annotation_text="Barycenter",
+                  annotation_position="bottom left",
+                  annotation_font_size=14,
+                  annotation_font_color="black")
+
+    # ===== PLOT LAYOUT ===== #
+    fig.update_xaxes(type='linear', autorange=True, showgrid=True,
+                     gridwidth=1, title="Measures")
+    fig.update_yaxes(autorange=True, showgrid=True,
+                     gridwidth=1, ticksuffix="  ", title="Number of Notes")
+    fig.update_layout(title_x=0.5, font={
+        "size": 14,
+    })
+    fig.add_shape(
+        # Rectangle with reference to the plot
+        type="rect",
+        xref="paper",
+        yref="paper",
+        x0=0,
+        y0=0,
+        x1=1.0,
+        y1=1.0,
+        line=dict(
+            color="black",
+            width=1,
+        )
+    )
+
+    return [fig, df]
