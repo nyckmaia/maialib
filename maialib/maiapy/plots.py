@@ -376,18 +376,18 @@ def _scoreEnvelopeDataFrame(df: pd.DataFrame) -> pd.DataFrame:
     return new_df
 
 
-def _envelopeDataFrameInterpolation(df: pd.DataFrame, interpolateMeasures: int) -> pd.DataFrame:
+def _envelopeDataFrameInterpolation(df: pd.DataFrame, interpolatePoints: int) -> pd.DataFrame:
     def split(a, n):
         k, m = divmod(len(a), n)
         return (a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
 
     totalMeasures = int(df.floatMeasure.max())
 
-    if interpolateMeasures >= totalMeasures:
+    if interpolatePoints >= totalMeasures:
         raise Exception(
             "ERROR: The score number of measures must be greater then the interpolate points value")
 
-    ranges = list(split(range(1, totalMeasures+1), interpolateMeasures))
+    ranges = list(split(range(1, totalMeasures+1), interpolatePoints))
 
     data = []
     for sub in ranges:
@@ -417,26 +417,25 @@ def _envelopeDataFrameInterpolation(df: pd.DataFrame, interpolateMeasures: int) 
     return new_df
 
 
-def _chordNumNotesDataFrameInterpolation(df: pd.DataFrame, interpolateMeasures: int) -> pd.DataFrame:
+def _chordNumNotesDataFrameInterpolation(df: pd.DataFrame, interpolatePoints: int) -> pd.DataFrame:
     def split(a, n):
         k, m = divmod(len(a), n)
         return (a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
 
-    totalMeasures = int(df.floatMeasure.max())
+    firstMeasureNumber = df.measure.min(skipna=True)
+    lastMeasureNumber = df.measure.max(skipna=True)
 
-    if interpolateMeasures >= totalMeasures:
+    if interpolatePoints >= lastMeasureNumber:
         raise Exception(
             "ERROR: The score number of measures must be greater then the interpolate points value")
 
-    ranges = list(split(range(1, totalMeasures+1), interpolateMeasures))
-
+    ranges = list(
+        split(range(firstMeasureNumber, lastMeasureNumber+1), interpolatePoints))
     data = []
     for sub in ranges:
-        sub_df = df[(df.floatMeasure >=
-                    float(sub.start)) & (df.floatMeasure < float(sub.stop))]
+        sub_df = df.query(f'(measure >= {sub.start}) & (measure < {sub.stop})')
         floatMeasure = (sub.start + sub.stop) / 2
-        sub_df = sub_df.fillna(0)
-        numNotes = round(sub_df.numNotes.mean(skipna=True))
+        numNotes = round(sub_df["numNotes"].mean(skipna=True))
 
         obj = {
             "floatMeasure": floatMeasure,
@@ -620,10 +619,11 @@ def plotChordsNumberOfNotes(score: mc.Score, **kwargs) -> list[plotly.graph_objs
     df = score.getChordsDataFrame()
     df["numNotes"] = df.apply(lambda line: line.chord.size(), axis=1)
     df = df.query(f'(measure >= {measureStart}) & (measure < {measureEnd})')
-    df["numNotes"] = df["numNotes"].map(lambda x: None if x == 0 else x)
 
     if "numPoints" in kwargs:
         df = _chordNumNotesDataFrameInterpolation(df, kwargs["numPoints"])
+
+    df["numNotes"] = df["numNotes"].map(lambda x: None if x == 0 else x)
 
     # ===== COMPUTE AUX DATA ===== #
     minNumNotes = df["numNotes"].min()
