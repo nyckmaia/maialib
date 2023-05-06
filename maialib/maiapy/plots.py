@@ -8,7 +8,7 @@ __all__ = ["plotPartsActivity", "plotPianoRoll",
            "plotScorePitchEnvelope", "plotChordsNumberOfNotes"]
 
 
-def _score2DataFrame(score: mc.Score, kwargs) -> None:
+def _score2DataFrame(score: mc.Score, kwargs) -> tuple([pd.DataFrame, str, str]):
     """Auxiliar function to convert a maialib Score object to a Pandas DataFrame
 
     Args:
@@ -20,7 +20,7 @@ def _score2DataFrame(score: mc.Score, kwargs) -> None:
        partNames (list): A str list that contains the filtered desired score parts to plot
 
     Returns:
-       None
+       Tuple: DataFrame, author, work_title
 
     Raises:
        RuntimeError, KeyError
@@ -173,7 +173,7 @@ def _score2DataFrame(score: mc.Score, kwargs) -> None:
     df = pd.DataFrame(plotData["notesData"])
     df['delta'] = df['Finish'] - df['Start']
 
-    return [df, author, work_title]
+    return df, author, work_title
 
 # plotPartsActivity
 #
@@ -188,7 +188,7 @@ def _score2DataFrame(score: mc.Score, kwargs) -> None:
 # https://www.researchgate.net/publication/321335427_Uma_analise_da_organizacao_e_fragmentacao_de_Farben_de_Arnold_Schoenberg
 
 
-def plotPartsActivity(score: mc.Score, **kwargs) -> list[plotly.graph_objs._figure.Figure, pd.DataFrame]:
+def plotPartsActivity(score: mc.Score, **kwargs) -> tuple([plotly.graph_objs._figure.Figure, pd.DataFrame]):
     """Plots a timeline graph showing the musical activity of each score instrument
 
     Args:
@@ -250,7 +250,7 @@ def plotPartsActivity(score: mc.Score, **kwargs) -> list[plotly.graph_objs._figu
     return [fig, df]
 
 
-def plotPianoRoll(score: mc.Score, **kwargs) -> list[plotly.graph_objs._figure.Figure, pd.DataFrame]:
+def plotPianoRoll(score: mc.Score, **kwargs) -> tuple([plotly.graph_objs._figure.Figure, pd.DataFrame]):
     """Plots a piano roll graph showing the musical activity of each score instrument
 
     Args:
@@ -311,7 +311,7 @@ def plotPianoRoll(score: mc.Score, **kwargs) -> list[plotly.graph_objs._figure.F
 
     fig.update_traces(width=0.8)
 
-    return [fig, df]
+    return fig, df
 
 
 def _removeNoteOffLines(df: pd.DataFrame) -> pd.DataFrame:
@@ -433,7 +433,7 @@ def _chordNumNotesDataFrameInterpolation(df: pd.DataFrame, interpolatePoints: in
     return new_df
 
 
-def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> list[plotly.graph_objs._figure.Figure, pd.DataFrame]:
+def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> tuple([plotly.graph_objs._figure.Figure, pd.DataFrame]):
     """Plot a score pitch envelope
 
     Args:
@@ -552,10 +552,10 @@ def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> list[plotly.graph_objs.
             width=1,
         )
     )
-    return [fig, df]
+    return fig, df
 
 
-def plotChordsNumberOfNotes(score: mc.Score, **kwargs) -> list[plotly.graph_objs._figure.Figure, pd.DataFrame]:
+def plotChordsNumberOfNotes(score: mc.Score, **kwargs) -> tuple([plotly.graph_objs._figure.Figure, pd.DataFrame]):
     """Plot chord number of notes varying in time
 
     Args:
@@ -652,4 +652,4 @@ def plotChordsNumberOfNotes(score: mc.Score, **kwargs) -> list[plotly.graph_objs
         )
     )
 
-    return [fig, df]
+    return fig, df

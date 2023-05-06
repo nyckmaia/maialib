@@ -3221,7 +3221,7 @@ std::vector<std::tuple<int, float, Key, Chord>> Score::getSameAttackChords(
             floatMeasure = static_cast<float>(query.getColumn(1).getDouble());
 
             // Get the note pointer
-            const intptr_t address = query.getColumn(2);
+            const intptr_t address = query.getColumn(2).getInt64();
             const Note* note = reinterpret_cast<Note*>(address);
 
             // Skip rests
@@ -3340,7 +3340,7 @@ std::vector<std::tuple<int, float, Key, Chord>> Score::getChordsPerEachNoteEvent
             }
 
             // Get the note pointer
-            const intptr_t address = query.getColumn(2);
+            const intptr_t address = query.getColumn(2).getInt64();
             const Note* note = reinterpret_cast<Note*>(address);
 
             const int measureScaleFactor = query.getColumn(3).getInt();
