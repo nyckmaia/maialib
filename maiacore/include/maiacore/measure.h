@@ -7,6 +7,7 @@
 #include "maiacore/barline.h"
 #include "maiacore/clef.h"
 #include "maiacore/constants.h"
+#include "maiacore/key.h"
 
 class Note;
 class Barline;
@@ -16,11 +17,9 @@ class Measure {
     int _number;
     int _timeSignatureUpper;
     int _timeSignatureLower;
-    int _fifthCicle;
-    std::string _keySignature;
+    Key _key;
     std::string _metronomeFigure;
     int _metronomeValue;
-    bool _isMajorKeyMode;
     bool _isKeySignatureChanged;
     bool _isTimeSignatureChanged;
     bool _isMetronomeChanged;
@@ -49,6 +48,28 @@ class Measure {
     ~Measure();
 
     /**
+     * @brief Set the Key object
+     *
+     * @param fifthCircle
+     * @param isMajorMode
+     */
+    void setKey(int fifthCircle, bool isMajorMode = true);
+
+    /**
+     * @brief Get the Key object
+     *
+     * @return Key
+     */
+    Key getKey() const;
+
+    /**
+     * @brief Get the Key Name object
+     *
+     * @return std::string
+     */
+    std::string getKeyName() const;
+
+    /**
      * @brief
      *
      */
@@ -64,10 +85,10 @@ class Measure {
     /**
      * @brief Set the Key Signature object
      *
-     * @param fifthCicle
+     * @param fifthCircle
      * @param isMajorMode
      */
-    void setKeySignature(const int fifthCicle, const bool isMajorMode = true);
+    void setKeySignature(const int fifthCircle, const bool isMajorMode = true);
 
     /**
      * @brief Set the Time Signature object
@@ -476,11 +497,11 @@ class Measure {
     int getDivisionsPerQuarterNote() const;
 
     /**
-     * @brief Get the Fifth Cicle object
+     * @brief Get the Fifth Circle object
      *
      * @return int
      */
-    int getFifthCicle() const;
+    int getFifthCircle() const;
 
     /**
      * @brief Get the Key Signature object

@@ -23,9 +23,8 @@ if (MSVC)
     set(CMAKE_CXX_FLAGS_RELEASE "/O2 /W3")
     add_definitions("/wd4244 /wd4267")
 else()
-    set(CMAKE_CXX_FLAGS "-Wall")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wextra")
 endif()
 
 # Add all maiacore source files

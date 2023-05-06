@@ -11,14 +11,10 @@ Measure::Measure(const int numStaves, const int divisionsPerQuarterNote)
     : _number(0),
       _timeSignatureUpper(4),
       _timeSignatureLower(4),
-      _fifthCicle(0),
-      _keySignature("C"),
       _metronomeFigure("quarter"),
       _metronomeValue(0),
-      _isMajorKeyMode(true),
       _isKeySignatureChanged(false),
       _isTimeSignatureChanged(false),
-      //   _isClefChanged(false),
       _isMetronomeChanged(false),
       _isDivisionsPerQuarterNoteChanged(false),
       _numStaves(numStaves),
@@ -35,38 +31,15 @@ Measure::~Measure() {}
 void Measure::info() const {
     LOG_INFO("Number: " << _number);
     LOG_INFO("Time Signature: " << _timeSignatureUpper << "/" << _timeSignatureLower);
-    LOG_INFO("Fifth Cicle: " << _fifthCicle);
+    LOG_INFO("Key: " << _key.getName());
     LOG_INFO("Metronome Mark: " << _metronomeFigure << " - " << _metronomeValue);
 }
 
-void Measure::setNumber(const int measureNumber) {
-    PROFILE_FUNCTION();
-    _number = measureNumber;
-}
+void Measure::setNumber(const int measureNumber) { _number = measureNumber; }
 
-void Measure::setKeySignature(const int fifthCicle, const bool isMajorMode) {
-    PROFILE_FUNCTION();
-    const std::map<int, std::string> majorKey{
-        std::make_pair(0, ""),    std::make_pair(1, "G"),   std::make_pair(2, "D"),
-        std::make_pair(3, "A"),   std::make_pair(4, "E"),   std::make_pair(5, "B"),
-        std::make_pair(6, "F#"),  std::make_pair(7, "C#"),  std::make_pair(8, "G#"),
-        std::make_pair(9, "D#"),  std::make_pair(10, "A#"), std::make_pair(11, "E#"),
-        std::make_pair(12, "B#"), std::make_pair(-1, "F"),  std::make_pair(-2, "Bb"),
-        std::make_pair(-3, "Eb"), std::make_pair(-4, "Ab"), std::make_pair(-5, "Db"),
-        std::make_pair(-6, "Gb")};
-
-    const std::map<int, std::string> minorKey{
-        std::make_pair(0, "Am"),   std::make_pair(1, "Em"),   std::make_pair(2, "Bm"),
-        std::make_pair(3, "F#m"),  std::make_pair(4, "C#m"),  std::make_pair(5, "G#m"),
-        std::make_pair(6, "D#m"),  std::make_pair(7, "A#m"),  std::make_pair(8, "E#m"),
-        std::make_pair(9, "B#m"),  std::make_pair(10, "Fxm"), std::make_pair(11, "Cxm"),
-        std::make_pair(12, "Gxm"), std::make_pair(-1, "Dm"),  std::make_pair(-2, "Gm"),
-        std::make_pair(-3, "Cm"),  std::make_pair(-4, "Fm"),  std::make_pair(-5, "Bbm"),
-        std::make_pair(-6, "Ebm")};
-
-    _keySignature = (isMajorMode) ? majorKey.at(fifthCicle) : minorKey.at(fifthCicle);
-    _fifthCicle = fifthCicle;
-    _isMajorKeyMode = isMajorMode;
+void Measure::setKeySignature(const int fifthCircle, const bool isMajorMode) {
+    _key.setFifthCircle(fifthCircle);
+    _key.setIsMajorMode(isMajorMode);
 
     _isKeySignatureChanged = true;
 }
@@ -83,7 +56,7 @@ void Measure::setMetronome(const int bpm, const Duration duration) {
     setIsMetronomeChanged(true);
 }
 
-void Measure::setKeyMode(const bool isMajorKeyMode) { _isMajorKeyMode = isMajorKeyMode; }
+void Measure::setKeyMode(const bool isMajorKeyMode) { _key.setIsMajorMode(isMajorKeyMode); }
 
 void Measure::setIsKeySignatureChanged(bool isKeySignatureChanged) {
     _isKeySignatureChanged = isKeySignatureChanged;
@@ -111,6 +84,15 @@ void Measure::setNumStaves(const int numStaves) {
 }
 
 int Measure::getNumStaves() const { return _numStaves; }
+
+void Measure::setKey(int fifthCircle, bool isMajorMode) {
+    _key.setFifthCircle(fifthCircle);
+    _key.setIsMajorMode(isMajorMode);
+}
+
+Key Measure::getKey() const { return _key; }
+
+std::string Measure::getKeyName() const { return _key.getName(); }
 
 void Measure::clear() {
     _note.clear();
@@ -261,7 +243,7 @@ bool Measure::metronomeChanged() const { return _isMetronomeChanged; }
 
 bool Measure::divisionsPerQuarterNoteChanged() const { return _isDivisionsPerQuarterNoteChanged; }
 
-bool Measure::isMajorKeyMode() const { return _isMajorKeyMode; }
+bool Measure::isMajorKeyMode() const { return _key.isMajorMode(); }
 
 const Note& Measure::getNote(const int noteId, const int staveId) const {
     const auto& stave = _note[staveId];
@@ -499,9 +481,9 @@ int Measure::getNumNotes(const int staveId) const {
     return numNotes;
 }
 
-int Measure::getFifthCicle() const { return _fifthCicle; }
+int Measure::getFifthCircle() const { return _key.getFifthCircle(); }
 
-const std::string Measure::getKeySignature() const { return _keySignature; }
+const std::string Measure::getKeySignature() const { return _key.getName(); }
 
 std::pair<int, int> Measure::getTimeSignature() const {
     return std::make_pair(_timeSignatureUpper, _timeSignatureLower);

@@ -324,7 +324,7 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
     // ===== STEP 0: INPUT VALIDATION ===== //
     // Error checking:
     if (_originalNotes.empty()) {
-        LOG_WARN("The chord is empty!");
+        // LOG_WARN("The chord is empty!");
         return;
     }
 
@@ -342,18 +342,39 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
 
     // ===== STEP 1.2: FILTER UNIQUE PITCH CLASS NOTES ===== //
     // Remove duplacated notes (pitchClass)
-    _openStack.erase(std::unique(_openStack.begin(), _openStack.end(),
-                                 [](const Note& a, const Note& b) {
-                                     return a.getPitchClass() == b.getPitchClass();
-                                 }),
-                     _openStack.end());
+    std::vector<int> myHashs;
+    myHashs.reserve(_openStack.size());
+
+    for (const auto& note : _openStack) {
+        int noteHash = hash(note.getPitchClass().c_str());
+        myHashs.push_back(noteHash);
+    }
+
+    std::sort(myHashs.begin(), myHashs.end());
+    myHashs.erase(std::unique(myHashs.begin(), myHashs.end()), myHashs.end());
+
+    const int uniquePitchClasses = myHashs.size();
+
+    std::vector<Note> uniqueNotes;
+    uniqueNotes.reserve(uniquePitchClasses);
+
+    for (const auto& note : _openStack) {
+        const int noteHash = hash(note.getPitchClass().c_str());
+        if (std::find(myHashs.begin(), myHashs.end(), noteHash) != myHashs.end()) {
+            uniqueNotes.push_back(note);
+            myHashs.erase(std::remove(myHashs.begin(), myHashs.end(), noteHash), myHashs.end());
+        }
+    }
+
+    // ===== STEP 1.3: OVERRIDE THE 'OPEN STACK' VECTOR WITH UNIQUE NOTE PITCH CLASSES ===== //
+    _openStack = uniqueNotes;
 
     // Define the current 'chordSize'
     const int chordSize = _openStack.size();
 
     // Error checking:
     if (chordSize < 3) {
-        LOG_WARN("The chord MUST BE at least 3 unique pitch classes!");
+        // LOG_WARN("The chord MUST BE at least 3 unique pitch classes!");
         return;
     }
 
@@ -368,12 +389,14 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
     // STEPS ===== //
     std::vector<NoteDataHeap> validEnharmonicHeaps =
         removeHeapsWithDuplicatedPitchSteps(allEnharmonicHeaps);
-
     // ===== STEP 5: COMPUTE THE STACK IN THIRDS TEMPLATE MATCH ===== //
+    const int possibleNumberOfHeapInvertions = 4;
+    _stackedHeaps.reserve(validEnharmonicHeaps.size() * possibleNumberOfHeapInvertions);
     for (auto& heap : validEnharmonicHeaps) {
         const std::vector<NoteDataHeap> heapInversions = computeAllHeapInversions(heap);
+        // std::cout << "  C2: heapInversions: " << heapInversions.size() << std::endl;
         std::vector<NoteDataHeap> tertianHeaps = filterTertianHeapsOnly(heapInversions);
-
+        // std::cout << "  C3: tertianHeaps: " << tertianHeaps.size() << std::endl;
         for (auto& heapInversion : tertianHeaps) {
             // Check if the first heap interval is a musical third
             const auto& firstNote = heapInversion[0].note;
@@ -427,6 +450,7 @@ std::vector<NoteDataHeap> Chord::computeEnharmonicUnitsGroups() const {
 std::vector<NoteDataHeap> Chord::computeEnharmonicHeaps(
     const std::vector<NoteDataHeap>& heaps) const {
     const int chordSize = heaps.size();
+
     const int numEnharmonicHeapVariants = std::pow(3, chordSize);
 
     std::vector<NoteDataHeap> enharmonicHeaps(numEnharmonicHeapVariants);
@@ -509,6 +533,28 @@ std::vector<NoteDataHeap> Chord::computeEnharmonicHeaps(
                 }
             }
             break;
+        case 8:
+            for (int i1 = 0; i1 < numOfEnharmonics; i1++) {
+                for (int i2 = 0; i2 < numOfEnharmonics; i2++) {
+                    for (int i3 = 0; i3 < numOfEnharmonics; i3++) {
+                        for (int i4 = 0; i4 < numOfEnharmonics; i4++) {
+                            for (int i5 = 0; i5 < numOfEnharmonics; i5++) {
+                                for (int i6 = 0; i6 < numOfEnharmonics; i6++) {
+                                    for (int i7 = 0; i7 < numOfEnharmonics; i7++) {
+                                        for (int i8 = 0; i8 < numOfEnharmonics; i8++) {
+                                            enharmonicHeaps[idx++] = {{heaps[0][i1], heaps[1][i2],
+                                                                       heaps[2][i3], heaps[3][i4],
+                                                                       heaps[4][i5], heaps[5][i6],
+                                                                       heaps[6][i7], heaps[7][i8]}};
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            break;
 
         default:
             LOG_ERROR("Invalid chord size: " + std::to_string(chordSize));
@@ -544,7 +590,7 @@ std::vector<NoteDataHeap> Chord::removeHeapsWithDuplicatedPitchSteps(
         validEnharmonicHeaps[idx++] = heap;
     }
 
-    validEnharmonicHeaps.resize(idx - 1);  // CHECAR ESSE IDX!!!
+    validEnharmonicHeaps.resize(idx - 1);
 
     return validEnharmonicHeaps;
 }
@@ -568,22 +614,35 @@ std::vector<NoteDataHeap> Chord::filterTertianHeapsOnly(
     }
 
     const int heapSize = heaps[0].size();
-
+    // std::cout << " | heapSize: " << heapSize << std::endl;
     std::vector<NoteDataHeap> tertianHeaps;
-
+    tertianHeaps.reserve(heapSize);
+    // int k = 0;
     for (const auto& heap : heaps) {
         bool isATertianHeap = true;
+
+        if (heap.empty()) {
+            continue;
+        }
+
         for (int i = 0; i < heapSize - 1; i++) {
             const Note& currentNote = heap[i].note;
             const Note& nextNote = heap[i + 1].note;
+            // std::cout << "heap[" << k << "][" << i << "/" << heapSize - 1
+            //           << "]: " << currentNote.getPitch() << " " << nextNote.getPitch() <<
+            //           std::endl;
 
             Interval interval(currentNote, nextNote);
+            // std::cout << "    intervalName: " << interval.getName() << std::endl;
             const int pitchStepInterval = interval.getPitchStepInterval();
+            // std::cout << "    pitchStepInterval: " << pitchStepInterval << std::endl;
+
             if ((pitchStepInterval != 3) && (pitchStepInterval != 5)) {
                 isATertianHeap = false;
                 break;
             }
         }
+        // k++;
 
         if (isATertianHeap) {
             tertianHeaps.push_back(heap);
@@ -747,7 +806,7 @@ HeapData Chord::stackInThirdsTemplateMatch(const NoteDataHeap& heap) const {
             stackPositionWeightMap = &c_B_stackPositionWeightMap;
             break;
         default:
-            LOG_ERROR("Invalid pitchStep");
+            LOG_ERROR("Invalid pitchStep: " + rootNote.getPitchStep());
             break;
     }
 
@@ -1164,202 +1223,602 @@ bool Chord::haveAugmentedInterval(const bool useEnharmony) const {
 }
 
 // ===== ABSTRACTION 1 ===== //
-
 bool Chord::haveDiminishedUnisson(const bool useEnharmony) const {
+    // auto sortedNotes = _originalNotes;
+    // std::sort(sortedNotes.begin(), sortedNotes.end());
+
     const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isDiminishedUnisson(useEnharmony);
-                       });
+
+    const auto root = intervals.at(0).getNotes().at(0);
+    const auto nextNote = intervals.at(0).getNotes().at(1);
+    const auto interval = Interval(nextNote, root);
+
+    return interval.isDiminishedUnisson(useEnharmony);
 }
 
 bool Chord::havePerfectUnisson(const bool useEnharmony) const {
     const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isPerfectUnisson(useEnharmony);
-                       });
+    return intervals.at(0).isPerfectUnisson(useEnharmony);
 }
 
 bool Chord::haveAugmentedUnisson(const bool useEnharmony) const {
     const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isAugmentedUnisson(useEnharmony);
-                       });
+    return intervals.at(0).isAugmentedUnisson(useEnharmony);
 }
 
-bool Chord::haveMinorSecond(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(
-        intervals.begin(), intervals.end(),
-        [useEnharmony](const Interval& interval) { return interval.isMinorSecond(useEnharmony); });
+bool Chord::haveMinorSecond(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 2;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMinorSecond(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveMajorSecond(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(
-        intervals.begin(), intervals.end(),
-        [useEnharmony](const Interval& interval) { return interval.isMajorSecond(useEnharmony); });
+bool Chord::haveMajorSecond(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 2;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMajorSecond(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveMinorThird(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(
-        intervals.begin(), intervals.end(),
-        [useEnharmony](const Interval& interval) { return interval.isMinorThird(useEnharmony); });
+bool Chord::haveMinorThird(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 3;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMinorThird(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveMajorThird(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(
-        intervals.begin(), intervals.end(),
-        [useEnharmony](const Interval& interval) { return interval.isMajorThird(useEnharmony); });
+bool Chord::haveMajorThird(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 3;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMajorThird(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::havePerfectFourth(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isPerfectFourth(useEnharmony);
-                       });
+bool Chord::havePerfectFourth(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 4;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isPerfectFourth(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveAugmentedFourth(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isAugmentedFourth(useEnharmony);
-                       });
+bool Chord::haveAugmentedFourth(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 4;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isAugmentedFourth(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveDiminishedFifth(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isDiminishedFifth(useEnharmony);
-                       });
+bool Chord::haveDiminishedFifth(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 5;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isDiminishedFifth(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::havePerfectFifth(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(
-        intervals.begin(), intervals.end(),
-        [useEnharmony](const Interval& interval) { return interval.isPerfectFifth(useEnharmony); });
+bool Chord::havePerfectFifth(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 5;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isPerfectFifth(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveAugmentedFifth(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isAugmentedFifth(useEnharmony);
-                       });
+bool Chord::haveAugmentedFifth(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 5;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isAugmentedFifth(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveMinorSixth(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(
-        intervals.begin(), intervals.end(),
-        [useEnharmony](const Interval& interval) { return interval.isMinorSixth(useEnharmony); });
+bool Chord::haveMinorSixth(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 6;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMinorSixth(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveMajorSixth(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(
-        intervals.begin(), intervals.end(),
-        [useEnharmony](const Interval& interval) { return interval.isMajorSixth(useEnharmony); });
+bool Chord::haveMajorSixth(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 6;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMajorSixth(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveDiminishedSeventh(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isDiminishedSeventh(useEnharmony);
-                       });
+bool Chord::haveDiminishedSeventh(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 7;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isDiminishedSeventh(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveMinorSeventh(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(
-        intervals.begin(), intervals.end(),
-        [useEnharmony](const Interval& interval) { return interval.isMinorSeventh(useEnharmony); });
+bool Chord::haveMinorSeventh(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 7;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMinorSeventh(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveMajorSeventh(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(
-        intervals.begin(), intervals.end(),
-        [useEnharmony](const Interval& interval) { return interval.isMajorSeventh(useEnharmony); });
+bool Chord::haveMajorSeventh(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 7;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMajorSeventh(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveDiminishedOctave(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isDiminishedOctave(useEnharmony);
-                       });
+bool Chord::haveDiminishedOctave(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 8;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isDiminishedOctave(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::havePerfectOctave(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isPerfectOctave(useEnharmony);
-                       });
+bool Chord::havePerfectOctave(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 8;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isPerfectOctave(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveAugmentedOctave(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isAugmentedOctave(useEnharmony);
-                       });
+bool Chord::haveAugmentedOctave(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 8;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isAugmentedOctave(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveMinorNinth(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(
-        intervals.begin(), intervals.end(),
-        [useEnharmony](const Interval& interval) { return interval.isMinorNinth(useEnharmony); });
+bool Chord::haveMinorNinth(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 9;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMinorNinth(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveMajorNinth(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(
-        intervals.begin(), intervals.end(),
-        [useEnharmony](const Interval& interval) { return interval.isMajorNinth(useEnharmony); });
+bool Chord::haveMajorNinth(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 9;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMajorNinth(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::havePerfectEleventh(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isPerfectEleventh(useEnharmony);
-                       });
+bool Chord::havePerfectEleventh(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 11;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isPerfectEleventh(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveSharpEleventh(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isSharpEleventh(useEnharmony);
-                       });
+bool Chord::haveSharpEleventh(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 11;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isSharpEleventh(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveMinorThirdteenth(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isMinorThirdteenth(useEnharmony);
-                       });
+bool Chord::haveMinorThirdteenth(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 13;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMinorThirdteenth(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
-bool Chord::haveMajorThirdteenth(const bool useEnharmony) const {
-    const auto intervals = getIntervalsFromOriginalSortedNotes();
-    return std::any_of(intervals.begin(), intervals.end(),
-                       [useEnharmony](const Interval& interval) {
-                           return interval.isMajorThirdteenth(useEnharmony);
-                       });
+bool Chord::haveMajorThirdteenth(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return false;
+    }
+
+    const auto& root = _closeStack.at(0);
+    const int intervalScaleDegree = 13;
+    const int maxIndex =
+        (closeStackSize < intervalScaleDegree) ? closeStackSize : intervalScaleDegree - 1;
+    for (int i = 1; i < maxIndex; i++) {
+        const auto& nextNote = _closeStack.at(i);
+        Interval interval(root, nextNote);
+        if (interval.isMajorThirdteenth(useEnharmony)) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 // ===== ABSTRACTION 2 ===== //
@@ -1693,30 +2152,147 @@ std::vector<int> Chord::toCents() const {
     return centsVec;
 }
 
-float Chord::getBarycentricFrequency() const {
+int Chord::getDegree(const Key& key, bool enharmonyNotes) {
+    if (!_isStackedInThirds) {
+        stackInThirds(enharmonyNotes);
+    }
+
+    const bool isMajorMode = key.isMajorMode();
+    const std::string majorKeyName = (isMajorMode) ? key.getName() : key.getRelativeKeyName();
+    const std::string keyPitchStep = majorKeyName.substr(0, 1);
+    const std::array<std::string, 7>* diatonicScale = nullptr;
+    switch (hash(keyPitchStep.c_str())) {
+        case hash("C"):
+            diatonicScale = (isMajorMode) ? &c_C_diatonicScale : &c_A_diatonicScale;
+            break;
+        case hash("D"):
+            diatonicScale = (isMajorMode) ? &c_D_diatonicScale : &c_B_diatonicScale;
+            break;
+        case hash("E"):
+            diatonicScale = (isMajorMode) ? &c_E_diatonicScale : &c_C_diatonicScale;
+            break;
+        case hash("F"):
+            diatonicScale = (isMajorMode) ? &c_F_diatonicScale : &c_D_diatonicScale;
+            break;
+        case hash("G"):
+            diatonicScale = (isMajorMode) ? &c_G_diatonicScale : &c_E_diatonicScale;
+            break;
+        case hash("A"):
+            diatonicScale = (isMajorMode) ? &c_A_diatonicScale : &c_F_diatonicScale;
+            break;
+        case hash("B"):
+            diatonicScale = (isMajorMode) ? &c_B_diatonicScale : &c_G_diatonicScale;
+            break;
+        default:
+            LOG_ERROR("Invalid pitchStep: " + keyPitchStep);
+            break;
+    }
+
+    // Skip invalid chord size
+    if (_closeStack.empty()) {
+        return 0;
+    }
+
+    const std::string rootPitchStep = _closeStack.at(0).getPitchStep();
+
+    const auto it = std::find(diatonicScale->begin(), diatonicScale->end(), rootPitchStep);
+    const int index = std::distance(diatonicScale->begin(), it);
+    const int degree = index + 1;
+
+    return degree;
+}
+
+std::string Chord::getRomanDegree(const Key& key, bool enharmonyNotes) {
+    const int degree = getDegree(key, enharmonyNotes);
+
+    if (degree == 0) {
+        return {};
+    }
+
+    const int index = degree - 1;
+
+    // OVER SIMPLIFIED!! TO IMPROVE!!
+    return c_harmonyKeyDegrees.at(index);
+}
+
+float Chord::getMeanFrequency() const {
     float sum = 0.0f;
     for (const auto& note : _originalNotes) {
         sum += note.getFrequency();
     }
 
-    const int barycenter = sum / _originalNotes.size();
-    return barycenter;
+    const int mean = sum / _originalNotes.size();
+    return mean;
 }
 
-int Chord::getBarycentricMIDI() const {
+float Chord::getMeanOfExtremesFrequency() const {
+    if (_originalNotes.size() == 0) {
+        return 0.0f;
+    }
+
+    auto copyNotes = _originalNotes;
+    std::sort(copyNotes.begin(), copyNotes.end());
+    int lowFreq = copyNotes.at(0).getFrequency();
+    int highFreq = copyNotes.at(copyNotes.size() - 1).getFrequency();
+
+    const float mean = (static_cast<float>(lowFreq) + static_cast<float>(highFreq)) / 2.0f;
+    return mean;
+}
+
+float Chord::getFrequencyStd() const {
+    std::vector<float> freqVec(_originalNotes.size(), 0.0f);
+
+    for (const auto& note : _originalNotes) {
+        freqVec.push_back(note.getFrequency());
+    }
+
+    return computeStandardDeviation(freqVec);
+}
+
+int Chord::getMeanMidiValue() const {
     int sum = 0;
     for (const auto& note : _originalNotes) {
         sum += note.getMIDINumber();
     }
 
-    const int barycenter = sum / _originalNotes.size();
-    return barycenter;
+    const int mean = sum / _originalNotes.size();
+    return mean;
 }
 
-std::string Chord::getBarycentricPitch(const std::string& accType) const {
-    const int barycenterMIDI = getBarycentricMIDI();
+int Chord::getMeanOfExtremesMidiValue() const {
+    if (_originalNotes.size() == 0) {
+        return MUSIC_XML::MIDI::NUMBER::MIDI_REST;
+    }
 
-    return Helper::midiNote2pitch(barycenterMIDI, accType);
+    auto copyNotes = _originalNotes;
+    std::sort(copyNotes.begin(), copyNotes.end());
+    int lowMIDI = copyNotes.at(0).getMIDINumber();
+    int highMIDI = copyNotes.at(copyNotes.size() - 1).getMIDINumber();
+
+    const int mean = (lowMIDI + highMIDI) / 2;
+    return mean;
+}
+
+float Chord::getMidiValueStd() const {
+    std::vector<int> midiVec(_originalNotes.size(), 0);
+
+    for (const auto& note : _originalNotes) {
+        midiVec.push_back(note.getMIDINumber());
+    }
+
+    return computeStandardDeviation(midiVec);
+}
+
+std::string Chord::getMeanPitch(const std::string& accType) const {
+    const int meanMIDI = getMeanMidiValue();
+
+    return Helper::midiNote2pitch(meanMIDI, accType);
+}
+
+std::string Chord::getMeanOfExtremesPitch(const std::string& accType) const {
+    const int meanMIDI = getMeanOfExtremesMidiValue();
+
+    return Helper::midiNote2pitch(meanMIDI, accType);
 }
 
 void printHeap(const NoteDataHeap& heap) {

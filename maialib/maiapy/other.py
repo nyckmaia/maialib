@@ -3,7 +3,7 @@ import pkg_resources
 from enum import Enum
 import platform
 import subprocess
-import maialib as ml
+import maialib.maiacore as mc
 
 __all__ = ["getSampleScorePath", "SampleScore",
            "setScoreEditorApp", "getScoreEditorApp", "openScore"]
@@ -40,7 +40,7 @@ def getScoreEditorApp() -> str:
     return _scoreEditorApp
 
 
-def openScore(score: ml.Score) -> None:
+def openScore(score: mc.Score) -> None:
     score.toFile("temp")
     global _scoreEditorApp
 

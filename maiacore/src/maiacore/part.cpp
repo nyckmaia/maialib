@@ -240,7 +240,7 @@ const std::string Part::toXML(const int instrumentId, const int identSize) const
         if (_measure[m].keySignatureChanged()) {
             xml.append(Helper::generateIdentation(4, identSize) + "<key>\n");
             xml.append(Helper::generateIdentation(5, identSize) + "<fifths>" +
-                       std::to_string(_measure[m].getFifthCicle()) + "</fifths>\n");
+                       std::to_string(_measure[m].getFifthCircle()) + "</fifths>\n");
 
             const std::string keyMode = (_measure[m].isMajorKeyMode()) ? "major" : "minor";
             xml.append(Helper::generateIdentation(5, identSize) + "<mode>" + keyMode + "</mode>\n");

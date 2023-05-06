@@ -71,47 +71,55 @@ std::pair<std::string, bool> Interval::analyse() const {
         case 1:
             switch (numSemitones) {
                 case -120:
-                    return {"-10 oct", true};
+                    return {"-10 P8", true};
                 case -108:
-                    return {"-9 oct", true};
+                    return {"-9 P8", true};
                 case -96:
-                    return {"-8 oct", true};
+                    return {"-8 P8", true};
                 case -84:
-                    return {"-7 oct", true};
+                    return {"-7 P8", true};
                 case -72:
-                    return {"-6 oct", true};
+                    return {"-6 P8", true};
                 case -60:
-                    return {"-5 oct", true};
+                    return {"-5 P8", true};
                 case -48:
-                    return {"-4 oct", true};
+                    return {"-4 P8", true};
                 case -36:
-                    return {"-3 oct", true};
+                    return {"-3 P8", true};
                 case -24:
-                    return {"-2 oct", true};
+                    return {"-2 P8", true};
                 case -12:
-                    return {"-1 oct", true};
+                    return {"-1 P8", true};
                 case 0:
-                    return {"unisson", true};
+                    return {"P1", true};
+                case 11:
+                    return {"d8", false};
                 case 12:
-                    return {"1 oct", true};
+                    return {"P8", true};
+                case 13:
+                    return {"A8", false};
+                case 23:
+                    return {"2 d8", false};
                 case 24:
-                    return {"2 oct", true};
+                    return {"2 P8", true};
+                case 25:
+                    return {"2 A8", false};
                 case 36:
-                    return {"3 oct", true};
+                    return {"3 P8", true};
                 case 48:
-                    return {"4 oct", true};
+                    return {"4 P8", true};
                 case 60:
-                    return {"5 oct", true};
+                    return {"5 P8", true};
                 case 72:
-                    return {"6 oct", true};
+                    return {"6 P8", true};
                 case 84:
-                    return {"7 oct", true};
+                    return {"7 P8", true};
                 case 96:
-                    return {"8 oct", true};
+                    return {"8 P8", true};
                 case 108:
-                    return {"9 oct", true};
+                    return {"9 P8", true};
                 case 120:
-                    return {"10 oct", true};
+                    return {"10 P8", true};
             }
             break;
 
@@ -339,9 +347,7 @@ int Interval::getPitchStepInterval() const {
     const std::string& diatonic_A = _note[0].getPitchStep();
     const std::string& diatonic_B = _note[1].getPitchStep();
 
-    // Select the chord stack using the 'possible root' note
     const std::array<std::string, 7>* diatonicScale = nullptr;
-
     switch (hash(diatonic_A.c_str())) {
         case hash("C"):
             diatonicScale = &c_C_diatonicScale;
@@ -625,11 +631,11 @@ bool Interval::isThirdteenth(const bool useEnharmony) const {
 
 bool Interval::isAnyOctaveMinorSecond(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 1;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 2;
@@ -637,16 +643,16 @@ bool Interval::isAnyOctaveMinorSecond(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveMajorSecond(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 2;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 2;
@@ -654,16 +660,16 @@ bool Interval::isAnyOctaveMajorSecond(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveMinorThird(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 3;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 3;
@@ -671,16 +677,16 @@ bool Interval::isAnyOctaveMinorThird(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveMajorThird(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 4;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 3;
@@ -688,16 +694,16 @@ bool Interval::isAnyOctaveMajorThird(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctavePerfectFourth(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 5;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 4;
@@ -705,16 +711,16 @@ bool Interval::isAnyOctavePerfectFourth(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveAugmentedFourth(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 6;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 4;
@@ -722,16 +728,16 @@ bool Interval::isAnyOctaveAugmentedFourth(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveDiminishedFifth(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 6;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 5;
@@ -739,16 +745,16 @@ bool Interval::isAnyOctaveDiminishedFifth(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctavePerfectFifth(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 7;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 5;
@@ -756,16 +762,16 @@ bool Interval::isAnyOctavePerfectFifth(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveAugmentedFifth(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 8;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 5;
@@ -773,16 +779,16 @@ bool Interval::isAnyOctaveAugmentedFifth(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveMinorSixth(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 8;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 6;
@@ -790,16 +796,16 @@ bool Interval::isAnyOctaveMinorSixth(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveMajorSixth(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 9;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 6;
@@ -807,16 +813,16 @@ bool Interval::isAnyOctaveMajorSixth(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveDiminishedSeventh(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 9;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 7;
@@ -824,16 +830,16 @@ bool Interval::isAnyOctaveDiminishedSeventh(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveMinorSeventh(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 10;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 7;
@@ -841,16 +847,16 @@ bool Interval::isAnyOctaveMinorSeventh(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveMajorSeventh(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 11;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 7;
@@ -858,16 +864,16 @@ bool Interval::isAnyOctaveMajorSeventh(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveDiminishedOctave(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 11;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 1;
@@ -875,16 +881,16 @@ bool Interval::isAnyOctaveDiminishedOctave(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctavePerfectOctave(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 0;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 1;
@@ -892,16 +898,16 @@ bool Interval::isAnyOctavePerfectOctave(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveAugmentedOctave(const bool useEnharmony) const {
     const int CloseOctaveSemitonesDistance = 1;
-    const bool isAscMinorSecond = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
-    const bool isDescMinorSecond = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isAsc = (_numSemitones - CloseOctaveSemitonesDistance) % 12 == 0;
+    const bool isDesc = (_numSemitones + CloseOctaveSemitonesDistance) % 12 == 0;
 
     if (useEnharmony) {
-        return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+        return (_numSemitones > 0) ? isAsc : isDesc;
     }
 
     const bool diatonicIntervalCheck = getDiatonicInterval(true, true) == 1;
@@ -909,7 +915,7 @@ bool Interval::isAnyOctaveAugmentedOctave(const bool useEnharmony) const {
         return false;
     }
 
-    return (_numSemitones > 0) ? isAscMinorSecond : isDescMinorSecond;
+    return (_numSemitones > 0) ? isAsc : isDesc;
 }
 
 bool Interval::isAnyOctaveSecond() const { return getDiatonicInterval(true, true) == 2; }

@@ -317,19 +317,11 @@ def plotPianoRoll(score: mc.Score, **kwargs) -> list[plotly.graph_objs._figure.F
 def _removeNoteOffLines(df: pd.DataFrame) -> pd.DataFrame:
     df["low"] = df["low"].map(lambda x: None if x == 0 else x)
     df["high"] = df["high"].map(lambda x: None if x == 0 else x)
-    df["barycenter"] = df["barycenter"].map(lambda x: None if x == 0 else x)
     df["mean"] = df["mean"].map(lambda x: None if x == 0 else x)
+    df["meanOfExtremes"] = df["meanOfExtremes"].map(
+        lambda x: None if x == 0 else x)
 
     return df
-
-
-def _chordBarycenter(chord) -> float:
-    sumMidiValues = 0
-    for note in chord:
-        sumMidiValues = sumMidiValues + note.getMIDINumber()
-
-    barycenter = sumMidiValues / chord.size()
-    return barycenter
 
 
 def _scoreEnvelopeDataFrame(df: pd.DataFrame) -> pd.DataFrame:
@@ -342,31 +334,24 @@ def _scoreEnvelopeDataFrame(df: pd.DataFrame) -> pd.DataFrame:
             obj = {
                 "floatMeasure": row["floatMeasure"],
                 "low": 0,
+                "meanOfExtremes": 0,
                 "mean": 0,
-                "barycenter": 0,
                 "high": 0,
                 "lowPitch": None,
+                "meanOfExtremesPitch": None,
                 "meanPitch": None,
-                "barycenterPitch": None,
                 "highPitch": None
             }
         else:
-            chord.sortNotes()
-
-            low = chord.getNote(0).getMIDINumber()
-            high = chord.getNote(chordSize-1).getMIDINumber()
-            mean = round((high + low) / 2)
-            meanNote = mc.Note(mean)
-
             obj = {
                 "floatMeasure": row["floatMeasure"],
                 "low": chord.getNote(0).getMIDINumber(),
-                "mean": mean,
-                "barycenter": chord.getBarycentricMIDI(),
+                "meanOfExtremes": chord.getMeanOfExtremesMidiValue(),
+                "mean": chord.getMeanMidiValue(),
                 "high": chord.getNote(chordSize-1).getMIDINumber(),
                 "lowPitch": chord.getNote(0).getPitch(),
-                "meanPitch": meanNote.getPitch(),
-                "barycenterPitch": chord.getBarycentricPitch(),
+                "meanOfExtremesPitch": chord.getMeanOfExtremesPitch(),
+                "meanPitch": chord.getMeanPitch(),
                 "highPitch": chord.getNote(chordSize-1).getPitch()
             }
 
@@ -395,19 +380,19 @@ def _envelopeDataFrameInterpolation(df: pd.DataFrame, interpolatePoints: int) ->
                     float(sub.start)) & (df.floatMeasure < float(sub.stop))]
         floatMeasure = (sub.start + sub.stop) / 2
         low = round(sub_df.low.mean())
+        meanOfExtremes = round(sub_df["meanOfExtremes"].mean())
         mean = round(sub_df["mean"].mean())
-        barycenter = round(sub_df.barycenter.mean())
         high = round(sub_df.high.mean())
 
         obj = {
             "floatMeasure": floatMeasure,
             "low": low,
+            "meanOfExtremes": meanOfExtremes,
             "mean": mean,
-            "barycenter": barycenter,
             "high": high,
             "lowPitch": mc.Helper.midiNote2pitch(low),
+            "meanOfExtremesPitch": mc.Helper.midiNote2pitch(meanOfExtremes),
             "meanPitch": mc.Helper.midiNote2pitch(mean),
-            "barycenterPitch": mc.Helper.midiNote2pitch(barycenter),
             "highPitch": mc.Helper.midiNote2pitch(high)
         }
 
@@ -458,8 +443,8 @@ def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> list[plotly.graph_objs.
        numPoints: (int): Number of interpolated points
        showHigher (bool): Plot the envelop upper limit
        showLower (bool): Plot the envelop lower limit
-       showBarycenter (bool): Plot the envelop barycentric curve
        showMean (bool): Plot the envelop mean curve
+       showMeanOfExtremes (bool): Plot the envelop mean of extremes curve
 
     Returns:
        A list: [Plotly Figure, The plot data as a Pandas Dataframe]
@@ -473,7 +458,7 @@ def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> list[plotly.graph_objs.
     >>> plotScorePitchEnvelope(myScore)
     >>> plotScorePitchEnvelope(myScore, numPoints=10)
     >>> plotScorePitchEnvelope(myScore, showLower=False)
-    >>> plotScorePitchEnvelope(myScore, showMean=False, showBarycenter=True)
+    >>> plotScorePitchEnvelope(myScore, showMean=False, showMean=True)
     """
     # ===== GET BASIC INFO ===== #
     df = score.getChordsDataFrame()
@@ -497,8 +482,8 @@ def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> list[plotly.graph_objs.
 
     # Get mouse houver plot data
     customLow = list(df[['lowPitch']].to_numpy())
+    customMeanOfExtremes = list(df[['meanOfExtremesPitch']].to_numpy())
     customMean = list(df[['meanPitch']].to_numpy())
-    customBary = list(df[['barycenterPitch']].to_numpy())
     customHigh = list(df[['highPitch']].to_numpy())
 
     # ===== PLOT TRACES CONTROL ===== #
@@ -510,29 +495,29 @@ def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> list[plotly.graph_objs.
     if "showLower" in kwargs:
         showLower = kwargs["showLower"]
 
+    showMeanOfExtremes = True
+    if "showMeanOfExtremes" in kwargs:
+        showMeanOfExtremes = kwargs["showMeanOfExtremes"]
+
     showMean = True
     if "showMean" in kwargs:
         showMean = kwargs["showMean"]
 
-    showBarycenter = True
-    if "showBarycenter" in kwargs:
-        showBarycenter = kwargs["showBarycenter"]
-
     # Create plot traces
     if showHigher:
-        fig.add_trace(go.Scatter(x=df.floatMeasure, y=df.high, name='higher Pitch', line_shape="spline",
+        fig.add_trace(go.Scatter(x=df.floatMeasure, y=df.high, name='higher pitch', line_shape="spline",
                                  customdata=customHigh, hovertemplate="%{customdata[0]}", line_color="blue"))
+
+    if showMeanOfExtremes:
+        fig.add_trace(go.Scatter(x=df.floatMeasure, y=df["meanOfExtremes"], name='mean of extremes', line_shape="spline",
+                                 customdata=customMeanOfExtremes, hovertemplate="%{customdata[0]}", line_color="black"))
 
     if showMean:
         fig.add_trace(go.Scatter(x=df.floatMeasure, y=df["mean"], name='mean', line_shape="spline",
-                                 customdata=customMean, hovertemplate="%{customdata[0]}", line_color="black"))
-
-    if showBarycenter:
-        fig.add_trace(go.Scatter(x=df.floatMeasure, y=df.barycenter, name='barycenter', line_shape="spline",
-                                 customdata=customBary, hovertemplate="%{customdata[0]}", line_color="green"))
+                                 customdata=customMean, hovertemplate="%{customdata[0]}", line_color="green"))
 
     if showLower:
-        fig.add_trace(go.Scatter(x=df.floatMeasure, y=df.low, name='lower Pitch', line_shape="spline",
+        fig.add_trace(go.Scatter(x=df.floatMeasure, y=df.low, name='lower pitch', line_shape="spline",
                                  customdata=customLow, hovertemplate="%{customdata[0]}", line_color="red"))
 
     # ===== PLOT LAYOUT ===== #
@@ -628,18 +613,18 @@ def plotChordsNumberOfNotes(score: mc.Score, **kwargs) -> list[plotly.graph_objs
     # ===== COMPUTE AUX DATA ===== #
     minNumNotes = df["numNotes"].min()
     maxNumNotes = df["numNotes"].max()
-    meanNumNotes = (minNumNotes + maxNumNotes) / 2
-    barycenterNumNotes = df["numNotes"].sum() / df.shape[0]
+    meanOfExtremesNumNotes = (minNumNotes + maxNumNotes) / 2
+    meanNumNotes = df["numNotes"].sum() / df.shape[0]
 
     # ===== CREATE PLOT TRACES ===== #
     fig = px.line(df, x="floatMeasure", y="numNotes",
                   title='Chords number of notes')
-    fig.add_hline(y=meanNumNotes, line_width=1, line_dash="dash", line_color="green", annotation_text="Mean",
+    fig.add_hline(y=meanOfExtremesNumNotes, line_width=1, line_dash="dash", line_color="green", annotation_text="Mean of Extremes",
                   annotation_position="bottom right",
                   annotation_font_size=14,
                   annotation_font_color="green")
-    fig.add_hline(y=barycenterNumNotes, line_width=2,
-                  line_dash="solid", line_color="black", annotation_text="Barycenter",
+    fig.add_hline(y=meanNumNotes, line_width=2,
+                  line_dash="solid", line_color="black", annotation_text="Mean",
                   annotation_position="bottom left",
                   annotation_font_size=14,
                   annotation_font_color="black")

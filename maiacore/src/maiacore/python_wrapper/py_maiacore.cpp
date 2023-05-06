@@ -18,6 +18,7 @@ void BarlineClass(const py::module &);
 void IntervalClass(const py::module &);
 void HelperClass(const py::module &);
 void Constants(const py::module &);
+void KeyClass(const py::module &);
 void Config(py::module &);
 
 PYBIND11_MODULE(maiacore, m) {
@@ -34,6 +35,7 @@ PYBIND11_MODULE(maiacore, m) {
     IntervalClass(m);
     HelperClass(m);
     ScoreCollectionClass(m);
+    KeyClass(m);
     // Config(m);
 
 #ifdef MAIALIB_VERSION_INFO

@@ -295,9 +295,20 @@ void ChordClass(const py::module& m) {
 
     cls.def("toCents", &Chord::toCents);
 
-    cls.def("getBarycentricFrequency", &Chord::getBarycentricFrequency);
-    cls.def("getBarycentricMIDI", &Chord::getBarycentricMIDI);
-    cls.def("getBarycentricPitch", &Chord::getBarycentricPitch, py::arg("accType") = "");
+    cls.def("getDegree", &Chord::getDegree, py::arg("key"), py::arg("enharmonyNotes") = false);
+    cls.def("getRomanDegree", &Chord::getRomanDegree, py::arg("key"),
+            py::arg("enharmonyNotes") = false);
+
+    cls.def("getMeanFrequency", &Chord::getMeanFrequency);
+    cls.def("getMeanOfExtremesFrequency", &Chord::getMeanOfExtremesFrequency);
+    cls.def("getFrequencyStd", &Chord::getFrequencyStd);
+
+    cls.def("getMeanMidiValue", &Chord::getMeanMidiValue);
+    cls.def("getMeanOfExtremesMidiValue", &Chord::getMeanOfExtremesMidiValue);
+    cls.def("getMidiValueStd", &Chord::getMidiValueStd);
+
+    cls.def("getMeanPitch", &Chord::getMeanPitch, py::arg("accType") = "");
+    cls.def("getMeanOfExtremesPitch", &Chord::getMeanOfExtremesPitch, py::arg("accType") = "");
 
     cls.def(py::self == py::self);
     cls.def(py::self != py::self);

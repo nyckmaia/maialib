@@ -1,9 +1,11 @@
 #pragma once
 #include <functional>
-#include <tuple>  // std::tuple
+#include <numeric>  // std::accumulate
+#include <tuple>    // std::tuple
 #include <vector>
 
 #include "maiacore/interval.h"
+#include "maiacore/key.h"
 #include "maiacore/note.h"
 
 struct NoteData {
@@ -63,6 +65,19 @@ class Chord {
     std::vector<NoteDataHeap> filterTertianHeapsOnly(const std::vector<NoteDataHeap>& heaps) const;
     std::vector<Note> computeBestOpenStackHeap(std::vector<HeapData>& stackedHeaps);
     void computeCloseStack(const std::vector<Note>& openStack);
+
+    template <typename T>
+    float computeStandardDeviation(const std::vector<T>& v) const {
+        const float sum = std::accumulate(v.begin(), v.end(), 0);
+        const float mean = sum / v.size();
+
+        std::vector<float> diff(v.size());
+        std::transform(v.begin(), v.end(), diff.begin(), [mean](double x) { return x - mean; });
+        const float sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
+        const float stdev = std::sqrt(sq_sum / v.size());
+
+        return stdev;
+    }
 
    public:
     /**
@@ -319,7 +334,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMinorSecond(const bool useEnharmony = false) const;
+    bool haveMinorSecond(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -328,7 +343,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMajorSecond(const bool useEnharmony = false) const;
+    bool haveMajorSecond(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -337,7 +352,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMinorThird(const bool useEnharmony = false) const;
+    bool haveMinorThird(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -346,7 +361,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMajorThird(const bool useEnharmony = false) const;
+    bool haveMajorThird(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -355,7 +370,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool havePerfectFourth(const bool useEnharmony = false) const;
+    bool havePerfectFourth(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -364,7 +379,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveAugmentedFourth(const bool useEnharmony = false) const;
+    bool haveAugmentedFourth(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -373,7 +388,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveDiminishedFifth(const bool useEnharmony = false) const;
+    bool haveDiminishedFifth(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -382,7 +397,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool havePerfectFifth(const bool useEnharmony = false) const;
+    bool havePerfectFifth(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -391,7 +406,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveAugmentedFifth(const bool useEnharmony = false) const;
+    bool haveAugmentedFifth(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -400,7 +415,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMinorSixth(const bool useEnharmony = false) const;
+    bool haveMinorSixth(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -409,7 +424,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMajorSixth(const bool useEnharmony = false) const;
+    bool haveMajorSixth(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -418,7 +433,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveDiminishedSeventh(const bool useEnharmony = false) const;
+    bool haveDiminishedSeventh(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -427,7 +442,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMinorSeventh(const bool useEnharmony = false) const;
+    bool haveMinorSeventh(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -436,7 +451,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMajorSeventh(const bool useEnharmony = false) const;
+    bool haveMajorSeventh(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -445,7 +460,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveDiminishedOctave(const bool useEnharmony = false) const;
+    bool haveDiminishedOctave(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -454,7 +469,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool havePerfectOctave(const bool useEnharmony = false) const;
+    bool havePerfectOctave(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -463,7 +478,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveAugmentedOctave(const bool useEnharmony = false) const;
+    bool haveAugmentedOctave(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -472,7 +487,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMinorNinth(const bool useEnharmony = false) const;
+    bool haveMinorNinth(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -481,7 +496,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMajorNinth(const bool useEnharmony = false) const;
+    bool haveMajorNinth(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -490,7 +505,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool havePerfectEleventh(const bool useEnharmony = false) const;
+    bool havePerfectEleventh(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -499,7 +514,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveSharpEleventh(const bool useEnharmony = false) const;
+    bool haveSharpEleventh(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -508,7 +523,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMinorThirdteenth(const bool useEnharmony = false) const;
+    bool haveMinorThirdteenth(const bool useEnharmony = false);
 
     /**
      * @brief
@@ -517,7 +532,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool haveMajorThirdteenth(const bool useEnharmony = false) const;
+    bool haveMajorThirdteenth(const bool useEnharmony = false);
 
     // ===== ABSTRACTION 2 ===== //
 
@@ -1013,26 +1028,80 @@ class Chord {
     std::vector<int> toCents() const;
 
     /**
-     * @brief Get the Barycentric Frequency object
+     * @brief Get the Degree object
+     *
+     * @param key
+     * @param enharmonyNotes
+     * @return int
+     */
+    int getDegree(const Key& key, bool enharmonyNotes = false);
+
+    /**
+     * @brief Get the Roman Degree object
+     *
+     * @param key
+     * @param enharmonyNotes
+     * @return std::string
+     */
+    std::string getRomanDegree(const Key& key, bool enharmonyNotes = false);
+
+    /**
+     * @brief Get the Mean Frequency object
      *
      * @return float
      */
-    float getBarycentricFrequency() const;
+    float getMeanFrequency() const;
 
     /**
-     * @brief Get the Barycentric M I D I object
+     * @brief Get the Mean Of Extremes Frequency object
+     *
+     * @return float
+     */
+    float getMeanOfExtremesFrequency() const;
+
+    /**
+     * @brief Get the Frequency Std object
+     *
+     * @return float
+     */
+    float getFrequencyStd() const;
+
+    /**
+     * @brief Get the Mean Midi Value object
      *
      * @return int
      */
-    int getBarycentricMIDI() const;
+    int getMeanMidiValue() const;
 
     /**
-     * @brief Get the Barycentric Pitch object
+     * @brief Get the Mean Of Extremes Midi Values object
+     *
+     * @return int
+     */
+    int getMeanOfExtremesMidiValue() const;
+
+    /**
+     * @brief Get the Midi Value Std object
+     *
+     * @return float
+     */
+    float getMidiValueStd() const;
+
+    /**
+     * @brief Get the Mean Pitch object
      *
      * @param accType
      * @return std::string
      */
-    std::string getBarycentricPitch(const std::string& accType = {}) const;
+    std::string getMeanPitch(const std::string& accType = {}) const;
+
+    /**
+     * @brief Get the Mean Of Extremes Pitch object
+     *
+     * @param accType
+     * @return std::string
+     */
+    std::string getMeanOfExtremesPitch(const std::string& accType = {}) const;
 
     /**
      * @brief

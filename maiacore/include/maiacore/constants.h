@@ -6,6 +6,24 @@
 #include <map>
 #include <string>
 
+const std::map<int, std::pair<std::string, std::string>> c_mapAscFifthTonality = {
+    {0, std::make_pair("C", "Am")},   {1, std::make_pair("G", "Em")},
+    {2, std::make_pair("D", "Bm")},   {3, std::make_pair("A", "F#m")},
+    {4, std::make_pair("E", "C#m")},  {5, std::make_pair("B", "G#m")},
+    {6, std::make_pair("F#", "D#m")}, {7, std::make_pair("C#", "Bbm")},
+    {8, std::make_pair("G#", "Fm")},  {9, std::make_pair("D#", "Cm")},
+    {10, std::make_pair("A#", "Gm")}, {11, std::make_pair("E#", "Dm")},
+};
+
+const std::map<int, std::pair<std::string, std::string>> c_mapDescFifthTonality = {
+    {0, std::make_pair("C", "Am")},   {1, std::make_pair("G", "Em")},
+    {2, std::make_pair("D", "Bm")},   {3, std::make_pair("A", "F#m")},
+    {4, std::make_pair("E", "C#m")},  {5, std::make_pair("B", "G#m")},
+    {6, std::make_pair("Gb", "D#m")}, {7, std::make_pair("Db", "Bbm")},
+    {8, std::make_pair("Ab", "Fm")},  {9, std::make_pair("Eb", "Cm")},
+    {10, std::make_pair("Bb", "Gm")}, {11, std::make_pair("F", "Dm")},
+};
+
 enum class Duration {
     MAXIMA_DOT_DOT = 42,
     MAXIMA_DOT = 41,
@@ -56,6 +74,10 @@ const std::map<int, Duration> c_mapTimeSignatureLower_Duration = {
     {8, Duration::EIGHTH},   {16, Duration::N16TH},    {32, Duration::N32ND},
     {64, Duration::N64TH},   {128, Duration::N128TH},  {256, Duration::N256TH},
     {512, Duration::N512TH}, {1024, Duration::N1024TH}};
+
+// ===== HARMONY DEGREES ===== //
+const std::array<int, 7> c_harmonyDegrees = {1, 2, 3, 4, 5, 6, 7};
+const std::array<std::string, 7> c_harmonyKeyDegrees = {"I", "II", "III", "IV", "V", "VI", "VII"};
 
 // ===== SCALES ===== //
 // Diatonic Scales (Pitch Steps)

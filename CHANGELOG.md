@@ -2,28 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v1.1.0] - 2023-04-23
+## [v1.1.0] - 2023-05-06
 
 ### New Features
 
 - Chord Class
-  - .getBarycenterFrequency()
-  - .getBarycenterMIDI()
-  - .getBarycenterPitch()
+
+  - .getMeanFrequency()
+  - .getMeanMidiValue()
+  - .getMeanPitch()
+  - .getMeanOfExtremesFrequency()
+  - .getMeanOfExtremesMidiValue()
+  - .getMeanOfExtremesPitch()
+  - .getFrequencyStd()
+  - .getMidiValueStd()
+  - .getDegree()
+  - .getRomanDegree()
+
+- New 'Key' Class
+
 - Maiapy functions
   - .plotScorePitchEnvelope()
   - .plotChordsNumberOfNotes()
 
 ### Improved
 
+- Score::getChordsDataFrame() includes a new column 'key'
 - Python wrapper: Chord::_repr_() shows a list of soundingPitch notes
 - Chord class now have "for range" C++ iterators
+- Upgrade SqLiteCpp to v3.2.1
 
 ### Fixed
 
 - Score::getChords() and .getChordsDataFrame() now works good
 - Score::info() shows the partName list correctly
 - Maialib plots that were broken, now works good
+- Beethoven 5th XML metadata: fix to Cm key
 
 ---
 

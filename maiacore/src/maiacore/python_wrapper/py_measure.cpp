@@ -17,10 +17,14 @@ void MeasureClass(const py::module& m) {
     cls.def(py::init<const int, const int>(), py::arg("numStaves") = 1,
             py::arg("divisionsPerQuarterNote") = 256);
 
+    cls.def("setKey", &Measure::setKey, py::arg("fifthCircle"), py::arg("isMajorMode") = true);
+    cls.def("getKey", &Measure::getKey);
+    cls.def("getKeyName", &Measure::getKeyName);
+
     cls.def("clear", &Measure::clear);
 
     cls.def("setNumber", &Measure::setNumber, py::arg("measureNumber"));
-    cls.def("setKeySignature", &Measure::setKeySignature, py::arg("fifthCicle"),
+    cls.def("setKeySignature", &Measure::setKeySignature, py::arg("fifthCircle"),
             py::arg("isMajorMode") = true);
     cls.def("setTimeSignature", &Measure::setTimeSignature, py::arg("upper"), py::arg("lower"));
     cls.def("setMetronome", &Measure::setMetronome, py::arg("bpm"),
@@ -130,7 +134,7 @@ void MeasureClass(const py::module& m) {
     cls.def("getNumNotes", py::overload_cast<const int>(&Measure::getNumNotes, py::const_),
             py::arg("staveId"));
 
-    cls.def("getFifthCicle", &Measure::getFifthCicle);
+    cls.def("getFifthCircle", &Measure::getFifthCircle);
     cls.def("getKeySignature", &Measure::getKeySignature);
     cls.def("getTimeSignature", &Measure::getTimeSignature);
     cls.def("getTimeMetronome", &Measure::getMetronome);
