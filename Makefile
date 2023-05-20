@@ -17,6 +17,7 @@ all: dev
 .PHONY: module-release
 .PHONY: module
 .PHONY: validate
+.PHONY: coverage
 .PHONY: build-cpp-tests
 .PHONY: cpp-tests
 .PHONY: py-tests 
@@ -87,10 +88,13 @@ build-cpp-tests:
 	@make static-debug
 	@python $(SCRIPTS_DIR)/make-cpp-tests.py Debug
 
+coverage:
+	@make cpp-tests
+	@python $(SCRIPTS_DIR)/run-code-coverage.py
+
 cpp-tests:
 	@make build-cpp-tests
 	@python $(SCRIPTS_DIR)/make-run-cpp-tests.py
-	@python $(SCRIPTS_DIR)/run-code-coverage.py
 
 py-tests:
 	@python $(SCRIPTS_DIR)/make-py-tests.py

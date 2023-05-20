@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.2.0] - 2023-05-20
+
+### New Features
+
+- Chord::getCloseStackHarmonicComplexity()
+- Chord::getHarmonicDensity()
+
+### Improved
+
+### Fixed
+
+---
+
 ## [v1.1.0] - 2023-05-06
 
 ### New Features

@@ -9,8 +9,8 @@ myOS = platform.system()
 
 # If 'Windows'
 if myOS == "Windows":
-    os.system(f"python -m unittest")
+    os.system(f"cd test && python -m unittest")
 else:
-    os.system(f"python3 -m unittest")
+    os.system(f"cd test && python3 -m unittest")
 
 print(f"{color.OKGREEN}Python Unit Tests: Done!{color.ENDC}")

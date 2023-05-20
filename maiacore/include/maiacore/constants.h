@@ -5,6 +5,18 @@
 #include <cmath>  // std::pow
 #include <map>
 #include <string>
+#include <vector>
+
+const float HAVE_THIRD_VALUE = 1.0f;         // 2^0
+const float HAVE_FIFTH_VALUE = 2.0f;         // 2^1
+const float HAVE_SEVENTH_VALUE = 4.0f;       // 2^2
+const float HAVE_NINTH_VALUE = 8.0f;         // 2^3
+const float HAVE_ELEVENTH_VALUE = 16.0f;     // 2^4
+const float HAVE_THIRDTEENTH_VALUE = 32.0f;  // 2^5
+
+const std::vector<float> c_haveComplexityValues{HAVE_THIRD_VALUE,    HAVE_FIFTH_VALUE,
+                                                HAVE_SEVENTH_VALUE,  HAVE_NINTH_VALUE,
+                                                HAVE_ELEVENTH_VALUE, HAVE_THIRDTEENTH_VALUE};
 
 const std::map<int, std::pair<std::string, std::string>> c_mapAscFifthTonality = {
     {0, std::make_pair("C", "Am")},   {1, std::make_pair("G", "Em")},

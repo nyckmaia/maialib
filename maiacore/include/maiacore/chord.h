@@ -255,6 +255,33 @@ class Chord {
     const std::vector<Note>& getNotes() const;
 
     /**
+     * @brief Get the Close Stack Harmonic Complexity object
+     *
+     * @param useEnharmony
+     * @return float
+     */
+    float getCloseStackHarmonicComplexity(const bool useEnharmony = false);
+
+    /**
+     * @brief Get the Harmonic Density object
+     *
+     * @param lowerBoundMIDI
+     * @param higherBoundMIDI
+     * @return float
+     */
+    float getHarmonicDensity(int lowerBoundMIDI = -1, int higherBoundMIDI = -1) const;
+
+    /**
+     * @brief Get the Harmonic Density object
+     *
+     * @param lowerBoundPitch
+     * @param higherBoundPitch
+     * @return float
+     */
+    float getHarmonicDensity(const std::string& lowerBoundPitch = {},
+                             const std::string& higherBoundPitch = {}) const;
+
+    /**
      * @brief
      *
      * @param useEnharmony

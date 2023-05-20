@@ -22,6 +22,13 @@ std::vector<std::string> Helper::splitString(const std::string& s, char delimite
     return tokens;
 }
 
+std::string Helper::formatFloat(float floatValue, int digits) {
+    std::ostringstream ss;
+    ss.precision(digits);
+    ss << floatValue;
+    return ss.str();
+}
+
 int Helper::semitonesBetweenPitches(const std::string& pitch_A, const std::string& pitch_B) {
     // Error checking
     if (pitch_A.empty() || pitch_B.empty()) {

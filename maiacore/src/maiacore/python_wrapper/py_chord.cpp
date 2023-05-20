@@ -156,6 +156,17 @@ void ChordClass(const py::module& m) {
     cls.def("getBassNote", &Chord::getBassNote);
     cls.def("getNotes", &Chord::getNotes);
 
+    cls.def("getCloseStackHarmonicComplexity", &Chord::getCloseStackHarmonicComplexity,
+            py::arg("useEnharmony") = false,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("getHarmonicDensity",
+            py::overload_cast<int, int>(&Chord::getHarmonicDensity, py::const_),
+            py::arg("lowerBoundMIDI") = -1, py::arg("higherBoundMIDI") = -1);
+    cls.def("getHarmonicDensity",
+            py::overload_cast<const std::string&, const std::string&>(&Chord::getHarmonicDensity,
+                                                                      py::const_),
+            py::arg("lowerBoundPitch") = "", py::arg("higherBoundPitch") = "");
+
     cls.def("haveMajorInterval", &Chord::haveMajorInterval, py::arg("useEnharmony") = false);
     cls.def("haveMinorInterval", &Chord::haveMinorInterval, py::arg("useEnharmony") = false);
     cls.def("havePerfectInterval", &Chord::havePerfectInterval, py::arg("useEnharmony") = false);

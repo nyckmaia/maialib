@@ -270,6 +270,8 @@ std::pair<std::string, bool> Interval::analyse() const {
                 case 0:
                     return {"A7", false};  // Special case: Using mod 12
                                            // in switch statement
+                case 1:
+                    return {"+A7", false};  // Example: [C4, Bx4]
                 case 13:
                     return {"+A7", false};
                 case 14:

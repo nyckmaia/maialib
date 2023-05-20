@@ -26,6 +26,15 @@ class Helper {
     /**
      * @brief
      *
+     * @param floatValue
+     * @param digits
+     * @return std::string
+     */
+    static std::string formatFloat(float floatValue, int digits);
+
+    /**
+     * @brief
+     *
      * @param identPosition
      * @param identSize
      * @return const std::string

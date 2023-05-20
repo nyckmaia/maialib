@@ -373,8 +373,8 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
     const int chordSize = _openStack.size();
 
     // Error checking:
-    if (chordSize < 3) {
-        // LOG_WARN("The chord MUST BE at least 3 unique pitch classes!");
+    if (chordSize < 2) {
+        // LOG_WARN("The chord MUST BE at least 2 unique pitch classes!");
         return;
     }
 
@@ -458,6 +458,14 @@ std::vector<NoteDataHeap> Chord::computeEnharmonicHeaps(
     const int numOfEnharmonics = 3;
 
     switch (chordSize) {
+        case 2:
+            for (int i1 = 0; i1 < numOfEnharmonics; i1++) {
+                for (int i2 = 0; i2 < numOfEnharmonics; i2++) {
+                    enharmonicHeaps[idx++] = {{heaps[0][i1], heaps[1][i2]}};
+                }
+            }
+            break;
+
         case 3:
             for (int i1 = 0; i1 < numOfEnharmonics; i1++) {
                 for (int i2 = 0; i2 < numOfEnharmonics; i2++) {
@@ -1184,6 +1192,108 @@ bool Chord::isSorted() const {
     return std::is_sorted(
         _originalNotes.begin(), _originalNotes.end(),
         [](const Note& lh, const Note& rh) { return lh.getMIDINumber() <= rh.getMIDINumber(); });
+}
+
+float Chord::getCloseStackHarmonicComplexity(const bool useEnharmony) {
+    if (!_isStackedInThirds) {
+        stackInThirds(useEnharmony);
+    }
+
+    const int closeStackSize = _closeStack.size();
+    if (closeStackSize < 2) {
+        return 0.0f;
+    }
+
+    float sum = 0.0f;
+    const int numCloseIntervals = closeStackSize - 1;
+    const auto& root = _closeStack.at(0);
+    for (int i = 0; i < numCloseIntervals; i++) {
+        const auto& nextNote = _closeStack.at(i + 1);
+        const Interval interval(root.getPitch(), nextNote.getPitch());
+
+        if (interval.isThird(useEnharmony)) {
+            sum += HAVE_THIRD_VALUE;
+        } else if (interval.isFifth(useEnharmony)) {
+            sum += HAVE_FIFTH_VALUE;
+        } else if (interval.isSeventh(useEnharmony)) {
+            sum += HAVE_SEVENTH_VALUE;
+        } else if (interval.isNinth(useEnharmony)) {
+            sum += HAVE_NINTH_VALUE;
+        } else if (interval.isEleventh(useEnharmony)) {
+            sum += HAVE_ELEVENTH_VALUE;
+        } else if (interval.isThirdteenth(useEnharmony)) {
+            sum += HAVE_THIRDTEENTH_VALUE;
+        } else {
+            LOG_ERROR(
+                "Invalid close chord interval[" + std::to_string(i) + "]: [" + root.getPitch() +
+                ", " + nextNote.getPitch() + "] = " + interval.getName() +
+                "\nuseEnharmony: " + std::to_string(useEnharmony) + " | getDiatonicInterval: " +
+                std::to_string(interval.getDiatonicInterval(false, true)) +
+                " | getDiatonicSteps: " + std::to_string(interval.getDiatonicSteps(false, true)));
+        }
+    }
+
+    const float maxHarmonicComplexity =
+        std::accumulate(c_haveComplexityValues.begin(), c_haveComplexityValues.end(), 0);
+
+    // Normalize output
+    sum += 1.0f;
+    sum /= (maxHarmonicComplexity + 1);
+    const std::string sumStr = Helper::formatFloat(sum, 4);
+
+    // Formated string back to float type
+    sum = std::stof(sumStr);
+
+    return sum;
+}
+
+float Chord::getHarmonicDensity(int lowerBoundMIDI, int higherBoundMIDI) const {
+    // ===== INPUT VALIDATION ===== //
+    if ((lowerBoundMIDI == -1 && higherBoundMIDI != -1) ||
+        (lowerBoundMIDI != -1 && higherBoundMIDI == -1)) {
+        LOG_ERROR("You need set both values: 'lowerBoundMIDI' and 'higherBoundMIDI'");
+    }
+
+    // Case 01: No parameters are passed by the user: Use default values
+    if (lowerBoundMIDI == -1 && higherBoundMIDI == -1) {
+        std::vector<Note> sortedNotes = _originalNotes;
+        std::sort(sortedNotes.begin(), sortedNotes.end());
+
+        const int numNotes = sortedNotes.size();
+        const int lowestMIDI = sortedNotes.at(0).getMIDINumber();
+        const int highestMIDI = sortedNotes.at(numNotes - 1).getMIDINumber();
+
+        const int midiRange = (highestMIDI - lowestMIDI) + 1;
+        const float density = static_cast<float>(numNotes) / static_cast<float>(midiRange);
+
+        return density;
+    }
+
+    // Case 02: User defined values of 'higherBoundMIDI' and 'lowerBoundMIDI'
+    const int numNotes = _originalNotes.size();
+    const int midiRange = (higherBoundMIDI - lowerBoundMIDI) + 1;
+    const float density = static_cast<float>(numNotes) / static_cast<float>(midiRange);
+
+    return density;
+}
+
+float Chord::getHarmonicDensity(const std::string& lowerBoundPitch,
+                                const std::string& higherBoundPitch) const {
+    // ===== INPUT VALIDATION ===== //
+    if (lowerBoundPitch.empty() || lowerBoundPitch == MUSIC_XML::PITCH::REST) {
+        LOG_ERROR("'lowerBoundPitch' cannot be empty or be 'rest'");
+    }
+
+    if (higherBoundPitch.empty() || higherBoundPitch == MUSIC_XML::PITCH::REST) {
+        LOG_ERROR("'higherBoundPitch' cannot be empty or be 'rest'");
+    }
+
+    // Get MIDI values from the user input pitches
+    const int lowerBoundMIDI = Helper::pitch2midiNote(lowerBoundPitch);
+    const int higherBoundMIDI = Helper::pitch2midiNote(higherBoundPitch);
+
+    // Compute density
+    return getHarmonicDensity(lowerBoundMIDI, higherBoundMIDI);
 }
 
 bool Chord::haveMajorInterval(const bool useEnharmony) const {

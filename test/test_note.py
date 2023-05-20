@@ -1,14 +1,16 @@
 import unittest
-from maialib import *
+import maialib as ml
 
 # ===== TEST NOTE CLASS ===== #
+
+
 class NoteConstructor(unittest.TestCase):
     def testOnlyPitchClass_getPitchTypesOctaveAndDuration(self):
-        noteDoubleFlat = Note("Abb")
-        noteFlat = Note("Ab")
-        noteNatural = Note("A")
-        noteSharp = Note("A#")
-        noteDoubleSharp = Note("Ax")
+        noteDoubleFlat = ml.Note("Abb")
+        noteFlat = ml.Note("Ab")
+        noteNatural = ml.Note("A")
+        noteSharp = ml.Note("A#")
+        noteDoubleSharp = ml.Note("Ax")
 
         # ===== PITCHSTEP ===== #
         self.assertEqual(noteDoubleFlat.getPitchStep(), "A")
@@ -45,24 +47,26 @@ class NoteConstructor(unittest.TestCase):
         self.assertEqual(noteSharp.getDurationTicks(), 256)
         self.assertEqual(noteDoubleSharp.getDurationTicks(), 256)
 
+
 class NoteEqualsOperator(unittest.TestCase):
     def testNonEnharmonicNotes(self):
-        a = Note("A")
-        b = Note("A")
+        a = ml.Note("A")
+        b = ml.Note("A")
 
         self.assertEqual(a == b, True)
         self.assertEqual(a.getMIDINumber() == b.getMIDINumber(), True)
 
     def testEnharmonicNotes(self):
-        a = Note("A")
-        b = Note("Gx")
+        a = ml.Note("A")
+        b = ml.Note("Gx")
 
         self.assertEqual(a == b, False)
         self.assertEqual(a.getMIDINumber() == b.getMIDINumber(), True)
 
+
 class NoteSetPitch(unittest.TestCase):
     def testWrittenAndSoundingPitchTypesAndOctave(self):
-        note = Note("A")
+        note = ml.Note("A")
 
         note.setPitchClass("D")
 
@@ -80,9 +84,9 @@ class NoteSetPitch(unittest.TestCase):
         self.assertEqual(note.getPitchClass(), note.getWrittenPitchClass())
         self.assertEqual(note.getPitch(), note.getWrittenPitch())
         self.assertEqual(note.getOctave(), note.getWrittenOctave())
-    
+
     def testWrittenAndSoundingPitchTypesAndOctave_transposeInstrument(self):
-        note = Note("A")
+        note = ml.Note("A")
 
         note.setPitchClass("D")
         note.setTransposingInterval(-1, -2)
@@ -98,7 +102,7 @@ class NoteSetPitch(unittest.TestCase):
         self.assertEqual(note.getSoundingOctave(), 4)
 
     def testWrittenAndSoundingPitchTypesAndOctave_transposeInstrumentChangeOctave(self):
-        note = Note("C4")
+        note = ml.Note("C4")
 
         note.setTransposingInterval(-1, -2)
 
@@ -113,39 +117,39 @@ class NoteSetPitch(unittest.TestCase):
         self.assertEqual(note.getSoundingOctave(), 3)
 
     def testGetPitchTypesAndOctave(self):
-        noteDoubleFlat = Note("Dbb")
-        noteFlat = Note("Db")
-        noteNatural = Note("D")
-        noteSharp = Note("D#")
-        noteDoubleSharp = Note("Dx")
-    
+        noteDoubleFlat = ml.Note("Dbb")
+        noteFlat = ml.Note("Db")
+        noteNatural = ml.Note("D")
+        noteSharp = ml.Note("D#")
+        noteDoubleSharp = ml.Note("Dx")
+
         noteDoubleFlat.setPitch("A")
         noteFlat.setPitch("A")
         noteNatural.setPitch("A")
         noteSharp.setPitch("A")
         noteDoubleSharp.setPitch("A")
-    
+
         # ===== PITCHSTEP ===== #
         self.assertEqual(noteDoubleFlat.getPitchStep(), "A")
         self.assertEqual(noteFlat.getPitchStep(), "A")
         self.assertEqual(noteNatural.getPitchStep(), "A")
         self.assertEqual(noteSharp.getPitchStep(), "A")
         self.assertEqual(noteDoubleSharp.getPitchStep(), "A")
-    
+
         # ===== PITCHCLASS ===== #
         self.assertEqual(noteDoubleFlat.getPitchClass(), "A")
         self.assertEqual(noteFlat.getPitchClass(), "A")
         self.assertEqual(noteNatural.getPitchClass(), "A")
         self.assertEqual(noteSharp.getPitchClass(), "A")
         self.assertEqual(noteDoubleSharp.getPitchClass(), "A")
-    
+
         # ===== PITCH ===== #
         self.assertEqual(noteDoubleFlat.getPitch(), "A4")
         self.assertEqual(noteFlat.getPitch(), "A4")
         self.assertEqual(noteNatural.getPitch(), "A4")
         self.assertEqual(noteSharp.getPitch(), "A4")
         self.assertEqual(noteDoubleSharp.getPitch(), "A4")
-    
+
         # ===== OCTAVE ===== #
         self.assertEqual(noteDoubleFlat.getOctave(), 4)
         self.assertEqual(noteFlat.getOctave(), 4)
