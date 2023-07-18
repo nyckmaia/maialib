@@ -136,6 +136,7 @@ void NoteClass(const py::module& m) {
 
     cls.def("toEnharmonicPitch", &Note::toEnharmonicPitch,
             py::arg("alternativeEnhamonicPitch") = false);
+    cls.def("getScaleDegree", &Note::getScaleDegree, py::arg("key"));
     cls.def("getFrequency", &Note::getFrequency);
 
     cls.def("transpose", &Note::transpose, py::arg("semitones"),

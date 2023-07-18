@@ -1510,6 +1510,52 @@ std::vector<Note> Note::getEnharmonicNotes(const bool includeCurrentPitch) const
     return {Note(getEnharmonicPitch(false)), Note(getEnharmonicPitch(true))};
 }
 
+int Note::getScaleDegree(const Key& key) const {
+    // Skip rests
+    if (isNoteOff()) {
+        return 0;
+    }
+
+    const bool isMajorMode = key.isMajorMode();
+    const std::string majorKeyName = (isMajorMode) ? key.getName() : key.getRelativeKeyName();
+    const std::string keyPitchStep = majorKeyName.substr(0, 1);
+    const std::array<std::string, 7>* diatonicScale = nullptr;
+    switch (hash(keyPitchStep.c_str())) {
+        case hash("C"):
+            diatonicScale = (isMajorMode) ? &c_C_diatonicScale : &c_A_diatonicScale;
+            break;
+        case hash("D"):
+            diatonicScale = (isMajorMode) ? &c_D_diatonicScale : &c_B_diatonicScale;
+            break;
+        case hash("E"):
+            diatonicScale = (isMajorMode) ? &c_E_diatonicScale : &c_C_diatonicScale;
+            break;
+        case hash("F"):
+            diatonicScale = (isMajorMode) ? &c_F_diatonicScale : &c_D_diatonicScale;
+            break;
+        case hash("G"):
+            diatonicScale = (isMajorMode) ? &c_G_diatonicScale : &c_E_diatonicScale;
+            break;
+        case hash("A"):
+            diatonicScale = (isMajorMode) ? &c_A_diatonicScale : &c_F_diatonicScale;
+            break;
+        case hash("B"):
+            diatonicScale = (isMajorMode) ? &c_B_diatonicScale : &c_G_diatonicScale;
+            break;
+        default:
+            LOG_ERROR("Invalid pitchStep: " + keyPitchStep);
+            break;
+    }
+
+    const std::string rootPitchStep = getPitchStep();
+
+    const auto it = std::find(diatonicScale->begin(), diatonicScale->end(), rootPitchStep);
+    const int index = std::distance(diatonicScale->begin(), it);
+    const int degree = index + 1;
+
+    return degree;
+}
+
 float Note::getFrequency() const { return Helper::pitch2freq(getSoundingPitch()); }
 
 void Note::transpose(const int semitones, const std::string& accType) {

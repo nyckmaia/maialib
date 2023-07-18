@@ -5,6 +5,8 @@ class Key {
    public:
     Key(int fifthCircle = 0, bool isMajorMode = true);
 
+    Key(const std::string& key);
+
     void setFifthCircle(int fifthCircle);
     int getFifthCircle() const;
 

@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "maiacore/constants.h"
+#include "maiacore/key.h"
 
 struct timeModification_st {
     int actualNotes = 0;
@@ -211,6 +212,14 @@ class Note {
 
     Note getEnharmonicNote(const bool alternativeEnhamonicPitch = false) const;
     std::vector<Note> getEnharmonicNotes(const bool includeCurrentPitch = false) const;
+
+    /**
+     * @brief Get the musical scale degree of the note
+     *
+     * @param key The key signature reference to calculate the musical scale
+     * @return The scale degree as an integer
+     */
+    int getScaleDegree(const Key& key) const;
 
     // Colocar praticamente a mesma documentaçao do método
     // 'getEnharmonicPitch()'

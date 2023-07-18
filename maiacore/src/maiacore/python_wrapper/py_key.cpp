@@ -11,6 +11,7 @@ void KeyClass(const py::module& m) {
     // bindings to Key class
     py::class_<Key> cls(m, "Key");
     cls.def(py::init<int, bool>(), py::arg("fifthCircle") = 0, py::arg("isMajorMode") = true);
+    cls.def(py::init<const std::string&>(), py::arg("key"));
 
     cls.def("setFifthCircle", &Key::setFifthCircle, py::arg("fifthCircle"));
     cls.def("getFifthCircle", &Key::getFifthCircle);

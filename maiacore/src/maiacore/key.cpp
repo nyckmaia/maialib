@@ -8,6 +8,18 @@ Key::Key(int fifthCircle, bool isMajorMode) : _fifthCircle(fifthCircle), _isMajo
     }
 }
 
+Key::Key(const std::string& key) : _fifthCircle(0), _isMajorMode(true) {
+    const auto it = c_mapKeyName2FifthCirCleMode.find(key);
+
+    if (it == c_mapKeyName2FifthCirCleMode.end()) {
+        LOG_ERROR("Invalid key name: " + key);
+    }
+
+    const auto pair = it->second;
+    _fifthCircle = pair.first;
+    _isMajorMode = pair.second;
+}
+
 void Key::setFifthCircle(int fifthCircle) { _fifthCircle = fifthCircle; }
 
 int Key::getFifthCircle() const { return _fifthCircle; }

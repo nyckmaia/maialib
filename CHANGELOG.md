@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.3.0] - 2023-07-18
+
+### New Features
+
+- Key class: Add overload constructor that accepts a string as a key signature
+- Note class: Add .getScaleDegree(const Key&)
+
+### Improved
+
+### Fixed
+
+---
+
 ## [v1.2.0] - 2023-05-20
 
 ### New Features
