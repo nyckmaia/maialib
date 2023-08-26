@@ -321,6 +321,13 @@ void ChordClass(const py::module& m) {
     cls.def("getMeanPitch", &Chord::getMeanPitch, py::arg("accType") = "");
     cls.def("getMeanOfExtremesPitch", &Chord::getMeanOfExtremesPitch, py::arg("accType") = "");
 
+    cls.def("getHarmonicSpectrum", &Chord::getHarmonicSpectrum, py::arg("numPartials") = 6,
+            py::arg("amplCallback") = nullptr);
+
+    cls.def("getSetharesDissonanceValue", &Chord::getSetharesDissonanceValue,
+            py::arg("numPartials") = 6, py::arg("useMinModel") = true,
+            py::arg("amplCallback") = nullptr);
+
     cls.def(py::self == py::self);
     cls.def(py::self != py::self);
     cls.def(py::self + py::self);

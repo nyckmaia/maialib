@@ -84,12 +84,12 @@ void ScoreClass(const py::module& m) {
 
     cls.def("selectNotes", &Score::selectNotes, py::arg("config"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("countNotes", &Score::countNotes, py::arg("config"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    //     cls.def("countNotes", &Score::countNotes, py::arg("config"),
+    //             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("setRepeat", &Score::setRepeat, py::arg("measureStart"), py::arg("measureEnd") = -1);
 
-    cls.def("findPattern", &Score::findPattern, py::arg("pattern"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    //     cls.def("findPattern", &Score::findPattern, py::arg("pattern"),
+    //             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("instrumentFragmentation", &Score::instrumentFragmentation,
             py::arg("config") = nlohmann::json(),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());

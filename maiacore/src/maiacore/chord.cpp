@@ -2,6 +2,7 @@
 
 #include <algorithm>  // std::rotate, std::count
 #include <iostream>
+#include <map>
 #include <set>      // std::set
 #include <utility>  // std::pair
 
@@ -2403,6 +2404,104 @@ std::string Chord::getMeanOfExtremesPitch(const std::string& accType) const {
     const int meanMIDI = getMeanOfExtremesMidiValue();
 
     return Helper::midiNote2pitch(meanMIDI, accType);
+}
+
+std::pair<std::vector<float>, std::vector<float>> Chord::getHarmonicSpectrum(
+    const int numPartials,
+    const std::function<std::vector<float>(std::vector<float>)> amplCallback) const {
+    if (numPartials <= 0) {
+        LOG_ERROR("The 'numPartials' must be a positive value");
+    }
+
+    std::map<float, float> freqAmplMap;
+
+    for (const auto& note : _originalNotes) {
+        const auto freqsAmplsPair = note.getHarmonicSpectrum(numPartials, amplCallback);
+
+        for (size_t i = 0; i < freqsAmplsPair.first.size(); ++i) {
+            auto freq = freqsAmplsPair.first[i];
+            auto ampl = freqsAmplsPair.second[i];
+
+            freqAmplMap[freq] += ampl;
+        }
+    }
+
+    std::vector<float> combinedFrequencies;
+    std::vector<float> combinedAmplitudes;
+
+    // Extract keys and values from the map to the vectors
+    std::transform(freqAmplMap.begin(), freqAmplMap.end(), std::back_inserter(combinedFrequencies),
+                   [](const std::pair<float, float>& pair) { return pair.first; });
+
+    std::transform(freqAmplMap.begin(), freqAmplMap.end(), std::back_inserter(combinedAmplitudes),
+                   [](const std::pair<float, float>& pair) { return pair.second; });
+
+    return {combinedFrequencies, combinedAmplitudes};
+}
+
+float Chord::getSetharesDissonanceValue(
+    const int numPartials, const bool useMinModel,
+    const std::function<std::vector<float>(std::vector<float>)> amplCallback) const {
+    /*
+    Given a list of partials in fvec, with amplitudes in amp, this routine
+    calculates the dissonance by summing the roughness of every sine pair
+    based on a model of Plomp-Levelt's roughness curve.
+
+    The older model (model='product') was based on the product of the two
+    amplitudes, but the newer model (model='min') is based on the minimum
+    of the two amplitudes, since this matches the beat frequency amplitude.
+    */
+
+    const auto& freqAmplPair = getHarmonicSpectrum(numPartials, amplCallback);
+
+    const std::vector<float>& fvec = freqAmplPair.first;
+    const std::vector<float>& amp = freqAmplPair.second;
+
+    // Ensure input vectors are of the same size
+    if (fvec.size() != amp.size()) {
+        LOG_ERROR("The 'frequency' and 'amplitude' vectors must have the same size.");
+    }
+
+    // Constants
+    const float Dstar = 0.24f;  //  Point of maximum dissonance
+    const float S1 = 0.0207f;
+    const float S2 = 18.96f;
+    const float C1 = 5.0f;
+    const float C2 = -5.0f;
+    const float A1 = -3.51f;  // Plomp-Levelt roughness curve
+    const float A2 = -5.75f;
+
+    // Sort indices based on fvec
+    std::vector<size_t> sort_idx(fvec.size());
+    std::iota(sort_idx.begin(), sort_idx.end(), 0);  // Fill with 0, 1, ... , fvec.size()-1
+    std::sort(sort_idx.begin(), sort_idx.end(),
+              [&fvec](size_t i, size_t j) { return fvec[i] < fvec[j]; });
+
+    // Sort fvec and amp using the sorted indices
+    std::vector<float> fr_sorted(fvec.size());
+    std::vector<float> am_sorted(amp.size());
+    for (size_t i = 0; i < sort_idx.size(); ++i) {
+        fr_sorted[i] = fvec[sort_idx[i]];
+        am_sorted[i] = amp[sort_idx[i]];
+    }
+
+    float D = 0.0f;
+    for (size_t i = 0; i < fr_sorted.size(); ++i) {
+        for (size_t j = i + 1; j < fr_sorted.size(); ++j) {
+            float Fmin = fr_sorted[i];
+            float S = Dstar / (S1 * Fmin + S2);
+            float Fdif = fr_sorted[j] - Fmin;
+
+            // Select model: 'min' or 'product'
+            float a =
+                (useMinModel) ? std::min(am_sorted[i], am_sorted[j]) : am_sorted[i] * am_sorted[j];
+
+            float SFdif = S * Fdif;
+            D += a * (C1 * std::exp(A1 * SFdif) + C2 * std::exp(A2 * SFdif));
+        }
+    }
+
+    return D;
 }
 
 void printHeap(const NoteDataHeap& heap) {

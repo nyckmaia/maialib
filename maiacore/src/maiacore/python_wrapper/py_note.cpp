@@ -1,3 +1,4 @@
+#include <pybind11/functional.h>
 #include <pybind11/iostream.h>
 #include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
@@ -8,6 +9,7 @@
 
 #include "maiacore/note.h"
 #include "pybind11_json/pybind11_json.hpp"
+
 namespace py = pybind11;
 
 void NoteClass(const py::module& m) {
@@ -138,6 +140,8 @@ void NoteClass(const py::module& m) {
             py::arg("alternativeEnhamonicPitch") = false);
     cls.def("getScaleDegree", &Note::getScaleDegree, py::arg("key"));
     cls.def("getFrequency", &Note::getFrequency);
+    cls.def("getHarmonicSpectrum", &Note::getHarmonicSpectrum, py::arg("numPartials") = 6,
+            py::arg("amplCallback") = nullptr);
 
     cls.def("transpose", &Note::transpose, py::arg("semitones"),
             py::arg("accType") = MUSIC_XML::ACCIDENT::NONE);

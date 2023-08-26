@@ -1,5 +1,6 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
 
@@ -225,6 +226,17 @@ class Note {
     // 'getEnharmonicPitch()'
     void toEnharmonicPitch(const bool alternativeEnhamonicPitch = false);
     float getFrequency() const;
+
+    /**
+     * @brief Get the Harmonic Spectrum object
+     *
+     * @param numPartials
+     * @param amplCallback
+     * @return std::pair<std::vector<float>, std::vector<float>>
+     */
+    std::pair<std::vector<float>, std::vector<float>> getHarmonicSpectrum(
+        const int numPartials = 6,
+        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
 
     void transpose(const int semitones, const std::string& accType = MUSIC_XML::ACCIDENT::NONE);
 

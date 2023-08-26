@@ -1131,6 +1131,29 @@ class Chord {
     std::string getMeanOfExtremesPitch(const std::string& accType = {}) const;
 
     /**
+     * @brief Get the Harmonic Spectrum object
+     *
+     * @param numPartials
+     * @param amplCallback
+     * @return std::pair<std::vector<float>, std::vector<float>>
+     */
+    std::pair<std::vector<float>, std::vector<float>> getHarmonicSpectrum(
+        const int numPartials = 6,
+        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
+
+    /**
+     * @brief Get the Sethares Dissonance Value object
+     *
+     * @param numPartials
+     * @param useMinModel
+     * @param amplCallback
+     * @return float
+     */
+    float getSetharesDissonanceValue(
+        const int numPartials = 6, const bool useMinModel = true,
+        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
+
+    /**
      * @brief
      *
      * @param index

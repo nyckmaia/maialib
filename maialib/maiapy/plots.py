@@ -247,7 +247,7 @@ def plotPartsActivity(score: mc.Score, **kwargs) -> tuple([plotly.graph_objs._fi
         )
     )
 
-    return [fig, df]
+    return fig, df
 
 
 def plotPianoRoll(score: mc.Score, **kwargs) -> tuple([plotly.graph_objs._figure.Figure, pd.DataFrame]):

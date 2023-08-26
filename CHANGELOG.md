@@ -2,6 +2,33 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.0] - 2023-08-26
+
+### New Features
+
+- Note Class
+
+  - .getHarmonicSpectrum()
+
+- Chord Class
+
+  - .getHarmonicSpectrum()
+  - .getSetharesDissonanceValue()
+
+- maiapy
+  - Add ml.plotSetharesDissonanceCurve()
+
+### Improved
+
+- Note::getPitch() now returns the 'soundingPitch' and not the 'writtenPitch'
+
+### Fixed
+
+- Score class
+  - Disable (comment) the methods: .countNotes() and .findPattern(). Future work.
+
+---
+
 ## [v1.3.0] - 2023-07-18
 
 ### New Features

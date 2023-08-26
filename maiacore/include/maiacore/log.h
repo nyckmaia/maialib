@@ -3,6 +3,7 @@
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
+#include <string>
 
 #ifdef _MSC_VER
 #define OS_FUNCTION_SIGNATURE __FUNCSIG__

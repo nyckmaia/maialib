@@ -1025,339 +1025,339 @@ bool Score::haveTypeTag(void) const { return _haveTypeTag; }
 //     return _numMeasures;
 // }
 
-int Score::countNotes(nlohmann::json& config) const {
-    PROFILE_FUNCTION();
-    // ===== CHECKING THE INPUT ARGUMENTS ===== //
-    // Parts:
-    if (!config.contains("parts")) {
-        LOG_INFO(
-            "'parts' field was not setted. Using the default 'all' "
-            "configuration");
-        config["parts"] = "all";
-    }
+// int Score::countNotes(nlohmann::json& config) const {
+//     PROFILE_FUNCTION();
+//     // ===== CHECKING THE INPUT ARGUMENTS ===== //
+//     // Parts:
+//     if (!config.contains("parts")) {
+//         LOG_INFO(
+//             "'parts' field was not setted. Using the default 'all' "
+//             "configuration");
+//         config["parts"] = "all";
+//     }
 
-    // Measures:
-    if (!config.contains("measures")) {
-        LOG_INFO(
-            "'measures' field was not setted. Using the default 'all' "
-            "configuration");
-        config["measures"] = "all";
-    }
+//     // Measures:
+//     if (!config.contains("measures")) {
+//         LOG_INFO(
+//             "'measures' field was not setted. Using the default 'all' "
+//             "configuration");
+//         config["measures"] = "all";
+//     }
 
-    if ((config["measures"] != "all") && (!config["measures"].is_array()) &&
-        (!config["measures"].is_number_integer())) {
-        LOG_ERROR(
-            "The 'measures' field MUST BE 'all', a integer number or an array "
-            "[start end] value!");
-    }
+//     if ((config["measures"] != "all") && (!config["measures"].is_array()) &&
+//         (!config["measures"].is_number_integer())) {
+//         LOG_ERROR(
+//             "The 'measures' field MUST BE 'all', a integer number or an array "
+//             "[start end] value!");
+//     }
 
-    // pitchClass:
-    if (!config.contains("pitchClass")) {
-        LOG_INFO(
-            "'pitchClass' field was not setted. Using the default 'all' "
-            "configuration");
-        config["pitchClass"] = "all";
-    }
+//     // pitchClass:
+//     if (!config.contains("pitchClass")) {
+//         LOG_INFO(
+//             "'pitchClass' field was not setted. Using the default 'all' "
+//             "configuration");
+//         config["pitchClass"] = "all";
+//     }
 
-    // Octave:
-    if (!config.contains("octave")) {
-        LOG_INFO(
-            "'octave' field was not setted. Using the default 'all' "
-            "configuration");
-        config["octave"] = "all";
-    }
+//     // Octave:
+//     if (!config.contains("octave")) {
+//         LOG_INFO(
+//             "'octave' field was not setted. Using the default 'all' "
+//             "configuration");
+//         config["octave"] = "all";
+//     }
 
-    // Voice:
-    if (!config.contains("voice")) {
-        LOG_INFO(
-            "'voice' field was not setted. Using the default 'all' "
-            "configuration");
-        config["voice"] = "all";
-    }
+//     // Voice:
+//     if (!config.contains("voice")) {
+//         LOG_INFO(
+//             "'voice' field was not setted. Using the default 'all' "
+//             "configuration");
+//         config["voice"] = "all";
+//     }
 
-    // Type:
-    if (!config.contains("type")) {
-        LOG_INFO(
-            "'type' field was not setted. Using the default 'all' "
-            "configuration");
-        config["type"] = "all";
-    }
+//     // Type:
+//     if (!config.contains("type")) {
+//         LOG_INFO(
+//             "'type' field was not setted. Using the default 'all' "
+//             "configuration");
+//         config["type"] = "all";
+//     }
 
-    // Staff:
-    if (!config.contains("staff")) {
-        LOG_INFO(
-            "'staff' field was not setted. Using the default 'all' "
-            "configuration");
-        config["staff"] = "all";
-    }
+//     // Staff:
+//     if (!config.contains("staff")) {
+//         LOG_INFO(
+//             "'staff' field was not setted. Using the default 'all' "
+//             "configuration");
+//         config["staff"] = "all";
+//     }
 
-    // ===== XPATH: ROOT ===== //
-    const std::string xPathRoot = "/score-partwise";
+//     // ===== XPATH: ROOT ===== //
+//     const std::string xPathRoot = "/score-partwise";
 
-    // ===== XPATH: PART ===== //
-    // Select the desired part:
-    std::string xPathPart;
+//     // ===== XPATH: PART ===== //
+//     // Select the desired part:
+//     std::string xPathPart;
 
-    // Set a alias:
-    const auto& partsField = config["parts"];
+//     // Set a alias:
+//     const auto& partsField = config["parts"];
 
-    // Case 1: 'all' option:
-    if (partsField == MUSIC_XML::PART::ALL) {
-        xPathPart = "//part";
+//     // Case 1: 'all' option:
+//     if (partsField == MUSIC_XML::PART::ALL) {
+//         xPathPart = "//part";
 
-        // Case 2: Single string:
-    } else if (partsField.is_string()) {
-        const std::string partName = partsField.get<std::string>();
-        int index = 0;
-        bool found = getPartIndex(partName, &index);
+//         // Case 2: Single string:
+//     } else if (partsField.is_string()) {
+//         const std::string partName = partsField.get<std::string>();
+//         int index = 0;
+//         bool found = getPartIndex(partName, &index);
 
-        if (!found) {
-            printPartNames();
-            LOG_ERROR("This music doesn't have a part called: " + partName);
-            return 0;
-        }
+//         if (!found) {
+//             printPartNames();
+//             LOG_ERROR("This music doesn't have a part called: " + partName);
+//             return 0;
+//         }
 
-        xPathPart = "/part[" + std::to_string(index) + "]";
+//         xPathPart = "/part[" + std::to_string(index) + "]";
 
-        // Case 3: List of parts
-    } else if (partsField.is_array()) {
-        std::string positions;
-        const int partsFieldSize = partsField.size();
-        for (int p = 0; p < partsFieldSize; p++) {
-            auto& item = partsField[p];
+//         // Case 3: List of parts
+//     } else if (partsField.is_array()) {
+//         std::string positions;
+//         const int partsFieldSize = partsField.size();
+//         for (int p = 0; p < partsFieldSize; p++) {
+//             auto& item = partsField[p];
 
-            if (!item.is_string()) {
-                LOG_ERROR("All parts list elements MUST be strings");
-                return 0;
-            }
-            const std::string partName = item.get<std::string>();
+//             if (!item.is_string()) {
+//                 LOG_ERROR("All parts list elements MUST be strings");
+//                 return 0;
+//             }
+//             const std::string partName = item.get<std::string>();
 
-            int index = 0;
-            bool found = getPartIndex(partName, &index);
+//             int index = 0;
+//             bool found = getPartIndex(partName, &index);
 
-            if (!found) {
-                printPartNames();
-                LOG_ERROR("This music doesn't have a part called: " + partName);
-                return 0;
-            }
-            if (p == 0) {
-                positions += "position() = " + std::to_string(index);
-            } else {
-                positions += " or position() = " + std::to_string(index);
-            }
-        }
-        // Concatenate all parts:
-        xPathPart = "/part[" + positions + "]";
+//             if (!found) {
+//                 printPartNames();
+//                 LOG_ERROR("This music doesn't have a part called: " + partName);
+//                 return 0;
+//             }
+//             if (p == 0) {
+//                 positions += "position() = " + std::to_string(index);
+//             } else {
+//                 positions += " or position() = " + std::to_string(index);
+//             }
+//         }
+//         // Concatenate all parts:
+//         xPathPart = "/part[" + positions + "]";
 
-        // Error: None of the above options:
-    } else {
-        LOG_ERROR(
-            "The 'parts' field MUST BE 'all', a string or an array of "
-            "strings!");
-        return 0;
-    }
+//         // Error: None of the above options:
+//     } else {
+//         LOG_ERROR(
+//             "The 'parts' field MUST BE 'all', a string or an array of "
+//             "strings!");
+//         return 0;
+//     }
 
-    // ===== XPATH: MEASURES ===== //
-    int measureStart = 0;
-    int measureEnd = 0;
+//     // ===== XPATH: MEASURES ===== //
+//     int measureStart = 0;
+//     int measureEnd = 0;
 
-    // Set a alias:
-    const auto& measuresField = config["measures"];
+//     // Set a alias:
+//     const auto& measuresField = config["measures"];
 
-    // Case 1: 'all' option
-    if (measuresField.is_string() && measuresField == MUSIC_XML::MEASURE::END) {
-        measureStart = 1;
-        measureEnd = getNumMeasures() + 1;
+//     // Case 1: 'all' option
+//     if (measuresField.is_string() && measuresField == MUSIC_XML::MEASURE::END) {
+//         measureStart = 1;
+//         measureEnd = getNumMeasures() + 1;
 
-        // Case 2: Single measure:
-    } else if (measuresField.is_number_integer()) {
-        measureStart = measuresField.get<int>();
-        measureEnd = measuresField.get<int>();
+//         // Case 2: Single measure:
+//     } else if (measuresField.is_number_integer()) {
+//         measureStart = measuresField.get<int>();
+//         measureEnd = measuresField.get<int>();
 
-        // Case 3: Array [start end]
-    } else if (measuresField.is_array() && measuresField.size() == 2) {
-        measureStart = measuresField[0].get<int>();
-        measureEnd = measuresField[1].get<int>();
+//         // Case 3: Array [start end]
+//     } else if (measuresField.is_array() && measuresField.size() == 2) {
+//         measureStart = measuresField[0].get<int>();
+//         measureEnd = measuresField[1].get<int>();
 
-        // Error: None of the above options:
-    } else {
-        LOG_ERROR(
-            "The 'measures' field MUST BE 'all' or an array with 2 positive "
-            "interger values: [measureStart, measureEnd]");
-        return nlohmann::json();
-    }
+//         // Error: None of the above options:
+//     } else {
+//         LOG_ERROR(
+//             "The 'measures' field MUST BE 'all' or an array with 2 positive "
+//             "interger values: [measureStart, measureEnd]");
+//         return nlohmann::json();
+//     }
 
-    // Error checking:
-    if (measureEnd < measureStart) {
-        LOG_ERROR(
-            "In the 'measures' field, the second element MUST BE greater than "
-            "the first one");
-        return nlohmann::json();
-    }
+//     // Error checking:
+//     if (measureEnd < measureStart) {
+//         LOG_ERROR(
+//             "In the 'measures' field, the second element MUST BE greater than "
+//             "the first one");
+//         return nlohmann::json();
+//     }
 
-    // Error checking:
-    if (measureStart == 0 || measureEnd == 0) {
-        LOG_ERROR("The 'measures' array values MUST BE greater then 0");
-        return nlohmann::json();
-    }
+//     // Error checking:
+//     if (measureStart == 0 || measureEnd == 0) {
+//         LOG_ERROR("The 'measures' array values MUST BE greater then 0");
+//         return nlohmann::json();
+//     }
 
-    // Set the measures XPath:
-    const std::string xPathMeasures =
-        "/measure[" + std::to_string(measureStart) +
-        " <= position() and position() <= " + std::to_string(measureEnd) + "]";
+//     // Set the measures XPath:
+//     const std::string xPathMeasures =
+//         "/measure[" + std::to_string(measureStart) +
+//         " <= position() and position() <= " + std::to_string(measureEnd) + "]";
 
-    std::vector<std::string> pitchFilter;
-    std::vector<std::string> noteFilter;
+//     std::vector<std::string> pitchFilter;
+//     std::vector<std::string> noteFilter;
 
-    // ===== XPATH: STEP, ALTER AND ACCIDENTAL ===== //
-    std::string pitchClass2, pitchStep, alterSymbol;
-    int octave = 0;
-    float alterValue = 0.0f;
-    const std::string pitchClass = config["pitchClass"].get<std::string>();
+//     // ===== XPATH: STEP, ALTER AND ACCIDENTAL ===== //
+//     std::string pitchClass2, pitchStep, alterSymbol;
+//     int octave = 0;
+//     float alterValue = 0.0f;
+//     const std::string pitchClass = config["pitchClass"].get<std::string>();
 
-    if (pitchClass != MUSIC_XML::PITCH::ALL) {
-        std::string pitch;
-        if (config["octave"].is_number_integer()) {
-            const int tempOctave = config["octave"].get<int>();
-            pitch = pitchClass + std::to_string(tempOctave);
+//     if (pitchClass != MUSIC_XML::PITCH::ALL) {
+//         std::string pitch;
+//         if (config["octave"].is_number_integer()) {
+//             const int tempOctave = config["octave"].get<int>();
+//             pitch = pitchClass + std::to_string(tempOctave);
 
-            Helper::splitPitch(pitch, pitchClass2, pitchStep, octave, alterValue, alterSymbol);
+//             Helper::splitPitch(pitch, pitchClass2, pitchStep, octave, alterValue, alterSymbol);
 
-        } else if (config["octave"].is_string()) {
-            const std::string temp = config["octave"].get<std::string>();
-            if (temp == MUSIC_XML::OCTAVE::ALL_STR) {
-                pitchStep = pitchClass.substr(0, 1);
-                alterValue = Helper::alterSymbol2Value(pitchClass.substr(1, pitchClass.size()));
-            } else {
-                LOG_ERROR("Unknown octave value");
-                return nlohmann::json();
-            }
-        }
-    }
+//         } else if (config["octave"].is_string()) {
+//             const std::string temp = config["octave"].get<std::string>();
+//             if (temp == MUSIC_XML::OCTAVE::ALL_STR) {
+//                 pitchStep = pitchClass.substr(0, 1);
+//                 alterValue = Helper::alterSymbol2Value(pitchClass.substr(1, pitchClass.size()));
+//             } else {
+//                 LOG_ERROR("Unknown octave value");
+//                 return nlohmann::json();
+//             }
+//         }
+//     }
 
-    // Get basic pitch class without accident:
-    std::string xPathStep, xPathPitch;
-    if (pitchClass != MUSIC_XML::PITCH::ALL) {
-        xPathStep = "step/text()='" + pitchStep + "'";
-        xPathPitch = "/pitch";
+//     // Get basic pitch class without accident:
+//     std::string xPathStep, xPathPitch;
+//     if (pitchClass != MUSIC_XML::PITCH::ALL) {
+//         xPathStep = "step/text()='" + pitchStep + "'";
+//         xPathPitch = "/pitch";
 
-        pitchFilter.push_back(xPathStep);
-    }
+//         pitchFilter.push_back(xPathStep);
+//     }
 
-    // Get accident / alter:
-    std::string xPathPitchAlter, xPathAccidental;
-    // Check is this note is altered or natural:
-    if (alterValue != 0) {
-        // Check if this alter is a quarter-tone alter:
-        if (alterValue != floorf(alterValue)) {
-            // Quarter-tone alter:
-            const std::string alterName = Helper::alterValue2Name(alterValue);
-            xPathAccidental = "accidental/text()='" + alterName + "'";
+//     // Get accident / alter:
+//     std::string xPathPitchAlter, xPathAccidental;
+//     // Check is this note is altered or natural:
+//     if (alterValue != 0) {
+//         // Check if this alter is a quarter-tone alter:
+//         if (alterValue != floorf(alterValue)) {
+//             // Quarter-tone alter:
+//             const std::string alterName = Helper::alterValue2Name(alterValue);
+//             xPathAccidental = "accidental/text()='" + alterName + "'";
 
-            noteFilter.push_back(xPathAccidental);
-        } else {
-            // Standard alter:
-            std::ostringstream streamObj;
+//             noteFilter.push_back(xPathAccidental);
+//         } else {
+//             // Standard alter:
+//             std::ostringstream streamObj;
 
-            // Set Fixed-Point Notation
-            streamObj << std::fixed;
-            streamObj << std::setprecision(0);
-            streamObj << floorf(alterValue);
+//             // Set Fixed-Point Notation
+//             streamObj << std::fixed;
+//             streamObj << std::setprecision(0);
+//             streamObj << floorf(alterValue);
 
-            const std::string alterStr = streamObj.str();
+//             const std::string alterStr = streamObj.str();
 
-            xPathPitchAlter = "alter/text()='" + alterStr + "'";
+//             xPathPitchAlter = "alter/text()='" + alterStr + "'";
 
-            pitchFilter.push_back(xPathPitchAlter);
-        }
-    } else {
-        // Natural note:
-        // The 'pitch' tag cannot have a 'alter' tag:
-        pitchFilter.push_back("not(alter)");
-    }
+//             pitchFilter.push_back(xPathPitchAlter);
+//         }
+//     } else {
+//         // Natural note:
+//         // The 'pitch' tag cannot have a 'alter' tag:
+//         pitchFilter.push_back("not(alter)");
+//     }
 
-    // ===== XPATH: OCTAVE ===== //
-    std::string xPathOctave;
-    if (config["octave"].is_number()) {
-        const int octave = config["octave"].get<int>();
-        if (octave != MUSIC_XML::OCTAVE::ALL) {
-            xPathOctave = "octave/text()='" + std::to_string(octave) + "'";
-            pitchFilter.push_back(xPathOctave);
-        }
+//     // ===== XPATH: OCTAVE ===== //
+//     std::string xPathOctave;
+//     if (config["octave"].is_number()) {
+//         const int octave = config["octave"].get<int>();
+//         if (octave != MUSIC_XML::OCTAVE::ALL) {
+//             xPathOctave = "octave/text()='" + std::to_string(octave) + "'";
+//             pitchFilter.push_back(xPathOctave);
+//         }
 
-    } else if (config["octave"].is_string()) {
-        const std::string octave = config["octave"].get<std::string>();
-        if (octave != MUSIC_XML::OCTAVE::ALL_STR) {
-            xPathOctave = "octave/text()='" + octave + "'";
-            pitchFilter.push_back(xPathOctave);
-        }
-    }
+//     } else if (config["octave"].is_string()) {
+//         const std::string octave = config["octave"].get<std::string>();
+//         if (octave != MUSIC_XML::OCTAVE::ALL_STR) {
+//             xPathOctave = "octave/text()='" + octave + "'";
+//             pitchFilter.push_back(xPathOctave);
+//         }
+//     }
 
-    // ===== XPATH: TYPE ===== //
-    std::string xPathType;
-    const std::string type = config["type"].get<std::string>();
-    if (type != MUSIC_XML::NOTE_TYPE::ALL) {
-        xPathType = "type/text()='" + type + "'";
-        noteFilter.push_back(xPathType);
-    }
+//     // ===== XPATH: TYPE ===== //
+//     std::string xPathType;
+//     const std::string type = config["type"].get<std::string>();
+//     if (type != MUSIC_XML::NOTE_TYPE::ALL) {
+//         xPathType = "type/text()='" + type + "'";
+//         noteFilter.push_back(xPathType);
+//     }
 
-    // ===== XPATH: VOICE ===== //
-    std::string xPathVoice;
-    const std::string voice = config["voice"].get<std::string>();
-    if (voice != MUSIC_XML::VOICE::ALL) {
-        xPathVoice = "voice/text()='" + voice + "'";
-        noteFilter.push_back(xPathVoice);
-    }
+//     // ===== XPATH: VOICE ===== //
+//     std::string xPathVoice;
+//     const std::string voice = config["voice"].get<std::string>();
+//     if (voice != MUSIC_XML::VOICE::ALL) {
+//         xPathVoice = "voice/text()='" + voice + "'";
+//         noteFilter.push_back(xPathVoice);
+//     }
 
-    // ===== XPATH: STAFF ===== //
-    std::string xPathStaff;
-    const std::string staff = config["staff"].get<std::string>();
-    if (staff != MUSIC_XML::STAFF::ALL) {
-        xPathStaff = "staff/text()='" + staff + "'";
-        noteFilter.push_back(xPathStaff);
-    }
+//     // ===== XPATH: STAFF ===== //
+//     std::string xPathStaff;
+//     const std::string staff = config["staff"].get<std::string>();
+//     if (staff != MUSIC_XML::STAFF::ALL) {
+//         xPathStaff = "staff/text()='" + staff + "'";
+//         noteFilter.push_back(xPathStaff);
+//     }
 
-    // ===== XPATH: NOTE ===== //
-    std::string xPathNote = "//note";
+//     // ===== XPATH: NOTE ===== //
+//     std::string xPathNote = "//note";
 
-    // ===== XPATH: AMOST DONE ===== //
-    std::string xPath = xPathRoot + xPathPart + xPathMeasures + xPathNote;
+//     // ===== XPATH: AMOST DONE ===== //
+//     std::string xPath = xPathRoot + xPathPart + xPathMeasures + xPathNote;
 
-    // ===== XPATH: ADD NOTE FILTERS ===== //
-    const int noteFilterSize = noteFilter.size();
-    for (int nf = 0; nf < noteFilterSize; nf++) {
-        if (nf == 0) {
-            xPath += "[" + noteFilter[nf];
-        } else {
-            xPath += " and " + noteFilter[nf];
-        }
-    }
+//     // ===== XPATH: ADD NOTE FILTERS ===== //
+//     const int noteFilterSize = noteFilter.size();
+//     for (int nf = 0; nf < noteFilterSize; nf++) {
+//         if (nf == 0) {
+//             xPath += "[" + noteFilter[nf];
+//         } else {
+//             xPath += " and " + noteFilter[nf];
+//         }
+//     }
 
-    if (noteFilter.size() > 0) {
-        xPath += "]";
-    }
+//     if (noteFilter.size() > 0) {
+//         xPath += "]";
+//     }
 
-    xPath += xPathPitch;
+//     xPath += xPathPitch;
 
-    const int pitchFilterSize = pitchFilter.size();
-    for (int f = 0; f < pitchFilterSize; f++) {
-        if (f == 0) {
-            xPath += "[" + pitchFilter[f];
-        } else {
-            xPath += " and " + pitchFilter[f];
-        }
-    }
+//     const int pitchFilterSize = pitchFilter.size();
+//     for (int f = 0; f < pitchFilterSize; f++) {
+//         if (f == 0) {
+//             xPath += "[" + pitchFilter[f];
+//         } else {
+//             xPath += " and " + pitchFilter[f];
+//         }
+//     }
 
-    if (pitchFilter.size() > 0) {
-        xPath += "]";
-    }
+//     if (pitchFilter.size() > 0) {
+//         xPath += "]";
+//     }
 
-    // LOG_DEBUG( "XPath: " << xPath);
+//     // LOG_DEBUG( "XPath: " << xPath);
 
-    const pugi::xpath_node_set nodes = _doc.select_nodes(xPath.c_str());
+//     const pugi::xpath_node_set nodes = _doc.select_nodes(xPath.c_str());
 
-    return nodes.size();
-}
+//     return nodes.size();
+// }
 
 bool Score::getNote(const int part, const int measure, const int note, std::string& pitch,
                     std::string& step, int& octave, int& duration, int& voice, std::string& type,
@@ -1747,597 +1747,597 @@ bool Score::getPartIndex(const std::string& partName, int* index) const {
     return foundIndex;
 }
 
-const nlohmann::json Score::findPattern(nlohmann::json& pattern) const {
-    PROFILE_FUNCTION();
-
-    // Measure elapsed time:
-    auto start = std::chrono::steady_clock::now();
-
-    LOG_INFO("[PRE-PROCESSING]: Start...");
-
-    // ===== CHECKING THE INPUT ARGUMENTS ===== //
-    // Parts:
-    if (!pattern.contains("parts")) {
-        LOG_INFO(
-            "'parts' field was not setted. Using the default 'all' "
-            "configuration");
-        pattern["parts"] = "all";
-    }
-    // -------------------------- //
-
-    // Measures:
-    if (!pattern.contains("measures")) {
-        LOG_INFO(
-            "'measures' field was not setted. Using the default 'all' "
-            "configuration");
-        pattern["measures"] = "all";
-    }
-
-    if ((pattern["measures"] != "all") && (!pattern["measures"].is_array())) {
-        LOG_ERROR("The 'measures' field MUST BE 'all' or an array value!");
-    }
-    // -------------------------- //
-
-    // Relative Pitch:
-    if (!pattern.contains("relativePitch")) {
-        LOG_INFO(
-            "'relativePitch' field was not setted. Using the default 'false' "
-            "configuration");
-        pattern["relativePitch"] = false;
-    }
-
-    if (!pattern["relativePitch"].is_boolean()) {
-        LOG_ERROR("The 'relativePitch' field MUST BE a boolean value!");
-    }
-    // -------------------------- //
-
-    // Relative Rhythm:
-    if (!pattern.contains("relativeRhythm")) {
-        LOG_INFO(
-            "'relativeRhythm' field was not setted. Using the default 'false' "
-            "configuration");
-        pattern["relativeRhythm"] = false;
-    }
-
-    if (!pattern["relativeRhythm"].is_boolean()) {
-        LOG_ERROR("The 'relativeRhythm' field MUST BE a boolean value!");
-    }
-    // -------------------------- //
-
-    // Notes:
-    if (!pattern.contains("notes")) {
-        LOG_ERROR("Missing required 'notes' field!");
-        return nlohmann::json();
-    }
-
-    if (!pattern["notes"].is_array()) {
-        LOG_ERROR("The 'notes' field must be an array!");
-        return nlohmann::json();
-    }
-    // -------------------------- //
-
-    // Output File:
-    bool save2File = true;
-    if (!pattern.contains("outputFile")) {
-        // LOG_INFO("'outputFile' field was not setted. No output file will be
-        // created");
-        save2File = false;
-    }
-
-    std::string outputFile;
-    if (save2File) {
-        if (!pattern["outputFile"].is_string()) {
-            LOG_ERROR("The 'outputFile' field MUST BE a string value!");
-            return nlohmann::json();
-        }
-
-        outputFile = pattern["outputFile"].get<std::string>();
-        const int outputFileSize = outputFile.size();
-
-        const std::string csvExtension = ".csv";
-        const int csvExtensionSize = csvExtension.size();
-
-        if (outputFileSize < csvExtensionSize) {
-            LOG_ERROR("The 'outputFile' filename MUST HAVE a least 4 characters");
-            return nlohmann::json();
-        }
-
-        const std::string extension =
-            outputFile.substr(outputFileSize - csvExtensionSize, outputFileSize);
-
-        if (extension != csvExtension) {
-            outputFile += csvExtension;
-        }
-    }
-    // -------------------------- //
-
-    // Pitch Similarity Threshold:
-    if (!pattern.contains("pitchSimilarityThreshold")) {
-        // LOG_INFO("'pitchSimilarityThreshold' field was not setted. Using the
-        // default 0 value");
-        pattern["pitchSimilarityThreshold"] = 0.0f;
-    }
-
-    if (!pattern["pitchSimilarityThreshold"].is_number_float()) {
-        LOG_ERROR(
-            "The 'pitchSimilarityThreshold' field MUST BE a float value "
-            "between 0.0 and 1.0");
-        return nlohmann::json();
-    }
-
-    const float pitchSimilarityThreshold = pattern["pitchSimilarityThreshold"].get<float>();
-    // -------------------------- //
-
-    // Type Similarity Threshold:
-    if (!pattern.contains("typeSimilarityThreshold")) {
-        // LOG_INFO("'typeSimilarityThreshold' field was not setted. Using the
-        // default 0 value");
-        pattern["typeSimilarityThreshold"] = 0.0f;
-    }
-
-    if (!pattern["typeSimilarityThreshold"].is_number_float()) {
-        LOG_ERROR(
-            "The 'typeSimilarityThreshold' field MUST BE a float value between "
-            "0.0 and 1.0");
-        return nlohmann::json();
-    }
-
-    const float typeSimilarityThreshold = pattern["typeSimilarityThreshold"].get<float>();
-    // -------------------------- //
-
-    // Similarity Threshold:
-    if (!pattern.contains("averageSimilarityThreshold")) {
-        // LOG_INFO("'averageSimilarityThreshold' field was not setted. Using
-        // the default 0 value");
-        pattern["averageSimilarityThreshold"] = 0.0f;
-    }
-
-    if (!pattern["averageSimilarityThreshold"].is_number_float()) {
-        LOG_ERROR(
-            "The 'averageSimilarityThreshold' field MUST BE a float value "
-            "between 0.0 and 1.0");
-        return nlohmann::json();
-    }
-
-    const float averageSimilarityThreshold = pattern["averageSimilarityThreshold"].get<float>();
-    // -------------------------- //
-
-    // ===== PRE-PROCESSING PATTERN: START ===== //
-    // For each pattern item: Error checking:
-    bool pureMelodicPattern = true;
-
-    const int patterNotesSize = pattern["notes"].size();
-    for (int idx = 0; idx < patterNotesSize; idx++) {
-        auto& el = pattern["notes"][idx];
-        if ((!el.contains("pitchClass")) || (!el.contains("type"))) {
-            LOG_ERROR("The pattern[notes][" + std::to_string(idx) +
-                      "] doesn't contains the required 'pitch' or 'noteType' field");
-            return nlohmann::json();
-        }
-
-        // ===== IS CHORD ===== //
-        bool isChord = false;
-        if (el.contains("isChord")) {
-            isChord = el["isChord"].get<bool>();
-        }
-        // Check if ALL element is a Chord type:
-        if (isChord) {
-            pureMelodicPattern = false;
-        }
-
-        // ===== NOTE TYPE ===== //
-        // Add a numberic 'duration' field inside the JSON pattern:
-        if (!el["type"].is_string()) {
-            LOG_ERROR("The pattern[notes][" + std::to_string(idx) + "] MUST BE a string");
-            return nlohmann::json();
-        }
-
-        const std::string noteType = el["type"].get<std::string>();
-        if (noteType == "all") {
-            el["duration"] = MUSIC_XML::DURATION::ALL;
-        } else {
-            // FIX IT: divisionsPerQuarterNote can change over measures
-            // el["duration"] = Helper::noteType2ticks(noteType,
-            // divisionsPerQuarterNote);
-        }
-
-        // ===== OCTAVE ===== //
-        // Add a numberic 'octave' field inside the JSON pattern:
-        if (!el.contains("octave")) {
-            el["octave"] = MUSIC_XML::OCTAVE::ALL;  // Any octave
-        } else if (el["octave"].is_string() && el["octave"].get<std::string>() == "all") {
-            el["octave"] = MUSIC_XML::OCTAVE::ALL;  // Any octave
-        } else if (el["octave"].is_number_integer()) {
-            el["octave"] = el["octave"].get<int>();
-        } else {
-            LOG_ERROR("The pattern[notes][" + std::to_string(idx) + "] have a wrong octave value");
-            return nlohmann::json();
-        }
-    }
-
-    LOG_INFO("Done!");
-
-    // ===== PRE-PROCESSING PATTERN: END ===== //
-
-    LOG_INFO("Running process...");
-
-    // ===== XPATH: ROOT ===== //
-    const std::string xPathRoot = "/score-partwise";
-
-    // ===== XPATH: PART ===== //
-    // Select the desired part:
-    std::string xPathPart;
-
-    // Set a alias:
-    const auto& partsField = pattern["parts"];
-
-    // Case 1: 'all' option:
-    if (partsField == MUSIC_XML::PART::ALL) {
-        xPathPart = "//part";
-
-        // Case 2: Single integer number:
-    } else if (partsField.is_number_integer()) {
-        const int p = partsField.get<int>();
-        xPathPart = "/part[" + std::to_string(p) + "]";
-
-        // Case 3: List of parts
-    } else if (partsField.is_array()) {
-        std::string positions;
-        const int partsFieldSize = partsField.size();
-        for (int p = 0; p < partsFieldSize; p++) {
-            const int partNumber = partsField[p].get<int>();
-            if (p == 0) {
-                positions += "position() = " + std::to_string(partNumber);
-            } else {
-                positions += " or position() = " + std::to_string(partNumber);
-            }
-        }
-        // Concatenate all parts:
-        xPathPart = "/part[" + positions + "]";
-
-        // Error: None of the above options:
-    } else {
-        LOG_ERROR(
-            "The 'parts' field MUST BE 'all', single integer number or an "
-            "array value");
-        return nlohmann::json();
-    }
-
-    // ===== XPATH: MEASURES ===== //
-    int measureStart = 0;
-    int measureEnd = 0;
-
-    // Set a alias:
-    const auto& measuresField = pattern["measures"];
-
-    // Case 1: 'all' option
-    if (measuresField.is_string() && measuresField == MUSIC_XML::MEASURE::END) {
-        measureStart = 0;
-        measureEnd = getNumMeasures();
-
-        // Case 2: Array [start end]
-    } else if (measuresField.is_array() && measuresField.size() == 2) {
-        measureStart = measuresField[0].get<int>();
-        measureEnd = measuresField[1].get<int>();
-
-        // Error checking:
-        if (measureEnd <= measureStart) {
-            LOG_ERROR(
-                "In the 'measures' field, the second element MUST BE greater "
-                "than the first one");
-            return nlohmann::json();
-        }
-
-        // Error: None of the above options:
-    } else {
-        LOG_ERROR(
-            "The 'measures' field MUST BE 'all' or an array with 2 positive "
-            "integers [measureStart, measureEnd]");
-        return nlohmann::json();
-    }
-
-    // Set the measures XPath:
-    const std::string xPathMeasures =
-        "/measure[" + std::to_string(measureStart + 1) +
-        " <= position() and position() <= " + std::to_string(measureEnd + 1) + "]";
-
-    // ===== XPATH: NOTE ===== //
-    std::string xPathNote = "/note";
-
-    // ===== XPATH: ONLY MELODIC ===== //
-    std::string noteAttrFilter;
-    if (pureMelodicPattern) {
-        noteAttrFilter += "[not(chord)]";
-    }
-
-    // Set the XPATH:
-    const std::string xPath = xPathRoot + xPathPart + xPathMeasures + xPathNote + noteAttrFilter;
-
-    const pugi::xpath_node_set musicNotes = _doc.select_nodes(xPath.c_str());
-
-    int musicNotesSize = musicNotes.size();
-    int patternNotesSize = pattern["notes"].size();
-
-    // Error checking:
-    if (patternNotesSize > musicNotesSize) {
-        LOG_ERROR(
-            "The pattern notes amount MUST BE smaller than the whole music "
-            "notes");
-        return nlohmann::json();
-    }
-
-    const int numIterations = musicNotesSize - patternNotesSize;
-
-    // LOG_DEBUG("size: " << musicNotesSize);
-    // LOG_DEBUG("xPath: " << xPath.c_str());
-
-    // Output JSON result:
-    nlohmann::json result;
-
-    std::string musicPartName;
-    int measure = 0;
-    std::string musicPitch, musicPitchClass, musicAlterSymbol, musicType;
-    int musicPitchAlterInt = 0;
-    int musicOctave = 0;
-    float musicDuration = 0.0f;
-    int transposedSemitones = 0;
-    float typeRatio = 0.0f;
-
-    float similarity = 0.0f;
-    float durRatio = 0.0f;
-    float pitRatio = 0.0f;
-
-    float similaritySum = 0.0f;
-    float durRatioSum = 0.0f;
-    float pitRatioSum = 0.0f;
-
-    // ===== CHECK RELATIVE PITCH/RHYTHM FALGS ===== //
-    // Get the relative pitch and relative rhythm config:
-    const bool relativePitch = pattern["relativePitch"].get<bool>();
-    const bool relativeRhythm = pattern["relativeRhythm"].get<bool>();
-
-    // ===== MAKE A COPY OF INPUT JSON PATTERN ===== //
-    // Pattern reference:
-    nlohmann::json patternRef;
-    if (relativePitch || relativeRhythm) {
-        // Make a copy to create a const pitch referece to use in the
-        // relativePitch case
-        patternRef = pattern;
-    }
-
-    // ===== RELATIVE PITCH ===== //
-    // First pattern pitch:
-    std::string firstPatternPitch;
-    if (relativePitch) {
-        // Get the first pitch of the pattern:
-        const nlohmann::json& patternElementRef = patternRef["notes"][0];
-        std::string patternPitchClassRef = patternElementRef["pitchClass"].get<std::string>();
-        int patternOctaveRef = patternElementRef["octave"].get<int>();
-        firstPatternPitch = patternPitchClassRef + std::to_string(patternOctaveRef);
-    }
-
-    // ===== RELATIVE RHYTHM ===== //
-    std::string firstPatternType;
-    float firstPatternDuration = 0.0f;
-    if (relativeRhythm) {
-        // Get the first rhythm of the pattern:
-        const nlohmann::json& patternElementRef = patternRef["notes"][0];
-        firstPatternType = patternElementRef["type"].get<std::string>();
-        // FIX IT: divisionsPerQuarterNote can change over measures
-        // firstPatternDuration = Helper::noteType2ticks(firstPatternType,
-        // _divisionsPerQuarterNote);
-    }
-
-    // ===== START ITERATIONS ===== //
-    for (int i = 0; i <= numIterations; i++) {
-        // Get the first music note of the iteration 'i':
-        const pugi::xml_node& node = musicNotes[i].node();
-
-        if (relativePitch || relativeRhythm) {
-            musicPartName = "";
-            musicPitch = "";
-            musicPitchClass = "";
-            musicAlterSymbol = "";
-            musicType = "";
-            measure = 0;
-            musicPitchAlterInt = 0;
-            musicOctave = 0;
-            musicDuration = 0.0f;
-
-            getNoteNodeData(node, musicPartName, measure, musicPitch, musicPitchClass,
-                            musicAlterSymbol, musicPitchAlterInt, musicOctave, musicType,
-                            musicDuration);
-        }
-
-        // Check if relative pitch option is enable:
-        if (relativePitch) {
-            // Compute the semitones difference between the first note of the
-            // Music and the first note of the pattern:
-            transposedSemitones = Helper::semitonesBetweenPitches(firstPatternPitch, musicPitch);
-
-            // Transpose the pattern to this new pitch reference:
-            for (int p = 0; p < patternNotesSize; p++) {
-                // Get the pattern element reference:
-                nlohmann::json& patternElementRef = patternRef["notes"][p];
-
-                // Get the pitch and octave pattern reference:
-                std::string patternPitchClass = patternElementRef["pitchClass"].get<std::string>();
-                int patternOctave = patternElementRef["octave"].get<int>();
-                const std::string oldPatternPitch =
-                    patternPitchClass + std::to_string(patternOctave);
-
-                // Get the transposed pitch from the reference:
-                const std::string newPatternPitch =
-                    Helper::transposePitch(oldPatternPitch, transposedSemitones);
-
-                // ===== SPLIT TRANSPOSED PITCH ===== //
-                std::string pitchClass, pitchStep, alterSymbol;
-                int octave = 0;
-                float alterValue = 0.0f;
-                Helper::splitPitch(newPatternPitch, pitchClass, pitchStep, octave, alterValue,
-                                   alterSymbol);
-
-                // ===== OVERWRITE THE PATTERN ELEMENT 'p' ===== //
-                nlohmann::json& patternElement = pattern["notes"][p];
-                patternElement["pitchClass"] = pitchClass;
-                patternElement["octave"] = octave;
-            }
-        }
-
-        // Check if relative rhythm option is enable:
-        if (relativeRhythm) {
-            // Compute the duration ratio between the pattern and the music
-            // iteration 'i':
-            const float typeRatio = musicDuration / firstPatternDuration;
-
-            // 'Transpose' the pattern rhythm to this new rhythm reference:
-            for (int p = 0; p < patternNotesSize; p++) {
-                // Get the pattern element reference:
-                nlohmann::json& patternElementRef = patternRef["notes"][p];
-
-                const float oldDur = patternElementRef["duration"].get<float>();
-
-                // ===== OVERWRITE THE PATTERN ELEMENT 'p' ===== //
-                nlohmann::json& patternElement = pattern["notes"][p];
-                patternElement["duration"] = oldDur * typeRatio;
-                // ***** IMPORTANT *****
-                // Here we are overwriting ONLY the DURATION field and leaving
-                // the 'type' field immutable. The reason about that is: For
-                // ower calculations, we need only the 'duration' value. So, if
-                // 'relativeRhythm' flag is enable and I you would like to
-                // inspect/breakpoint this method you will find the inconsistent
-                // values of 'duration' and 'type'
-                // *********************
-            }
-        }
-
-        // Reset the current similarity values for the next pattern iteration:
-        durRatioSum = 0.0f;
-        pitRatioSum = 0.0f;
-        similaritySum = 0.0f;
-
-        for (int j = 0; j < patternNotesSize; j++) {
-            // Try to get the note node:
-            const pugi::xml_node& node = musicNotes[i + j].node();
-
-            musicPartName = "";
-            musicPitch = "";
-            musicPitchClass = "";
-            musicAlterSymbol = "";
-            musicType = "";
-            measure = 0;
-            musicPitchAlterInt = 0;
-            musicOctave = 0;
-            musicDuration = 0.0f;
-
-            getNoteNodeData(node, musicPartName, measure, musicPitch, musicPitchClass,
-                            musicAlterSymbol, musicPitchAlterInt, musicOctave, musicType,
-                            musicDuration);
-
-            // ===== GET PATTERN NOTES DATA ===== //
-            const nlohmann::json& patternElement = pattern["notes"][j];
-
-            std::string patternPitchClass = patternElement["pitchClass"].get<std::string>();
-            int patternOctave = patternElement["octave"].get<int>();
-            const float patternDuration = patternElement["duration"].get<float>();
-
-            // ===== GET THE SIMILARITY VALUE ===== //
-            similarity = Helper::noteSimilarity(musicPitchClass, musicOctave, musicDuration,
-                                                patternPitchClass, patternOctave, patternDuration,
-                                                durRatio, pitRatio);
-
-            similaritySum += similarity;
-            durRatioSum += durRatio;
-            pitRatioSum += pitRatio;
-        }
-
-        // Compute the mean pattern elements similarities:
-        const float patternNotesSizeFloat = static_cast<float>(patternNotesSize);
-
-        const float averageSimilarity = similaritySum / patternNotesSizeFloat;
-        const float durationSimilarity = durRatioSum / patternNotesSizeFloat;
-        const float pitchSimilarity = pitRatioSum / patternNotesSizeFloat;
-
-        // Verify if this result is desired by the user:
-        if ((averageSimilarity >= averageSimilarityThreshold) &&
-            (durationSimilarity >= typeSimilarityThreshold) &&
-            (pitchSimilarity >= pitchSimilarityThreshold)) {
-            // ===== GET MEASURE START/END ===== //
-            const pugi::xml_node& nodeStart = musicNotes[i].node();
-            const pugi::xml_node& nodeEnd = musicNotes[i + patternNotesSize - 1].node();
-
-            const int mStart = static_cast<int>(nodeStart.parent().attribute("number").as_int());
-            const int mEnd = static_cast<int>(nodeEnd.parent().attribute("number").as_int());
-
-            // ===== GET PART NAME ===== //
-            const std::string partId =
-                musicNotes[i].node().parent().parent().attribute("id").as_string();
-            const int id = atoi(partId.substr(1, partId.size()).c_str());
-            const std::string partName = getPartName(id);
-
-            // ===== APPEND THE RESULT ===== //
-            nlohmann::json outputLine;
-            outputLine["partName"] = partName;
-            outputLine["measureStart"] = mStart;
-            outputLine["measureEnd"] = mEnd;
-            outputLine["transposedSemitones"] = transposedSemitones;
-            outputLine["typeRatio"] = typeRatio;
-            outputLine["typeSimilarity"] = durationSimilarity;
-            outputLine["pitchSimilarity"] = pitchSimilarity;
-            outputLine["averageSimilarity"] = averageSimilarity;
-
-            result.push_back(outputLine);
-        }
-    }
-
-    // Get the elapsed time:
-    auto end = std::chrono::steady_clock::now();
-
-    // Print the elapsed time:
-    LOG_INFO("Elapsed time: "
-             << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
-             << " ms");
-
-    // ===== WRITE RESULT TO A CSV FILE ===== //
-    if (save2File) {
-        // Create a output file:
-        std::ofstream csvFile(outputFile);
-
-        // Write the CSV header:
-        csvFile << "index"
-                << ", "
-                << "partName"
-                << ", "
-                << "measureStart"
-                << ", "
-                << "measureEnd"
-                << ", "
-                << "transposedSemitones"
-                << ", "
-                << "typeRatio"
-                << ", "
-                << "typeSimilarity"
-                << ", "
-                << "pitchSimilarity"
-                << ", "
-                << "averageSimilarity" << std::endl;
-
-        // Write data:
-        const int resultSize = result.size();
-        for (int o = 0; o < resultSize; o++) {
-            csvFile << o << ", " << result[o]["partName"].get<std::string>() << ", "
-                    << result[o]["measureStart"].get<int>() << ", "
-                    << result[o]["measureEnd"].get<int>() << ", "
-                    << result[o]["transposedSemitones"].get<float>() << ", "
-                    << result[o]["typeRatio"].get<float>() << ", "
-                    << result[o]["typeSimilarity"].get<float>() << ", "
-                    << result[o]["pitchSimilarity"].get<float>() << ", "
-                    << result[o]["averageSimilarity"].get<float>() << std::endl;
-        }
-    }
-
-    return result;
-}
+// const nlohmann::json Score::findPattern(nlohmann::json& pattern) const {
+//     PROFILE_FUNCTION();
+
+//     // Measure elapsed time:
+//     auto start = std::chrono::steady_clock::now();
+
+//     LOG_INFO("[PRE-PROCESSING]: Start...");
+
+//     // ===== CHECKING THE INPUT ARGUMENTS ===== //
+//     // Parts:
+//     if (!pattern.contains("parts")) {
+//         LOG_INFO(
+//             "'parts' field was not setted. Using the default 'all' "
+//             "configuration");
+//         pattern["parts"] = "all";
+//     }
+//     // -------------------------- //
+
+//     // Measures:
+//     if (!pattern.contains("measures")) {
+//         LOG_INFO(
+//             "'measures' field was not setted. Using the default 'all' "
+//             "configuration");
+//         pattern["measures"] = "all";
+//     }
+
+//     if ((pattern["measures"] != "all") && (!pattern["measures"].is_array())) {
+//         LOG_ERROR("The 'measures' field MUST BE 'all' or an array value!");
+//     }
+//     // -------------------------- //
+
+//     // Relative Pitch:
+//     if (!pattern.contains("relativePitch")) {
+//         LOG_INFO(
+//             "'relativePitch' field was not setted. Using the default 'false' "
+//             "configuration");
+//         pattern["relativePitch"] = false;
+//     }
+
+//     if (!pattern["relativePitch"].is_boolean()) {
+//         LOG_ERROR("The 'relativePitch' field MUST BE a boolean value!");
+//     }
+//     // -------------------------- //
+
+//     // Relative Rhythm:
+//     if (!pattern.contains("relativeRhythm")) {
+//         LOG_INFO(
+//             "'relativeRhythm' field was not setted. Using the default 'false' "
+//             "configuration");
+//         pattern["relativeRhythm"] = false;
+//     }
+
+//     if (!pattern["relativeRhythm"].is_boolean()) {
+//         LOG_ERROR("The 'relativeRhythm' field MUST BE a boolean value!");
+//     }
+//     // -------------------------- //
+
+//     // Notes:
+//     if (!pattern.contains("notes")) {
+//         LOG_ERROR("Missing required 'notes' field!");
+//         return nlohmann::json();
+//     }
+
+//     if (!pattern["notes"].is_array()) {
+//         LOG_ERROR("The 'notes' field must be an array!");
+//         return nlohmann::json();
+//     }
+//     // -------------------------- //
+
+//     // Output File:
+//     bool save2File = true;
+//     if (!pattern.contains("outputFile")) {
+//         // LOG_INFO("'outputFile' field was not setted. No output file will be
+//         // created");
+//         save2File = false;
+//     }
+
+//     std::string outputFile;
+//     if (save2File) {
+//         if (!pattern["outputFile"].is_string()) {
+//             LOG_ERROR("The 'outputFile' field MUST BE a string value!");
+//             return nlohmann::json();
+//         }
+
+//         outputFile = pattern["outputFile"].get<std::string>();
+//         const int outputFileSize = outputFile.size();
+
+//         const std::string csvExtension = ".csv";
+//         const int csvExtensionSize = csvExtension.size();
+
+//         if (outputFileSize < csvExtensionSize) {
+//             LOG_ERROR("The 'outputFile' filename MUST HAVE a least 4 characters");
+//             return nlohmann::json();
+//         }
+
+//         const std::string extension =
+//             outputFile.substr(outputFileSize - csvExtensionSize, outputFileSize);
+
+//         if (extension != csvExtension) {
+//             outputFile += csvExtension;
+//         }
+//     }
+//     // -------------------------- //
+
+//     // Pitch Similarity Threshold:
+//     if (!pattern.contains("pitchSimilarityThreshold")) {
+//         // LOG_INFO("'pitchSimilarityThreshold' field was not setted. Using the
+//         // default 0 value");
+//         pattern["pitchSimilarityThreshold"] = 0.0f;
+//     }
+
+//     if (!pattern["pitchSimilarityThreshold"].is_number_float()) {
+//         LOG_ERROR(
+//             "The 'pitchSimilarityThreshold' field MUST BE a float value "
+//             "between 0.0 and 1.0");
+//         return nlohmann::json();
+//     }
+
+//     const float pitchSimilarityThreshold = pattern["pitchSimilarityThreshold"].get<float>();
+//     // -------------------------- //
+
+//     // Type Similarity Threshold:
+//     if (!pattern.contains("typeSimilarityThreshold")) {
+//         // LOG_INFO("'typeSimilarityThreshold' field was not setted. Using the
+//         // default 0 value");
+//         pattern["typeSimilarityThreshold"] = 0.0f;
+//     }
+
+//     if (!pattern["typeSimilarityThreshold"].is_number_float()) {
+//         LOG_ERROR(
+//             "The 'typeSimilarityThreshold' field MUST BE a float value between "
+//             "0.0 and 1.0");
+//         return nlohmann::json();
+//     }
+
+//     const float typeSimilarityThreshold = pattern["typeSimilarityThreshold"].get<float>();
+//     // -------------------------- //
+
+//     // Similarity Threshold:
+//     if (!pattern.contains("averageSimilarityThreshold")) {
+//         // LOG_INFO("'averageSimilarityThreshold' field was not setted. Using
+//         // the default 0 value");
+//         pattern["averageSimilarityThreshold"] = 0.0f;
+//     }
+
+//     if (!pattern["averageSimilarityThreshold"].is_number_float()) {
+//         LOG_ERROR(
+//             "The 'averageSimilarityThreshold' field MUST BE a float value "
+//             "between 0.0 and 1.0");
+//         return nlohmann::json();
+//     }
+
+//     const float averageSimilarityThreshold = pattern["averageSimilarityThreshold"].get<float>();
+//     // -------------------------- //
+
+//     // ===== PRE-PROCESSING PATTERN: START ===== //
+//     // For each pattern item: Error checking:
+//     bool pureMelodicPattern = true;
+
+//     const int patterNotesSize = pattern["notes"].size();
+//     for (int idx = 0; idx < patterNotesSize; idx++) {
+//         auto& el = pattern["notes"][idx];
+//         if ((!el.contains("pitchClass")) || (!el.contains("type"))) {
+//             LOG_ERROR("The pattern[notes][" + std::to_string(idx) +
+//                       "] doesn't contains the required 'pitch' or 'noteType' field");
+//             return nlohmann::json();
+//         }
+
+//         // ===== IS CHORD ===== //
+//         bool isChord = false;
+//         if (el.contains("isChord")) {
+//             isChord = el["isChord"].get<bool>();
+//         }
+//         // Check if ALL element is a Chord type:
+//         if (isChord) {
+//             pureMelodicPattern = false;
+//         }
+
+//         // ===== NOTE TYPE ===== //
+//         // Add a numberic 'duration' field inside the JSON pattern:
+//         if (!el["type"].is_string()) {
+//             LOG_ERROR("The pattern[notes][" + std::to_string(idx) + "] MUST BE a string");
+//             return nlohmann::json();
+//         }
+
+//         const std::string noteType = el["type"].get<std::string>();
+//         if (noteType == "all") {
+//             el["duration"] = MUSIC_XML::DURATION::ALL;
+//         } else {
+//             // FIX IT: divisionsPerQuarterNote can change over measures
+//             // el["duration"] = Helper::noteType2ticks(noteType,
+//             // divisionsPerQuarterNote);
+//         }
+
+//         // ===== OCTAVE ===== //
+//         // Add a numberic 'octave' field inside the JSON pattern:
+//         if (!el.contains("octave")) {
+//             el["octave"] = MUSIC_XML::OCTAVE::ALL;  // Any octave
+//         } else if (el["octave"].is_string() && el["octave"].get<std::string>() == "all") {
+//             el["octave"] = MUSIC_XML::OCTAVE::ALL;  // Any octave
+//         } else if (el["octave"].is_number_integer()) {
+//             el["octave"] = el["octave"].get<int>();
+//         } else {
+//             LOG_ERROR("The pattern[notes][" + std::to_string(idx) + "] have a wrong octave
+//             value"); return nlohmann::json();
+//         }
+//     }
+
+//     LOG_INFO("Done!");
+
+//     // ===== PRE-PROCESSING PATTERN: END ===== //
+
+//     LOG_INFO("Running process...");
+
+//     // ===== XPATH: ROOT ===== //
+//     const std::string xPathRoot = "/score-partwise";
+
+//     // ===== XPATH: PART ===== //
+//     // Select the desired part:
+//     std::string xPathPart;
+
+//     // Set a alias:
+//     const auto& partsField = pattern["parts"];
+
+//     // Case 1: 'all' option:
+//     if (partsField == MUSIC_XML::PART::ALL) {
+//         xPathPart = "//part";
+
+//         // Case 2: Single integer number:
+//     } else if (partsField.is_number_integer()) {
+//         const int p = partsField.get<int>();
+//         xPathPart = "/part[" + std::to_string(p) + "]";
+
+//         // Case 3: List of parts
+//     } else if (partsField.is_array()) {
+//         std::string positions;
+//         const int partsFieldSize = partsField.size();
+//         for (int p = 0; p < partsFieldSize; p++) {
+//             const int partNumber = partsField[p].get<int>();
+//             if (p == 0) {
+//                 positions += "position() = " + std::to_string(partNumber);
+//             } else {
+//                 positions += " or position() = " + std::to_string(partNumber);
+//             }
+//         }
+//         // Concatenate all parts:
+//         xPathPart = "/part[" + positions + "]";
+
+//         // Error: None of the above options:
+//     } else {
+//         LOG_ERROR(
+//             "The 'parts' field MUST BE 'all', single integer number or an "
+//             "array value");
+//         return nlohmann::json();
+//     }
+
+//     // ===== XPATH: MEASURES ===== //
+//     int measureStart = 0;
+//     int measureEnd = 0;
+
+//     // Set a alias:
+//     const auto& measuresField = pattern["measures"];
+
+//     // Case 1: 'all' option
+//     if (measuresField.is_string() && measuresField == MUSIC_XML::MEASURE::END) {
+//         measureStart = 0;
+//         measureEnd = getNumMeasures();
+
+//         // Case 2: Array [start end]
+//     } else if (measuresField.is_array() && measuresField.size() == 2) {
+//         measureStart = measuresField[0].get<int>();
+//         measureEnd = measuresField[1].get<int>();
+
+//         // Error checking:
+//         if (measureEnd <= measureStart) {
+//             LOG_ERROR(
+//                 "In the 'measures' field, the second element MUST BE greater "
+//                 "than the first one");
+//             return nlohmann::json();
+//         }
+
+//         // Error: None of the above options:
+//     } else {
+//         LOG_ERROR(
+//             "The 'measures' field MUST BE 'all' or an array with 2 positive "
+//             "integers [measureStart, measureEnd]");
+//         return nlohmann::json();
+//     }
+
+//     // Set the measures XPath:
+//     const std::string xPathMeasures =
+//         "/measure[" + std::to_string(measureStart + 1) +
+//         " <= position() and position() <= " + std::to_string(measureEnd + 1) + "]";
+
+//     // ===== XPATH: NOTE ===== //
+//     std::string xPathNote = "/note";
+
+//     // ===== XPATH: ONLY MELODIC ===== //
+//     std::string noteAttrFilter;
+//     if (pureMelodicPattern) {
+//         noteAttrFilter += "[not(chord)]";
+//     }
+
+//     // Set the XPATH:
+//     const std::string xPath = xPathRoot + xPathPart + xPathMeasures + xPathNote + noteAttrFilter;
+
+//     const pugi::xpath_node_set musicNotes = _doc.select_nodes(xPath.c_str());
+
+//     int musicNotesSize = musicNotes.size();
+//     int patternNotesSize = pattern["notes"].size();
+
+//     // Error checking:
+//     if (patternNotesSize > musicNotesSize) {
+//         LOG_ERROR(
+//             "The pattern notes amount MUST BE smaller than the whole music "
+//             "notes");
+//         return nlohmann::json();
+//     }
+
+//     const int numIterations = musicNotesSize - patternNotesSize;
+
+//     // LOG_DEBUG("size: " << musicNotesSize);
+//     // LOG_DEBUG("xPath: " << xPath.c_str());
+
+//     // Output JSON result:
+//     nlohmann::json result;
+
+//     std::string musicPartName;
+//     int measure = 0;
+//     std::string musicPitch, musicPitchClass, musicAlterSymbol, musicType;
+//     int musicPitchAlterInt = 0;
+//     int musicOctave = 0;
+//     float musicDuration = 0.0f;
+//     int transposedSemitones = 0;
+//     float typeRatio = 0.0f;
+
+//     float similarity = 0.0f;
+//     float durRatio = 0.0f;
+//     float pitRatio = 0.0f;
+
+//     float similaritySum = 0.0f;
+//     float durRatioSum = 0.0f;
+//     float pitRatioSum = 0.0f;
+
+//     // ===== CHECK RELATIVE PITCH/RHYTHM FALGS ===== //
+//     // Get the relative pitch and relative rhythm config:
+//     const bool relativePitch = pattern["relativePitch"].get<bool>();
+//     const bool relativeRhythm = pattern["relativeRhythm"].get<bool>();
+
+//     // ===== MAKE A COPY OF INPUT JSON PATTERN ===== //
+//     // Pattern reference:
+//     nlohmann::json patternRef;
+//     if (relativePitch || relativeRhythm) {
+//         // Make a copy to create a const pitch referece to use in the
+//         // relativePitch case
+//         patternRef = pattern;
+//     }
+
+//     // ===== RELATIVE PITCH ===== //
+//     // First pattern pitch:
+//     std::string firstPatternPitch;
+//     if (relativePitch) {
+//         // Get the first pitch of the pattern:
+//         const nlohmann::json& patternElementRef = patternRef["notes"][0];
+//         std::string patternPitchClassRef = patternElementRef["pitchClass"].get<std::string>();
+//         int patternOctaveRef = patternElementRef["octave"].get<int>();
+//         firstPatternPitch = patternPitchClassRef + std::to_string(patternOctaveRef);
+//     }
+
+//     // ===== RELATIVE RHYTHM ===== //
+//     std::string firstPatternType;
+//     float firstPatternDuration = 0.0f;
+//     if (relativeRhythm) {
+//         // Get the first rhythm of the pattern:
+//         const nlohmann::json& patternElementRef = patternRef["notes"][0];
+//         firstPatternType = patternElementRef["type"].get<std::string>();
+//         // FIX IT: divisionsPerQuarterNote can change over measures
+//         // firstPatternDuration = Helper::noteType2ticks(firstPatternType,
+//         // _divisionsPerQuarterNote);
+//     }
+
+//     // ===== START ITERATIONS ===== //
+//     for (int i = 0; i <= numIterations; i++) {
+//         // Get the first music note of the iteration 'i':
+//         const pugi::xml_node& node = musicNotes[i].node();
+
+//         if (relativePitch || relativeRhythm) {
+//             musicPartName = "";
+//             musicPitch = "";
+//             musicPitchClass = "";
+//             musicAlterSymbol = "";
+//             musicType = "";
+//             measure = 0;
+//             musicPitchAlterInt = 0;
+//             musicOctave = 0;
+//             musicDuration = 0.0f;
+
+//             getNoteNodeData(node, musicPartName, measure, musicPitch, musicPitchClass,
+//                             musicAlterSymbol, musicPitchAlterInt, musicOctave, musicType,
+//                             musicDuration);
+//         }
+
+//         // Check if relative pitch option is enable:
+//         if (relativePitch) {
+//             // Compute the semitones difference between the first note of the
+//             // Music and the first note of the pattern:
+//             transposedSemitones = Helper::semitonesBetweenPitches(firstPatternPitch, musicPitch);
+
+//             // Transpose the pattern to this new pitch reference:
+//             for (int p = 0; p < patternNotesSize; p++) {
+//                 // Get the pattern element reference:
+//                 nlohmann::json& patternElementRef = patternRef["notes"][p];
+
+//                 // Get the pitch and octave pattern reference:
+//                 std::string patternPitchClass =
+//                 patternElementRef["pitchClass"].get<std::string>(); int patternOctave =
+//                 patternElementRef["octave"].get<int>(); const std::string oldPatternPitch =
+//                     patternPitchClass + std::to_string(patternOctave);
+
+//                 // Get the transposed pitch from the reference:
+//                 const std::string newPatternPitch =
+//                     Helper::transposePitch(oldPatternPitch, transposedSemitones);
+
+//                 // ===== SPLIT TRANSPOSED PITCH ===== //
+//                 std::string pitchClass, pitchStep, alterSymbol;
+//                 int octave = 0;
+//                 float alterValue = 0.0f;
+//                 Helper::splitPitch(newPatternPitch, pitchClass, pitchStep, octave, alterValue,
+//                                    alterSymbol);
+
+//                 // ===== OVERWRITE THE PATTERN ELEMENT 'p' ===== //
+//                 nlohmann::json& patternElement = pattern["notes"][p];
+//                 patternElement["pitchClass"] = pitchClass;
+//                 patternElement["octave"] = octave;
+//             }
+//         }
+
+//         // Check if relative rhythm option is enable:
+//         if (relativeRhythm) {
+//             // Compute the duration ratio between the pattern and the music
+//             // iteration 'i':
+//             const float typeRatio = musicDuration / firstPatternDuration;
+
+//             // 'Transpose' the pattern rhythm to this new rhythm reference:
+//             for (int p = 0; p < patternNotesSize; p++) {
+//                 // Get the pattern element reference:
+//                 nlohmann::json& patternElementRef = patternRef["notes"][p];
+
+//                 const float oldDur = patternElementRef["duration"].get<float>();
+
+//                 // ===== OVERWRITE THE PATTERN ELEMENT 'p' ===== //
+//                 nlohmann::json& patternElement = pattern["notes"][p];
+//                 patternElement["duration"] = oldDur * typeRatio;
+//                 // ***** IMPORTANT *****
+//                 // Here we are overwriting ONLY the DURATION field and leaving
+//                 // the 'type' field immutable. The reason about that is: For
+//                 // ower calculations, we need only the 'duration' value. So, if
+//                 // 'relativeRhythm' flag is enable and I you would like to
+//                 // inspect/breakpoint this method you will find the inconsistent
+//                 // values of 'duration' and 'type'
+//                 // *********************
+//             }
+//         }
+
+//         // Reset the current similarity values for the next pattern iteration:
+//         durRatioSum = 0.0f;
+//         pitRatioSum = 0.0f;
+//         similaritySum = 0.0f;
+
+//         for (int j = 0; j < patternNotesSize; j++) {
+//             // Try to get the note node:
+//             const pugi::xml_node& node = musicNotes[i + j].node();
+
+//             musicPartName = "";
+//             musicPitch = "";
+//             musicPitchClass = "";
+//             musicAlterSymbol = "";
+//             musicType = "";
+//             measure = 0;
+//             musicPitchAlterInt = 0;
+//             musicOctave = 0;
+//             musicDuration = 0.0f;
+
+//             getNoteNodeData(node, musicPartName, measure, musicPitch, musicPitchClass,
+//                             musicAlterSymbol, musicPitchAlterInt, musicOctave, musicType,
+//                             musicDuration);
+
+//             // ===== GET PATTERN NOTES DATA ===== //
+//             const nlohmann::json& patternElement = pattern["notes"][j];
+
+//             std::string patternPitchClass = patternElement["pitchClass"].get<std::string>();
+//             int patternOctave = patternElement["octave"].get<int>();
+//             const float patternDuration = patternElement["duration"].get<float>();
+
+//             // ===== GET THE SIMILARITY VALUE ===== //
+//             similarity = Helper::noteSimilarity(musicPitchClass, musicOctave, musicDuration,
+//                                                 patternPitchClass, patternOctave,
+//                                                 patternDuration, durRatio, pitRatio);
+
+//             similaritySum += similarity;
+//             durRatioSum += durRatio;
+//             pitRatioSum += pitRatio;
+//         }
+
+//         // Compute the mean pattern elements similarities:
+//         const float patternNotesSizeFloat = static_cast<float>(patternNotesSize);
+
+//         const float averageSimilarity = similaritySum / patternNotesSizeFloat;
+//         const float durationSimilarity = durRatioSum / patternNotesSizeFloat;
+//         const float pitchSimilarity = pitRatioSum / patternNotesSizeFloat;
+
+//         // Verify if this result is desired by the user:
+//         if ((averageSimilarity >= averageSimilarityThreshold) &&
+//             (durationSimilarity >= typeSimilarityThreshold) &&
+//             (pitchSimilarity >= pitchSimilarityThreshold)) {
+//             // ===== GET MEASURE START/END ===== //
+//             const pugi::xml_node& nodeStart = musicNotes[i].node();
+//             const pugi::xml_node& nodeEnd = musicNotes[i + patternNotesSize - 1].node();
+
+//             const int mStart = static_cast<int>(nodeStart.parent().attribute("number").as_int());
+//             const int mEnd = static_cast<int>(nodeEnd.parent().attribute("number").as_int());
+
+//             // ===== GET PART NAME ===== //
+//             const std::string partId =
+//                 musicNotes[i].node().parent().parent().attribute("id").as_string();
+//             const int id = atoi(partId.substr(1, partId.size()).c_str());
+//             const std::string partName = getPartName(id);
+
+//             // ===== APPEND THE RESULT ===== //
+//             nlohmann::json outputLine;
+//             outputLine["partName"] = partName;
+//             outputLine["measureStart"] = mStart;
+//             outputLine["measureEnd"] = mEnd;
+//             outputLine["transposedSemitones"] = transposedSemitones;
+//             outputLine["typeRatio"] = typeRatio;
+//             outputLine["typeSimilarity"] = durationSimilarity;
+//             outputLine["pitchSimilarity"] = pitchSimilarity;
+//             outputLine["averageSimilarity"] = averageSimilarity;
+
+//             result.push_back(outputLine);
+//         }
+//     }
+
+//     // Get the elapsed time:
+//     auto end = std::chrono::steady_clock::now();
+
+//     // Print the elapsed time:
+//     LOG_INFO("Elapsed time: "
+//              << std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count()
+//              << " ms");
+
+//     // ===== WRITE RESULT TO A CSV FILE ===== //
+//     if (save2File) {
+//         // Create a output file:
+//         std::ofstream csvFile(outputFile);
+
+//         // Write the CSV header:
+//         csvFile << "index"
+//                 << ", "
+//                 << "partName"
+//                 << ", "
+//                 << "measureStart"
+//                 << ", "
+//                 << "measureEnd"
+//                 << ", "
+//                 << "transposedSemitones"
+//                 << ", "
+//                 << "typeRatio"
+//                 << ", "
+//                 << "typeSimilarity"
+//                 << ", "
+//                 << "pitchSimilarity"
+//                 << ", "
+//                 << "averageSimilarity" << std::endl;
+
+//         // Write data:
+//         const int resultSize = result.size();
+//         for (int o = 0; o < resultSize; o++) {
+//             csvFile << o << ", " << result[o]["partName"].get<std::string>() << ", "
+//                     << result[o]["measureStart"].get<int>() << ", "
+//                     << result[o]["measureEnd"].get<int>() << ", "
+//                     << result[o]["transposedSemitones"].get<float>() << ", "
+//                     << result[o]["typeRatio"].get<float>() << ", "
+//                     << result[o]["typeSimilarity"].get<float>() << ", "
+//                     << result[o]["pitchSimilarity"].get<float>() << ", "
+//                     << result[o]["averageSimilarity"].get<float>() << std::endl;
+//         }
+//     }
+
+//     return result;
+// }
 
 int Score::xPathCountNodes(const std::string& xPath) const {
     // Select all nodes from the given XPath:

@@ -401,21 +401,21 @@ class Score {
      */
     nlohmann::json selectNotes(nlohmann::json& config) const;
 
-    /**
-     * @brief
-     *
-     * @param pattern
-     * @return const nlohmann::json
-     */
-    const nlohmann::json findPattern(nlohmann::json& pattern) const;
+    // /**
+    //  * @brief
+    //  *
+    //  * @param pattern
+    //  * @return const nlohmann::json
+    //  */
+    // const nlohmann::json findPattern(nlohmann::json& pattern) const;
 
-    /**
-     * @brief
-     *
-     * @param config
-     * @return int
-     */
-    int countNotes(nlohmann::json& config) const;
+    // /**
+    //  * @brief
+    //  *
+    //  * @param config
+    //  * @return int
+    //  */
+    // int countNotes(nlohmann::json& config) const;
 
     /**
      * @brief Get the Note Node Data object
