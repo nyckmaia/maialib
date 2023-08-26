@@ -238,17 +238,6 @@ class Note {
         const int numPartials = 6,
         const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
 
-    /**
-     * @brief Get the Harmonic Spectrum object
-     *
-     * @param numPartials
-     * @param amplCallback
-     * @return std::pair<std::vector<float>, std::vector<float>>
-     */
-    std::pair<std::vector<float>, std::vector<float>> getHarmonicSpectrum(
-        const int numPartials = 6,
-        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
-
     void transpose(const int semitones, const std::string& accType = MUSIC_XML::ACCIDENT::NONE);
 
     const std::string toXML(const size_t instrumentId = 1, const int identSize = 2) const;
