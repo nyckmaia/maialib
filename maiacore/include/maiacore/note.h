@@ -225,7 +225,18 @@ class Note {
     // Colocar praticamente a mesma documentaçao do método
     // 'getEnharmonicPitch()'
     void toEnharmonicPitch(const bool alternativeEnhamonicPitch = false);
-    float getFrequency() const;
+    float getFrequency(const bool equalTemperament = true, const float freqA4 = 440.0f) const;
+
+    /**
+     * @brief Get the Harmonic Spectrum object
+     *
+     * @param numPartials
+     * @param amplCallback
+     * @return std::pair<std::vector<float>, std::vector<float>>
+     */
+    std::pair<std::vector<float>, std::vector<float>> getHarmonicSpectrum(
+        const int numPartials = 6,
+        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
 
     /**
      * @brief Get the Harmonic Spectrum object

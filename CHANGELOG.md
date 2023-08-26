@@ -21,6 +21,9 @@ All notable changes to this project will be documented in this file.
 ### Improved
 
 - Note::getPitch() now returns the 'soundingPitch' and not the 'writtenPitch'
+- Note::getFrequency() now have 2 optional input arguments:
+  - bool equalTemperament = true
+  - float freqA4 = 440.0f
 
 ### Fixed
 

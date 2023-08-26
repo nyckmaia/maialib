@@ -1063,12 +1063,12 @@ std::pair<int, int> Helper::freq2midiNote(const float freq, std::function<int(fl
     return std::make_pair(closestMIDINumber, centsOffset);
 }
 
-float Helper::midiNote2freq(const int midiNote) {
+float Helper::midiNote2freq(const int midiNote, const float freqA4) {
     if (midiNote < 0) {
         return 0.0f;
     }  // rest
 
-    return powf(2.0f, (static_cast<float>(midiNote) - 69.0f) / 12.0f) * 440.0f;
+    return powf(2.0f, (static_cast<float>(midiNote) - 69.0f) / 12.0f) * freqA4;
 }
 
 int Helper::midiNote2octave(const int midiNote) {

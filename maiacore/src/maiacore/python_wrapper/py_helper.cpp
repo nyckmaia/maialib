@@ -19,7 +19,8 @@ void HelperClass(const py::module& m) {
     cls.def_static("freq2midiNote", &Helper::freq2midiNote, py::arg("freq"),
                    py::arg("modelo") = nullptr);
     //--------------------- //
-    cls.def_static("midiNote2freq", &Helper::midiNote2freq, py::arg("midiNoteValue"));
+    cls.def_static("midiNote2freq", &Helper::midiNote2freq, py::arg("midiNoteValue"),
+                   py::arg("freqA4") = 440.0f);
     //--------------------- //
     cls.def_static("pitch2midiNote", &Helper::pitch2midiNote, py::arg("pitch"));
     //--------------------- //

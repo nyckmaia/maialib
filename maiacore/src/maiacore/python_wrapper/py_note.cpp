@@ -139,7 +139,8 @@ void NoteClass(const py::module& m) {
     cls.def("toEnharmonicPitch", &Note::toEnharmonicPitch,
             py::arg("alternativeEnhamonicPitch") = false);
     cls.def("getScaleDegree", &Note::getScaleDegree, py::arg("key"));
-    cls.def("getFrequency", &Note::getFrequency);
+    cls.def("getFrequency", &Note::getFrequency, py::arg("equalTemperament") = true,
+            py::arg("freqA4") = 440.0f);
     cls.def("getHarmonicSpectrum", &Note::getHarmonicSpectrum, py::arg("numPartials") = 6,
             py::arg("amplCallback") = nullptr);
 

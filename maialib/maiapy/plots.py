@@ -3,12 +3,13 @@ import maialib.maiacore as mc
 import pandas as pd
 import plotly.express as px
 import plotly
+from typing import List, Tuple
 
 __all__ = ["plotPartsActivity", "plotPianoRoll",
            "plotScorePitchEnvelope", "plotChordsNumberOfNotes"]
 
 
-def _score2DataFrame(score: mc.Score, kwargs) -> tuple([pd.DataFrame, str, str]):
+def _score2DataFrame(score: mc.Score, kwargs) -> Tuple[pd.DataFrame, str, str]:
     """Auxiliar function to convert a maialib Score object to a Pandas DataFrame
 
     Args:
@@ -188,7 +189,7 @@ def _score2DataFrame(score: mc.Score, kwargs) -> tuple([pd.DataFrame, str, str])
 # https://www.researchgate.net/publication/321335427_Uma_analise_da_organizacao_e_fragmentacao_de_Farben_de_Arnold_Schoenberg
 
 
-def plotPartsActivity(score: mc.Score, **kwargs) -> tuple([plotly.graph_objs._figure.Figure, pd.DataFrame]):
+def plotPartsActivity(score: mc.Score, **kwargs) -> Tuple[plotly.graph_objs._figure.Figure, pd.DataFrame]:
     """Plots a timeline graph showing the musical activity of each score instrument
 
     Args:
@@ -250,7 +251,7 @@ def plotPartsActivity(score: mc.Score, **kwargs) -> tuple([plotly.graph_objs._fi
     return fig, df
 
 
-def plotPianoRoll(score: mc.Score, **kwargs) -> tuple([plotly.graph_objs._figure.Figure, pd.DataFrame]):
+def plotPianoRoll(score: mc.Score, **kwargs) -> Tuple[plotly.graph_objs._figure.Figure, pd.DataFrame]:
     """Plots a piano roll graph showing the musical activity of each score instrument
 
     Args:
@@ -433,7 +434,7 @@ def _chordNumNotesDataFrameInterpolation(df: pd.DataFrame, interpolatePoints: in
     return new_df
 
 
-def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> tuple([plotly.graph_objs._figure.Figure, pd.DataFrame]):
+def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> Tuple[plotly.graph_objs._figure.Figure, pd.DataFrame]:
     """Plot a score pitch envelope
 
     Args:
@@ -555,7 +556,7 @@ def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> tuple([plotly.graph_obj
     return fig, df
 
 
-def plotChordsNumberOfNotes(score: mc.Score, **kwargs) -> tuple([plotly.graph_objs._figure.Figure, pd.DataFrame]):
+def plotChordsNumberOfNotes(score: mc.Score, **kwargs) -> Tuple[plotly.graph_objs._figure.Figure, pd.DataFrame]:
     """Plot chord number of notes varying in time
 
     Args:

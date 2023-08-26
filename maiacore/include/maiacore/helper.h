@@ -92,9 +92,10 @@ class Helper {
      * @brief
      *
      * @param midiNote
+     * @param freqA4
      * @return float
      */
-    static float midiNote2freq(const int midiNote);
+    static float midiNote2freq(const int midiNote, const float freqA4 = 440.0f);
 
     /**
      * @brief

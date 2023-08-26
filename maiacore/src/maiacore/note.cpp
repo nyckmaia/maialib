@@ -1556,7 +1556,40 @@ int Note::getScaleDegree(const Key& key) const {
     return degree;
 }
 
-float Note::getFrequency() const { return Helper::pitch2freq(getSoundingPitch()); }
+float Note::getFrequency(bool equalTemperament, const float freqA4) const {
+    return (equalTemperament) ? Helper::midiNote2freq(_midiNumber, freqA4)
+                              : Helper::pitch2freq(getSoundingPitch());
+}
+
+std::pair<std::vector<float>, std::vector<float>> Note::getHarmonicSpectrum(
+    const int numPartials,
+    const std::function<std::vector<float>(std::vector<float>)> amplCallback) const {
+    if (numPartials <= 0) {
+        LOG_ERROR("The 'numPartials' must be a positive value");
+    }
+
+    std::vector<float> freqs(numPartials, 0);
+    for (int i = 0; i < numPartials; i++) {
+        freqs[i] = getFrequency() * (i + 1);
+    }
+
+    std::vector<float> ampls(numPartials, 0);
+    if (amplCallback == nullptr) {
+        for (int i = 0; i < numPartials; i++) {
+            ampls[i] = std::pow(0.88f, i);
+        }
+    } else {
+        ampls = amplCallback(freqs);
+    }
+
+    if (freqs.size() != ampls.size()) {
+        LOG_ERROR(
+            "The output vector of 'amplCallback' function must have the size of 'numPartials'=" +
+            std::to_string(numPartials));
+    }
+
+    return {freqs, ampls};
+}
 
 std::pair<std::vector<float>, std::vector<float>> Note::getHarmonicSpectrum(
     const int numPartials,

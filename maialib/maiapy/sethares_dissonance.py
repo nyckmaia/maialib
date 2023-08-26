@@ -3,6 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from maialib import maiacore as mc
+from typing import List, Tuple
 
 __all__ = ["plotSetharesDissonanceCurve", "plotScoreSetharesDissonance"]
 
@@ -53,7 +54,7 @@ def _dissmeasure(fvec, amp, model='min') -> float:
 
     return D
 
-def plotSetharesDissonanceCurve(base_freq=500, numPartials=6, r_low=1, r_high=2.3, n_points=3000, amplVec=None) -> tuple[go.Figure, list[float], list[float]]:
+def plotSetharesDissonanceCurve(base_freq=500, numPartials=6, r_low=1, r_high=2.3, n_points=3000, amplVec=None) -> Tuple[go.Figure, List[float], List[float]]:
     """
     Compute the Sethares Dissonance Curve of a given base frequency
 
@@ -103,7 +104,7 @@ def plotSetharesDissonanceCurve(base_freq=500, numPartials=6, r_low=1, r_high=2.
     
     return fig, ratios, dissonances
 
-def plotScoreSetharesDissonance(score: mc.Score, **kwargs) -> tuple[go.Figure, pd.DataFrame]:
+def plotScoreSetharesDissonance(score: mc.Score, **kwargs) -> Tuple[go.Figure, pd.DataFrame]:
     """Plot 2D line graph of the Sethares Dissonance over time
 
     Args:
