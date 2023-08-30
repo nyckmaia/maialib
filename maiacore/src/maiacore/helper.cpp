@@ -1632,9 +1632,16 @@ std::pair<std::string, int> Helper::ticks2noteType(const int ticks,
     }  // 1:256
 
     // switch/case default option
-    LOG_WARN("ticks: " << ticks << " | divPQN: " << divisionsPerQuarterNote
-                       << "| scaledRatio: " << scaledRatio);
-    LOG_ERROR("Unable to convert ticks to noteType: " + std::to_string(ticks));
+    LOG_ERROR(
+        "Unable to convert " + std::to_string(ticks) + " 'ticks' value to 'noteType' string\n " +
+        "using 'divisionPerQuarterNote'=" + std::to_string(divisionsPerQuarterNote) +
+        " and 'scaledRatio'=" + std::to_string(scaledRatio) + "\n\n" +
+        "If you are working based on a XML file, this file can be corrupted!\nYou can try to "
+        "fix this problem: \na) Open/Import this XML file in a modern score editor software "
+        "(like MuseScore 4, Avid Sibelius 2023 or Makemusic Finale 27)\nb) Generate a new "
+        "version of this sheet music by exporting this file as a new *.xml or *.musicxml "
+        "file\nc) Return to your 'maialib environment' and update your Score object "
+        "constructor file path to point to the new generated file\nd) Run your code again! Done!");
     return {};
 
 #else
@@ -1738,9 +1745,19 @@ std::pair<std::string, int> Helper::ticks2noteType(const int ticks,
         case 3906 ... 5858:
             return {MUSIC_XML::NOTE_TYPE::N1024TH, 0};  // 1:256
         default:
-            LOG_WARN("ticks: " << ticks << " | divPQN: " << divisionsPerQuarterNote
-                               << "| scaledRatio: " << scaledRatio);
-            LOG_ERROR("Unable to convert ticks to noteType: " + std::to_string(ticks));
+            LOG_ERROR(
+                "Unable to convert " + std::to_string(ticks) +
+                " 'ticks' value to 'noteType' string\n " +
+                "using 'divisionPerQuarterNote'=" + std::to_string(divisionsPerQuarterNote) +
+                " and 'scaledRatio'=" + std::to_string(scaledRatio) + "\n\n" +
+                "If you are working based on a XML file, this file can be corrupted!\nYou can try "
+                "to fix this problem: \na) Open/Import this XML file in a modern score editor "
+                "software "
+                "(like MuseScore 4, Avid Sibelius 2023 or Makemusic Finale 27)\nb) Generate a new "
+                "version of this sheet music by exporting this file as a new *.xml or *.musicxml "
+                "file\nc) Return to your 'maialib environment' and update your Score object "
+                "constructor file path to point to the new generated file\nd) Run your code again! "
+                "Done!");
             break;
     }
 

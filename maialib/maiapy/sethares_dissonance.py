@@ -104,6 +104,38 @@ def plotSetharesDissonanceCurve(base_freq=500, numPartials=6, r_low=1, r_high=2.
     
     return fig, ratios, dissonances
 
+def _setharesDissonanceDataFrameInterpolation(df: pd.DataFrame, interpolatePoints: int) -> pd.DataFrame:
+    def split(a, n):
+        k, m = divmod(len(a), n)
+        return (a[i*k+min(i, m):(i+1)*k+min(i+1, m)] for i in range(n))
+
+    firstMeasureNumber = df.measure.min(skipna=True)
+    lastMeasureNumber = df.measure.max(skipna=True)
+
+    if interpolatePoints >= lastMeasureNumber:
+        raise Exception(
+            "ERROR: The score number of measures must be greater then the interpolate points value")
+
+    ranges = list(
+        split(range(firstMeasureNumber, lastMeasureNumber+1), interpolatePoints))
+    data = []
+    for sub in ranges:
+        sub_df = df.query(f'(measure >= {sub.start}) & (measure < {sub.stop})')
+        floatMeasure = (sub.start + sub.stop) / 2
+        dissonance = round(sub_df["dissonance"].mean(skipna=True))
+        chordSizeMean = round(sub_df["chordSize"].mean(skipna=True))
+
+        obj = {
+            "floatMeasure": floatMeasure,
+            "dissonance": dissonance,
+            "chordSizeMean": chordSizeMean,
+        }
+
+        data.append(obj)
+
+    new_df = pd.DataFrame.from_records(data)
+    return new_df
+
 def plotScoreSetharesDissonance(score: mc.Score, **kwargs) -> Tuple[go.Figure, pd.DataFrame]:
     """Plot 2D line graph of the Sethares Dissonance over time
 
@@ -113,6 +145,7 @@ def plotScoreSetharesDissonance(score: mc.Score, **kwargs) -> Tuple[go.Figure, p
     Kwargs:
        measureStart (int): Start measure to plot
        measureEnd (int): End measure to plot
+       numPoints (int): Number of interpolated points
 
     Returns:
        A list: [Plotly Figure, The plot data as a Pandas Dataframe]
@@ -124,17 +157,33 @@ def plotScoreSetharesDissonance(score: mc.Score, **kwargs) -> Tuple[go.Figure, p
 
     >>> myScore = ml.Score("/path/to/score.xml")
     >>> ml.plotScoreSetharesDissonance(myScore)
+    >>> ml.plotScoreSetharesDissonance(myScore, numPoints=15)
     >>> ml.plotScoreSetharesDissonance(myScore, measureStart=10, measureEnd=20)
     """
+    # ===== GET THE PLOT TITLE ===== #
+    workTitle = score.getTitle()
+    if workTitle.strip() == "":
+        workTitle = "No Title"
+    plotTitle = f'<b>Sethares Sensory Dissonance</b><br><i>{workTitle}</i>' 
+    
+    # ===== COMPUTE THE SETHARES DISSONANCE ===== #
     df = score.getChordsDataFrame(kwargs)
 
     df["dissonance"] = df.apply(lambda row: row.chord.getSetharesDissonanceValue(), axis=1)
     df["chordNotes"] = df.apply(lambda row: ', '.join([str(x.getPitch()) for x in row.chord.getNotes()]), axis=1)
     df["chordSize"] = df.apply(lambda row: row.chord.size(), axis=1)
+    dissonanceMean = df.dissonance.mean()
 
-    fig = px.line(df, x="floatMeasure", y="dissonance",
-              hover_data=["chordNotes", "chordSize"],
-              title='<b>Sethares Sensory Dissonance</b><br><i>Beethoven 5th Symphony</i>')
+    # ===== CHECK THE INTERPOLATION POINTS ===== #
+    plotHoverData = ["chordNotes", "chordSize"]
+    if "numPoints" in kwargs:
+        df = _setharesDissonanceDataFrameInterpolation(df, kwargs["numPoints"])
+        plotHoverData = ["chordSizeMean"]
+
+    # ===== PLOT ===== #
+    fig = px.line(df, x="floatMeasure", y="dissonance", hover_data=plotHoverData, title=plotTitle)
+
+    fig.add_hline(y=dissonanceMean, line_width=3, line_dash="dash", line_color="green")
 
     fig.update_layout(
         title_x=0.5,

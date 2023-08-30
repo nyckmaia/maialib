@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.1] - 2023-08-30
+
+### Improved
+
+- maiacore
+  - Improve error message to help users to fix corrupted XML files
+- maiapy
+  - plotScoreSetharesDissonance:
+    - Add new input argument 'numPoints' to create a interpolated curve
+    - Add a horizontal dashed line to show the 'dissonance mean' value
+
+### Fixed
+
+- maiapy
+  - Fix plotScoreSetharesDissonance display title
+
+---
+
 ## [v1.4.0] - 2023-08-26
 
 ### New Features
@@ -17,6 +35,7 @@ All notable changes to this project will be documented in this file.
 
 - maiapy
   - Add ml.plotSetharesDissonanceCurve()
+  - Add ml.plotScoreSetharesDissonance()
 
 ### Improved
 
