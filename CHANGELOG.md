@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.2] - 2023-MM-DD
+
+### API Changes
+
+- Python Wrapper: Chord.getSetharesDissonanceValue() replaced by .getSetharesDissonance()
+
+### New Features
+
+- Chord::getSetharesPartialsDissonanceValue()
+  - Python Wrapper called: .getSetharesPartialsDataFrame()
+
+### Improved
+
+- maiapy
+  - 'plotScoreSetharesDissonance':
+    - Add 'numPartials', 'useMin', 'ampCallback' arguments
+    - Add optional 'plotType' input argument: 'scatter' or 'line'
+    - Add optional 'lineShape' input argument: 'linear' or 'spline'
+    - Add line label for the 'mean value': Dissonance Mean
+
+### Fixed
+
+---
+
 ## [v1.4.1] - 2023-08-30
 
 ### Improved

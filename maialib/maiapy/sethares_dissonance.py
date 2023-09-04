@@ -3,7 +3,7 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 from maialib import maiacore as mc
-from typing import List, Tuple
+from typing import List, Tuple, Callable, Optional
 
 __all__ = ["plotSetharesDissonanceCurve", "plotScoreSetharesDissonance"]
 
@@ -136,12 +136,21 @@ def _setharesDissonanceDataFrameInterpolation(df: pd.DataFrame, interpolatePoint
     new_df = pd.DataFrame.from_records(data)
     return new_df
 
-def plotScoreSetharesDissonance(score: mc.Score, **kwargs) -> Tuple[go.Figure, pd.DataFrame]:
+def plotScoreSetharesDissonance(score: mc.Score, plotType='line', lineShape='linear', numPartials: int = 6, useMinModel: bool = True, 
+                                amplCallback: Optional[Callable[[List[float]], List[float]]] = None,
+    dissCallback: Optional[Callable[[List[float]], float]] = None, **kwargs) -> Tuple[go.Figure, pd.DataFrame]:
     """Plot 2D line graph of the Sethares Dissonance over time
 
     Args:
-       score (maialib.Score):  A maialib Score object loaded with a valid MusicXML file
-
+       score (maialib.Score): A maialib Score object loaded with a valid MusicXML file
+       plotType (str): Can be 'line' or 'scatter'
+       lineShape (str): Can be 'linear' or 'spline'
+       numPartials (int): Amount of spectral partials for each note
+       useMinModel (bool): Sethares dissonance values can be computed using the 'minimal amplitude' model
+                    or the 'product amplitudes' model. The 'min' model is a more recent approach
+       amplCallback: Custom user function callback to generate the amplitude of each spectrum partial
+       dissCallback: Custom user function callback to receive all paired partial dissonances and computes 
+                     a single total dissonance value output
     Kwargs:
        measureStart (int): Start measure to plot
        measureEnd (int): End measure to plot
@@ -169,7 +178,7 @@ def plotScoreSetharesDissonance(score: mc.Score, **kwargs) -> Tuple[go.Figure, p
     # ===== COMPUTE THE SETHARES DISSONANCE ===== #
     df = score.getChordsDataFrame(kwargs)
 
-    df["dissonance"] = df.apply(lambda row: row.chord.getSetharesDissonanceValue(), axis=1)
+    df["dissonance"] = df.apply(lambda row: row.chord.getSetharesDissonance(numPartials, useMinModel, amplCallback, dissCallback), axis=1)
     df["chordNotes"] = df.apply(lambda row: ', '.join([str(x.getPitch()) for x in row.chord.getNotes()]), axis=1)
     df["chordSize"] = df.apply(lambda row: row.chord.size(), axis=1)
     dissonanceMean = df.dissonance.mean()
@@ -181,9 +190,13 @@ def plotScoreSetharesDissonance(score: mc.Score, **kwargs) -> Tuple[go.Figure, p
         plotHoverData = ["chordSizeMean"]
 
     # ===== PLOT ===== #
-    fig = px.line(df, x="floatMeasure", y="dissonance", hover_data=plotHoverData, title=plotTitle)
+    fig = None
+    if plotType == 'line':
+        fig = px.line(df, x="floatMeasure", y="dissonance", hover_data=plotHoverData, title=plotTitle, line_shape=lineShape)
+    else:
+        fig = px.scatter(df, x="floatMeasure", y="dissonance", hover_data=plotHoverData, title=plotTitle)
 
-    fig.add_hline(y=dissonanceMean, line_width=3, line_dash="dash", line_color="green")
+    fig.add_hline(y=dissonanceMean, line_width=3, line_dash="dash", line_color="green", annotation_text="Mean")
 
     fig.update_layout(
         title_x=0.5,

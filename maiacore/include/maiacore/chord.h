@@ -36,6 +36,9 @@ void printHeap(const NoteDataHeap& heap);
 
 void sortHeapOctaves(NoteDataHeap* heap);
 
+typedef std::tuple<int, float, float, int, float, float, float, float> SetharesDissonanceTableRow;
+typedef std::vector<SetharesDissonanceTableRow> SetharesDissonanceTable;
+
 class Chord {
    private:
     // original chord notes. No enharmony applied
@@ -1142,16 +1145,30 @@ class Chord {
         const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
 
     /**
-     * @brief Get the Sethares Dissonance Value object
+     * @brief Get the Sethares Partials Dissonance Value object
      *
      * @param numPartials
      * @param useMinModel
      * @param amplCallback
-     * @return float
+     * @return SetharesDissonanceTable
      */
-    float getSetharesDissonanceValue(
+    SetharesDissonanceTable getSetharesPartialsDissonanceValue(
         const int numPartials = 6, const bool useMinModel = true,
         const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
+
+    /**
+     * @brief Get the Sethares Dissonance object
+     *
+     * @param numPartials
+     * @param useMinModel
+     * @param amplCallback
+     * @param dissCallback
+     * @return float
+     */
+    float getSetharesDissonance(
+        const int numPartials = 6, const bool useMinModel = true,
+        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr,
+        const std::function<float(std::vector<float>)> dissCallback = nullptr) const;
 
     /**
      * @brief

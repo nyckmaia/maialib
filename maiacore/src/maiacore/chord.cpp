@@ -2439,7 +2439,7 @@ std::pair<std::vector<float>, std::vector<float>> Chord::getHarmonicSpectrum(
     return {combinedFrequencies, combinedAmplitudes};
 }
 
-float Chord::getSetharesDissonanceValue(
+SetharesDissonanceTable Chord::getSetharesPartialsDissonanceValue(
     const int numPartials, const bool useMinModel,
     const std::function<std::vector<float>(std::vector<float>)> amplCallback) const {
     /*
@@ -2485,7 +2485,11 @@ float Chord::getSetharesDissonanceValue(
         am_sorted[i] = amp[sort_idx[i]];
     }
 
-    float D = 0.0f;
+    // float D = 0.0f;
+
+    std::vector<SetharesDissonanceTableRow> table;
+    const int tableSize = fr_sorted.size() * fr_sorted.size();
+    table.reserve(tableSize);
     for (size_t i = 0; i < fr_sorted.size(); ++i) {
         for (size_t j = i + 1; j < fr_sorted.size(); ++j) {
             float Fmin = fr_sorted[i];
@@ -2497,11 +2501,41 @@ float Chord::getSetharesDissonanceValue(
                 (useMinModel) ? std::min(am_sorted[i], am_sorted[j]) : am_sorted[i] * am_sorted[j];
 
             float SFdif = S * Fdif;
-            D += a * (C1 * std::exp(A1 * SFdif) + C2 * std::exp(A2 * SFdif));
+
+            // D += a * (C1 * std::exp(A1 * SFdif) + C2 * std::exp(A2 * SFdif));
+            const float diss = a * (C1 * std::exp(A1 * SFdif) + C2 * std::exp(A2 * SFdif));
+            table.push_back(
+                {i, fr_sorted[i], am_sorted[i], j, fr_sorted[j], am_sorted[j], a, diss});
         }
     }
 
-    return D;
+    return table;
+}
+
+float Chord::getSetharesDissonance(
+    const int numPartials, const bool useMinModel,
+    const std::function<std::vector<float>(std::vector<float>)> amplCallback,
+    const std::function<float(std::vector<float>)> dissCallback) const {
+    const SetharesDissonanceTable table =
+        getSetharesPartialsDissonanceValue(numPartials, useMinModel, amplCallback);
+
+    const int tableSize = table.size();
+    const int dissColIdx = 7;
+    if (dissCallback == nullptr) {
+        float totalDissonance = 0.0f;
+        for (int row = 0; row < tableSize; row++) {
+            totalDissonance += std::get<dissColIdx>(table[row]);
+        }
+
+        return totalDissonance;
+    }
+
+    std::vector<float> dissonanceVec(tableSize, 0.0f);
+    for (int row = 0; row < tableSize; row++) {
+        dissonanceVec[row] = std::get<dissColIdx>(table[row]);
+    }
+
+    return dissCallback(dissonanceVec);
 }
 
 void printHeap(const NoteDataHeap& heap) {
