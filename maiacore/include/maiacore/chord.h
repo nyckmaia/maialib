@@ -36,7 +36,25 @@ void printHeap(const NoteDataHeap& heap);
 
 void sortHeapOctaves(NoteDataHeap* heap);
 
-typedef std::tuple<int, float, float, int, float, float, float, float> SetharesDissonanceTableRow;
+/**
+ * @brief Sethares Dissonance Table Row type
+ * 00) Base Frequency Idx
+ * 01) Base Frequency
+ * 02) Base Frequency Pitch
+ * 03) Base Frequency Pitch (deviation in cents)
+ * 04) Base Freqyency Amplitude
+ * 05) Target Frequency Idx
+ * 06) Target Frequency
+ * 07) Target Frequency Pitch
+ * 08) Target Frequency Pitch (deviation in cents)
+ * 09) Target Freqyency Amplitude
+ * 10) Sethares Calculated Amplitude
+ * 11) Dyad Frequency Ratio
+ * 12) Sethares Dyad frequencies Dissonance
+ */
+typedef std::tuple<int, float, std::string, int, float, int, float, std::string, int, float, float,
+                   float, float>
+    SetharesDissonanceTableRow;
 typedef std::vector<SetharesDissonanceTableRow> SetharesDissonanceTable;
 
 class Chord {
@@ -1141,18 +1159,18 @@ class Chord {
      * @return std::pair<std::vector<float>, std::vector<float>>
      */
     std::pair<std::vector<float>, std::vector<float>> getHarmonicSpectrum(
-        const int numPartials = 6,
+        const int numPartialsPerNote = 6,
         const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
 
     /**
-     * @brief Get the Sethares Partials Dissonance Value object
+     * @brief Get the Sethares Dyads Dissonance Value object
      *
      * @param numPartials
      * @param useMinModel
      * @param amplCallback
      * @return SetharesDissonanceTable
      */
-    SetharesDissonanceTable getSetharesPartialsDissonanceValue(
+    SetharesDissonanceTable getSetharesDyadsDissonanceValue(
         const int numPartials = 6, const bool useMinModel = true,
         const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
 
@@ -1166,7 +1184,7 @@ class Chord {
      * @return float
      */
     float getSetharesDissonance(
-        const int numPartials = 6, const bool useMinModel = true,
+        const int numPartialsPerNote = 6, const bool useMinModel = true,
         const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr,
         const std::function<float(std::vector<float>)> dissCallback = nullptr) const;
 

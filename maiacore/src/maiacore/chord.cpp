@@ -2407,16 +2407,16 @@ std::string Chord::getMeanOfExtremesPitch(const std::string& accType) const {
 }
 
 std::pair<std::vector<float>, std::vector<float>> Chord::getHarmonicSpectrum(
-    const int numPartials,
+    const int numPartialsPerNote,
     const std::function<std::vector<float>(std::vector<float>)> amplCallback) const {
-    if (numPartials <= 0) {
-        LOG_ERROR("The 'numPartials' must be a positive value");
+    if (numPartialsPerNote <= 0) {
+        LOG_ERROR("The 'numPartialsPerNote' must be a positive value");
     }
 
     std::map<float, float> freqAmplMap;
 
     for (const auto& note : _originalNotes) {
-        const auto freqsAmplsPair = note.getHarmonicSpectrum(numPartials, amplCallback);
+        const auto freqsAmplsPair = note.getHarmonicSpectrum(numPartialsPerNote, amplCallback);
 
         for (size_t i = 0; i < freqsAmplsPair.first.size(); ++i) {
             auto freq = freqsAmplsPair.first[i];
@@ -2439,8 +2439,8 @@ std::pair<std::vector<float>, std::vector<float>> Chord::getHarmonicSpectrum(
     return {combinedFrequencies, combinedAmplitudes};
 }
 
-SetharesDissonanceTable Chord::getSetharesPartialsDissonanceValue(
-    const int numPartials, const bool useMinModel,
+SetharesDissonanceTable Chord::getSetharesDyadsDissonanceValue(
+    const int numPartialsPerNote, const bool useMinModel,
     const std::function<std::vector<float>(std::vector<float>)> amplCallback) const {
     /*
     Given a list of partials in fvec, with amplitudes in amp, this routine
@@ -2452,7 +2452,7 @@ SetharesDissonanceTable Chord::getSetharesPartialsDissonanceValue(
     of the two amplitudes, since this matches the beat frequency amplitude.
     */
 
-    const auto& freqAmplPair = getHarmonicSpectrum(numPartials, amplCallback);
+    const auto& freqAmplPair = getHarmonicSpectrum(numPartialsPerNote, amplCallback);
 
     const std::vector<float>& fvec = freqAmplPair.first;
     const std::vector<float>& amp = freqAmplPair.second;
@@ -2483,29 +2483,47 @@ SetharesDissonanceTable Chord::getSetharesPartialsDissonanceValue(
     for (size_t i = 0; i < sort_idx.size(); ++i) {
         fr_sorted[i] = fvec[sort_idx[i]];
         am_sorted[i] = amp[sort_idx[i]];
+
+        // std::cout << "[i=" << i << "] freq=" << fr_sorted[i] << " | amp=" << am_sorted[i]
+        //           << std::endl;
     }
 
     // float D = 0.0f;
 
+    const int freqSortedSize = fr_sorted.size();
+
     std::vector<SetharesDissonanceTableRow> table;
-    const int tableSize = fr_sorted.size() * fr_sorted.size();
+    const int tableSize = freqSortedSize * freqSortedSize;
     table.reserve(tableSize);
-    for (size_t i = 0; i < fr_sorted.size(); ++i) {
-        for (size_t j = i + 1; j < fr_sorted.size(); ++j) {
-            float Fmin = fr_sorted[i];
+    for (int freqBaseIdx = 0; freqBaseIdx < freqSortedSize; ++freqBaseIdx) {
+        for (int freqTargetIdx = freqBaseIdx + 1; freqTargetIdx < freqSortedSize; ++freqTargetIdx) {
+            float Fmin = fr_sorted[freqBaseIdx];
             float S = Dstar / (S1 * Fmin + S2);
-            float Fdif = fr_sorted[j] - Fmin;
+            float Fdif = fr_sorted[freqTargetIdx] - Fmin;
 
             // Select model: 'min' or 'product'
-            float a =
-                (useMinModel) ? std::min(am_sorted[i], am_sorted[j]) : am_sorted[i] * am_sorted[j];
+            float a = (useMinModel) ? std::min(am_sorted[freqBaseIdx], am_sorted[freqTargetIdx])
+                                    : am_sorted[freqBaseIdx] * am_sorted[freqTargetIdx];
 
             float SFdif = S * Fdif;
 
-            // D += a * (C1 * std::exp(A1 * SFdif) + C2 * std::exp(A2 * SFdif));
             const float diss = a * (C1 * std::exp(A1 * SFdif) + C2 * std::exp(A2 * SFdif));
-            table.push_back(
-                {i, fr_sorted[i], am_sorted[i], j, fr_sorted[j], am_sorted[j], a, diss});
+
+            // Compute the pitch and cents deviation of both 'base' and 'target' frequencies
+            const auto basePitchCentsPair =
+                Helper::freq2pitch(fr_sorted[freqBaseIdx], MUSIC_XML::ACCIDENT::NONE);
+            const auto targetPitchCentsPair =
+                Helper::freq2pitch(fr_sorted[freqTargetIdx], MUSIC_XML::ACCIDENT::NONE);
+
+            // Compute the dyad frequency ratio
+            const float freqRatio = fr_sorted[freqTargetIdx] / fr_sorted[freqBaseIdx];
+
+            // Store all data in a table row
+            table.push_back({freqBaseIdx, fr_sorted[freqBaseIdx], basePitchCentsPair.first,
+                             basePitchCentsPair.second, am_sorted[freqBaseIdx], freqTargetIdx,
+                             fr_sorted[freqTargetIdx], targetPitchCentsPair.first,
+                             targetPitchCentsPair.second, am_sorted[freqTargetIdx], a, freqRatio,
+                             diss});
         }
     }
 
@@ -2513,14 +2531,14 @@ SetharesDissonanceTable Chord::getSetharesPartialsDissonanceValue(
 }
 
 float Chord::getSetharesDissonance(
-    const int numPartials, const bool useMinModel,
+    const int numPartialsPerNote, const bool useMinModel,
     const std::function<std::vector<float>(std::vector<float>)> amplCallback,
     const std::function<float(std::vector<float>)> dissCallback) const {
     const SetharesDissonanceTable table =
-        getSetharesPartialsDissonanceValue(numPartials, useMinModel, amplCallback);
+        getSetharesDyadsDissonanceValue(numPartialsPerNote, useMinModel, amplCallback);
 
     const int tableSize = table.size();
-    const int dissColIdx = 7;
+    const int dissColIdx = 12;
     if (dissCallback == nullptr) {
         float totalDissonance = 0.0f;
         for (int row = 0; row < tableSize; row++) {

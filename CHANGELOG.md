@@ -2,7 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v1.4.2] - 2023-MM-DD
+## [v1.4.3] - 2023-09-20
+
+### API Changes
+
+- Chord::getSetharesPartialsDissonance() replaced by .getSetharesDyadsDissonance()
+  - Wrapper: getSetharesPartialsDataFrame replaced by getSetharesDyadsDataFrame
+    getSetharesDyadsDataFrame
+  - Rename and add new columns
+
+### New Features
+
+- maiapy
+  - .plotChordDyadsSetharesDissonanceHeatmap()
+
+### Fixed
+
+- ml.plotSetharesDissonanceCurve
+
+---
+
+## [v1.4.2] - 2023-09-04
 
 ### API Changes
 
@@ -10,8 +30,8 @@ All notable changes to this project will be documented in this file.
 
 ### New Features
 
-- Chord::getSetharesPartialsDissonanceValue()
-  - Python Wrapper called: .getSetharesPartialsDataFrame()
+- Chord::getSetharesDyadsDissonance()
+  - Python Wrapper called: .getSetharesDyadsDataFrame()
 
 ### Improved
 

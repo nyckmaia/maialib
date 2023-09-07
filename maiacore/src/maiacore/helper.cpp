@@ -58,7 +58,7 @@ const std::string Helper::midiNote2pitch(const int midiNote, const std::string& 
         (accType != MUSIC_XML::ACCIDENT::DOUBLE_SHARP) &&
         (accType != MUSIC_XML::ACCIDENT::DOUBLE_FLAT)) {
         LOG_ERROR("Unknown accident type: " + accType);
-        return std::string();
+        return {};
     }
 
     // ===== VALIDADE ACCTYPE FOR THIS SPECIFIC MIDI NOTE ===== //

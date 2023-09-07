@@ -321,19 +321,19 @@ void ChordClass(const py::module& m) {
     cls.def("getMeanPitch", &Chord::getMeanPitch, py::arg("accType") = "");
     cls.def("getMeanOfExtremesPitch", &Chord::getMeanOfExtremesPitch, py::arg("accType") = "");
 
-    cls.def("getHarmonicSpectrum", &Chord::getHarmonicSpectrum, py::arg("numPartials") = 6,
+    cls.def("getHarmonicSpectrum", &Chord::getHarmonicSpectrum, py::arg("numPartialsPerNote") = 6,
             py::arg("amplCallback") = nullptr);
 
-    cls.def("getSetharesDissonance", &Chord::getSetharesDissonance, py::arg("numPartials") = 6,
-            py::arg("useMinModel") = true, py::arg("amplCallback") = nullptr,
-            py::arg("dissCallback") = nullptr);
+    cls.def("getSetharesDissonance", &Chord::getSetharesDissonance,
+            py::arg("numPartialsPerNote") = 6, py::arg("useMinModel") = true,
+            py::arg("amplCallback") = nullptr, py::arg("dissCallback") = nullptr);
 
     cls.def(
-        "getSetharesPartialsDataFrame",
-        [](const Chord& chord, const int numPartials, const bool useMinModel,
+        "getSetharesDyadsDataFrame",
+        [](const Chord& chord, const int numPartialsPerNote, const bool useMinModel,
            const std::function<std::vector<float>(std::vector<float>)> amplCallback) {
-            const SetharesDissonanceTable table =
-                chord.getSetharesPartialsDissonanceValue(numPartials, useMinModel, amplCallback);
+            const SetharesDissonanceTable table = chord.getSetharesDyadsDissonanceValue(
+                numPartialsPerNote, useMinModel, amplCallback);
 
             // Import Pandas module
             py::object Pandas = py::module_::import("pandas");
@@ -342,26 +342,49 @@ void ChordClass(const py::module& m) {
             py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
 
             // Set DataFrame columns name
-            std::vector<std::string> columns = {"freqBaseIdx",   "freqBase",   "ampBase",
-                                                "freqTargetIdx", "freqTarget", "ampTarget",
-                                                "calcAmplitude", "dissonance"};
+            std::vector<std::string> columns = {"baseFreqIdx",
+                                                "baseFreq",
+                                                "basePitch",
+                                                "basePitchCentsDeviation",
+                                                "baseAmp",
+                                                "targetFreqIdx",
+                                                "targetFreq",
+                                                "targetPitch",
+                                                "targetPitchCentsDeviation",
+                                                "targetAmp",
+                                                "calcAmplitude",
+                                                "freqRatio",
+                                                "dissonance"};
 
             // Fill DataFrame with records and columns
             py::object df = FromRecords(table, "columns"_a = columns);
 
-            df.attr("freqBaseIdx") = df.attr("freqBaseIdx").attr("astype")("int16");
-            df.attr("freqBase") = df.attr("freqBase").attr("astype")("float32");
-            df.attr("ampBase") = df.attr("ampBase").attr("astype")("float32");
-            df.attr("freqTargetIdx") = df.attr("freqTargetIdx").attr("astype")("int16");
-            df.attr("freqTarget") = df.attr("freqTarget").attr("astype")("float32");
-            df.attr("ampTarget") = df.attr("ampTarget").attr("astype")("float32");
+            // Base Frequency
+            df.attr("baseFreqIdx") = df.attr("baseFreqIdx").attr("astype")("int16");
+            df.attr("baseFreq") = df.attr("baseFreq").attr("astype")("float32");
+            df.attr("basePitch") = df.attr("basePitch").attr("astype")("str");
+            df.attr("basePitchCentsDeviation") =
+                df.attr("basePitchCentsDeviation").attr("astype")("int16");
+            df.attr("baseAmp") = df.attr("baseAmp").attr("astype")("float32");
+
+            // Target Frequency
+            df.attr("targetFreqIdx") = df.attr("targetFreqIdx").attr("astype")("int16");
+            df.attr("targetFreq") = df.attr("targetFreq").attr("astype")("float32");
+            df.attr("targetPitch") = df.attr("targetPitch").attr("astype")("str");
+            df.attr("targetPitchCentsDeviation") =
+                df.attr("targetPitchCentsDeviation").attr("astype")("int16");
+            df.attr("targetAmp") = df.attr("targetAmp").attr("astype")("float32");
+
+            // Final Results
+            df.attr("freqRatio") = df.attr("freqRatio").attr("astype")("float32");
             df.attr("calcAmplitude") = df.attr("calcAmplitude").attr("astype")("float32");
             df.attr("dissonance") = df.attr("dissonance").attr("astype")("float32");
 
             return df;
         },
-        py::arg("numPartials") = 6, py::arg("useMinModel") = true,
-        py::arg("amplCallback") = nullptr);
+        py::arg("numPartialsPerNote") = 6, py::arg("useMinModel") = true,
+        py::arg("amplCallback") = nullptr,
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def(py::self == py::self);
     cls.def(py::self != py::self);

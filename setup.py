@@ -145,7 +145,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="1.4.2",
+    version="1.4.3",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate sheet music data",
