@@ -152,4 +152,4 @@ Nycholas Maia - nyckmaia@gmail.com
 
 ## License
 
-Maialib is licensed under (GPLv3 License) [https://www.gnu.org/licenses/gpl-3.0.html]
+Maialib is licensed under [GPLv3 License](https://www.gnu.org/licenses/gpl-3.0.html)
