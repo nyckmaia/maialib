@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.4] - 2023-11-14
+
+### Fixed
+
+- www.maialib.com DNS now point to the official maialib documentation
+- Fix all maialib examples located inside the `python-tutorial` folder
+
+---
+
 ## [v1.4.3] - 2023-09-20
 
 ### API Changes

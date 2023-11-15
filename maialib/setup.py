@@ -8,16 +8,16 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="1.4.3-dev",
+    version="1.4.4-dev",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate music data",
     long_description=long_description,
     long_description_content_type="text/markdown",
     license="GNU General Public License v3 or later (GPLv3+)",
-    url="https://github.com/nyckmaia/maia",
+    url="https://github.com/nyckmaia/maialib",
     project_urls={
-        "Bug Tracker": "https://github.com/nyckmaia/maia/issues",
+        "Bug Tracker": "https://github.com/nyckmaia/maialib/issues",
     },
     keywords=["music", "score", "sheet music", "analysis"],
     packages=find_packages(),

@@ -2,8 +2,6 @@
 
 ![Maialib CI/CD](https://github.com/nyckmaia/maialib/actions/workflows/wheels.yml/badge.svg)
 
-Official website: [Maialib Documentation](https://www.maialib.com/)
-
 This library is a multiplatform set of musical tools that enable musical score analisys and composition in a easy and fast way. <br>
 The project **core** was wrote in `C++17`, but it also has a `Python` wrapper that allows a greater number of people (ie musicians not trained in IT) to also have in their hands the same power and musical tools available in `maialib`.
 
@@ -13,12 +11,20 @@ The project **core** was wrote in `C++17`, but it also has a `Python` wrapper th
 - High computer perfomance and fast calculations
 - Read and write musical scores (MusicXML file format)
 
-You can easily import your sheet music to Python environment using:
+## Get Python Package
 
 ```python
-from maialib import *
+pip install maialib
+```
 
-score = Score('examples/Beethoven/Symphony_9th.xml')
+## Get Started
+
+You can easily import your sheet music (`*.xml` file) to Python environment using:
+
+```python
+import maialib as ml
+
+myScore = ml.Score('./Beethoven/Symphony_9th.xml')
 ```
 
 Now you can explore some `maialib` features like:
@@ -28,15 +34,13 @@ Now you can explore some `maialib` features like:
 - Analyse scores in a musical statistical data perspective
 - And much more!
 
-## Requirements
+## Documentation (in development)
 
-### To run-only
+[Maialib Documentation WebSite](www.maialib.com/docs/)
 
-- Python 3.8 (or greater)
+## Are you a C++ developer?
 
-### To build from source
-
-#### Applications:
+### Requirements to build from C++ sources:
 
 - C++17 compatible compiler
 - CMake 3.26
@@ -46,7 +50,9 @@ Now you can explore some `maialib` features like:
 - Buildcache (Optional: To accelerate the build process)
 - CppCheck (Optional: C++ Static Analyzer)
 
-#### Python Dev-only dependencies
+## Are you a Python developer?
+
+### Python Dev-only dependencies
 
 ```
 pip install pathlib
@@ -74,8 +80,8 @@ sudo apt install clang (pybind11_mkdoc dependency) - Linux/Mac Only
 
 This project have 2 documentation levels. One for each user type:
 
-- **Level 1 - User documentation:** for musicians, musical researchers and non-professional IT people
-- **Level 2 - Developer documentation:** A deeper information for professional C++ programmers.
+- **Level 1 - User documentation:** for musicians, musical researchers and non-professional IT people (help me to do that!)
+- **Level 2 - Developer documentation:** A deeper information for professional C++ programmers (Doxygen)
 
 ## Code Coverage
 
@@ -131,7 +137,9 @@ Nycholas Maia - nyckmaia@gmail.com
 
 ## Contributing
 
-If you want...
+- Fork this project
+- Make your custumizations and improvments
+- Please, send me a pull request
 
 ## License
 
