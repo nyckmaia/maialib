@@ -29,32 +29,33 @@ var NAVTREE =
       [ "Advantages", "index.html#autotoc_md0", null ],
       [ "Get Python Package", "index.html#autotoc_md1", null ],
       [ "Get Started", "index.html#autotoc_md2", null ],
-      [ "Documentation (in development)", "index.html#autotoc_md3", null ],
-      [ "Are you a C++ developer?", "index.html#autotoc_md4", [
-        [ "Requirements to build from C++ sources:", "index.html#autotoc_md5", null ]
+      [ "Frequent Asked Questions", "index.html#autotoc_md3", [
+        [ "1) Where can I find the XML file of a specific musical score?", "index.html#autotoc_md4", null ],
+        [ "2) What can I do if I don't have a <tt>*.xml</tt> file of my target music?", "index.html#autotoc_md5", null ]
       ] ],
-      [ "Are you a Python developer?", "index.html#autotoc_md6", [
-        [ "Python Dev-only dependencies", "index.html#autotoc_md7", null ]
+      [ "Documentation (in development)", "index.html#autotoc_md6", [
+        [ "Level 1: Python Tutorial", "index.html#autotoc_md7", null ],
+        [ "Level 2: Developer Documentation", "index.html#autotoc_md8", null ]
       ] ],
-      [ "Tested Environments", "index.html#autotoc_md8", null ],
-      [ "Documentation", "index.html#autotoc_md9", null ],
-      [ "Code Coverage", "index.html#autotoc_md10", [
-        [ "Level 1: Python Tutorial", "index.html#autotoc_md11", null ],
-        [ "Level 2: Developer Documentation", "index.html#autotoc_md12", null ]
-      ] ],
-      [ "Quick Start", "index.html#autotoc_md13", [
-        [ "Build Python module from C++ source", "index.html#autotoc_md14", null ]
-      ] ],
-      [ "Frequent Asked Questions", "index.html#autotoc_md15", [
-        [ "1) Where can I find the XML file of a specific musical score?", "index.html#autotoc_md16", null ]
-      ] ],
-      [ "Known issues to build from source", "index.html#autotoc_md17", [
-        [ "All Platforms", "index.html#autotoc_md18", null ],
-        [ "Windows-Only", "index.html#autotoc_md19", null ]
-      ] ],
-      [ "Contact", "index.html#autotoc_md20", null ],
-      [ "Contributing", "index.html#autotoc_md21", null ],
-      [ "License", "index.html#autotoc_md22", null ]
+      [ "Would you like to improve any maialib function?", "index.html#autotoc_md10", [
+        [ "Are you a C++ developer?", "index.html#autotoc_md11", [
+          [ "Requirements to build from C++ sources:", "index.html#autotoc_md12", null ]
+        ] ],
+        [ "Are you a Python developer?", "index.html#autotoc_md13", [
+          [ "Python Dev-only dependencies", "index.html#autotoc_md14", null ]
+        ] ],
+        [ "Tested Environments", "index.html#autotoc_md15", null ],
+        [ "Quick Start", "index.html#autotoc_md16", [
+          [ "Build Python module from C++ source", "index.html#autotoc_md17", null ]
+        ] ],
+        [ "Known issues to build from source", "index.html#autotoc_md18", [
+          [ "All Platforms", "index.html#autotoc_md19", null ],
+          [ "Windows-Only", "index.html#autotoc_md20", null ]
+        ] ],
+        [ "Contact", "index.html#autotoc_md21", null ],
+        [ "Contributing", "index.html#autotoc_md22", null ],
+        [ "License", "index.html#autotoc_md23", null ]
+      ] ]
     ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],

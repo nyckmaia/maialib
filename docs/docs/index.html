@@ -100,7 +100,8 @@ Advantages</h1>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Get Python Package</h1>
 <div class="fragment"><div class="line">pip install maialib</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md2"></a>
+</div><!-- fragment --><p> Or, if you have a older <code>maialib</code> version installed on your system, please get the latest version running: <code>pip install maialib --upgrade</code></p>
+<h1><a class="anchor" id="autotoc_md2"></a>
 Get Started</h1>
 <p >You can easily import your sheet music (<code>*.xml</code> file) to Python environment using:</p>
 <div class="fragment"><div class="line"><span class="keyword">import</span> maialib <span class="keyword">as</span> ml</div>
@@ -114,12 +115,55 @@ Get Started</h1>
 <li>And much more!</li>
 </ul>
 <h1><a class="anchor" id="autotoc_md3"></a>
-Documentation (in development)</h1>
-<p ><a href="www.maialib.com/docs/">Maialib Documentation WebSite</a></p>
-<h1><a class="anchor" id="autotoc_md4"></a>
-Are you a C++ developer?</h1>
+Frequent Asked Questions</h1>
+<h2><a class="anchor" id="autotoc_md4"></a>
+1) Where can I find the XML file of a specific musical score?</h2>
+<p >To import musical scores the file extensions must be: <code>*.xml</code>, <code>*.mxl</code> or <code>*.musicxml</code> <br  />
+ You can easily export your music files to these file formats above from score editors, like:</p>
+<ul>
+<li>MuseScore (free!)</li>
+<li>Sibelius</li>
+<li>Finale</li>
+<li>Others</li>
+</ul>
+<p >Many <code>MusicXML</code> files are avaliable for free in the internet for download.</p>
 <h2><a class="anchor" id="autotoc_md5"></a>
-Requirements to build from C++ sources:</h2>
+2) What can I do if I don't have a &lt;tt&gt;*.xml&lt;/tt&gt; file of my target music?</h2>
+<ul>
+<li>First, make shure and look at different websites and online repositories trying to find the <code>*.xml</code> file</li>
+<li>You can find on the internet the desired MIDI file and import it in a score editor (like MuseScore, Sibelius, Finale, etc.) and then export the <code>MusicXML</code> file from it</li>
+<li>You can use scan the sheet music paper and get a PDF version of it, so:<ul>
+<li>You can use a OMR software to try to convert the PDF file into a <code>*.xml</code> file</li>
+<li>You can pay for other people to type manually note-by-note the PDF into a musical software (link MuseScore, Sibelius, Finale, etc.)</li>
+</ul>
+</li>
+<li>You can type manually note-by-note the music paper into a musical software (link MuseScore, Sibelius, Finale, etc.)</li>
+</ul>
+<h1><a class="anchor" id="autotoc_md6"></a>
+Documentation (in development)</h1>
+<p >This project have 2 documentation levels. One for each user type:</p>
+<ul>
+<li><b>Level 1 - User documentation:</b> for musicians, musical researchers and non-professional IT people (help me to do that!)</li>
+<li><b>Level 2 - Developer documentation:</b> A deeper information for professional C++ programmers (Doxygen)</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md7"></a>
+Level 1: Python Tutorial</h2>
+<p >You can explore <code>maialib</code> features looking at <code>python-tutorial</code> folder (<a href="https://github.com/nyckmaia/maialib/tree/main/python-tutorial">link here</a>). <br  />
+ There you will learn how to use and mix <code>maialib</code> classes and functions to reach your musical goals If you are starting, please check these 3 basic <code>maialib</code> Python tutorials:</p><ul>
+<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_notes_chords.ipynb">Create Notes and Chords</a></li>
+<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_score.ipynb">Create a Score</a></li>
+<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/dataframe.ipynb">Using Dataframes</a></li>
+</ul>
+<h2><a class="anchor" id="autotoc_md8"></a>
+Level 2: Developer Documentation</h2>
+<p ><a href="https://maialib.com/">Maialib Documentation WebSite</a></p>
+<hr  />
+<h1><a class="anchor" id="autotoc_md10"></a>
+Would you like to improve any maialib function?</h1>
+<h2><a class="anchor" id="autotoc_md11"></a>
+Are you a C++ developer?</h2>
+<h3><a class="anchor" id="autotoc_md12"></a>
+Requirements to build from C++ sources:</h3>
 <ul>
 <li>C++17 compatible compiler</li>
 <li>CMake 3.26</li>
@@ -129,10 +173,10 @@ Requirements to build from C++ sources:</h2>
 <li>Buildcache (Optional: To accelerate the build process)</li>
 <li>CppCheck (Optional: C++ Static Analyzer)</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md6"></a>
-Are you a Python developer?</h1>
-<h2><a class="anchor" id="autotoc_md7"></a>
-Python Dev-only dependencies</h2>
+<h2><a class="anchor" id="autotoc_md13"></a>
+Are you a Python developer?</h2>
+<h3><a class="anchor" id="autotoc_md14"></a>
+Python Dev-only dependencies</h3>
 <div class="fragment"><div class="line">pip install pathlib</div>
 <div class="line">pip install cpplint</div>
 <div class="line">pip install wheel</div>
@@ -144,8 +188,8 @@ Python Dev-only dependencies</h2>
 <div class="line"> </div>
 <div class="line">pybind11_mkdoc (github)</div>
 <div class="line">sudo apt install clang (pybind11_mkdoc dependency) - Linux/Mac Only</div>
-</div><!-- fragment --><h1><a class="anchor" id="autotoc_md8"></a>
-Tested Environments</h1>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md15"></a>
+Tested Environments</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Operational System   </th><th class="markdownTableHeadNone">Compilers    </th></tr>
@@ -156,71 +200,40 @@ Tested Environments</h1>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Apple OSX 10.15   </td><td class="markdownTableBodyNone">XCode 11.5 (Command Line Tools)   </td></tr>
 </table>
-<h1><a class="anchor" id="autotoc_md9"></a>
-Documentation</h1>
-<p >This project have 2 documentation levels. One for each user type:</p>
-<ul>
-<li><b>Level 1 - User documentation:</b> for musicians, musical researchers and non-professional IT people (help me to do that!)</li>
-<li><b>Level 2 - Developer documentation:</b> A deeper information for professional C++ programmers (Doxygen)</li>
-</ul>
-<h1><a class="anchor" id="autotoc_md10"></a>
-Code Coverage</h1>
-<p >Click <a href="../../code-coverage/index.html">here</a> to check the <code>maiacore</code> C++ code coverage</p>
-<h2><a class="anchor" id="autotoc_md11"></a>
-Level 1: Python Tutorial</h2>
-<p >You can explore <code>maialib</code> features looking at <code>python-tutorial</code> folder. <br  />
- There you will learn how to use and mix <code>maialib</code> classes and functions to reach your musical goals</p>
-<h2><a class="anchor" id="autotoc_md12"></a>
-Level 2: Developer Documentation</h2>
-<p >You can browse the compiled <code>doxygen</code> documentation opening <code>docs/index.html</code>. <br  />
-</p>
-<h1><a class="anchor" id="autotoc_md13"></a>
-Quick Start</h1>
-<h2><a class="anchor" id="autotoc_md14"></a>
-Build Python module from C++ source</h2>
+<h2><a class="anchor" id="autotoc_md16"></a>
+Quick Start</h2>
+<h3><a class="anchor" id="autotoc_md17"></a>
+Build Python module from C++ source</h3>
 <p >Open a terminal (or CMD in Windows), enter inside of the <code>maialib</code> folder. <br  />
  Type: <code>make</code> to build the Python module <br  />
  When the build process finishes, type: <code>make install</code> <br  />
  Done!</p>
-<h1><a class="anchor" id="autotoc_md15"></a>
-Frequent Asked Questions</h1>
-<h2><a class="anchor" id="autotoc_md16"></a>
-1) Where can I find the XML file of a specific musical score?</h2>
-<p >To import musical scores the file extensions must be: <code>*.xml</code>, <code>*.mxl</code> or <code>*.musicxml</code> <br  />
- You can easily export your music files to these file formats above from score editors, like:</p>
-<ul>
-<li>MuseScore (free!)</li>
-<li>Sibelius</li>
-<li>Finale</li>
-<li>Others</li>
-</ul>
-<p >Many <code>MusicXML</code> files are avaliable for free in the internet for download. But if you don't have a specific MusicXML file, you can import the MIDI file in a score editor (like MuseScore) and then export the <code>MusicXML</code> file from it.</p>
-<h1><a class="anchor" id="autotoc_md17"></a>
-Known issues to build from source</h1>
 <h2><a class="anchor" id="autotoc_md18"></a>
-All Platforms</h2>
+Known issues to build from source</h2>
+<h3><a class="anchor" id="autotoc_md19"></a>
+All Platforms</h3>
 <ul>
 <li>Multiple Python versions installed, like: <code>Official Python</code>, <code>Microsoft Python</code>, <code>MSYS2 Python</code> and others can direct the build system to choose a wrong version to build and install the library. <br  />
  To check all Python versions installed on your system, open the <code>Terminal</code> (or <code>CMD</code> on Windows) and type: - Linux or Mac: - <code>which python</code> - <code>which python3</code> - Windows: - <code>where.exe python</code> - <code>where.exe python3</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md19"></a>
-Windows-Only</h2>
+<h3><a class="anchor" id="autotoc_md20"></a>
+Windows-Only</h3>
 <ul>
 <li>Disable your antivirus or create a exception (CMake permissions)</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md20"></a>
-Contact</h1>
+<h2><a class="anchor" id="autotoc_md21"></a>
+Contact</h2>
 <p >Nycholas Maia - <a href="#" onclick="location.href='mai'+'lto:'+'nyc'+'km'+'aia'+'@g'+'mai'+'l.'+'com'; return false;">nyckm<span class="obfuscator">.nosp@m.</span>aia@<span class="obfuscator">.nosp@m.</span>gmail<span class="obfuscator">.nosp@m.</span>.com</a></p>
-<h1><a class="anchor" id="autotoc_md21"></a>
-Contributing</h1>
+<h2><a class="anchor" id="autotoc_md22"></a>
+Contributing</h2>
 <ul>
 <li>Fork this project</li>
 <li>Make your custumizations and improvments</li>
 <li>Please, send me a pull request</li>
 </ul>
-<h1><a class="anchor" id="autotoc_md22"></a>
-License</h1>
-<p >Maialib is licensed under (GPLv3 License) [<a href="https://www.gnu.org/licenses/gpl-3.0.html">https://www.gnu.org/licenses/gpl-3.0.html</a>] </p>
+<h2><a class="anchor" id="autotoc_md23"></a>
+License</h2>
+<p >Maialib is licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPLv3 License</a> </p>
 </div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->
