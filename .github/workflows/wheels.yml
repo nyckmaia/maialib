@@ -1,15 +1,10 @@
 name: Build Wheels
 
-defaults:
-  run:
-    working-directory: .
 on:
   push:
     branches:
       - main
   workflow_dispatch:
-    branches:
-      - "**"
   release:
     types:
       - published
@@ -18,21 +13,9 @@ jobs:
   build_wheels:
     name: Build wheels on ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    env:
-      CIBW_BUILD_VERBOSITY_WINDOWS: 0
-      CIBW_BUILD_VERBOSITY_MACOS: 0
-      CIBW_BUILD_VERBOSITY_LINUX: 1
-      # CIBW_BUILD: cp38-manylinux_x86_64 cp310-win_amd64
-      CIBW_BEFORE_ALL_LINUX: cp -rf ./stubs/* .
-      CIBW_BEFORE_ALL_MACOS: cp -rf ./stubs/* .
-      CIBW_BEFORE_ALL_WINDOWS: xcopy /e /k /y .\stubs\* .
-      # Skip CPython 3.6 and CPython 3.7 | Pypy 3.7
-      CIBW_SKIP: cp36-* cp37-* pp37-* *-win32 *-manylinux_i686
     strategy:
       fail-fast: false
       matrix:
-        # os: [ubuntu-latest]
-        # os: [macos-latest]
         os: [ubuntu-latest, windows-latest, macos-latest]
 
     steps:
@@ -43,26 +26,30 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: "3.8"
-        if: runner.os == 'macOS'
 
-      - name: Install pybind11-stubgen and mypy
-        run: python -m pip install pybind11-stubgen==2.5.1 mypy
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pybind11-stubgen==2.5.1 mypy cibuildwheel
 
       - name: Install maialib
         run: python -m pip install .
 
       - name: Generate stubs from Maiacore
-        run: pybind11-stubgen maialib.maiacore '--output-dir=./stubs/' --ignore-invalid-expressions ".*" --ignore-all-errors
+        run: pybind11-stubgen maialib.maiacore --output-dir=./stubs/ --ignore-invalid-expressions ".*" --ignore-all-errors
 
       - name: Generate stubs from Maiapy
         run: stubgen ./maialib/maiapy/ -o ./stubs/
 
       - uses: pypa/cibuildwheel@v2.11.3
+        with:
+          output-dir: wheelhouse
         env:
           CIBW_ARCHS_MACOS: auto universal2
-
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v1
+          CIBW_BEFORE_ALL_LINUX: cp -rf ./stubs/* .
+          CIBW_BEFORE_ALL_MACOS: cp -rf ./stubs/* .
+          CIBW_BEFORE_ALL_WINDOWS: xcopy /e /k /y .\stubs\* .
+          CIBW_SKIP: cp36-* cp37-* pp37-* *-win32 *-manylinux_i686
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
@@ -74,16 +61,17 @@ jobs:
     name: Upload All
     needs: build_wheels
     runs-on: ubuntu-latest
-    # if: github.event_name == 'release' && github.event.action == 'published'
 
     steps:
+      - uses: actions/checkout@v3
+
       - uses: actions/setup-python@v4
         with:
           python-version: "3.x"
 
       - uses: actions/download-artifact@v3
         with:
-          name: artifact
+          name: wheelhouse
           path: dist
 
       - uses: pypa/gh-action-pypi-publish@v1.6.4
