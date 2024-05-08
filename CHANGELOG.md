@@ -2,6 +2,23 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.5] - 2024-05-08
+
+### Improved
+
+- Update Pybind11 to v2.12.0
+- Update pybind11-stub-gen to v2.5.1
+- Update pybind11_json to v0.2.14
+- Update nlomann::json to v3.11.3
+
+### Fixed
+
+- Note::getScaleDegree() now works ok
+- Fix initial score clefs bug
+- Score::toFile() show the output XML file absolute path in the LOG
+
+---
+
 ## [v1.4.4] - 2023-11-14
 
 ### Fixed

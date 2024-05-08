@@ -17,7 +17,7 @@ print(f"{color.OKGREEN}Generating Python Module Stubs from Maiacore...{color.END
 # This pybind11-stubgen command below works until the pybind11-stubgen v0.16.2
 # The next version is v1.0. The syntax was changed and stoped to generate to maiacore stubs
 # Also, the WSL VS Code (Linux) was unable to access the maiacore stubs, even in the v0.16.2
-genStubsCommand = f"pybind11-stubgen maialib.maiacore --output-dir={stubsPath} --ignore-invalid=all --no-setup-py"
+genStubsCommand = f"pybind11-stubgen maialib.maiacore --output-dir={stubsPath} --ignore-invalid-expressions \".*\" --ignore-all-errors"
 os.system(genStubsCommand)
 
 print(f"{color.OKGREEN}Generating Python Module Stubs from Maiapy...{color.ENDC}")

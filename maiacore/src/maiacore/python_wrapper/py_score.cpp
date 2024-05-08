@@ -5,6 +5,7 @@
 
 #include "maiacore/measure.h"
 #include "maiacore/score.h"
+#include "nlohmann/json.hpp"
 #include "pybind11_json/pybind11_json.hpp"
 
 namespace py = pybind11;
@@ -82,8 +83,8 @@ void ScoreClass(const py::module& m) {
     cls.def("getPartIndex", &Score::getPartIndex, py::arg("partName"), py::arg("index"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def("selectNotes", &Score::selectNotes, py::arg("config"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    //     cls.def("selectNotes", &Score::selectNotes, py::arg("config"),
+    //             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //     cls.def("countNotes", &Score::countNotes, py::arg("config"),
     //             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("setRepeat", &Score::setRepeat, py::arg("measureStart"), py::arg("measureEnd") = -1);

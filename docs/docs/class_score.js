@@ -31,7 +31,6 @@ var class_score =
     [ "operator=", "class_score.html#aaac75eb74d741745214738d0f040c79a", null ],
     [ "removeMeasure", "class_score.html#a9857758b336f63408c2edba511c99cbb", null ],
     [ "removePart", "class_score.html#a58e585a1ab0f55e026350282eef8a01b", null ],
-    [ "selectNotes", "class_score.html#a8b506a9ac37f8def2bbbdd8e7c912c32", null ],
     [ "setComposerName", "class_score.html#af6b803dfeb152be8320a820b0fa5f06b", null ],
     [ "setKeySignature", "class_score.html#a8463ad887edc02a8b1a8a83cf85d0e57", null ],
     [ "setKeySignature", "class_score.html#a853058ea5c7c69f47fe8147dc08fbe29", null ],

@@ -11,7 +11,8 @@ void ClefClass(const py::module& m) {
         .value("G", ClefSign::G)
         .value("F", ClefSign::F)
         .value("C", ClefSign::C)
-        .value("P", ClefSign::PERCUSSION);
+        .value("P", ClefSign::PERCUSSION)
+        .export_values();
 
     m.doc() = "Clef class binding";
 

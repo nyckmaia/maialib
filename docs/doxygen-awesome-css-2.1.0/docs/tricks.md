@@ -19,15 +19,14 @@ If for some reason you don't want the theme to automatically switch to dark mode
 you can disable dark mode by adding the `light-mode` class to the html-tag in the header template:
 
 ```html
-<html xmlns="http://www.w3.org/1999/xhtml" class="light-mode">
+<html xmlns="https://www.w3.org/1999/xhtml" class="light-mode"></html>
 ```
 
 The same can be done to always enable dark-mode:
 
 ```html
-<html xmlns="http://www.w3.org/1999/xhtml" class="dark-mode">
+<html xmlns="https://www.w3.org/1999/xhtml" class="dark-mode"></html>
 ```
-
 
 **This only works if you don't use the dark-mode toggle extension.**
 
@@ -39,8 +38,8 @@ cut off.
 
 ```css
 html {
-    /* Make sure sidebar is wide enough to contain the page title (logo + title + version) */
-    --side-nav-fixed-width: 335px;
+  /* Make sure sidebar is wide enough to contain the page title (logo + title + version) */
+  --side-nav-fixed-width: 335px;
 }
 ```
 

@@ -14,6 +14,7 @@ var class_measure =
     [ "getClef", "class_measure.html#a57525953b60c99eec3df3fff71beeace", null ],
     [ "getClef", "class_measure.html#aac6b6e55f372affe4210b04300e19b17", null ],
     [ "getClefs", "class_measure.html#abb05970ddc09334865533b468d1f35d0", null ],
+    [ "getClefs", "class_measure.html#accd2b32107817de57e8c235ae6d92990", null ],
     [ "getDivisionsPerQuarterNote", "class_measure.html#acb514d6cf4c827b783826a62af4eb3a1", null ],
     [ "getDurationTicks", "class_measure.html#a060148d825df5b2172e070521f6a49e0", null ],
     [ "getEmptyDurationTicks", "class_measure.html#a95cc1ec747299c299b68dd353ff4afbd", null ],

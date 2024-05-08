@@ -213,24 +213,17 @@ const std::string Part::toXML(const int instrumentId, const int identSize) const
         // identSize) + "</print>\n");
 
         // ===== ATTRIBUTES TAG ===== //
-        bool attributeChanged =
-            m == 0 || _measure[m].keySignatureChanged() || _measure[m].timeSignatureChanged() ||
-            _measure[m].getClef().isClefChanged() || _measure[m].divisionsPerQuarterNoteChanged();
+        bool attributeChanged = m == 0 || _measure[m].keySignatureChanged() ||
+                                _measure[m].timeSignatureChanged() ||
+                                _measure[m].divisionsPerQuarterNoteChanged();
+        const auto& measureClefs = _measure[m].getClefs();
+        for (const auto& clef : measureClefs) {
+            attributeChanged |= clef.isClefChanged();
+        }
 
         if (attributeChanged) {
             xml.append(Helper::generateIdentation(3, identSize) + "<attributes>\n");
         }
-
-        // if (m == 0) {
-        //     if (_measure[m].empty()) {
-        //         xml.append(Helper::generateIdentation(4, identSize) +
-        //         "<divisions>" + std::to_string(256) + "</divisions>\n");
-        //     } else {
-        //         xml.append(Helper::generateIdentation(4, identSize) +
-        //         "<divisions>" + std::to_string(_measure[m].getNote(0,
-        //         0).getDivisionsPerQuarterNote()) + "</divisions>\n");
-        //     }
-        // }
 
         if (_measure[m].divisionsPerQuarterNoteChanged()) {
             xml.append(Helper::generateIdentation(4, identSize) + "<divisions>" +

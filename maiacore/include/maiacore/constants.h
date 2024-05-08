@@ -43,15 +43,15 @@ const std::map<std::string, std::pair<int, bool>> c_mapKeyName2FifthCirCleMode =
     {"F#", std::make_pair(6, true)},   {"C#", std::make_pair(7, true)},
     {"G#", std::make_pair(8, true)},   {"D#", std::make_pair(9, true)},
     {"A#", std::make_pair(10, true)},  {"E#", std::make_pair(11, true)},
-    {"Gb", std::make_pair(6, true)},   {"Db", std::make_pair(7, true)},
-    {"Ab", std::make_pair(8, true)},   {"Eb", std::make_pair(9, true)},
-    {"Bb", std::make_pair(10, true)},  {"F", std::make_pair(11, true)},
+    {"Gb", std::make_pair(-6, true)},  {"Db", std::make_pair(-5, true)},
+    {"Ab", std::make_pair(-4, true)},  {"Eb", std::make_pair(-3, true)},
+    {"Bb", std::make_pair(-2, true)},  {"F", std::make_pair(-1, true)},
     {"Am", std::make_pair(0, false)},  {"Em", std::make_pair(1, false)},
     {"Bm", std::make_pair(2, false)},  {"F#m", std::make_pair(3, false)},
     {"C#m", std::make_pair(4, false)}, {"G#m", std::make_pair(5, false)},
-    {"D#m", std::make_pair(6, false)}, {"Bbm", std::make_pair(7, false)},
-    {"Fm", std::make_pair(8, false)},  {"Cm", std::make_pair(9, false)},
-    {"Gm", std::make_pair(10, false)}, {"Dm", std::make_pair(11, false)}};
+    {"D#m", std::make_pair(6, false)}, {"Bbm", std::make_pair(-5, false)},
+    {"Fm", std::make_pair(-4, false)}, {"Cm", std::make_pair(-3, false)},
+    {"Gm", std::make_pair(-2, false)}, {"Dm", std::make_pair(-1, false)}};
 
 enum class Duration {
     MAXIMA_DOT_DOT = 42,

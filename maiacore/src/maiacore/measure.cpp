@@ -208,6 +208,8 @@ int Measure::getFreeDurationTicks(const int staveId) const {
     return getDurationTicks() - getFilledDurationTicks(staveId);
 }
 
+const std::vector<Clef>& Measure::getClefs() const { return _clef; }
+
 std::vector<Clef>& Measure::getClefs() { return _clef; }
 
 const Clef& Measure::getClef(const int clefId) const { return _clef.at(clefId); }
@@ -505,7 +507,6 @@ const std::string Measure::toXML(const int instrumentId, const int identSize) co
     //         backup += note.getDurationTicks();
     //     }
     // }
-
     if (!_barlineLeft.getBarStyle().empty()) {
         xml.append(_barlineLeft.toXML(identSize));
     }
@@ -534,15 +535,18 @@ const std::string Measure::toXML(const int instrumentId, const int identSize) co
     int sumDurationVoice1 = 0;
     bool haveAnyNoteOn = false;
 
-    std::vector<std::vector<int>> voiceDuration(5);
+    std::unordered_map<int, std::vector<int>> voiceTicksVectormap;
     for (const auto& stave : _note) {
         for (const auto& note : stave) {
-            voiceDuration[note.getVoice()].push_back(note.getDurationTicks());
             haveAnyNoteOn |= note.isNoteOn();
+            const int noteVoice = note.getVoice();
+            const int noteDurationTicks = note.getDurationTicks();
+
+            voiceTicksVectormap[noteVoice].push_back(noteDurationTicks);
         }
     }
-
-    sumDurationVoice1 = std::accumulate(voiceDuration[1].begin(), voiceDuration[1].end(), 0);
+    sumDurationVoice1 =
+        std::accumulate(voiceTicksVectormap[1].begin(), voiceTicksVectormap[1].end(), 0);
 
     for (int s = 0; s < _numStaves; s++) {
         const auto& currentStave = _note[s];

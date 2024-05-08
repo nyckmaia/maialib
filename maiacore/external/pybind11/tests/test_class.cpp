@@ -55,6 +55,8 @@ void bind_empty0(py::module_ &m) {
 } // namespace test_class
 
 TEST_SUBMODULE(class_, m) {
+    m.def("obj_class_name", [](py::handle obj) { return py::detail::obj_class_name(obj.ptr()); });
+
     // test_instance
     struct NoConstructor {
         NoConstructor() = default;
@@ -83,7 +85,7 @@ TEST_SUBMODULE(class_, m) {
         .def_static("new_instance", &NoConstructor::new_instance, "Return an instance");
 
     py::class_<NoConstructorNew>(m, "NoConstructorNew")
-        .def(py::init([](const NoConstructorNew &self) { return self; })) // Need a NOOP __init__
+        .def(py::init([]() { return nullptr; })) // Need a NOOP __init__
         .def_static("__new__",
                     [](const py::object &) { return NoConstructorNew::new_instance(); });
 

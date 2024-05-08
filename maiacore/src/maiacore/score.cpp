@@ -1,8 +1,9 @@
 #include "maiacore/score.h"
 
-// #include <fstream>  // Just for debug
+#include <filesystem>  // Para std::filesystem::absolute
 #include <iostream>
 #include <limits>  // std::numeric_limits
+#include <set>
 #include <tuple>
 
 #include "cherno/instrumentor.h"
@@ -11,6 +12,7 @@
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
 #include "miniz-cpp/zip_file.hpp"
+#include "nlohmann/json.hpp"
 
 Score::Score(const std::initializer_list<std::string>& partsName, const int numMeasures)
     : _numParts(partsName.size()),
@@ -190,6 +192,21 @@ void Score::loadXMLFile(const std::string& filePath) {
         partsNameVec.push_back(name.text().as_string());
     }
 
+    // Lambda function to detect duplacated part names
+    auto hasDuplicatesPartNames = [](const std::vector<std::string>& pNames) -> bool {
+        std::set<std::string> seen;
+        for (const auto& item : pNames) {
+            if (!seen.insert(item).second) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    if (hasDuplicatesPartNames(partsNameVec)) {
+        LOG_WARN("This score have duplicates part names! Change it to better results.");
+    }
+
     // Get the parts and measures amounts:
     _numParts = parts.size();
     _numMeasures = measures.size();
@@ -320,6 +337,21 @@ void Score::loadXMLFile(const std::string& filePath) {
         // But if the XML file does not contain this info, use the default value of 256
         const int firstDivisions = (firstDivisionsTemp != 0) ? firstDivisionsTemp : 256;
 
+        // ===== STEP 3: GET THE PART 'i' CLEFS ===== //
+        const std::string xPathDefaultClefs = xPathPart + "/measure[1]/attributes/clef";
+
+        // Get the xPath result:
+        const pugi::xpath_node_set defaultClefsNodes = Helper::getNodeSet(_doc, xPathDefaultClefs);
+        const int numClefs = defaultClefsNodes.size();
+        std::vector<Clef> defaultClefs(numClefs);
+
+        for (int i = 0; i < numClefs; i++) {
+            const std::string sign = defaultClefsNodes[i].node().child_value("sign");
+            const int line = atoi(defaultClefsNodes[i].node().child_value("line"));
+            defaultClefs[i].setSign(Clef::clefSignStr2ClefSign(sign));
+            defaultClefs[i].setLine(line);
+        }
+
         // For each measure 'm'
         for (int m = 0; m < _numMeasures; m++) {
             _part[p].getMeasure(m).setNumber(m);
@@ -347,7 +379,13 @@ void Score::loadXMLFile(const std::string& filePath) {
                 const int fifthCircle = atoi(measureKeyFifths.node().child_value("fifths"));
                 _part[p].getMeasure(m).setKeySignature(fifthCircle);
 
-                std::string keyModeStr = measureKeyFifths.node().child_value("mode");
+                const std::string keyModeStr = measureKeyFifths.node().child_value("mode");
+
+                if (keyModeStr.empty()) {
+                    LOG_WARN("[XML MISSING TAG][" + _part[p].getName() + "][" + std::to_string(m) +
+                             "] The key signature mode is empty. Auto-configing to 'major' mode");
+                }
+
                 const bool isMajorKey =
                     (keyModeStr.empty() || keyModeStr == "major") ? true : false;
                 _part[p].getMeasure(m).setKeyMode(isMajorKey);
@@ -380,18 +418,19 @@ void Score::loadXMLFile(const std::string& filePath) {
             // ===== CLEF CHANGES ===== //
             const std::string xPathClefs = xPathMeasure + "/attributes/clef";
             const pugi::xpath_node_set measureClef = _doc.select_nodes(xPathClefs.c_str());
-            const int numClefs = measureClef.size();
+            const int currentNumClefs = measureClef.size();
+            bool currentClefsInMeasureChange = (currentNumClefs > 0) ? true : false;
             _part[p].getMeasure(m).getClefs().resize(numClefs);
 
-            // if (numClefs > 0) {
-            //     _part[p].getMeasure(m).setIsClefChanged(true);
-            // }
-
-            for (int c = 0; c < numClefs; c++) {
-                const std::string sign = measureClef[c].node().child_value("sign");
-                const int line = atoi(measureClef[c].node().child_value("line"));
-                _part[p].getMeasure(m).getClef(c).setSign(Clef::clefSignStr2ClefSign(sign));
-                _part[p].getMeasure(m).getClef(c).setLine(line);
+            if (!currentClefsInMeasureChange) {
+                _part[p].getMeasure(m).getClefs() = defaultClefs;
+            } else {
+                for (int c = 0; c < numClefs; c++) {
+                    const std::string sign = measureClef[c].node().child_value("sign");
+                    const int line = atoi(measureClef[c].node().child_value("line"));
+                    _part[p].getMeasure(m).getClef(c).setSign(Clef::clefSignStr2ClefSign(sign));
+                    _part[p].getMeasure(m).getClef(c).setLine(line);
+                }
             }
 
             // ===== BARLINE CHANGES ===== //
@@ -964,7 +1003,6 @@ const std::string Score::toXML(const int identSize) const {
 
     // End of file
     xml.append("</score-partwise>\n");
-
     return xml;
 }
 
@@ -1004,11 +1042,20 @@ void Score::toFile(std::string fileName, bool compressedXML, const int identSize
 
     // Uncompressed MusicXML flow
     const std::string fileNameWithExt = fileName + uncompressExt;
-    std::ofstream buffer(fileNameWithExt);
-    buffer << toXML(identSize);
-    buffer.close();
+    std::string fullPath =
+        std::filesystem::absolute(fileNameWithExt).string();  // Obtém o caminho absoluto
 
-    LOG_INFO("Wrote file: " << fileNameWithExt);
+    std::ofstream buffer(fullPath, std::ofstream::out | std::ofstream::trunc);
+    if (!buffer) {
+        LOG_ERROR("Unable to open the file " + fullPath + " to write data");
+        buffer.close();
+        return;
+    }
+
+    const std::string& xml = toXML(identSize);
+    buffer << xml;
+    buffer.close();
+    LOG_INFO("Wrote file: " << fullPath);
 }
 
 bool Score::isValid(void) const { return _isValidXML; }
@@ -1497,217 +1544,217 @@ void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, i
     }
 }
 
-nlohmann::json Score::selectNotes(nlohmann::json& config) const {
-    PROFILE_FUNCTION();
+// nlohmann::json Score::selectNotes(nlohmann::json& config) const {
+//     PROFILE_FUNCTION();
 
-    // ===== XPATH: ROOT ===== //
-    const std::string xPathRoot = "/score-partwise";
+//     // ===== XPATH: ROOT ===== //
+//     const std::string xPathRoot = "/score-partwise";
 
-    // ===== XPATH: PART ===== //
-    // Select the desired part:
-    std::string xPathPart;
+//     // ===== XPATH: PART ===== //
+//     // Select the desired part:
+//     std::string xPathPart;
 
-    // Set a alias:
-    const auto& partsField = config["parts"];
+//     // Set a alias:
+//     const auto& partsField = config["parts"];
 
-    // Case 1: 'all' option:
-    if (partsField == MUSIC_XML::PART::ALL) {
-        xPathPart = "//part";
+//     // Case 1: 'all' option:
+//     if (partsField == MUSIC_XML::PART::ALL) {
+//         xPathPart = "//part";
 
-        // Case 2: Single string:
-    } else if (partsField.is_string()) {
-        const std::string partName = partsField.get<std::string>();
-        int index = 0;
-        bool found = getPartIndex(partName, &index);
+//         // Case 2: Single string:
+//     } else if (partsField.is_string()) {
+//         const std::string partName = partsField.get<std::string>();
+//         int index = 0;
+//         bool found = getPartIndex(partName, &index);
 
-        if (!found) {
-            printPartNames();
-            LOG_ERROR("This music doesn't have a part called: " + partName);
-            return 0;
-        }
+//         if (!found) {
+//             printPartNames();
+//             LOG_ERROR("This music doesn't have a part called: " + partName);
+//             return 0;
+//         }
 
-        xPathPart = "/part[" + std::to_string(index) + "]";
+//         xPathPart = "/part[" + std::to_string(index) + "]";
 
-        // Case 3: List of parts
-    } else if (partsField.is_array()) {
-        std::string positions;
-        const int partsFieldSize = partsField.size();
-        for (int p = 0; p < partsFieldSize; p++) {
-            auto& item = partsField[p];
+//         // Case 3: List of parts
+//     } else if (partsField.is_array()) {
+//         std::string positions;
+//         const int partsFieldSize = partsField.size();
+//         for (int p = 0; p < partsFieldSize; p++) {
+//             auto& item = partsField[p];
 
-            if (!item.is_string()) {
-                LOG_ERROR("All parts list elements MUST be strings");
-                return nlohmann::json();
-            }
-            const std::string partName = item.get<std::string>();
+//             if (!item.is_string()) {
+//                 LOG_ERROR("All parts list elements MUST be strings");
+//                 return nlohmann::json();
+//             }
+//             const std::string partName = item.get<std::string>();
 
-            int index = 0;
-            bool found = getPartIndex(partName, &index);
+//             int index = 0;
+//             bool found = getPartIndex(partName, &index);
 
-            if (!found) {
-                printPartNames();
-                LOG_ERROR("This music doesn't have a part called: " + partName);
-                return nlohmann::json();
-            }
+//             if (!found) {
+//                 printPartNames();
+//                 LOG_ERROR("This music doesn't have a part called: " + partName);
+//                 return nlohmann::json();
+//             }
 
-            if (p == 0) {
-                positions += "position() = " + std::to_string(index);
-            } else {
-                positions += " or position() = " + std::to_string(index);
-            }
-        }
-        // Concatenate all parts:
-        xPathPart = "/part[" + positions + "]";
+//             if (p == 0) {
+//                 positions += "position() = " + std::to_string(index);
+//             } else {
+//                 positions += " or position() = " + std::to_string(index);
+//             }
+//         }
+//         // Concatenate all parts:
+//         xPathPart = "/part[" + positions + "]";
 
-        // Error: None of the above options:
-    } else {
-        LOG_ERROR(
-            "The 'parts' field MUST BE 'all', single string or a string "
-            "array!");
-        return nlohmann::json();
-    }
+//         // Error: None of the above options:
+//     } else {
+//         LOG_ERROR(
+//             "The 'parts' field MUST BE 'all', single string or a string "
+//             "array!");
+//         return nlohmann::json();
+//     }
 
-    // ===== XPATH: MEASURES ===== //
-    int measureStart = 0;
-    int measureEnd = 0;
+//     // ===== XPATH: MEASURES ===== //
+//     int measureStart = 0;
+//     int measureEnd = 0;
 
-    // Set a alias:
-    const auto& measuresField = config["measures"];
+//     // Set a alias:
+//     const auto& measuresField = config["measures"];
 
-    // Case 1: 'all' option
-    if (measuresField.is_string() && measuresField == MUSIC_XML::MEASURE::END) {
-        measureStart = 1;
-        measureEnd = getNumMeasures() + 1;
+//     // Case 1: 'all' option
+//     if (measuresField.is_string() && measuresField == MUSIC_XML::MEASURE::END) {
+//         measureStart = 1;
+//         measureEnd = getNumMeasures() + 1;
 
-        // Case 2: Single measure:
-    } else if (measuresField.is_number_integer()) {
-        measureStart = measuresField.get<int>();
-        measureEnd = measuresField.get<int>();
+//         // Case 2: Single measure:
+//     } else if (measuresField.is_number_integer()) {
+//         measureStart = measuresField.get<int>();
+//         measureEnd = measuresField.get<int>();
 
-        // Case 3: Array [start end]
-    } else if (measuresField.is_array() && measuresField.size() == 2) {
-        measureStart = measuresField[0].get<int>();
-        measureEnd = measuresField[1].get<int>();
+//         // Case 3: Array [start end]
+//     } else if (measuresField.is_array() && measuresField.size() == 2) {
+//         measureStart = measuresField[0].get<int>();
+//         measureEnd = measuresField[1].get<int>();
 
-        // Error: None of the above options:
-    } else {
-        LOG_ERROR(
-            "The 'measures' field MUST BE 'all' or an array with 2 positive "
-            "integers [measureStart, measureEnd]");
-        return nlohmann::json();
-    }
+//         // Error: None of the above options:
+//     } else {
+//         LOG_ERROR(
+//             "The 'measures' field MUST BE 'all' or an array with 2 positive "
+//             "integers [measureStart, measureEnd]");
+//         return nlohmann::json();
+//     }
 
-    // Error checking:
-    if (measureEnd < measureStart) {
-        LOG_ERROR(
-            "In the 'measures' field, the second element MUST BE greater than "
-            "the first one!");
-        return nlohmann::json();
-    }
+//     // Error checking:
+//     if (measureEnd < measureStart) {
+//         LOG_ERROR(
+//             "In the 'measures' field, the second element MUST BE greater than "
+//             "the first one!");
+//         return nlohmann::json();
+//     }
 
-    // Error checking:
-    if (measureStart == 0 || measureEnd == 0) {
-        LOG_ERROR("The 'measures' [start end] array values MUST BE greater then 0");
-        return nlohmann::json();
-    }
+//     // Error checking:
+//     if (measureStart == 0 || measureEnd == 0) {
+//         LOG_ERROR("The 'measures' [start end] array values MUST BE greater then 0");
+//         return nlohmann::json();
+//     }
 
-    // Set the measures XPath:
-    const std::string xPathMeasures =
-        "/measure[" + std::to_string(measureStart) +
-        " <= position() and position() <= " + std::to_string(measureEnd) + "]";
+//     // Set the measures XPath:
+//     const std::string xPathMeasures =
+//         "/measure[" + std::to_string(measureStart) +
+//         " <= position() and position() <= " + std::to_string(measureEnd) + "]";
 
-    if (!config.contains("melodicOnly")) {
-        config["melodicOnly"] = true;
-    }
+//     if (!config.contains("melodicOnly")) {
+//         config["melodicOnly"] = true;
+//     }
 
-    bool melodicOnly = config["melodicOnly"].get<bool>();
+//     bool melodicOnly = config["melodicOnly"].get<bool>();
 
-    // ===== XPATH: NOTE ===== //
-    std::string xPathNote = "/note";
+//     // ===== XPATH: NOTE ===== //
+//     std::string xPathNote = "/note";
 
-    // ===== XPATH: ONLY MELODIC ===== //
-    std::string noteAttrFilter;
-    if (melodicOnly) {
-        noteAttrFilter += "[not(chord)]";
-    }
+//     // ===== XPATH: ONLY MELODIC ===== //
+//     std::string noteAttrFilter;
+//     if (melodicOnly) {
+//         noteAttrFilter += "[not(chord)]";
+//     }
 
-    // Set the XPATH:
-    const std::string xPath = xPathRoot + xPathPart + xPathMeasures + xPathNote + noteAttrFilter;
+//     // Set the XPATH:
+//     const std::string xPath = xPathRoot + xPathPart + xPathMeasures + xPathNote + noteAttrFilter;
 
-    const pugi::xpath_node_set musicNotes = _doc.select_nodes(xPath.c_str());
+//     const pugi::xpath_node_set musicNotes = _doc.select_nodes(xPath.c_str());
 
-    const int musicNotesSize = musicNotes.size();
+//     const int musicNotesSize = musicNotes.size();
 
-    nlohmann::json result;
+//     nlohmann::json result;
 
-    std::string partName, musicPitch, musicPitchClass, alterSymbol, musicType;
-    int measure = 0;
-    int alterValue = 0;
-    int musicOctave = 0;
-    float duration = 0.0f;
-    // For each filtered music note:
-    for (int i = 0; i < musicNotesSize; i++) {
-        const pugi::xml_node& node = musicNotes[i].node();
+//     std::string partName, musicPitch, musicPitchClass, alterSymbol, musicType;
+//     int measure = 0;
+//     int alterValue = 0;
+//     int musicOctave = 0;
+//     float duration = 0.0f;
+//     // For each filtered music note:
+//     for (int i = 0; i < musicNotesSize; i++) {
+//         const pugi::xml_node& node = musicNotes[i].node();
 
-        partName = "";
-        musicPitch = "";
-        musicPitchClass = "";
-        alterSymbol = "";
-        musicType = "";
-        measure = 0;
-        alterValue = 0;
-        musicOctave = 0;
-        duration = 0.0f;
+//         partName = "";
+//         musicPitch = "";
+//         musicPitchClass = "";
+//         alterSymbol = "";
+//         musicType = "";
+//         measure = 0;
+//         alterValue = 0;
+//         musicOctave = 0;
+//         duration = 0.0f;
 
-        getNoteNodeData(node, partName, measure, musicPitch, musicPitchClass, alterSymbol,
-                        alterValue, musicOctave, musicType, duration);
+//         getNoteNodeData(node, partName, measure, musicPitch, musicPitchClass, alterSymbol,
+//                         alterValue, musicOctave, musicType, duration);
 
-        // // ===== GET MEASURE ===== //
-        // const int measure =
-        // static_cast<int>(node.parent().attribute("number").as_int());
+//         // // ===== GET MEASURE ===== //
+//         // const int measure =
+//         // static_cast<int>(node.parent().attribute("number").as_int());
 
-        // // ===== GET MUSIC NOTES PITCH CLASS ===== //
-        // std::string musicPitchClass =
-        // node.child("pitch").child_value("step");
+//         // // ===== GET MUSIC NOTES PITCH CLASS ===== //
+//         // std::string musicPitchClass =
+//         // node.child("pitch").child_value("step");
 
-        // // ===== GET MUSIC NOTES OCTAVE ===== //
-        // int musicOctave = 0;
-        // if (musicPitchClass.empty()) {
-        //     musicOctave = MUSIC_XML::OCTAVE::ALL;
-        //     musicPitchClass = MUSIC_XML::PITCH::REST;
-        // } else {
-        //     musicOctave = atoi(node.child("pitch").child_value("octave"));
-        // }
+//         // // ===== GET MUSIC NOTES OCTAVE ===== //
+//         // int musicOctave = 0;
+//         // if (musicPitchClass.empty()) {
+//         //     musicOctave = MUSIC_XML::OCTAVE::ALL;
+//         //     musicPitchClass = MUSIC_XML::PITCH::REST;
+//         // } else {
+//         //     musicOctave = atoi(node.child("pitch").child_value("octave"));
+//         // }
 
-        // // ===== GET MUSIC NOTES TYPE ===== //
-        // std::string musicType;
-        // musicType = node.child_value("type");
-        // if(musicType.empty()) {
-        //     const float musicDuration = atof(node.child_value("duration"));
-        //     const int divisionsPerQuarterNote = getDivisionsPerQuarterNote();
-        //     musicType = duration2noteType(musicDuration,
-        //     divisionsPerQuarterNote);
-        // }
+//         // // ===== GET MUSIC NOTES TYPE ===== //
+//         // std::string musicType;
+//         // musicType = node.child_value("type");
+//         // if(musicType.empty()) {
+//         //     const float musicDuration = atof(node.child_value("duration"));
+//         //     const int divisionsPerQuarterNote = getDivisionsPerQuarterNote();
+//         //     musicType = duration2noteType(musicDuration,
+//         //     divisionsPerQuarterNote);
+//         // }
 
-        // // ===== GET PART NAME ===== //
-        // const std::string partId =
-        // node.parent().parent().attribute("id").as_string(); const int id =
-        // atoi(partId.substr(1, partId.size()).c_str()); const std::string
-        // partName = getPartName(id);
+//         // // ===== GET PART NAME ===== //
+//         // const std::string partId =
+//         // node.parent().parent().attribute("id").as_string(); const int id =
+//         // atoi(partId.substr(1, partId.size()).c_str()); const std::string
+//         // partName = getPartName(id);
 
-        // ===== APPEND THE RESULT ===== //
-        nlohmann::json outputLine;
-        outputLine["partName"] = partName;
-        outputLine["measure"] = measure;
-        outputLine["pitch"] = musicPitch;
-        outputLine["octave"] = musicOctave;
-        outputLine["type"] = musicType;
+//         // ===== APPEND THE RESULT ===== //
+//         nlohmann::json outputLine;
+//         outputLine["partName"] = partName;
+//         outputLine["measure"] = measure;
+//         outputLine["pitch"] = musicPitch;
+//         outputLine["octave"] = musicOctave;
+//         outputLine["type"] = musicType;
 
-        result.push_back(outputLine);
-    }
+//         result.push_back(outputLine);
+//     }
 
-    return result;
-}
+//     return result;
+// }
 
 void Score::printPartNames() const {
     for (const auto& part : _part) {

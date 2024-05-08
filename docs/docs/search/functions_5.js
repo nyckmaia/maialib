@@ -7,7 +7,7 @@ var searchData=
   ['getbassnote_4',['getBassNote',['../class_chord.html#a36ee9433c0bef369d6c4fd3b1720bd96',1,'Chord']]],
   ['getchords_5',['getChords',['../class_score.html#aec4f8f23dcfd0cbfebe29b80ee473c88',1,'Score']]],
   ['getclef_6',['getClef',['../class_measure.html#aac6b6e55f372affe4210b04300e19b17',1,'Measure::getClef(const int clefId=0) const'],['../class_measure.html#a57525953b60c99eec3df3fff71beeace',1,'Measure::getClef(const int clefId=0)']]],
-  ['getclefs_7',['getClefs',['../class_measure.html#abb05970ddc09334865533b468d1f35d0',1,'Measure']]],
+  ['getclefs_7',['getClefs',['../class_measure.html#accd2b32107817de57e8c235ae6d92990',1,'Measure::getClefs() const'],['../class_measure.html#abb05970ddc09334865533b468d1f35d0',1,'Measure::getClefs()']]],
   ['getclefsignstr_8',['getClefSignStr',['../class_clef.html#ac2681c118884cd2a01708d5414afcd2e',1,'Clef']]],
   ['getclosechord_9',['getCloseChord',['../class_chord.html#ae52f2d24dbd2f8edbec052e61ba6ee15',1,'Chord']]],
   ['getclosestackchord_10',['getCloseStackChord',['../class_chord.html#a73d02d4d1558393ec14bf65f0db8b0b4',1,'Chord']]],

@@ -393,13 +393,13 @@ class Score {
      */
     bool getPartIndex(const std::string& partName, int* index) const;
 
-    /**
-     * @brief
-     *
-     * @param config
-     * @return nlohmann::json
-     */
-    nlohmann::json selectNotes(nlohmann::json& config) const;
+    // /**
+    //  * @brief
+    //  *
+    //  * @param config
+    //  * @return nlohmann::json
+    //  */
+    // nlohmann::json selectNotes(nlohmann::json& config) const;
 
     // /**
     //  * @brief

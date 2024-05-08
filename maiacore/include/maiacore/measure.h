@@ -265,6 +265,13 @@ class Measure {
      *
      * @return std::vector<Clef>&
      */
+    const std::vector<Clef>& getClefs() const;
+
+    /**
+     * @brief Get the Clefs object
+     *
+     * @return std::vector<Clef>&
+     */
     std::vector<Clef>& getClefs();
 
     /**

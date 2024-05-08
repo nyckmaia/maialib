@@ -31,6 +31,7 @@ endif()
 file(GLOB maiacore_src
     ${PROJECT_SOURCE_DIR}/maiacore/src/maiacore/*.cpp
     ${PROJECT_SOURCE_DIR}/maiacore/src/external/pugi/pugixml.cpp
+    ${PROJECT_SOURCE_DIR}/maiacore/include/external/nlohmann/*.hpp
 )
 
 # Generate static library
