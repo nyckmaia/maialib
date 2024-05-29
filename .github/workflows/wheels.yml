@@ -38,6 +38,7 @@ jobs:
           rm -rf stubs/
           rm -rf wheelhouse/
           rm -rf *.egg-info
+          rm -rf /tmp/cibuildwheel/
         shell: bash
 
       - name: Install pybind11-stubgen and mypy
@@ -61,6 +62,7 @@ jobs:
           CIBW_BEFORE_ALL_MACOS: cp -rf ./stubs/* .
           CIBW_BEFORE_ALL_WINDOWS: xcopy /e /k /y .\stubs\* .
           CIBW_SKIP: cp36-* cp37-* pp37-* *-win32 *-manylinux_i686
+          MACOSX_DEPLOYMENT_TARGET: 10.15
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
