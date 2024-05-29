@@ -39,6 +39,8 @@ jobs:
           rm -rf wheelhouse/
           rm -rf *.egg-info
           rm -rf /tmp/cibuildwheel/
+          rm -rf /project/build/
+          rm -rf /home/runner/work/maialib/maialib/build/
         shell: bash
 
       - name: Install pybind11-stubgen and mypy
