@@ -41,6 +41,7 @@ jobs:
           rm -rf /tmp/cibuildwheel/
           rm -rf /project/build/
           rm -rf /home/runner/work/maialib/maialib/build/
+          find . -name "CMakeCache.txt" -delete
         shell: bash
 
       - name: Install pybind11-stubgen and mypy
