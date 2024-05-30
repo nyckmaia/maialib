@@ -62,27 +62,29 @@ jobs:
         env:
           CIBW_ARCHS_MACOS: auto universal2
           CIBW_BEFORE_ALL_LINUX: |
-            rm -rf build/ dist/ wheelhouse/ *.egg-info /tmp/cibuildwheel/ /project/build/ /home/runner/work/maialib/maialib/build/
-            find . -name "CMakeCache.txt" -delete
-            find . -name "CMakeFiles" -exec rm -rf {} +
-            find . -name "cmake_install.cmake" -delete
-            find . -name "Makefile" -delete
             if [ -d ./stubs ]; then cp -rf ./stubs/* .; fi
+          #           rm -rf build/ dist/ wheelhouse/ *.egg-info /tmp/cibuildwheel/ /project/build/ /home/runner/work/maialib/maialib/build/
+          #           find . -name "CMakeCache.txt" -delete
+          #           find . -name "CMakeFiles" -exec rm -rf {} +
+          #           find . -name "cmake_install.cmake" -delete
+          #           find . -name "Makefile" -delete
           CIBW_BEFORE_ALL_MACOS: |
-            rm -rf build/ dist/ wheelhouse/ *.egg-info /tmp/cibuildwheel/ /project/build/ /home/runner/work/maialib/maialib/build/
-            find . -name "CMakeCache.txt" -delete
-            find . -name "CMakeFiles" -exec rm -rf {} +
-            find . -name "cmake_install.cmake" -delete
-            find . -name "Makefile" -delete
             if [ -d ./stubs ]; then cp -rf ./stubs/* .; fi
+          #            rm -rf build/ dist/ wheelhouse/ *.egg-info /tmp/cibuildwheel/ /project/build/ /home/runner/work/maialib/maialib/build/
+          #            find . -name "CMakeCache.txt" -delete
+          #            find . -name "CMakeFiles" -exec rm -rf {} +
+          #            find . -name "cmake_install.cmake" -delete
+          #            find . -name "Makefile" -delete
+
           CIBW_BEFORE_ALL_WINDOWS: |
-            powershell -Command "Remove-Item -Recurse -Force build, dist, wheelhouse, '*.egg-info'"
-            powershell -Command "Remove-Item -Recurse -Force \tmp\cibuildwheel, \project\build, \home\runner\work\maialib\maialib\build"
-            powershell -Command "Get-ChildItem -Recurse -Filter 'CMakeCache.txt' | Remove-Item -Force"
-            powershell -Command "Get-ChildItem -Recurse -Filter 'CMakeFiles' | Remove-Item -Recurse -Force"
-            powershell -Command "Get-ChildItem -Recurse -Filter 'cmake_install.cmake' | Remove-Item -Force"
-            powershell -Command "Get-ChildItem -Recurse -Filter 'Makefile' | Remove-Item -Force"
             if exist .\stubs\ (xcopy /e /k /y .\stubs\* .)
+          #            powershell -Command "Remove-Item -Recurse -Force build, dist, wheelhouse, '*.egg-info'"
+          #            powershell -Command "Remove-Item -Recurse -Force \tmp\cibuildwheel, \project\build, \home\runner\work\maialib\maialib\build"
+          #            powershell -Command "Get-ChildItem -Recurse -Filter 'CMakeCache.txt' | Remove-Item -Force"
+          #            powershell -Command "Get-ChildItem -Recurse -Filter 'CMakeFiles' | Remove-Item -Recurse -Force"
+          #            powershell -Command "Get-ChildItem -Recurse -Filter 'cmake_install.cmake' | Remove-Item -Force"
+          #            powershell -Command "Get-ChildItem -Recurse -Filter 'Makefile' | Remove-Item -Force"
+
           CIBW_SKIP: cp36-* cp37-* pp37-* *-win32 *-manylinux_i686
           MACOSX_DEPLOYMENT_TARGET: 11.0
 
