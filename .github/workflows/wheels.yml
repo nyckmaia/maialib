@@ -90,16 +90,14 @@ jobs:
     name: Upload All
     needs: build_wheels
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v3
 
-      # - uses: actions/setup-python@v4
-
-      - uses: actions/download-artifact@v3
+      - uses: actions/download-artifact@v4
         with:
-          name: wheelhouse
+          pattern: cibw-*
           path: dist
+          merge-multiple: true
 
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
