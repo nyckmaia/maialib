@@ -67,11 +67,24 @@ jobs:
             find . -name "CMakeFiles" -exec rm -rf {} +
             find . -name "cmake_install.cmake" -delete
             find . -name "Makefile" -delete
-            cp -rf ./stubs/* .
-          CIBW_BEFORE_ALL_MACOS: cp -rf ./stubs/* .
-          CIBW_BEFORE_ALL_WINDOWS: xcopy /e /k /y .\stubs\* .
+            [ -d ./stubs ] && cp -rf ./stubs/* .
+          CIBW_BEFORE_ALL_MACOS: |
+            rm -rf build/ dist/ stubs/ wheelhouse/ *.egg-info /tmp/cibuildwheel/ /project/build/ /home/runner/work/maialib/maialib/build/
+            find . -name "CMakeCache.txt" -delete
+            find . -name "CMakeFiles" -exec rm -rf {} +
+            find . -name "cmake_install.cmake" -delete
+            find . -name "Makefile" -delete
+            [ -d ./stubs ] && cp -rf ./stubs/* .
+          CIBW_BEFORE_ALL_WINDOWS: |
+            rmdir /s /q build dist stubs wheelhouse *.egg-info
+            rmdir /s /q \tmp\cibuildwheel \project\build \home\runner\work\maialib\maialib\build
+            del /s CMakeCache.txt
+            del /s CMakeFiles
+            del /s cmake_install.cmake
+            del /s Makefile
+            if exist .\stubs\ (xcopy /e /k /y .\stubs\* .)
           CIBW_SKIP: cp36-* cp37-* pp37-* *-win32 *-manylinux_i686
-          MACOSX_DEPLOYMENT_TARGET: 10.15
+          MACOSX_DEPLOYMENT_TARGET: 11.0
 
       - name: Upload wheels
         uses: actions/upload-artifact@v3
