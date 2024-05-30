@@ -62,21 +62,21 @@ jobs:
         env:
           CIBW_ARCHS_MACOS: auto universal2
           CIBW_BEFORE_ALL_LINUX: |
-            rm -rf build/ dist/ stubs/ wheelhouse/ *.egg-info /tmp/cibuildwheel/ /project/build/ /home/runner/work/maialib/maialib/build/
+            rm -rf build/ dist/ wheelhouse/ *.egg-info /tmp/cibuildwheel/ /project/build/ /home/runner/work/maialib/maialib/build/
             find . -name "CMakeCache.txt" -delete
             find . -name "CMakeFiles" -exec rm -rf {} +
             find . -name "cmake_install.cmake" -delete
             find . -name "Makefile" -delete
-            [ -d ./stubs ] && cp -rf ./stubs/* .
+            if [ -d ./stubs ]; then cp -rf ./stubs/* .; fi
           CIBW_BEFORE_ALL_MACOS: |
-            rm -rf build/ dist/ stubs/ wheelhouse/ *.egg-info /tmp/cibuildwheel/ /project/build/ /home/runner/work/maialib/maialib/build/
+            rm -rf build/ dist/ wheelhouse/ *.egg-info /tmp/cibuildwheel/ /project/build/ /home/runner/work/maialib/maialib/build/
             find . -name "CMakeCache.txt" -delete
             find . -name "CMakeFiles" -exec rm -rf {} +
             find . -name "cmake_install.cmake" -delete
             find . -name "Makefile" -delete
-            [ -d ./stubs ] && cp -rf ./stubs/* .
+            if [ -d ./stubs ]; then cp -rf ./stubs/* .; fi
           CIBW_BEFORE_ALL_WINDOWS: |
-            rmdir /s /q build dist stubs wheelhouse *.egg-info
+            rmdir /s /q build dist wheelhouse *.egg-info
             rmdir /s /q \tmp\cibuildwheel \project\build \home\runner\work\maialib\maialib\build
             del /s CMakeCache.txt
             del /s CMakeFiles
