@@ -76,12 +76,12 @@ jobs:
             find . -name "Makefile" -delete
             if [ -d ./stubs ]; then cp -rf ./stubs/* .; fi
           CIBW_BEFORE_ALL_WINDOWS: |
-            rmdir /s /q build dist wheelhouse *.egg-info
-            rmdir /s /q \tmp\cibuildwheel \project\build \home\runner\work\maialib\maialib\build
-            del /s CMakeCache.txt
-            del /s CMakeFiles
-            del /s cmake_install.cmake
-            del /s Makefile
+            powershell -Command "Remove-Item -Recurse -Force build, dist, wheelhouse, '*.egg-info'"
+            powershell -Command "Remove-Item -Recurse -Force \tmp\cibuildwheel, \project\build, \home\runner\work\maialib\maialib\build"
+            powershell -Command "Get-ChildItem -Recurse -Filter 'CMakeCache.txt' | Remove-Item -Force"
+            powershell -Command "Get-ChildItem -Recurse -Filter 'CMakeFiles' | Remove-Item -Recurse -Force"
+            powershell -Command "Get-ChildItem -Recurse -Filter 'cmake_install.cmake' | Remove-Item -Force"
+            powershell -Command "Get-ChildItem -Recurse -Filter 'Makefile' | Remove-Item -Force"
             if exist .\stubs\ (xcopy /e /k /y .\stubs\* .)
           CIBW_SKIP: cp36-* cp37-* pp37-* *-win32 *-manylinux_i686
           MACOSX_DEPLOYMENT_TARGET: 11.0
