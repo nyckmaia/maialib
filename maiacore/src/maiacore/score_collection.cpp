@@ -4,15 +4,11 @@
 
 #include "maiacore/log.h"
 
-ScoreCollection::ScoreCollection(const std::string& collectionName,
-                                 const std::string& directoryPath) {
-    _collectionName = collectionName;
+ScoreCollection::ScoreCollection(const std::string& directoryPath) {
     setDirectoriesPaths({directoryPath});
 }
 
-ScoreCollection::ScoreCollection(const std::string& collectionName,
-                                 const std::vector<std::string>& directoriesPaths) {
-    _collectionName = collectionName;
+ScoreCollection::ScoreCollection(const std::vector<std::string>& directoriesPaths) {
     setDirectoriesPaths(directoriesPaths);
 }
 
@@ -22,12 +18,6 @@ void ScoreCollection::setDirectoriesPaths(const std::vector<std::string>& direct
     _directoriesPaths = directoriesPaths;
 
     loadCollectionFiles();
-}
-
-std::string ScoreCollection::getName() const { return _collectionName; }
-
-void ScoreCollection::setName(const std::string& collectionName) {
-    _collectionName = collectionName;
 }
 
 void ScoreCollection::addDirectory(const std::string& directoryPath) {
@@ -77,7 +67,7 @@ void ScoreCollection::loadCollectionFiles() {
     }
 }
 
-void ScoreCollection::merge(const ScoreCollection& other, const std::string& mergedCollectionName) {
+void ScoreCollection::merge(const ScoreCollection& other) {
     // Merge directories paths
     for (const auto& dir : other.getDirectoriesPaths()) {
         _directoriesPaths.push_back(dir);
@@ -86,11 +76,6 @@ void ScoreCollection::merge(const ScoreCollection& other, const std::string& mer
     // Merge Score objects
     for (const auto& sc : other.getScores()) {
         _scores.push_back(sc);
-    }
-
-    // Set new merged ScoreCollection name
-    if (!mergedCollectionName.empty()) {
-        _collectionName = mergedCollectionName;
     }
 }
 

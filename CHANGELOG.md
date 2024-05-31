@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.8] - 2024-MM-DD
+
+### Improved
+
+- Remove ScoreCollection::get/setName
+- Add Score::getLoadedFilePath
+
+---
+
 ## [v1.4.7] - 2024-MM-DD
 
 ### Improved

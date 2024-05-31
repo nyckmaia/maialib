@@ -111,11 +111,12 @@ void Score::info() const {
     LOG_INFO("Loaded from file: " << std::boolalpha << _isLoadedXML);
 }
 
-void Score::loadXMLFile(const std::string& filePath) {
-    // PROFILE_FUNCTION();
-    // auto start = std::chrono::steady_clock::now();
+std::string Score::loadedFilePath() const { return _loadedFilePath; }
 
+void Score::loadXMLFile(const std::string& filePath) {
     clear();
+
+    _loadedFilePath = filePath;
 
     const std::string fileExtension = filePath.substr(filePath.size() - 3, filePath.size());
 
@@ -187,7 +188,7 @@ void Score::loadXMLFile(const std::string& filePath) {
     }
 
     // Detect Anacrusis Measure
-    const std::string& xPathAnacrusisMeasure = "/score-partwise//part//measure[@number='0'";
+    const std::string& xPathAnacrusisMeasure = "/score-partwise//part//measure[@number='0']";
     const pugi::xpath_node_set anacrusisMeasure = _doc.select_nodes(xPathAnacrusisMeasure.c_str());
     _haveAnacrusisMeasure = (anacrusisMeasure.empty()) ? false : true;
 

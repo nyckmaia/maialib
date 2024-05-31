@@ -12,19 +12,15 @@ void ScoreCollectionClass(const py::module& m) {
 
     // bindings to ScoreCollection class
     py::class_<ScoreCollection> cls(m, "ScoreCollection");
-    cls.def(py::init<const std::string&, const std::string&>(), py::arg("collectionName"),
-            py::arg("directoryPath") = std::string());
+    cls.def(py::init<const std::string&>(), py::arg("directoryPath") = std::string());
 
-    cls.def(py::init<const std::string&, const std::vector<std::string>&>(),
-            py::arg("collectionName"), py::arg("directoriesPaths") = std::vector<std::string>());
+    cls.def(py::init<const std::vector<std::string>&>(),
+            py::arg("directoriesPaths") = std::vector<std::string>());
 
     cls.def("getDirectoriesPaths", &ScoreCollection::getDirectoriesPaths);
     cls.def("setDirectoriesPaths", &ScoreCollection::setDirectoriesPaths,
             py::arg("directoriesPaths"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-
-    cls.def("getName", &ScoreCollection::getName);
-    cls.def("setName", &ScoreCollection::setName, py::arg("collectionName"));
 
     cls.def("addDirectory", &ScoreCollection::addDirectory, py::arg("directoryPath"));
 
@@ -46,14 +42,13 @@ void ScoreCollectionClass(const py::module& m) {
             py::return_value_policy::reference_internal);
 
     cls.def("isEmpty", &ScoreCollection::isEmpty);
-    cls.def("merge", &ScoreCollection::merge, py::arg("other"),
-            py::arg("mergedCollectionName") = std::string());
+    cls.def("merge", &ScoreCollection::merge, py::arg("other"));
     cls.def("removeScore", &ScoreCollection::removeScore, py::arg("scoreIdx"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     // Default Python 'print' function:
     cls.def("__repr__", [](const ScoreCollection& scoreCollection) {
-        return "<ScoreCollection '" + scoreCollection.getName() + "'>";
+        return "<ScoreCollection ('" + std::to_string(scoreCollection.getNumScores()) + "')>";
     });
 
     cls.def("__hash__", [](const ScoreCollection& scoreCollection) {
@@ -61,7 +56,7 @@ void ScoreCollectionClass(const py::module& m) {
         for (const auto& dir : scoreCollection.getDirectoriesPaths()) {
             temp += dir;
         }
-        return std::hash<std::string>{}(scoreCollection.getName() + temp);
+        return std::hash<std::string>{}(temp);
     });
 
     cls.def("__sizeof__",

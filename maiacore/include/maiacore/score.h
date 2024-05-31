@@ -20,6 +20,7 @@ class Score {
     std::string _title;
     std::string _composerName;
     std::vector<Part> _part;
+    std::string _loadedFilePath;
 
     pugi::xml_document _doc;
     int _numParts;
@@ -32,14 +33,6 @@ class Score {
     int _lcmDivisionsPerQuarterNote; /* Least Common Multiple of all 'divisions'
                                         tags in XML file */
     bool _haveAnacrusisMeasure;
-
-    /**
-     * @brief
-     *
-     * @return true
-     * @return false
-     */
-    bool haveAnacrusisMeasure() const;
 
     /**
      * @brief Import a XML sheet music file: *.xml, *.musicxml or *.mxml
@@ -314,6 +307,8 @@ class Score {
      */
     bool isValid(void) const;
 
+    std::string loadedFilePath() const;
+
     /**
      * @brief
      *
@@ -401,6 +396,14 @@ class Score {
      * @return false
      */
     bool getPartIndex(const std::string& partName, int* index) const;
+
+    /**
+     * @brief
+     *
+     * @return true
+     * @return false
+     */
+    bool haveAnacrusisMeasure() const;
 
     // /**
     //  * @brief
