@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.4.7] - 2024-MM-DD
+
+### Improved
+
+- Improve Github Actions wheels.yml file
+- Add Score::haveAnacrusisMeasure()
+
+### Fixed
+
+- Auto fix XML scores that contais multiple part with the same name
+
+---
+
 ## [v1.4.6] - 2024-05-30
 
 ### Improved

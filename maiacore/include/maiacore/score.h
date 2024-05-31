@@ -31,6 +31,15 @@ class Score {
     std::vector<Chord> _stackedChords;
     int _lcmDivisionsPerQuarterNote; /* Least Common Multiple of all 'divisions'
                                         tags in XML file */
+    bool _haveAnacrusisMeasure;
+
+    /**
+     * @brief
+     *
+     * @return true
+     * @return false
+     */
+    bool haveAnacrusisMeasure() const;
 
     /**
      * @brief Import a XML sheet music file: *.xml, *.musicxml or *.mxml

@@ -65,6 +65,7 @@ void ScoreClass(const py::module& m) {
     cls.def("setMetronomeMark", &Score::setMetronomeMark, py::arg("bpm"),
             py::arg("duration") = Duration::QUARTER, py::arg("measureStart") = 0);
 
+    cls.def("haveAnacrusisMeasure", &Score::haveAnacrusisMeasure);
     cls.def("toXML", &Score::toXML, py::arg("identSize") = 2);
     cls.def("toJSON", &Score::toJSON);
     cls.def("toFile", &Score::toFile, py::arg("fileName"), py::arg("compressedXML") = false,
