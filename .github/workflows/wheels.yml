@@ -33,7 +33,7 @@ jobs:
           python-version: "3.8"
 
       - name: Upgrade pip to the latest version
-        run: python -m pip install --upgrade pip
+        run: python3.8 -m pip install --upgrade pip
 
       - name: Clean previous builds
         run: |
@@ -66,7 +66,8 @@ jobs:
       - name: Build wheels
         run: python -m cibuildwheel --output-dir wheelhouse
         env:
-          CIBW_ARCHS_MACOS: auto universal2
+          CIBW_ARCHS_MACOS: universal2
+          MACOSX_DEPLOYMENT_TARGET: 10.15
           CIBW_BEFORE_ALL_LINUX: |
             if [ -d ./stubs ]; then cp -rf ./stubs/* .; fi
             rm -rf build/ *.egg-info /tmp/cibuildwheel/ /project/build/ /home/runner/work/maialib/maialib/build/
@@ -80,8 +81,7 @@ jobs:
           CIBW_BEFORE_ALL_WINDOWS: |
             if exist .\stubs\ (xcopy /e /k /y .\stubs\* .)
 
-          CIBW_SKIP: cp36-* cp37-* pp37-* *-win32 *-manylinux_i686
-          MACOSX_DEPLOYMENT_TARGET: 11.0
+          CIBW_SKIP: cp36-* cp37-* pp37-* *-win32 *-manylinux_i686 *-manylinux_ppc64le *-manylinux_s390x *-musllinux_s390x
 
       - uses: actions/upload-artifact@v4
         with:
@@ -106,7 +106,7 @@ jobs:
         run: ls -l dist
 
       - name: Verify files
-        run: sha256sum dist/**/*.whl
+        run: sha256sum dist/*.whl
 
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
