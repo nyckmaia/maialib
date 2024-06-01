@@ -111,7 +111,7 @@ void Score::info() const {
     LOG_INFO("Loaded from file: " << std::boolalpha << _isLoadedXML);
 }
 
-std::string Score::loadedFilePath() const { return _loadedFilePath; }
+std::string Score::getLoadedFilePath() const { return _loadedFilePath; }
 
 void Score::loadXMLFile(const std::string& filePath) {
     clear();

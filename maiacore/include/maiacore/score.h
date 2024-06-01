@@ -307,7 +307,7 @@ class Score {
      */
     bool isValid(void) const;
 
-    std::string loadedFilePath() const;
+    std::string getLoadedFilePath() const;
 
     /**
      * @brief

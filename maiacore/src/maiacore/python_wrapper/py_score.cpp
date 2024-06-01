@@ -45,7 +45,7 @@ void ScoreClass(const py::module& m) {
     cls.def("getPartsNames", &Score::getPartsNames);
     cls.def("getTitle", &Score::getTitle);
 
-    cls.def("loadedFilePath", &Score::loadedFilePath);
+    cls.def("getLoadedFilePath", &Score::getLoadedFilePath);
     cls.def("setTitle", &Score::setTitle, py::arg("scoreTitle"));
 
     cls.def("getComposerName", &Score::getComposerName);
