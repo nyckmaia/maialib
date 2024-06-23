@@ -141,7 +141,7 @@ void Note::setIsPitched(const bool isPitched) { _isPitched = isPitched; }
 
 bool Note::isPitched() const { return _isPitched; }
 
-std::string Note::getPitchClass() const { return _writtenPitchClass; }
+std::string Note::getPitchClass() const { return getSoundingPitchClass(); }
 
 void Note::setOctave(const int octave) {
     _writtenOctave = octave;
@@ -1815,7 +1815,11 @@ void Note::addTie(const std::string& tieType) { _tie.push_back(tieType); }
 
 void Note::removeTies() { _tie.clear(); }
 
-std::string Note::getPitchStep() const { return _writtenPitchClass.substr(0, 1); }
+std::string Note::getWrittenPitchStep() const { return _writtenPitchClass.substr(0, 1); }
+
+std::string Note::getSoundingPitchStep() const { return _soundingPitchClass.substr(0, 1); }
+
+std::string Note::getPitchStep() const { return getSoundingPitchStep(); }
 
 int Note::getVoice() const { return _voice; }
 

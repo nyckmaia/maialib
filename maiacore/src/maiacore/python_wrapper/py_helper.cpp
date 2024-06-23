@@ -62,7 +62,8 @@ void HelperClass(const py::module& m) {
                    py::arg("duration_B"),
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
-    cls.def_static("duration2noteType", &Helper::duration2noteType, py::arg("duration"));
+    cls.def_static("duration2noteType", &Helper::duration2noteType, py::arg("duration"),
+                   py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def_static("duration2Ticks", &Helper::duration2Ticks, py::arg("duration"),
                    py::arg("divisionsPerQuarterNote") = 265);

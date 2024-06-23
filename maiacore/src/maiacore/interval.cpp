@@ -1,6 +1,7 @@
 #include "maiacore/interval.h"
 
 #include <algorithm>  // std::find
+#include <sstream>
 #include <stdexcept>
 
 #include "maiacore/constants.h"
@@ -82,16 +83,36 @@ std::pair<std::string, bool> Interval::analyse() const {
                     return {"-6 P8", true};
                 case -60:
                     return {"-5 P8", true};
+                case -49:
+                    return {"-4 A8", false};
                 case -48:
                     return {"-4 P8", true};
+                case -47:
+                    return {"-4 d8", false};
+                case -37:
+                    return {"-3 A8", false};
                 case -36:
                     return {"-3 P8", true};
+                case -35:
+                    return {"-3 d8", false};
+                case -25:
+                    return {"-2 A8", false};
                 case -24:
                     return {"-2 P8", true};
+                case -23:
+                    return {"-2 d8", false};
+                case -13:
+                    return {"-1 A8", false};
                 case -12:
                     return {"-1 P8", true};
+                case -11:
+                    return {"-1 d8", false};
+                case -1:
+                    return {"d8", false};
                 case 0:
                     return {"P1", true};
+                case 1:
+                    return {"A1", false};
                 case 11:
                     return {"d8", false};
                 case 12:
@@ -104,18 +125,42 @@ std::pair<std::string, bool> Interval::analyse() const {
                     return {"2 P8", true};
                 case 25:
                     return {"2 A8", false};
+                case 35:
+                    return {"3 d8", false};
                 case 36:
                     return {"3 P8", true};
+                case 37:
+                    return {"3 A8", false};
+                case 47:
+                    return {"4 d8", false};
                 case 48:
                     return {"4 P8", true};
+                case 49:
+                    return {"4 A8", false};
+                case 59:
+                    return {"5 d8", false};
                 case 60:
                     return {"5 P8", true};
+                case 61:
+                    return {"5 A8", false};
+                case 71:
+                    return {"6 d8", false};
                 case 72:
                     return {"6 P8", true};
+                case 73:
+                    return {"6 A8", false};
+                case 83:
+                    return {"7 d8", false};
                 case 84:
                     return {"7 P8", true};
+                case 85:
+                    return {"7 A8", false};
+                case 95:
+                    return {"8 d8", false};
                 case 96:
                     return {"8 P8", true};
+                case 97:
+                    return {"8 A8", false};
                 case 108:
                     return {"9 P8", true};
                 case 120:
@@ -286,11 +331,18 @@ std::pair<std::string, bool> Interval::analyse() const {
             LOG_ERROR("Unknown 'diatonicInterval' value: " + std::to_string(diatonicInterval));
     }
 
-    LOG_ERROR("Unable to compute the interval from " + _note[0].getPitch() + " to " +
-              _note[1].getPitch() + ".\n" +
-              "'diatonicInterval' = " + std::to_string(diatonicInterval) +
-              " and 'numSemitones' = " + std::to_string(numSemitones) +
-              ".\n'numSemitones % 12' = " + std::to_string(numSemitones % 12));
+    std::stringstream err;
+    err << "Unable to compute the interval [" << _note[0].getPitch() << ", " << _note[1].getPitch()
+        << "]" << std::endl;
+    err << "WrittenPitch: [" << _note[0].getWrittenPitch() << ", " << _note[1].getWrittenPitch()
+        << "]" << std::endl;
+    err << "diatonicInterval: " << diatonicInterval << std::endl;
+    err << "numSemitones: " << numSemitones << " e (numSemitones % 12): " << (numSemitones % 12)
+        << std::endl;
+    err << "midiNumbers: [" << _note[0].getMIDINumber() << ", " << _note[1].getMIDINumber() << "]"
+        << std::endl;
+
+    LOG_ERROR(err.str());
 
     // Only to avoid the 'no-return' compiler warning
     return {"", false};

@@ -2,7 +2,35 @@
 
 All notable changes to this project will be documented in this file.
 
-## [v1.4.8] - 2024-MM-DD
+## [v1.5.0] - 2024-06-23
+
+### API Changes
+
+- Score::getLoadedFilePath() to .getFilePath()
+
+### New Features
+
+- Score Class:
+  - Add .getFileName()
+- Chord Class:
+  - Add .getQuality()
+- Note Class:
+  - Add .getWrittenPitchClass()
+  - Add .getSoundingPitchClass()
+
+### Improved
+
+- Score::getChords() and getChordsDataFrame() returns struct with a new boolean field called 'isHomophonic'
+- Interval::analyse() add 'diminished unison' and 'augmented unison' invervals
+
+### Fixed
+
+- Note::getPitchClass() now points to Note::getSoundingPitchClass()
+- Note::getPitchStep() now points to Note::getSoundingPitchStep()
+
+---
+
+## [v1.4.8] - 2024-06-01
 
 ### Improved
 

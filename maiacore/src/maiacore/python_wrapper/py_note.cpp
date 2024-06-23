@@ -75,6 +75,8 @@ void NoteClass(const py::module& m) {
     cls.def("getUnpitchedIndex", &Note::getUnpitchedIndex);
 
     // ===================== Method GETTERS for class Note ===== //
+    cls.def("getWrittenPitchStep", &Note::getWrittenPitchStep);
+    cls.def("getSoundingPitchStep", &Note::getSoundingPitchStep);
     cls.def("getPitchStep", &Note::getPitchStep);
     cls.def("getSoundingPitchClass", &Note::getSoundingPitchClass);
     cls.def("getSoundingPitch", &Note::getSoundingPitch);

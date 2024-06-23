@@ -148,38 +148,6 @@ TEST(chordOperator, plus) {
   EXPECT_EQ(chord3.size(), chord01.size() + chord02.size());
 }
 
-TEST(chordOperator, StreamLeft) {
-  Note a("C");
-  Note b("E");
-
-  Chord chord01;
-  chord01 << a;
-  chord01 << b;
-
-  Chord chord02;
-  chord02.addNote(a);
-  chord02.addNote(b);
-
-  EXPECT_EQ(chord01, chord02);
-}
-
-TEST(chordOperator, StreamRight) {
-  Note a("C");
-  Note b("E");
-  Note c("G");
-
-  Chord chord;
-  chord.addNote(a);
-  chord.addNote(b);
-  chord.addNote(c);
-
-  Note x;
-  chord >> x;
-
-  EXPECT_EQ(chord.size(), 2);
-  EXPECT_EQ(x.getPitch(), c.getPitch());
-}
-
 TEST(isInRootPosition, majorChords) {
   Chord myChord01({"C4", "E4", "G4"});
   EXPECT_EQ(myChord01.isInRootPosition(), true);

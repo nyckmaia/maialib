@@ -48,7 +48,7 @@ void ScoreCollectionClass(const py::module& m) {
 
     // Default Python 'print' function:
     cls.def("__repr__", [](const ScoreCollection& scoreCollection) {
-        return "<ScoreCollection ('" + std::to_string(scoreCollection.getNumScores()) + "')>";
+        return "<ScoreCollection - " + std::to_string(scoreCollection.getNumScores()) + " scores>";
     });
 
     cls.def("__hash__", [](const ScoreCollection& scoreCollection) {

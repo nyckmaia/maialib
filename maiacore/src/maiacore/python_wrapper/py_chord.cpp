@@ -268,6 +268,7 @@ void ChordClass(const py::module& m) {
     cls.def("isDiminishedChord", &Chord::isDiminishedChord);
     cls.def("isDominantSeventhChord", &Chord::isDominantSeventhChord);
     cls.def("isHalfDiminishedChord", &Chord::isHalfDiminishedChord);
+    cls.def("getQuality", &Chord::getQuality);
 
     cls.def("isSorted", &Chord::isSorted);
     cls.def("isTonal", &Chord::isTonal, py::arg("model") = nullptr);

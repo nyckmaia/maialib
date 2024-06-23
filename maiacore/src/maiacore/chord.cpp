@@ -12,21 +12,33 @@
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
 
+// const int RESERVE_NUM_NOTES = 20;
+
 Chord::Chord() : _isStackedInThirds(false) {}
 
 Chord::Chord(const std::vector<Note>& notes) : _isStackedInThirds(false) {
+    // reserveNotesMemory();
     for (const auto& n : notes) {
         addNote(n);
     }
 }
 
 Chord::Chord(const std::vector<std::string>& pitches) : _isStackedInThirds(false) {
+    // reserveNotesMemory();
     for (const auto& p : pitches) {
         addNote(Note(p));
     }
 }
 
 Chord::~Chord() {}
+
+// void Chord::reserveNotesMemory() {
+//     _originalNotes.reserve(RESERVE_NUM_NOTES);
+//     _openStack.reserve(RESERVE_NUM_NOTES);
+//     _closeStack.reserve(RESERVE_NUM_NOTES);
+//     _stackedHeaps.reserve(RESERVE_NUM_NOTES);
+//     _closeStackintervals.reserve(RESERVE_NUM_NOTES);
+// }
 
 void Chord::clear() {
     _originalNotes.clear();
@@ -576,9 +588,11 @@ std::vector<NoteDataHeap> Chord::computeEnharmonicHeaps(
 std::vector<NoteDataHeap> Chord::removeHeapsWithDuplicatedPitchSteps(
     std::vector<NoteDataHeap>& heaps) const {
     const int heapsSize = heaps.size();
-    std::vector<NoteDataHeap> validEnharmonicHeaps(heapsSize);
+    // std::vector<NoteDataHeap> validEnharmonicHeaps(heapsSize);
+    std::vector<NoteDataHeap> validEnharmonicHeaps;
+    validEnharmonicHeaps.reserve(heapsSize);
 
-    int idx = 0;
+    // int idx = 0;
     for (auto& heap : heaps) {
         // Sort heap notes alphabetically
         std::sort(heap.begin(), heap.end(), [](const NoteData& a, const NoteData& b) {
@@ -596,10 +610,12 @@ std::vector<NoteDataHeap> Chord::removeHeapsWithDuplicatedPitchSteps(
         }
 
         // Add current heap to the output vector
-        validEnharmonicHeaps[idx++] = heap;
+        // validEnharmonicHeaps[idx++] = heap;
+        validEnharmonicHeaps.push_back(heap);
+        // idx++;
     }
 
-    validEnharmonicHeaps.resize(idx - 1);
+    // validEnharmonicHeaps.resize(idx - 1);
 
     return validEnharmonicHeaps;
 }
@@ -862,7 +878,7 @@ std::vector<int> Chord::getMIDIIntervals(const bool firstNoteAsReference) const 
     const int numNotes = _originalNotes.size();
 
     if (numNotes <= 0) {
-        LOG_ERROR("Chord is empty");
+        return {};
     }
 
     std::vector<int> midiIntervals(numNotes - 1);
@@ -890,7 +906,7 @@ std::vector<Interval> Chord::getIntervals(const bool firstNoteAsReference) const
     const int numIntervals = size() - 1;
 
     if (numIntervals <= 0) {
-        LOG_ERROR("Chord is empty");
+        return {};
     }
 
     std::vector<Interval> intervals(numIntervals);
@@ -1156,6 +1172,32 @@ bool Chord::isHalfDiminishedChord() {
     }
 
     return (haveMinorThird() && haveDiminishedFifth()) ? true : false;
+}
+
+std::string Chord::getQuality() {
+    switch (size()) {
+        case 0:
+        case 1:
+            return {};
+        case 2:
+            return "dyad";
+    }
+
+    if (isMajorChord()) {
+        return "major";
+    } else if (isMinorChord()) {
+        return "minor";
+    } else if (isDiminishedChord()) {
+        return "diminished";
+    } else if (isHalfDiminishedChord()) {
+        return "half-diminished";
+    } else if (isAugmentedChord()) {
+        return "augmented";
+    } else {
+        return "indeterminate";
+    }
+
+    return {};
 }
 
 bool Chord::isTonal(std::function<bool(const Chord& chord)> model) {
@@ -2361,12 +2403,16 @@ float Chord::getFrequencyStd() const {
 }
 
 int Chord::getMeanMidiValue() const {
+    if (_originalNotes.size() == 0) {
+        return 0;
+    }
+
     int sum = 0;
     for (const auto& note : _originalNotes) {
         sum += note.getMIDINumber();
     }
 
-    const int mean = sum / _originalNotes.size();
+    const int mean = sum / static_cast<int>(_originalNotes.size());
     return mean;
 }
 
@@ -2601,3 +2647,13 @@ void sortHeapOctaves(NoteDataHeap* heap) {
 }
 
 bool operator<(const HeapData& a, const HeapData& b) { return std::get<1>(a) < std::get<1>(b); }
+
+std::ostream& operator<<(std::ostream& os, const Chord& chord) {
+    const int chordSize = chord.size();
+    os << "[";
+    for (int i = 0; i < chordSize - 1; i++) {
+        os << chord.getNote(i).getPitch() << ",";
+    }
+    os << chord.getNote(chordSize - 1).getPitch() + "]";
+    return os;
+}

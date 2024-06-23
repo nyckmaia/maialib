@@ -45,7 +45,8 @@ void ScoreClass(const py::module& m) {
     cls.def("getPartsNames", &Score::getPartsNames);
     cls.def("getTitle", &Score::getTitle);
 
-    cls.def("getLoadedFilePath", &Score::getLoadedFilePath);
+    cls.def("getFilePath", &Score::getFilePath);
+    cls.def("getFileName", &Score::getFileName);
     cls.def("setTitle", &Score::setTitle, py::arg("scoreTitle"));
 
     cls.def("getComposerName", &Score::getComposerName);
@@ -108,7 +109,8 @@ void ScoreClass(const py::module& m) {
             py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
 
             // Set DataFrame columns name
-            std::vector<std::string> columns = {"measure", "floatMeasure", "key", "chord"};
+            std::vector<std::string> columns = {"measure", "floatMeasure", "key", "chord",
+                                                "isHomophonic"};
 
             // Fill DataFrame with records and columns
             py::object df = FromRecords(score.getChords(config), "columns"_a = columns);

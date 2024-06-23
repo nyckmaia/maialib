@@ -20,7 +20,8 @@ class Score {
     std::string _title;
     std::string _composerName;
     std::vector<Part> _part;
-    std::string _loadedFilePath;
+    std::string _filePath;
+    std::string _fileName;
 
     pugi::xml_document _doc;
     int _numParts;
@@ -54,7 +55,7 @@ class Score {
      * @param includeDuplicates
      * @return std::vector<std::tuple<int, float, Chord>>
      */
-    std::vector<std::tuple<int, float, Key, Chord>> getSameAttackChords(
+    std::vector<std::tuple<int, float, Key, Chord, bool>> getSameAttackChords(
         SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
         const bool includeDuplicates);
 
@@ -67,7 +68,7 @@ class Score {
      * @param includeDuplicates
      * @return std::vector<std::tuple<int, float, Chord>>
      */
-    std::vector<std::tuple<int, float, Key, Chord>> getChordsPerEachNoteEvent(
+    std::vector<std::tuple<int, float, Key, Chord, bool>> getChordsPerEachNoteEvent(
         SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
         const bool includeDuplicates);
 
@@ -307,7 +308,9 @@ class Score {
      */
     bool isValid(void) const;
 
-    std::string getLoadedFilePath() const;
+    std::string getFilePath() const;
+
+    std::string getFileName() const;
 
     /**
      * @brief
@@ -563,7 +566,7 @@ class Score {
      *
      * @return A list of tuples: {measure, floatMeasure, Key object, Chord object}
      */
-    std::vector<std::tuple<int, float, Key, Chord>> getChords(nlohmann::json config = {});
+    std::vector<std::tuple<int, float, Key, Chord, bool>> getChords(nlohmann::json config = {});
 
     /**
      * @brief Construct a new Score object

@@ -111,12 +111,27 @@ void Score::info() const {
     LOG_INFO("Loaded from file: " << std::boolalpha << _isLoadedXML);
 }
 
-std::string Score::getLoadedFilePath() const { return _loadedFilePath; }
+std::string Score::getFilePath() const { return _filePath; }
+
+std::string Score::getFileName() const { return _fileName; }
 
 void Score::loadXMLFile(const std::string& filePath) {
     clear();
 
-    _loadedFilePath = filePath;
+    _filePath = filePath;
+
+    _fileName = [](const std::string& path) -> std::string {
+        // Encontrar a última ocorrência de '/' ou '\'
+        size_t pos = path.find_last_of("/\\");
+
+        // Se não encontrou, significa que a string é o nome do arquivo
+        if (pos == std::string::npos) {
+            return path;
+        }
+
+        // Retornar a substring após a última ocorrência de '/' ou '\'
+        return path.substr(pos + 1);
+    }(_filePath);
 
     const std::string fileExtension = filePath.substr(filePath.size() - 3, filePath.size());
 
@@ -2957,7 +2972,7 @@ nlohmann::json Score::instrumentFragmentation(nlohmann::json config) {
     return out;
 }
 
-std::vector<std::tuple<int, float, Key, Chord>> Score::getChords(nlohmann::json config) {
+std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChords(nlohmann::json config) {
     // ===== STEP 1: PARSE THE INPUT CONFIG JSON ===== //
     // ===== STEP 1.0: READ PART NAMES ===== //
     std::vector<std::string> partNames;
@@ -3260,7 +3275,7 @@ std::vector<std::tuple<int, float, Key, Chord>> Score::getChords(nlohmann::json 
     return getChordsPerEachNoteEvent(db, minDurationTicks, maxDurationTicks, includeDuplicates);
 }
 
-std::vector<std::tuple<int, float, Key, Chord>> Score::getSameAttackChords(
+std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getSameAttackChords(
     SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
     const bool includeDuplicates) {
     // PROFILE_FUNCTION();
@@ -3279,7 +3294,7 @@ std::vector<std::tuple<int, float, Key, Chord>> Score::getSameAttackChords(
     }
 
     // ===== STEP 2: FOR EACH UNIQUE START TIME - GET THE STACK CHORD ===== //
-    std::vector<std::tuple<int, float, Key, Chord>> stackedChords;
+    std::vector<std::tuple<int, float, Key, Chord, bool>> stackedChords;
     stackedChords.reserve(uniqueStartTimes.size());
 
     for (const auto& startTime : uniqueStartTimes) {
@@ -3363,13 +3378,13 @@ std::vector<std::tuple<int, float, Key, Chord>> Score::getSameAttackChords(
         const Key key = _part.at(0).getMeasure(internalMeasureIdx).getKey();
 
         // Store [measure, floatMeasure, key, chord] tuple
-        stackedChords.push_back({measure, floatMeasure, key, chord});
+        stackedChords.push_back({measure, floatMeasure, key, chord, true});
     }
 
     return stackedChords;
 }
 
-std::vector<std::tuple<int, float, Key, Chord>> Score::getChordsPerEachNoteEvent(
+std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChordsPerEachNoteEvent(
     SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
     const bool includeDuplicates) {
     // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
@@ -3390,7 +3405,7 @@ std::vector<std::tuple<int, float, Key, Chord>> Score::getChordsPerEachNoteEvent
     }
 
     // ===== STEP 3: FOR EACH UNIQUE START TIME - GET THE STACK CHORD ===== //
-    std::vector<std::tuple<int, float, Key, Chord>> stackedChords;
+    std::vector<std::tuple<int, float, Key, Chord, bool>> stackedChords;
     stackedChords.reserve(numUniqueEvents);
     for (const int startTime : uniqueStartTime) {
         // std::cout << "startTime: " << startTime << std::endl;
@@ -3407,6 +3422,7 @@ std::vector<std::tuple<int, float, Key, Chord>> Score::getChordsPerEachNoteEvent
         std::vector<std::pair<int, const Note*>> scaleFactorNotePair;
         std::vector<int> chordNotesStartTimes;
         chordNotesStartTimes.reserve(15);
+        bool isHomophonicChord = true;
         while (query.executeStep()) {
             // Get the measure value
             measure = query.getColumn(0).getInt();
@@ -3424,10 +3440,12 @@ std::vector<std::tuple<int, float, Key, Chord>> Score::getChordsPerEachNoteEvent
 
             const int measureScaleFactor = query.getColumn(3).getInt();
 
-            const int startTime = query.getColumn(4).getInt();
+            const int startTimeValue = query.getColumn(4).getInt();
             if (note->isNoteOn()) {
-                chordNotesStartTimes.push_back(startTime);
+                chordNotesStartTimes.push_back(startTimeValue);
             }
+
+            isHomophonicChord &= startTime == startTimeValue;
 
             scaleFactorNotePair.push_back({measureScaleFactor, note});
         }
@@ -3516,7 +3534,7 @@ std::vector<std::tuple<int, float, Key, Chord>> Score::getChordsPerEachNoteEvent
         // std::cout << "measure: " << measure << " maxFloM: " << maxfloatMeasure
         //   << " key: " << key.getName() << " chord:" << chord.getName() << std::endl;
         // Store [measure, floatMeasure, key, chord] tuple
-        stackedChords.push_back({measure, maxfloatMeasure, key, chord});
+        stackedChords.push_back({measure, maxfloatMeasure, key, chord, isHomophonicChord});
     }
 
     return stackedChords;

@@ -75,6 +75,7 @@ class Chord {
     Note _bassNote;
     bool _isStackedInThirds;
 
+    // void reserveNotesMemory();
     void computeIntervals();
     void stackInThirds(const bool enharmonyNotes = false);
     HeapData stackInThirdsTemplateMatch(const NoteDataHeap& heap) const;
@@ -936,6 +937,13 @@ class Chord {
     bool isHalfDiminishedChord();
 
     /**
+     * @brief Get the Quality object
+     *
+     * @return std::string
+     */
+    std::string getQuality();
+
+    /**
      * @brief
      *
      * @return true
@@ -1269,27 +1277,7 @@ class Chord {
         return x;
     }
 
-    /**
-     * @brief
-     *
-     * @param note
-     */
-    void operator<<(const Note& note) { addNote(note); }
-
-    /**
-     * @brief
-     *
-     * @param note
-     * @return Note
-     */
-    Note operator>>(Note& note) {
-        note = _originalNotes[_originalNotes.size() - 1];
-
-        removeTopNote();
-
-        return note;
-    }
-
     std::vector<Note>::iterator begin() { return _originalNotes.begin(); }
     std::vector<Note>::iterator end() { return _originalNotes.end(); }
+    friend std::ostream& operator<<(std::ostream& os, const Chord& chord);
 };

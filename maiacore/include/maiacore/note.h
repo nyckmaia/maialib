@@ -162,10 +162,13 @@ class Note {
 
     int getSoundingOctave() const;
     int getWrittenOctave() const;
+    int getOctave() const;
 
     std::string getPitchClass() const;
+
+    std::string getWrittenPitchStep() const;
+    std::string getSoundingPitchStep() const;
     std::string getPitchStep() const;
-    int getOctave() const;
 
     std::string getType() const;
     std::string getLongType() const;
