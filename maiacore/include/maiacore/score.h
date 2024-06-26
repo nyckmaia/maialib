@@ -45,19 +45,20 @@ class Score {
      */
     void loadXMLFile(const std::string& filePath);
 
-    /**
-     * @brief Get a chord list where each chord contains notes have the same attack in time (aligned
-     * chord)
-     *
-     * @param db
-     * @param minDurationTicks
-     * @param maxDurationTicks
-     * @param includeDuplicates
-     * @return std::vector<std::tuple<int, float, Chord>>
-     */
-    std::vector<std::tuple<int, float, Key, Chord, bool>> getSameAttackChords(
-        SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
-        const bool includeDuplicates);
+    // /**
+    //  * @brief Get a chord list where each chord contains notes have the same attack in time
+    //  (aligned
+    //  * chord)
+    //  *
+    //  * @param db
+    //  * @param minDurationTicks
+    //  * @param maxDurationTicks
+    //  * @param includeDuplicates
+    //  * @return std::vector<std::tuple<int, float, Chord>>
+    //  */
+    // std::vector<std::tuple<int, float, Key, Chord, bool>> getSameAttackChords(
+    //     SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
+    //     const bool includeDuplicates);
 
     /**
      * @brief Get the Chords Per Each Note Event object

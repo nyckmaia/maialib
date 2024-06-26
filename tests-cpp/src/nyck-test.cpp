@@ -52,39 +52,38 @@ TEST(nyckSuite01, myTestExample02) {
 }
 
 TEST(nyckSuite01, myTestExample03) {
-  ScoreCollection collection("/mnt/c/Users/nyck/Desktop/Bach-chorale");
+  Score score(
+      "/mnt/c/Users/nyck/Desktop/Doutorado/Bach-chorale/"
+      "BWV_105.06_FB.musicxml");
+
+  auto chordsTuple = score.getChords();
+  const int chordsTupleSize = chordsTuple.size();
+  std::vector<Chord> closeChords;
+  closeChords.reserve(chordsTupleSize);
+
+  std::cout << score.getTitle() << " | " << score.getFilePath() << std::endl;
+
+  int chordIdx = 0;
   int errors = 0;
-  for (auto& score : collection.getScores()) {
-    // std::tuple<int, float, Key, Chord>
-    auto chordsTuple = score.getChords();
-    const int chordsTupleSize = chordsTuple.size();
-    std::vector<Chord> closeChords;
-    closeChords.reserve(chordsTupleSize);
+  for (auto& t : chordsTuple) {
+    const int measure = std::get<0>(t);
+    const float floatMeasure = std::get<1>(t);
+    Chord& c = std::get<3>(t);
 
-    std::cout << score.getTitle() << " | " << score.getLoadedFilePath()
-              << std::endl;
+    try {
+      std::cout << "idx[" + std::to_string(chordIdx++) + "] m=[" << measure
+                << "/" << floatMeasure << "] ";
 
-    for (auto& t : chordsTuple) {
-      const float floatMeasure = std::get<1>(t);
-      Chord& c = std::get<3>(t);
-      try {
-        std::cout << "m=" << floatMeasure << " " << c;
-        const Chord& stacked = c.getCloseStackChord();
-        closeChords.push_back(stacked);
-
-        // Debug log para verificar a capacidade e tamanho do vetor
-        std::cout << " closeChords size[" << closeChords.size() << "] capacity["
-                  << closeChords.capacity()
-                  << "] | c size: " << c.getNotes().size()
-                  << ", stacked size: " << stacked.getNotes().size()
-                  << std::endl;
-
-      } catch (const std::length_error& e) {
-        errors++;
-        std::cerr << "Caught length_error: " << e.what() << '\n';
+      for (const auto& n : c.getNotes()) {
+        std::cout << n.getPitch() << ", ";
       }
+
+      std::cout << "]" << std::endl;
+
+    } catch (const std::runtime_error& e) {
+      errors++;
+      std::cerr << "runtime_error: " << e.what() << '\n';
     }
-    std::cout << "errors = " << errors << std::endl;
   }
 
   EXPECT_EQ(errors, 0);

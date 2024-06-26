@@ -16,6 +16,7 @@ The project **core** was wrote in `C++17`, but it also has a `Python` wrapper th
 ```python
 pip install maialib
 ```
+
 Or, if you have a older `maialib` version installed on your system, please get the latest version running: `pip install maialib --upgrade`
 
 ## Get Started
@@ -50,6 +51,7 @@ You can easily export your music files to these file formats above from score ed
 Many `MusicXML` files are avaliable for free in the internet for download.
 
 ### 2) What can I do if I don't have a `*.xml` file of my target music?
+
 - First, make shure and look at different websites and online repositories trying to find the `*.xml` file
 - You can find on the internet the desired MIDI file and import it in a score editor (like MuseScore, Sibelius, Finale, etc.) and then export the `MusicXML` file from it
 - You can use scan the sheet music paper and get a PDF version of it, so:
@@ -69,6 +71,7 @@ This project have 2 documentation levels. One for each user type:
 You can explore `maialib` features looking at `python-tutorial` folder ([link here](https://github.com/nyckmaia/maialib/tree/main/python-tutorial)). <br>
 There you will learn how to use and mix `maialib` classes and functions to reach your musical goals
 If you are starting, please check these 3 basic `maialib` Python tutorials:
+
 - [Create Notes and Chords](https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_notes_chords.ipynb)
 - [Create a Score](https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_score.ipynb)
 - [Using Dataframes](https://github.com/nyckmaia/maialib/blob/main/python-tutorial/dataframe.ipynb)
@@ -77,10 +80,15 @@ If you are starting, please check these 3 basic `maialib` Python tutorials:
 
 [Maialib Documentation WebSite](https://maialib.com/)
 
-----------------------------
+## VS Code Users
 
-Would you like to improve any maialib function?
-=============================================
+- You can write your Python scripts using `*.py` or `*.ipynb` file extensions.
+- If you decide to use `*.ipynb` extension, make shure to install `nbformat` Python package to enable visualize maialib graphs on VS Code editor.
+  To do that: `pip install nbformat --upgrade`
+
+---
+
+# Would you like to improve any maialib function?
 
 ## Are you a C++ developer?
 
@@ -116,7 +124,7 @@ sudo apt install clang (pybind11_mkdoc dependency) - Linux/Mac Only
 
 | Operational System | Compilers                       |
 | ------------------ | ------------------------------- |
-| Windows 10 x64     | Clang 15.0 (MSYS2)              |
+| Windows 10 x64     | Clang 18.0                      |
 | Linux Ubuntu 20.04 | GCC 9.3                         |
 | Apple OSX 10.15    | XCode 11.5 (Command Line Tools) |
 

@@ -272,8 +272,25 @@ int Note::getDivisionsPerQuarterNote() const { return _duration.divisionsPerQuar
 float Note::getDuration() const { return getQuarterDuration(); }
 
 float Note::getQuarterDuration() const {
-    return static_cast<float>(_duration.ticks) /
-           static_cast<float>(_duration.divisionsPerQuarterNote);
+    if (!_isTuplet) {
+        return static_cast<float>(_duration.ticks) /
+               static_cast<float>(_duration.divisionsPerQuarterNote);
+    }
+
+    // ===== TUPLET NOTE ===== //
+    const int rawTicks = Helper::noteType2ticks(getLongType(), getDivisionsPerQuarterNote());
+    const float tupletTicks =
+        (static_cast<float>(rawTicks) * static_cast<float>(_timeModification.normalNotes)) /
+        static_cast<float>(_timeModification.actualNotes);
+
+    const float tupletQuarterDuration =
+        tupletTicks / static_cast<float>(_duration.divisionsPerQuarterNote);
+
+    std::cout << "getLongType(): " << getLongType() << " rawTicks: " << rawTicks
+              << " tupletTicks: " << tupletTicks
+              << " tupletQuarterDuration: " << tupletQuarterDuration
+              << " divisionsPerQuarterNote: " << _duration.divisionsPerQuarterNote << std::endl;
+    return tupletQuarterDuration;
 }
 
 bool Note::isGraceNote() const { return _isGraceNote; }

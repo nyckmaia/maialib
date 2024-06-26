@@ -3097,10 +3097,10 @@ std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChords(nlohmann:
     }
 
     // ===== STEP 1.5: READ STACK MODE ===== //
-    const bool continuosMode =
-        (!config.contains("continuosMode") || !config["continuosMode"].is_boolean())
-            ? true
-            : config["continuosMode"].get<bool>();
+    // const bool continuosMode =
+    //     (!config.contains("continuosMode") || !config["continuosMode"].is_boolean())
+    //         ? true
+    //         : config["continuosMode"].get<bool>();
 
     // ===== STEP 1.6: READ MIN DURATION ===== //
     const std::string defaultMinDuration = MUSIC_XML::NOTE_TYPE::N64TH;  // Arbitrary value
@@ -3267,122 +3267,122 @@ std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChords(nlohmann:
         }
     }
 
-    // Choose which stack chords algorithm that you desired:
-    if (!continuosMode) {
-        return getSameAttackChords(db, minDurationTicks, maxDurationTicks, includeDuplicates);
-    }
+    // // Choose which stack chords algorithm that you desired:
+    // if (!continuosMode) {
+    //     return getSameAttackChords(db, minDurationTicks, maxDurationTicks, includeDuplicates);
+    // }
 
     return getChordsPerEachNoteEvent(db, minDurationTicks, maxDurationTicks, includeDuplicates);
 }
 
-std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getSameAttackChords(
-    SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
-    const bool includeDuplicates) {
-    // PROFILE_FUNCTION();
-    // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
-    db.exec("CREATE INDEX startTime_idx ON events (starttime)");
+// std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getSameAttackChords(
+//     SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
+//     const bool includeDuplicates) {
+//     // PROFILE_FUNCTION();
+//     // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
+//     db.exec("CREATE INDEX startTime_idx ON events (starttime)");
 
-    // ===== STEP 1: GET THE AMOUNT OF UNIQUE START TIME EVENTS ===== //
-    SQLite::Statement query(db,
-                            "SELECT starttime, COUNT(*) from events GROUP BY starttime "
-                            "ORDER BY starttime ASC");
+//     // ===== STEP 1: GET THE AMOUNT OF UNIQUE START TIME EVENTS ===== //
+//     SQLite::Statement query(db,
+//                             "SELECT starttime, COUNT(*) from events GROUP BY starttime "
+//                             "ORDER BY starttime ASC");
 
-    std::vector<int> uniqueStartTimes;
-    while (query.executeStep()) {
-        const int startTime = query.getColumn(0).getInt();
-        uniqueStartTimes.push_back(startTime);
-    }
+//     std::vector<int> uniqueStartTimes;
+//     while (query.executeStep()) {
+//         const int startTime = query.getColumn(0).getInt();
+//         uniqueStartTimes.push_back(startTime);
+//     }
 
-    // ===== STEP 2: FOR EACH UNIQUE START TIME - GET THE STACK CHORD ===== //
-    std::vector<std::tuple<int, float, Key, Chord, bool>> stackedChords;
-    stackedChords.reserve(uniqueStartTimes.size());
+//     // ===== STEP 2: FOR EACH UNIQUE START TIME - GET THE STACK CHORD ===== //
+//     std::vector<std::tuple<int, float, Key, Chord, bool>> stackedChords;
+//     stackedChords.reserve(uniqueStartTimes.size());
 
-    for (const auto& startTime : uniqueStartTimes) {
-        SQLite::Statement query(db,
-                                "SELECT measure, floatMeasure, address, scalefactor FROM "
-                                "events WHERE starttime = ?");
-        // Bind query parameters
-        query.bind(1, startTime);
+//     for (const auto& startTime : uniqueStartTimes) {
+//         SQLite::Statement query(db,
+//                                 "SELECT measure, floatMeasure, address, scalefactor FROM "
+//                                 "events WHERE starttime = ?");
+//         // Bind query parameters
+//         query.bind(1, startTime);
 
-        int measure = 0;
-        float floatMeasure = 0.0f;
-        std::vector<std::pair<int, const Note*>> scaleFactorNotePair;
-        while (query.executeStep()) {
-            // Get the measure value
-            measure = query.getColumn(0).getInt();
+//         int measure = 0;
+//         float floatMeasure = 0.0f;
+//         std::vector<std::pair<int, const Note*>> scaleFactorNotePair;
+//         while (query.executeStep()) {
+//             // Get the measure value
+//             measure = query.getColumn(0).getInt();
 
-            // Get the measure value
-            floatMeasure = static_cast<float>(query.getColumn(1).getDouble());
+//             // Get the measure value
+//             floatMeasure = static_cast<float>(query.getColumn(1).getDouble());
 
-            // Get the note pointer
-            const intptr_t address = query.getColumn(2).getInt64();
-            const Note* note = reinterpret_cast<Note*>(address);
+//             // Get the note pointer
+//             const intptr_t address = query.getColumn(2).getInt64();
+//             const Note* note = reinterpret_cast<Note*>(address);
 
-            // Skip rests
-            if (note->isNoteOff()) {
-                continue;
-            }
+//             // Skip rests
+//             if (note->isNoteOff()) {
+//                 continue;
+//             }
 
-            const int measureScaleFactor = query.getColumn(3).getInt();
+//             const int measureScaleFactor = query.getColumn(3).getInt();
 
-            scaleFactorNotePair.push_back({measureScaleFactor, note});
-        }
+//             scaleFactorNotePair.push_back({measureScaleFactor, note});
+//         }
 
-        // ===== STEP 2.1: SKIP UNDESIRED CHORDS ===== //
-        // The logic below is:
-        // a) Skip this chord if it have ALL notes longer than 'maxDuration'
-        // b) Skip this chord if it have AT LEAST ONE note shorter than
-        // 'minDuration'
-        Chord chord;
-        // bool undesiredTimeChord = false;
-        const int firstNoteMeasureScale = scaleFactorNotePair[0].first;
-        const Note* firstNote = scaleFactorNotePair[0].second;
+//         // ===== STEP 2.1: SKIP UNDESIRED CHORDS ===== //
+//         // The logic below is:
+//         // a) Skip this chord if it have ALL notes longer than 'maxDuration'
+//         // b) Skip this chord if it have AT LEAST ONE note shorter than
+//         // 'minDuration'
+//         Chord chord;
+//         // bool undesiredTimeChord = false;
+//         const int firstNoteMeasureScale = scaleFactorNotePair[0].first;
+//         const Note* firstNote = scaleFactorNotePair[0].second;
 
-        bool tooShortTimeChord = false;
-        bool tooLongTimeChord =
-            (firstNote->getDurationTicks() * firstNoteMeasureScale) > maxDurationTicks;
+//         bool tooShortTimeChord = false;
+//         bool tooLongTimeChord =
+//             (firstNote->getDurationTicks() * firstNoteMeasureScale) > maxDurationTicks;
 
-        for (const auto& pair : scaleFactorNotePair) {
-            const int measureScale = pair.first;
-            const Note* note = pair.second;
+//         for (const auto& pair : scaleFactorNotePair) {
+//             const int measureScale = pair.first;
+//             const Note* note = pair.second;
 
-            const int scaledDurationTicks = note->getDurationTicks() * measureScale;
+//             const int scaledDurationTicks = note->getDurationTicks() * measureScale;
 
-            tooShortTimeChord |= scaledDurationTicks < minDurationTicks;
-            tooLongTimeChord &= scaledDurationTicks > maxDurationTicks;
+//             tooShortTimeChord |= scaledDurationTicks < minDurationTicks;
+//             tooLongTimeChord &= scaledDurationTicks > maxDurationTicks;
 
-            // Append note to the temp chord
-            chord.addNote(*note);
-        }
+//             // Append note to the temp chord
+//             chord.addNote(*note);
+//         }
 
-        // Skip undesired short/long time chords
-        if (tooShortTimeChord || tooLongTimeChord) {
-            continue;
-        }
+//         // Skip undesired short/long time chords
+//         if (tooShortTimeChord || tooLongTimeChord) {
+//             continue;
+//         }
 
-        // Remove chord duplicate notes
-        if (!includeDuplicates) {
-            chord.removeDuplicateNotes();
-        }
+//         // Remove chord duplicate notes
+//         if (!includeDuplicates) {
+//             chord.removeDuplicateNotes();
+//         }
 
-        // // Skip undesired smaller/bigger chords
-        // const int chordSize = chord.size();
-        // if (chordSize < minStackedNotes || chordSize > maxStackedNotes) {
-        //     continue;
-        // }
+//         // // Skip undesired smaller/bigger chords
+//         // const int chordSize = chord.size();
+//         // if (chordSize < minStackedNotes || chordSize > maxStackedNotes) {
+//         //     continue;
+//         // }
 
-        chord.sortNotes();
+//         chord.sortNotes();
 
-        // Get the current measure Key
-        const int internalMeasureIdx = measure - 1;
-        const Key key = _part.at(0).getMeasure(internalMeasureIdx).getKey();
+//         // Get the current measure Key
+//         const int internalMeasureIdx = measure - 1;
+//         const Key key = _part.at(0).getMeasure(internalMeasureIdx).getKey();
 
-        // Store [measure, floatMeasure, key, chord] tuple
-        stackedChords.push_back({measure, floatMeasure, key, chord, true});
-    }
+//         // Store [measure, floatMeasure, key, chord, isHomophonic] tuple
+//         stackedChords.push_back({measure, floatMeasure, key, chord, true});
+//     }
 
-    return stackedChords;
-}
+//     return stackedChords;
+// }
 
 std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChordsPerEachNoteEvent(
     SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
@@ -3533,7 +3533,7 @@ std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChordsPerEachNot
 
         // std::cout << "measure: " << measure << " maxFloM: " << maxfloatMeasure
         //   << " key: " << key.getName() << " chord:" << chord.getName() << std::endl;
-        // Store [measure, floatMeasure, key, chord] tuple
+        // Store [measure, floatMeasure, key, chord, isHomophonic] tuple
         stackedChords.push_back({measure, maxfloatMeasure, key, chord, isHomophonicChord});
     }
 
