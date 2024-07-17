@@ -28,7 +28,7 @@ void MeasureClass(const py::module& m) {
             py::arg("isMajorMode") = true);
     cls.def("setTimeSignature", &Measure::setTimeSignature, py::arg("upper"), py::arg("lower"));
     cls.def("setMetronome", &Measure::setMetronome, py::arg("bpm"),
-            py::arg("duration") = Duration::QUARTER);
+            py::arg("rhythmFigure") = RhythmFigure::QUARTER);
 
     cls.def("setKeyMode", &Measure::setKeyMode, py::arg("isMajorMode"));
     cls.def("setIsKeySignatureChanged", &Measure::setIsKeySignatureChanged,
@@ -93,7 +93,7 @@ void MeasureClass(const py::module& m) {
     cls.def("getQuarterDuration", &Measure::getQuarterDuration);
     cls.def("getFilledQuarterDuration", &Measure::getFilledQuarterDuration, py::arg("staveId") = 0);
     cls.def("getFreeQuarterDuration", &Measure::getFreeQuarterDuration, py::arg("staveId") = 0);
-
+    cls.def("getFractionDuration", &Measure::getFractionDuration);
     cls.def("getDurationTicks", &Measure::getDurationTicks);
     cls.def("getFilledDurationTicks", &Measure::getFilledDurationTicks, py::arg("staveId") = 0);
     cls.def("getFreeDurationTicks", &Measure::getFreeDurationTicks, py::arg("staveId") = 0);

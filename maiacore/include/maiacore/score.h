@@ -35,6 +35,22 @@ class Score {
                                         tags in XML file */
     bool _haveAnacrusisMeasure;
 
+    typedef struct noteData_st {
+        float currentTimeValue = 0.0f;
+        const Note* notePtr = nullptr;
+        float floatBeatStartTime = 0.0f;
+        float floatBeatEndTime = 0.0f;
+    } NoteData;
+
+    typedef struct chordData_st {
+        std::vector<NoteData> noteData;
+        const Measure* measurePtr = nullptr;
+        bool isHomophonicChord = true;
+        float beatEndTimeHigherLimit = 0.0f;
+        float beatStartTimeLowerLimit = 1000.0f;
+        float chordQuarterDuration = 0.0f;
+    } ChordData;
+
     /**
      * @brief Import a XML sheet music file: *.xml, *.musicxml or *.mxml
      *
@@ -45,33 +61,15 @@ class Score {
      */
     void loadXMLFile(const std::string& filePath);
 
-    // /**
-    //  * @brief Get a chord list where each chord contains notes have the same attack in time
-    //  (aligned
-    //  * chord)
-    //  *
-    //  * @param db
-    //  * @param minDurationTicks
-    //  * @param maxDurationTicks
-    //  * @param includeDuplicates
-    //  * @return std::vector<std::tuple<int, float, Chord>>
-    //  */
-    // std::vector<std::tuple<int, float, Key, Chord, bool>> getSameAttackChords(
-    //     SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
-    //     const bool includeDuplicates);
-
     /**
      * @brief Get the Chords Per Each Note Event object
      *
      * @param db
-     * @param minDurationTicks
-     * @param maxDurationTicks
      * @param includeDuplicates
-     * @return std::vector<std::tuple<int, float, Chord>>
+     * @return std::vector<std::tuple<int, float, Key, Chord, bool>>
      */
     std::vector<std::tuple<int, float, Key, Chord, bool>> getChordsPerEachNoteEvent(
-        SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
-        const bool includeDuplicates);
+        SQLite::Database& db, const bool includeDuplicates);
 
    public:
     /**
@@ -256,7 +254,7 @@ class Score {
      * @param duration
      * @param measureStart
      */
-    void setMetronomeMark(int bpm, const Duration duration = Duration::QUARTER,
+    void setMetronomeMark(int bpm, const RhythmFigure duration = RhythmFigure::QUARTER,
                           int measureStart = 0);
 
     /**

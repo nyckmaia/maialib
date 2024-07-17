@@ -40,15 +40,12 @@ void HelperClass(const py::module& m) {
                    py::arg("divisionsPerQuarterNote") = 256,
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def_static("ticks2noteType", &Helper::ticks2noteType, py::arg("ticks"),
-                   py::arg("divisionsPerQuarterNote") = 256,
+    cls.def_static("ticks2noteType", &Helper::ticks2noteType, py::arg("durationTicks"),
+                   py::arg("divisionsPerQuarterNote") = 256, py::arg("actualNotes") = 1,
+                   py::arg("normalNotes") = 1,
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def_static("pitch2number", &Helper::pitch2number, py::arg("pitch"),
-                   py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    //--------------------- //
-    cls.def_static("number2pitch", &Helper::number2pitch, py::arg("number"),
-                   py::arg("accType") = "#",
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
     cls.def_static("isEnharmonic", &Helper::isEnharmonic,
@@ -62,13 +59,13 @@ void HelperClass(const py::module& m) {
                    py::arg("duration_B"),
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
-    cls.def_static("duration2noteType", &Helper::duration2noteType, py::arg("duration"),
+    cls.def_static("rhythmFigure2noteType", &Helper::rhythmFigure2noteType, py::arg("rhythmFigure"),
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def_static("duration2Ticks", &Helper::duration2Ticks, py::arg("duration"),
+    cls.def_static("rhythmFigure2Ticks", &Helper::rhythmFigure2Ticks, py::arg("rhythmFigure"),
                    py::arg("divisionsPerQuarterNote") = 265);
     //--------------------- //
-    cls.def_static("noteType2duration", &Helper::noteType2duration, py::arg("noteType"));
+    cls.def_static("noteType2RhythmFigure", &Helper::noteType2RhythmFigure, py::arg("noteType"));
     //--------------------- //
     cls.def_static("pitch2freq", &Helper::pitch2freq, py::arg("pitch"),
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());

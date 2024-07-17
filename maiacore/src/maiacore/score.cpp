@@ -88,8 +88,9 @@ void Score::info() const {
     LOG_INFO("Title: " << _title);
     LOG_INFO("Composer: " << _composerName);
     LOG_INFO("Key Signature: " << _part.at(0).getMeasure(0).getKeySignature());
-    LOG_INFO("Time Signature: " << _part.at(0).getMeasure(0).getTimeSignature().first << "/"
-                                << _part.at(0).getMeasure(0).getTimeSignature().second);
+    LOG_INFO("Time Signature: " << _part.at(0).getMeasure(0).getTimeSignature().getUpperValue()
+                                << "/"
+                                << _part.at(0).getMeasure(0).getTimeSignature().getLowerValue());
     LOG_INFO("Number of Notes: " << getNumNotes());
     LOG_INFO("Number of Measures: " << getNumMeasures());
     LOG_INFO("Number of Parts: " << getNumParts());
@@ -509,7 +510,7 @@ void Score::loadXMLFile(const std::string& filePath) {
             bool isGraceNote = false;
             bool isTuple = false;
             bool isUnpitched = false;
-            int numDots = 0;
+            // int numDots = 0;
             int numTies = 0;
             int octave = 0;
             std::string step;
@@ -544,6 +545,17 @@ void Score::loadXMLFile(const std::string& filePath) {
                 tupleNormalNotes =
                     atoi(node.child("time-modification").child_value("normal-notes"));
                 tupleNormalType = node.child("time-modification").child_value("normal-type");
+                if (tupleActualNotes == 0) {
+                    tupleActualNotes = 1;
+                }
+
+                if (tupleNormalNotes == 0) {
+                    tupleNormalNotes = 1;
+                }
+
+                if (tupleNormalType.empty()) {
+                    tupleNormalType = type;
+                }
 
                 // ===== GET NOTE PITCH ===== //
                 step = (!isUnpitched) ? node.child("pitch").child_value("step")
@@ -593,26 +605,24 @@ void Score::loadXMLFile(const std::string& filePath) {
                 }
 
                 // ===== CONSTRUCT A NOTE OBJECT AND STORE IT INSIDE THE SCORE ===== //
-                const int divPQN = _part[p].getMeasure(m).getDivisionsPerQuarterNote();
-                Duration duration;
-                if (isGraceNote) {
-                    duration = Helper::noteType2duration(type);
-                } else {
-                    const std::string noteType =
-                        Helper::ticks2noteType(durationTicks, divPQN).first;
-                    duration = Helper::noteType2duration(noteType);
-                }
 
-                Note note(pitch, duration, isNoteOn, inChord, transposeDiatonic, transposeChromatic,
-                          divPQN);
+                Note note(pitch);
+                note.setIsInChord(inChord);
+                note.setTransposingInterval(transposeDiatonic, transposeChromatic);
                 note.setVoice(voice);
                 note.setStaff(staff);
                 note.setIsGraceNote(isGraceNote);
                 note.setStem(stem);
                 note.setIsTuplet(isTuple);
                 note.setIsPitched(!isUnpitched);
-                note.setTupleValues(tupleActualNotes, tupleNormalNotes, tupleNormalType);
+                // note.setTupleValues(tupleActualNotes, tupleNormalNotes, tupleNormalType);
                 note.setUnpitchedIndex(unpitchedIndex);
+
+                // ===== NOTE DURATION ===== //
+                const int divPQN = _part[p].getMeasure(m).getDivisionsPerQuarterNote();
+                if (!isGraceNote) {
+                    note.setDuration({durationTicks, divPQN, tupleActualNotes, tupleNormalNotes});
+                }
 
                 // ===== ARTICULATIONS ===== //
                 for (pugi::xml_node articulation :
@@ -648,23 +658,23 @@ void Score::loadXMLFile(const std::string& filePath) {
                     note.addSlur(slurType, slurOrientation);
                 }
                 // ===== DOTS ===== //
-                const auto dotsNodes = node.select_nodes("dot");
-                numDots = dotsNodes.size();
+                // const auto dotsNodes = node.select_nodes("dot");
+                // numDots = dotsNodes.size();
 
-                switch (numDots) {
-                    case 0:
-                        note.removeDots();
-                        break;
-                    case 1:
-                        note.setSingleDot();
-                        break;
-                    case 2:
-                        note.setDoubleDot();
-                        break;
-                    default:
-                        LOG_ERROR("More than 2 dots in a note");
-                        break;
-                }
+                // switch (numDots) {
+                //     case 0:
+                //         note.removeDots();
+                //         break;
+                //     case 1:
+                //         note.setSingleDot();
+                //         break;
+                //     case 2:
+                //         note.setDoubleDot();
+                //         break;
+                //     default:
+                //         LOG_ERROR("More than 2 dots in a note");
+                //         break;
+                // }
 
                 _part[p].getMeasure(m).addNote(note, staff);
             }
@@ -835,7 +845,7 @@ void Score::setTimeSignature(const int timeUpper, const int timeLower, const int
     }
 }
 
-void Score::setMetronomeMark(int bpm, const Duration duration, int measureStart) {
+void Score::setMetronomeMark(int bpm, const RhythmFigure duration, int measureStart) {
     // PROFILE_FUNCTION();
     // ===== VALIDADE INPUT ARGUMENTS ===== //
     // BPM validation
@@ -3096,50 +3106,6 @@ std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChords(nlohmann:
         return {};
     }
 
-    // ===== STEP 1.5: READ STACK MODE ===== //
-    // const bool continuosMode =
-    //     (!config.contains("continuosMode") || !config["continuosMode"].is_boolean())
-    //         ? true
-    //         : config["continuosMode"].get<bool>();
-
-    // ===== STEP 1.6: READ MIN DURATION ===== //
-    const std::string defaultMinDuration = MUSIC_XML::NOTE_TYPE::N64TH;  // Arbitrary value
-    std::string minDuration =
-        (!config.contains("minDuration") || !config["minDuration"].is_string())
-            ? defaultMinDuration
-            : config["minDuration"].get<std::string>();
-
-    int minDurationTicks = Helper::noteType2ticks(minDuration, _lcmDivisionsPerQuarterNote);
-
-    if (minDurationTicks < 0) {
-        LOG_WARN("The 'minDuration' MUST BE a basic rhythm figure string!");
-        LOG_WARN("Setting the 'minDuration' to '64th'");
-        minDurationTicks = Helper::noteType2ticks(defaultMinDuration, _lcmDivisionsPerQuarterNote);
-    }
-
-    // ===== STEP 1.7: READ MAX DURATION ===== //
-    const std::string defaultMaxDuration = MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT;  // Arbitrary value
-    std::string maxDuration =
-        (!config.contains("maxDuration") || !config["maxDuration"].is_string())
-            ? defaultMaxDuration
-            : config["maxDuration"].get<std::string>();
-
-    int maxDurationTicks = Helper::noteType2ticks(maxDuration, _lcmDivisionsPerQuarterNote);
-
-    if (maxDurationTicks < 0) {
-        LOG_WARN("The 'maxDuration' MUST BE a basic rhythm figure string!");
-        LOG_WARN("Setting the 'maxDuration' to 'maxima'");
-        maxDurationTicks = Helper::noteType2ticks(defaultMaxDuration, _lcmDivisionsPerQuarterNote);
-    }
-
-    // Error checking
-    if (minDurationTicks > maxDurationTicks) {
-        LOG_ERROR(
-            "The 'maxDuration' figure MUST BE greater than 'minDuration' "
-            "figure");
-        return {};
-    }
-
     // ===== STEP 1.8: READ 'INCLUDE UNPITCHED' ===== //
     const bool includeUnpitched =
         (!config.contains("includeUnpitched") || !config["includeUnpitched"].is_boolean())
@@ -3156,385 +3122,269 @@ std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChords(nlohmann:
     SQLite::Database db(":memory:",
                         SQLite::OPEN_READWRITE | SQLite::OPEN_CREATE | SQLite::OPEN_MEMORY);
 
-    db.exec(
-        "create table events (measure int, floatMeasure float, starttime int, endtime int, address "
-        "intptr_t, scalefactor int)");
+    const std::string& sqlCreateTable =
+        "create table events (partIdx integer, measureIdx integer, staveIdx integer, voiceIdx "
+        "integer, noteIdx integer, pitch text, duration float, fractionDuration text, "
+        "currentFractionDuration text, endFractionDuration text, currentFractionDurationFloat "
+        "float, endFractionDurationFloat float,"
+        "currentDuration float, endDuration float, currentMeasureFractionDuration text, "
+        "endMeasureFractionDuration text, currentMeasureDuration float, "
+        "endMeasureDuration float, currentTime float, endTime float, noteAddress intptr_t, "
+        "measureAddress intptr_t, "
+        "divisionPerQuarterNote integer);";
 
-    int previusTime = 0;
-    int currentTime = 0;
-    float previusFloatMeasure = 0.0f;
+    db.exec(sqlCreateTable.c_str());
 
-    // std::ofstream file;
-    // file.open("table.csv");
-    // file.clear();
-    // file << "measure; fMeasure; starttime; endtime; curTimeVc1; mBegging; lcmDQN; mDPQN; note; "
-    //         "ticks; "
-    //         "noteDiv; "
-    //         "noteDur; divisionsScaleFactor;"
-    //      << std::endl;
-
+    std::string sqlInsertValues;
     const int partNamesSize = partNames.size();
-    for (int p = 0; p < partNamesSize; p++) {
-        Part& currentPart = getPart(partNames[p]);
+    for (int partIdx = 0; partIdx < partNamesSize; partIdx++) {
+        Part& currentPart = getPart(partNames[partIdx]);
 
         // Skip unpitched parts
         if (!includeUnpitched && !currentPart.isPitched()) {
             continue;
         }
 
-        currentTime = 0;
-        int currentTimeVoice1 = 0;
-        int measureBegginingTicks = 0;
-        for (int m = measureStart; m < measureEnd; m++) {
-            Measure& currentMeasure = currentPart.getMeasure(m);
-            const float floatMeasureBeginning = static_cast<float>(m);
+        float currentDuration = 0.0f;
+        float currentMeasureDuration = 0.0f;
+        float previusDuration = 0.0f;
+        float previusMeasureDuration = 0.0f;
+        Fraction currentFractionDuration(0, 1);
+        Fraction currentMeasureFractionDuration(0, 1);
+        Fraction previusFractionDuration(0, 1);
+        Fraction previusMeasureFractionDuration(0, 1);
 
-            // Compute the measure 'divisions per quarter note' scale factor
-            // That's necessary to standardize the integer values to each rhythm
-            // figure Because 'divisions per quarter note' can change over XML
-            // measures
-            const float divisionsScaleFactor = (float)_lcmDivisionsPerQuarterNote /
-                                               (float)currentMeasure.getDivisionsPerQuarterNote();
+        for (int measureIdx = measureStart; measureIdx < measureEnd; measureIdx++) {
+            Measure& currentMeasure = currentPart.getMeasure(measureIdx);
+            const float startMeasureDuration = static_cast<float>(measureIdx);
+            currentMeasureDuration = startMeasureDuration;
 
-            measureBegginingTicks = currentTimeVoice1;
-            for (int s = 0; s < currentMeasure.getNumStaves(); s++) {
-                const int numNotes = currentMeasure.getNumNotes(s);
-                // Reset 'currentTime' and 'floatMeasureDelta' when use multiple staves
-                currentTime = measureBegginingTicks;
-                float floatMeasure = floatMeasureBeginning;
-                previusFloatMeasure = floatMeasure;
-                float floatMeasureDelta = 0.0f;
+            Fraction startMeasureFractionDuration(measureIdx, 1);
+            currentMeasureFractionDuration = startMeasureFractionDuration;
+
+            float measureBegginingDuration = 0.0f;
+            Fraction measureBegginingFractionDuration(0, 1);
+
+            const int divisionsPerQuarterNote = currentMeasure.getDivisionsPerQuarterNote();
+
+            for (int staveIdx = 0; staveIdx < currentMeasure.getNumStaves(); staveIdx++) {
+                const int numNotes = currentMeasure.getNumNotes(staveIdx);
+
+                if (staveIdx == 0) {
+                    measureBegginingDuration = currentDuration;
+                    measureBegginingFractionDuration = currentFractionDuration;
+                } else {
+                    currentDuration = measureBegginingDuration;
+                    currentFractionDuration = measureBegginingFractionDuration;
+                }
+
                 int currentVoice = 1;
-                for (int n = 0; n < numNotes; n++) {
-                    Note& currentNote = currentMeasure.getNote(n, s);
+
+                for (int noteIdx = 0; noteIdx < numNotes; noteIdx++) {
+                    const Note& currentNote = currentMeasure.getNote(noteIdx, staveIdx);
+                    const int voiceIdx = currentNote.getVoice();
+                    const std::string& pitch = currentNote.getPitch();
+                    const float duration = currentNote.getQuarterDuration();
+                    const Fraction& fractionDuration =
+                        currentNote.getDuration().getFractionDuration();
+                    const std::string& fractionDurationAsString =
+                        currentNote.getDuration().getFractionDurationAsString();
+
+                    if (currentNote.isGraceNote()) {
+                        continue;
+                    }
 
                     if (currentNote.inChord()) {
-                        currentTime = previusTime;
-                        floatMeasure = previusFloatMeasure;
+                        currentDuration = previusDuration;
+                        currentMeasureDuration = previusMeasureDuration;
+
+                        currentFractionDuration = previusFractionDuration;
+                        currentMeasureFractionDuration = previusMeasureFractionDuration;
                     }
 
                     if (currentNote.getVoice() != currentVoice) {
                         currentVoice = currentNote.getVoice();
-                        currentTime = measureBegginingTicks;
-                        floatMeasure = floatMeasureBeginning;
+                        currentDuration = measureBegginingDuration;
+                        currentMeasureDuration = startMeasureDuration;
+
+                        currentFractionDuration = measureBegginingFractionDuration;
+                        currentMeasureFractionDuration = startMeasureFractionDuration;
                     }
 
-                    const int timeEnd =
-                        currentTime + (currentNote.getDurationTicks() * divisionsScaleFactor);
+                    const float endDuration = currentDuration + duration;
+                    const float measureDurationDelta =
+                        static_cast<float>(currentNote.getDurationTicks()) /
+                        static_cast<float>(currentMeasure.getDurationTicks());
+                    const float endMeasureDuration = currentMeasureDuration + measureDurationDelta;
 
-                    // const std::string line =
-                    //     std::to_string(m + 1) + ";" + std::to_string(floatMeasure + 1.0f) + ";" +
-                    //     std::to_string(currentTime) + ";" + std::to_string(timeEnd) + ";" +
-                    //     std::to_string(currentTimeVoice1) + ";" +
-                    //     std::to_string(measureBegginingTicks) + ";" +
-                    //     std::to_string(_lcmDivisionsPerQuarterNote) + ";" +
-                    //     std::to_string(currentMeasure.getDivisionsPerQuarterNote()) + ";" +
-                    //     currentNote.getPitch() + ";" +
-                    //     std::to_string(currentNote.getDurationTicks()) + ";" +
-                    //     std::to_string(currentNote.getDivisionsPerQuarterNote()) + ";" +
-                    //     currentNote.getType() + ";" + std::to_string(divisionsScaleFactor) +
-                    //     "\n";
+                    const Fraction endFractionDuration = currentFractionDuration + fractionDuration;
+                    const Fraction measureFractionDurationDelta =
+                        currentNote.getDuration().getFractionDuration() /
+                        currentMeasure.getFractionDuration();
+                    const Fraction endMeasureFractionDuration =
+                        currentMeasureFractionDuration + measureFractionDurationDelta;
 
-                    // file << line;
-
-                    std::string str =
-                        "insert into events (measure, floatMeasure, starttime, endtime, "
-                        "address, scalefactor) VALUES ";
-                    std::string values =
-                        "(" + std::to_string(m + 1) + ", " + std::to_string(floatMeasure + 1.0f) +
-                        ", " + std::to_string(currentTime) + ", " + std::to_string(timeEnd) + ", " +
+                    sqlInsertValues +=
+                        "\n(" + std::to_string(partIdx) + ", " + std::to_string(measureIdx) + ", " +
+                        std::to_string(staveIdx) + ", " + std::to_string(voiceIdx) + ", " +
+                        std::to_string(noteIdx) + ", '" + pitch + "', " + std::to_string(duration) +
+                        ", " + fractionDurationAsString + ", " +
+                        currentFractionDuration.toString() + ", " + endFractionDuration.toString() +
+                        ", " + std::to_string(currentFractionDuration.getFloatValue()) + ", " +
+                        std::to_string(endFractionDuration.getFloatValue()) + ", " +
+                        std::to_string(currentDuration) + ", " + std::to_string(endDuration) +
+                        ", " + currentMeasureFractionDuration.toString() + ", " +
+                        endMeasureFractionDuration.toString() + ", " +
+                        std::to_string(currentMeasureDuration) + ", " +
+                        std::to_string(endMeasureDuration) + ", " +
+                        std::to_string(currentMeasureFractionDuration.getFloatValue()) + ", " +
+                        std::to_string(endMeasureFractionDuration.getFloatValue()) + ", " +
                         std::to_string((intptr_t)&currentNote) + ", " +
-                        std::to_string(divisionsScaleFactor) + ")";
-                    str.append(values);
+                        std::to_string((intptr_t)&currentMeasure) + ", " +
+                        std::to_string(divisionsPerQuarterNote) + "),";
 
-                    db.exec(str.c_str());
+                    // Aux variables
+                    previusDuration = currentDuration;
+                    previusMeasureDuration = currentMeasureDuration;
 
-                    previusTime = currentTime * divisionsScaleFactor;
-                    currentTime += currentNote.getDurationTicks() * divisionsScaleFactor;
-                    previusFloatMeasure = floatMeasure;
+                    previusFractionDuration = currentFractionDuration;
+                    previusMeasureFractionDuration = currentMeasureFractionDuration;
 
-                    if (currentNote.getVoice() == 1 && !currentNote.inChord()) {
-                        currentTimeVoice1 += currentNote.getDurationTicks() * divisionsScaleFactor;
-                    }
+                    currentDuration += duration;
+                    currentMeasureDuration += measureDurationDelta;
 
-                    if (!currentNote.inChord()) {
-                        floatMeasureDelta +=
-                            currentNote.getQuarterDuration() / currentMeasure.getQuarterDuration();
-                        floatMeasure = floatMeasureBeginning + floatMeasureDelta;
-                    }
+                    currentFractionDuration += fractionDuration;
+                    currentMeasureFractionDuration += measureFractionDurationDelta;
                 }
             }
         }
     }
 
-    // // Choose which stack chords algorithm that you desired:
-    // if (!continuosMode) {
-    //     return getSameAttackChords(db, minDurationTicks, maxDurationTicks, includeDuplicates);
-    // }
+    // Substitui o último caractere ',' por ';'
+    const std::string& replacement = ";";
+    sqlInsertValues.back() = replacement[0];
 
-    return getChordsPerEachNoteEvent(db, minDurationTicks, maxDurationTicks, includeDuplicates);
+    const std::string& sqlInsertCommand =
+        "insert into events (partIdx, measureIdx, staveIdx, voiceIdx, noteIdx, "
+        "pitch, duration, fractionDuration, currentFractionDuration, endFractionDuration, "
+        "currentFractionDurationFloat, endFractionDurationFloat, "
+        "currentDuration, endDuration, currentMeasureFractionDuration, endMeasureFractionDuration, "
+        "currentMeasureDuration, endMeasureDuration, currentTime, endTime, noteAddress, "
+        "measureAddress, "
+        "divisionPerQuarterNote) "
+        "VALUES ";
+
+    const std::string& sqlCommand = sqlInsertCommand + sqlInsertValues;
+
+    // std::cout << sqlCommand << std::endl;
+
+    db.exec(sqlCommand.c_str());
+
+    return getChordsPerEachNoteEvent(db, includeDuplicates);
 }
 
-// std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getSameAttackChords(
-//     SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
-//     const bool includeDuplicates) {
-//     // PROFILE_FUNCTION();
-//     // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
-//     db.exec("CREATE INDEX startTime_idx ON events (starttime)");
-
-//     // ===== STEP 1: GET THE AMOUNT OF UNIQUE START TIME EVENTS ===== //
-//     SQLite::Statement query(db,
-//                             "SELECT starttime, COUNT(*) from events GROUP BY starttime "
-//                             "ORDER BY starttime ASC");
-
-//     std::vector<int> uniqueStartTimes;
-//     while (query.executeStep()) {
-//         const int startTime = query.getColumn(0).getInt();
-//         uniqueStartTimes.push_back(startTime);
-//     }
-
-//     // ===== STEP 2: FOR EACH UNIQUE START TIME - GET THE STACK CHORD ===== //
-//     std::vector<std::tuple<int, float, Key, Chord, bool>> stackedChords;
-//     stackedChords.reserve(uniqueStartTimes.size());
-
-//     for (const auto& startTime : uniqueStartTimes) {
-//         SQLite::Statement query(db,
-//                                 "SELECT measure, floatMeasure, address, scalefactor FROM "
-//                                 "events WHERE starttime = ?");
-//         // Bind query parameters
-//         query.bind(1, startTime);
-
-//         int measure = 0;
-//         float floatMeasure = 0.0f;
-//         std::vector<std::pair<int, const Note*>> scaleFactorNotePair;
-//         while (query.executeStep()) {
-//             // Get the measure value
-//             measure = query.getColumn(0).getInt();
-
-//             // Get the measure value
-//             floatMeasure = static_cast<float>(query.getColumn(1).getDouble());
-
-//             // Get the note pointer
-//             const intptr_t address = query.getColumn(2).getInt64();
-//             const Note* note = reinterpret_cast<Note*>(address);
-
-//             // Skip rests
-//             if (note->isNoteOff()) {
-//                 continue;
-//             }
-
-//             const int measureScaleFactor = query.getColumn(3).getInt();
-
-//             scaleFactorNotePair.push_back({measureScaleFactor, note});
-//         }
-
-//         // ===== STEP 2.1: SKIP UNDESIRED CHORDS ===== //
-//         // The logic below is:
-//         // a) Skip this chord if it have ALL notes longer than 'maxDuration'
-//         // b) Skip this chord if it have AT LEAST ONE note shorter than
-//         // 'minDuration'
-//         Chord chord;
-//         // bool undesiredTimeChord = false;
-//         const int firstNoteMeasureScale = scaleFactorNotePair[0].first;
-//         const Note* firstNote = scaleFactorNotePair[0].second;
-
-//         bool tooShortTimeChord = false;
-//         bool tooLongTimeChord =
-//             (firstNote->getDurationTicks() * firstNoteMeasureScale) > maxDurationTicks;
-
-//         for (const auto& pair : scaleFactorNotePair) {
-//             const int measureScale = pair.first;
-//             const Note* note = pair.second;
-
-//             const int scaledDurationTicks = note->getDurationTicks() * measureScale;
-
-//             tooShortTimeChord |= scaledDurationTicks < minDurationTicks;
-//             tooLongTimeChord &= scaledDurationTicks > maxDurationTicks;
-
-//             // Append note to the temp chord
-//             chord.addNote(*note);
-//         }
-
-//         // Skip undesired short/long time chords
-//         if (tooShortTimeChord || tooLongTimeChord) {
-//             continue;
-//         }
-
-//         // Remove chord duplicate notes
-//         if (!includeDuplicates) {
-//             chord.removeDuplicateNotes();
-//         }
-
-//         // // Skip undesired smaller/bigger chords
-//         // const int chordSize = chord.size();
-//         // if (chordSize < minStackedNotes || chordSize > maxStackedNotes) {
-//         //     continue;
-//         // }
-
-//         chord.sortNotes();
-
-//         // Get the current measure Key
-//         const int internalMeasureIdx = measure - 1;
-//         const Key key = _part.at(0).getMeasure(internalMeasureIdx).getKey();
-
-//         // Store [measure, floatMeasure, key, chord, isHomophonic] tuple
-//         stackedChords.push_back({measure, floatMeasure, key, chord, true});
-//     }
-
-//     return stackedChords;
-// }
-
 std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChordsPerEachNoteEvent(
-    SQLite::Database& db, const int minDurationTicks, const int maxDurationTicks,
-    const bool includeDuplicates) {
+    SQLite::Database& db, const bool includeDuplicates) {
     // ===== STEP 0: CREATE INDEX TO SPEED UP QUERIES ===== //
-    db.exec("CREATE INDEX startTime_endTime_idx ON events (starttime, endtime)");
+    db.exec("CREATE INDEX currentTime_endTime_idx ON events (currentTime, endTime)");
 
     // ===== STEP 1: GET THE NUMBER OF UNIQUE START TIME EVENTS ===== //
     const int numUniqueEvents =
-        db.execAndGet("SELECT COUNT (DISTINCT starttime) from events").getInt();
+        db.execAndGet("SELECT COUNT (DISTINCT currentTime) from events").getInt();
 
     // ===== STEP 2: GET THE UNIQUE START TIME EVENTS ===== //
-    std::vector<int> uniqueStartTime(numUniqueEvents, 0);
-    SQLite::Statement query(db, "SELECT DISTINCT starttime from events ORDER BY starttime ASC");
+    std::vector<float> uniqueStartTime;
+    uniqueStartTime.reserve(numUniqueEvents);
+    SQLite::Statement query(db, "SELECT DISTINCT currentTime from events ORDER BY currentTime ASC");
 
-    int i = 0;
     while (query.executeStep()) {
-        uniqueStartTime[i] = query.getColumn(0).getInt();
-        i++;
+        uniqueStartTime.push_back(query.getColumn(0).getDouble());
     }
 
     // ===== STEP 3: FOR EACH UNIQUE START TIME - GET THE STACK CHORD ===== //
+    std::vector<Score::ChordData> chordData(numUniqueEvents);
+    int chordIdx = 0;
     std::vector<std::tuple<int, float, Key, Chord, bool>> stackedChords;
     stackedChords.reserve(numUniqueEvents);
-    for (const int startTime : uniqueStartTime) {
-        // std::cout << "startTime: " << startTime << std::endl;
-        SQLite::Statement query(
-            db,
-            "SELECT measure, floatMeasure, address, scalefactor, starttime FROM "
-            "events WHERE starttime <= ? and endtime > ?");
+    for (const float startTime : uniqueStartTime) {
+        SQLite::Statement query(db,
+                                "SELECT currentTime, noteAddress, measureAddress, "
+                                "currentFractionDurationFloat, endFractionDurationFloat FROM "
+                                "events WHERE currentTime <= ? and endTime > ?");
         // Bind query parameters
         query.bind(1, startTime);
         query.bind(2, startTime);
 
-        int measure = 0;
-        float maxfloatMeasure = 0.0f;
-        std::vector<std::pair<int, const Note*>> scaleFactorNotePair;
-        std::vector<int> chordNotesStartTimes;
-        chordNotesStartTimes.reserve(15);
-        bool isHomophonicChord = true;
+        const Measure* measurePtr = nullptr;
+        auto& currentChordData = chordData.at(chordIdx);
         while (query.executeStep()) {
-            // Get the measure value
-            measure = query.getColumn(0).getInt();
-
-            // Get the maxfloatMeasure value
-            const float measureFloat = static_cast<float>(query.getColumn(1).getDouble());
-
-            if (measureFloat > maxfloatMeasure) {
-                maxfloatMeasure = measureFloat;
-            }
+            const float measureStartTime = query.getColumn(0).getDouble();
 
             // Get the note pointer
-            const intptr_t address = query.getColumn(2).getInt64();
-            const Note* note = reinterpret_cast<Note*>(address);
+            const intptr_t noteAddress = query.getColumn(1).getInt64();
+            const Note* notePtr = reinterpret_cast<const Note*>(noteAddress);
 
-            const int measureScaleFactor = query.getColumn(3).getInt();
+            // Get the measure pointer
+            const intptr_t measureAddress = query.getColumn(2).getInt64();
+            measurePtr = reinterpret_cast<const Measure*>(measureAddress);
 
-            const int startTimeValue = query.getColumn(4).getInt();
-            if (note->isNoteOn()) {
-                chordNotesStartTimes.push_back(startTimeValue);
+            const float beatStartTime = query.getColumn(3).getDouble();
+            const float beatEndTime = query.getColumn(4).getDouble();
+
+            // std::cout << "chordIdx: " << chordIdx << " | pitch: " << notePtr->getPitch()
+            //           << " | startTime: " << startTime
+            //           << " | measureStartTime: " << measureStartTime
+            //           << " | beatStartTime: " << beatStartTime << " beatEndTime: " << beatEndTime
+            //           << std::endl;
+
+            if (!notePtr->isNoteOn()) {
+                continue;
             }
 
-            isHomophonicChord &= startTime == startTimeValue;
+            currentChordData.noteData.push_back(
+                {measureStartTime, notePtr, beatStartTime, beatEndTime});
 
-            scaleFactorNotePair.push_back({measureScaleFactor, note});
-        }
-
-        // ===== STEP 3.1: SKIP UNDESIRED CHORDS ===== //
-        // The logic below is:
-        // a) Skip this chord if it have ALL notes longer than 'maxDuration'
-        // b) Skip this chord if it have AT LEAST ONE note shorter than
-        // 'minDuration'
-        Chord chord;
-        // bool undesiredTimeChord = false;
-        const int firstNoteMeasureScale = scaleFactorNotePair[0].first;
-        const Note* firstNote = scaleFactorNotePair[0].second;
-
-        bool tooShortTimeChord = false;
-        bool tooLongTimeChord =
-            (firstNote->getDurationTicks() * firstNoteMeasureScale) > maxDurationTicks;
-
-        int noteInChordMinDurationTicks = firstNote->getDurationTicks() * firstNoteMeasureScale;
-        for (const auto& pair : scaleFactorNotePair) {
-            const int measureScale = pair.first;
-            const Note* note = pair.second;
-
-            int scaledDurationTicks = note->getDurationTicks() * measureScale;
-
-            tooShortTimeChord |= scaledDurationTicks < minDurationTicks;
-            tooLongTimeChord &= scaledDurationTicks > maxDurationTicks;
-
-            // Append note to the temp chord
-            chord.addNote(*note);
-
-            if (scaledDurationTicks < noteInChordMinDurationTicks) {
-                noteInChordMinDurationTicks = scaledDurationTicks;
+            if (beatEndTime > currentChordData.beatEndTimeHigherLimit) {
+                currentChordData.beatEndTimeHigherLimit = beatEndTime;
             }
+
+            if (beatStartTime < currentChordData.beatStartTimeLowerLimit) {
+                currentChordData.beatStartTimeLowerLimit = beatStartTime;
+            }
+
+            currentChordData.isHomophonicChord &= isFloatEqual(startTime, measureStartTime, 0.005f);
+            currentChordData.measurePtr = measurePtr;
         }
 
-        // Skip undesired short/long time chords
-        if (tooShortTimeChord || tooLongTimeChord) {
+        currentChordData.chordQuarterDuration =
+            currentChordData.beatEndTimeHigherLimit - currentChordData.beatStartTimeLowerLimit;
+
+        if (currentChordData.noteData.empty()) {
             continue;
         }
+
+        Chord chord;
+        for (const auto& noteData : currentChordData.noteData) {
+            chord.addNote(*noteData.notePtr);
+        }
+
+        const int measureDivisionPerQuarterNote = measurePtr->getDivisionsPerQuarterNote();
+        chord.setDuration(currentChordData.chordQuarterDuration, measureDivisionPerQuarterNote);
 
         // Remove chord duplicate notes
         if (!includeDuplicates) {
             chord.removeDuplicateNotes();
         }
 
-        // // Skip undesired smaller/bigger chords
-        // const int chordSize = chord.size();
-        // if (chordSize < minStackedNotes || chordSize > maxStackedNotes) {
-        //     continue;
-        // }
-
         chord.sortNotes();
 
-        bool haveAllNotesEqualDuration = true;
-        for (const auto& note : chord) {
-            const int firstDuration = chord.getNote(0).getDurationTicks();
-            if (note.getDurationTicks() != firstDuration) {
-                haveAllNotesEqualDuration = false;
-                break;
-            }
-        }
-
-        const int currentChordMinStartTime =
-            *std::min_element(chordNotesStartTimes.begin(), chordNotesStartTimes.end());
-        const int currentChordMaxStartTime =
-            *std::max_element(chordNotesStartTimes.begin(), chordNotesStartTimes.end());
-
-        const bool chordWithMultipleStartTime =
-            (currentChordMinStartTime != currentChordMaxStartTime) ? true : false;
-        if (chordWithMultipleStartTime && haveAllNotesEqualDuration && chord.size() > 1) {
-            const int chordMinEndTime =
-                currentChordMinStartTime + chord.getNote(0).getDurationTicks();
-            const int chordDuration = chordMinEndTime - currentChordMaxStartTime;
-            chord.setDurationTicks(chordDuration);
-        } else {
-            if (chord.size() != 0) {
-                chord.setDurationTicks(noteInChordMinDurationTicks);
-            }
-        }
-
         // Get the current measure Key
-        const int internalMeasureIdx = measure - 1;
-        const Key key = _part.at(0).getMeasure(internalMeasureIdx).getKey();
+        const int measureIdx = measurePtr->getNumber();
+        const Key& key = _part.at(0).getMeasure(measureIdx).getKey();
 
-        // std::cout << "measure: " << measure << " maxFloM: " << maxfloatMeasure
-        //   << " key: " << key.getName() << " chord:" << chord.getName() << std::endl;
-        // Store [measure, floatMeasure, key, chord, isHomophonic] tuple
-        stackedChords.push_back({measure, maxfloatMeasure, key, chord, isHomophonicChord});
+        stackedChords.push_back(
+            {measureIdx + 1, startTime + 1, key, chord, currentChordData.isHomophonicChord});
+        chordIdx++;
     }
 
     return stackedChords;

@@ -7,6 +7,10 @@ from pathlib import Path
 from setuptools import Extension, setup
 from setuptools.command.build_ext import build_ext
 
+# Lê a versão do arquivo VERSION
+version_path = Path(__file__).parent / "VERSION"
+version = version_path.read_text().strip()
+
 # Convert distutils Windows platform specifiers to CMake -A arguments
 PLAT_TO_CMAKE = {
     "win32": "Win32",
@@ -55,7 +59,8 @@ class CMakeBuild(build_ext):
             f"-DSQLITECPP_RUN_CPPLINT=OFF",
             f"-DSQLITECPP_RUN_CPPCHECK=OFF",
             f"-DSQLITECPP_BUILD_TESTS=OFF",
-            f"-DSQLITECPP_USE_STATIC_RUNTIME=ON"
+            f"-DSQLITECPP_USE_STATIC_RUNTIME=ON",
+            f'-DMAIALIB_VERSION_INFO={version}',
         ]
         build_args = []
         # Adding CMake arguments set as environment variable
@@ -145,7 +150,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
 
 setup(
     name="maialib",
-    version="1.5.1",
+    version=version,
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate sheet music data",
@@ -186,10 +191,9 @@ setup(
         "Natural Language :: English",
         "Topic :: Software Development :: Libraries"
     ],
-    install_requires=["pandas", "plotly"],
+    install_requires=["pandas", "plotly", "kaleido", "nbformat"],
     python_requires=">=3.8.0",
     zip_safe=False,
-    # extras_require={"test": ["pytest>=6.0"]},
     ext_modules=[CMakeExtension(name="maiacore")],
     cmdclass={"build_ext": CMakeBuild}
 )

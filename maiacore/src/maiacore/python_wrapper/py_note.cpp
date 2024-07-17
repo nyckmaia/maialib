@@ -17,31 +17,39 @@ void NoteClass(const py::module& m) {
 
     py::class_<Note> cls(m, "Note");
 
-    cls.def(
-        py::init<const std::string&, const Duration, bool, bool, const int, const int, const int>(),
-        py::arg("pitch"), py::arg("duration") = Duration::QUARTER, py::arg("isNoteOn") = true,
-        py::arg("inChord") = false, py::arg("transposeDiatonic") = 0,
-        py::arg("transposeChromatic") = 0, py::arg("divisionsPerQuarterNote") = 256);
-
-    cls.def(py::init<const int, const std::string&, const Duration, bool, bool, const int,
-                     const int, const int>(),
-            py::arg("midiNumber"), py::arg("accType") = "", py::arg("duration") = Duration::QUARTER,
+    cls.def(py::init<const std::string&, const RhythmFigure, bool, bool, const int, const int,
+                     const int>(),
+            py::arg("pitch"), py::arg("rhythmFigure") = RhythmFigure::QUARTER,
             py::arg("isNoteOn") = true, py::arg("inChord") = false,
             py::arg("transposeDiatonic") = 0, py::arg("transposeChromatic") = 0,
             py::arg("divisionsPerQuarterNote") = 256);
+
+    cls.def(py::init<const int, const std::string&, const RhythmFigure, bool, bool, const int,
+                     const int, const int>(),
+            py::arg("midiNumber"), py::arg("accType") = "",
+            py::arg("rhythmFigure") = RhythmFigure::QUARTER, py::arg("isNoteOn") = true,
+            py::arg("inChord") = false, py::arg("transposeDiatonic") = 0,
+            py::arg("transposeChromatic") = 0, py::arg("divisionsPerQuarterNote") = 256);
 
     // ====== Methods SETTERS for class Note ===== //
     cls.def("setPitchClass", &Note::setPitchClass, py::arg("pitchClass"),
             "Set the note pitch class");
     cls.def("setOctave", &Note::setOctave, py::arg("octave"));
+    cls.def("setDuration", py::overload_cast<const Duration&>(&Note::setDuration),
+            py::arg("duration"));
+    cls.def("setDuration", py::overload_cast<const float, const int>(&Note::setDuration),
+            py::arg("quarterDuration"), py::arg("divisionsPerQuarterNote") = 256,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def("setDuration", py::overload_cast<const Duration, const int>(&Note::setDuration),
-            py::arg("duration"), py::arg("divisionsPerQuarterNote") = 256);
-    cls.def("setDuration", py::overload_cast<const float, const int, const int>(&Note::setDuration),
-            py::arg("durationValue"), py::arg("lowerTimeSignatureValue") = 4,
-            py::arg("divisionsPerQuarterNote") = 256);
+    //     cls.def("setDuration", py::overload_cast<const RhythmFigure, const
+    //     int>(&Note::setDuration),
+    //             py::arg("rhythmFigure"), py::arg("divisionsPerQuarterNote") = 256);
+    //     cls.def("setDuration", py::overload_cast<const float, const int, const
+    //     int>(&Note::setDuration),
+    //             py::arg("durationValue"), py::arg("lowerTimeSignatureValue") = 4,
+    //             py::arg("divisionsPerQuarterNote") = 256);
 
-    cls.def("setDurationTicks", &Note::setDurationTicks, py::arg("durationTicks"));
+    //     cls.def("setDurationTicks", &Note::setDurationTicks, py::arg("durationTicks"));
     cls.def("setIsNoteOn", &Note::setIsNoteOn, py::arg("isNoteOn"));
     cls.def("setPitch", &Note::setPitch, py::arg("pitch"));
     cls.def("setIsInChord", &Note::setIsInChord, py::arg("inChord"));
@@ -52,9 +60,9 @@ void NoteClass(const py::module& m) {
     cls.def("setStaff", &Note::setStaff, py::arg("staff"));
     cls.def("setIsGraceNote", &Note::setIsGraceNote, py::arg("isGraceNote") = false);
     cls.def("setStem", &Note::setStem, py::arg("stem"));
-    cls.def("removeDots", &Note::removeDots);
-    cls.def("setSingleDot", &Note::setSingleDot);
-    cls.def("setDoubleDot", &Note::setDoubleDot);
+    //     cls.def("removeDots", &Note::removeDots);
+    //     cls.def("setSingleDot", &Note::setSingleDot);
+    //     cls.def("setDoubleDot", &Note::setDoubleDot);
     cls.def("setTieStart", &Note::setTieStart);
     cls.def("setTieStop", &Note::setTieStop);
     cls.def("setTieStopStart", &Note::setTieStopStart);

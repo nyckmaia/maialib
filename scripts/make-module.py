@@ -41,4 +41,11 @@ os.system(cmakeCommand)
 
 os.system(f"make -j {numThreads} -C {path} --no-print-directory")
 
+# ===== COMPILAÇÃO COM VS 2022 ===== #
+# if myOS == "Windows":
+# Na raiz do maialib
+# cmake -G "Visual Studio 17 2022" -A x64 -S . -B ./build -DPYBIND_LIB=ON -DSQLITECPP_RUN_CPPLINT=OFF
+# msbuild ./build/maiacore.sln /p:Configuration=RelWithDebInfo /p:Platform=x64
+# ================================== #
+
 print(f"{color.OKGREEN}Done!{color.ENDC}")

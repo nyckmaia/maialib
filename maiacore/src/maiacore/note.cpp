@@ -11,7 +11,7 @@
 
 Note::Note() : Note("A4") {}
 
-Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, bool inChord,
+Note::Note(const std::string& pitch, const RhythmFigure rhythmFigure, bool isNoteOn, bool inChord,
            int transposeDiatonic, int transposeChromatic, const int divisionsPerQuarterNote)
     : _writtenPitchClass(MUSIC_XML::PITCH::REST),
       _writtenOctave(0),
@@ -27,11 +27,13 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
       _isGraceNote(false),
       _isTuplet(false),
       _isPitched(true),
-      _unpitchedIndex(0) {
+      _unpitchedIndex(0),
+      _duration(Helper::rhythmFigure2Ticks(rhythmFigure, divisionsPerQuarterNote),
+                divisionsPerQuarterNote) {
     // Rest case: This is necessary to prevent: empty pitchClass + alterSymbol
     if (pitch.empty() || (pitch.find(MUSIC_XML::PITCH::REST) != std::string::npos) ||
         isNoteOn == false) {
-        setDuration(duration, divisionsPerQuarterNote);
+        // setDuration(duration, divisionsPerQuarterNote);
         return;
     }
 
@@ -84,15 +86,15 @@ Note::Note(const std::string& pitch, const Duration duration, bool isNoteOn, boo
     _transposeDiatonic = transposeDiatonic;
     _transposeChromatic = transposeChromatic;
     _isNoteOn = true;
-    _duration.divisionsPerQuarterNote = divisionsPerQuarterNote;
-    setDuration(duration, divisionsPerQuarterNote);
+    // _duration.divisionsPerQuarterNote = divisionsPerQuarterNote;
+    // setDuration(duration, divisionsPerQuarterNote);
 
     // Update the sounding Pitch/PitchClass and MIDI number
     setTransposingInterval(transposeDiatonic, transposeChromatic);
 }
 
-Note::Note(const int midiNumber, const std::string& accType, const Duration duration, bool isNoteOn,
-           bool inChord, const int transposeDiatonic, const int transposeChromatic,
+Note::Note(const int midiNumber, const std::string& accType, const RhythmFigure duration,
+           bool isNoteOn, bool inChord, const int transposeDiatonic, const int transposeChromatic,
            const int divisionsPerQuarterNote)
     : Note(Helper::midiNote2pitch(midiNumber, accType), duration, isNoteOn, inChord,
            transposeDiatonic, transposeChromatic, divisionsPerQuarterNote) {
@@ -106,7 +108,7 @@ Note::~Note() {}
 void Note::info() const {
     LOG_INFO("Is note on: " << std::boolalpha << _isNoteOn);
     LOG_INFO("Pitch: " << getPitch());
-    LOG_INFO("Note Type: " << _duration.noteType);
+    LOG_INFO("Note Type: " << _duration.getNoteType());
     LOG_INFO("Quarter Duration: " << getQuarterDuration());
     LOG_INFO("Voice: " << _voice);
     LOG_INFO("Staff: " << _staff);
@@ -166,132 +168,121 @@ int Note::getTransposeDiatonic() const { return _transposeDiatonic; }
 
 int Note::getTransposeChromatic() const { return _transposeChromatic; }
 
-void Note::setDuration(const Duration duration, const int divisionsPerQuarterNote) {
-    _duration.duration = duration;
-    _duration.divisionsPerQuarterNote = divisionsPerQuarterNote;
-    _duration.noteType = Helper::duration2noteType(duration);
-    _duration.ticks = Helper::noteType2ticks(_duration.noteType, _duration.divisionsPerQuarterNote);
-    const auto typeDotsPair =
-        Helper::ticks2noteType(_duration.ticks, _duration.divisionsPerQuarterNote);
-    _duration.numDots = typeDotsPair.second;
+void Note::setDuration(const Duration& duration) { _duration = duration; }
+
+void Note::setDuration(const float quarterDuration, const int divisionsPerQuarterNote) {
+    _duration.setQuarterDuration(quarterDuration, divisionsPerQuarterNote);
 }
 
-void Note::setDuration(const float durationValue, const int lowerTimeSignatureValue,
-                       const int divisionsPerQuarterNote) {
-    if (c_TimeSignatureLowerValueMap.find(lowerTimeSignatureValue) ==
-        c_TimeSignatureLowerValueMap.end()) {
-        LOG_ERROR("Unable to use the lower time signature value: " +
-                  std::to_string(lowerTimeSignatureValue));
-    }
+// void Note::setDuration(const RhythmFigure rhythmFigure, const int divisionsPerQuarterNote) {
+//     _duration.duration = rhythmFigure;
+//     _duration.divisionsPerQuarterNote = divisionsPerQuarterNote;
+//     _duration.noteType = Helper::rhythmFigure2noteType(rhythmFigure);
+//     _duration.ticks = Helper::noteType2ticks(_duration.noteType,
+//     _duration.divisionsPerQuarterNote); const auto typeDotsPair =
+//         Helper::ticks2noteType(_duration.ticks, _duration.divisionsPerQuarterNote);
+//     _duration.numDots = typeDotsPair.second;
+// }
 
-    const Duration lowTimeSigDur = c_TimeSignatureLowerValueMap.at(lowerTimeSignatureValue);
+// void Note::setDuration(const float durationValue, const int lowerTimeSignatureValue,
+//                        const int divisionsPerQuarterNote) {
+//     if (c_TimeSignatureLowerValueMap.find(lowerTimeSignatureValue) ==
+//         c_TimeSignatureLowerValueMap.end()) {
+//         LOG_ERROR("Unable to use the lower time signature value: " +
+//                   std::to_string(lowerTimeSignatureValue));
+//     }
 
-    const std::string lowTimeSigNoteType = Helper::duration2noteType(lowTimeSigDur);
-    const int lowTicks = Helper::noteType2ticks(lowTimeSigNoteType, divisionsPerQuarterNote);
-    const int durTick = static_cast<int>(durationValue * lowTicks);
+//     const RhythmFigure lowTimeSigDur = c_TimeSignatureLowerValueMap.at(lowerTimeSignatureValue);
 
-    // ===== CHECK CONVERT UPPER AND LOWER LIMITS ===== //
-    // Upper limit
-    const std::string maximaNoteType = Helper::duration2noteType(Duration::MAXIMA_DOT_DOT);
-    const int maximaTicks = Helper::noteType2ticks(maximaNoteType, divisionsPerQuarterNote);
+//     const std::string lowTimeSigNoteType = Helper::rhythmFigure2noteType(lowTimeSigDur);
+//     const int lowTicks = Helper::noteType2ticks(lowTimeSigNoteType, divisionsPerQuarterNote);
+//     const int durTick = static_cast<int>(durationValue * lowTicks);
 
-    // Lower limit
-    const std::string n1024NoteType = Helper::duration2noteType(Duration::N1024TH);
-    const int n1024Ticks = Helper::noteType2ticks(n1024NoteType, divisionsPerQuarterNote);
+//     // ===== CHECK CONVERT UPPER AND LOWER LIMITS ===== //
+//     // Upper limit
+//     const std::string maximaNoteType = Helper::rhythmFigure2noteType(RhythmFigure::MAXIMA);
+//     const int maximaTicks = Helper::noteType2ticks(maximaNoteType, divisionsPerQuarterNote);
 
-    // Check upper and lower limits
-    if (durTick > maximaTicks || durTick < n1024Ticks) {
-        LOG_ERROR("The '" + std::to_string(durationValue) +
-                  "' duration value extrapolates the range of values that can be associated with a "
-                  "rhythmic figure using the time signature lower value '" +
-                  std::to_string(lowerTimeSignatureValue) + "'");
-    }
+//     // Lower limit
+//     const std::string n1024NoteType = Helper::rhythmFigure2noteType(RhythmFigure::N1024TH);
+//     const int n1024Ticks = Helper::noteType2ticks(n1024NoteType, divisionsPerQuarterNote);
 
-    // ===== SET THE DURATION INTERVAL VALUES ===== //
-    _duration.ticks = durTick;
+//     // Check upper and lower limits
+//     if (durTick > maximaTicks || durTick < n1024Ticks) {
+//         LOG_ERROR("The '" + std::to_string(durationValue) +
+//                   "' duration value extrapolates the range of values that can be associated with
+//                   a " "rhythmic figure using the time signature lower value '" +
+//                   std::to_string(lowerTimeSignatureValue) + "'");
+//     }
 
-    const auto durNoteTypePair = Helper::ticks2noteType(_duration.ticks, divisionsPerQuarterNote);
-    _duration.noteType = durNoteTypePair.first;
-    _duration.numDots = durNoteTypePair.second;
-    _duration.duration = Helper::noteType2duration(_duration.noteType);
-    _duration.divisionsPerQuarterNote = divisionsPerQuarterNote;
-}
+//     // ===== SET THE DURATION INTERVAL VALUES ===== //
+//     _duration.ticks = durTick;
 
-void Note::setDurationTicks(int durationTicks) {
-    _duration.ticks = durationTicks;
-    const auto typeDotsPair =
-        Helper::ticks2noteType(_duration.ticks, _duration.divisionsPerQuarterNote);
-    _duration.noteType = typeDotsPair.first;
-    _duration.numDots = typeDotsPair.second;
-    _duration.duration = Helper::noteType2duration(_duration.noteType);
-}
+//     const auto durNoteTypePair = Helper::ticks2noteType(_duration.ticks,
+//     divisionsPerQuarterNote); _duration.noteType = durNoteTypePair.first; _duration.numDots =
+//     durNoteTypePair.second; _duration.duration =
+//     Helper::noteType2RhythmFigure(_duration.noteType); _duration.divisionsPerQuarterNote =
+//     divisionsPerQuarterNote;
+// }
+
+// void Note::setDurationTicks(int durationTicks) {
+//     _duration.ticks = durationTicks;
+//     const auto typeDotsPair =
+//         Helper::ticks2noteType(_duration.ticks, _duration.divisionsPerQuarterNote);
+//     _duration.noteType = typeDotsPair.first;
+//     _duration.numDots = typeDotsPair.second;
+//     _duration.duration = Helper::noteType2RhythmFigure(_duration.noteType);
+// }
 
 void Note::setIsGraceNote(const bool isGraceNote) { _isGraceNote = isGraceNote; }
 
-void Note::removeDots() {
-    _duration.numDots = 0;
-    _duration.noteType = _duration.noteType.substr(0, _duration.noteType.find('-'));
-    _duration.ticks = Helper::noteType2ticks(_duration.noteType, _duration.divisionsPerQuarterNote);
-    _duration.duration = Helper::noteType2duration(_duration.noteType);
-}
+// void Note::removeDots() {
+//     _duration.numDots = 0;
+//     _duration.noteType = _duration.noteType.substr(0, _duration.noteType.find('-'));
+//     _duration.ticks = Helper::noteType2ticks(_duration.noteType,
+//     _duration.divisionsPerQuarterNote); _duration.duration =
+//     Helper::noteType2RhythmFigure(_duration.noteType);
+// }
 
-void Note::setSingleDot() {
-    _duration.numDots = 1;
-    _duration.noteType = _duration.noteType.substr(0, _duration.noteType.find('-'));
-    _duration.noteType.append("-dot");
-    _duration.ticks = Helper::noteType2ticks(_duration.noteType, _duration.divisionsPerQuarterNote);
-    _duration.duration = Helper::noteType2duration(_duration.noteType);
-}
+// void Note::setSingleDot() {
+//     _duration.numDots = 1;
+//     _duration.noteType = _duration.noteType.substr(0, _duration.noteType.find('-'));
+//     _duration.noteType.append("-dot");
+//     _duration.ticks = Helper::noteType2ticks(_duration.noteType,
+//     _duration.divisionsPerQuarterNote); _duration.duration =
+//     Helper::noteType2RhythmFigure(_duration.noteType);
+// }
 
-void Note::setDoubleDot() {
-    _duration.numDots = 2;
-    _duration.noteType = _duration.noteType.substr(0, _duration.noteType.find('-'));
-    _duration.noteType.append("-dot-dot");
-    _duration.ticks = Helper::noteType2ticks(_duration.noteType, _duration.divisionsPerQuarterNote);
-    _duration.duration = Helper::noteType2duration(_duration.noteType);
-}
+// void Note::setDoubleDot() {
+//     _duration.numDots = 2;
+//     _duration.noteType = _duration.noteType.substr(0, _duration.noteType.find('-'));
+//     _duration.noteType.append("-dot-dot");
+//     _duration.ticks = Helper::noteType2ticks(_duration.noteType,
+//     _duration.divisionsPerQuarterNote); _duration.duration =
+//     Helper::noteType2RhythmFigure(_duration.noteType);
+// }
 
 std::string Note::getType() const { return getLongType(); }
 
-std::string Note::getLongType() const { return _duration.noteType; }
+std::string Note::getLongType() const { return _duration.getNoteType(); }
 
 std::string Note::getShortType() const {
-    return _duration.noteType.substr(0, _duration.noteType.find('-'));
+    return _duration.getNoteType().substr(0, _duration.getNoteType().find('-'));
 }
 
-int Note::getDurationTicks() const { return _duration.ticks; }
+int Note::getDurationTicks() const { return _duration.getTicks(); }
 
-int Note::getNumDots() const { return _duration.numDots; }
+int Note::getNumDots() const { return _duration.getDots(); }
 
-bool Note::isDotted() const { return (_duration.numDots <= 0) ? false : true; }
+bool Note::isDotted() const { return (_duration.getDots() <= 0) ? false : true; }
 
-bool Note::isDoubleDotted() const { return (_duration.numDots == 2) ? true : false; }
+bool Note::isDoubleDotted() const { return (_duration.getDots() == 2) ? true : false; }
 
-int Note::getDivisionsPerQuarterNote() const { return _duration.divisionsPerQuarterNote; }
+int Note::getDivisionsPerQuarterNote() const { return _duration.getDivisionsPerQuarterNote(); }
 
-float Note::getDuration() const { return getQuarterDuration(); }
+const Duration& Note::getDuration() const { return _duration; }
 
-float Note::getQuarterDuration() const {
-    if (!_isTuplet) {
-        return static_cast<float>(_duration.ticks) /
-               static_cast<float>(_duration.divisionsPerQuarterNote);
-    }
-
-    // ===== TUPLET NOTE ===== //
-    const int rawTicks = Helper::noteType2ticks(getLongType(), getDivisionsPerQuarterNote());
-    const float tupletTicks =
-        (static_cast<float>(rawTicks) * static_cast<float>(_timeModification.normalNotes)) /
-        static_cast<float>(_timeModification.actualNotes);
-
-    const float tupletQuarterDuration =
-        tupletTicks / static_cast<float>(_duration.divisionsPerQuarterNote);
-
-    std::cout << "getLongType(): " << getLongType() << " rawTicks: " << rawTicks
-              << " tupletTicks: " << tupletTicks
-              << " tupletQuarterDuration: " << tupletQuarterDuration
-              << " divisionsPerQuarterNote: " << _duration.divisionsPerQuarterNote << std::endl;
-    return tupletQuarterDuration;
-}
+float Note::getQuarterDuration() const { return _duration.getQuarterDuration(); }
 
 bool Note::isGraceNote() const { return _isGraceNote; }
 
@@ -1803,9 +1794,7 @@ void Note::setIsTuplet(const bool isTuplet) { _isTuplet = isTuplet; }
 
 void Note::setTupleValues(const int actualNotes, const int normalNotes,
                           const std::string& normalType) {
-    _timeModification.actualNotes = actualNotes;
-    _timeModification.normalNotes = normalNotes;
-    _timeModification.normalType = normalType;
+    _duration.setTupleValues(actualNotes, normalNotes, normalType);
 }
 
 bool Note::isTuplet() const { return _isTuplet; }
@@ -1976,7 +1965,7 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
     if (_isGraceNote) {
         xml.append(Helper::generateIdentation(4, identSize) + "<type>16th</type>\n");
     } else {
-        if (!_duration.noteType.empty()) {
+        if (!_duration.getNoteType().empty()) {
             xml.append(Helper::generateIdentation(4, identSize) + "<type>" + getShortType() +
                        "</type>\n");
         } else {
@@ -1989,15 +1978,17 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
     if (_isTuplet) {
         xml.append(Helper::generateIdentation(4, identSize) + "<time-modification>\n");
         xml.append(Helper::generateIdentation(5, identSize) + "<actual-notes>" +
-                   std::to_string(_timeModification.actualNotes) + "</actual-notes>\n");
+                   std::to_string(_duration.getTimeModificationActualNotes()) +
+                   "</actual-notes>\n");
         xml.append(Helper::generateIdentation(5, identSize) + "<normal-notes>" +
-                   std::to_string(_timeModification.normalNotes) + "</normal-notes>\n");
+                   std::to_string(_duration.getTimeModificationNormalNotes()) +
+                   "</normal-notes>\n");
         xml.append(Helper::generateIdentation(5, identSize) + "<normal-type>" +
-                   _timeModification.normalType + "</normal-type>\n");
+                   _duration.getTimeModificationNormalType() + "</normal-type>\n");
         xml.append(Helper::generateIdentation(4, identSize) + "</time-modification>\n");
     }
 
-    for (int d = 0; d < _duration.numDots; d++) {
+    for (int d = 0; d < _duration.getDots(); d++) {
         xml.append(Helper::generateIdentation(4, identSize) + "<dot />\n");
     }
 

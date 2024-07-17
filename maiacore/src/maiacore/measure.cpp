@@ -9,8 +9,6 @@
 
 Measure::Measure(const int numStaves, const int divisionsPerQuarterNote)
     : _number(0),
-      _timeSignatureUpper(4),
-      _timeSignatureLower(4),
       _metronomeFigure("quarter"),
       _metronomeValue(0),
       _isKeySignatureChanged(false),
@@ -18,7 +16,8 @@ Measure::Measure(const int numStaves, const int divisionsPerQuarterNote)
       _isMetronomeChanged(false),
       _isDivisionsPerQuarterNoteChanged(false),
       _numStaves(numStaves),
-      _divisionsPerQuarterNote(divisionsPerQuarterNote) {
+      _divisionsPerQuarterNote(divisionsPerQuarterNote),
+      _timeSignature({4, 4}) {
     _note.resize(numStaves);  // Create Staves
     _clef.resize(numStaves);
 
@@ -30,7 +29,8 @@ Measure::~Measure() {}
 
 void Measure::info() const {
     LOG_INFO("Number: " << _number);
-    LOG_INFO("Time Signature: " << _timeSignatureUpper << "/" << _timeSignatureLower);
+    LOG_INFO("Time Signature: " << _timeSignature.getUpperValue() << "/"
+                                << _timeSignature.getLowerValue());
     LOG_INFO("Key: " << _key.getName());
     LOG_INFO("Metronome Mark: " << _metronomeFigure << " - " << _metronomeValue);
 }
@@ -46,13 +46,13 @@ void Measure::setKeySignature(const int fifthCircle, const bool isMajorMode) {
 
 void Measure::setTimeSignature(const int timeSignatureUpper, const int timeSignatureLower) {
     _isTimeSignatureChanged = true;
-    _timeSignatureUpper = timeSignatureUpper;
-    _timeSignatureLower = timeSignatureLower;
+    _timeSignature.setUpperValue(timeSignatureUpper);
+    _timeSignature.setLowerValue(timeSignatureLower);
 }
 
-void Measure::setMetronome(const int bpm, const Duration duration) {
+void Measure::setMetronome(const int bpm, const RhythmFigure rhythmFigure) {
     _metronomeValue = bpm;
-    _metronomeFigure = Helper::duration2noteType(duration);
+    _metronomeFigure = Helper::rhythmFigure2noteType(rhythmFigure);
     setIsMetronomeChanged(true);
 }
 
@@ -175,7 +175,7 @@ float Measure::getFilledQuarterDuration(const int staveId) const {
     const auto& stave = _note.at(staveId);
 
     for (const auto& note : stave) {
-        filledQuarterDuration += note.getDuration();
+        filledQuarterDuration += note.getDuration().getQuarterDuration();
     }
 
     return filledQuarterDuration;
@@ -185,10 +185,17 @@ float Measure::getFreeQuarterDuration(const int staveId) const {
     return getQuarterDuration() - getFilledQuarterDuration(staveId);
 }
 
+Fraction Measure::getFractionDuration() const {
+    Fraction frac(getDurationTicks(), _divisionsPerQuarterNote);
+
+    return frac;
+}
+
 int Measure::getDurationTicks() const {
-    const Duration timeSigLowerDur = c_mapTimeSignatureLower_Duration.at(_timeSignatureLower);
-    const int ticks = Helper::duration2Ticks(timeSigLowerDur, _divisionsPerQuarterNote);
-    const int measureDurationTicks = _timeSignatureUpper * ticks;
+    const RhythmFigure timeSigLowerDur =
+        c_mapTimeSignatureLower_Duration.at(_timeSignature.getLowerValue());
+    const int ticks = Helper::rhythmFigure2Ticks(timeSigLowerDur, _divisionsPerQuarterNote);
+    const int measureDurationTicks = _timeSignature.getUpperValue() * ticks;
 
     return measureDurationTicks;
 }
@@ -487,9 +494,7 @@ int Measure::getFifthCircle() const { return _key.getFifthCircle(); }
 
 const std::string Measure::getKeySignature() const { return _key.getName(); }
 
-std::pair<int, int> Measure::getTimeSignature() const {
-    return std::make_pair(_timeSignatureUpper, _timeSignatureLower);
-}
+const TimeSignature& Measure::getTimeSignature() const { return _timeSignature; }
 
 std::pair<std::string, int> Measure::getMetronome() const {
     return {_metronomeFigure, _metronomeValue};
@@ -586,7 +591,7 @@ int Measure::getEmptyDurationTicks() const {
     }
 
     const int divisionsPerUnit = [&]() {
-        switch (_timeSignatureLower) {
+        switch (_timeSignature.getLowerValue()) {
             case 2:
                 return 512;
                 break;
@@ -609,7 +614,7 @@ int Measure::getEmptyDurationTicks() const {
         }
     }();
 
-    const int maxDurationTicks = _timeSignatureUpper * divisionsPerUnit;
+    const int maxDurationTicks = _timeSignature.getUpperValue() * divisionsPerUnit;
 
     const int diff = maxDurationTicks - sumDuration;
 

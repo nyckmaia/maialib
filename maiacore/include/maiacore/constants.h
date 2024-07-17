@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include "maiacore/log.h"
+
 const float HAVE_THIRD_VALUE = 1.0f;         // 2^0
 const float HAVE_FIFTH_VALUE = 2.0f;         // 2^1
 const float HAVE_SEVENTH_VALUE = 4.0f;       // 2^2
@@ -53,56 +55,28 @@ const std::map<std::string, std::pair<int, bool>> c_mapKeyName2FifthCirCleMode =
     {"Fm", std::make_pair(-4, false)}, {"Cm", std::make_pair(-3, false)},
     {"Gm", std::make_pair(-2, false)}, {"Dm", std::make_pair(-1, false)}};
 
-enum class Duration {
-    MAXIMA_DOT_DOT = 42,
-    MAXIMA_DOT = 41,
-    MAXIMA = 40,
-    LONG_DOT_DOT = 39,
-    LONG_DOT = 38,
-    LONG = 37,
-    BREVE_DOT_DOT = 36,
-    BREVE_DOT = 35,
-    BREVE = 34,
-    WHOLE_DOT_DOT = 33,
-    WHOLE_DOT = 32,
-    WHOLE = 31,
-    HALF_DOT_DOT = 30,
-    HALF_DOT = 29,
-    HALF = 28,
-    QUARTER_DOT_DOT = 27,
-    QUARTER_DOT = 26,
-    QUARTER = 25,
-    EIGHTH_DOT_DOT = 24,
-    EIGHTH_DOT = 23,
-    EIGHTH = 22,
-    N16TH_DOT_DOT = 21,
-    N16TH_DOT = 20,
-    N16TH = 19,
-    N32ND_DOT_DOT = 18,
-    N32ND_DOT = 17,
-    N32ND = 16,
-    N64TH_DOT_DOT = 15,
-    N64TH_DOT = 14,
-    N64TH = 13,
-    N128TH_DOT_DOT = 12,
-    N128TH_DOT = 11,
-    N128TH = 10,
-    N256TH_DOT_DOT = 9,
-    N256TH_DOT = 8,
-    N256TH = 7,
-    N512TH_DOT_DOT = 6,
-    N512TH_DOT = 5,
-    N512TH = 4,
-    N1024TH_DOT_DOT = 3,
-    N1024TH_DOT = 2,
-    N1024TH = 1,
+enum class RhythmFigure {
+    MAXIMA,
+    LONG,
+    BREVE,
+    WHOLE,
+    HALF,
+    QUARTER,
+    EIGHTH,
+    N16TH,
+    N32ND,
+    N64TH,
+    N128TH,
+    N256TH,
+    N512TH,
+    N1024TH,
 };
 
-const std::map<int, Duration> c_mapTimeSignatureLower_Duration = {
-    {1, Duration::WHOLE},    {2, Duration::HALF},      {4, Duration::QUARTER},
-    {8, Duration::EIGHTH},   {16, Duration::N16TH},    {32, Duration::N32ND},
-    {64, Duration::N64TH},   {128, Duration::N128TH},  {256, Duration::N256TH},
-    {512, Duration::N512TH}, {1024, Duration::N1024TH}};
+const std::map<int, RhythmFigure> c_mapTimeSignatureLower_Duration = {
+    {1, RhythmFigure::WHOLE},    {2, RhythmFigure::HALF},      {4, RhythmFigure::QUARTER},
+    {8, RhythmFigure::EIGHTH},   {16, RhythmFigure::N16TH},    {32, RhythmFigure::N32ND},
+    {64, RhythmFigure::N64TH},   {128, RhythmFigure::N128TH},  {256, RhythmFigure::N256TH},
+    {512, RhythmFigure::N512TH}, {1024, RhythmFigure::N1024TH}};
 
 // ===== HARMONY DEGREES ===== //
 const std::array<int, 7> c_harmonyDegrees = {1, 2, 3, 4, 5, 6, 7};
@@ -187,9 +161,9 @@ const std::map<char, int> c_A_closeStackOctavesMap = {{'A', 4}, {'C', 5}, {'E', 
 const std::map<char, int> c_B_closeStackOctavesMap = {{'B', 4}, {'D', 5}, {'F', 5}, {'A', 5},
                                                       {'C', 6}, {'E', 6}, {'G', 6}};
 
-const std::map<int, Duration> c_TimeSignatureLowerValueMap = {
-    {32, Duration::N32ND},  {16, Duration::N16TH}, {8, Duration::EIGHTH},
-    {4, Duration::QUARTER}, {2, Duration::HALF},   {1, Duration::WHOLE}};
+const std::map<int, RhythmFigure> c_TimeSignatureLowerValueMap = {
+    {32, RhythmFigure::N32ND},  {16, RhythmFigure::N16TH}, {8, RhythmFigure::EIGHTH},
+    {4, RhythmFigure::QUARTER}, {2, RhythmFigure::HALF},   {1, RhythmFigure::WHOLE}};
 
 namespace MUSIC_XML {
 
@@ -231,47 +205,19 @@ const std::string ALL = "all";
 
 namespace NOTE_TYPE {
 const std::string ALL = "all";
-const std::string MAXIMA_DOT_DOT = "maxima-dot-dot";
-const std::string MAXIMA_DOT = "maxima-dot";
 const std::string MAXIMA = "maxima";
-const std::string LONG_DOT_DOT = "long-dot-dot";
-const std::string LONG_DOT = "long-dot";
 const std::string LONG = "long";
-const std::string BREVE_DOT_DOT = "breve-dot-dot";
-const std::string BREVE_DOT = "breve-dot";
 const std::string BREVE = "breve";
-const std::string WHOLE_DOT_DOT = "whole-dot-dot";
-const std::string WHOLE_DOT = "whole-dot";
 const std::string WHOLE = "whole";
-const std::string HALF_DOT_DOT = "half-dot-dot";
-const std::string HALF_DOT = "half-dot";
 const std::string HALF = "half";
-const std::string QUARTER_DOT_DOT = "quarter-dot-dot";
-const std::string QUARTER_DOT = "quarter-dot";
 const std::string QUARTER = "quarter";
-const std::string EIGHTH_DOT_DOT = "eighth-dot-dot";
-const std::string EIGHTH_DOT = "eighth-dot";
 const std::string EIGHTH = "eighth";
-const std::string N16TH_DOT_DOT = "16th-dot-dot";
-const std::string N16TH_DOT = "16th-dot";
 const std::string N16TH = "16th";
-const std::string N32ND_DOT_DOT = "32nd-dot-dot";
-const std::string N32ND_DOT = "32nd-dot";
 const std::string N32ND = "32nd";
-const std::string N64TH_DOT_DOT = "64th-dot-dot";
-const std::string N64TH_DOT = "64th-dot";
 const std::string N64TH = "64th";
-const std::string N128TH_DOT_DOT = "128th-dot-dot";
-const std::string N128TH_DOT = "128th-dot";
 const std::string N128TH = "128th";
-const std::string N256TH_DOT_DOT = "256th-dot-dot";
-const std::string N256TH_DOT = "256th-dot";
 const std::string N256TH = "256th";
-const std::string N512TH_DOT_DOT = "512th-dot-dot";
-const std::string N512TH_DOT = "512th-dot";
 const std::string N512TH = "512th";
-const std::string N1024TH_DOT_DOT = "1024th-dot-dot";
-const std::string N1024TH_DOT = "1024th-dot";
 const std::string N1024TH = "1024th";
 }  // namespace NOTE_TYPE
 

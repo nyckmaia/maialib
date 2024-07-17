@@ -59,47 +59,70 @@ add_executable(${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/src/adolfo-test.cpp
 )
 
-target_include_directories(${PROJECT_NAME} PUBLIC ../maiacore/include)
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/include/external)
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/include/external/pugi)
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/external/sqlitecpp/include)
-
-include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/external/sqlitecpp/sqlite3)
-include_directories(${PROJECT_NAME} SYSTEM PUBLIC ../maiacore/external/sqlitecpp/src)
+include(FetchContent)
+FetchContent_Declare(
+  cpptrace
+  GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
+  GIT_TAG        v0.6.2 # <HASH or TAG>
+)
+FetchContent_MakeAvailable(cpptrace)
 
 if(WIN32)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/Debug)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/Debug/maiacore/external/sqlitecpp)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Windows/static/Debug/maiacore/external/sqlitecpp/sqlite3)
-    if(MSYS OR MINGW OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-        message(STATUS "===> Selected Windows Compiler: MSYS or MINGW or Clang")
-        if (${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-            target_link_libraries(${PROJECT_NAME} PRIVATE gtest gtest_main SQLiteCpp sqlite3)
-        else()
-            target_link_libraries(${PROJECT_NAME} PRIVATE gtest gtest_main -static-libgcc -static-libstdc++ -Wl,-Bstatic,--whole-archive -lwinpthread -Wl,--no-whole-archive SQLiteCpp sqlite3)
-        endif()
-    elseif(MSVC)
-        message(STATUS "===> Selected Windows Compiler: MSVC")
-
-        add_definitions(-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE)
-        target_link_libraries(${PROJECT_NAME} PRIVATE SQLiteCpp sqlite3)
-    else()
-        message(FATAL "===> UNABLE TO FIND A WINDOWS COMPILER")
-    endif()
+    set(OS "Windows")
 elseif(APPLE)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/Debug)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/Debug/maiacore/external/sqlitecpp)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Darwin/static/Debug/maiacore/external/sqlitecpp/sqlite3)
-
-    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore gtest SQLiteCpp sqlite3 dl)
+    set(OS "Darwin")
 elseif(UNIX AND NOT APPLE)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/Debug)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/Debug/maiacore/external/sqlitecpp)
-    target_link_directories(${PROJECT_NAME} PUBLIC ../build/Linux/static/Debug/maiacore/external/sqlitecpp/sqlite3)
-
-    target_link_libraries(${PROJECT_NAME} PUBLIC maiacore gtest SQLiteCpp sqlite3 dl)
+    set(OS "Linux")
 else()
     message(FATAL_ERROR "Unable to detect the OS")
 endif()
+
+set(MAIALIB_ROOT_DIR ..)
+set(MAIACORE_ROOT_DIR ${MAIALIB_ROOT_DIR}/maiacore)
+set(MAIACORE_INCLUDE_DIR ${MAIACORE_ROOT_DIR}/include)
+
+set(MAIACORE_LIB_DIR ${MAIALIB_ROOT_DIR}/build/${OS}/static/Debug)
+set(SQLITECPP_LIB_DIR ${MAIACORE_LIB_DIR}/maiacore/external/sqlitecpp)
+set(SQLITE_LIB_DIR ${SQLITECPP_LIB_DIR}/sqlite3)
+
+target_include_directories(${PROJECT_NAME} PUBLIC ${MAIACORE_INCLUDE_DIR})
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MAIACORE_INCLUDE_DIR}/external)
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MAIACORE_INCLUDE_DIR}/external/pugi)
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MAIACORE_ROOT_DIR}/external/sqlitecpp/include)
+
+target_link_directories(${PROJECT_NAME} PUBLIC ${MAIACORE_LIB_DIR})
+target_link_directories(${PROJECT_NAME} PUBLIC ${SQLITECPP_LIB_DIR})
+target_link_directories(${PROJECT_NAME} PUBLIC ${SQLITE_LIB_DIR})
+
+set(LIBS 
+    maiacore
+    gtest
+    SQLiteCpp
+    sqlite3
+    cpptrace::cpptrace
+)
+
+if(MSVC)
+    set(CPP_COMPILER_TYPE "MSVC")
+    add_definitions(-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE)
+elseif(MSYS)
+    set(CPP_COMPILER_TYPE "MSYS")
+    list(APPEND LIBS gtest_main)
+elseif(MINGW)
+    set(CPP_COMPILER_TYPE "MINGW")
+    list(APPEND LIBS gtest_main)
+elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+    set(CPP_COMPILER_TYPE "CLANG")
+else()
+    message(FATAL "===> UNABLE TO FIND A WINDOWS COMPILER")
+endif()
+
+message(STATUS "===> Selected Compiler Type: " ${CPP_COMPILER_TYPE})
+
+if(APPLE OR (UNIX AND NOT APPLE))
+    list(APPEND LIBS dl)
+endif()
+
+target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBS})
 
 add_test(NAME ${PROJECT_NAME} COMMAND ${PROJECT_NAME})

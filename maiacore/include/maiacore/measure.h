@@ -8,15 +8,15 @@
 #include "maiacore/clef.h"
 #include "maiacore/constants.h"
 #include "maiacore/key.h"
+#include "maiacore/time-signature.h"
 
 class Note;
 class Barline;
+class Fraction;
 
 class Measure {
    private:
     int _number;
-    int _timeSignatureUpper;
-    int _timeSignatureLower;
     Key _key;
     std::string _metronomeFigure;
     int _metronomeValue;
@@ -26,6 +26,7 @@ class Measure {
     bool _isDivisionsPerQuarterNoteChanged;
     int _numStaves;
     int _divisionsPerQuarterNote;
+    TimeSignature _timeSignature;
 
     std::vector<std::vector<Note>> _note;
     std::vector<Clef> _clef;
@@ -104,7 +105,7 @@ class Measure {
      * @param bpm
      * @param duration
      */
-    void setMetronome(const int bpm, const Duration duration = Duration::QUARTER);
+    void setMetronome(const int bpm, const RhythmFigure duration = RhythmFigure::QUARTER);
 
     /**
      * @brief Set the Key Mode object
@@ -236,6 +237,13 @@ class Measure {
      * @return float
      */
     float getFreeQuarterDuration(const int staveId = 0) const;
+
+    /**
+     * @brief Get the Fraction Duration object
+     *
+     * @return Fraction
+     */
+    Fraction getFractionDuration() const;
 
     /**
      * @brief Get the Duration Ticks object
@@ -520,9 +528,9 @@ class Measure {
     /**
      * @brief Get the Time Signature object
      *
-     * @return std::pair<int, int>
+     * @return TimeSignature&
      */
-    std::pair<int, int> getTimeSignature() const;
+    const TimeSignature& getTimeSignature() const;
 
     /**
      * @brief Get the Metronome object

@@ -86,7 +86,12 @@
     "xutility": "cpp",
     "condition_variable": "cpp",
     "ranges": "cpp",
-    "span": "cpp"
+    "span": "cpp",
+    "cinttypes": "cpp",
+    "csignal": "cpp",
+    "queue": "cpp",
+    "random": "cpp",
+    "regex": "cpp"
   },
   "editor.formatOnSave": true,
   "editor.bracketPairColorization.enabled": true,

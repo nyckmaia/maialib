@@ -170,11 +170,45 @@ class Chord {
     void removeNote(int noteIndex);
 
     /**
-     * @brief Set the Duration Ticks object
+     * @brief Set the Duration object
      *
-     * @param durationTicks
+     * @param duration
      */
-    void setDurationTicks(const int durationTicks);
+    void setDuration(const Duration& duration);
+
+    /**
+     * @brief Set the Duration object
+     *
+     * @param quarterDuration
+     * @param divisionsPerQuarterNote
+     */
+    void setDuration(const float quarterDuration, const int divisionsPerQuarterNote = 256);
+
+    // /**
+    //  * @brief Set the Duration Ticks object
+    //  *
+    //  * @param durationTicks
+    //  */
+    // void setDurationTicks(const int durationTicks);
+
+    // /**
+    //  * @brief Set the note duration
+    //  *
+    //  * @param duration Duration as a Enum class element
+    //  * @param divisionsPerQuarterNote Divisions per quarter note
+    //  */
+    // void setDuration(const RhythmFigure duration, const int divisionsPerQuarterNote = 256);
+
+    // /**
+    //  * @brief Set the note duration
+    //  *
+    //  * @param durationValue Float-point duration between 0 and 1 using the relative lower
+    //  time
+    //  * signature value
+    //  * @param lowerTimeSignatureValue Lower time signature value
+    //  */
+    // void setDuration(const float durationValue, const int lowerTimeSignatureValue = 4,
+    //                  const int divisionsPerQuarterNote = 256);
 
     /**
      * @brief

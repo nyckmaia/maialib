@@ -136,14 +136,53 @@ void Chord::removeNote(int noteIndex) {
     _isStackedInThirds = false;
 }
 
-void Chord::setDurationTicks(const int durationTicks) {
+void Chord::setDuration(const Duration& duration) {
     const int chordSize = _originalNotes.size();
 
     for (int i = 0; i < chordSize; i++) {
-        _originalNotes[i].setDurationTicks(durationTicks);
-        _openStack[i].setDurationTicks(durationTicks);
+        _originalNotes[i].setDuration(duration);
+        _openStack[i].setDuration(duration);
     }
 }
+
+void Chord::setDuration(const float quarterDuration, const int divisionsPerQuarterNote) {
+    const int chordSize = _originalNotes.size();
+
+    for (int i = 0; i < chordSize; i++) {
+        _originalNotes[i].setDuration(quarterDuration, divisionsPerQuarterNote);
+        _openStack[i].setDuration(quarterDuration, divisionsPerQuarterNote);
+    }
+}
+
+// void Chord::setDurationTicks(const int durationTicks) {
+//     const int chordSize = _originalNotes.size();
+
+//     for (int i = 0; i < chordSize; i++) {
+//         _originalNotes[i].setDurationTicks(durationTicks);
+//         _openStack[i].setDurationTicks(durationTicks);
+//     }
+// }
+
+// void Chord::setDuration(const RhythmFigure rhythmFigure, const int divisionsPerQuarterNote) {
+//     const int chordSize = _originalNotes.size();
+
+//     for (int i = 0; i < chordSize; i++) {
+//         _originalNotes[i].setDuration(duration, divisionsPerQuarterNote);
+//         _openStack[i].setDuration(duration, divisionsPerQuarterNote);
+//     }
+// }
+
+// void Chord::setDuration(const float durationValue, const int lowerTimeSignatureValue,
+//                         const int divisionsPerQuarterNote) {
+//     const int chordSize = _originalNotes.size();
+
+//     for (int i = 0; i < chordSize; i++) {
+//         _originalNotes[i].setDuration(durationValue, lowerTimeSignatureValue,
+//                                       divisionsPerQuarterNote);
+//         _openStack[i].setDuration(durationValue, lowerTimeSignatureValue,
+//         divisionsPerQuarterNote);
+//     }
+// }
 
 void Chord::inversion(int inversionNumber) {
     for (int i = 0; i < inversionNumber; i++) {
@@ -220,50 +259,16 @@ std::vector<HeapData> Chord::getStackedHeaps(const bool enharmonyNotes) {
 }
 
 std::string Chord::getDuration() const {
-    const std::map<std::string, int> map{{MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT, 56000000},
-                                         {MUSIC_XML::NOTE_TYPE::MAXIMA_DOT, 48000000},
-                                         {MUSIC_XML::NOTE_TYPE::MAXIMA, 32000000},
-                                         {MUSIC_XML::NOTE_TYPE::LONG_DOT_DOT, 28000000},
-                                         {MUSIC_XML::NOTE_TYPE::LONG_DOT, 24000000},
-                                         {MUSIC_XML::NOTE_TYPE::LONG, 16000000},
-                                         {MUSIC_XML::NOTE_TYPE::BREVE_DOT_DOT, 14000000},
-                                         {MUSIC_XML::NOTE_TYPE::BREVE_DOT, 12000000},
-                                         {MUSIC_XML::NOTE_TYPE::BREVE, 8000000},
-                                         {MUSIC_XML::NOTE_TYPE::WHOLE_DOT_DOT, 7000000},
-                                         {MUSIC_XML::NOTE_TYPE::WHOLE_DOT, 6000000},
-                                         {MUSIC_XML::NOTE_TYPE::WHOLE, 4000000},
-                                         {MUSIC_XML::NOTE_TYPE::HALF_DOT_DOT, 3500000},
-                                         {MUSIC_XML::NOTE_TYPE::HALF_DOT, 3000000},
-                                         {MUSIC_XML::NOTE_TYPE::HALF, 2000000},
-                                         {MUSIC_XML::NOTE_TYPE::QUARTER_DOT_DOT, 1750000},
-                                         {MUSIC_XML::NOTE_TYPE::QUARTER_DOT, 1500000},
-                                         {MUSIC_XML::NOTE_TYPE::QUARTER, 1000000},  // 1:1
-                                         {MUSIC_XML::NOTE_TYPE::EIGHTH_DOT_DOT, 875000},
-                                         {MUSIC_XML::NOTE_TYPE::EIGHTH_DOT, 750000},
-                                         {MUSIC_XML::NOTE_TYPE::EIGHTH, 500000},
-                                         {MUSIC_XML::NOTE_TYPE::N16TH_DOT_DOT, 437500},
-                                         {MUSIC_XML::NOTE_TYPE::N16TH_DOT, 375000},
-                                         {MUSIC_XML::NOTE_TYPE::N16TH, 250000},
-                                         {MUSIC_XML::NOTE_TYPE::N32ND_DOT_DOT, 218750},
-                                         {MUSIC_XML::NOTE_TYPE::N32ND_DOT, 187500},
-                                         {MUSIC_XML::NOTE_TYPE::N32ND, 125000},
-                                         {MUSIC_XML::NOTE_TYPE::N64TH_DOT_DOT, 109375},
-                                         {MUSIC_XML::NOTE_TYPE::N64TH_DOT, 93750},
-                                         {MUSIC_XML::NOTE_TYPE::N64TH, 62500},
-                                         {MUSIC_XML::NOTE_TYPE::N128TH_DOT_DOT, 54688},
-                                         {MUSIC_XML::NOTE_TYPE::N128TH_DOT, 46875},
-                                         {MUSIC_XML::NOTE_TYPE::N128TH, 31250},
-                                         {MUSIC_XML::NOTE_TYPE::N256TH_DOT_DOT, 27344},
-                                         {MUSIC_XML::NOTE_TYPE::N256TH_DOT, 23438},
-                                         {MUSIC_XML::NOTE_TYPE::N256TH, 15625},
-                                         {MUSIC_XML::NOTE_TYPE::N512TH_DOT_DOT, 13672},
-                                         {MUSIC_XML::NOTE_TYPE::N512TH_DOT, 11719},
-                                         {MUSIC_XML::NOTE_TYPE::N512TH, 7813},
-                                         {MUSIC_XML::NOTE_TYPE::N1024TH_DOT_DOT, 6836},
-                                         {MUSIC_XML::NOTE_TYPE::N1024TH_DOT, 5859},
-                                         {MUSIC_XML::NOTE_TYPE::N1024TH, 3906}};
+    const std::map<std::string, int> map{
+        {MUSIC_XML::NOTE_TYPE::MAXIMA, 32000000}, {MUSIC_XML::NOTE_TYPE::LONG, 16000000},
+        {MUSIC_XML::NOTE_TYPE::BREVE, 8000000},   {MUSIC_XML::NOTE_TYPE::WHOLE, 4000000},
+        {MUSIC_XML::NOTE_TYPE::HALF, 2000000},    {MUSIC_XML::NOTE_TYPE::QUARTER, 1000000},  // 1:1
+        {MUSIC_XML::NOTE_TYPE::EIGHTH, 500000},   {MUSIC_XML::NOTE_TYPE::N16TH, 250000},
+        {MUSIC_XML::NOTE_TYPE::N32ND, 125000},    {MUSIC_XML::NOTE_TYPE::N64TH, 62500},
+        {MUSIC_XML::NOTE_TYPE::N128TH, 31250},    {MUSIC_XML::NOTE_TYPE::N256TH, 15625},
+        {MUSIC_XML::NOTE_TYPE::N512TH, 7813},     {MUSIC_XML::NOTE_TYPE::N1024TH, 3906}};
 
-    int minDuration = Helper::noteType2ticks(MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT, 1000000);
+    int minDuration = Helper::noteType2ticks(MUSIC_XML::NOTE_TYPE::MAXIMA, 1000000);
     for (const auto& note : _originalNotes) {
         const auto noteType = note.getType();
 

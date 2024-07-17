@@ -213,8 +213,8 @@ public:
 // Other clocks that are not the system clock are not measured as datetime.datetime objects
 // since they are not measured on calendar time. So instead we just make them timedeltas
 // Or if they have passed us a time as a float we convert that
-template <typename Clock, typename Duration>
-class type_caster<std::chrono::time_point<Clock, Duration>>
+template <typename Clock, typename RhythmFigure>
+class type_caster<std::chrono::time_point<Clock, RhythmFigure>>
     : public duration_caster<std::chrono::time_point<Clock, Duration>> {};
 
 template <typename Rep, typename Period>

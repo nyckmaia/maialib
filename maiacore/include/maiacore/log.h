@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cpptrace/cpptrace.hpp>
 #include <cstring>
 #include <iostream>
 #include <stdexcept>
@@ -20,4 +21,5 @@
 #define LOG_ERROR(msg)                                                                           \
     throw std::runtime_error(std::string("[maiacore] ") + msg + "\nSource File: " +              \
                              std::string(__FILENAME__) + " - Line " + std::to_string(__LINE__) + \
-                             "\nFunction: " + std::string(OS_FUNCTION_SIGNATURE))
+                             "\nFunction: " + std::string(OS_FUNCTION_SIGNATURE) + "\n\n" +      \
+                             cpptrace::generate_raw_trace().resolve().to_string(true))

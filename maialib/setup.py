@@ -1,4 +1,5 @@
 from setuptools import setup, find_packages
+from pathlib import Path
 
 with open("README.md", "r", encoding="utf-8") as fh:
     long_description = fh.read()
@@ -6,9 +7,13 @@ with open("README.md", "r", encoding="utf-8") as fh:
 with open("LICENSE.txt", "r", encoding="utf-8") as fh:
     license_txt = fh.read()
 
+# Lê a versão do arquivo VERSION
+version_path = Path(__file__).parent / "VERSION"
+version = version_path.read_text().strip()
+
 setup(
     name="maialib",
-    version="1.5.1-dev",
+    version=version + "-dev",
     author="Nycholas Maia",
     author_email="nyckmaia@gmail.com",
     description="A C++/Python library to manipulate music data",

@@ -243,9 +243,11 @@ const std::string Part::toXML(const int instrumentId, const int identSize) const
         if (_measure[m].timeSignatureChanged()) {
             xml.append(Helper::generateIdentation(4, identSize) + "<time>\n");
             xml.append(Helper::generateIdentation(5, identSize) + "<beats>" +
-                       std::to_string(_measure[m].getTimeSignature().first) + "</beats>\n");
+                       std::to_string(_measure[m].getTimeSignature().getUpperValue()) +
+                       "</beats>\n");
             xml.append(Helper::generateIdentation(5, identSize) + "<beat-type>" +
-                       std::to_string(_measure[m].getTimeSignature().second) + "</beat-type>\n");
+                       std::to_string(_measure[m].getTimeSignature().getLowerValue()) +
+                       "</beat-type>\n");
             xml.append(Helper::generateIdentation(4, identSize) + "</time>\n");
         }
 
@@ -319,6 +321,7 @@ void Part::appendNote(const Note& note, const int position, const int staveId) {
     for (int m = 0; m < numMeasures; m++) {
         auto& measure = _measure[m];
         const int emptySpace = measure.getEmptyDurationTicks();
+        const int divisionsPerQuarterNote = measure.getDivisionsPerQuarterNote();
 
         // This measure 'm' doesn't have any empty space.
         // Go to the next measure
@@ -332,11 +335,11 @@ void Part::appendNote(const Note& note, const int position, const int staveId) {
         // CASE 01: split the note and use ties
         if (diff < 0) {
             Note first = note;
-            first.setDurationTicks(emptySpace);
+            first.setDuration({emptySpace, divisionsPerQuarterNote});
             first.setTieStart();
 
             Note second = note;
-            second.setDurationTicks(abs(diff));
+            second.setDuration({abs(diff), divisionsPerQuarterNote});
             second.setTieStop();
 
             _measure[m].addNote(first, staveId, position);
@@ -374,6 +377,7 @@ void Part::appendChord(const Chord& chord, const int position, const int staveId
     for (int m = 0; m < numMeasures; m++) {
         auto& measure = _measure[m];
         const int emptySpace = measure.getEmptyDurationTicks();
+        const int divisionsPerQuarterNote = measure.getDivisionsPerQuarterNote();
 
         // This measure 'm' doesn't have any empty space.
         // Go to the next measure
@@ -397,14 +401,14 @@ void Part::appendChord(const Chord& chord, const int position, const int staveId
             }
 
             for (int n = 0; n < chordSize; n++) {
-                first[n].setDurationTicks(emptySpace);
+                first[n].setDuration({emptySpace, divisionsPerQuarterNote});
                 first[n].setTieStart();
 
                 _measure[m].addNote(first[n], staveId, position);
             }
 
             for (int n = 0; n < chordSize; n++) {
-                second[n].setDurationTicks(abs(diff));
+                second[n].setDuration({abs(diff), divisionsPerQuarterNote});
                 second[n].setTieStop();
 
                 _measure[m + 1].addNote(second[n], staveId, position);

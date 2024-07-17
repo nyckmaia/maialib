@@ -33,8 +33,22 @@ void ChordClass(const py::module& m) {
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("removeNote", &Chord::removeNote, py::arg("noteIndex"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("setDurationTicks", &Chord::setDurationTicks, py::arg("durationTicks"),
+    cls.def("setDuration", py::overload_cast<const Duration&>(&Chord::setDuration),
+            py::arg("duration"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def("setDuration", py::overload_cast<const float, const int>(&Chord::setDuration),
+            py::arg("quarterDuration"), py::arg("divisionsPerQuarterNote") = 256,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+
+    //     cls.def("setDuration", py::overload_cast<const RhythmFigure, const
+    //     int>(&Chord::setDuration),
+    //             py::arg("rhythmFigure"), py::arg("divisionsPerQuarterNote") = 256);
+    //     cls.def("setDuration",
+    //             py::overload_cast<const float, const int, const int>(&Chord::setDuration),
+    //             py::arg("durationValue"), py::arg("lowerTimeSignatureValue") = 4,
+    //             py::arg("divisionsPerQuarterNote") = 256);
+    //     cls.def("setDurationTicks", &Chord::setDurationTicks, py::arg("durationTicks"),
+    //             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("inversion", &Chord::inversion, py::arg("inversionNumber"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("transpose", &Chord::transpose, py::arg("semiTonesNumber"),

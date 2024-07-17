@@ -2,6 +2,40 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.6.0] - 2024-07-17
+
+### API Changes
+
+- Note and Chord classes:
+  - .setDurationTicks(const int) replaced by .setDuration(const Duration&)
+- MUSICXML::NOTE_TYPE remove all dotted rhythmFigure constants
+- Replace all old mentions of 'duration' by 'RhythmFigure'
+- Note class:
+  - Remove: .removeDots(), .setSingleDot(), setDoubleDot()
+
+### New Features
+
+- New class Duration
+- New class Fraction to store any possible musical note duration
+- New class TimeSignature
+- Add Helper::ticks2rhythmFigure()
+- Add Cpptrace library to get the stackTrace when a exception occors inside the maiacore library
+
+### Improved
+
+- Improve CMakeLists.txt reading
+- Add VERSION file
+- Helper::ticks2noteType() now supports tuplets
+- Note::getDuration() now supports tuplets
+- Note class now have a Duration private member
+- Add "kaleido" and "nbformat" as install requirements
+
+### Fixed
+
+- Score::getChords fixed chord stack with tuplets
+
+---
+
 ## [v1.5.0] - 2024-06-23
 
 ### API Changes

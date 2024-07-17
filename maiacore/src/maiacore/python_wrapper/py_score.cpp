@@ -65,7 +65,7 @@ void ScoreClass(const py::module& m) {
             py::arg("timeLower"), py::arg("measureId") = -1);
 
     cls.def("setMetronomeMark", &Score::setMetronomeMark, py::arg("bpm"),
-            py::arg("duration") = Duration::QUARTER, py::arg("measureStart") = 0);
+            py::arg("rhythmFigure") = RhythmFigure::QUARTER, py::arg("measureStart") = 0);
 
     cls.def("haveAnacrusisMeasure", &Score::haveAnacrusisMeasure);
     cls.def("toXML", &Score::toXML, py::arg("identSize") = 2);

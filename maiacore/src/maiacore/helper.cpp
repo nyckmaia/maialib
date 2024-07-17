@@ -1482,288 +1482,447 @@ int Helper::noteType2ticks(std::string noteType, const int divisionsPerQuarterNo
     return ticks;
 }
 
-std::pair<std::string, int> Helper::ticks2noteType(const int ticks,
-                                                   const int divisionsPerQuarterNote) {
-    const float ratio = static_cast<float>(ticks) / static_cast<float>(divisionsPerQuarterNote);
-    const int scaledRatio =
-        std::round(ratio * 1000000.0f);  // Round to the nearest integer, like MusicXML scores
+std::pair<std::string, int> Helper::ticks2noteType(int durationTicks, int divisionsPerQuarterNote,
+                                                   int actualNotes, int normalNotes) {
+    std::pair<std::string, int> result;
+    int baseDuration = durationTicks;
+    int dotCount = 0;
 
-    // Microsoft Visual C++ Compiler doesn't support 'case range' like GCC and
-    // Clang/LLVM Replaced this feature using multiple 'if' statements
-#ifdef _MSC_VER
-    if ((scaledRatio >= 56000000) && (scaledRatio <= 63999999)) {
-        return {MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT, 2};
-    }  // 32:1
-    if ((scaledRatio >= 48000000) && (scaledRatio <= 55999999)) {
-        return {MUSIC_XML::NOTE_TYPE::MAXIMA_DOT, 1};
-    }  // 32:1
-    if ((scaledRatio >= 32000000) && (scaledRatio <= 47999999)) {
-        return {MUSIC_XML::NOTE_TYPE::MAXIMA, 0};
-    }  // 32:1
-
-    if ((scaledRatio >= 28000000) && (scaledRatio <= 31999999)) {
-        return {MUSIC_XML::NOTE_TYPE::LONG_DOT_DOT, 2};
-    }  // 16:1
-    if ((scaledRatio >= 24000000) && (scaledRatio <= 27999999)) {
-        return {MUSIC_XML::NOTE_TYPE::LONG_DOT, 1};
-    }  // 16:1
-    if ((scaledRatio >= 16000000) && (scaledRatio <= 23999999)) {
-        return {MUSIC_XML::NOTE_TYPE::LONG, 0};
-    }  // 16:1
-
-    if ((scaledRatio >= 14000000) && (scaledRatio <= 15999999)) {
-        return {MUSIC_XML::NOTE_TYPE::BREVE_DOT_DOT, 2};
-    }  // 8:1
-    if ((scaledRatio >= 12000000) && (scaledRatio <= 13999999)) {
-        return {MUSIC_XML::NOTE_TYPE::BREVE_DOT, 1};
-    }  // 8:1
-    if ((scaledRatio >= 8000000) && (scaledRatio <= 11999999)) {
-        return {MUSIC_XML::NOTE_TYPE::BREVE, 0};
-    }  // 8:1
-
-    if ((scaledRatio >= 7000000) && (scaledRatio <= 7999999)) {
-        return {MUSIC_XML::NOTE_TYPE::WHOLE_DOT_DOT, 2};
-    }  // 4:1
-    if ((scaledRatio >= 6000000) && (scaledRatio <= 6999999)) {
-        return {MUSIC_XML::NOTE_TYPE::WHOLE_DOT, 1};
-    }  // 4:1
-    if ((scaledRatio >= 4000000) && (scaledRatio <= 5999999)) {
-        return {MUSIC_XML::NOTE_TYPE::WHOLE, 0};
-    }  // 4:1
-
-    if ((scaledRatio >= 3500000) && (scaledRatio <= 3999999)) {
-        return {MUSIC_XML::NOTE_TYPE::HALF_DOT_DOT, 2};
-    }  // 2:1
-    if ((scaledRatio >= 3000000) && (scaledRatio <= 3499999)) {
-        return {MUSIC_XML::NOTE_TYPE::HALF_DOT, 1};
-    }  // 2:1
-    if ((scaledRatio >= 2000000) && (scaledRatio <= 2999999)) {
-        return {MUSIC_XML::NOTE_TYPE::HALF, 0};
-    }  // 2:1
-
-    if ((scaledRatio >= 1750000) && (scaledRatio <= 1999999)) {
-        return {MUSIC_XML::NOTE_TYPE::QUARTER_DOT_DOT, 2};
-    }  // 1:1
-    if ((scaledRatio >= 1500000) && (scaledRatio <= 1749999)) {
-        return {MUSIC_XML::NOTE_TYPE::QUARTER_DOT, 1};
-    }  // 1:1
-    if ((scaledRatio >= 1000000) && (scaledRatio <= 1499999)) {
-        return {MUSIC_XML::NOTE_TYPE::QUARTER, 0};
-    }  // 1:1
-
-    if ((scaledRatio >= 875000) && (scaledRatio <= 999999)) {
-        return {MUSIC_XML::NOTE_TYPE::EIGHTH_DOT_DOT, 2};
-    }  // 1:2
-    if ((scaledRatio >= 750000) && (scaledRatio <= 874999)) {
-        return {MUSIC_XML::NOTE_TYPE::EIGHTH_DOT, 1};
-    }  // 1:2
-    if ((scaledRatio >= 500000) && (scaledRatio <= 749999)) {
-        return {MUSIC_XML::NOTE_TYPE::EIGHTH, 0};
-    }  // 1:2
-
-    if ((scaledRatio >= 437500) && (scaledRatio <= 499999)) {
-        return {MUSIC_XML::NOTE_TYPE::N16TH_DOT_DOT, 2};
-    }  // 1:4
-    if ((scaledRatio >= 375000) && (scaledRatio <= 437499)) {
-        return {MUSIC_XML::NOTE_TYPE::N16TH_DOT, 1};
-    }  // 1:4
-    if ((scaledRatio >= 250000) && (scaledRatio <= 374999)) {
-        return {MUSIC_XML::NOTE_TYPE::N16TH, 0};
-    }  // 1:4
-
-    if ((scaledRatio >= 218750) && (scaledRatio <= 249999)) {
-        return {MUSIC_XML::NOTE_TYPE::N32ND_DOT_DOT, 2};
-    }  // 1:8
-    if ((scaledRatio >= 187500) && (scaledRatio <= 218749)) {
-        return {MUSIC_XML::NOTE_TYPE::N32ND_DOT, 1};
-    }  // 1:8
-    if ((scaledRatio >= 125000) && (scaledRatio <= 187499)) {
-        return {MUSIC_XML::NOTE_TYPE::N32ND, 0};
-    }  // 1:8
-
-    if ((scaledRatio >= 109375) && (scaledRatio <= 124999)) {
-        return {MUSIC_XML::NOTE_TYPE::N64TH_DOT_DOT, 2};
-    }  // 1:16
-    if ((scaledRatio >= 93750) && (scaledRatio <= 109374)) {
-        return {MUSIC_XML::NOTE_TYPE::N64TH_DOT, 1};
-    }  // 1:16
-    if ((scaledRatio >= 62500) && (scaledRatio <= 93749)) {
-        return {MUSIC_XML::NOTE_TYPE::N64TH, 0};
-    }  // 1:16
-
-    if ((scaledRatio >= 54688) && (scaledRatio <= 62499)) {
-        return {MUSIC_XML::NOTE_TYPE::N128TH_DOT_DOT, 2};
-    }  // 1:32
-    if ((scaledRatio >= 46875) && (scaledRatio <= 54687)) {
-        return {MUSIC_XML::NOTE_TYPE::N128TH_DOT, 1};
-    }  // 1:32
-    if ((scaledRatio >= 31250) && (scaledRatio <= 46874)) {
-        return {MUSIC_XML::NOTE_TYPE::N128TH, 0};
-    }  // 1:32
-
-    if ((scaledRatio >= 27344) && (scaledRatio <= 31249)) {
-        return {MUSIC_XML::NOTE_TYPE::N256TH_DOT_DOT, 2};
-    }  // 1:64
-    if ((scaledRatio >= 23438) && (scaledRatio <= 27343)) {
-        return {MUSIC_XML::NOTE_TYPE::N256TH_DOT, 1};
-    }  // 1:64
-    if ((scaledRatio >= 15625) && (scaledRatio <= 23437)) {
-        return {MUSIC_XML::NOTE_TYPE::N256TH, 0};
-    }  // 1:64
-
-    if ((scaledRatio >= 13672) && (scaledRatio <= 15624)) {
-        return {MUSIC_XML::NOTE_TYPE::N512TH_DOT_DOT, 2};
-    }  // 1:128
-    if ((scaledRatio >= 11719) && (scaledRatio <= 13671)) {
-        return {MUSIC_XML::NOTE_TYPE::N512TH_DOT, 1};
-    }  // 1:128
-    if ((scaledRatio >= 7813) && (scaledRatio <= 11718)) {
-        return {MUSIC_XML::NOTE_TYPE::N512TH, 0};
-    }  // 1:128
-
-    if ((scaledRatio >= 6836) && (scaledRatio <= 7812)) {
-        return {MUSIC_XML::NOTE_TYPE::N1024TH_DOT_DOT, 2};
-    }  // 1:256
-    if ((scaledRatio >= 5859) && (scaledRatio <= 6835)) {
-        return {MUSIC_XML::NOTE_TYPE::N1024TH_DOT, 1};
-    }  // 1:256
-    if ((scaledRatio >= 3906) && (scaledRatio <= 5858)) {
-        return {MUSIC_XML::NOTE_TYPE::N1024TH, 0};
-    }  // 1:256
-
-    // switch/case default option
-    LOG_ERROR(
-        "Unable to convert " + std::to_string(ticks) + " 'ticks' value to 'noteType' string\n " +
-        "using 'divisionPerQuarterNote'=" + std::to_string(divisionsPerQuarterNote) +
-        " and 'scaledRatio'=" + std::to_string(scaledRatio) + "\n\n" +
-        "If you are working based on a XML file, this file can be corrupted!\nYou can try to "
-        "fix this problem: \na) Open/Import this XML file in a modern score editor software "
-        "(like MuseScore 4, Avid Sibelius 2023 or Makemusic Finale 27)\nb) Generate a new "
-        "version of this sheet music by exporting this file as a new *.xml or *.musicxml "
-        "file\nc) Return to your 'maialib environment' and update your Score object "
-        "constructor file path to point to the new generated file\nd) Run your code again! Done!");
-    return {};
-
-#else
-    // GCC and Clang/LLVM compilers have 'case range' support
-    switch (scaledRatio) {
-        case 56000000 ... 63999999:
-            return {MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT, 2};  // 32:1
-        case 48000000 ... 55999999:
-            return {MUSIC_XML::NOTE_TYPE::MAXIMA_DOT, 1};  // 32:1
-        case 32000000 ... 47999999:
-            return {MUSIC_XML::NOTE_TYPE::MAXIMA, 0};  // 32:1
-
-        case 28000000 ... 31999999:
-            return {MUSIC_XML::NOTE_TYPE::LONG_DOT_DOT, 2};  // 16:1
-        case 24000000 ... 27999999:
-            return {MUSIC_XML::NOTE_TYPE::LONG_DOT, 1};  // 16:1
-        case 16000000 ... 23999999:
-            return {MUSIC_XML::NOTE_TYPE::LONG, 0};  // 16:1
-
-        case 14000000 ... 15999999:
-            return {MUSIC_XML::NOTE_TYPE::BREVE_DOT_DOT, 2};  // 8:1
-        case 12000000 ... 13999999:
-            return {MUSIC_XML::NOTE_TYPE::BREVE_DOT, 1};  // 8:1
-        case 8000000 ... 11999999:
-            return {MUSIC_XML::NOTE_TYPE::BREVE, 0};  // 8:1
-
-        case 7000000 ... 7999999:
-            return {MUSIC_XML::NOTE_TYPE::WHOLE_DOT_DOT, 2};  // 4:1
-        case 6000000 ... 6999999:
-            return {MUSIC_XML::NOTE_TYPE::WHOLE_DOT, 1};  // 4:1
-        case 4000000 ... 5999999:
-            return {MUSIC_XML::NOTE_TYPE::WHOLE, 0};  // 4:1
-
-        case 3500000 ... 3999999:
-            return {MUSIC_XML::NOTE_TYPE::HALF_DOT_DOT, 2};  // 2:1
-        case 3000000 ... 3499999:
-            return {MUSIC_XML::NOTE_TYPE::HALF_DOT, 1};  // 2:1
-        case 2000000 ... 2999999:
-            return {MUSIC_XML::NOTE_TYPE::HALF, 0};  // 2:1
-
-        case 1750000 ... 1999999:
-            return {MUSIC_XML::NOTE_TYPE::QUARTER_DOT_DOT, 2};  // 1:1
-        case 1500000 ... 1749999:
-            return {MUSIC_XML::NOTE_TYPE::QUARTER_DOT, 1};  // 1:1
-        case 1000000 ... 1499999:
-            return {MUSIC_XML::NOTE_TYPE::QUARTER, 0};  // 1:1
-
-        case 875000 ... 999999:
-            return {MUSIC_XML::NOTE_TYPE::EIGHTH_DOT_DOT, 2};  // 1:2
-        case 750000 ... 874999:
-            return {MUSIC_XML::NOTE_TYPE::EIGHTH_DOT, 1};  // 1:2
-        case 500000 ... 749999:
-            return {MUSIC_XML::NOTE_TYPE::EIGHTH, 0};  // 1:2
-
-        case 437500 ... 499999:
-            return {MUSIC_XML::NOTE_TYPE::N16TH_DOT_DOT, 2};  // 1:4
-        case 375000 ... 437499:
-            return {MUSIC_XML::NOTE_TYPE::N16TH_DOT, 1};  // 1:4
-        case 250000 ... 374999:
-            return {MUSIC_XML::NOTE_TYPE::N16TH, 0};  // 1:4
-
-        case 218750 ... 249999:
-            return {MUSIC_XML::NOTE_TYPE::N32ND_DOT_DOT, 2};  // 1:8
-        case 187500 ... 218749:
-            return {MUSIC_XML::NOTE_TYPE::N32ND_DOT, 1};  // 1:8
-        case 125000 ... 187499:
-            return {MUSIC_XML::NOTE_TYPE::N32ND, 0};  // 1:8
-
-        case 109375 ... 124999:
-            return {MUSIC_XML::NOTE_TYPE::N64TH_DOT_DOT, 2};  // 1:16
-        case 93750 ... 109374:
-            return {MUSIC_XML::NOTE_TYPE::N64TH_DOT, 1};  // 1:16
-        case 62500 ... 93749:
-            return {MUSIC_XML::NOTE_TYPE::N64TH, 0};  // 1:16
-
-        case 54688 ... 62499:
-            return {MUSIC_XML::NOTE_TYPE::N128TH_DOT_DOT, 2};  // 1:32
-        case 46875 ... 54687:
-            return {MUSIC_XML::NOTE_TYPE::N128TH_DOT, 1};  // 1:32
-        case 31250 ... 46874:
-            return {MUSIC_XML::NOTE_TYPE::N128TH, 0};  // 1:32
-
-        case 27344 ... 31249:
-            return {MUSIC_XML::NOTE_TYPE::N256TH_DOT_DOT, 2};  // 1:64
-        case 23438 ... 27343:
-            return {MUSIC_XML::NOTE_TYPE::N256TH_DOT, 1};  // 1:64
-        case 15625 ... 23437:
-            return {MUSIC_XML::NOTE_TYPE::N256TH, 0};  // 1:64
-
-        case 13672 ... 15624:
-            return {MUSIC_XML::NOTE_TYPE::N512TH_DOT_DOT, 2};  // 1:128
-        case 11719 ... 13671:
-            return {MUSIC_XML::NOTE_TYPE::N512TH_DOT, 1};  // 1:128
-        case 7813 ... 11718:
-            return {MUSIC_XML::NOTE_TYPE::N512TH, 0};  // 1:128
-
-        case 6836 ... 7812:
-            return {MUSIC_XML::NOTE_TYPE::N1024TH_DOT_DOT, 2};  // 1:256
-        case 5859 ... 6835:
-            return {MUSIC_XML::NOTE_TYPE::N1024TH_DOT, 1};  // 1:256
-        case 3906 ... 5858:
-            return {MUSIC_XML::NOTE_TYPE::N1024TH, 0};  // 1:256
-        default:
-            LOG_ERROR(
-                "Unable to convert " + std::to_string(ticks) +
-                " 'ticks' value to 'noteType' string\n " +
-                "using 'divisionPerQuarterNote'=" + std::to_string(divisionsPerQuarterNote) +
-                " and 'scaledRatio'=" + std::to_string(scaledRatio) + "\n\n" +
-                "If you are working based on a XML file, this file can be corrupted!\nYou can try "
-                "to fix this problem: \na) Open/Import this XML file in a modern score editor "
-                "software "
-                "(like MuseScore 4, Avid Sibelius 2023 or Makemusic Finale 27)\nb) Generate a new "
-                "version of this sheet music by exporting this file as a new *.xml or *.musicxml "
-                "file\nc) Return to your 'maialib environment' and update your Score object "
-                "constructor file path to point to the new generated file\nd) Run your code again! "
-                "Done!");
-            break;
+    // Adjust the durationTicks for tuplets
+    if (actualNotes != normalNotes) {
+        durationTicks = (durationTicks * normalNotes) / actualNotes;
     }
 
-    return {};
-#endif
+    // Determine base note type and dot count
+    if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 5)) {
+        result.first = "maxima";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 5);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 4)) {
+        result.first = "long";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 4);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 3)) {
+        result.first = "breve";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 3);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 2)) {
+        result.first = "whole";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 2);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 1)) {
+        result.first = "half";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 1);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 0)) {
+        result.first = "quarter";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 0);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -1)) {
+        result.first = "eighth";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -1);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -2)) {
+        result.first = "16th";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -2);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -3)) {
+        result.first = "32nd";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -3);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -4)) {
+        result.first = "64th";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -4);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -5)) {
+        result.first = "128th";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -5);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -6)) {
+        result.first = "256th";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -6);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -7)) {
+        result.first = "512th";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -7);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -8)) {
+        result.first = "1024th";
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -8);
+    } else {
+        std::string errMsg = "Unable to convert durationTick to noteType\n";
+        errMsg += "durationTicks: " + std::to_string(durationTicks) + "\n";
+        errMsg += "divisionsPerQuarterNote: " + std::to_string(divisionsPerQuarterNote) + "\n";
+        errMsg += "actualNotes: " + std::to_string(actualNotes) + "\n";
+        errMsg += "normalNotes: " + std::to_string(normalNotes) + "\n";
+        LOG_ERROR(errMsg);
+    }
+
+    // Calculate dot count
+    while (durationTicks > baseDuration) {
+        baseDuration += baseDuration / 2;
+        dotCount++;
+    }
+
+    result.second = dotCount;
+    return result;
 }
+
+std::pair<RhythmFigure, int> Helper::ticks2rhythmFigure(int durationTicks,
+                                                        int divisionsPerQuarterNote,
+                                                        int actualNotes, int normalNotes) {
+    std::pair<RhythmFigure, int> result;
+    int baseDuration = durationTicks;
+    int dotCount = 0;
+
+    const bool isTuplet = (actualNotes != normalNotes);
+    const bool isPerfectMultipleTuple = (divisionsPerQuarterNote % actualNotes == 0);
+
+    // Adjust the durationTicks for tuplets
+    if (isTuplet) {
+        if (isPerfectMultipleTuple) {
+            durationTicks =
+                std::floor(static_cast<float>(durationTicks) *
+                           (static_cast<float>(actualNotes) / static_cast<float>(normalNotes)));
+        } else {
+            durationTicks =
+                std::floor((static_cast<float>(durationTicks) * static_cast<float>(actualNotes)) /
+                           static_cast<float>(normalNotes));
+        }
+    }
+
+    // Determine base note type and dot count
+    if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 5)) {
+        result.first = RhythmFigure::MAXIMA;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 5);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 4)) {
+        result.first = RhythmFigure::LONG;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 4);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 3)) {
+        result.first = RhythmFigure::BREVE;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 3);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 2)) {
+        result.first = RhythmFigure::WHOLE;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 2);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 1)) {
+        result.first = RhythmFigure::HALF;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 1);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, 0)) {
+        result.first = RhythmFigure::QUARTER;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, 0);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -1)) {
+        result.first = RhythmFigure::EIGHTH;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -1);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -2)) {
+        result.first = RhythmFigure::N16TH;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -2);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -3)) {
+        result.first = RhythmFigure::N32ND;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -3);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -4)) {
+        result.first = RhythmFigure::N64TH;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -4);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -5)) {
+        result.first = RhythmFigure::N128TH;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -5);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -6)) {
+        result.first = RhythmFigure::N256TH;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -6);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -7)) {
+        result.first = RhythmFigure::N512TH;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -7);
+    } else if (durationTicks >= divisionsPerQuarterNote * std::pow(2, -8)) {
+        result.first = RhythmFigure::N1024TH;
+        baseDuration = divisionsPerQuarterNote * std::pow(2, -8);
+    } else {
+        std::string errMsg = "Unable to convert durationTick to RhythmFigure\n";
+        errMsg += "durationTicks: " + std::to_string(durationTicks) + "\n";
+        errMsg += "divisionsPerQuarterNote: " + std::to_string(divisionsPerQuarterNote) + "\n";
+        errMsg += "actualNotes: " + std::to_string(actualNotes) + "\n";
+        errMsg += "normalNotes: " + std::to_string(normalNotes) + "\n";
+        LOG_ERROR(errMsg);
+    }
+
+    // Calculate dot count
+    while (durationTicks > baseDuration) {
+        baseDuration += baseDuration / 2;
+        dotCount++;
+    }
+
+    result.second = dotCount;
+    return result;
+}
+
+// std::pair<std::string, int> Helper::ticks2noteType(const int ticks,
+//                                                    const int divisionsPerQuarterNote) {
+//     const float ratio = static_cast<float>(ticks) / static_cast<float>(divisionsPerQuarterNote);
+//     const int scaledRatio =
+//         std::round(ratio * 1000000.0f);  // Round to the nearest integer, like MusicXML scores
+
+//     // Microsoft Visual C++ Compiler doesn't support 'case range' like GCC and
+//     // Clang/LLVM Replaced this feature using multiple 'if' statements
+// #ifdef _MSC_VER
+//     if ((scaledRatio >= 56000000) && (scaledRatio <= 63999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT, 2};
+//     }  // 32:1
+//     if ((scaledRatio >= 48000000) && (scaledRatio <= 55999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::MAXIMA_DOT, 1};
+//     }  // 32:1
+//     if ((scaledRatio >= 32000000) && (scaledRatio <= 47999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::MAXIMA, 0};
+//     }  // 32:1
+
+//     if ((scaledRatio >= 28000000) && (scaledRatio <= 31999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::LONG_DOT_DOT, 2};
+//     }  // 16:1
+//     if ((scaledRatio >= 24000000) && (scaledRatio <= 27999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::LONG_DOT, 1};
+//     }  // 16:1
+//     if ((scaledRatio >= 16000000) && (scaledRatio <= 23999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::LONG, 0};
+//     }  // 16:1
+
+//     if ((scaledRatio >= 14000000) && (scaledRatio <= 15999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::BREVE_DOT_DOT, 2};
+//     }  // 8:1
+//     if ((scaledRatio >= 12000000) && (scaledRatio <= 13999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::BREVE_DOT, 1};
+//     }  // 8:1
+//     if ((scaledRatio >= 8000000) && (scaledRatio <= 11999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::BREVE, 0};
+//     }  // 8:1
+
+//     if ((scaledRatio >= 7000000) && (scaledRatio <= 7999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::WHOLE_DOT_DOT, 2};
+//     }  // 4:1
+//     if ((scaledRatio >= 6000000) && (scaledRatio <= 6999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::WHOLE_DOT, 1};
+//     }  // 4:1
+//     if ((scaledRatio >= 4000000) && (scaledRatio <= 5999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::WHOLE, 0};
+//     }  // 4:1
+
+//     if ((scaledRatio >= 3500000) && (scaledRatio <= 3999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::HALF_DOT_DOT, 2};
+//     }  // 2:1
+//     if ((scaledRatio >= 3000000) && (scaledRatio <= 3499999)) {
+//         return {MUSIC_XML::NOTE_TYPE::HALF_DOT, 1};
+//     }  // 2:1
+//     if ((scaledRatio >= 2000000) && (scaledRatio <= 2999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::HALF, 0};
+//     }  // 2:1
+
+//     if ((scaledRatio >= 1750000) && (scaledRatio <= 1999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::QUARTER_DOT_DOT, 2};
+//     }  // 1:1
+//     if ((scaledRatio >= 1500000) && (scaledRatio <= 1749999)) {
+//         return {MUSIC_XML::NOTE_TYPE::QUARTER_DOT, 1};
+//     }  // 1:1
+//     if ((scaledRatio >= 1000000) && (scaledRatio <= 1499999)) {
+//         return {MUSIC_XML::NOTE_TYPE::QUARTER, 0};
+//     }  // 1:1
+
+//     if ((scaledRatio >= 875000) && (scaledRatio <= 999999)) {
+//         return {MUSIC_XML::NOTE_TYPE::EIGHTH_DOT_DOT, 2};
+//     }  // 1:2
+//     if ((scaledRatio >= 750000) && (scaledRatio <= 874999)) {
+//         return {MUSIC_XML::NOTE_TYPE::EIGHTH_DOT, 1};
+//     }  // 1:2
+//     if ((scaledRatio >= 500000) && (scaledRatio <= 749999)) {
+//         return {MUSIC_XML::NOTE_TYPE::EIGHTH, 0};
+//     }  // 1:2
+
+//     if ((scaledRatio >= 437500) && (scaledRatio <= 499999)) {
+//         return {MUSIC_XML::NOTE_TYPE::N16TH_DOT_DOT, 2};
+//     }  // 1:4
+//     if ((scaledRatio >= 375000) && (scaledRatio <= 437499)) {
+//         return {MUSIC_XML::NOTE_TYPE::N16TH_DOT, 1};
+//     }  // 1:4
+//     if ((scaledRatio >= 250000) && (scaledRatio <= 374999)) {
+//         return {MUSIC_XML::NOTE_TYPE::N16TH, 0};
+//     }  // 1:4
+
+//     if ((scaledRatio >= 218750) && (scaledRatio <= 249999)) {
+//         return {MUSIC_XML::NOTE_TYPE::N32ND_DOT_DOT, 2};
+//     }  // 1:8
+//     if ((scaledRatio >= 187500) && (scaledRatio <= 218749)) {
+//         return {MUSIC_XML::NOTE_TYPE::N32ND_DOT, 1};
+//     }  // 1:8
+//     if ((scaledRatio >= 125000) && (scaledRatio <= 187499)) {
+//         return {MUSIC_XML::NOTE_TYPE::N32ND, 0};
+//     }  // 1:8
+
+//     if ((scaledRatio >= 109375) && (scaledRatio <= 124999)) {
+//         return {MUSIC_XML::NOTE_TYPE::N64TH_DOT_DOT, 2};
+//     }  // 1:16
+//     if ((scaledRatio >= 93750) && (scaledRatio <= 109374)) {
+//         return {MUSIC_XML::NOTE_TYPE::N64TH_DOT, 1};
+//     }  // 1:16
+//     if ((scaledRatio >= 62500) && (scaledRatio <= 93749)) {
+//         return {MUSIC_XML::NOTE_TYPE::N64TH, 0};
+//     }  // 1:16
+
+//     if ((scaledRatio >= 54688) && (scaledRatio <= 62499)) {
+//         return {MUSIC_XML::NOTE_TYPE::N128TH_DOT_DOT, 2};
+//     }  // 1:32
+//     if ((scaledRatio >= 46875) && (scaledRatio <= 54687)) {
+//         return {MUSIC_XML::NOTE_TYPE::N128TH_DOT, 1};
+//     }  // 1:32
+//     if ((scaledRatio >= 31250) && (scaledRatio <= 46874)) {
+//         return {MUSIC_XML::NOTE_TYPE::N128TH, 0};
+//     }  // 1:32
+
+//     if ((scaledRatio >= 27344) && (scaledRatio <= 31249)) {
+//         return {MUSIC_XML::NOTE_TYPE::N256TH_DOT_DOT, 2};
+//     }  // 1:64
+//     if ((scaledRatio >= 23438) && (scaledRatio <= 27343)) {
+//         return {MUSIC_XML::NOTE_TYPE::N256TH_DOT, 1};
+//     }  // 1:64
+//     if ((scaledRatio >= 15625) && (scaledRatio <= 23437)) {
+//         return {MUSIC_XML::NOTE_TYPE::N256TH, 0};
+//     }  // 1:64
+
+//     if ((scaledRatio >= 13672) && (scaledRatio <= 15624)) {
+//         return {MUSIC_XML::NOTE_TYPE::N512TH_DOT_DOT, 2};
+//     }  // 1:128
+//     if ((scaledRatio >= 11719) && (scaledRatio <= 13671)) {
+//         return {MUSIC_XML::NOTE_TYPE::N512TH_DOT, 1};
+//     }  // 1:128
+//     if ((scaledRatio >= 7813) && (scaledRatio <= 11718)) {
+//         return {MUSIC_XML::NOTE_TYPE::N512TH, 0};
+//     }  // 1:128
+
+//     if ((scaledRatio >= 6836) && (scaledRatio <= 7812)) {
+//         return {MUSIC_XML::NOTE_TYPE::N1024TH_DOT_DOT, 2};
+//     }  // 1:256
+//     if ((scaledRatio >= 5859) && (scaledRatio <= 6835)) {
+//         return {MUSIC_XML::NOTE_TYPE::N1024TH_DOT, 1};
+//     }  // 1:256
+//     if ((scaledRatio >= 3906) && (scaledRatio <= 5858)) {
+//         return {MUSIC_XML::NOTE_TYPE::N1024TH, 0};
+//     }  // 1:256
+
+//     // switch/case default option
+//     LOG_ERROR(
+//         "Unable to convert " + std::to_string(ticks) + " 'ticks' value to 'noteType' string\n " +
+//         "using 'divisionPerQuarterNote'=" + std::to_string(divisionsPerQuarterNote) +
+//         " and 'scaledRatio'=" + std::to_string(scaledRatio) + "\n\n" +
+//         "If you are working based on a XML file, this file can be corrupted!\nYou can try to "
+//         "fix this problem: \na) Open/Import this XML file in a modern score editor software "
+//         "(like MuseScore 4, Avid Sibelius 2023 or Makemusic Finale 27)\nb) Generate a new "
+//         "version of this sheet music by exporting this file as a new *.xml or *.musicxml "
+//         "file\nc) Return to your 'maialib environment' and update your Score object "
+//         "constructor file path to point to the new generated file\nd) Run your code again!
+//         Done!");
+//     return {};
+
+// #else
+//     // GCC and Clang/LLVM compilers have 'case range' support
+//     switch (scaledRatio) {
+//         case 56000000 ... 63999999:
+//             return {MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT, 2};  // 32:1
+//         case 48000000 ... 55999999:
+//             return {MUSIC_XML::NOTE_TYPE::MAXIMA_DOT, 1};  // 32:1
+//         case 32000000 ... 47999999:
+//             return {MUSIC_XML::NOTE_TYPE::MAXIMA, 0};  // 32:1
+
+//         case 28000000 ... 31999999:
+//             return {MUSIC_XML::NOTE_TYPE::LONG_DOT_DOT, 2};  // 16:1
+//         case 24000000 ... 27999999:
+//             return {MUSIC_XML::NOTE_TYPE::LONG_DOT, 1};  // 16:1
+//         case 16000000 ... 23999999:
+//             return {MUSIC_XML::NOTE_TYPE::LONG, 0};  // 16:1
+
+//         case 14000000 ... 15999999:
+//             return {MUSIC_XML::NOTE_TYPE::BREVE_DOT_DOT, 2};  // 8:1
+//         case 12000000 ... 13999999:
+//             return {MUSIC_XML::NOTE_TYPE::BREVE_DOT, 1};  // 8:1
+//         case 8000000 ... 11999999:
+//             return {MUSIC_XML::NOTE_TYPE::BREVE, 0};  // 8:1
+
+//         case 7000000 ... 7999999:
+//             return {MUSIC_XML::NOTE_TYPE::WHOLE_DOT_DOT, 2};  // 4:1
+//         case 6000000 ... 6999999:
+//             return {MUSIC_XML::NOTE_TYPE::WHOLE_DOT, 1};  // 4:1
+//         case 4000000 ... 5999999:
+//             return {MUSIC_XML::NOTE_TYPE::WHOLE, 0};  // 4:1
+
+//         case 3500000 ... 3999999:
+//             return {MUSIC_XML::NOTE_TYPE::HALF_DOT_DOT, 2};  // 2:1
+//         case 3000000 ... 3499999:
+//             return {MUSIC_XML::NOTE_TYPE::HALF_DOT, 1};  // 2:1
+//         case 2000000 ... 2999999:
+//             return {MUSIC_XML::NOTE_TYPE::HALF, 0};  // 2:1
+
+//         case 1750000 ... 1999999:
+//             return {MUSIC_XML::NOTE_TYPE::QUARTER_DOT_DOT, 2};  // 1:1
+//         case 1500000 ... 1749999:
+//             return {MUSIC_XML::NOTE_TYPE::QUARTER_DOT, 1};  // 1:1
+//         case 1000000 ... 1499999:
+//             return {MUSIC_XML::NOTE_TYPE::QUARTER, 0};  // 1:1
+
+//         case 875000 ... 999999:
+//             return {MUSIC_XML::NOTE_TYPE::EIGHTH_DOT_DOT, 2};  // 1:2
+//         case 750000 ... 874999:
+//             return {MUSIC_XML::NOTE_TYPE::EIGHTH_DOT, 1};  // 1:2
+//         case 500000 ... 749999:
+//             return {MUSIC_XML::NOTE_TYPE::EIGHTH, 0};  // 1:2
+
+//         case 437500 ... 499999:
+//             return {MUSIC_XML::NOTE_TYPE::N16TH_DOT_DOT, 2};  // 1:4
+//         case 375000 ... 437499:
+//             return {MUSIC_XML::NOTE_TYPE::N16TH_DOT, 1};  // 1:4
+//         case 250000 ... 374999:
+//             return {MUSIC_XML::NOTE_TYPE::N16TH, 0};  // 1:4
+
+//         case 218750 ... 249999:
+//             return {MUSIC_XML::NOTE_TYPE::N32ND_DOT_DOT, 2};  // 1:8
+//         case 187500 ... 218749:
+//             return {MUSIC_XML::NOTE_TYPE::N32ND_DOT, 1};  // 1:8
+//         case 125000 ... 187499:
+//             return {MUSIC_XML::NOTE_TYPE::N32ND, 0};  // 1:8
+
+//         case 109375 ... 124999:
+//             return {MUSIC_XML::NOTE_TYPE::N64TH_DOT_DOT, 2};  // 1:16
+//         case 93750 ... 109374:
+//             return {MUSIC_XML::NOTE_TYPE::N64TH_DOT, 1};  // 1:16
+//         case 62500 ... 93749:
+//             return {MUSIC_XML::NOTE_TYPE::N64TH, 0};  // 1:16
+
+//         case 54688 ... 62499:
+//             return {MUSIC_XML::NOTE_TYPE::N128TH_DOT_DOT, 2};  // 1:32
+//         case 46875 ... 54687:
+//             return {MUSIC_XML::NOTE_TYPE::N128TH_DOT, 1};  // 1:32
+//         case 31250 ... 46874:
+//             return {MUSIC_XML::NOTE_TYPE::N128TH, 0};  // 1:32
+
+//         case 27344 ... 31249:
+//             return {MUSIC_XML::NOTE_TYPE::N256TH_DOT_DOT, 2};  // 1:64
+//         case 23438 ... 27343:
+//             return {MUSIC_XML::NOTE_TYPE::N256TH_DOT, 1};  // 1:64
+//         case 15625 ... 23437:
+//             return {MUSIC_XML::NOTE_TYPE::N256TH, 0};  // 1:64
+
+//         case 13672 ... 15624:
+//             return {MUSIC_XML::NOTE_TYPE::N512TH_DOT_DOT, 2};  // 1:128
+//         case 11719 ... 13671:
+//             return {MUSIC_XML::NOTE_TYPE::N512TH_DOT, 1};  // 1:128
+//         case 7813 ... 11718:
+//             return {MUSIC_XML::NOTE_TYPE::N512TH, 0};  // 1:128
+
+//         case 6836 ... 7812:
+//             return {MUSIC_XML::NOTE_TYPE::N1024TH_DOT_DOT, 2};  // 1:256
+//         case 5859 ... 6835:
+//             return {MUSIC_XML::NOTE_TYPE::N1024TH_DOT, 1};  // 1:256
+//         case 3906 ... 5858:
+//             return {MUSIC_XML::NOTE_TYPE::N1024TH, 0};  // 1:256
+//         default:
+//             LOG_ERROR(
+//                 "Unable to convert " + std::to_string(ticks) +
+//                 " 'ticks' value to 'noteType' string\n " +
+//                 "using 'divisionPerQuarterNote'=" + std::to_string(divisionsPerQuarterNote) +
+//                 " and 'scaledRatio'=" + std::to_string(scaledRatio) + "\n\n" +
+//                 "If you are working based on a XML file, this file can be corrupted!\nYou can try
+//                 " "to fix this problem: \na) Open/Import this XML file in a modern score editor "
+//                 "software "
+//                 "(like MuseScore 4, Avid Sibelius 2023 or Makemusic Finale 27)\nb) Generate a new
+//                 " "version of this sheet music by exporting this file as a new *.xml or
+//                 *.musicxml " "file\nc) Return to your 'maialib environment' and update your Score
+//                 object " "constructor file path to point to the new generated file\nd) Run your
+//                 code again! " "Done!");
+//             break;
+//     }
+
+//     return {};
+// #endif
+// }
 
 float Helper::noteSimilarity(std::string& pitchClass_A, int octave_A, const float duration_A,
                              std::string& pitchClass_B, int octave_B, const float duration_B,
@@ -2100,236 +2259,122 @@ float Helper::durationRatio(float duration_A, float duration_B) {
     return (duration_A > duration_B) ? duration_B / duration_A : duration_A / duration_B;
 }
 
-std::string Helper::duration2noteType(const Duration duration) {
-    switch (duration) {
-        case Duration::MAXIMA_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::MAXIMA_DOT_DOT;
-            break;
-        case Duration::MAXIMA_DOT:
-            return MUSIC_XML::NOTE_TYPE::MAXIMA_DOT;
-            break;
-        case Duration::MAXIMA:
+std::string Helper::rhythmFigure2noteType(const RhythmFigure rhythmFigure) {
+    switch (rhythmFigure) {
+        case RhythmFigure::MAXIMA:
             return MUSIC_XML::NOTE_TYPE::MAXIMA;
             break;
-        case Duration::LONG_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::LONG_DOT_DOT;
-            break;
-        case Duration::LONG_DOT:
-            return MUSIC_XML::NOTE_TYPE::LONG_DOT;
-            break;
-        case Duration::LONG:
+        case RhythmFigure::LONG:
             return MUSIC_XML::NOTE_TYPE::LONG;
             break;
-        case Duration::BREVE_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::BREVE_DOT_DOT;
-            break;
-        case Duration::BREVE_DOT:
-            return MUSIC_XML::NOTE_TYPE::BREVE_DOT;
-            break;
-        case Duration::BREVE:
+        case RhythmFigure::BREVE:
             return MUSIC_XML::NOTE_TYPE::BREVE;
             break;
-        case Duration::WHOLE_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::WHOLE_DOT_DOT;
-            break;
-        case Duration::WHOLE_DOT:
-            return MUSIC_XML::NOTE_TYPE::WHOLE_DOT;
-            break;
-        case Duration::WHOLE:
+        case RhythmFigure::WHOLE:
             return MUSIC_XML::NOTE_TYPE::WHOLE;
             break;
-        case Duration::HALF_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::HALF_DOT_DOT;
-            break;
-        case Duration::HALF_DOT:
-            return MUSIC_XML::NOTE_TYPE::HALF_DOT;
-            break;
-        case Duration::HALF:
+        case RhythmFigure::HALF:
             return MUSIC_XML::NOTE_TYPE::HALF;
             break;
-        case Duration::QUARTER_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::QUARTER_DOT_DOT;
-            break;
-        case Duration::QUARTER_DOT:
-            return MUSIC_XML::NOTE_TYPE::QUARTER_DOT;
-            break;
-        case Duration::QUARTER:
+        case RhythmFigure::QUARTER:
             return MUSIC_XML::NOTE_TYPE::QUARTER;
             break;
-        case Duration::EIGHTH_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::EIGHTH_DOT_DOT;
-            break;
-        case Duration::EIGHTH_DOT:
-            return MUSIC_XML::NOTE_TYPE::EIGHTH_DOT;
-            break;
-        case Duration::EIGHTH:
+        case RhythmFigure::EIGHTH:
             return MUSIC_XML::NOTE_TYPE::EIGHTH;
             break;
-        case Duration::N16TH_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::N16TH_DOT_DOT;
-            break;
-        case Duration::N16TH_DOT:
-            return MUSIC_XML::NOTE_TYPE::N16TH_DOT;
-            break;
-        case Duration::N16TH:
+        case RhythmFigure::N16TH:
             return MUSIC_XML::NOTE_TYPE::N16TH;
             break;
-        case Duration::N32ND_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::N32ND_DOT_DOT;
-            break;
-        case Duration::N32ND_DOT:
-            return MUSIC_XML::NOTE_TYPE::N32ND_DOT;
-            break;
-        case Duration::N32ND:
+        case RhythmFigure::N32ND:
             return MUSIC_XML::NOTE_TYPE::N32ND;
             break;
-        case Duration::N64TH_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::N64TH_DOT_DOT;
-            break;
-        case Duration::N64TH_DOT:
-            return MUSIC_XML::NOTE_TYPE::N64TH_DOT;
-            break;
-        case Duration::N64TH:
+        case RhythmFigure::N64TH:
             return MUSIC_XML::NOTE_TYPE::N64TH;
             break;
-        case Duration::N128TH_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::N128TH_DOT_DOT;
-            break;
-        case Duration::N128TH_DOT:
-            return MUSIC_XML::NOTE_TYPE::N128TH_DOT;
-            break;
-        case Duration::N128TH:
+        case RhythmFigure::N128TH:
             return MUSIC_XML::NOTE_TYPE::N128TH;
             break;
-        case Duration::N256TH_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::N256TH_DOT_DOT;
-            break;
-        case Duration::N256TH_DOT:
-            return MUSIC_XML::NOTE_TYPE::N256TH_DOT;
-            break;
-        case Duration::N256TH:
+        case RhythmFigure::N256TH:
             return MUSIC_XML::NOTE_TYPE::N256TH;
             break;
-        case Duration::N512TH_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::N512TH_DOT_DOT;
-            break;
-        case Duration::N512TH_DOT:
-            return MUSIC_XML::NOTE_TYPE::N512TH_DOT;
-            break;
-        case Duration::N512TH:
+        case RhythmFigure::N512TH:
             return MUSIC_XML::NOTE_TYPE::N512TH;
             break;
-        case Duration::N1024TH_DOT_DOT:
-            return MUSIC_XML::NOTE_TYPE::N1024TH_DOT_DOT;
-            break;
-        case Duration::N1024TH_DOT:
-            return MUSIC_XML::NOTE_TYPE::N1024TH_DOT;
-            break;
-        case Duration::N1024TH:
+        case RhythmFigure::N1024TH:
             return MUSIC_XML::NOTE_TYPE::N1024TH;
-            break;
-
-        default:
-            LOG_ERROR("Unknown Duration type");
             break;
     }
 
+    LOG_ERROR("Unknown Duration type");
     return {};
 }
 
-int Helper::duration2Ticks(const Duration duration, const int divisionsPerQuarterNote) {
-    const auto noteType = Helper::duration2noteType(duration);
-    const int ticks = Helper::noteType2ticks(noteType, divisionsPerQuarterNote);
+int Helper::rhythmFigure2Ticks(const RhythmFigure rhythmFigure, const int divisionsPerQuarterNote) {
+    switch (rhythmFigure) {
+        case RhythmFigure::MAXIMA:
+            return divisionsPerQuarterNote * std::pow(2, 5);
+        case RhythmFigure::LONG:
+            return divisionsPerQuarterNote * std::pow(2, 4);
+        case RhythmFigure::BREVE:
+            return divisionsPerQuarterNote * std::pow(2, 3);
+        case RhythmFigure::WHOLE:
+            return divisionsPerQuarterNote * std::pow(2, 2);
+        case RhythmFigure::HALF:
+            return divisionsPerQuarterNote * std::pow(2, 1);
+        case RhythmFigure::QUARTER:
+            return divisionsPerQuarterNote * std::pow(2, 0);
+        case RhythmFigure::EIGHTH:
+            return divisionsPerQuarterNote * std::pow(2, -1);
+        case RhythmFigure::N16TH:
+            return divisionsPerQuarterNote * std::pow(2, -2);
+        case RhythmFigure::N32ND:
+            return divisionsPerQuarterNote * std::pow(2, -3);
+        case RhythmFigure::N64TH:
+            return divisionsPerQuarterNote * std::pow(2, -4);
+        case RhythmFigure::N128TH:
+            return divisionsPerQuarterNote * std::pow(2, -5);
+        case RhythmFigure::N256TH:
+            return divisionsPerQuarterNote * std::pow(2, -6);
+        case RhythmFigure::N512TH:
+            return divisionsPerQuarterNote * std::pow(2, -7);
+        case RhythmFigure::N1024TH:
+            return divisionsPerQuarterNote * std::pow(2, -8);
+    }
 
-    return ticks;
+    LOG_ERROR("Unknown rhythmFigure: " + Helper::toString(rhythmFigure));
+    return {};
 }
 
-Duration Helper::noteType2duration(const std::string& noteType) {
+RhythmFigure Helper::noteType2RhythmFigure(const std::string& noteType) {
     switch (hash(noteType.c_str())) {
-        case hash("maxima-dot-dot"):
-            return Duration::MAXIMA_DOT_DOT;
-        case hash("maxima-dot"):
-            return Duration::MAXIMA_DOT;
         case hash("maxima"):
-            return Duration::MAXIMA;
-        case hash("long-dot-dot"):
-            return Duration::LONG_DOT_DOT;
-        case hash("long-dot"):
-            return Duration::LONG_DOT;
+            return RhythmFigure::MAXIMA;
         case hash("long"):
-            return Duration::LONG;
-        case hash("breve-dot-dot"):
-            return Duration::BREVE_DOT_DOT;
-        case hash("breve-dot"):
-            return Duration::BREVE_DOT;
+            return RhythmFigure::LONG;
         case hash("breve"):
-            return Duration::BREVE;
-        case hash("whole-dot-dot"):
-            return Duration::WHOLE_DOT_DOT;
-        case hash("whole-dot"):
-            return Duration::WHOLE_DOT;
+            return RhythmFigure::BREVE;
         case hash("whole"):
-            return Duration::WHOLE;
-        case hash("half-dot-dot"):
-            return Duration::HALF_DOT_DOT;
-        case hash("half-dot"):
-            return Duration::HALF_DOT;
+            return RhythmFigure::WHOLE;
         case hash("half"):
-            return Duration::HALF;
-        case hash("quarter-dot-dot"):
-            return Duration::QUARTER_DOT_DOT;
-        case hash("quarter-dot"):
-            return Duration::QUARTER_DOT;
+            return RhythmFigure::HALF;
         case hash("quarter"):
-            return Duration::QUARTER;
-        case hash("eighth-dot-dot"):
-            return Duration::EIGHTH_DOT_DOT;
-        case hash("eighth-dot"):
-            return Duration::EIGHTH_DOT;
+            return RhythmFigure::QUARTER;
         case hash("eighth"):
-            return Duration::EIGHTH;
-        case hash("16th-dot-dot"):
-            return Duration::N16TH_DOT_DOT;
-        case hash("16th-dot"):
-            return Duration::N16TH_DOT;
+            return RhythmFigure::EIGHTH;
         case hash("16th"):
-            return Duration::N16TH;
-        case hash("32nd-dot-dot"):
-            return Duration::N32ND_DOT_DOT;
-        case hash("32nd-dot"):
-            return Duration::N32ND_DOT;
+            return RhythmFigure::N16TH;
         case hash("32nd"):
-            return Duration::N32ND;
-        case hash("64th-dot-dot"):
-            return Duration::N64TH_DOT_DOT;
-        case hash("64th-dot"):
-            return Duration::N64TH_DOT;
+            return RhythmFigure::N32ND;
         case hash("64th"):
-            return Duration::N64TH;
-        case hash("128th-dot-dot"):
-            return Duration::N128TH_DOT_DOT;
-        case hash("128th-dot"):
-            return Duration::N128TH_DOT;
+            return RhythmFigure::N64TH;
         case hash("128th"):
-            return Duration::N128TH;
-        case hash("256th-dot-dot"):
-            return Duration::N256TH_DOT_DOT;
-        case hash("256th-dot"):
-            return Duration::N256TH_DOT;
+            return RhythmFigure::N128TH;
         case hash("256th"):
-            return Duration::N256TH;
-        case hash("512th-dot-dot"):
-            return Duration::N512TH_DOT_DOT;
-        case hash("512th-dot"):
-            return Duration::N512TH_DOT;
+            return RhythmFigure::N256TH;
         case hash("512th"):
-            return Duration::N512TH;
-        case hash("1024th-dot-dot"):
-            return Duration::N1024TH_DOT_DOT;
-        case hash("1024th-dot"):
-            return Duration::N1024TH_DOT;
+            return RhythmFigure::N512TH;
         case hash("1024th"):
-            return Duration::N1024TH;
+            return RhythmFigure::N1024TH;
 
         default:
             LOG_ERROR("Unknown note type: " + noteType);
@@ -2550,4 +2595,41 @@ const std::string Helper::generateIdentation(int identPosition, int identSize) {
 
 float Helper::freq2equalTemperament(const float freq, const float referenceFreq) {
     return referenceFreq * powf(2, (round(12.0f * log2f(freq / referenceFreq)) / 12.0f));
+}
+
+std::string Helper::toString(const RhythmFigure rhythmFigure) {
+    switch (rhythmFigure) {
+        case RhythmFigure::MAXIMA:
+            return MUSIC_XML::NOTE_TYPE::MAXIMA;
+        case RhythmFigure::LONG:
+            return MUSIC_XML::NOTE_TYPE::LONG;
+        case RhythmFigure::BREVE:
+            return MUSIC_XML::NOTE_TYPE::BREVE;
+        case RhythmFigure::WHOLE:
+            return MUSIC_XML::NOTE_TYPE::WHOLE;
+        case RhythmFigure::HALF:
+            return MUSIC_XML::NOTE_TYPE::HALF;
+        case RhythmFigure::QUARTER:
+            return MUSIC_XML::NOTE_TYPE::QUARTER;
+        case RhythmFigure::EIGHTH:
+            return MUSIC_XML::NOTE_TYPE::EIGHTH;
+        case RhythmFigure::N16TH:
+            return MUSIC_XML::NOTE_TYPE::N16TH;
+        case RhythmFigure::N32ND:
+            return MUSIC_XML::NOTE_TYPE::N32ND;
+        case RhythmFigure::N64TH:
+            return MUSIC_XML::NOTE_TYPE::N64TH;
+        case RhythmFigure::N128TH:
+            return MUSIC_XML::NOTE_TYPE::N128TH;
+        case RhythmFigure::N256TH:
+            return MUSIC_XML::NOTE_TYPE::N256TH;
+        case RhythmFigure::N512TH:
+            return MUSIC_XML::NOTE_TYPE::N512TH;
+        case RhythmFigure::N1024TH:
+            return MUSIC_XML::NOTE_TYPE::N1024TH;
+    }
+
+    std::string errMgs = "Unable to convert rhythmFigure to a noteType string\n";
+    errMgs += "rhythmFigure: " + std::to_string((int)rhythmFigure);
+    LOG_ERROR(errMgs);
 }

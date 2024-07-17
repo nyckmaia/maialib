@@ -44,13 +44,28 @@ class Helper {
     /**
      * @brief
      *
-     * @param ticks
+     * @param durationTicks
      * @param divisionsPerQuarterNote
+     * @param actualNotes
+     * @param normalNotes
      * @return std::pair<std::string, int>
      */
-    static std::pair<std::string, int> ticks2noteType(const int ticks,
-                                                      const int divisionsPerQuarterNote = 256);
+    static std::pair<std::string, int> ticks2noteType(int durationTicks,
+                                                      int divisionsPerQuarterNote,
+                                                      int actualNotes = 1, int normalNotes = 1);
 
+    /**
+     * @brief
+     *
+     * @param durationTicks
+     * @param divisionsPerQuarterNote
+     * @param actualNotes
+     * @param normalNotes
+     * @return std::pair<RhythmFigure, int>
+     */
+    static std::pair<RhythmFigure, int> ticks2rhythmFigure(int durationTicks,
+                                                           int divisionsPerQuarterNote,
+                                                           int actualNotes, int normalNotes);
     /**
      * @brief
      *
@@ -221,19 +236,20 @@ class Helper {
     /**
      * @brief
      *
-     * @param duration
+     * @param rhythmFigure
      * @return std::string
      */
-    static std::string duration2noteType(const Duration duration);
+    static std::string rhythmFigure2noteType(const RhythmFigure rhythmFigure);
 
     /**
      * @brief
      *
-     * @param duration
+     * @param rhythmFigure
      * @param divisionsPerQuarterNote
      * @return int
      */
-    static int duration2Ticks(const Duration duration, const int divisionsPerQuarterNote = 256);
+    static int rhythmFigure2Ticks(const RhythmFigure rhythmFigure,
+                                  const int divisionsPerQuarterNote = 256);
 
     /**
      * @brief
@@ -241,7 +257,7 @@ class Helper {
      * @param noteType
      * @return Duration
      */
-    static Duration noteType2duration(const std::string& noteType);
+    static RhythmFigure noteType2RhythmFigure(const std::string& noteType);
 
     /**
      * @brief
@@ -350,5 +366,13 @@ class Helper {
      * @return float
      */
     static float freq2equalTemperament(const float freq, const float referenceFreq = 440.0f);
+
+    /**
+     * @brief
+     *
+     * @param rhythmFigure
+     * @return std::string
+     */
+    static std::string toString(const RhythmFigure rhythmFigure);
 };
 #endif  // HELPERS_H

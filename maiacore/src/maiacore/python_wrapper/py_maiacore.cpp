@@ -19,6 +19,7 @@ void IntervalClass(const py::module &);
 void HelperClass(const py::module &);
 void Constants(const py::module &);
 void KeyClass(const py::module &);
+void TimeSignatureClass(const py::module &);
 void Config(py::module &);
 
 PYBIND11_MODULE(maiacore, m) {
@@ -36,18 +37,11 @@ PYBIND11_MODULE(maiacore, m) {
     HelperClass(m);
     ScoreCollectionClass(m);
     KeyClass(m);
-    // Config(m);
+    TimeSignatureClass(m);
 
 #ifdef MAIALIB_VERSION_INFO
     m.attr("__version__") = MACRO_STRINGIFY(MAIALIB_VERSION_INFO);
 #else
     m.attr("__version__") = "dev";
 #endif
-}
-
-namespace py = pybind11;
-
-void Config(py::module &m) {
-    m.def("getTuningSystem", &getTuningSystem);
-    m.def("setTuningSystem", &setTuningSystem, py::arg("tuningSystem"));
 }

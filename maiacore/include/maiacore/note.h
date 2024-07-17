@@ -5,21 +5,23 @@
 #include <vector>
 
 #include "maiacore/constants.h"
+#include "maiacore/duration.h"
 #include "maiacore/key.h"
+#include "maiacore/time-signature.h"
 
-struct timeModification_st {
-    int actualNotes = 0;
-    int normalNotes = 0;
-    std::string normalType = "eighth";
-};
+// struct timeModification_st {
+//     int actualNotes = 0;
+//     int normalNotes = 0;
+//     std::string normalType = "eighth";
+// };
 
-typedef struct duration_st {
-    Duration duration;
-    int ticks = 0;
-    std::string noteType;
-    int divisionsPerQuarterNote = 0;
-    int numDots = 0;
-} DurationType;
+// typedef struct duration_st {
+//     RhythmFigure duration;
+//     int ticks = 0;
+//     std::string noteType;
+//     int divisionsPerQuarterNote = 0;
+//     int numDots = 0;
+// } DurationType;
 
 class Note {
    private:
@@ -29,7 +31,6 @@ class Note {
     std::string _soundingPitchClass;
     int _soundingOctave;
 
-    DurationType _duration;
     bool _isNoteOn;
     bool _inChord;
     int _midiNumber;
@@ -42,8 +43,9 @@ class Note {
     bool _isTuplet;
     bool _isPitched;
     int _unpitchedIndex;
+    Duration _duration;
 
-    timeModification_st _timeModification;
+    // timeModification_st _timeModification;
 
     std::pair<std::string, std::string> _slur;
 
@@ -55,11 +57,11 @@ class Note {
 
    public:
     Note();
-    explicit Note(const std::string& pitch, const Duration duration = Duration::QUARTER,
+    explicit Note(const std::string& pitch, const RhythmFigure rhythmFigure = RhythmFigure::QUARTER,
                   bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0,
                   const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
     explicit Note(const int midiNumber, const std::string& accType = "",
-                  const Duration duration = Duration::QUARTER, bool isNoteOn = true,
+                  const RhythmFigure rhythmFigure = RhythmFigure::QUARTER, bool isNoteOn = true,
                   bool inChord = false, const int transposeDiatonic = 0,
                   const int transposeChromatic = 0, const int divisionsPerQuarterNote = 256);
 
@@ -83,29 +85,44 @@ class Note {
     void setOctave(int octave);
 
     /**
-     * @brief Set the note duration
+     * @brief Set the Duration object
      *
-     * @param duration Duration as a Enum class element
-     * @param divisionsPerQuarterNote Divisions per quarter note
+     * @param duration
      */
-    void setDuration(const Duration duration, const int divisionsPerQuarterNote = 256);
+    void setDuration(const Duration& duration);
 
     /**
-     * @brief Set the note duration
+     * @brief Set the Duration object
      *
-     * @param durationValue Float-point duration between 0 and 1 using the relative lower time
-     * signature value
-     * @param lowerTimeSignatureValue Lower time signature value
+     * @param quarterDuration
+     * @param divisionsPerQuarterNote
      */
-    void setDuration(const float durationValue, const int lowerTimeSignatureValue = 4,
-                     const int divisionsPerQuarterNote = 256);
+    void setDuration(const float quarterDuration, const int divisionsPerQuarterNote = 256);
 
-    /**
-     * @brief Set the note duration ticks
-     *
-     * @param durationTicks Duration in ticks unit
-     */
-    void setDurationTicks(int durationTicks);
+    // /**
+    //  * @brief Set the note duration
+    //  *
+    //  * @param rhythmFigure RhythmFigure as a Enum class element
+    //  * @param divisionsPerQuarterNote Divisions per quarter note
+    //  */
+    // void setDuration(const RhythmFigure rhythmFigure, const int divisionsPerQuarterNote = 256);
+
+    // /**
+    //  * @brief Set the note duration
+    //  *
+    //  * @param durationValue Float-point duration between 0 and 1 using the relative lower time
+    //  * signature value
+    //  * @param lowerTimeSignatureValue Lower time signature value
+    //  */
+    // void setDuration(const float durationValue, const int lowerTimeSignatureValue = 4,
+    //                  const int divisionsPerQuarterNote = 256);
+
+    // /**
+    //  * @brief Set the note duration ticks
+    //  *
+    //  * @param durationTicks Duration in ticks unit
+    //  */
+    // void setDurationTicks(int durationTicks);
 
     /**
      * @brief Set the note ON or OFF
@@ -132,9 +149,9 @@ class Note {
     void setStaff(const int staff);
     void setIsGraceNote(const bool isGraceNote = false);
     void setStem(const std::string& stem);
-    void removeDots();
-    void setSingleDot();
-    void setDoubleDot();
+    // void removeDots();
+    // void setSingleDot();
+    // void setDoubleDot();
     void setTieStart();
     void setTieStop();
     void setTieStopStart();
@@ -178,7 +195,7 @@ class Note {
     bool isDotted() const;
     bool isDoubleDotted() const;
     int getDivisionsPerQuarterNote() const;
-    float getDuration() const;
+    const Duration& getDuration() const;
     float getQuarterDuration() const;
 
     bool isNoteOn() const;
@@ -225,9 +242,20 @@ class Note {
      */
     int getScaleDegree(const Key& key) const;
 
-    // Colocar praticamente a mesma documentaçao do método
-    // 'getEnharmonicPitch()'
+    /**
+     * @brief
+     *
+     * @param alternativeEnhamonicPitch
+     */
     void toEnharmonicPitch(const bool alternativeEnhamonicPitch = false);
+
+    /**
+     * @brief Get the Frequency object
+     *
+     * @param equalTemperament
+     * @param freqA4
+     * @return float
+     */
     float getFrequency(const bool equalTemperament = true, const float freqA4 = 440.0f) const;
 
     /**
