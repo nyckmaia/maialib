@@ -20,7 +20,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-11]
+        os: [ubuntu-latest, windows-latest, macos-12]
 
     steps:
       - uses: actions/checkout@v4
@@ -34,7 +34,7 @@ jobs:
 
       - name: Upgrade pip to the latest version
         run: |
-          if [[ "${{ matrix.os }}" == "macos-11" ]]; then
+          if [[ "${{ matrix.os }}" == "macos-12" ]]; then
             python3.8 -m pip install --upgrade pip
           else
             python -m pip install --upgrade pip
