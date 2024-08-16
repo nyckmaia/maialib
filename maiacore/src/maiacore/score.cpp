@@ -213,8 +213,18 @@ void Score::loadXMLFile(const std::string& filePath) {
     std::vector<std::string> partsNameVec;
     partsNameVec.reserve(partsNameSize);
     for (int n = 0; n < partsNameSize; n++) {
-        const pugi::xml_node name = partsName[n].node();
-        partsNameVec.push_back(name.text().as_string());
+        const pugi::xml_node& name = partsName[n].node();
+        std::string rawPartName = name.text().as_string();
+        // Substitui todas as ocorrências de '\n' por ' '
+        std::replace(rawPartName.begin(), rawPartName.end(), '\n', ' ');
+
+        // Substitui os espaços duplos por apenas um espaço simples
+        size_t pos = 0;
+        while ((pos = rawPartName.find("  ", pos)) != std::string::npos) {
+            rawPartName.replace(pos, 2, " ");
+        }
+
+        partsNameVec.push_back(rawPartName);
     }
 
     // Lambda function to detect duplacated part names

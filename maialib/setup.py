@@ -8,7 +8,7 @@ with open("LICENSE.txt", "r", encoding="utf-8") as fh:
     license_txt = fh.read()
 
 # Lê a versão do arquivo VERSION
-version_path = Path(__file__).parent / "VERSION"
+version_path = Path(__file__).parent.parent / "VERSION"
 version = version_path.read_text().strip()
 
 setup(

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.6.1] - 2024-08-16
+
+### Fixed
+
+- Replace the deprecatted 'pkg_recourses' package to 'importlib.resources'
+- Fix break lines and doubles spaces on the score parts name
+
+---
+
 ## [v1.6.0] - 2024-07-17
 
 ### API Changes

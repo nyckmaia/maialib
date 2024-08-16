@@ -1,9 +1,8 @@
 import os
-import pkg_resources
 from enum import Enum
-import platform
 import subprocess
 import maialib.maiacore as mc
+import importlib.resources as pkg_resources
 
 __all__ = ["getSampleScorePath", "SampleScore",
            "setScoreEditorApp", "getScoreEditorApp", "openScore", "getXmlSamplesDirPath"]
@@ -29,7 +28,7 @@ def setScoreEditorApp(executableFullPath: str) -> None:
     """
     global _scoreEditorApp
 
-    if (os.path.isfile(executableFullPath)):
+    if os.path.isfile(executableFullPath):
         _scoreEditorApp = executableFullPath
     else:
         raise ValueError('Invalid executable full path')
@@ -103,9 +102,9 @@ def getSampleScorePath(sampleEnum: SampleScore) -> str:
         SampleScore.Strauss_Also_Sprach_Zarathustra: "Strauss_Also_Sprach_Zarathustra.mxl"
     }[sampleEnum]
 
-    xmlDir = pkg_resources.resource_filename("maialib", "xml-scores-examples")
+    xmlDir = pkg_resources.files("maialib").joinpath("xml-scores-examples")
     fileFullPath = os.path.join(xmlDir, xmlFileName)
-    return fileFullPath
+    return str(fileFullPath)
 
 
 def getXmlSamplesDirPath() -> str:
@@ -127,5 +126,5 @@ def getXmlSamplesDirPath() -> str:
     >>> score = ml.Score(xmlDir + "Bach/cello_suite_1_violin.xml")
     >>> score.info()
     """
-    xmlDir = pkg_resources.resource_filename("maialib", "xml-scores-examples")
-    return xmlDir
+    xmlDir = pkg_resources.files("maialib").joinpath("xml-scores-examples")
+    return str(xmlDir)
