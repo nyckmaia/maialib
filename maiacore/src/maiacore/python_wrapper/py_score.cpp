@@ -92,8 +92,58 @@ void ScoreClass(const py::module& m) {
     //             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("setRepeat", &Score::setRepeat, py::arg("measureStart"), py::arg("measureEnd") = -1);
 
-    //     cls.def("findPattern", &Score::findPattern, py::arg("pattern"),
-    //             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def(
+        "findMelodyPatternDataFrame",
+        [](Score& score, const std::vector<Note>& melodyPattern,
+           const float totalIntervalsSimilarityThreshold,
+           const float totalRhythmSimilarityThreshold,
+           const std::function<std::vector<float>(const std::vector<Note>&,
+                                                  const std::vector<Note>&)>
+               intervalsSimilarityCallback,
+           const std::function<std::vector<float>(const std::vector<Note>&,
+                                                  const std::vector<Note>&)>
+               rhythmSimilarityCallback,
+           const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
+           const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
+           const std::function<float(float, float)> totalSimilarityCallback) {
+            // Import Pandas module
+            py::object Pandas = py::module_::import("pandas");
+
+            // Get method 'from_records' from 'DataFrame()' object
+            py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
+
+            // Set DataFrame columns name
+            std::vector<std::string> columns = {"partName",
+                                                "measureId",
+                                                "staveId",
+                                                "writtenClefKey",
+                                                "transposeInterval",
+                                                "segmentWrittenPitch",
+                                                "semitonesDiff",
+                                                "rhythmDiff",
+                                                "totalIntervalSimilarity",
+                                                "totalRhythmSimilarity",
+                                                "totalSimilarity"};
+
+            // Fill DataFrame with records and columns
+            py::object df = FromRecords(
+                score.findMelodyPattern(melodyPattern, totalIntervalsSimilarityThreshold,
+                                        totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
+                                        rhythmSimilarityCallback, totalIntervalSimilarityCallback,
+                                        totalRhythmSimilarityCallback, totalSimilarityCallback),
+                "columns"_a = columns);
+
+            return df;
+        },
+        py::arg("melodyPattern"), py::arg("totalIntervalsSimilarityThreshold") = 0.5f,
+        py::arg("totalRhythmSimilarityThreshold") = 0.5f,
+        py::arg("intervalsSimilarityCallback") = nullptr,
+        py::arg("rhythmSimilarityCallback") = nullptr,
+        py::arg("totalIntervalSimilarityCallback") = nullptr,
+        py::arg("totalRhythmSimilarityCallback") = nullptr,
+        py::arg("totalSimilarityCallback") = nullptr,
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+
     cls.def("instrumentFragmentation", &Score::instrumentFragmentation,
             py::arg("config") = nlohmann::json(),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());

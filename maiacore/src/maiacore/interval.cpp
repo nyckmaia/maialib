@@ -443,6 +443,17 @@ bool Interval::isAscendant() const { return (whiteKeyDistance() > 0) ? true : fa
 
 bool Interval::isDescendant() const { return (whiteKeyDistance() < 0) ? true : false; }
 
+std::string Interval::getDirection() const {
+    if (isAscendant()) {
+        return "asc";
+    } else if (isDescendant()) {
+        return "desc";
+    }
+
+    // Perfect unisson
+    return {};
+}
+
 bool Interval::isSimple() const { return (abs(_numSemitones) <= 12) ? true : false; }
 
 bool Interval::isCompound() const { return !isSimple(); }

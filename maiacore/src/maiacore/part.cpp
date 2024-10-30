@@ -106,6 +106,8 @@ const Measure& Part::getMeasure(const int measureId) const {
     return _measure.at(measureId);
 }
 
+const std::vector<Measure> Part::getMeasures() const { return _measure; }
+
 int Part::getNumMeasures() const { return _measure.size(); }
 
 void Part::setNumStaves(const int numStaves) {

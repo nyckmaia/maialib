@@ -2,6 +2,29 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.7.0] - 2024-10-31
+
+### API Changes
+
+### New Features
+
+- Score Class:
+  - .findMelodyPattern()
+  - .findMelodyPatternDataFrame()
+- Helper Class
+  - .getSemitonesDifferenceBetweenMelodies()
+  - .getDurationDifferenceBetweenRhythms()
+  - .calculateMelodyEuclideanSimilarity()
+  - .calculateRhythmicEuclideanSimilarity()
+- Part::getMeasures()
+- Interval::getDiretion()
+
+### Improved
+
+### Fixed
+
+---
+
 ## [v1.6.1] - 2024-08-16
 
 ### Fixed

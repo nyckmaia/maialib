@@ -38,7 +38,7 @@ void PartClass(const py::module& m) {
             py::return_value_policy::reference_internal);
     cls.def("getMeasure", py::overload_cast<const int>(&Part::getMeasure, py::const_),
             py::arg("measureId"), py::return_value_policy::reference_internal);
-
+    cls.def("getMeasures", &Part::getMeasures, py::return_value_policy::reference_internal);
     cls.def("getNumMeasures", &Part::getNumMeasures);
 
     cls.def("setNumStaves", &Part::setNumStaves, py::arg("numStaves"));
