@@ -40,6 +40,7 @@ void IntervalClass(const py::module& m) {
     cls.def("getNotes", &Interval::getNotes);
     cls.def("isAscendant", &Interval::isAscendant);
     cls.def("isDescendant", &Interval::isDescendant);
+    cls.def("getDirection", &Interval::getDirection);
 
     cls.def("isSimple", &Interval::isSimple);
     cls.def("isCompound", &Interval::isCompound);
@@ -141,8 +142,7 @@ void IntervalClass(const py::module& m) {
 
     // Default Python 'print' function:
     cls.def("__repr__", [](const Interval& interval) {
-        const std::string direction = (interval.isAscendant()) ? "asc" : "desc";
-        return "<Interval " + interval.getName() + " " + direction + ">";
+        return "<Interval " + interval.getName() + " " + interval.getDirection() + ">";
     });
 
     cls.def("__hash__", [](const Interval& interval) {

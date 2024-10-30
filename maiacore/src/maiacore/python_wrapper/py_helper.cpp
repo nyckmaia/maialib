@@ -108,4 +108,32 @@ void HelperClass(const py::module& m) {
                    py::arg("freq_B"));
     cls.def_static("freq2equalTemperament", &Helper::freq2equalTemperament, py::arg("freq"),
                    py::arg("referenceFreq") = 440.0f);
+
+    cls.def_static("getSemitonesDifferenceBetweenMelodies",
+                   &Helper::getSemitonesDifferenceBetweenMelodies, py::arg("referenceMelody"),
+                   py::arg("otherMelody"));
+
+    cls.def_static("calculateMelodyEuclideanSimilarity",
+                   py::overload_cast<const std::vector<Note>&, const std::vector<Note>&>(
+                       &Helper::calculateMelodyEuclideanSimilarity),
+                   py::arg("melodyPattern"), py::arg("otherMelody"));
+
+    cls.def_static(
+        "calculateMelodyEuclideanSimilarity",
+        py::overload_cast<const std::vector<float>&>(&Helper::calculateMelodyEuclideanSimilarity),
+        py::arg("semitonesDifference"));
+
+    cls.def_static("getDurationDifferenceBetweenRhythms",
+                   &Helper::getDurationDifferenceBetweenRhythms, py::arg("referenceRhythm"),
+                   py::arg("otherRhythm"));
+
+    cls.def_static("calculateRhythmicEuclideanSimilarity",
+                   py::overload_cast<const std::vector<Note>&, const std::vector<Note>&>(
+                       &Helper::calculateRhythmicEuclideanSimilarity),
+                   py::arg("rhythmPattern"), py::arg("otherRhythm"));
+
+    cls.def_static(
+        "calculateRhythmicEuclideanSimilarity",
+        py::overload_cast<const std::vector<float>&>(&Helper::calculateRhythmicEuclideanSimilarity),
+        py::arg("durationDifferences"));
 }

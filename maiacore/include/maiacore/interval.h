@@ -118,6 +118,13 @@ class Interval {
     bool isDescendant() const;
 
     /**
+     * @brief Get the Direction object
+     * 
+     * @return std::string 
+     */
+    std::string getDirection() const;
+
+    /**
      * @brief
      *
      * @return true

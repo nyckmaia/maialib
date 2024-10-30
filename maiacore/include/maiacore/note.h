@@ -9,20 +9,6 @@
 #include "maiacore/key.h"
 #include "maiacore/time-signature.h"
 
-// struct timeModification_st {
-//     int actualNotes = 0;
-//     int normalNotes = 0;
-//     std::string normalType = "eighth";
-// };
-
-// typedef struct duration_st {
-//     RhythmFigure duration;
-//     int ticks = 0;
-//     std::string noteType;
-//     int divisionsPerQuarterNote = 0;
-//     int numDots = 0;
-// } DurationType;
-
 class Note {
    private:
     std::string _writtenPitchClass;

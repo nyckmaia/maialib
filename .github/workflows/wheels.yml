@@ -64,7 +64,7 @@ jobs:
         run: pybind11-stubgen maialib.maiacore '--output-dir=./stubs/' --ignore-all-errors
 
       - name: Generate stubs from Maiapy
-        run: stubgen ./maialib/maiapy/ -o ./stubs/
+        run: stubgen --no-analysis ./maialib/maiapy/ -o ./stubs/ --include-docstrings --ignore-errors
 
       - name: Install cibuildwheel
         run: python -m pip install cibuildwheel==2.18.1

@@ -374,5 +374,61 @@ class Helper {
      * @return std::string
      */
     static std::string toString(const RhythmFigure rhythmFigure);
+
+    /**
+     * @brief Get the Semitones Difference Between Melodies object
+     *
+     * @param referenceMelody
+     * @param otherMelody
+     * @return std::vector<float>
+     */
+    static std::vector<float> getSemitonesDifferenceBetweenMelodies(
+        const std::vector<Note>& referenceMelody, const std::vector<Note>& otherMelody);
+
+    /**
+     * @brief
+     *
+     * @param melodyPattern
+     * @param otherMelody
+     * @return float
+     */
+    static float calculateMelodyEuclideanSimilarity(const std::vector<Note>& melodyPattern,
+                                                    const std::vector<Note>& otherMelody);
+
+    /**
+     * @brief 
+     * 
+     * @param semitonesDifference 
+     * @return float 
+     */
+    static float calculateMelodyEuclideanSimilarity(const std::vector<float>& semitonesDifference);
+
+    /**
+     * @brief Get the Duration Difference Between Rhythms object
+     *
+     * @param referenceRhythm
+     * @param otherRhythm
+     * @return std::vector<float>
+     */
+    static std::vector<float> getDurationDifferenceBetweenRhythms(
+        const std::vector<Note>& referenceRhythm, const std::vector<Note>& otherRhythm);
+
+    /**
+     * @brief
+     *
+     * @param rhythmPattern
+     * @param otherRhythm
+     * @return float
+     */
+    static float calculateRhythmicEuclideanSimilarity(const std::vector<Note>& rhythmPattern,
+                                                      const std::vector<Note>& otherRhythm);
+
+    /**
+     * @brief 
+     * 
+     * @param durationDifferences 
+     * @return float 
+     */
+    static float calculateRhythmicEuclideanSimilarity(const std::vector<float>& durationDifferences);
 };
 #endif  // HELPERS_H

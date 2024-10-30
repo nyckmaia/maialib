@@ -53,6 +53,7 @@ class Part {
     void removeMeasure(const int measureStart, const int measureEnd);
     Measure& getMeasure(const int measureId);
     const Measure& getMeasure(const int measureId) const;
+    const std::vector<Measure> getMeasures() const;
     int getNumMeasures() const;
 
     void setNumStaves(const int numStaves);

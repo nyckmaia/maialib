@@ -415,13 +415,48 @@ class Score {
     //  */
     // nlohmann::json selectNotes(nlohmann::json& config) const;
 
-    // /**
-    //  * @brief
-    //  *
-    //  * @param pattern
-    //  * @return const nlohmann::json
-    //  */
-    // const nlohmann::json findPattern(nlohmann::json& pattern) const;
+    /**
+     * @brief
+     * a) partName (string)
+     * a) measureNumber (int)
+     * b) staveId (int)
+     * c) measure KeyName (string)
+     * d) transpose Interval (string)
+     * e) semitonesDifferenceBetweenMelodies (std::vector<float>)
+     * f) rhythmDifferenceBetweenMelodies (std::vector<float>)
+     * g) totalIntervalSimilarity (float)
+     * h) totalRhythmSimilarity (float)
+     * i) totalSimilarity (float)
+     */
+    typedef std::tuple<std::string, int, int, std::string, std::string, std::vector<std::string>, std::vector<float>, std::vector<float>,
+                       float, float, float> MelodyPatternRow;
+    typedef std::vector<MelodyPatternRow> MelodyPatternTable;
+
+    /**
+     * @brief
+     *
+     * @param melodyPattern
+     * @param totalIntervalsSimilarityThreshold
+     * @param totalRhythmSimilarityThreshold
+     * @param intervalsSimilarityCallback
+     * @param rhythmSimilarityCallback
+     * @param totalIntervalSimilarityCallback
+     * @param totalRhythmSimilarityCallback
+     * @param totalSimilarityCallback
+     * @return MelodyPatternTable
+     */
+    MelodyPatternTable findMelodyPattern(
+        const std::vector<Note>& melodyPattern, const float totalIntervalsSimilarityThreshold = 0.5,
+        const float totalRhythmSimilarityThreshold = 0.5,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+            intervalsSimilarityCallback = nullptr,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+            rhythmSimilarityCallback = nullptr,
+        const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback =
+            nullptr,
+        const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback =
+            nullptr,
+        const std::function<float(float, float)> totalSimilarityCallback = nullptr) const;
 
     // /**
     //  * @brief

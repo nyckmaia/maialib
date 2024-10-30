@@ -5,7 +5,8 @@ from pathlib import Path
 
 from terminal_colors import *
 
-print(f"{color.OKGREEN}Installing Maialib module on Python Kernel v{platform.python_version()}...{color.ENDC}")
+print(f"""{color.OKGREEN}Installing Maialib module on Python Kernel v{
+      platform.python_version()}...{color.ENDC}""")
 
 distDir = "dist"
 
@@ -15,12 +16,14 @@ os.system(f"pip install {distDir}/")
 stubsPath = Path.cwd() / "stubs"
 print(f"{color.OKGREEN}Generating Python Module Stubs from Maiacore...{color.ENDC}")
 
-genStubsCommand = f"pybind11-stubgen maialib.maiacore --output-dir={stubsPath} --ignore-invalid-expressions \".*\" --ignore-all-errors"
+genStubsCommand = f"""pybind11-stubgen maialib.maiacore --output-dir={
+    stubsPath} --ignore-invalid-expressions \".*\" --ignore-all-errors"""
 os.system(genStubsCommand)
 
 print(f"{color.OKGREEN}Generating Python Module Stubs from Maiapy...{color.ENDC}")
 maiapyPath = Path.cwd() / "maialib" / "maiapy"
-genStubsCommand = f"stubgen {maiapyPath} -o {stubsPath}"
+genStubsCommand = f"""stubgen --no-analysis  {
+    maiapyPath} -o {stubsPath} --include-docstrings --ignore-errors"""
 os.system(genStubsCommand)
 
 
@@ -36,4 +39,5 @@ os.system(f"pip uninstall --yes maialib")
 # Re - install maialib, now with Python stubs
 os.system(f"pip install {distDir}/")
 
-print(f"{color.OKGREEN}Maialib Installed on Python kernel v{platform.python_version()} {color.ENDC}")
+print(f"""{color.OKGREEN}Maialib Installed on Python kernel v{
+      platform.python_version()} {color.ENDC}""")

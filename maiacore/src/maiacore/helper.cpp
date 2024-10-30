@@ -1,10 +1,13 @@
 #include "maiacore/helper.h"
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <fstream>  // std::ofstream
 #include <functional>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <sstream>
 
 #include "cherno/instrumentor.h"
@@ -2632,4 +2635,138 @@ std::string Helper::toString(const RhythmFigure rhythmFigure) {
     std::string errMgs = "Unable to convert rhythmFigure to a noteType string\n";
     errMgs += "rhythmFigure: " + std::to_string((int)rhythmFigure);
     LOG_ERROR(errMgs);
+}
+
+std::vector<float> Helper::getSemitonesDifferenceBetweenMelodies(
+    const std::vector<Note>& referenceMelody, const std::vector<Note>& otherMelody) {
+    const int referenceMelodySize = referenceMelody.size();
+    const int otherMelodySize = otherMelody.size();
+
+    if (referenceMelodySize < 2 || otherMelodySize < 2) {
+        LOG_ERROR("referenceMelody and otherMelody must have 2 elements minimum!");
+    }
+
+    const int minSize = std::min(referenceMelodySize, otherMelodySize);
+    const int numValidSemitones = minSize - 1;
+    std::vector<float> semitones(numValidSemitones, 0.0f);
+
+    for (int i = 0; i < numValidSemitones; i++) {
+        // For the Reference Melody
+        const Note& firstReferenceNote = referenceMelody.at(i);
+        const Note& secondReferenceNote = referenceMelody.at(i + 1);
+
+        int referenceSemitones = 0;
+        if (firstReferenceNote.isNoteOff() || secondReferenceNote.isNoteOff()) {
+            referenceSemitones = 0;
+        } else {
+            const Interval& referenceInterval = Interval(firstReferenceNote, secondReferenceNote);
+            referenceSemitones = referenceInterval.getNumSemitones();
+        }
+
+        // For the Other Melody
+        const Note& firstOtherNote = otherMelody.at(i);
+        const Note& secondOtherNote = otherMelody.at(i + 1);
+
+        int otherSemitones = 0;
+        if (firstOtherNote.isNoteOff() || secondOtherNote.isNoteOff()) {
+            otherSemitones = 0;
+        } else {
+            const Interval& otherInterval = Interval(firstOtherNote, secondOtherNote);
+            otherSemitones = otherInterval.getNumSemitones();
+        }
+
+        semitones[i] = (float)referenceSemitones - (float)otherSemitones;
+    }
+
+    return semitones;
+}
+
+float Helper::calculateMelodyEuclideanSimilarity(const std::vector<Note>& melodyPattern,
+                                                 const std::vector<Note>& otherMelody) {
+    std::vector<float> semitones =
+        Helper::getSemitonesDifferenceBetweenMelodies(melodyPattern, otherMelody);
+
+    return calculateMelodyEuclideanSimilarity(semitones);
+}
+
+float Helper::calculateMelodyEuclideanSimilarity(const std::vector<float>& semitonesDifference) {
+    // To power of 2
+    std::vector<float> semitonesDiffPow2 = semitonesDifference;
+    for (auto& semitone : semitonesDiffPow2) {
+        semitone = std::pow(semitone, 2);
+    }
+
+    const float sumSquares =
+        std::accumulate(semitonesDiffPow2.begin(), semitonesDiffPow2.end(), 0.0f);
+
+    const float euclideanDistance = std::sqrt(sumSquares);
+    const float similarity = 1.0f / (1.0f + euclideanDistance);  // Inverso da distância euclidiana
+
+    return similarity;
+}
+
+std::vector<float> Helper::getDurationDifferenceBetweenRhythms(
+    const std::vector<Note>& referenceRhythm, const std::vector<Note>& otherRhythm) {
+    const int referenceRhythmSize = referenceRhythm.size();
+    const int otherRhythmSize = otherRhythm.size();
+
+    if (referenceRhythmSize < 2 || otherRhythmSize < 2) {
+        LOG_ERROR("referenceRhythm and otherRhythm must have 2 elements minimum!");
+    }
+
+    // Normaliza cada duração pelo maior valor de duração na sequência
+    float maxReferenceDuration = 0.0f;
+    float maxOtherDuration = 0.0f;
+
+    for (const auto& note : referenceRhythm) {
+        maxReferenceDuration =
+            std::max(maxReferenceDuration, note.getDuration().getQuarterDuration());
+    }
+    for (const auto& note : otherRhythm) {
+        maxOtherDuration = std::max(maxOtherDuration, note.getDuration().getQuarterDuration());
+    }
+
+    const int minSize = std::min(referenceRhythmSize, otherRhythmSize);
+    std::vector<float> durationDifferences(minSize, 0.0f);
+
+    for (int i = 0; i < minSize; i++) {
+        // Normaliza as durações pelo maior valor
+        float normalizedReferenceDuration =
+            referenceRhythm.at(i).getDuration().getQuarterDuration() / maxReferenceDuration;
+        float normalizedOtherDuration =
+            otherRhythm.at(i).getDuration().getQuarterDuration() / maxOtherDuration;
+
+        // Calcula a diferença ao quadrado entre durações normalizadas
+        durationDifferences[i] = normalizedReferenceDuration - normalizedOtherDuration;
+    }
+
+    return durationDifferences;
+}
+
+float Helper::calculateRhythmicEuclideanSimilarity(const std::vector<Note>& rhythmPattern,
+                                                   const std::vector<Note>& otherRhythm) {
+    const std::vector<float> durationDifferences =
+        Helper::getDurationDifferenceBetweenRhythms(rhythmPattern, otherRhythm);
+
+    return calculateRhythmicEuclideanSimilarity(durationDifferences);
+}
+
+float Helper::calculateRhythmicEuclideanSimilarity(const std::vector<float>& durationDifferences) {
+    // To power of 2
+    std::vector<float> durationDifferencesPow2 = durationDifferences;
+    for (auto& diff : durationDifferencesPow2) {
+        diff = std::pow(diff, 2);
+    }
+
+    // Soma dos quadrados das diferenças de durações normalizadas
+    const float sumSquares =
+        std::accumulate(durationDifferencesPow2.begin(), durationDifferencesPow2.end(), 0.0f);
+
+    // Distância Euclidiana das diferenças de duração
+    const float euclideanDistance = std::sqrt(sumSquares);
+
+    // Similaridade é o inverso da distância euclidiana
+    const float similarity = 1.0f / (1.0f + euclideanDistance);
+
+    return similarity;
 }
