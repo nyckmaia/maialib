@@ -3,6 +3,12 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <thread>
+#include <future>
+#include <vector>
+#include <mutex>
+#include <algorithm>
+
 #include "maiacore/measure.h"
 #include "maiacore/score.h"
 #include "nlohmann/json.hpp"
@@ -143,6 +149,114 @@ void ScoreClass(const py::module& m) {
         py::arg("totalRhythmSimilarityCallback") = nullptr,
         py::arg("totalSimilarityCallback") = nullptr,
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+
+    // Overload para multiplos padrões em paralelo
+    cls.def(
+        "findMelodyPatternDataFrame",
+        [](Score& score, const std::vector<std::vector<Note>>& melodyPatterns,
+           float intervalSimilarityThreshold, float rhythmSimilarityThreshold,
+           const std::function<std::vector<float>(const std::vector<Note>&,
+                                                  const std::vector<Note>&)> intervalsSimilarityCallback,
+           const std::function<std::vector<float>(const std::vector<Note>&,
+                                                  const std::vector<Note>&)> rhythmSimilarityCallback,
+           const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
+           const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
+           const std::function<float(float, float)> totalSimilarityCallback) {
+
+            // Definindo as colunas do DataFrame
+            std::vector<std::string> columns = {"partName",
+                                                "measureId",
+                                                "staveId",
+                                                "writtenClefKey",
+                                                "transposeInterval",
+                                                "segmentWrittenPitch",
+                                                "semitonesDiff",
+                                                "rhythmDiff",
+                                                "totalIntervalSimilarity",
+                                                "totalRhythmSimilarity",
+                                                "totalSimilarity"};
+
+            // Estrutura para armazenar os resultados intermediários
+            std::vector<std::vector<std::tuple<std::string, int, int, std::string, std::string,
+                                               std::vector<std::string>, std::vector<float>, std::vector<float>,
+                                               float, float, float>>> results(melodyPatterns.size());
+
+            // Mutex para proteger o acesso ao vetor `results`
+            std::mutex results_mutex;
+
+            // Função para processar cada padrão de melodia
+            auto process_pattern = [&](size_t idx) {
+                std::cout << "Processando padrão de melodia: " << idx << std::endl;
+
+                // Realiza a operação intensiva em C++ e armazena o resultado
+                auto result = score.findMelodyPattern(
+                    melodyPatterns[idx],
+                    intervalSimilarityThreshold,
+                    rhythmSimilarityThreshold,
+                    intervalsSimilarityCallback,
+                    rhythmSimilarityCallback,
+                    totalIntervalSimilarityCallback,
+                    totalRhythmSimilarityCallback,
+                    totalSimilarityCallback
+                );
+
+                // Protege o acesso a `results` antes de armazenar o resultado
+                std::lock_guard<std::mutex> lock(results_mutex);
+                results[idx] = std::move(result);
+            };
+
+            // Limita o número de threads de acordo com o número de núcleos da CPU
+            size_t num_threads = std::min(melodyPatterns.size(), static_cast<size_t>(std::thread::hardware_concurrency()));
+            std::vector<std::jthread> threads;
+
+            // Executa cada padrão de melodia em um thread separado até o limite definido
+            for (size_t idx = 0; idx < num_threads; ++idx) {
+                threads.emplace_back([&, idx]() {
+                    try {
+                        process_pattern(idx);
+                    } catch (const std::exception& e) {
+                        std::cerr << "Erro ao processar padrão: " << e.what() << std::endl;
+                    }
+                });
+            }
+
+            // Espera por todos os threads
+            for (auto& thread : threads) {
+                if (thread.joinable()) thread.join();
+            }
+
+            // Converte os resultados para DataFrames no contexto principal (com o GIL adquirido)
+            py::gil_scoped_acquire acquire;
+            py::object Pandas = py::module_::import("pandas");
+            py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
+            std::vector<py::object> dataframes;
+
+            for (size_t idx = 0; idx < results.size(); ++idx) {
+                py::object df = FromRecords(results[idx], "columns"_a = columns);
+                int num_columns = df.attr("shape").cast<py::tuple>()[1].cast<int>();
+                df.attr("insert")(num_columns, "patternIdx", idx);
+                dataframes.push_back(df);
+            }
+
+            // Concatena todos os DataFrames processados com sucesso
+            if (!dataframes.empty()) {
+                std::cout << "Concatenando DataFrames..." << std::endl;
+                py::object result_df = Pandas.attr("concat")(dataframes, "ignore_index"_a = true);
+                result_df.attr("sort_values")("by"_a = "measureId", "ascending"_a = true, "inplace"_a = true);
+                return result_df;
+            } else {
+                throw std::runtime_error("Nenhum DataFrame foi concatenado devido a erro de memória ou outro problema.");
+            }
+        },
+        py::arg("melodyPatterns"),
+        py::arg("intervalSimilarityThreshold") = 0.5f,
+        py::arg("rhythmSimilarityThreshold") = 0.5f,
+        py::arg("intervalsSimilarityCallback") = nullptr,
+        py::arg("rhythmSimilarityCallback") = nullptr,
+        py::arg("totalIntervalSimilarityCallback") = nullptr,
+        py::arg("totalRhythmSimilarityCallback") = nullptr,
+        py::arg("totalSimilarityCallback") = nullptr
+    );
 
     cls.def("instrumentFragmentation", &Score::instrumentFragmentation,
             py::arg("config") = nlohmann::json(),

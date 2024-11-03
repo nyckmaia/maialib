@@ -1,4 +1,5 @@
 import os
+import sys
 from enum import Enum
 import subprocess
 import maialib.maiacore as mc
@@ -102,7 +103,15 @@ def getSampleScorePath(sampleEnum: SampleScore) -> str:
         SampleScore.Strauss_Also_Sprach_Zarathustra: "Strauss_Also_Sprach_Zarathustra.mxl"
     }[sampleEnum]
 
-    xmlDir = pkg_resources.files("maialib").joinpath("xml-scores-examples")
+    # xmlDir = pkg_resources.files("maialib").joinpath("xml-scores-examples")
+    xmlDir = ""
+    if sys.version_info >= (3, 9):
+        from importlib import resources
+        xmlDir = resources.files("maialib").joinpath("xml-scores-examples")
+    else:
+        from importlib_resources import files
+        xmlDir = files("maialib").joinpath("xml-scores-examples")
+
     fileFullPath = os.path.join(xmlDir, xmlFileName)
     return str(fileFullPath)
 

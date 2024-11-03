@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.7.1] - 2024-11-03
+
+### API Changes
+
+### New Features
+
+- Score::findMelodyPatternDataFrame() overload method support find multiple patterns at the same time in parallel
+
+### Improved
+
+- Update Pybind11 to v2.13.6
+- C++ compiler from std=17 to std=20
+
+### Fixed
+
+- Fix Python 3.8 incompatible internal libraries
+
+---
+
 ## [v1.7.0] - 2024-10-31
 
 ### API Changes

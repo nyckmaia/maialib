@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import contextlib
 import os
 import string
@@ -51,11 +53,14 @@ main_headers = {
 detail_headers = {
     "include/pybind11/detail/class.h",
     "include/pybind11/detail/common.h",
+    "include/pybind11/detail/cpp_conduit.h",
     "include/pybind11/detail/descr.h",
     "include/pybind11/detail/init.h",
     "include/pybind11/detail/internals.h",
     "include/pybind11/detail/type_caster_base.h",
     "include/pybind11/detail/typeid.h",
+    "include/pybind11/detail/value_and_holder.h",
+    "include/pybind11/detail/exception_translation.h",
 }
 
 eigen_headers = {
@@ -73,6 +78,7 @@ cmake_files = {
     "share/cmake/pybind11/pybind11Common.cmake",
     "share/cmake/pybind11/pybind11Config.cmake",
     "share/cmake/pybind11/pybind11ConfigVersion.cmake",
+    "share/cmake/pybind11/pybind11GuessPythonExtSuffix.cmake",
     "share/cmake/pybind11/pybind11NewTools.cmake",
     "share/cmake/pybind11/pybind11Targets.cmake",
     "share/cmake/pybind11/pybind11Tools.cmake",

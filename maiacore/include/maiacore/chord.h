@@ -3,6 +3,7 @@
 #include <numeric>  // std::accumulate
 #include <tuple>    // std::tuple
 #include <vector>
+#include <algorithm> // std::transform
 
 #include "maiacore/interval.h"
 #include "maiacore/key.h"

@@ -91,7 +91,10 @@
     "csignal": "cpp",
     "queue": "cpp",
     "random": "cpp",
-    "regex": "cpp"
+    "regex": "cpp",
+    "coroutine": "cpp",
+    "resumable": "cpp",
+    "future": "cpp"
   },
   "editor.formatOnSave": true,
   "editor.bracketPairColorization.enabled": true,
