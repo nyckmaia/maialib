@@ -89,7 +89,7 @@ jobs:
 
           CIBW_SKIP: cp36-* cp37-* pp37-* *-win32 *-manylinux_i686 *-manylinux_ppc64le *-manylinux_s390x *-musllinux_s390x
           CIBW_ENVIRONMENT: |
-            CMAKE_ARGS="-DMAIALIB_VERSION_INFO=${{ steps.version.outputs.version }} -DCMAKE_CXX_STANDARD=20"
+            CMAKE_ARGS="-DMAIALIB_VERSION_INFO=${{ steps.version.outputs.version }}"
 
       - uses: actions/upload-artifact@v4
         with:

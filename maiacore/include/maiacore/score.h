@@ -35,6 +35,24 @@ class Score {
                                         tags in XML file */
     bool _haveAnacrusisMeasure;
 
+    // Container em memória para armazenar informações de notas
+    struct NoteEvent {
+        std::string partName;
+        int measureIdx;
+        int staveIdx;
+        int noteIdx;
+        const std::string keyName;
+        const Note* notePtr;
+    };
+
+    mutable std::vector<NoteEvent> _cachedNoteEvents; // Cache para eventos de nota
+    mutable bool _isNoteEventsCached = false; // Flag para indicar se o cache já foi preenchido
+    std::vector<NoteEvent> collectNoteEvents() const;
+
+    mutable std::vector<std::vector<NoteEvent>> _cachedNoteEventsPerPart; // Cache para eventos de nota
+    mutable bool _isNoteEventsPerPartCached = false; // Flag para indicar se o cache já foi preenchido
+    std::vector<std::vector<NoteEvent>> collectNoteEventsPerPart() const;
+
     typedef struct noteData_st {
         float currentTimeValue = 0.0f;
         const Note* notePtr = nullptr;
@@ -448,6 +466,32 @@ class Score {
     MelodyPatternTable findMelodyPattern(
         const std::vector<Note>& melodyPattern, const float totalIntervalsSimilarityThreshold = 0.5,
         const float totalRhythmSimilarityThreshold = 0.5,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+            intervalsSimilarityCallback = nullptr,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+            rhythmSimilarityCallback = nullptr,
+        const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback =
+            nullptr,
+        const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback =
+            nullptr,
+        const std::function<float(float, float)> totalSimilarityCallback = nullptr) const;
+
+    std::vector<MelodyPatternTable> findMelodyPattern(
+        const std::vector<std::vector<Note>>& melodyPatterns, const float totalIntervalsSimilarityThreshold = 0.5,
+        const float totalRhythmSimilarityThreshold = 0.5,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+            intervalsSimilarityCallback = nullptr,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+            rhythmSimilarityCallback = nullptr,
+        const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback =
+            nullptr,
+        const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback =
+            nullptr,
+        const std::function<float(float, float)> totalSimilarityCallback = nullptr) const;
+
+    std::vector<MelodyPatternTable> findAnyMelodyPattern(const int patternNumNotes = 5,
+        const float totalIntervalsSimilarityThreshold = 1.0f,
+        const float totalRhythmSimilarityThreshold = 1.0f,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
             intervalsSimilarityCallback = nullptr,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>

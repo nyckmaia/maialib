@@ -5,6 +5,11 @@
 #include <limits>  // std::numeric_limits
 #include <set>
 #include <tuple>
+#include <thread>
+#include <future>
+#include <vector>
+#include <mutex>
+#include <algorithm>
 
 // #include "cherno/instrumentor.h"
 #include "maiacore/clef.h"
@@ -1859,6 +1864,83 @@ bool Score::getPartIndex(const std::string& partName, int* index) const {
     return foundIndex;
 }
 
+std::vector<Score::NoteEvent> Score::collectNoteEvents() const {
+    // Verifica se o cache já foi preenchido
+    if (_isNoteEventsCached) {
+        return _cachedNoteEvents;
+    }
+
+    _cachedNoteEvents.clear(); // Garante que esteja vazio antes de preencher
+    for (int partIdx = 0; partIdx < getNumParts(); partIdx++) {
+        const int NUM_NOTES_PER_MEASURE = 16;
+        _cachedNoteEvents.reserve(_cachedNoteEvents.size() + _part[partIdx].getNumMeasures() * NUM_NOTES_PER_MEASURE);
+
+        const Part& currentPart = _part[partIdx];
+        const std::string& currentPartName = currentPart.getName();
+        for (int measureIdx = 0; measureIdx < currentPart.getNumMeasures(); measureIdx++) {
+            const Measure& currentMeasure = currentPart.getMeasure(measureIdx);
+            const int numStaves = currentMeasure.getNumStaves();
+            for (int staveIdx = 0; staveIdx < numStaves; staveIdx++) {
+                const int numNotes = currentMeasure.getNumNotes(staveIdx);
+                for (int noteIdx = 0; noteIdx < numNotes; noteIdx++) {
+                    const Note& currentNote = currentMeasure.getNote(noteIdx, staveIdx);
+
+                    // Skip all chords and multiple voices! To fix in the future
+                    // Get only the top melody of each instrument/stave
+                    if (currentNote.inChord() || currentNote.getVoice() != 1) {
+                        continue;
+                    }
+                    const std::string& currentKeyName = currentMeasure.getKey().getName();
+                    _cachedNoteEvents.push_back({currentPartName, measureIdx, staveIdx, noteIdx, currentKeyName, &currentNote});
+                }
+            }
+        }
+    }
+
+    _isNoteEventsCached = true; // Marca o cache como preenchido
+    return _cachedNoteEvents;
+}
+
+std::vector<std::vector<Score::NoteEvent>> Score::collectNoteEventsPerPart() const {
+    // Verifica se o cache já foi preenchido
+    if (_isNoteEventsPerPartCached) {
+        return _cachedNoteEventsPerPart;
+    }
+
+    _cachedNoteEventsPerPart.clear(); // Garante que esteja vazio antes de preencher
+    _cachedNoteEventsPerPart.reserve(getNumParts());
+    const int NUM_NOTES_PER_MEASURE = 16;
+    for (int partIdx = 0; partIdx < getNumParts(); partIdx++) {
+        std::vector<NoteEvent> cachedNoteEvents;
+        cachedNoteEvents.reserve(_part[partIdx].getNumMeasures() * NUM_NOTES_PER_MEASURE);
+
+        const Part& currentPart = _part[partIdx];
+        const std::string& currentPartName = currentPart.getName();
+        for (int measureIdx = 0; measureIdx < currentPart.getNumMeasures(); measureIdx++) {
+            const Measure& currentMeasure = currentPart.getMeasure(measureIdx);
+            const int numStaves = currentMeasure.getNumStaves();
+            for (int staveIdx = 0; staveIdx < numStaves; staveIdx++) {
+                const int numNotes = currentMeasure.getNumNotes(staveIdx);
+                for (int noteIdx = 0; noteIdx < numNotes; noteIdx++) {
+                    const Note& currentNote = currentMeasure.getNote(noteIdx, staveIdx);
+
+                    // Skip all chords and multiple voices! To fix in the future
+                    // Get only the top melody of each instrument/stave
+                    if (currentNote.inChord() || currentNote.getVoice() != 1) {
+                        continue;
+                    }
+                    const std::string& currentKeyName = currentMeasure.getKey().getName();
+                    cachedNoteEvents.push_back({currentPartName, measureIdx, staveIdx, noteIdx, currentKeyName, &currentNote});
+                }
+            }
+        }
+        _cachedNoteEventsPerPart.push_back(cachedNoteEvents);
+    }
+
+    _isNoteEventsPerPartCached = true; // Marca o cache como preenchido
+    return _cachedNoteEventsPerPart;
+}
+
 Score::MelodyPatternTable Score::findMelodyPattern(
     const std::vector<Note>& melodyPattern, const float totalIntervalsSimilarityThreshold,
     const float totalRhythmSimilarityThreshold,
@@ -1876,18 +1958,10 @@ Score::MelodyPatternTable Score::findMelodyPattern(
         LOG_ERROR("The melody pattern is bigger than the score");
     }
 
+    const auto& noteEvents = collectNoteEvents(); // Obtém o cache de eventos de nota
     MelodyPatternTable resultTable;
-    resultTable.reserve(totalNumNotes - melodyPatternSize);
+    resultTable.reserve(noteEvents.size() - melodyPattern.size());
 
-    // Container em memória para armazenar informações de notas
-    struct NoteEvent {
-        std::string partName;
-        int measureIdx;
-        int staveIdx;
-        int noteIdx;
-        const std::string keyName;
-        const Note* notePtr;
-    };
     // ===== STEP 1: COLETAR TODAS AS NOTAS DA PARTITURA ===== //
     for (int partIdx = 0; partIdx < getNumParts(); partIdx++) {
         std::vector<NoteEvent> noteEvents;
@@ -2029,6 +2103,104 @@ Score::MelodyPatternTable Score::findMelodyPattern(
     }
 
     return resultTable;
+}
+
+std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
+        const std::vector<std::vector<Note>>& melodyPatterns, const float totalIntervalsSimilarityThreshold,
+        const float totalRhythmSimilarityThreshold,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+            intervalsSimilarityCallback,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+            rhythmSimilarityCallback,
+        const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
+        const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
+        const std::function<float(float, float)> totalSimilarityCallback) const {
+    const auto& noteEvents = collectNoteEvents(); // Obtém o cache de eventos de nota uma única vez
+    std::vector<Score::MelodyPatternTable> results(melodyPatterns.size());
+
+    // Mutex para proteger o acesso ao vetor `results`
+    std::mutex results_mutex;
+
+    // Função para processar cada padrão de melodia
+    auto process_pattern = [&](size_t idx) {
+        std::cout << "Processando padrão de melodia: " << idx << std::endl;
+
+        // Realiza a operação intensiva em C++ e armazena o resultado
+        auto result = findMelodyPattern(
+            melodyPatterns[idx],
+            totalIntervalsSimilarityThreshold,
+            totalRhythmSimilarityThreshold,
+            intervalsSimilarityCallback,
+            rhythmSimilarityCallback,
+            totalIntervalSimilarityCallback,
+            totalRhythmSimilarityCallback,
+            totalSimilarityCallback
+        );
+
+        // Protege o acesso a `results` antes de armazenar o resultado
+        std::lock_guard<std::mutex> lock(results_mutex);
+        results[idx] = std::move(result);
+    };
+
+    // Limita o número de threads de acordo com o número de núcleos da CPU
+    size_t num_threads = std::min(melodyPatterns.size(), static_cast<size_t>(std::thread::hardware_concurrency()));
+    std::vector<std::thread> threads;
+
+    // Executa cada padrão de melodia em um thread separado até o limite definido
+    for (size_t idx = 0; idx < num_threads; ++idx) {
+        threads.emplace_back([&, idx]() {
+            try {
+                process_pattern(idx);
+            } catch (const std::exception& e) {
+                std::cerr << "Erro ao processar padrão: " << e.what() << std::endl;
+            }
+        });
+    }
+
+    // Espera por todos os threads
+    for (auto& thread : threads) {
+        if (thread.joinable()) thread.join();
+    }
+
+    return results;
+}
+
+std::vector<Score::MelodyPatternTable> Score::findAnyMelodyPattern(
+        const int patternNumNotes,
+        const float totalIntervalsSimilarityThreshold,
+        const float totalRhythmSimilarityThreshold,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+            intervalsSimilarityCallback,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+            rhythmSimilarityCallback,
+        const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
+        const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
+        const std::function<float(float, float)> totalSimilarityCallback) const {
+    
+    const auto& noteEventsPerPart = collectNoteEventsPerPart();
+    std::vector<std::vector<Note>> patterns;
+    const int maxNumPatterns = getNumNotes() / patternNumNotes;
+    std::cout << "Max melody blocks to find: " << maxNumPatterns << std::endl;
+    patterns.reserve(maxNumPatterns); // Impreciso
+    
+    std::cout << "Creating melody patterns vector..." << std::endl;
+    for (const auto& noteEventList : noteEventsPerPart) {
+        int patternMaxIterationIdx = noteEventList.size() - patternNumNotes;
+        for (int eventIdx = 0; eventIdx < patternMaxIterationIdx; eventIdx++) {
+            std::vector<Note> localPattern;
+            localPattern.reserve(patternNumNotes);
+            const int maxEventIdx = eventIdx + patternNumNotes;
+            for (int idx = eventIdx; idx < maxEventIdx; idx++) {
+                localPattern.push_back(*noteEventList[idx].notePtr);
+            }
+            patterns.push_back(localPattern);
+        }
+    }
+
+    std::cout << "Searching patterns..." << std::endl;
+    return findMelodyPattern(patterns, totalIntervalsSimilarityThreshold, 
+    totalRhythmSimilarityThreshold, intervalsSimilarityCallback, rhythmSimilarityCallback, 
+    totalIntervalSimilarityCallback, totalRhythmSimilarityCallback, totalSimilarityCallback);
 }
 
 bool Score::haveAnacrusisMeasure() const { return _haveAnacrusisMeasure; }
