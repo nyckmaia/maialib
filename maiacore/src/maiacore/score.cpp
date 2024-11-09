@@ -2165,6 +2165,67 @@ std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
     return results;
 }
 
+void Score::removeDuplicatePatterns(std::vector<std::vector<Note>>* patterns) const {
+    auto& patternsRef = *patterns;
+    std::set<size_t> uniqueIndices;  // Armazena os índices de padrões únicos
+
+    // Função auxiliar para calcular as diferenças de MIDI entre notas
+    auto calculateMidiDifferences = [](const std::vector<Note>& pattern) {
+        std::vector<int> midiDiffs;
+        for (size_t i = 1; i < pattern.size(); ++i) {
+            midiDiffs.push_back(pattern[i].getMIDINumber() - pattern[i - 1].getMIDINumber());
+        }
+        return midiDiffs;
+    };
+
+    // Função auxiliar para calcular as diferenças de durações normalizadas entre notas
+    auto calculateDurationDifferences = [](const std::vector<Note>& pattern) {
+        std::vector<float> durationDiffs;
+        for (size_t i = 1; i < pattern.size(); ++i) {
+            float diff = pattern[i].getQuarterDuration() - pattern[i - 1].getQuarterDuration();
+            durationDiffs.push_back(diff);
+        }
+        return durationDiffs;
+    };
+
+    for (size_t i = 0; i < patternsRef.size(); ++i) {
+        if (uniqueIndices.find(i) != uniqueIndices.end()) {
+            continue;  // Padrão já marcado como único
+        }
+
+        // Calcula as diferenças de MIDI e duração para o padrão atual
+        auto midiDiffs1 = calculateMidiDifferences(patternsRef[i]);
+        auto durationDiffs1 = calculateDurationDifferences(patternsRef[i]);
+
+        bool isUnique = true;
+
+        for (size_t j = i + 1; j < patternsRef.size(); ++j) {
+            // Calcula as diferenças de MIDI e duração para o padrão a ser comparado
+            auto midiDiffs2 = calculateMidiDifferences(patternsRef[j]);
+            auto durationDiffs2 = calculateDurationDifferences(patternsRef[j]);
+
+            // Verifica se ambos os critérios de igualdade são atendidos
+            if (midiDiffs1 == midiDiffs2 && durationDiffs1 == durationDiffs2) {
+                isUnique = false;
+                uniqueIndices.insert(j);  // Marca o padrão `j` como duplicado
+            }
+        }
+
+        if (isUnique) {
+            uniqueIndices.insert(i);  // Marca o padrão `i` como único
+        }
+    }
+
+    // Filtra o vetor original para manter apenas os padrões únicos
+    std::vector<std::vector<Note>> filteredPatterns;
+    for (size_t i : uniqueIndices) {
+        filteredPatterns.push_back(std::move(patternsRef[i]));
+    }
+
+    // Substitui o vetor original pelos padrões únicos
+    patternsRef = std::move(filteredPatterns);
+}
+
 std::vector<Score::MelodyPatternTable> Score::findAnyMelodyPattern(
         const int patternNumNotes,
         const float totalIntervalsSimilarityThreshold,
@@ -2180,10 +2241,10 @@ std::vector<Score::MelodyPatternTable> Score::findAnyMelodyPattern(
     const auto& noteEventsPerPart = collectNoteEventsPerPart();
     std::vector<std::vector<Note>> patterns;
     const int maxNumPatterns = getNumNotes() / patternNumNotes;
-    std::cout << "Max melody blocks to find: " << maxNumPatterns << std::endl;
+    // std::cout << "Max melody blocks to find: " << maxNumPatterns << std::endl;
     patterns.reserve(maxNumPatterns); // Impreciso
     
-    std::cout << "Creating melody patterns vector..." << std::endl;
+    // std::cout << "Creating melody patterns vector..." << std::endl;
     for (const auto& noteEventList : noteEventsPerPart) {
         int patternMaxIterationIdx = noteEventList.size() - patternNumNotes;
         for (int eventIdx = 0; eventIdx < patternMaxIterationIdx; eventIdx++) {
@@ -2197,7 +2258,9 @@ std::vector<Score::MelodyPatternTable> Score::findAnyMelodyPattern(
         }
     }
 
-    std::cout << "Searching patterns..." << std::endl;
+    removeDuplicatePatterns(&patterns);
+
+    // std::cout << "Searching patterns..." << std::endl;
     return findMelodyPattern(patterns, totalIntervalsSimilarityThreshold, 
     totalRhythmSimilarityThreshold, intervalsSimilarityCallback, rhythmSimilarityCallback, 
     totalIntervalSimilarityCallback, totalRhythmSimilarityCallback, totalSimilarityCallback);

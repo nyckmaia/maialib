@@ -53,6 +53,8 @@ class Score {
     mutable bool _isNoteEventsPerPartCached = false; // Flag para indicar se o cache já foi preenchido
     std::vector<std::vector<NoteEvent>> collectNoteEventsPerPart() const;
 
+    void removeDuplicatePatterns(std::vector<std::vector<Note>>* patterns) const;
+
     typedef struct noteData_st {
         float currentTimeValue = 0.0f;
         const Note* notePtr = nullptr;

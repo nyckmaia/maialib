@@ -1,6 +1,9 @@
 #include "maiacore/score_collection.h"
 
 #include <filesystem>
+#include <vector>
+#include <string>
+#include <tuple>
 
 #include "maiacore/log.h"
 
@@ -87,3 +90,75 @@ void ScoreCollection::removeScore(const int scoreIdx) {
 
     _scores.erase(_scores.begin() + scoreIdx);
 }
+
+ScoreCollection::ExtendedMelodyPatternTable ScoreCollection::findMelodyPattern(
+    const std::vector<Note>& melodyPattern, const float totalIntervalsSimilarityThreshold,
+    const float totalRhythmSimilarityThreshold,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& intervalsSimilarityCallback,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& rhythmSimilarityCallback,
+    const std::function<float(const std::vector<float>&)>& totalIntervalSimilarityCallback,
+    const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback,
+    const std::function<float(float, float)>& totalSimilarityCallback) const {
+    
+    ScoreCollection::ExtendedMelodyPatternTable results;
+    for (const auto& score : _scores) {
+        auto scoreResults = score.findMelodyPattern(melodyPattern, totalIntervalsSimilarityThreshold,
+                                                    totalRhythmSimilarityThreshold,
+                                                    intervalsSimilarityCallback, rhythmSimilarityCallback,
+                                                    totalIntervalSimilarityCallback, totalRhythmSimilarityCallback,
+                                                    totalSimilarityCallback);
+        
+        for (const auto& row : scoreResults) {
+            // Constrói diretamente um MelodyPatternRow com o título da partitura
+            results.emplace_back(score.getFileName(), score.getComposerName(), score.getTitle(), std::get<0>(row), std::get<1>(row), std::get<2>(row),
+                                 std::get<3>(row), std::get<4>(row), std::get<5>(row), std::get<6>(row),
+                                 std::get<7>(row), std::get<8>(row), std::get<9>(row), std::get<10>(row));
+        }
+    }
+    return results;
+}
+
+std::vector<ScoreCollection::ExtendedMelodyPatternTable> ScoreCollection::findMelodyPattern(
+    const std::vector<std::vector<Note>>& melodyPatterns, const float totalIntervalsSimilarityThreshold,
+    const float totalRhythmSimilarityThreshold,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& intervalsSimilarityCallback,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& rhythmSimilarityCallback,
+    const std::function<float(const std::vector<float>&)>& totalIntervalSimilarityCallback,
+    const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback,
+    const std::function<float(float, float)>& totalSimilarityCallback) const {
+    
+    std::vector<ExtendedMelodyPatternTable> allResults;
+    for (const auto& score : _scores) {
+        auto scoreResults = score.findMelodyPattern(melodyPatterns, totalIntervalsSimilarityThreshold,
+                                                    totalRhythmSimilarityThreshold,
+                                                    intervalsSimilarityCallback, rhythmSimilarityCallback,
+                                                    totalIntervalSimilarityCallback, totalRhythmSimilarityCallback,
+                                                    totalSimilarityCallback);
+        
+        ScoreCollection::ExtendedMelodyPatternTable extendedTable;
+        for (const auto& table : scoreResults) {       // Itera sobre cada tabela
+            for (const Score::MelodyPatternRow& row : table) { // Itera sobre cada linha da tabela
+                // Adiciona uma nova linha ao extendedTable, incluindo o título da partitura no início
+                extendedTable.emplace_back(
+                    score.getFileName(),                  // Nome do arquivo
+                    score.getComposerName(),              // Nome do compositor
+                    score.getTitle(),                       // Título da partitura
+                    std::get<0>(row),                       // partName
+                    std::get<1>(row),                       // measureNumber
+                    std::get<2>(row),                       // staveId
+                    std::get<3>(row),                       // writtenClefKey
+                    std::get<4>(row),                       // transposeInterval
+                    std::get<5>(row),                       // segmentWrittenPitch
+                    std::get<6>(row),                       // semitonesDiff
+                    std::get<7>(row),                       // rhythmDiff
+                    std::get<8>(row),                       // totalIntervalSimilarity
+                    std::get<9>(row),                       // totalRhythmSimilarity
+                    std::get<10>(row)                       // totalSimilarity
+                );
+            }
+        }
+        allResults.push_back(extendedTable);
+    }
+    return allResults;
+}
+

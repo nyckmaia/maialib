@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.8.0] - 2024-11-08
+
+### New Features
+
+- ScoreCollection::findMelodyPattern method
+
+---
+
 ## [v1.7.1] - 2024-11-03
 
 ### API Changes
