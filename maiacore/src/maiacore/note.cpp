@@ -112,7 +112,7 @@ void Note::info() const {
     LOG_INFO("Quarter Duration: " << getQuarterDuration());
     LOG_INFO("Voice: " << _voice);
     LOG_INFO("Staff: " << _staff);
-    LOG_INFO("MIDI Number: " << getMIDINumber());
+    LOG_INFO("MIDI Number: " << getMidiNumber());
     LOG_INFO("Stem: " << _stem);
     LOG_INFO("Beams: " << _beam.size());
     LOG_INFO("Is Tuplet: " << std::boolalpha << _isTuplet);
@@ -2035,4 +2035,4 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
     return xml;
 }
 
-int Note::getMIDINumber() const { return _midiNumber; }
+int Note::getMidiNumber() const { return _midiNumber; }

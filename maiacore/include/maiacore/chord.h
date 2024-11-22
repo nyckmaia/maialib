@@ -22,7 +22,7 @@ struct NoteData {
           enharmonicDiatonicDistance(_enharDiat){};
 
     friend bool operator<(const NoteData& lhs, const NoteData& rhs) {
-        return lhs.note.getMIDINumber() < rhs.note.getMIDINumber();
+        return lhs.note.getMidiNumber() < rhs.note.getMidiNumber();
     }
 };
 
@@ -212,11 +212,11 @@ class Chord {
     //                  const int divisionsPerQuarterNote = 256);
 
     /**
-     * @brief
-     *
-     * @param inversionNumber
+     * @brief 
+     * 
+     * @param inversionNumber 
      */
-    void inversion(int inversionNumber);
+    void toInversion(int inversionNumber);
 
     /**
      * @brief
@@ -1009,7 +1009,7 @@ class Chord {
      * @param firstNoteAsReference
      * @return std::vector<int>
      */
-    std::vector<int> getMIDIIntervals(const bool firstNoteAsReference = false) const;
+    std::vector<int> getMidiIntervals(const bool firstNoteAsReference = false) const;
 
     /**
      * @brief Get the Intervals object

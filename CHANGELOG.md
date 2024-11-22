@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.8.1] - 2024-11-22
+
+### API Changes
+
+- Note Class:
+  - .getMIDINumber -> .getMidiNumber
+- Chord Class:
+  - .inversion -> .toInversion
+  - .getMIDIIntervals -> .getMidiIntervals
+
+---
+
 ## [v1.8.0] - 2024-11-08
 
 ### New Features

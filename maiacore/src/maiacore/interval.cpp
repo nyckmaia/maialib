@@ -22,7 +22,7 @@ Interval::Interval(const Note& note_A, const Note& note_B) : _numSemitones(0) {
     _note[0] = note_A;
     _note[1] = note_B;
 
-    _numSemitones = _note[1].getMIDINumber() - _note[0].getMIDINumber();
+    _numSemitones = _note[1].getMidiNumber() - _note[0].getMidiNumber();
 }
 
 void Interval::setNotes(const std::string& pitch_A, const std::string& pitch_B) {
@@ -40,7 +40,7 @@ void Interval::setNotes(const Note& note_A, const Note& note_B) {
     _note[0] = note_A;
     _note[1] = note_B;
 
-    _numSemitones = _note[1].getMIDINumber() - _note[0].getMIDINumber();
+    _numSemitones = _note[1].getMidiNumber() - _note[0].getMidiNumber();
 }
 
 int Interval::whiteKeyDistance() const {
@@ -339,7 +339,7 @@ std::pair<std::string, bool> Interval::analyse() const {
     err << "diatonicInterval: " << diatonicInterval << std::endl;
     err << "numSemitones: " << numSemitones << " e (numSemitones % 12): " << (numSemitones % 12)
         << std::endl;
-    err << "midiNumbers: [" << _note[0].getMIDINumber() << ", " << _note[1].getMIDINumber() << "]"
+    err << "midiNumbers: [" << _note[0].getMidiNumber() << ", " << _note[1].getMidiNumber() << "]"
         << std::endl;
 
     LOG_ERROR(err.str());

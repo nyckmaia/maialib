@@ -115,7 +115,7 @@ void NoteClass(const py::module& m) {
     cls.def("isNoteOn", &Note::isNoteOn);
     cls.def("isNoteOff", &Note::isNoteOff);
     cls.def("getPitch", &Note::getPitch);
-    cls.def("getMIDINumber", &Note::getMIDINumber);
+    cls.def("getMidiNumber", &Note::getMidiNumber);
 
     cls.def("getVoice", &Note::getVoice);
     cls.def("getStaff", &Note::getStaff);

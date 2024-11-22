@@ -2027,8 +2027,8 @@ Score::MelodyPatternTable Score::findMelodyPattern(
                 break;
             }
 
-            // const int patternFirstNoteMidi = patternFirstNoteOn->getMIDINumber();
-            // const int segmentFirstNoteMidi = segmentFirstNoteOn->getMIDINumber();
+            // const int patternFirstNoteMidi = patternFirstNoteOn->getMidiNumber();
+            // const int segmentFirstNoteMidi = segmentFirstNoteOn->getMidiNumber();
             // const int transposeSemitones = segmentFirstNoteMidi - patternFirstNoteMidi;
 
             std::string intervalName;
@@ -2173,7 +2173,7 @@ void Score::removeDuplicatePatterns(std::vector<std::vector<Note>>* patterns) co
     auto calculateMidiDifferences = [](const std::vector<Note>& pattern) {
         std::vector<int> midiDiffs;
         for (size_t i = 1; i < pattern.size(); ++i) {
-            midiDiffs.push_back(pattern[i].getMIDINumber() - pattern[i - 1].getMIDINumber());
+            midiDiffs.push_back(pattern[i].getMidiNumber() - pattern[i - 1].getMidiNumber());
         }
         return midiDiffs;
     };

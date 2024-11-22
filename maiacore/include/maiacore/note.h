@@ -187,7 +187,7 @@ class Note {
     bool isNoteOn() const;
     bool isNoteOff() const;
     std::string getPitch() const;
-    int getMIDINumber() const;
+    int getMidiNumber() const;
     int getVoice() const;
     int getStaff() const;
     std::string getStem() const;
@@ -260,19 +260,19 @@ class Note {
     const std::string toXML(const size_t instrumentId = 1, const int identSize = 2) const;
 
     bool operator<(const Note& otherNote) const {
-        return (_midiNumber < otherNote.getMIDINumber());
+        return (_midiNumber < otherNote.getMidiNumber());
     }
 
     bool operator>(const Note& otherNote) const {
-        return (_midiNumber > otherNote.getMIDINumber());
+        return (_midiNumber > otherNote.getMidiNumber());
     }
 
     bool operator<=(const Note& otherNote) const {
-        return (_midiNumber <= otherNote.getMIDINumber());
+        return (_midiNumber <= otherNote.getMidiNumber());
     }
 
     bool operator>=(const Note& otherNote) const {
-        return (_midiNumber >= otherNote.getMIDINumber());
+        return (_midiNumber >= otherNote.getMidiNumber());
     }
 
     bool operator==(const Note& otherNote) const { return getPitch() == otherNote.getPitch(); }

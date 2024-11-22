@@ -49,7 +49,7 @@ void ChordClass(const py::module& m) {
     //             py::arg("divisionsPerQuarterNote") = 256);
     //     cls.def("setDurationTicks", &Chord::setDurationTicks, py::arg("durationTicks"),
     //             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("inversion", &Chord::inversion, py::arg("inversionNumber"),
+    cls.def("toInversion", &Chord::toInversion, py::arg("inversionNumber"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("transpose", &Chord::transpose, py::arg("semiTonesNumber"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
@@ -288,7 +288,7 @@ void ChordClass(const py::module& m) {
     cls.def("isTonal", &Chord::isTonal, py::arg("model") = nullptr);
     cls.def("isInRootPosition", &Chord::isInRootPosition);
 
-    cls.def("getMIDIIntervals", &Chord::getMIDIIntervals, py::arg("firstNoteAsReference") = false);
+    cls.def("getMidiIntervals", &Chord::getMidiIntervals, py::arg("firstNoteAsReference") = false);
     cls.def("getIntervals", &Chord::getIntervals, py::arg("firstNoteAsReference") = false);
     cls.def("getIntervalsFromOriginalSortedNotes", &Chord::getIntervalsFromOriginalSortedNotes);
 

@@ -295,9 +295,9 @@ void ScoreClass(const py::module& m) {
 // );
 
 
-    cls.def("instrumentFragmentation", &Score::instrumentFragmentation,
-            py::arg("config") = nlohmann::json(),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    // cls.def("instrumentFragmentation", &Score::instrumentFragmentation,
+    //         py::arg("config") = nlohmann::json(),
+    //         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getChords", &Score::getChords, py::arg("config") = nlohmann::json(),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def(

@@ -184,7 +184,7 @@ void Chord::setDuration(const float quarterDuration, const int divisionsPerQuart
 //     }
 // }
 
-void Chord::inversion(int inversionNumber) {
+void Chord::toInversion(int inversionNumber) {
     for (int i = 0; i < inversionNumber; i++) {
         _originalNotes[0].transpose(12);  // isto apenas altera a nota uma oitava acima
 
@@ -879,7 +879,7 @@ void Chord::computeIntervals() {
     ignore(intervals);
 }
 
-std::vector<int> Chord::getMIDIIntervals(const bool firstNoteAsReference) const {
+std::vector<int> Chord::getMidiIntervals(const bool firstNoteAsReference) const {
     const int numNotes = _originalNotes.size();
 
     if (numNotes <= 0) {
@@ -890,9 +890,9 @@ std::vector<int> Chord::getMIDIIntervals(const bool firstNoteAsReference) const 
 
     // ===== GET INTERVALS USING THE FIRST NOTE AS REFERENCE ===== //
     if (firstNoteAsReference) {
-        const int rootMidiNumber = _originalNotes[0].getMIDINumber();
+        const int rootMidiNumber = _originalNotes[0].getMidiNumber();
         for (int i = 1; i < numNotes; i++) {
-            midiIntervals[i - 1] = _originalNotes[i].getMIDINumber() - rootMidiNumber;
+            midiIntervals[i - 1] = _originalNotes[i].getMidiNumber() - rootMidiNumber;
         }
 
         return midiIntervals;
@@ -901,7 +901,7 @@ std::vector<int> Chord::getMIDIIntervals(const bool firstNoteAsReference) const 
     // ===== GET INTERVALS FROM EACH NOTE PAIR ===== //
     for (int i = 0; i < numNotes - 1; i++) {
         midiIntervals[i] =
-            _originalNotes[i + 1].getMIDINumber() - _originalNotes[i].getMIDINumber();
+            _originalNotes[i + 1].getMidiNumber() - _originalNotes[i].getMidiNumber();
     }
 
     return midiIntervals;
@@ -1239,7 +1239,7 @@ bool Chord::isInRootPosition() {
 bool Chord::isSorted() const {
     return std::is_sorted(
         _originalNotes.begin(), _originalNotes.end(),
-        [](const Note& lh, const Note& rh) { return lh.getMIDINumber() <= rh.getMIDINumber(); });
+        [](const Note& lh, const Note& rh) { return lh.getMidiNumber() <= rh.getMidiNumber(); });
 }
 
 float Chord::getCloseStackHarmonicComplexity(const bool useEnharmony) {
@@ -1308,8 +1308,8 @@ float Chord::getHarmonicDensity(int lowerBoundMIDI, int higherBoundMIDI) const {
         std::sort(sortedNotes.begin(), sortedNotes.end());
 
         const int numNotes = sortedNotes.size();
-        const int lowestMIDI = sortedNotes.at(0).getMIDINumber();
-        const int highestMIDI = sortedNotes.at(numNotes - 1).getMIDINumber();
+        const int lowestMIDI = sortedNotes.at(0).getMidiNumber();
+        const int highestMIDI = sortedNotes.at(numNotes - 1).getMidiNumber();
 
         const int midiRange = (highestMIDI - lowestMIDI) + 1;
         const float density = static_cast<float>(numNotes) / static_cast<float>(midiRange);
@@ -2414,7 +2414,7 @@ int Chord::getMeanMidiValue() const {
 
     int sum = 0;
     for (const auto& note : _originalNotes) {
-        sum += note.getMIDINumber();
+        sum += note.getMidiNumber();
     }
 
     const int mean = sum / static_cast<int>(_originalNotes.size());
@@ -2428,8 +2428,8 @@ int Chord::getMeanOfExtremesMidiValue() const {
 
     auto copyNotes = _originalNotes;
     std::sort(copyNotes.begin(), copyNotes.end());
-    int lowMIDI = copyNotes.at(0).getMIDINumber();
-    int highMIDI = copyNotes.at(copyNotes.size() - 1).getMIDINumber();
+    int lowMIDI = copyNotes.at(0).getMidiNumber();
+    int highMIDI = copyNotes.at(copyNotes.size() - 1).getMidiNumber();
 
     const int mean = (lowMIDI + highMIDI) / 2;
     return mean;
@@ -2439,7 +2439,7 @@ float Chord::getMidiValueStd() const {
     std::vector<int> midiVec(_originalNotes.size(), 0);
 
     for (const auto& note : _originalNotes) {
-        midiVec.push_back(note.getMIDINumber());
+        midiVec.push_back(note.getMidiNumber());
     }
 
     return computeStandardDeviation(midiVec);
@@ -2624,8 +2624,8 @@ void sortHeapOctaves(NoteDataHeap* heap) {
         auto& currentNote = heap->at(i).note;
         auto& nextNote = heap->at(i + 1).note;
 
-        const int currentNoteFirstOct = currentNote.getMIDINumber() % 12;
-        const int nextNoteFirstOct = nextNote.getMIDINumber() % 12;
+        const int currentNoteFirstOct = currentNote.getMidiNumber() % 12;
+        const int nextNoteFirstOct = nextNote.getMidiNumber() % 12;
 
         if (nextNoteFirstOct > currentNoteFirstOct) {
             // Special cases:
