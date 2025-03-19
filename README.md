@@ -143,6 +143,7 @@ Done!
 
 - Multiple Python versions installed, like: `Official Python`, `Microsoft Python`, `MSYS2 Python` and others can direct the build system to choose a wrong version to build and install the library. <br>
   To check all Python versions installed on your system, open the `Terminal` (or `CMD` on Windows) and type: - Linux or Mac: - `which python` - `which python3` - Windows: - `where.exe python` - `where.exe python3`
+- If `maialib` Python stubs and autocomplete are not working good on VS Code. Run: "Pylance: Clear Persisted Indices"
 
 ### Windows-Only
 

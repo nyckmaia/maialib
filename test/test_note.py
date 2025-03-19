@@ -54,14 +54,14 @@ class NoteEqualsOperator(unittest.TestCase):
         b = ml.Note("A")
 
         self.assertEqual(a == b, True)
-        self.assertEqual(a.getMIDINumber() == b.getMIDINumber(), True)
+        self.assertEqual(a.getMidiNumber() == b.getMidiNumber(), True)
 
     def testEnharmonicNotes(self):
         a = ml.Note("A")
         b = ml.Note("Gx")
 
         self.assertEqual(a == b, False)
-        self.assertEqual(a.getMIDINumber() == b.getMIDINumber(), True)
+        self.assertEqual(a.getMidiNumber() == b.getMidiNumber(), True)
 
 
 class NoteSetPitch(unittest.TestCase):

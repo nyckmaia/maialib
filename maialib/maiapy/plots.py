@@ -140,7 +140,7 @@ def _score2DataFrame(score: mc.Score, kwargs) -> Tuple[pd.DataFrame, str, str]:
 
                     # Get note data
                     noteDuration = currentNote.getQuarterDuration()
-                    midiValue = currentNote.getMIDINumber()
+                    midiValue = currentNote.getMidiNumber()
                     notePitch = currentNote.getPitch()
 
                     aux = currentTimePosition + internalStaveCurrentTime
@@ -346,10 +346,10 @@ def _scoreEnvelopeDataFrame(df: pd.DataFrame) -> pd.DataFrame:
         else:
             obj = {
                 "floatMeasure": row["floatMeasure"],
-                "low": chord.getNote(0).getMIDINumber(),
+                "low": chord.getNote(0).getMidiNumber(),
                 "meanOfExtremes": chord.getMeanOfExtremesMidiValue(),
                 "mean": chord.getMeanMidiValue(),
-                "high": chord.getNote(chordSize-1).getMIDINumber(),
+                "high": chord.getNote(chordSize-1).getMidiNumber(),
                 "lowPitch": chord.getNote(0).getPitch(),
                 "meanOfExtremesPitch": chord.getMeanOfExtremesPitch(),
                 "meanPitch": chord.getMeanPitch(),

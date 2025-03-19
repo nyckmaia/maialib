@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.8.2] - 2025-02-26
+
+### Fixed
+
+- Fix plot functions that were using .getMIDINumber() to use the new API .getMidiNumber()
+- Fix Pandas dependecy minimum version to v2.0.0
+
+---
+
 ## [v1.8.1] - 2024-11-22
 
 ### API Changes

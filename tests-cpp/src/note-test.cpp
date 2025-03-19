@@ -62,7 +62,7 @@
 //   Note b("A");
 
 //   EXPECT_EQ(a == b, true);
-//   EXPECT_EQ(a.getMIDINumber() == b.getMIDINumber(), true);
+//   EXPECT_EQ(a.getMidiNumber() == b.getMidiNumber(), true);
 // }
 
 // TEST(NoteEqualsOperator, enharmonicNotes) {
@@ -70,7 +70,7 @@
 //   Note b("Gx");
 
 //   EXPECT_EQ(a == b, false);
-//   EXPECT_EQ(a.getMIDINumber() == b.getMIDINumber(), true);
+//   EXPECT_EQ(a.getMidiNumber() == b.getMidiNumber(), true);
 // }
 
 // TEST(NoteSetPitch, writtenAndSoundingPitchTypesAndOctave) {

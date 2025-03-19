@@ -191,7 +191,7 @@ setup(
         "Natural Language :: English",
         "Topic :: Software Development :: Libraries"
     ],
-    install_requires=["pandas", "plotly", "kaleido", "nbformat"],
+    install_requires=["pandas>=2.0.0", "plotly", "kaleido", "nbformat"],
     python_requires=">=3.8.0",
     zip_safe=False,
     ext_modules=[CMakeExtension(name="maiacore")],
