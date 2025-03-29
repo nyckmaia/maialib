@@ -276,12 +276,14 @@ void ChordClass(const py::module& m) {
     cls.def("haveAnyOctaveSeventh", &Chord::haveAnyOctaveSeventh);
     cls.def("haveAnyOctaveOctave", &Chord::haveAnyOctaveOctave);
 
+    cls.def("isSus", &Chord::isSus);
     cls.def("isMajorChord", &Chord::isMajorChord);
     cls.def("isMinorChord", &Chord::isMinorChord);
     cls.def("isAugmentedChord", &Chord::isAugmentedChord);
     cls.def("isDiminishedChord", &Chord::isDiminishedChord);
-    cls.def("isDominantSeventhChord", &Chord::isDominantSeventhChord);
     cls.def("isHalfDiminishedChord", &Chord::isHalfDiminishedChord);
+    cls.def("isWholeDiminishedChord", &Chord::isWholeDiminishedChord);
+    cls.def("isDominantSeventhChord", &Chord::isDominantSeventhChord);
     cls.def("getQuality", &Chord::getQuality);
 
     cls.def("isSorted", &Chord::isSorted);

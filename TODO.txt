@@ -1,0 +1,4 @@
+TO FIX:
+
+- Chord(['D4', 'F4', 'Ab4', 'Cb5']).getQuality() is wrong classified as 'diminished'. The correct answer is 'whole-diminished'
+- Chord(['B#4', 'D#4', 'F#4', 'A5']).getQuality() is wrong classified as 'indeterminate'. The correct answer is 'whole-diminished'

@@ -929,6 +929,23 @@ class Chord {
      * @return true
      * @return false
      */
+    bool isDyad();
+
+
+    /**
+     * @brief
+     *
+     * @return true
+     * @return false
+     */
+    bool isSus();
+
+    /**
+     * @brief
+     *
+     * @return true
+     * @return false
+     */
     bool isMajorChord();
 
     /**
@@ -961,7 +978,7 @@ class Chord {
      * @return true
      * @return false
      */
-    bool isDominantSeventhChord();
+    bool isHalfDiminishedChord();
 
     /**
      * @brief
@@ -969,7 +986,15 @@ class Chord {
      * @return true
      * @return false
      */
-    bool isHalfDiminishedChord();
+    bool isWholeDiminishedChord();
+
+    /**
+     * @brief
+     *
+     * @return true
+     * @return false
+     */
+    bool isDominantSeventhChord();
 
     /**
      * @brief Get the Quality object

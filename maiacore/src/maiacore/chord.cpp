@@ -390,9 +390,18 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
     // Define the current 'chordSize'
     const int chordSize = _openStack.size();
 
-    // Error checking:
-    if (chordSize < 2) {
-        // LOG_WARN("The chord MUST BE at least 2 unique pitch classes!");
+    // ===== ERROR CHECKING ===== //
+    // Empty chord
+    if (chordSize == 0) {
+        _isStackedInThirds = true;
+        _closeStack.clear();
+        return;
+    }
+    // Single note chord
+    if (chordSize == 1) {
+        _isStackedInThirds = true;
+        _closeStack.clear();
+        _closeStack.push_back(_openStack[0]);
         return;
     }
 
@@ -400,7 +409,6 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
     std::vector<NoteDataHeap> enharmonicUnitGroups = computeEnharmonicUnitsGroups();
 
     // ===== STEP 3: COMPUTE ALL ENHARMONIC HEAPS (VALID AND INVALID HEAPS)
-    // ===== //
     std::vector<NoteDataHeap> allEnharmonicHeaps = computeEnharmonicHeaps(enharmonicUnitGroups);
 
     // ===== STEP 4: FILTER HEAPS THAT DO NOT CONTAIN INTERNAL DUPLICATED PITCH
@@ -426,7 +434,6 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
                 continue;
             }
 
-            // sortHeapOctaves(&heapInversion);
             const auto& heapData = stackInThirdsTemplateMatch(heapInversion);
             _stackedHeaps.push_back(heapData);
         }
@@ -1128,12 +1135,46 @@ std::string Chord::getName() {
     return chordName;
 }
 
+bool Chord::isDyad() {
+    if (!_isStackedInThirds) {
+        stackInThirds();
+    }
+
+    return (stackSize() == 2) ? true : false;
+}
+
+
+bool Chord::isSus() {
+    if (!_isStackedInThirds) {
+        stackInThirds();
+    }
+
+    if (stackSize() < 3) {
+        return false;
+    }
+
+    // ===== EXEMPLE ===== // 
+    // stackChord = [C4, Ebb4, G4]
+    // Can be interpreted as => [G4, C5, D5] = Gsus4
+    const Note root(_closeStack[2].getMidiNumber());
+    const Note fourth(_closeStack[0].getMidiNumber() + 12);
+    const Note fifth(_closeStack[1].getMidiNumber() + 12);
+
+    const Interval firstInterval(root, fourth);
+    const Interval secondInterval(root, fifth);
+
+    const bool havePerfectFourth = firstInterval.isPerfectFourth(true);
+    const bool havePerfectFifth = secondInterval.isPerfectFifth(true);
+
+    return (havePerfectFourth && havePerfectFifth) ? true : false;
+}
+
 bool Chord::isMajorChord() {
     if (!_isStackedInThirds) {
         stackInThirds();
     }
 
-    return (haveMajorThird() && !haveAugmentedFifth()) ? true : false;
+    return (stackSize() >= 3 && haveMajorThird() && !haveAugmentedFifth()) ? true : false;
 }
 
 bool Chord::isMinorChord() {
@@ -1141,7 +1182,7 @@ bool Chord::isMinorChord() {
         stackInThirds();
     }
 
-    return (haveMinorThird() && !haveDiminishedFifth()) ? true : false;
+    return (stackSize() >= 3 && haveMinorThird() && !haveDiminishedFifth()) ? true : false;
 }
 
 bool Chord::isAugmentedChord() {
@@ -1149,7 +1190,7 @@ bool Chord::isAugmentedChord() {
         stackInThirds();
     }
 
-    return (haveMajorThird() && haveAugmentedFifth()) ? true : false;
+    return (stackSize() >= 3 && haveMajorThird() && haveAugmentedFifth()) ? true : false;
 }
 
 bool Chord::isDiminishedChord() {
@@ -1157,7 +1198,23 @@ bool Chord::isDiminishedChord() {
         stackInThirds();
     }
 
+    return (stackSize() >= 3 && haveMinorThird() && haveDiminishedFifth() && !haveMinorSeventh() && !haveDiminishedSeventh()) ? true : false;
+}
+
+bool Chord::isHalfDiminishedChord() {
+    if (!_isStackedInThirds) {
+        stackInThirds();
+    }
+
     return (haveMinorThird() && haveDiminishedFifth() && haveMinorSeventh()) ? true : false;
+}
+
+bool Chord::isWholeDiminishedChord() {
+    if (!_isStackedInThirds) {
+        stackInThirds();
+    }
+
+    return (haveMinorThird() && haveDiminishedFifth() && haveDiminishedSeventh()) ? true : false;
 }
 
 bool Chord::isDominantSeventhChord() {
@@ -1171,24 +1228,22 @@ bool Chord::isDominantSeventhChord() {
                : false;
 }
 
-bool Chord::isHalfDiminishedChord() {
-    if (!_isStackedInThirds) {
-        stackInThirds();
-    }
-
-    return (haveMinorThird() && haveDiminishedFifth()) ? true : false;
-}
-
 std::string Chord::getQuality() {
-    switch (size()) {
-        case 0:
-        case 1:
-            return {};
-        case 2:
-            return "dyad";
+    if (!isTonal()) {
+        return "non-tonal";
     }
 
-    if (isMajorChord()) {
+    const int orginalChordSize = size();
+    const int stackSizeSize = stackSize();
+    if (orginalChordSize == 0) {
+        return {};
+    } else if (stackSizeSize == 1 && orginalChordSize == 1) {
+        return "single-note";
+    } else if (stackSizeSize == 1 && orginalChordSize > 1) {
+        return "dyad-octave";
+    } else if (isDyad()) {
+        return "dyad";
+    } else if (isMajorChord()) {
         return "major";
     } else if (isMinorChord()) {
         return "minor";
@@ -1196,8 +1251,12 @@ std::string Chord::getQuality() {
         return "diminished";
     } else if (isHalfDiminishedChord()) {
         return "half-diminished";
+    } else if (isWholeDiminishedChord()) {
+        return "whole-diminished";
     } else if (isAugmentedChord()) {
         return "augmented";
+    } else if (isSus()) {
+        return "sus";
     } else {
         return "indeterminate";
     }
@@ -1214,8 +1273,13 @@ bool Chord::isTonal(std::function<bool(const Chord& chord)> model) {
         return model(*this);
     }
 
+    // Special Case
+    if (isSus()) { 
+        return true;
+    }
+
     for (int i = 0; i < stackSize() - 1; i++) {
-        const Interval interval(_openStack[i], _openStack[i + 1]);
+        const Interval interval(_closeStack[i], _closeStack[i + 1]);
 
         if (!interval.isTonal()) {
             return false;

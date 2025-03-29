@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.9.0] - 2025-03-29
+
+### New features
+
+- Add new chord classification: 'sus' for "suspended chord" (sus4 and sus2)
+
+### Improve
+
+- Split 'diminished' chord classification into:
+  - diminished (triad or tetrad)
+  - half-diminished (tetrad)
+  - whole-diminished (tetrad)
+
+### Fix
+
+- Fix special dyads interval classifications. Exemple: [A4, Cbb5] as +d3
+
+---
+
 ## [v1.8.2] - 2025-02-26
 
 ### Fixed
