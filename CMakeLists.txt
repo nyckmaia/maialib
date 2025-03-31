@@ -53,7 +53,7 @@ include(FetchContent)
 FetchContent_Declare(
   cpptrace
   GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
-  GIT_TAG        v0.6.2 # <HASH or TAG>
+  GIT_TAG        v0.8.2 # <HASH or TAG>
 )
 FetchContent_MakeAvailable(cpptrace)
 
@@ -76,8 +76,6 @@ set(LIBS
     SQLiteCpp
     sqlite3
     cpptrace::cpptrace
-    # pthread
-    # dl
 )
 
 # Generate static library

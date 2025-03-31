@@ -3,7 +3,7 @@
  * @ingroup tests
  * @brief   Test of a SQLiteCpp Column.
  *
- * Copyright (c) 2012-2021 Sebastien Rombauts (sebastien.rombauts@gmail.com)
+ * Copyright (c) 2012-2024 Sebastien Rombauts (sebastien.rombauts@gmail.com)
  *
  * Distributed under the MIT License (MIT) (See accompanying file LICENSE.txt
  * or copy at http://opensource.org/licenses/MIT)
@@ -38,7 +38,7 @@ static void test_column_basis(bool utf16)
     EXPECT_EQ(0, db.getLastInsertRowid());
 
     // Create a first row (autoid: 1) with all kind of data and a null value
-    SQLite::Statement   insert(db, "INSERT INTO test VALUES (NULL, \"first\", -123, 0.123, ?, NULL)");
+    SQLite::Statement   insert(db, "INSERT INTO test VALUES (NULL, 'first', -123, 0.123, ?, NULL)");
     // Bind the blob value to the first parameter of the SQL query
     const char  buffer[] = {'b', 'l', '\0', 'b'}; // "bl\0b" : 4 char, with a null byte inside
     const int   size = sizeof(buffer); // size = 4
@@ -98,7 +98,7 @@ static void test_column_basis(bool utf16)
         EXPECT_STREQ("first",   ptxt);
         EXPECT_EQ("first",      msg);
         EXPECT_EQ(-123,         integer);
-        EXPECT_EQ(0.123,        real);
+        EXPECT_DOUBLE_EQ(0.123, real);
         EXPECT_EQ(0,            memcmp("bl\0b", pblob, size));
 #if !defined(_MSC_VER) || _MSC_VER >= 1900
         EXPECT_EQ((size_t)size, sblob.size());
@@ -129,7 +129,7 @@ static void test_column_basis(bool utf16)
         EXPECT_EQ("first",      msg1);
         EXPECT_EQ("first",      msg2);
         EXPECT_EQ(-123,         integer);
-        EXPECT_EQ(0.123,        real);
+        EXPECT_DOUBLE_EQ(0.123, real);
         EXPECT_EQ(0,            memcmp("bl\0b", pblob, 4));
         EXPECT_EQ(0,            memcmp("bl\0b", &sblob[0], 4));
     }
@@ -195,7 +195,7 @@ static void test_column_basis(bool utf16)
         const SQLite::Column integer = query.getColumn(2);
         EXPECT_EQ(-123, integer.getInt());
         const SQLite::Column dbl = query.getColumn(3);
-        EXPECT_EQ(0.123, dbl.getDouble());
+        EXPECT_DOUBLE_EQ(0.123, dbl.getDouble());
     }
 }
 
@@ -214,7 +214,7 @@ TEST(Column, getName)
     // Create a new database
     SQLite::Database db(":memory:", SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE);
     EXPECT_EQ(0, db.exec("CREATE TABLE test (id INTEGER PRIMARY KEY, msg TEXT)"));
-    EXPECT_EQ(1, db.exec("INSERT INTO test VALUES (NULL, \"first\")"));
+    EXPECT_EQ(1, db.exec("INSERT INTO test VALUES (NULL, 'first')"));
 
     // Compile a SQL query, using the "id" column name as-is, but aliasing the "msg" column with new name "value"
     SQLite::Statement   query(db, "SELECT id, msg as value FROM test");
@@ -267,7 +267,7 @@ TEST(Column, shared_ptr)
     // Create a new database
     SQLite::Database db(":memory:", SQLite::OPEN_READWRITE|SQLite::OPEN_CREATE);
     EXPECT_EQ(0, db.exec("CREATE TABLE test (id INTEGER PRIMARY KEY, msg TEXT)"));
-    EXPECT_EQ(1, db.exec(R"(INSERT INTO test VALUES (42, "fortytwo"))"));
+    EXPECT_EQ(1, db.exec("INSERT INTO test VALUES (42, 'fortytwo')"));
     const char* query_str = "SELECT id, msg FROM test";
 
     std::unique_ptr<SQLite::Statement> query{ new SQLite::Statement(db, query_str) };
