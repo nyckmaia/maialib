@@ -154,6 +154,16 @@ class Helper {
      */
     static std::vector<Interval> notes2Intervals(const std::vector<Note>& notes,
                                                  const bool firstNoteAsReference = false);
+    
+    /**
+     * @brief 
+     * 
+     * @param pitches 
+     * @param firstNoteAsReference 
+     * @return std::vector<Interval> 
+     */
+    static std::vector<Interval> notes2Intervals(const std::vector<std::string>& pitches,
+                                                 const bool firstNoteAsReference = false);
 
     /**
      * @brief
@@ -199,7 +209,7 @@ class Helper {
      * @return std::pair<std::string, int>
      */
     static std::pair<std::string, int> freq2pitch(
-        const float freq, const std::string& accType = MUSIC_XML::ACCIDENT::SHARP);
+        const float freq, const std::string& accType = MUSIC_XML::ACCIDENT::NONE);
 
     /**
      * @brief

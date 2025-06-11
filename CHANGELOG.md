@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.9.1] - 2025-06-11
+
+### New features
+
+### Improve
+
+- maiapy.plotChordsNumberOfNotes
+- maiapy.plotPianoRoll
+- maiapy.plotScorePitchEnvelope
+- maiapy.plotSetharesDissonanceCurve
+- notes2Intervals add overload de pitch string
+
+### Fix
+
+---
+
 ## [v1.9.0] - 2025-03-29
 
 ### New features

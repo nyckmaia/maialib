@@ -17,10 +17,14 @@ void ChordClass(const py::module& m) {
     py::class_<Chord> cls(m, "Chord");
     cls.def(py::init<>(),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def(py::init<const std::vector<Note>&>(), py::arg("notes"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def(py::init<const std::vector<std::string>&>(), py::arg("pitches"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def(py::init<const std::vector<Note>&, const RhythmFigure>(), 
+                py::arg("notes"),
+                py::arg("rhythmFigure") = RhythmFigure::QUARTER,
+                py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def(py::init<const std::vector<std::string>&, const RhythmFigure>(), 
+                py::arg("pitches"),
+                py::arg("rhythmFigure") = RhythmFigure::QUARTER,
+                py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("clear", &Chord::clear);
 

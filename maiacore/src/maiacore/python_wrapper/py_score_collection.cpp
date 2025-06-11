@@ -70,7 +70,7 @@ void ScoreCollectionClass(const py::module& m) {
                                            "composerName"_a = std::get<1>(row),
                                            "scoreTitle"_a = std::get<2>(row),
                                            "partName"_a = std::get<3>(row),
-                                           "measureNumber"_a = std::get<4>(row),
+                                           "measureId"_a = std::get<4>(row),
                                            "staveId"_a = std::get<5>(row),
                                            "writtenClefKey"_a = std::get<6>(row),
                                            "transposeInterval"_a = std::get<7>(row),
@@ -123,20 +123,22 @@ void ScoreCollectionClass(const py::module& m) {
                 for (const auto& table : allResults) {
                     std::vector<py::dict> records;
                     for (const auto& row : table) {
-                        records.push_back(py::dict("filename"_a = std::get<0>(row),
-                                           "composerName"_a = std::get<1>(row),
-                                           "scoreTitle"_a = std::get<2>(row),
-                                           "partName"_a = std::get<3>(row),
-                                           "measureNumber"_a = std::get<4>(row),
-                                           "staveId"_a = std::get<5>(row),
-                                           "writtenClefKey"_a = std::get<6>(row),
-                                           "transposeInterval"_a = std::get<7>(row),
-                                           "segmentWrittenPitch"_a = std::get<8>(row),
-                                           "semitonesDiff"_a = std::get<9>(row),
-                                           "rhythmDiff"_a = std::get<10>(row),
-                                           "totalIntervalSimilarity"_a = std::get<11>(row),
-                                           "totalRhythmSimilarity"_a = std::get<12>(row),
-                                           "totalSimilarity"_a = std::get<13>(row)));
+                        records.push_back(py::dict(
+                                            "patternIdx"_a = std::get<0>(row),
+                                            "filename"_a = std::get<1>(row),
+                                            "composerName"_a = std::get<2>(row),
+                                            "scoreTitle"_a = std::get<3>(row),
+                                            "partName"_a = std::get<4>(row),
+                                            "measureId"_a = std::get<5>(row),
+                                            "staveId"_a = std::get<6>(row),
+                                            "writtenClefKey"_a = std::get<7>(row),
+                                            "transposeInterval"_a = std::get<8>(row),
+                                            "segmentWrittenPitch"_a = std::get<9>(row),
+                                            "semitonesDiff"_a = std::get<10>(row),
+                                            "rhythmDiff"_a = std::get<11>(row),
+                                            "totalIntervalSimilarity"_a = std::get<12>(row),
+                                            "totalRhythmSimilarity"_a = std::get<13>(row),
+                                            "totalSimilarity"_a = std::get<14>(row)));
                     }
                     dataframes.push_back(pandas.attr("DataFrame")(records));
                 }

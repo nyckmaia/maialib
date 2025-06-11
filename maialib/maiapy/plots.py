@@ -144,9 +144,9 @@ def _score2DataFrame(score: mc.Score, kwargs) -> Tuple[pd.DataFrame, str, str]:
                     notePitch = currentNote.getPitch()
 
                     aux = currentTimePosition + internalStaveCurrentTime
-                    noteStart = (aux / measureQuarterTimeAmount) + 1
-                    noteFinish = ((aux + noteDuration) /
-                                  measureQuarterTimeAmount) + 1
+                    noteStart = (aux / measureQuarterTimeAmount)
+                    noteFinish = (aux + noteDuration) / \
+                        measureQuarterTimeAmount
 
                     # This plotly timeline function requires the use of these 3 names below: 'Tasks', 'Start' and 'Finish'
                     noteData = {
@@ -285,8 +285,14 @@ def plotPianoRoll(score: mc.Score, **kwargs) -> Tuple[plotly.graph_objs._figure.
         d.x = df.delta.tolist()
 
     # Update plot layout
-    fig.update_xaxes(type='linear', autorange=True, showgrid=True,
-                     gridwidth=1, title="Measures")
+    fig.update_xaxes(
+        type='linear',
+        range=[1, None],  # Fixando limite inferior do eixo X em 1
+        showgrid=True,
+        gridwidth=1,
+        title="Measures"
+    )
+
     fig.update_yaxes(autorange=True, showgrid=True,
                      gridwidth=1, title='Pitch',
                      tickvals=[12, 24, 36, 48, 60, 72, 84, 96, 108, 120],
@@ -539,6 +545,17 @@ def plotScorePitchEnvelope(score: mc.Score, **kwargs) -> Tuple[plotly.graph_objs
     fig.update_layout(hovermode='x unified',
                       template="plotly_white", yaxis_showticksuffix="all")
 
+    fig.update_layout(
+        legend=dict(
+            orientation="h",          # Horizontal
+            yanchor="bottom",         # Ancorar a parte inferior da legenda
+            # Colocar a legenda abaixo do gráfico (ajuste conforme necessário)
+            y=-0.4,
+            xanchor="center",         # Centralizar horizontalmente
+            x=0.5                     # No meio do gráfico
+        )
+    )
+
     fig.add_shape(
         # Rectangle with reference to the plot
         type="rect",
@@ -634,10 +651,13 @@ def plotChordsNumberOfNotes(score: mc.Score, **kwargs) -> Tuple[plotly.graph_obj
     fig.update_xaxes(type='linear', autorange=True, showgrid=True,
                      gridwidth=1, title="Measures")
     fig.update_yaxes(autorange=True, showgrid=True,
-                     gridwidth=1, ticksuffix="  ", title="Number of Notes")
+                     gridwidth=1, ticksuffix="  ", title="Number of Notes", gridcolor='lightgray')
     fig.update_layout(title_x=0.5, font={
         "size": 14,
-    })
+    },
+        plot_bgcolor='white'
+    )
+
     fig.add_shape(
         # Rectangle with reference to the plot
         type="rect",

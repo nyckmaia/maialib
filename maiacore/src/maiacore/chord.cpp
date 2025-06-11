@@ -11,34 +11,25 @@
 #include "maiacore/interval.h"
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
-
-// const int RESERVE_NUM_NOTES = 20;
+#include "maiacore/duration.h"
 
 Chord::Chord() : _isStackedInThirds(false) {}
 
-Chord::Chord(const std::vector<Note>& notes) : _isStackedInThirds(false) {
-    // reserveNotesMemory();
+Chord::Chord(const std::vector<Note>& notes, const RhythmFigure rhythmFigure) : _isStackedInThirds(false) {
     for (const auto& n : notes) {
-        addNote(n);
+        const Note& note = Note(n.getPitch(), rhythmFigure);
+        addNote(note);
     }
 }
 
-Chord::Chord(const std::vector<std::string>& pitches) : _isStackedInThirds(false) {
-    // reserveNotesMemory();
+Chord::Chord(const std::vector<std::string>& pitches, const RhythmFigure rhythmFigure) : _isStackedInThirds(false) {
     for (const auto& p : pitches) {
-        addNote(Note(p));
+        const Note& note = Note(p, rhythmFigure);
+        addNote(note);
     }
 }
 
 Chord::~Chord() {}
-
-// void Chord::reserveNotesMemory() {
-//     _originalNotes.reserve(RESERVE_NUM_NOTES);
-//     _openStack.reserve(RESERVE_NUM_NOTES);
-//     _closeStack.reserve(RESERVE_NUM_NOTES);
-//     _stackedHeaps.reserve(RESERVE_NUM_NOTES);
-//     _closeStackintervals.reserve(RESERVE_NUM_NOTES);
-// }
 
 void Chord::clear() {
     _originalNotes.clear();

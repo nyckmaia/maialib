@@ -6,7 +6,9 @@ import plotly.graph_objects as go
 from maialib import maiacore as mc
 from typing import List, Tuple, Callable, Optional
 
-__all__ = ["plotSetharesDissonanceCurve", "plotScoreSetharesDissonance", "plotChordDyadsSetharesDissonanceHeatmap"]
+__all__ = ["plotSetharesDissonanceCurve", "plotScoreSetharesDissonance",
+           "plotChordDyadsSetharesDissonanceHeatmap"]
+
 
 def _dissmeasure(fvec: List[float], amp: List[float], model: str = 'min') -> float:
     """
@@ -27,7 +29,7 @@ def _dissmeasure(fvec: List[float], amp: List[float], model: str = 'min') -> flo
     freq_amp_dict = {}
     for f, a in zip(fr_sorted, am_sorted):
         freq_amp_dict[f] = freq_amp_dict.get(f, 0) + a
-    
+
     # Extract updated frequencies and amplitudes from the dictionary
     fr_sorted = np.array(list(freq_amp_dict.keys()))
     am_sorted = np.array(list(freq_amp_dict.values()))
@@ -63,6 +65,7 @@ def _dissmeasure(fvec: List[float], amp: List[float], model: str = 'min') -> flo
     D = np.sum(a * (C1 * np.exp(A1 * SFdif) + C2 * np.exp(A2 * SFdif)))
 
     return D, fr_pairs, am_pairs
+
 
 def plotSetharesDissonanceCurve(fundamentalFreq: float = 440, numPartials: int = 6, ratioLowLimit: float = 1.0, ratioHighLimit: float = 2.3, ratioStepIncrement: float = 0.001, amplCallback: Optional[Callable[[List[float]], List[float]]] = None) -> Tuple[go.Figure, pd.DataFrame]:
     """
@@ -128,7 +131,8 @@ def plotSetharesDissonanceCurve(fundamentalFreq: float = 440, numPartials: int =
             tickvals=[n/d for n, d in filtered_intervals],
             ticktext=['{}/{}'.format(n, d) for n, d in filtered_intervals]
         ),
-        yaxis=dict(showticklabels=True)
+        yaxis=dict(showticklabels=True),
+        plot_bgcolor='white'
     )
 
     fig.add_shape(
@@ -276,8 +280,9 @@ def plotScoreSetharesDissonance(score: mc.Score, plotType='line', lineShape='lin
 
     return fig, df
 
+
 def plotChordDyadsSetharesDissonanceHeatmap(chord: mc.Chord, numPartialsPerNote: int = 6, useMinModel: bool = True, amplCallback: Optional[Callable[[
-                                    List[float]], List[float]]] = None, dissonanceThreshold: float = 0.1, dissonanceDecimalPoint: int  = 2) -> Tuple[plotly.graph_objs._figure.Figure, pd.DataFrame]:
+        List[float]], List[float]]] = None, dissonanceThreshold: float = 0.1, dissonanceDecimalPoint: int = 2) -> Tuple[plotly.graph_objs._figure.Figure, pd.DataFrame]:
     """Plot chord dyads Sethares dissonance heatmap
 
     Args:
@@ -304,28 +309,34 @@ def plotChordDyadsSetharesDissonanceHeatmap(chord: mc.Chord, numPartialsPerNote:
     >>> fig, df = plotChordDyadsSetharesDissonanceHeatmap(myChord)
     >>> fig.show()
     """
-    df = chord.getSetharesDyadsDataFrame(numPartialsPerNote=numPartialsPerNote, useMinModel=useMinModel, amplCallback=amplCallback)
+    df = chord.getSetharesDyadsDataFrame(
+        numPartialsPerNote=numPartialsPerNote, useMinModel=useMinModel, amplCallback=amplCallback)
     dfFiltered = df[df.dissonance > dissonanceThreshold]
-    
-    # Pivot the dataframe to create a matrix
-    matrix_df = dfFiltered.pivot(index='baseFreq', columns='targetFreq', values='dissonance')
+
+    # Pivot the dataframe to create a matrix with baseFreq on X and targetFreq on Y
+    matrix_df = dfFiltered.pivot(
+        index='targetFreq', columns='baseFreq', values='dissonance')
 
     # Create a heatmap using Plotly
-    fig = px.imshow(matrix_df, 
-                labels=dict(x="Target Frequency (Hz)", y="Base Frequency (Hz)", color="Dissonance"), color_continuous_scale='Inferno')
-    
+    fig = px.imshow(matrix_df,
+                    labels=dict(x="Base Frequency (Hz)",
+                                y="Target Frequency (Hz)", color="Dissonance"),
+                    color_continuous_scale='Inferno')
+
     # Extract unique frequencies for x and y ticks
-    x_ticks = sorted(matrix_df.columns.unique())
-    y_ticks = sorted(matrix_df.index.unique())
+    x_ticks = sorted(matrix_df.columns.unique())  # baseFreq
+    y_ticks = sorted(matrix_df.index.unique())    # targetFreq
 
     roundedXTicksValues = [round(num, 0) for num in x_ticks]
     roundedYTicksValues = [round(num, 0) for num in y_ticks]
 
-    # Update x and y ticks to only show unique frequencies and set log scale
-    fig.update_xaxes(type='log', tickvals=x_ticks, ticktext=roundedXTicksValues)
-    fig.update_yaxes(type='log', tickvals=y_ticks, ticktext=roundedYTicksValues)
+    fig.update_xaxes(type='linear', tickvals=x_ticks,
+                     ticktext=roundedXTicksValues)
+    fig.update_yaxes(type='linear', tickvals=y_ticks,
+                     ticktext=roundedYTicksValues, autorange=True)
 
     roundedDissonanceValue = round(df.dissonance.sum(), dissonanceDecimalPoint)
-    fig.update_layout(title=f'<b>Chord Dyads Sethares Dissonance Heatmap</b><br><i>Chord Dissonance={str(roundedDissonanceValue)}</i>', title_x=0.5)
+    fig.update_layout(
+        title=f'<b>Chord Dyads Sethares Dissonance Heatmap</b><br><i>Chord Dissonance={str(roundedDissonanceValue)}</i>', title_x=0.5)
 
     return fig, dfFiltered

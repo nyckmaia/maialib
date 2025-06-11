@@ -31,8 +31,18 @@ void HelperClass(const py::module& m) {
                    py::arg("accType") = std::string(),
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
-    cls.def_static("notes2Intervals", &Helper::notes2Intervals, py::arg("notes"),
-                   py::arg("firstNoteAsReference") = false);
+    cls.def_static(
+        "notes2Intervals",
+        py::overload_cast<const std::vector<std::string>&, const bool>(&Helper::notes2Intervals),
+        py::arg("pitches"),
+        py::arg("firstNoteAsReference") = false
+    );
+    cls.def_static(
+        "notes2Intervals",
+        py::overload_cast<const std::vector<Note>&, const bool>(&Helper::notes2Intervals),
+        py::arg("notes"),
+        py::arg("firstNoteAsReference") = false
+    );
     //--------------------- //
     cls.def_static("midiNote2octave", &Helper::midiNote2octave, py::arg("midiNote"));
     //--------------------- //
@@ -70,7 +80,7 @@ void HelperClass(const py::module& m) {
     cls.def_static("pitch2freq", &Helper::pitch2freq, py::arg("pitch"),
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
-    cls.def_static("freq2pitch", &Helper::freq2pitch, py::arg("freq"), py::arg("accType") = "#");
+    cls.def_static("freq2pitch", &Helper::freq2pitch, py::arg("freq"), py::arg("accType") = "");
     //--------------------- //
     cls.def_static("pitchRatio", &Helper::pitchRatio, py::arg("pitch_A"), py::arg("pitch_B"),
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());

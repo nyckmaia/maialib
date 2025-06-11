@@ -114,14 +114,14 @@ class Chord {
      *
      * @param notes
      */
-    explicit Chord(const std::vector<Note>& notes);
+    explicit Chord(const std::vector<Note>& notes, const RhythmFigure rhythmFigure = RhythmFigure::QUARTER);
 
     /**
      * @brief Construct a new Chord object
      *
      * @param pitches
      */
-    explicit Chord(const std::vector<std::string>& pitches);
+    explicit Chord(const std::vector<std::string>& pitches, const RhythmFigure rhythmFigure = RhythmFigure::QUARTER);
 
     /**
      * @brief Destroy the Chord object

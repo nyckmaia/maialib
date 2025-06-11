@@ -191,6 +191,19 @@ std::vector<Interval> Helper::notes2Intervals(const std::vector<Note>& notes,
     return intervals;
 }
 
+std::vector<Interval> Helper::notes2Intervals(const std::vector<std::string>& pitches,
+    const bool firstNoteAsReference) {
+    const int notesSize = pitches.size();
+    std::vector<Note> notes;
+    notes.reserve(notesSize);
+
+    for (const auto& pitch : pitches) {
+        notes.emplace_back(Note(pitch));
+    }
+
+    return Helper::notes2Intervals(notes, firstNoteAsReference);
+}
+
 int Helper::pitch2midiNote(const std::string& pitch) {
     switch (hash(pitch.c_str())) {
         case hash("C0"):

@@ -118,7 +118,7 @@ ScoreCollection::ExtendedMelodyPatternTable ScoreCollection::findMelodyPattern(
     return results;
 }
 
-std::vector<ScoreCollection::ExtendedMelodyPatternTable> ScoreCollection::findMelodyPattern(
+std::vector<ScoreCollection::ExtendedMultiMelodyPatternTable> ScoreCollection::findMelodyPattern(
     const std::vector<std::vector<Note>>& melodyPatterns, const float totalIntervalsSimilarityThreshold,
     const float totalRhythmSimilarityThreshold,
     const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& intervalsSimilarityCallback,
@@ -127,7 +127,7 @@ std::vector<ScoreCollection::ExtendedMelodyPatternTable> ScoreCollection::findMe
     const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback,
     const std::function<float(float, float)>& totalSimilarityCallback) const {
     
-    std::vector<ExtendedMelodyPatternTable> allResults;
+    std::vector<ExtendedMultiMelodyPatternTable> allResults;
     for (const auto& score : _scores) {
         auto scoreResults = score.findMelodyPattern(melodyPatterns, totalIntervalsSimilarityThreshold,
                                                     totalRhythmSimilarityThreshold,
@@ -135,16 +135,19 @@ std::vector<ScoreCollection::ExtendedMelodyPatternTable> ScoreCollection::findMe
                                                     totalIntervalSimilarityCallback, totalRhythmSimilarityCallback,
                                                     totalSimilarityCallback);
         
-        ScoreCollection::ExtendedMelodyPatternTable extendedTable;
-        for (const auto& table : scoreResults) {       // Itera sobre cada tabela
+        ScoreCollection::ExtendedMultiMelodyPatternTable extendedTable;
+        for (size_t patternIdx = 0; patternIdx < scoreResults.size(); ++patternIdx) {
+        // for (const auto& table : scoreResults) {       // Itera sobre cada tabela
+            const auto& table = scoreResults[patternIdx]; // Acessa a tabela atual
             for (const Score::MelodyPatternRow& row : table) { // Itera sobre cada linha da tabela
                 // Adiciona uma nova linha ao extendedTable, incluindo o título da partitura no início
                 extendedTable.emplace_back(
+                    patternIdx,
                     score.getFileName(),                  // Nome do arquivo
                     score.getComposerName(),              // Nome do compositor
                     score.getTitle(),                       // Título da partitura
                     std::get<0>(row),                       // partName
-                    std::get<1>(row),                       // measureNumber
+                    std::get<1>(row),                       // measureId
                     std::get<2>(row),                       // staveId
                     std::get<3>(row),                       // writtenClefKey
                     std::get<4>(row),                       // transposeInterval

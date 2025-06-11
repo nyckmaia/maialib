@@ -15,6 +15,9 @@ class ScoreCollection {
     typedef std::tuple<std::string, std::string, std::string, std::string, int, int, std::string, std::string, std::vector<std::string>, 
                    std::vector<float>, std::vector<float>, float, float, float> ExtendedMelodyPatternRow;
     typedef std::vector<ExtendedMelodyPatternRow> ExtendedMelodyPatternTable;
+    typedef std::tuple<int, std::string, std::string, std::string, std::string, int, int, std::string, std::string, std::vector<std::string>, 
+                   std::vector<float>, std::vector<float>, float, float, float> ExtendedMultiMelodyPatternRow;
+    typedef std::vector<ExtendedMultiMelodyPatternRow> ExtendedMultiMelodyPatternTable;
 
    public:
     explicit ScoreCollection(const std::string& directoryPath = {});
@@ -45,7 +48,7 @@ class ScoreCollection {
     const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback = nullptr,
     const std::function<float(float, float)>& totalSimilarityCallback = nullptr) const;
 
-    std::vector<ExtendedMelodyPatternTable> findMelodyPattern(
+    std::vector<ExtendedMultiMelodyPatternTable> findMelodyPattern(
     const std::vector<std::vector<Note>>& melodyPatterns, const float totalIntervalsSimilarityThreshold = 0.5f,
     const float totalRhythmSimilarityThreshold = 0.5f,
     const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& intervalsSimilarityCallback = nullptr,
