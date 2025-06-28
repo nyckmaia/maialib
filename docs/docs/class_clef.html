@@ -91,42 +91,53 @@ $(document).ready(function(){initNavTree('class_clef.html',''); initResizable();
   <div class="headertitle"><div class="title">Clef Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Represents a musical clef for a staff, including sign, line, and change status.  
+ <a href="class_clef.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="clef_8h_source.html">clef.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a13a4d2422b787e9146d46e367b659ef1"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_clef.html#a13a4d2422b787e9146d46e367b659ef1">Clef</a> (const ClefSign sign=ClefSign::G, int line=-1)</td></tr>
-<tr class="memdesc:a13a4d2422b787e9146d46e367b659ef1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_clef.html">Clef</a> object.  <a href="class_clef.html#a13a4d2422b787e9146d46e367b659ef1">More...</a><br /></td></tr>
+<tr class="memdesc:a13a4d2422b787e9146d46e367b659ef1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="class_clef.html" title="Represents a musical clef for a staff, including sign, line, and change status.">Clef</a> with a given sign and line.  <a href="class_clef.html#a13a4d2422b787e9146d46e367b659ef1">More...</a><br /></td></tr>
 <tr class="separator:a13a4d2422b787e9146d46e367b659ef1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e9acef80fc7b346959f550bde33532c"><td class="memItemLeft" align="right" valign="top"><a id="a8e9acef80fc7b346959f550bde33532c" name="a8e9acef80fc7b346959f550bde33532c"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>~Clef</b> ()</td></tr>
-<tr class="memdesc:a8e9acef80fc7b346959f550bde33532c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the <a class="el" href="class_clef.html">Clef</a> object. <br /></td></tr>
+<tr class="memdesc:a8e9acef80fc7b346959f550bde33532c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. <br /></td></tr>
 <tr class="separator:a8e9acef80fc7b346959f550bde33532c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a166d528b6d6020772e20e4ccaec83474"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_clef.html#a166d528b6d6020772e20e4ccaec83474">getLine</a> () const</td></tr>
-<tr class="memdesc:a166d528b6d6020772e20e4ccaec83474"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Line object.  <a href="class_clef.html#a166d528b6d6020772e20e4ccaec83474">More...</a><br /></td></tr>
+<tr class="memdesc:a166d528b6d6020772e20e4ccaec83474"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the staff line for the clef.  <a href="class_clef.html#a166d528b6d6020772e20e4ccaec83474">More...</a><br /></td></tr>
 <tr class="separator:a166d528b6d6020772e20e4ccaec83474"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa7d9ddfe783e9a27125ad2bd94fdabd9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_clef.html#aa7d9ddfe783e9a27125ad2bd94fdabd9">setLine</a> (int line)</td></tr>
-<tr class="memdesc:aa7d9ddfe783e9a27125ad2bd94fdabd9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Line object.  <a href="class_clef.html#aa7d9ddfe783e9a27125ad2bd94fdabd9">More...</a><br /></td></tr>
+<tr class="memdesc:aa7d9ddfe783e9a27125ad2bd94fdabd9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the staff line for the clef.  <a href="class_clef.html#aa7d9ddfe783e9a27125ad2bd94fdabd9">More...</a><br /></td></tr>
 <tr class="separator:aa7d9ddfe783e9a27125ad2bd94fdabd9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e9f0211f6370490b7c4a6c7fa874605"><td class="memItemLeft" align="right" valign="top">ClefSign&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_clef.html#a8e9f0211f6370490b7c4a6c7fa874605">getSign</a> () const</td></tr>
-<tr class="memdesc:a8e9f0211f6370490b7c4a6c7fa874605"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Sign object.  <a href="class_clef.html#a8e9f0211f6370490b7c4a6c7fa874605">More...</a><br /></td></tr>
+<tr class="memdesc:a8e9f0211f6370490b7c4a6c7fa874605"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the clef sign (G, F, C, percussion).  <a href="class_clef.html#a8e9f0211f6370490b7c4a6c7fa874605">More...</a><br /></td></tr>
 <tr class="separator:a8e9f0211f6370490b7c4a6c7fa874605"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a98b29e74dc24f460f939e97f27da9bbe"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_clef.html#a98b29e74dc24f460f939e97f27da9bbe">setSign</a> (const ClefSign sign)</td></tr>
-<tr class="memdesc:a98b29e74dc24f460f939e97f27da9bbe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Sign object.  <a href="class_clef.html#a98b29e74dc24f460f939e97f27da9bbe">More...</a><br /></td></tr>
+<tr class="memdesc:a98b29e74dc24f460f939e97f27da9bbe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the clef sign and updates the staff line accordingly.  <a href="class_clef.html#a98b29e74dc24f460f939e97f27da9bbe">More...</a><br /></td></tr>
 <tr class="separator:a98b29e74dc24f460f939e97f27da9bbe"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa782cb9426e0a5ca294ca9796d55c7c0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_clef.html#aa782cb9426e0a5ca294ca9796d55c7c0">isClefChanged</a> () const</td></tr>
+<tr class="memdesc:aa782cb9426e0a5ca294ca9796d55c7c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the clef has changed in the current measure.  <a href="class_clef.html#aa782cb9426e0a5ca294ca9796d55c7c0">More...</a><br /></td></tr>
 <tr class="separator:aa782cb9426e0a5ca294ca9796d55c7c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac2681c118884cd2a01708d5414afcd2e"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_clef.html#ac2681c118884cd2a01708d5414afcd2e">getClefSignStr</a> () const</td></tr>
-<tr class="memdesc:ac2681c118884cd2a01708d5414afcd2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="class_clef.html">Clef</a> Sign Str object.  <a href="class_clef.html#ac2681c118884cd2a01708d5414afcd2e">More...</a><br /></td></tr>
+<tr class="memdesc:ac2681c118884cd2a01708d5414afcd2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the clef sign as a string ("G", "F", "C", "percussion").  <a href="class_clef.html#ac2681c118884cd2a01708d5414afcd2e">More...</a><br /></td></tr>
 <tr class="separator:ac2681c118884cd2a01708d5414afcd2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5ad6ca8d118cf3cfb32b6bb1c6720051"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_clef.html#a5ad6ca8d118cf3cfb32b6bb1c6720051">toXML</a> (const int clefNumber=-1, const int identSize=2) const</td></tr>
+<tr class="memdesc:a5ad6ca8d118cf3cfb32b6bb1c6720051"><td class="mdescLeft">&#160;</td><td class="mdescRight">Serializes the clef to MusicXML format.  <a href="class_clef.html#a5ad6ca8d118cf3cfb32b6bb1c6720051">More...</a><br /></td></tr>
 <tr class="separator:a5ad6ca8d118cf3cfb32b6bb1c6720051"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:a625a1855921cf8be75ca7832d7bbeb0b"><td class="memItemLeft" align="right" valign="top">static ClefSign&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_clef.html#a625a1855921cf8be75ca7832d7bbeb0b">clefSignStr2ClefSign</a> (const std::string &amp;clefStr)</td></tr>
+<tr class="memdesc:a625a1855921cf8be75ca7832d7bbeb0b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a clef sign string to a ClefSign enum value.  <a href="class_clef.html#a625a1855921cf8be75ca7832d7bbeb0b">More...</a><br /></td></tr>
 <tr class="separator:a625a1855921cf8be75ca7832d7bbeb0b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p >Represents a musical clef for a staff, including sign, line, and change status. </p>
+<p >The <a class="el" href="class_clef.html" title="Represents a musical clef for a staff, including sign, line, and change status.">Clef</a> class provides methods for setting and querying the clef sign (G, F, C, percussion), the staff line on which the clef appears, and whether the clef has changed in the current measure. It supports MusicXML serialization and is designed for music analysis, computational musicology, and MusicXML processing. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a13a4d2422b787e9146d46e367b659ef1" name="a13a4d2422b787e9146d46e367b659ef1"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a13a4d2422b787e9146d46e367b659ef1">&#9670;&nbsp;</a></span>Clef()</h2>
 
@@ -153,11 +164,11 @@ Static Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Construct a new <a class="el" href="class_clef.html">Clef</a> object. </p>
+<p>Constructs a <a class="el" href="class_clef.html" title="Represents a musical clef for a staff, including sign, line, and change status.">Clef</a> with a given sign and line. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">sign</td><td></td></tr>
-    <tr><td class="paramname">line</td><td></td></tr>
+    <tr><td class="paramname">sign</td><td><a class="el" href="class_clef.html" title="Represents a musical clef for a staff, including sign, line, and change status.">Clef</a> sign (default: G). </td></tr>
+    <tr><td class="paramname">line</td><td>Staff line for the clef (default: -1, auto-detect). </td></tr>
   </table>
   </dd>
 </dl>
@@ -188,13 +199,15 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a clef sign string to a ClefSign enum value. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">clefStr</td><td></td></tr>
+    <tr><td class="paramname">clefStr</td><td><a class="el" href="class_clef.html" title="Represents a musical clef for a staff, including sign, line, and change status.">Clef</a> sign string ("G", "F", "C", "percussion"). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>ClefSign </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>ClefSign enum value. </dd></dl>
 
 </div>
 </div>
@@ -213,8 +226,8 @@ Static Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Get the <a class="el" href="class_clef.html">Clef</a> Sign Str object. </p>
-<dl class="section return"><dt>Returns</dt><dd>std::string </dd></dl>
+<p>Returns the clef sign as a string ("G", "F", "C", "percussion"). </p>
+<dl class="section return"><dt>Returns</dt><dd>String representation of the clef sign. </dd></dl>
 
 </div>
 </div>
@@ -233,8 +246,8 @@ Static Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Get the Line object. </p>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<p>Returns the staff line for the clef. </p>
+<dl class="section return"><dt>Returns</dt><dd>Integer representing the staff line. </dd></dl>
 
 </div>
 </div>
@@ -253,8 +266,8 @@ Static Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Get the Sign object. </p>
-<dl class="section return"><dt>Returns</dt><dd>ClefSign </dd></dl>
+<p>Returns the clef sign (G, F, C, percussion). </p>
+<dl class="section return"><dt>Returns</dt><dd>ClefSign enum value. </dd></dl>
 
 </div>
 </div>
@@ -272,9 +285,9 @@ Static Public Member Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the clef has changed in the current measure. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if clef changed. </dd></dl>
 
 </div>
 </div>
@@ -294,10 +307,10 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Set the Line object. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Sets the staff line for the clef. </p>
+<p >Only applicable for C and percussion clefs. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">line</td><td></td></tr>
+    <tr><td class="paramname">line</td><td>New staff line. </td></tr>
   </table>
   </dd>
 </dl>
@@ -320,10 +333,10 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Set the Sign object. </p>
+<p>Sets the clef sign and updates the staff line accordingly. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">sign</td><td></td></tr>
+    <tr><td class="paramname">sign</td><td>New clef sign. </td></tr>
   </table>
   </dd>
 </dl>
@@ -355,14 +368,16 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Serializes the clef to MusicXML format. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">clefNumber</td><td></td></tr>
-    <tr><td class="paramname">identSize</td><td></td></tr>
+    <tr><td class="paramname">clefNumber</td><td><a class="el" href="class_clef.html" title="Represents a musical clef for a staff, including sign, line, and change status.">Clef</a> number (default: -1 for single staff). </td></tr>
+    <tr><td class="paramname">identSize</td><td>Indentation size (default: 2). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>MusicXML string for the clef. </dd></dl>
 
 </div>
 </div>

@@ -1,6 +1,7 @@
 var class_barline =
 [
     [ "Barline", "class_barline.html#a18cef76891a33bc70c004540faa348f2", null ],
+    [ "clean", "class_barline.html#a4920dafc455a9ceee189c48065b882a6", null ],
     [ "getBarStyle", "class_barline.html#a8640e3f0b44b1cc27eb0a5fcc32640c8", null ],
     [ "getDirection", "class_barline.html#a1ed3796f3828669cc2cfba43c87c3b33", null ],
     [ "getLocation", "class_barline.html#adf4a620d6a95d1099f746d19df5eb978", null ],

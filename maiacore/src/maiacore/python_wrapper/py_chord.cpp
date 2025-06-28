@@ -248,7 +248,7 @@ void ChordClass(const py::module& m) {
             py::arg("useEnharmony") = false);
     cls.def("haveAnyOctaveAugmentedFourth", &Chord::haveAnyOctaveAugmentedFourth,
             py::arg("useEnharmony") = false);
-    cls.def("haveAnyOctaveDiminhavehedFifth", &Chord::haveAnyOctaveDiminhavehedFifth,
+    cls.def("haveAnyOctaveDiminishedFifth", &Chord::haveAnyOctaveDiminishedFifth,
             py::arg("useEnharmony") = false);
     cls.def("haveAnyOctavePerfectFifth", &Chord::haveAnyOctavePerfectFifth,
             py::arg("useEnharmony") = false);
@@ -258,13 +258,13 @@ void ChordClass(const py::module& m) {
             py::arg("useEnharmony") = false);
     cls.def("haveAnyOctaveMajorSixth", &Chord::haveAnyOctaveMajorSixth,
             py::arg("useEnharmony") = false);
-    cls.def("haveAnyOctaveDiminhavehedSeventh", &Chord::haveAnyOctaveDiminhavehedSeventh,
+    cls.def("haveAnyOctaveDiminishedSeventh", &Chord::haveAnyOctaveDiminishedSeventh,
             py::arg("useEnharmony") = false);
     cls.def("haveAnyOctaveMinorSeventh", &Chord::haveAnyOctaveMinorSeventh,
             py::arg("useEnharmony") = false);
     cls.def("haveAnyOctaveMajorSeventh", &Chord::haveAnyOctaveMajorSeventh,
             py::arg("useEnharmony") = false);
-    cls.def("haveAnyOctaveDiminhavehedOctave", &Chord::haveAnyOctaveDiminhavehedOctave,
+    cls.def("haveAnyOctaveDiminishedOctave", &Chord::haveAnyOctaveDiminishedOctave,
             py::arg("useEnharmony") = false);
     cls.def("haveAnyOctavePerfectOctave", &Chord::haveAnyOctavePerfectOctave,
             py::arg("useEnharmony") = false);

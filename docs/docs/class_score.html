@@ -85,137 +85,206 @@ $(document).ready(function(){initNavTree('class_score.html',''); initResizable()
 
 <div class="header">
   <div class="summary">
+<a href="#nested-classes">Classes</a> &#124;
+<a href="#pub-types">Public Types</a> &#124;
 <a href="#pub-methods">Public Member Functions</a> &#124;
 <a href="class_score-members.html">List of all members</a>  </div>
   <div class="headertitle"><div class="title">Score Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Represents a complete musical score, including metadata, parts, measures, and notes.  
+ <a href="class_score.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="score_8h_source.html">score.h</a>&gt;</code></p>
 <table class="memberdecls">
+<tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-types" name="pub-types"></a>
+Public Types</h2></td></tr>
+<tr class="memitem:a76a35ae2c0d094843f85f3b08a1d1a25"><td class="memItemLeft" align="right" valign="top">typedef std::tuple&lt; std::string, int, int, std::string, std::string, std::vector&lt; std::string &gt;, std::vector&lt; float &gt;, std::vector&lt; float &gt;, float, float, float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a76a35ae2c0d094843f85f3b08a1d1a25">MelodyPatternRow</a></td></tr>
+<tr class="memdesc:a76a35ae2c0d094843f85f3b08a1d1a25"><td class="mdescLeft">&#160;</td><td class="mdescRight">Table row type for melodic pattern search results.  <a href="class_score.html#a76a35ae2c0d094843f85f3b08a1d1a25">More...</a><br /></td></tr>
+<tr class="separator:a76a35ae2c0d094843f85f3b08a1d1a25"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab5c6f5794b338382a7cf864667bc6ecb"><td class="memItemLeft" align="right" valign="top"><a id="ab5c6f5794b338382a7cf864667bc6ecb" name="ab5c6f5794b338382a7cf864667bc6ecb"></a>
+typedef std::vector&lt; <a class="el" href="class_score.html#a76a35ae2c0d094843f85f3b08a1d1a25">MelodyPatternRow</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>MelodyPatternTable</b></td></tr>
+<tr class="memdesc:ab5c6f5794b338382a7cf864667bc6ecb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Table type for melodic pattern search results. <br /></td></tr>
+<tr class="separator:ab5c6f5794b338382a7cf864667bc6ecb"><td class="memSeparator" colspan="2">&#160;</td></tr>
+</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a014e053ce17389206a4e5a37cd391f7d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a014e053ce17389206a4e5a37cd391f7d">Score</a> (const std::initializer_list&lt; std::string &gt; &amp;partsName, const int numMeasures=20)</td></tr>
-<tr class="memdesc:a014e053ce17389206a4e5a37cd391f7d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new blank <a class="el" href="class_score.html">Score</a> object.  <a href="class_score.html#a014e053ce17389206a4e5a37cd391f7d">More...</a><br /></td></tr>
+<tr class="memdesc:a014e053ce17389206a4e5a37cd391f7d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new blank <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> object with specified part names and initial measure count.  <a href="class_score.html#a014e053ce17389206a4e5a37cd391f7d">More...</a><br /></td></tr>
 <tr class="separator:a014e053ce17389206a4e5a37cd391f7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad86c9ce14c4c53edb5cfc8dd7cb3007c"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#ad86c9ce14c4c53edb5cfc8dd7cb3007c">Score</a> (const std::vector&lt; std::string &gt; &amp;partsName, const int numMeasures=20)</td></tr>
-<tr class="memdesc:ad86c9ce14c4c53edb5cfc8dd7cb3007c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_score.html">Score</a> object.  <a href="class_score.html#ad86c9ce14c4c53edb5cfc8dd7cb3007c">More...</a><br /></td></tr>
+<tr class="memdesc:ad86c9ce14c4c53edb5cfc8dd7cb3007c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new blank <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> object with specified part names and initial measure count.  <a href="class_score.html#ad86c9ce14c4c53edb5cfc8dd7cb3007c">More...</a><br /></td></tr>
 <tr class="separator:ad86c9ce14c4c53edb5cfc8dd7cb3007c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af957d12c7434f4f530aa173c178783f4"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#af957d12c7434f4f530aa173c178783f4">Score</a> (const std::string &amp;filePath)</td></tr>
-<tr class="memdesc:af957d12c7434f4f530aa173c178783f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_score.html">Score</a> object from a loaded sheet music file.  <a href="class_score.html#af957d12c7434f4f530aa173c178783f4">More...</a><br /></td></tr>
+<tr class="memdesc:af957d12c7434f4f530aa173c178783f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a new <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> object by loading a MusicXML file.  <a href="class_score.html#af957d12c7434f4f530aa173c178783f4">More...</a><br /></td></tr>
 <tr class="separator:af957d12c7434f4f530aa173c178783f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad3c809c3e56e2cb20496536511e06519"><td class="memItemLeft" align="right" valign="top"><a id="ad3c809c3e56e2cb20496536511e06519" name="ad3c809c3e56e2cb20496536511e06519"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>Score</b> (<a class="el" href="class_score.html">Score</a> &amp;&amp;)=default</td></tr>
-<tr class="memdesc:ad3c809c3e56e2cb20496536511e06519"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_score.html">Score</a> object. <br /></td></tr>
+<tr class="memdesc:ad3c809c3e56e2cb20496536511e06519"><td class="mdescLeft">&#160;</td><td class="mdescRight">Move constructor for <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a>. <br /></td></tr>
 <tr class="separator:ad3c809c3e56e2cb20496536511e06519"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a54ab36a6fdd88696f0176d9534a76883"><td class="memItemLeft" align="right" valign="top"><a id="a54ab36a6fdd88696f0176d9534a76883" name="a54ab36a6fdd88696f0176d9534a76883"></a>
 &#160;</td><td class="memItemRight" valign="bottom"><b>~Score</b> ()</td></tr>
-<tr class="memdesc:a54ab36a6fdd88696f0176d9534a76883"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destroy the <a class="el" href="class_score.html">Score</a> object. <br /></td></tr>
+<tr class="memdesc:a54ab36a6fdd88696f0176d9534a76883"><td class="mdescLeft">&#160;</td><td class="mdescRight">Destructor. Releases resources associated with the score. <br /></td></tr>
 <tr class="separator:a54ab36a6fdd88696f0176d9534a76883"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0b19e00bea38679a5c627b7df3fe0cea"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a0b19e00bea38679a5c627b7df3fe0cea">clear</a> ()</td></tr>
-<tr class="memdesc:a0b19e00bea38679a5c627b7df3fe0cea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clear <a class="el" href="class_score.html">Score</a> object.  <a href="class_score.html#a0b19e00bea38679a5c627b7df3fe0cea">More...</a><br /></td></tr>
+<tr class="memdesc:a0b19e00bea38679a5c627b7df3fe0cea"><td class="mdescLeft">&#160;</td><td class="mdescRight">Clears all content from the score, removing parts, measures, and metadata.  <a href="class_score.html#a0b19e00bea38679a5c627b7df3fe0cea">More...</a><br /></td></tr>
 <tr class="separator:a0b19e00bea38679a5c627b7df3fe0cea"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a07fcb91b38be45315ea92083640f033e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a07fcb91b38be45315ea92083640f033e">addPart</a> (const std::string &amp;partName, const int numStaves=1)</td></tr>
+<tr class="memdesc:a07fcb91b38be45315ea92083640f033e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a new part (instrument/voice) to the score.  <a href="class_score.html#a07fcb91b38be45315ea92083640f033e">More...</a><br /></td></tr>
 <tr class="separator:a07fcb91b38be45315ea92083640f033e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a58e585a1ab0f55e026350282eef8a01b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a58e585a1ab0f55e026350282eef8a01b">removePart</a> (const int partId)</td></tr>
+<tr class="memdesc:a58e585a1ab0f55e026350282eef8a01b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a part from the score by its index.  <a href="class_score.html#a58e585a1ab0f55e026350282eef8a01b">More...</a><br /></td></tr>
 <tr class="separator:a58e585a1ab0f55e026350282eef8a01b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af022ff7f14b43fa0d5a49faade131a90"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#af022ff7f14b43fa0d5a49faade131a90">addMeasure</a> (const int numMeasures)</td></tr>
+<tr class="memdesc:af022ff7f14b43fa0d5a49faade131a90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a specified number of measures to all parts in the score.  <a href="class_score.html#af022ff7f14b43fa0d5a49faade131a90">More...</a><br /></td></tr>
 <tr class="separator:af022ff7f14b43fa0d5a49faade131a90"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9857758b336f63408c2edba511c99cbb"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a9857758b336f63408c2edba511c99cbb">removeMeasure</a> (const int measureStart, const int measureEnd)</td></tr>
+<tr class="memdesc:a9857758b336f63408c2edba511c99cbb"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a range of measures from all parts in the score.  <a href="class_score.html#a9857758b336f63408c2edba511c99cbb">More...</a><br /></td></tr>
 <tr class="separator:a9857758b336f63408c2edba511c99cbb"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a742ed6184f3dc18c3edbe683e2ddb1ca"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_part.html">Part</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a742ed6184f3dc18c3edbe683e2ddb1ca">getPart</a> (const int partId)</td></tr>
-<tr class="memdesc:a742ed6184f3dc18c3edbe683e2ddb1ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="class_part.html">Part</a> object.  <a href="class_score.html#a742ed6184f3dc18c3edbe683e2ddb1ca">More...</a><br /></td></tr>
+<tr class="memdesc:a742ed6184f3dc18c3edbe683e2ddb1ca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a reference to a part by its index.  <a href="class_score.html#a742ed6184f3dc18c3edbe683e2ddb1ca">More...</a><br /></td></tr>
 <tr class="separator:a742ed6184f3dc18c3edbe683e2ddb1ca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a159d7f06f08e39e1140257cadd21c79a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_part.html">Part</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a159d7f06f08e39e1140257cadd21c79a">getPart</a> (const std::string &amp;partName)</td></tr>
-<tr class="memdesc:a159d7f06f08e39e1140257cadd21c79a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="class_part.html">Part</a> object.  <a href="class_score.html#a159d7f06f08e39e1140257cadd21c79a">More...</a><br /></td></tr>
+<tr class="memdesc:a159d7f06f08e39e1140257cadd21c79a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a reference to a part by its name.  <a href="class_score.html#a159d7f06f08e39e1140257cadd21c79a">More...</a><br /></td></tr>
 <tr class="separator:a159d7f06f08e39e1140257cadd21c79a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0216f363a8ec9dfbb5a3f28beaa3751f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a0216f363a8ec9dfbb5a3f28beaa3751f">getNumParts</a> () const</td></tr>
-<tr class="memdesc:a0216f363a8ec9dfbb5a3f28beaa3751f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Num Parts object.  <a href="class_score.html#a0216f363a8ec9dfbb5a3f28beaa3751f">More...</a><br /></td></tr>
+<tr class="memdesc:a0216f363a8ec9dfbb5a3f28beaa3751f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of parts (instruments/voices) in the score.  <a href="class_score.html#a0216f363a8ec9dfbb5a3f28beaa3751f">More...</a><br /></td></tr>
 <tr class="separator:a0216f363a8ec9dfbb5a3f28beaa3751f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a575129a3b3410a874765f562cb6fcd48"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a575129a3b3410a874765f562cb6fcd48">getNumMeasures</a> () const</td></tr>
-<tr class="memdesc:a575129a3b3410a874765f562cb6fcd48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Num Measures object.  <a href="class_score.html#a575129a3b3410a874765f562cb6fcd48">More...</a><br /></td></tr>
+<tr class="memdesc:a575129a3b3410a874765f562cb6fcd48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of measures in the score.  <a href="class_score.html#a575129a3b3410a874765f562cb6fcd48">More...</a><br /></td></tr>
 <tr class="separator:a575129a3b3410a874765f562cb6fcd48"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a02f838f4a06f14e871e772ad332cb8c4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a02f838f4a06f14e871e772ad332cb8c4">getNumNotes</a> () const</td></tr>
-<tr class="memdesc:a02f838f4a06f14e871e772ad332cb8c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Num Notes object.  <a href="class_score.html#a02f838f4a06f14e871e772ad332cb8c4">More...</a><br /></td></tr>
+<tr class="memdesc:a02f838f4a06f14e871e772ad332cb8c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the total number of notes in the score.  <a href="class_score.html#a02f838f4a06f14e871e772ad332cb8c4">More...</a><br /></td></tr>
 <tr class="separator:a02f838f4a06f14e871e772ad332cb8c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1cd405744059426c973ada60c6e071ad"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a1cd405744059426c973ada60c6e071ad">getPartsNames</a> () const</td></tr>
-<tr class="memdesc:a1cd405744059426c973ada60c6e071ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="class_part.html">Part</a> Names object.  <a href="class_score.html#a1cd405744059426c973ada60c6e071ad">More...</a><br /></td></tr>
+<tr class="memdesc:a1cd405744059426c973ada60c6e071ad"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a vector with the names of all parts/instruments.  <a href="class_score.html#a1cd405744059426c973ada60c6e071ad">More...</a><br /></td></tr>
 <tr class="separator:a1cd405744059426c973ada60c6e071ad"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a796566e50112f9c669037705e8efbf63"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a796566e50112f9c669037705e8efbf63">getTitle</a> () const</td></tr>
-<tr class="memdesc:a796566e50112f9c669037705e8efbf63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Title object.  <a href="class_score.html#a796566e50112f9c669037705e8efbf63">More...</a><br /></td></tr>
+<tr class="memdesc:a796566e50112f9c669037705e8efbf63"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the title of the score.  <a href="class_score.html#a796566e50112f9c669037705e8efbf63">More...</a><br /></td></tr>
 <tr class="separator:a796566e50112f9c669037705e8efbf63"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0f4e66e63d64ed8ef60e49b2813a1d7"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#ae0f4e66e63d64ed8ef60e49b2813a1d7">setTitle</a> (const std::string &amp;scoreTitle)</td></tr>
-<tr class="memdesc:ae0f4e66e63d64ed8ef60e49b2813a1d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Title object.  <a href="class_score.html#ae0f4e66e63d64ed8ef60e49b2813a1d7">More...</a><br /></td></tr>
+<tr class="memdesc:ae0f4e66e63d64ed8ef60e49b2813a1d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the title of the score.  <a href="class_score.html#ae0f4e66e63d64ed8ef60e49b2813a1d7">More...</a><br /></td></tr>
 <tr class="separator:ae0f4e66e63d64ed8ef60e49b2813a1d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aedfe9649393d191b4e7dc8bf132e0840"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#aedfe9649393d191b4e7dc8bf132e0840">getComposerName</a> () const</td></tr>
-<tr class="memdesc:aedfe9649393d191b4e7dc8bf132e0840"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Composer Name object.  <a href="class_score.html#aedfe9649393d191b4e7dc8bf132e0840">More...</a><br /></td></tr>
+<tr class="memdesc:aedfe9649393d191b4e7dc8bf132e0840"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the composer's name.  <a href="class_score.html#aedfe9649393d191b4e7dc8bf132e0840">More...</a><br /></td></tr>
 <tr class="separator:aedfe9649393d191b4e7dc8bf132e0840"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af6b803dfeb152be8320a820b0fa5f06b"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#af6b803dfeb152be8320a820b0fa5f06b">setComposerName</a> (const std::string &amp;composerName)</td></tr>
-<tr class="memdesc:af6b803dfeb152be8320a820b0fa5f06b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Composer Name object.  <a href="class_score.html#af6b803dfeb152be8320a820b0fa5f06b">More...</a><br /></td></tr>
+<tr class="memdesc:af6b803dfeb152be8320a820b0fa5f06b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the composer's name.  <a href="class_score.html#af6b803dfeb152be8320a820b0fa5f06b">More...</a><br /></td></tr>
 <tr class="separator:af6b803dfeb152be8320a820b0fa5f06b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8463ad887edc02a8b1a8a83cf85d0e57"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a8463ad887edc02a8b1a8a83cf85d0e57">setKeySignature</a> (const int fifthCicle, const bool isMajorMode=true, const int measureId=0)</td></tr>
-<tr class="memdesc:a8463ad887edc02a8b1a8a83cf85d0e57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the <a class="el" href="class_key.html">Key</a> Signature object.  <a href="class_score.html#a8463ad887edc02a8b1a8a83cf85d0e57">More...</a><br /></td></tr>
+<tr class="memdesc:a8463ad887edc02a8b1a8a83cf85d0e57"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the key signature for all parts at a specific measure.  <a href="class_score.html#a8463ad887edc02a8b1a8a83cf85d0e57">More...</a><br /></td></tr>
 <tr class="separator:a8463ad887edc02a8b1a8a83cf85d0e57"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a853058ea5c7c69f47fe8147dc08fbe29"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a853058ea5c7c69f47fe8147dc08fbe29">setKeySignature</a> (const std::string &amp;key, const int measureId=0)</td></tr>
-<tr class="memdesc:a853058ea5c7c69f47fe8147dc08fbe29"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the <a class="el" href="class_key.html">Key</a> Signature object.  <a href="class_score.html#a853058ea5c7c69f47fe8147dc08fbe29">More...</a><br /></td></tr>
+<tr class="memdesc:a853058ea5c7c69f47fe8147dc08fbe29"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the key signature using the key name (e.g., "C", "Gm").  <a href="class_score.html#a853058ea5c7c69f47fe8147dc08fbe29">More...</a><br /></td></tr>
 <tr class="separator:a853058ea5c7c69f47fe8147dc08fbe29"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a28ae41d70e201945ece54563c2907e9f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a28ae41d70e201945ece54563c2907e9f">setTimeSignature</a> (const int timeUpper, const int timeLower, const int measureId=-1)</td></tr>
-<tr class="memdesc:a28ae41d70e201945ece54563c2907e9f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Time Signature object.  <a href="class_score.html#a28ae41d70e201945ece54563c2907e9f">More...</a><br /></td></tr>
+<tr class="memdesc:a28ae41d70e201945ece54563c2907e9f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the time signature for all or part of the measures.  <a href="class_score.html#a28ae41d70e201945ece54563c2907e9f">More...</a><br /></td></tr>
 <tr class="separator:a28ae41d70e201945ece54563c2907e9f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aded3f738de0603e15932c7ca866dbd7a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#aded3f738de0603e15932c7ca866dbd7a">setMetronomeMark</a> (int bpm, const Duration duration=Duration::QUARTER, int measureStart=0)</td></tr>
-<tr class="memdesc:aded3f738de0603e15932c7ca866dbd7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Metronome Mark object.  <a href="class_score.html#aded3f738de0603e15932c7ca866dbd7a">More...</a><br /></td></tr>
-<tr class="separator:aded3f738de0603e15932c7ca866dbd7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae7dccf1cdc323f0ae76c131236fe2e2a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#ae7dccf1cdc323f0ae76c131236fe2e2a">setMetronomeMark</a> (int bpm, const RhythmFigure duration=RhythmFigure::QUARTER, int measureStart=0)</td></tr>
+<tr class="memdesc:ae7dccf1cdc323f0ae76c131236fe2e2a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the metronome mark (BPM) for a specific measure.  <a href="class_score.html#ae7dccf1cdc323f0ae76c131236fe2e2a">More...</a><br /></td></tr>
+<tr class="separator:ae7dccf1cdc323f0ae76c131236fe2e2a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac79a72ec0f6de9ce2e2bfa61174a2e93"><td class="memItemLeft" align="right" valign="top">const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#ac79a72ec0f6de9ce2e2bfa61174a2e93">toXML</a> (const int identSize=2) const</td></tr>
+<tr class="memdesc:ac79a72ec0f6de9ce2e2bfa61174a2e93"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exports the score to MusicXML format.  <a href="class_score.html#ac79a72ec0f6de9ce2e2bfa61174a2e93">More...</a><br /></td></tr>
 <tr class="separator:ac79a72ec0f6de9ce2e2bfa61174a2e93"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaed7e8cd04e869fc2fe5ad4a29085b58"><td class="memItemLeft" align="right" valign="top">const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#aaed7e8cd04e869fc2fe5ad4a29085b58">toJSON</a> () const</td></tr>
+<tr class="memdesc:aaed7e8cd04e869fc2fe5ad4a29085b58"><td class="mdescLeft">&#160;</td><td class="mdescRight">Exports the score to JSON format.  <a href="class_score.html#aaed7e8cd04e869fc2fe5ad4a29085b58">More...</a><br /></td></tr>
 <tr class="separator:aaed7e8cd04e869fc2fe5ad4a29085b58"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a45a957a47c9d6dd9584b98f182c1ed98"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a45a957a47c9d6dd9584b98f182c1ed98">toFile</a> (std::string fileName, bool compressedXML=false, const int identSize=2) const</td></tr>
+<tr class="memdesc:a45a957a47c9d6dd9584b98f182c1ed98"><td class="mdescLeft">&#160;</td><td class="mdescRight">Saves the score to a file in XML or compressed MXL format.  <a href="class_score.html#a45a957a47c9d6dd9584b98f182c1ed98">More...</a><br /></td></tr>
 <tr class="separator:a45a957a47c9d6dd9584b98f182c1ed98"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5d6030c6df1e97ef48d3ebec99b1a5d0"><td class="memItemLeft" align="right" valign="top"><a id="a5d6030c6df1e97ef48d3ebec99b1a5d0" name="a5d6030c6df1e97ef48d3ebec99b1a5d0"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>info</b> () const</td></tr>
+<tr class="memitem:a5d6030c6df1e97ef48d3ebec99b1a5d0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a5d6030c6df1e97ef48d3ebec99b1a5d0">info</a> () const</td></tr>
+<tr class="memdesc:a5d6030c6df1e97ef48d3ebec99b1a5d0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prints summary information about the score to the log.  <a href="class_score.html#a5d6030c6df1e97ef48d3ebec99b1a5d0">More...</a><br /></td></tr>
 <tr class="separator:a5d6030c6df1e97ef48d3ebec99b1a5d0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a00903d95bac5ad63580666ffa3fcd8a1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a00903d95bac5ad63580666ffa3fcd8a1">forEachNote</a> (std::function&lt; void(<a class="el" href="class_part.html">Part</a> *part, <a class="el" href="class_measure.html">Measure</a> *measure, int staveId, <a class="el" href="class_note.html">Note</a> *note)&gt; callback, int measureStart=0, int measureEnd=-1, std::vector&lt; std::string &gt; partNames={})</td></tr>
+<tr class="memdesc:a00903d95bac5ad63580666ffa3fcd8a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Iterates over all notes in the score, applying a callback function.  <a href="class_score.html#a00903d95bac5ad63580666ffa3fcd8a1">More...</a><br /></td></tr>
 <tr class="separator:a00903d95bac5ad63580666ffa3fcd8a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b42ab3c12bdf6820c4922ecf9d67e68"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a3b42ab3c12bdf6820c4922ecf9d67e68">isValid</a> (void) const</td></tr>
+<tr class="memdesc:a3b42ab3c12bdf6820c4922ecf9d67e68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the score is valid (MusicXML loaded correctly).  <a href="class_score.html#a3b42ab3c12bdf6820c4922ecf9d67e68">More...</a><br /></td></tr>
 <tr class="separator:a3b42ab3c12bdf6820c4922ecf9d67e68"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab98d31163aecdc030030714a8144af94"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#ab98d31163aecdc030030714a8144af94">getFilePath</a> () const</td></tr>
+<tr class="memdesc:ab98d31163aecdc030030714a8144af94"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the file path of the loaded MusicXML file.  <a href="class_score.html#ab98d31163aecdc030030714a8144af94">More...</a><br /></td></tr>
+<tr class="separator:ab98d31163aecdc030030714a8144af94"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:af3eca0b4ac6333c7f19be979b1b2e658"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#af3eca0b4ac6333c7f19be979b1b2e658">getFileName</a> () const</td></tr>
+<tr class="memdesc:af3eca0b4ac6333c7f19be979b1b2e658"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the file name of the loaded MusicXML file.  <a href="class_score.html#af3eca0b4ac6333c7f19be979b1b2e658">More...</a><br /></td></tr>
+<tr class="separator:af3eca0b4ac6333c7f19be979b1b2e658"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0382fa9932716cf6fcf15fb82ac4e56"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#ac0382fa9932716cf6fcf15fb82ac4e56">haveTypeTag</a> (void) const</td></tr>
+<tr class="memdesc:ac0382fa9932716cf6fcf15fb82ac4e56"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the MusicXML file contains &lt;type&gt; tags for notes.  <a href="class_score.html#ac0382fa9932716cf6fcf15fb82ac4e56">More...</a><br /></td></tr>
 <tr class="separator:ac0382fa9932716cf6fcf15fb82ac4e56"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a87f79b629e1fb4a158de5f066fbd761d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a87f79b629e1fb4a158de5f066fbd761d">getNote</a> (const int part, const int measure, const int note, std::string &amp;pitch, std::string &amp;step, int &amp;octave, int &amp;duration, int &amp;voice, std::string &amp;type, std::string &amp;steam, int &amp;staff) const</td></tr>
-<tr class="memdesc:a87f79b629e1fb4a158de5f066fbd761d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="class_note.html">Note</a> object.  <a href="class_score.html#a87f79b629e1fb4a158de5f066fbd761d">More...</a><br /></td></tr>
+<tr class="memdesc:a87f79b629e1fb4a158de5f066fbd761d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves detailed information about a specific note in the score.  <a href="class_score.html#a87f79b629e1fb4a158de5f066fbd761d">More...</a><br /></td></tr>
 <tr class="separator:a87f79b629e1fb4a158de5f066fbd761d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa9eb280ed1b53325c5d95bbb5635972a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#aa9eb280ed1b53325c5d95bbb5635972a">getNote</a> (const int part, const int measure, const int note, std::string &amp;pitch, std::string &amp;step, int &amp;octave) const</td></tr>
-<tr class="memdesc:aa9eb280ed1b53325c5d95bbb5635972a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="class_note.html">Note</a> object.  <a href="class_score.html#aa9eb280ed1b53325c5d95bbb5635972a">More...</a><br /></td></tr>
+<tr class="memdesc:aa9eb280ed1b53325c5d95bbb5635972a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves basic information about a specific note (pitch, step, octave).  <a href="class_score.html#aa9eb280ed1b53325c5d95bbb5635972a">More...</a><br /></td></tr>
 <tr class="separator:aa9eb280ed1b53325c5d95bbb5635972a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:add45940f292db53fc94de20a3a0d9f35"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#add45940f292db53fc94de20a3a0d9f35">getNote</a> (const int part, const int measure, const int note, std::string &amp;pitch) const</td></tr>
-<tr class="memdesc:add45940f292db53fc94de20a3a0d9f35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="class_note.html">Note</a> object.  <a href="class_score.html#add45940f292db53fc94de20a3a0d9f35">More...</a><br /></td></tr>
+<tr class="memdesc:add45940f292db53fc94de20a3a0d9f35"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves only the pitch of a specific note.  <a href="class_score.html#add45940f292db53fc94de20a3a0d9f35">More...</a><br /></td></tr>
 <tr class="separator:add45940f292db53fc94de20a3a0d9f35"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2d12891c31702bb8f31113f364f29861"><td class="memItemLeft" align="right" valign="top"><a id="a2d12891c31702bb8f31113f364f29861" name="a2d12891c31702bb8f31113f364f29861"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> () const</td></tr>
+<tr class="memdesc:a2d12891c31702bb8f31113f364f29861"><td class="mdescLeft">&#160;</td><td class="mdescRight">Prints the names of all parts/instruments in the score to the terminal. <br /></td></tr>
 <tr class="separator:a2d12891c31702bb8f31113f364f29861"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abecc48a5b4f877f432250a4f1a7f1b13"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#abecc48a5b4f877f432250a4f1a7f1b13">xPathCountNodes</a> (const std::string &amp;xPath) const</td></tr>
+<tr class="memdesc:abecc48a5b4f877f432250a4f1a7f1b13"><td class="mdescLeft">&#160;</td><td class="mdescRight">Counts the number of XML nodes matching a given XPath expression.  <a href="class_score.html#abecc48a5b4f877f432250a4f1a7f1b13">More...</a><br /></td></tr>
 <tr class="separator:abecc48a5b4f877f432250a4f1a7f1b13"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af68794583e706f5b9a6d8a49945f0de6"><td class="memItemLeft" align="right" valign="top">const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#af68794583e706f5b9a6d8a49945f0de6">getPartName</a> (const int partId) const</td></tr>
-<tr class="memdesc:af68794583e706f5b9a6d8a49945f0de6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="class_part.html">Part</a> Name object.  <a href="class_score.html#af68794583e706f5b9a6d8a49945f0de6">More...</a><br /></td></tr>
+<tr class="memdesc:af68794583e706f5b9a6d8a49945f0de6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the name of a part by its index.  <a href="class_score.html#af68794583e706f5b9a6d8a49945f0de6">More...</a><br /></td></tr>
 <tr class="separator:af68794583e706f5b9a6d8a49945f0de6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad37a2af621dcc68b820e9ef6f84a9ab0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#ad37a2af621dcc68b820e9ef6f84a9ab0">getPartIndex</a> (const std::string &amp;partName, int *index) const</td></tr>
-<tr class="memdesc:ad37a2af621dcc68b820e9ef6f84a9ab0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="class_part.html">Part</a> Index object.  <a href="class_score.html#ad37a2af621dcc68b820e9ef6f84a9ab0">More...</a><br /></td></tr>
+<tr class="memdesc:ad37a2af621dcc68b820e9ef6f84a9ab0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Gets the index of a part by its name.  <a href="class_score.html#ad37a2af621dcc68b820e9ef6f84a9ab0">More...</a><br /></td></tr>
 <tr class="separator:ad37a2af621dcc68b820e9ef6f84a9ab0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:acd635fc0dd8df3d2c79186c6d13265f7"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#acd635fc0dd8df3d2c79186c6d13265f7">haveAnacrusisMeasure</a> () const</td></tr>
+<tr class="memdesc:acd635fc0dd8df3d2c79186c6d13265f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the score contains an anacrusis (pickup) measure.  <a href="class_score.html#acd635fc0dd8df3d2c79186c6d13265f7">More...</a><br /></td></tr>
+<tr class="separator:acd635fc0dd8df3d2c79186c6d13265f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2150b14e1102bd62e213048a788f665e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a2150b14e1102bd62e213048a788f665e">getNoteNodeData</a> (const pugi::xml_node &amp;node, std::string &amp;partName, int &amp;measure, std::string &amp;pitch, std::string &amp;pitchClass, std::string &amp;alterSymbol, int &amp;alterValue, int &amp;octave, std::string &amp;type, float &amp;duration) const</td></tr>
-<tr class="memdesc:a2150b14e1102bd62e213048a788f665e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="class_note.html">Note</a> Node Data object.  <a href="class_score.html#a2150b14e1102bd62e213048a788f665e">More...</a><br /></td></tr>
+<tr class="memdesc:a2150b14e1102bd62e213048a788f665e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves detailed information from a note XML node.  <a href="class_score.html#a2150b14e1102bd62e213048a788f665e">More...</a><br /></td></tr>
 <tr class="separator:a2150b14e1102bd62e213048a788f665e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7d64768cd2985912caf015a190f03e4e"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a7d64768cd2985912caf015a190f03e4e">setRepeat</a> (int measureStart, int measureEnd=-1)</td></tr>
-<tr class="memdesc:a7d64768cd2985912caf015a190f03e4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Repeat object.  <a href="class_score.html#a7d64768cd2985912caf015a190f03e4e">More...</a><br /></td></tr>
+<tr class="memdesc:a7d64768cd2985912caf015a190f03e4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets repeat barlines for a range of measures.  <a href="class_score.html#a7d64768cd2985912caf015a190f03e4e">More...</a><br /></td></tr>
 <tr class="separator:a7d64768cd2985912caf015a190f03e4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7ffa5ef4975c4ff74dea9954a5b4b14a"><td class="memItemLeft" align="right" valign="top">nlohmann::json&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a7ffa5ef4975c4ff74dea9954a5b4b14a">instrumentFragmentation</a> (nlohmann::json config=nlohmann::json())</td></tr>
-<tr class="memdesc:a7ffa5ef4975c4ff74dea9954a5b4b14a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the called score 'instrument fragmentation' data.  <a href="class_score.html#a7ffa5ef4975c4ff74dea9954a5b4b14a">More...</a><br /></td></tr>
+<tr class="memdesc:a7ffa5ef4975c4ff74dea9954a5b4b14a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Analyzes instrumental fragmentation in the score, returning data for visualization.  <a href="class_score.html#a7ffa5ef4975c4ff74dea9954a5b4b14a">More...</a><br /></td></tr>
 <tr class="separator:a7ffa5ef4975c4ff74dea9954a5b4b14a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aec4f8f23dcfd0cbfebe29b80ee473c88"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::tuple&lt; int, float, <a class="el" href="class_key.html">Key</a>, <a class="el" href="class_chord.html">Chord</a> &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#aec4f8f23dcfd0cbfebe29b80ee473c88">getChords</a> (nlohmann::json config={})</td></tr>
-<tr class="memdesc:aec4f8f23dcfd0cbfebe29b80ee473c88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the vertical stacked chords from the score object.  <a href="class_score.html#aec4f8f23dcfd0cbfebe29b80ee473c88">More...</a><br /></td></tr>
-<tr class="separator:aec4f8f23dcfd0cbfebe29b80ee473c88"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c6ce2665f8a88360a58b2db399f79cd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a4c6ce2665f8a88360a58b2db399f79cd">Score</a> (const <a class="el" href="class_score.html">Score</a> &amp;other)</td></tr>
-<tr class="memdesc:a4c6ce2665f8a88360a58b2db399f79cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_score.html">Score</a> object.  <a href="class_score.html#a4c6ce2665f8a88360a58b2db399f79cd">More...</a><br /></td></tr>
+<tr class="memdesc:a4c6ce2665f8a88360a58b2db399f79cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor for <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a>.  <a href="class_score.html#a4c6ce2665f8a88360a58b2db399f79cd">More...</a><br /></td></tr>
 <tr class="separator:a4c6ce2665f8a88360a58b2db399f79cd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaac75eb74d741745214738d0f040c79a"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_score.html">Score</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#aaac75eb74d741745214738d0f040c79a">operator=</a> (const <a class="el" href="class_score.html">Score</a> &amp;other)</td></tr>
+<tr class="memdesc:aaac75eb74d741745214738d0f040c79a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Assignment operator for <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a>.  <a href="class_score.html#aaac75eb74d741745214738d0f040c79a">More...</a><br /></td></tr>
 <tr class="separator:aaac75eb74d741745214738d0f040c79a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a25f756454cc5725c6b12205f45ca6470"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_score.html#ab5c6f5794b338382a7cf864667bc6ecb">MelodyPatternTable</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a25f756454cc5725c6b12205f45ca6470">findMelodyPattern</a> (const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;melodyPattern, const float totalIntervalsSimilarityThreshold=0.5, const float totalRhythmSimilarityThreshold=0.5, const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; intervalsSimilarityCallback=nullptr, const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; rhythmSimilarityCallback=nullptr, const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; totalIntervalSimilarityCallback=nullptr, const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; totalRhythmSimilarityCallback=nullptr, const std::function&lt; float(float, float)&gt; totalSimilarityCallback=nullptr) const</td></tr>
+<tr class="memdesc:a25f756454cc5725c6b12205f45ca6470"><td class="mdescLeft">&#160;</td><td class="mdescRight">Searches for a melodic pattern throughout the score, returning detailed results.  <a href="class_score.html#a25f756454cc5725c6b12205f45ca6470">More...</a><br /></td></tr>
+<tr class="separator:a25f756454cc5725c6b12205f45ca6470"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a7ee7f7fdd72c7a961d5469ae31fcc983"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="class_score.html#ab5c6f5794b338382a7cf864667bc6ecb">MelodyPatternTable</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a7ee7f7fdd72c7a961d5469ae31fcc983">findMelodyPattern</a> (const std::vector&lt; std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &gt; &amp;melodyPatterns, const float totalIntervalsSimilarityThreshold=0.5, const float totalRhythmSimilarityThreshold=0.5, const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; intervalsSimilarityCallback=nullptr, const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; rhythmSimilarityCallback=nullptr, const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; totalIntervalSimilarityCallback=nullptr, const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; totalRhythmSimilarityCallback=nullptr, const std::function&lt; float(float, float)&gt; totalSimilarityCallback=nullptr) const</td></tr>
+<tr class="memdesc:a7ee7f7fdd72c7a961d5469ae31fcc983"><td class="mdescLeft">&#160;</td><td class="mdescRight">Searches for multiple melodic patterns in the score, returning a table for each pattern.  <a href="class_score.html#a7ee7f7fdd72c7a961d5469ae31fcc983">More...</a><br /></td></tr>
+<tr class="separator:a7ee7f7fdd72c7a961d5469ae31fcc983"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:aded7af68cc190ce5d365e891c16861e0"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="class_score.html#ab5c6f5794b338382a7cf864667bc6ecb">MelodyPatternTable</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#aded7af68cc190ce5d365e891c16861e0">findAnyMelodyPattern</a> (const int patternNumNotes=5, const float totalIntervalsSimilarityThreshold=1.0f, const float totalRhythmSimilarityThreshold=1.0f, const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; intervalsSimilarityCallback=nullptr, const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; rhythmSimilarityCallback=nullptr, const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; totalIntervalSimilarityCallback=nullptr, const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; totalRhythmSimilarityCallback=nullptr, const std::function&lt; float(float, float)&gt; totalSimilarityCallback=nullptr) const</td></tr>
+<tr class="memdesc:aded7af68cc190ce5d365e891c16861e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds all possible melodic patterns of a given length in the score.  <a href="class_score.html#aded7af68cc190ce5d365e891c16861e0">More...</a><br /></td></tr>
+<tr class="separator:aded7af68cc190ce5d365e891c16861e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab1df59bbea62fd23b0f3334b65e99eff"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::tuple&lt; int, float, <a class="el" href="class_key.html">Key</a>, <a class="el" href="class_chord.html">Chord</a>, bool &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#ab1df59bbea62fd23b0f3334b65e99eff">getChords</a> (nlohmann::json config={})</td></tr>
+<tr class="memdesc:ab1df59bbea62fd23b0f3334b65e99eff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the vertical stacked chords from the score object.  <a href="class_score.html#ab1df59bbea62fd23b0f3334b65e99eff">More...</a><br /></td></tr>
+<tr class="separator:ab1df59bbea62fd23b0f3334b65e99eff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p >Represents a complete musical score, including metadata, parts, measures, and notes. </p>
+<p >The <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> class provides methods for creating, loading, editing, analyzing, and exporting musical scores. It supports MusicXML import/export, part and measure management, note access, metadata handling, and advanced musicological analysis such as melodic pattern search and chord extraction. </p>
+</div><h2 class="groupheader">Member Typedef Documentation</h2>
+<a id="a76a35ae2c0d094843f85f3b08a1d1a25" name="a76a35ae2c0d094843f85f3b08a1d1a25"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a76a35ae2c0d094843f85f3b08a1d1a25">&#9670;&nbsp;</a></span>MelodyPatternRow</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">typedef std::tuple&lt;std::string, int, int, std::string, std::string, std::vector&lt;std::string&gt;, std::vector&lt;float&gt;, std::vector&lt;float&gt;, float, float, float&gt; <a class="el" href="class_score.html#a76a35ae2c0d094843f85f3b08a1d1a25">Score::MelodyPatternRow</a></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Table row type for melodic pattern search results. </p>
+<p >Contains part name, measure, stave, key, transposition, interval/rhythm differences, and similarity scores. </p>
+
+</div>
+</div>
 <h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a014e053ce17389206a4e5a37cd391f7d" name="a014e053ce17389206a4e5a37cd391f7d"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a014e053ce17389206a4e5a37cd391f7d">&#9670;&nbsp;</a></span>Score() <span class="overload">[1/4]</span></h2>
@@ -251,11 +320,11 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
 </table>
 </div><div class="memdoc">
 
-<p>Construct a new blank <a class="el" href="class_score.html">Score</a> object. </p>
+<p>Constructs a new blank <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> object with specified part names and initial measure count. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">partsName</td><td>A musical instrument names list </td></tr>
-    <tr><td class="paramname">numMeasures</td><td>Initial measures amount </td></tr>
+    <tr><td class="paramname">partsName</td><td>List of instrument/part names. </td></tr>
+    <tr><td class="paramname">numMeasures</td><td>Initial number of measures (default: 20). </td></tr>
   </table>
   </dd>
 </dl>
@@ -296,11 +365,11 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
 </table>
 </div><div class="memdoc">
 
-<p>Construct a new <a class="el" href="class_score.html">Score</a> object. </p>
+<p>Constructs a new blank <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> object with specified part names and initial measure count. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">partsName</td><td></td></tr>
-    <tr><td class="paramname">numMeasures</td><td></td></tr>
+    <tr><td class="paramname">partsName</td><td>Vector of instrument/part names. </td></tr>
+    <tr><td class="paramname">numMeasures</td><td>Initial number of measures (default: 20). </td></tr>
   </table>
   </dd>
 </dl>
@@ -331,18 +400,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
 </table>
 </div><div class="memdoc">
 
-<p>Construct a new <a class="el" href="class_score.html">Score</a> object from a loaded sheet music file. </p>
-<p >The supported input sheet music files are: <br  />
-</p><ul>
-<li>*.xml (Standard for some music editors like: Sibelius and Finale) <br  />
-</li>
-<li>*.musicxml (Standard for other music editors like: MuseScore) <br  />
-</li>
-<li>*.mxml (Compressed/Zipped XML file)</li>
-</ul>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Constructs a new <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> object by loading a MusicXML file. </p>
+<p >Supported formats: *.xml, *.musicxml, *.mxl (compressed). </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">filePath</td><td>Path to the XML sheet music file </td></tr>
+    <tr><td class="paramname">filePath</td><td>Path to the MusicXML file. </td></tr>
   </table>
   </dd>
 </dl>
@@ -373,10 +434,10 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
 </table>
 </div><div class="memdoc">
 
-<p>Construct a new <a class="el" href="class_score.html">Score</a> object. </p>
+<p>Copy constructor for <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">other</td><td></td></tr>
+    <tr><td class="paramname">other</td><td><a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> to copy. </td></tr>
   </table>
   </dd>
 </dl>
@@ -399,9 +460,11 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Adds a specified number of measures to all parts in the score. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">numMeasures</td><td></td></tr>
+    <tr><td class="paramname">numMeasures</td><td>Number of measures to add. </td></tr>
   </table>
   </dd>
 </dl>
@@ -433,10 +496,12 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
+
+<p>Adds a new part (instrument/voice) to the score. </p>
+<p >Optionally specify the number of staves for the part. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">partName</td><td></td></tr>
-    <tr><td class="paramname">numStaves</td><td></td></tr>
+    <tr><td class="paramname">partName</td><td>Name of the part/instrument. </td></tr>
+    <tr><td class="paramname">numStaves</td><td>Number of staves (default: 1). </td></tr>
   </table>
   </dd>
 </dl>
@@ -458,8 +523,248 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
       </table>
 </div><div class="memdoc">
 
-<p>Clear <a class="el" href="class_score.html">Score</a> object. </p>
-<p >Clear all content inside of <a class="el" href="class_score.html">Score</a> object </p>
+<p>Clears all content from the score, removing parts, measures, and metadata. </p>
+<p >Useful for reusing the <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> object without creating a new one. </p>
+
+</div>
+</div>
+<a id="aded7af68cc190ce5d365e891c16861e0" name="aded7af68cc190ce5d365e891c16861e0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#aded7af68cc190ce5d365e891c16861e0">&#9670;&nbsp;</a></span>findAnyMelodyPattern()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="class_score.html#ab5c6f5794b338382a7cf864667bc6ecb">MelodyPatternTable</a> &gt; Score::findAnyMelodyPattern </td>
+          <td>(</td>
+          <td class="paramtype">const int&#160;</td>
+          <td class="paramname"><em>patternNumNotes</em> = <code>5</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>totalIntervalsSimilarityThreshold</em> = <code>1.0f</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>totalRhythmSimilarityThreshold</em> = <code>1.0f</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>intervalsSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>rhythmSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>totalIntervalSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>totalRhythmSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(float, float)&gt;&#160;</td>
+          <td class="paramname"><em>totalSimilarityCallback</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Finds all possible melodic patterns of a given length in the score. </p>
+<p >Useful for exploratory analysis of motives and recurring melodic cells. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">patternNumNotes</td><td>Number of notes in each pattern. </td></tr>
+    <tr><td class="paramname">totalIntervalsSimilarityThreshold</td><td>Minimum interval similarity threshold. </td></tr>
+    <tr><td class="paramname">totalRhythmSimilarityThreshold</td><td>Minimum rhythm similarity threshold. </td></tr>
+    <tr><td class="paramname">intervalsSimilarityCallback</td><td>Custom function to calculate interval similarity. </td></tr>
+    <tr><td class="paramname">rhythmSimilarityCallback</td><td>Custom function to calculate rhythm similarity. </td></tr>
+    <tr><td class="paramname">totalIntervalSimilarityCallback</td><td>Function to aggregate interval similarity. </td></tr>
+    <tr><td class="paramname">totalRhythmSimilarityCallback</td><td>Function to aggregate rhythm similarity. </td></tr>
+    <tr><td class="paramname">totalSimilarityCallback</td><td>Function to combine total similarities. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of result tables for each found pattern. </dd></dl>
+
+</div>
+</div>
+<a id="a25f756454cc5725c6b12205f45ca6470" name="a25f756454cc5725c6b12205f45ca6470"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a25f756454cc5725c6b12205f45ca6470">&#9670;&nbsp;</a></span>findMelodyPattern() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="class_score.html#ab5c6f5794b338382a7cf864667bc6ecb">MelodyPatternTable</a> Score::findMelodyPattern </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>melodyPattern</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>totalIntervalsSimilarityThreshold</em> = <code>0.5</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>totalRhythmSimilarityThreshold</em> = <code>0.5</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>intervalsSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>rhythmSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>totalIntervalSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>totalRhythmSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(float, float)&gt;&#160;</td>
+          <td class="paramname"><em>totalSimilarityCallback</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Searches for a melodic pattern throughout the score, returning detailed results. </p>
+<p >Allows searching for melodic patterns with interval and rhythmic similarity criteria. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">melodyPattern</td><td>Vector of notes representing the pattern to search for. </td></tr>
+    <tr><td class="paramname">totalIntervalsSimilarityThreshold</td><td>Minimum interval similarity threshold. </td></tr>
+    <tr><td class="paramname">totalRhythmSimilarityThreshold</td><td>Minimum rhythm similarity threshold. </td></tr>
+    <tr><td class="paramname">intervalsSimilarityCallback</td><td>Custom function to calculate interval similarity. </td></tr>
+    <tr><td class="paramname">rhythmSimilarityCallback</td><td>Custom function to calculate rhythm similarity. </td></tr>
+    <tr><td class="paramname">totalIntervalSimilarityCallback</td><td>Function to aggregate interval similarity. </td></tr>
+    <tr><td class="paramname">totalRhythmSimilarityCallback</td><td>Function to aggregate rhythm similarity. </td></tr>
+    <tr><td class="paramname">totalSimilarityCallback</td><td>Function to combine total similarities. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Table of results with detailed information about found patterns. </dd></dl>
+
+</div>
+</div>
+<a id="a7ee7f7fdd72c7a961d5469ae31fcc983" name="a7ee7f7fdd72c7a961d5469ae31fcc983"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a7ee7f7fdd72c7a961d5469ae31fcc983">&#9670;&nbsp;</a></span>findMelodyPattern() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="class_score.html#ab5c6f5794b338382a7cf864667bc6ecb">MelodyPatternTable</a> &gt; Score::findMelodyPattern </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>melodyPatterns</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>totalIntervalsSimilarityThreshold</em> = <code>0.5</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>totalRhythmSimilarityThreshold</em> = <code>0.5</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>intervalsSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>rhythmSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>totalIntervalSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt;&#160;</td>
+          <td class="paramname"><em>totalRhythmSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(float, float)&gt;&#160;</td>
+          <td class="paramname"><em>totalSimilarityCallback</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Searches for multiple melodic patterns in the score, returning a table for each pattern. </p>
+<p >Allows parallel analysis of several patterns, useful for comparative research. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">melodyPatterns</td><td>Vector of melodic patterns. </td></tr>
+    <tr><td class="paramname">totalIntervalsSimilarityThreshold</td><td>Minimum interval similarity threshold. </td></tr>
+    <tr><td class="paramname">totalRhythmSimilarityThreshold</td><td>Minimum rhythm similarity threshold. </td></tr>
+    <tr><td class="paramname">intervalsSimilarityCallback</td><td>Custom function to calculate interval similarity. </td></tr>
+    <tr><td class="paramname">rhythmSimilarityCallback</td><td>Custom function to calculate rhythm similarity. </td></tr>
+    <tr><td class="paramname">totalIntervalSimilarityCallback</td><td>Function to aggregate interval similarity. </td></tr>
+    <tr><td class="paramname">totalRhythmSimilarityCallback</td><td>Function to aggregate rhythm similarity. </td></tr>
+    <tr><td class="paramname">totalSimilarityCallback</td><td>Function to combine total similarities. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of result tables, one for each pattern. </dd></dl>
 
 </div>
 </div>
@@ -500,26 +805,28 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
+
+<p>Iterates over all notes in the score, applying a callback function. </p>
+<p >Supports optional filtering by measure range and part names. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">callback</td><td></td></tr>
-    <tr><td class="paramname">measureStart</td><td></td></tr>
-    <tr><td class="paramname">measureEnd</td><td></td></tr>
-    <tr><td class="paramname">partNames</td><td></td></tr>
+    <tr><td class="paramname">callback</td><td>Function to call for each note. </td></tr>
+    <tr><td class="paramname">measureStart</td><td>Starting measure (default: 0). </td></tr>
+    <tr><td class="paramname">measureEnd</td><td>Ending measure (default: -1, until the end). </td></tr>
+    <tr><td class="paramname">partNames</td><td>List of part names to process (default: all). </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="aec4f8f23dcfd0cbfebe29b80ee473c88" name="aec4f8f23dcfd0cbfebe29b80ee473c88"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aec4f8f23dcfd0cbfebe29b80ee473c88">&#9670;&nbsp;</a></span>getChords()</h2>
+<a id="ab1df59bbea62fd23b0f3334b65e99eff" name="ab1df59bbea62fd23b0f3334b65e99eff"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab1df59bbea62fd23b0f3334b65e99eff">&#9670;&nbsp;</a></span>getChords()</h2>
 
 <div class="memitem">
 <div class="memproto">
       <table class="memname">
         <tr>
-          <td class="memname">std::vector&lt; std::tuple&lt; int, float, <a class="el" href="class_key.html">Key</a>, <a class="el" href="class_chord.html">Chord</a> &gt; &gt; Score::getChords </td>
+          <td class="memname">std::vector&lt; std::tuple&lt; int, float, <a class="el" href="class_key.html">Key</a>, <a class="el" href="class_chord.html">Chord</a>, bool &gt; &gt; Score::getChords </td>
           <td>(</td>
           <td class="paramtype">nlohmann::json&#160;</td>
           <td class="paramname"><em>config</em> = <code>{}</code></td><td>)</td>
@@ -570,7 +877,7 @@ When <code>includeDuplicates</code> is <code>false</code> each chord will be fil
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A list of tuples: {measure, floatMeasure, <a class="el" href="class_key.html">Key</a> object, <a class="el" href="class_chord.html">Chord</a> object} </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>A list of tuples: {measure, floatMeasure, <a class="el" href="class_key.html" title="Represents a musical key signature (tonality), including circle of fifths and mode (major/minor).">Key</a> object, <a class="el" href="class_chord.html" title="Represents a musical chord.">Chord</a> object} </dd></dl>
 
 </div>
 </div>
@@ -589,8 +896,48 @@ When <code>includeDuplicates</code> is <code>false</code> each chord will be fil
       </table>
 </div><div class="memdoc">
 
-<p>Get the Composer Name object. </p>
-<dl class="section return"><dt>Returns</dt><dd>std::string </dd></dl>
+<p>Returns the composer's name. </p>
+<dl class="section return"><dt>Returns</dt><dd>Composer name string. </dd></dl>
+
+</div>
+</div>
+<a id="af3eca0b4ac6333c7f19be979b1b2e658" name="af3eca0b4ac6333c7f19be979b1b2e658"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af3eca0b4ac6333c7f19be979b1b2e658">&#9670;&nbsp;</a></span>getFileName()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string Score::getFileName </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the file name of the loaded MusicXML file. </p>
+<dl class="section return"><dt>Returns</dt><dd>File name string. </dd></dl>
+
+</div>
+</div>
+<a id="ab98d31163aecdc030030714a8144af94" name="ab98d31163aecdc030030714a8144af94"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab98d31163aecdc030030714a8144af94">&#9670;&nbsp;</a></span>getFilePath()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string Score::getFilePath </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the file path of the loaded MusicXML file. </p>
+<dl class="section return"><dt>Returns</dt><dd>File path string. </dd></dl>
 
 </div>
 </div>
@@ -632,19 +979,17 @@ When <code>includeDuplicates</code> is <code>false</code> each chord will be fil
       </table>
 </div><div class="memdoc">
 
-<p>Get the <a class="el" href="class_note.html">Note</a> object. </p>
+<p>Retrieves only the pitch of a specific note. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">part</td><td></td></tr>
-    <tr><td class="paramname">measure</td><td></td></tr>
-    <tr><td class="paramname">note</td><td></td></tr>
-    <tr><td class="paramname">pitch</td><td></td></tr>
+    <tr><td class="paramname">part</td><td><a class="el" href="class_part.html" title="Represents a musical part (instrument or voice) in a score, containing measures, staves,...">Part</a> index. </td></tr>
+    <tr><td class="paramname">measure</td><td><a class="el" href="class_measure.html" title="Represents a musical measure (bar) within a score, containing notes, staves, key/time signatures,...">Measure</a> index. </td></tr>
+    <tr><td class="paramname">note</td><td><a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> index. </td></tr>
+    <tr><td class="paramname">pitch</td><td>Output: pitch string. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the note was found. </dd></dl>
 
 </div>
 </div>
@@ -698,21 +1043,19 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the <a class="el" href="class_note.html">Note</a> object. </p>
+<p>Retrieves basic information about a specific note (pitch, step, octave). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">part</td><td></td></tr>
-    <tr><td class="paramname">measure</td><td></td></tr>
-    <tr><td class="paramname">note</td><td></td></tr>
-    <tr><td class="paramname">pitch</td><td></td></tr>
-    <tr><td class="paramname">step</td><td></td></tr>
-    <tr><td class="paramname">octave</td><td></td></tr>
+    <tr><td class="paramname">part</td><td><a class="el" href="class_part.html" title="Represents a musical part (instrument or voice) in a score, containing measures, staves,...">Part</a> index. </td></tr>
+    <tr><td class="paramname">measure</td><td><a class="el" href="class_measure.html" title="Represents a musical measure (bar) within a score, containing notes, staves, key/time signatures,...">Measure</a> index. </td></tr>
+    <tr><td class="paramname">note</td><td><a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> index. </td></tr>
+    <tr><td class="paramname">pitch</td><td>Output: pitch string. </td></tr>
+    <tr><td class="paramname">step</td><td>Output: step string. </td></tr>
+    <tr><td class="paramname">octave</td><td>Output: octave integer. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the note was found. </dd></dl>
 
 </div>
 </div>
@@ -796,26 +1139,24 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the <a class="el" href="class_note.html">Note</a> object. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Retrieves detailed information about a specific note in the score. </p>
+<p >Accesses attributes such as pitch, duration, voice, type, stem, and staff. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">part</td><td></td></tr>
-    <tr><td class="paramname">measure</td><td></td></tr>
-    <tr><td class="paramname">note</td><td></td></tr>
-    <tr><td class="paramname">pitch</td><td></td></tr>
-    <tr><td class="paramname">step</td><td></td></tr>
-    <tr><td class="paramname">octave</td><td></td></tr>
-    <tr><td class="paramname">duration</td><td></td></tr>
-    <tr><td class="paramname">voice</td><td></td></tr>
-    <tr><td class="paramname">type</td><td></td></tr>
-    <tr><td class="paramname">steam</td><td></td></tr>
-    <tr><td class="paramname">staff</td><td></td></tr>
+    <tr><td class="paramname">part</td><td><a class="el" href="class_part.html" title="Represents a musical part (instrument or voice) in a score, containing measures, staves,...">Part</a> index. </td></tr>
+    <tr><td class="paramname">measure</td><td><a class="el" href="class_measure.html" title="Represents a musical measure (bar) within a score, containing notes, staves, key/time signatures,...">Measure</a> index. </td></tr>
+    <tr><td class="paramname">note</td><td><a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> index. </td></tr>
+    <tr><td class="paramname">pitch</td><td>Output: pitch string. </td></tr>
+    <tr><td class="paramname">step</td><td>Output: step string. </td></tr>
+    <tr><td class="paramname">octave</td><td>Output: octave integer. </td></tr>
+    <tr><td class="paramname">duration</td><td>Output: duration integer. </td></tr>
+    <tr><td class="paramname">voice</td><td>Output: voice integer. </td></tr>
+    <tr><td class="paramname">type</td><td>Output: type string. </td></tr>
+    <tr><td class="paramname">steam</td><td>Output: stem string. </td></tr>
+    <tr><td class="paramname">staff</td><td>Output: staff integer. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the note was found. </dd></dl>
 
 </div>
 </div>
@@ -893,19 +1234,19 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the <a class="el" href="class_note.html">Note</a> Node Data object. </p>
+<p>Retrieves detailed information from a note XML node. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">node</td><td></td></tr>
-    <tr><td class="paramname">partName</td><td></td></tr>
-    <tr><td class="paramname">measure</td><td></td></tr>
-    <tr><td class="paramname">pitch</td><td></td></tr>
-    <tr><td class="paramname">pitchClass</td><td></td></tr>
-    <tr><td class="paramname">alterSymbol</td><td></td></tr>
-    <tr><td class="paramname">alterValue</td><td></td></tr>
-    <tr><td class="paramname">octave</td><td></td></tr>
-    <tr><td class="paramname">type</td><td></td></tr>
-    <tr><td class="paramname">duration</td><td></td></tr>
+    <tr><td class="paramname">node</td><td>XML node of the note. </td></tr>
+    <tr><td class="paramname">partName</td><td>Output: part name. </td></tr>
+    <tr><td class="paramname">measure</td><td>Output: measure number. </td></tr>
+    <tr><td class="paramname">pitch</td><td>Output: pitch string. </td></tr>
+    <tr><td class="paramname">pitchClass</td><td>Output: pitch class string. </td></tr>
+    <tr><td class="paramname">alterSymbol</td><td>Output: accidental symbol. </td></tr>
+    <tr><td class="paramname">alterValue</td><td>Output: accidental value. </td></tr>
+    <tr><td class="paramname">octave</td><td>Output: octave. </td></tr>
+    <tr><td class="paramname">type</td><td>Output: note type. </td></tr>
+    <tr><td class="paramname">duration</td><td>Output: note duration. </td></tr>
   </table>
   </dd>
 </dl>
@@ -927,8 +1268,8 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the Num Measures object. </p>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<p>Returns the number of measures in the score. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of measures. </dd></dl>
 
 </div>
 </div>
@@ -947,8 +1288,8 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the Num Notes object. </p>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<p>Returns the total number of notes in the score. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of notes. </dd></dl>
 
 </div>
 </div>
@@ -967,8 +1308,8 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the Num Parts object. </p>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<p>Returns the number of parts (instruments/voices) in the score. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of parts. </dd></dl>
 
 </div>
 </div>
@@ -988,14 +1329,14 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the <a class="el" href="class_part.html">Part</a> object. </p>
+<p>Returns a reference to a part by its index. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">partId</td><td></td></tr>
+    <tr><td class="paramname">partId</td><td>Index of the part. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_part.html">Part</a>&amp; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to the <a class="el" href="class_part.html" title="Represents a musical part (instrument or voice) in a score, containing measures, staves,...">Part</a> object. </dd></dl>
 
 </div>
 </div>
@@ -1015,14 +1356,14 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the <a class="el" href="class_part.html">Part</a> object. </p>
+<p>Returns a reference to a part by its name. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">partName</td><td></td></tr>
+    <tr><td class="paramname">partName</td><td>Name of the part. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_part.html">Part</a>&amp; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to the <a class="el" href="class_part.html" title="Represents a musical part (instrument or voice) in a score, containing measures, staves,...">Part</a> object. </dd></dl>
 
 </div>
 </div>
@@ -1052,17 +1393,15 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the <a class="el" href="class_part.html">Part</a> Index object. </p>
+<p>Gets the index of a part by its name. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">partName</td><td></td></tr>
-    <tr><td class="paramname">index</td><td></td></tr>
+    <tr><td class="paramname">partName</td><td>Name of the part. </td></tr>
+    <tr><td class="paramname">index</td><td>Output: index integer. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if the part was found. </dd></dl>
 
 </div>
 </div>
@@ -1082,14 +1421,14 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the <a class="el" href="class_part.html">Part</a> Name object. </p>
+<p>Returns the name of a part by its index. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">partId</td><td></td></tr>
+    <tr><td class="paramname">partId</td><td><a class="el" href="class_part.html" title="Represents a musical part (instrument or voice) in a score, containing measures, staves,...">Part</a> index. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_part.html" title="Represents a musical part (instrument or voice) in a score, containing measures, staves,...">Part</a> name string. </dd></dl>
 
 </div>
 </div>
@@ -1108,8 +1447,8 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the <a class="el" href="class_part.html">Part</a> Names object. </p>
-<dl class="section return"><dt>Returns</dt><dd>const std::vector&lt;std::string&gt; </dd></dl>
+<p>Returns a vector with the names of all parts/instruments. </p>
+<dl class="section return"><dt>Returns</dt><dd>Vector of part names. </dd></dl>
 
 </div>
 </div>
@@ -1128,8 +1467,28 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the Title object. </p>
-<dl class="section return"><dt>Returns</dt><dd>std::string </dd></dl>
+<p>Returns the title of the score. </p>
+<dl class="section return"><dt>Returns</dt><dd>Title string. </dd></dl>
+
+</div>
+</div>
+<a id="acd635fc0dd8df3d2c79186c6d13265f7" name="acd635fc0dd8df3d2c79186c6d13265f7"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#acd635fc0dd8df3d2c79186c6d13265f7">&#9670;&nbsp;</a></span>haveAnacrusisMeasure()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Score::haveAnacrusisMeasure </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns true if the score contains an anacrusis (pickup) measure. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if anacrusis is present. </dd></dl>
 
 </div>
 </div>
@@ -1148,9 +1507,29 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the MusicXML file contains &lt;type&gt; tags for notes. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if &lt;type&gt; tags are present. </dd></dl>
+
+</div>
+</div>
+<a id="a5d6030c6df1e97ef48d3ebec99b1a5d0" name="a5d6030c6df1e97ef48d3ebec99b1a5d0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5d6030c6df1e97ef48d3ebec99b1a5d0">&#9670;&nbsp;</a></span>info()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void Score::info </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Prints summary information about the score to the log. </p>
+<p >Includes title, composer, key, time signature, note count, measure count, and part names. </p>
 
 </div>
 </div>
@@ -1170,64 +1549,14 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Get the called score 'instrument fragmentation' data. </p>
-<p >This method is used only to get the input data to a specific Python plot graph.<br  />
- The final Python plot shows the score 'instrument fragmentation' analysis graphically</p>
-<p ><b>Paper:</b> Uma análise da organização e fragmentação de Farben de Arnold Schoenberg <br  />
- <b>Author:</b> Igor Leão Maia (UNICAMP) <br  />
- <b>C++/Python</b> <b>Implementation</b> <b>by:</b> Prof. Adolfo Maia Junior (UNICAMP) <br  />
- <br  />
- To get more information about it: <br  />
-<a class="el" href="">https://www.researchgate.net/publication/321335427_Uma_analise_da_organizacao_e_fragmentacao_de_Farben_de_Arnold_Schoenberg</a></p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Analyzes instrumental fragmentation in the score, returning data for visualization. </p>
+<p >Generates a JSON with activation, fragmentation, and execution lines for each instrument. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">config</td><td>A JSON object that contains: <br  />
- <br  />
-<code>partNumber:</code> list of integers <br  />
-<code>measureStart:</code> integer <br  />
-<code>measureEnd:</code> integer <br  />
- <br  />
-<b>Example:</b> <div class="fragment"><div class="line">{</div>
-<div class="line">  &quot;partNumber&quot;: [1, 3, 7],</div>
-<div class="line">  &quot;measureStart&quot;: 4,</div>
-<div class="line">  &quot;measureEnd&quot;: 10</div>
-<div class="line">}</div>
-</div><!-- fragment --></td></tr>
+    <tr><td class="paramname">config</td><td>JSON object with configuration parameters (parts, measures, etc). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>A JSON object that contains all data to plot the 'instrument fragmentation' Python graph <br  />
- <br  />
-<b>Example:</b> <div class="fragment"><div class="line">{</div>
-<div class="line">  &quot;element&quot;:</div>
-<div class="line">  [</div>
-<div class="line">    {</div>
-<div class="line">      &quot;partName&quot;: &quot;Violin I&quot;,</div>
-<div class="line">      &quot;measureStart&quot;: 1,</div>
-<div class="line">      &quot;measureEnd&quot;: 5,</div>
-<div class="line">      &quot;beatNumber&quot;: 3,</div>
-<div class="line">      &quot;beatType&quot;: 4,</div>
-<div class="line">      &quot;work&quot;: &quot;My Score Title&quot;,</div>
-<div class="line">      &quot;author&quot;: &quot;Mozart&quot;,</div>
-<div class="line">      &quot;Activation Rate&quot;: 2.5,</div>
-<div class="line">      &quot;Number of Activations&quot;: 15,</div>
-<div class="line">      &quot;lines&quot;: {</div>
-<div class="line">        {1.0f, 2.0f},</div>
-<div class="line">        {3.2f, 4.5f},</div>
-<div class="line">        {X, Y}</div>
-<div class="line">      }</div>
-<div class="line">      &quot;lines_rests&quot;: {</div>
-<div class="line">        {2.0f, 3.2f},</div>
-<div class="line">        {3.5f, 5.7f},</div>
-<div class="line">        {W, Z}</div>
-<div class="line">      }</div>
-<div class="line">    },</div>
-<div class="line">    {</div>
-<div class="line">      // Other json object with the same fields</div>
-<div class="line">    }</div>
-<div class="line">  ]</div>
-<div class="line">}</div>
-</div><!-- fragment --> </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>JSON with data for analysis and plotting. </dd></dl>
 
 </div>
 </div>
@@ -1246,9 +1575,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the score is valid (MusicXML loaded correctly). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if valid. </dd></dl>
 
 </div>
 </div>
@@ -1275,13 +1604,15 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Assignment operator for <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a>. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">other</td><td></td></tr>
+    <tr><td class="paramname">other</td><td><a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> to assign from. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_score.html">Score</a>&amp; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Reference to this <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a>. </dd></dl>
 
 </div>
 </div>
@@ -1310,10 +1641,12 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Removes a range of measures from all parts in the score. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">measureStart</td><td></td></tr>
-    <tr><td class="paramname">measureEnd</td><td></td></tr>
+    <tr><td class="paramname">measureStart</td><td>Index of the first measure to remove. </td></tr>
+    <tr><td class="paramname">measureEnd</td><td>Index of the last measure to remove. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1335,9 +1668,11 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Removes a part from the score by its index. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">partId</td><td></td></tr>
+    <tr><td class="paramname">partId</td><td>Index of the part to remove. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1360,10 +1695,10 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Set the Composer Name object. </p>
+<p>Sets the composer's name. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">composerName</td><td></td></tr>
+    <tr><td class="paramname">composerName</td><td>New composer name. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1402,12 +1737,12 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Set the <a class="el" href="class_key.html">Key</a> Signature object. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Sets the key signature for all parts at a specific measure. </p>
+<p >Specify the number of accidentals (fifths) and mode (major/minor). </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">fifthCicle</td><td></td></tr>
-    <tr><td class="paramname">isMajorMode</td><td></td></tr>
-    <tr><td class="paramname">measureId</td><td></td></tr>
+    <tr><td class="paramname">fifthCicle</td><td>Number of accidentals in the circle of fifths. </td></tr>
+    <tr><td class="paramname">isMajorMode</td><td>True for major, false for minor. </td></tr>
+    <tr><td class="paramname">measureId</td><td><a class="el" href="class_measure.html" title="Represents a musical measure (bar) within a score, containing notes, staves, key/time signatures,...">Measure</a> index (default: 0). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1440,19 +1775,19 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Set the <a class="el" href="class_key.html">Key</a> Signature object. </p>
+<p>Sets the key signature using the key name (e.g., "C", "Gm"). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">key</td><td></td></tr>
-    <tr><td class="paramname">measureId</td><td></td></tr>
+    <tr><td class="paramname">key</td><td><a class="el" href="class_key.html" title="Represents a musical key signature (tonality), including circle of fifths and mode (major/minor).">Key</a> name. </td></tr>
+    <tr><td class="paramname">measureId</td><td><a class="el" href="class_measure.html" title="Represents a musical measure (bar) within a score, containing notes, staves, key/time signatures,...">Measure</a> index (default: 0). </td></tr>
   </table>
   </dd>
 </dl>
 
 </div>
 </div>
-<a id="aded3f738de0603e15932c7ca866dbd7a" name="aded3f738de0603e15932c7ca866dbd7a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#aded3f738de0603e15932c7ca866dbd7a">&#9670;&nbsp;</a></span>setMetronomeMark()</h2>
+<a id="ae7dccf1cdc323f0ae76c131236fe2e2a" name="ae7dccf1cdc323f0ae76c131236fe2e2a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae7dccf1cdc323f0ae76c131236fe2e2a">&#9670;&nbsp;</a></span>setMetronomeMark()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1466,8 +1801,8 @@ false </dd></dl>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const Duration&#160;</td>
-          <td class="paramname"><em>duration</em> = <code>Duration::QUARTER</code>, </td>
+          <td class="paramtype">const RhythmFigure&#160;</td>
+          <td class="paramname"><em>duration</em> = <code>RhythmFigure::QUARTER</code>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
@@ -1483,12 +1818,12 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Set the Metronome Mark object. </p>
+<p>Sets the metronome mark (BPM) for a specific measure. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">bpm</td><td></td></tr>
-    <tr><td class="paramname">duration</td><td></td></tr>
-    <tr><td class="paramname">measureStart</td><td></td></tr>
+    <tr><td class="paramname">bpm</td><td>Beats per minute. </td></tr>
+    <tr><td class="paramname">duration</td><td>Rhythm figure associated with the BPM (default: QUARTER). </td></tr>
+    <tr><td class="paramname">measureStart</td><td>Starting measure (default: 0). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1521,11 +1856,11 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Set the Repeat object. </p>
+<p>Sets repeat barlines for a range of measures. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">measureStart</td><td></td></tr>
-    <tr><td class="paramname">measureEnd</td><td></td></tr>
+    <tr><td class="paramname">measureStart</td><td>Starting measure index. </td></tr>
+    <tr><td class="paramname">measureEnd</td><td>Ending measure index (-1 for last measure). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1564,12 +1899,12 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Set the Time Signature object. </p>
-<dl class="params"><dt>Parameters</dt><dd>
+<p>Sets the time signature for all or part of the measures. </p>
+<p >Can be applied to all measures or from a specific measure onward. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">timeUpper</td><td></td></tr>
-    <tr><td class="paramname">timeLower</td><td></td></tr>
-    <tr><td class="paramname">measureId</td><td></td></tr>
+    <tr><td class="paramname">timeUpper</td><td>Numerator of the time signature. </td></tr>
+    <tr><td class="paramname">timeLower</td><td>Denominator of the time signature. </td></tr>
+    <tr><td class="paramname">measureId</td><td>Starting measure index (-1 for all). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1592,10 +1927,10 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Set the Title object. </p>
+<p>Sets the title of the score. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">scoreTitle</td><td></td></tr>
+    <tr><td class="paramname">scoreTitle</td><td>New title. </td></tr>
   </table>
   </dd>
 </dl>
@@ -1633,11 +1968,13 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Saves the score to a file in XML or compressed MXL format. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">fileName</td><td></td></tr>
-    <tr><td class="paramname">compressedXML</td><td></td></tr>
-    <tr><td class="paramname">identSize</td><td></td></tr>
+    <tr><td class="paramname">fileName</td><td>Output file name. </td></tr>
+    <tr><td class="paramname">compressedXML</td><td>True to save as .mxl (compressed). </td></tr>
+    <tr><td class="paramname">identSize</td><td>Indentation size (default: 2). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1658,7 +1995,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>const std::string </dd></dl>
+
+<p>Exports the score to JSON format. </p>
+<p >Useful for integration with analysis and visualization tools. </p><dl class="section return"><dt>Returns</dt><dd>JSON string representing the score. </dd></dl>
 
 </div>
 </div>
@@ -1677,13 +2016,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
+
+<p>Exports the score to MusicXML format. </p>
+<p >Generates a complete MusicXML string, including metadata and all parts. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">identSize</td><td></td></tr>
+    <tr><td class="paramname">identSize</td><td>Indentation size (default: 2). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>MusicXML string. </dd></dl>
 
 </div>
 </div>
@@ -1702,13 +2043,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Counts the number of XML nodes matching a given XPath expression. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">xPath</td><td></td></tr>
+    <tr><td class="paramname">xPath</td><td>XPath expression. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of nodes found. </dd></dl>
 
 </div>
 </div>

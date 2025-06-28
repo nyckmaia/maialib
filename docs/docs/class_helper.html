@@ -90,84 +90,151 @@ $(document).ready(function(){initNavTree('class_helper.html',''); initResizable(
   <div class="headertitle"><div class="title">Helper Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p><a class="el" href="class_helper.html" title="Helper class with static utility functions for music analysis, pitch/duration conversion,...">Helper</a> class with static utility functions for music analysis, pitch/duration conversion, and MusicXML processing.  
+ <a href="class_helper.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="helper_8h_source.html">helper.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-static-methods" name="pub-static-methods"></a>
 Static Public Member Functions</h2></td></tr>
 <tr class="memitem:afe4aebc4c8412f0be7d88fab9c488e59"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#afe4aebc4c8412f0be7d88fab9c488e59">splitString</a> (const std::string &amp;s, char delimiter)</td></tr>
+<tr class="memdesc:afe4aebc4c8412f0be7d88fab9c488e59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Splits a string into tokens using a specified delimiter.  <a href="class_helper.html#afe4aebc4c8412f0be7d88fab9c488e59">More...</a><br /></td></tr>
 <tr class="separator:afe4aebc4c8412f0be7d88fab9c488e59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6c73d3d8bc74eb02253a38d8542853f6"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a6c73d3d8bc74eb02253a38d8542853f6">formatFloat</a> (float floatValue, int digits)</td></tr>
+<tr class="memdesc:a6c73d3d8bc74eb02253a38d8542853f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Formats a floating-point number as a string with a given number of decimal digits.  <a href="class_helper.html#a6c73d3d8bc74eb02253a38d8542853f6">More...</a><br /></td></tr>
 <tr class="separator:a6c73d3d8bc74eb02253a38d8542853f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a599d397c4a50714156b9c9cfc28efc90"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a599d397c4a50714156b9c9cfc28efc90">generateIdentation</a> (int identPosition, int identSize=2)</td></tr>
+<tr class="memdesc:a599d397c4a50714156b9c9cfc28efc90"><td class="mdescLeft">&#160;</td><td class="mdescRight">Generates a string of spaces for indentation, useful for pretty-printing MusicXML.  <a href="class_helper.html#a599d397c4a50714156b9c9cfc28efc90">More...</a><br /></td></tr>
 <tr class="separator:a599d397c4a50714156b9c9cfc28efc90"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a5fc60ca1f67a97cf8478423deed8c49a"><td class="memItemLeft" align="right" valign="top">static std::pair&lt; std::string, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a5fc60ca1f67a97cf8478423deed8c49a">ticks2noteType</a> (const int ticks, const int divisionsPerQuarterNote=256)</td></tr>
-<tr class="separator:a5fc60ca1f67a97cf8478423deed8c49a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad3dc7809cf9cd74578e4e6a349d2c623"><td class="memItemLeft" align="right" valign="top">static std::pair&lt; std::string, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#ad3dc7809cf9cd74578e4e6a349d2c623">ticks2noteType</a> (int durationTicks, int divisionsPerQuarterNote, int actualNotes=1, int normalNotes=1)</td></tr>
+<tr class="memdesc:ad3dc7809cf9cd74578e4e6a349d2c623"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a duration in ticks to a MusicXML note type and dot count.  <a href="class_helper.html#ad3dc7809cf9cd74578e4e6a349d2c623">More...</a><br /></td></tr>
+<tr class="separator:ad3dc7809cf9cd74578e4e6a349d2c623"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0b66180d53de8dc6901b20c755780d8e"><td class="memItemLeft" align="right" valign="top">static std::pair&lt; RhythmFigure, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a0b66180d53de8dc6901b20c755780d8e">ticks2rhythmFigure</a> (int durationTicks, int divisionsPerQuarterNote, int actualNotes, int normalNotes)</td></tr>
+<tr class="memdesc:a0b66180d53de8dc6901b20c755780d8e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a duration in ticks to a RhythmFigure and dot count.  <a href="class_helper.html#a0b66180d53de8dc6901b20c755780d8e">More...</a><br /></td></tr>
+<tr class="separator:a0b66180d53de8dc6901b20c755780d8e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7c1f49532b06ffea95c9ff72f673ea68"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a7c1f49532b06ffea95c9ff72f673ea68">noteType2ticks</a> (std::string noteType, const int divisionsPerQuarterNote=256)</td></tr>
+<tr class="memdesc:a7c1f49532b06ffea95c9ff72f673ea68"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a MusicXML note type string to a duration in ticks.  <a href="class_helper.html#a7c1f49532b06ffea95c9ff72f673ea68">More...</a><br /></td></tr>
 <tr class="separator:a7c1f49532b06ffea95c9ff72f673ea68"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aefb7d19ea68ff9dc78e206d5af8e7814"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#aefb7d19ea68ff9dc78e206d5af8e7814">pitch2number</a> (const std::string &amp;pitch)</td></tr>
+<tr class="memdesc:aefb7d19ea68ff9dc78e206d5af8e7814"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a pitch string (e.g., "C4") to a floating-point number representation.  <a href="class_helper.html#aefb7d19ea68ff9dc78e206d5af8e7814">More...</a><br /></td></tr>
 <tr class="separator:aefb7d19ea68ff9dc78e206d5af8e7814"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a449398a519412e6aab7d6080aab031b5"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a449398a519412e6aab7d6080aab031b5">number2pitch</a> (const float number, const std::string &amp;accType=MUSIC_XML::ACCIDENT::SHARP)</td></tr>
+<tr class="memdesc:a449398a519412e6aab7d6080aab031b5"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a floating-point pitch number to a pitch string, with optional accidental type.  <a href="class_helper.html#a449398a519412e6aab7d6080aab031b5">More...</a><br /></td></tr>
 <tr class="separator:a449398a519412e6aab7d6080aab031b5"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9e06032ec3c85d43e4bebcfe947ad94a"><td class="memItemLeft" align="right" valign="top">static std::pair&lt; int, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a9e06032ec3c85d43e4bebcfe947ad94a">freq2midiNote</a> (const float freq, std::function&lt; int(float)&gt; modelo=nullptr)</td></tr>
+<tr class="memdesc:a9e06032ec3c85d43e4bebcfe947ad94a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a frequency in Hz to the closest MIDI note and cents deviation.  <a href="class_helper.html#a9e06032ec3c85d43e4bebcfe947ad94a">More...</a><br /></td></tr>
 <tr class="separator:a9e06032ec3c85d43e4bebcfe947ad94a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6f459665ed2173f7a47a6a0358c74b54"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a6f459665ed2173f7a47a6a0358c74b54">midiNote2freq</a> (const int midiNote, const float freqA4=440.0f)</td></tr>
+<tr class="memdesc:a6f459665ed2173f7a47a6a0358c74b54"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a MIDI note number to frequency in Hz.  <a href="class_helper.html#a6f459665ed2173f7a47a6a0358c74b54">More...</a><br /></td></tr>
 <tr class="separator:a6f459665ed2173f7a47a6a0358c74b54"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae50a50463d228d9a36749b0a522a3bf9"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#ae50a50463d228d9a36749b0a522a3bf9">midiNote2octave</a> (const int midiNote)</td></tr>
+<tr class="memdesc:ae50a50463d228d9a36749b0a522a3bf9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a MIDI note number to its octave number.  <a href="class_helper.html#ae50a50463d228d9a36749b0a522a3bf9">More...</a><br /></td></tr>
 <tr class="separator:ae50a50463d228d9a36749b0a522a3bf9"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a092ce2f6040bb4c349484d234509c55c"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a092ce2f6040bb4c349484d234509c55c">pitch2midiNote</a> (const std::string &amp;pitch)</td></tr>
+<tr class="memdesc:a092ce2f6040bb4c349484d234509c55c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a pitch string (e.g., "C4") to a MIDI note number.  <a href="class_helper.html#a092ce2f6040bb4c349484d234509c55c">More...</a><br /></td></tr>
 <tr class="separator:a092ce2f6040bb4c349484d234509c55c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9c3fc360fa220ce5c05107f205c7bb20"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a9c3fc360fa220ce5c05107f205c7bb20">midiNote2pitch</a> (const int midiNote, const std::string &amp;accType={})</td></tr>
+<tr class="memdesc:a9c3fc360fa220ce5c05107f205c7bb20"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a MIDI note number to a pitch string, with optional accidental type.  <a href="class_helper.html#a9c3fc360fa220ce5c05107f205c7bb20">More...</a><br /></td></tr>
 <tr class="separator:a9c3fc360fa220ce5c05107f205c7bb20"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a061f37a1ca57b63e7385777d9fd2947d"><td class="memItemLeft" align="right" valign="top">static const std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a061f37a1ca57b63e7385777d9fd2947d">midiNote2pitches</a> (const int midiNote)</td></tr>
+<tr class="memdesc:a061f37a1ca57b63e7385777d9fd2947d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns all possible pitch spellings for a given MIDI note.  <a href="class_helper.html#a061f37a1ca57b63e7385777d9fd2947d">More...</a><br /></td></tr>
 <tr class="separator:a061f37a1ca57b63e7385777d9fd2947d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5b28f717cd0f49b531dbec8a40b98973"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; <a class="el" href="class_interval.html">Interval</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a5b28f717cd0f49b531dbec8a40b98973">notes2Intervals</a> (const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;notes, const bool firstNoteAsReference=false)</td></tr>
+<tr class="memdesc:a5b28f717cd0f49b531dbec8a40b98973"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes intervals between a sequence of notes.  <a href="class_helper.html#a5b28f717cd0f49b531dbec8a40b98973">More...</a><br /></td></tr>
 <tr class="separator:a5b28f717cd0f49b531dbec8a40b98973"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:abf044b14f4f51f0657dc5048f11243a2"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; <a class="el" href="class_interval.html">Interval</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#abf044b14f4f51f0657dc5048f11243a2">notes2Intervals</a> (const std::vector&lt; std::string &gt; &amp;pitches, const bool firstNoteAsReference=false)</td></tr>
+<tr class="memdesc:abf044b14f4f51f0657dc5048f11243a2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes intervals between a sequence of pitch strings.  <a href="class_helper.html#abf044b14f4f51f0657dc5048f11243a2">More...</a><br /></td></tr>
+<tr class="separator:abf044b14f4f51f0657dc5048f11243a2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a15a3658836f783d500e92da0e342e7a6"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a15a3658836f783d500e92da0e342e7a6">semitonesBetweenPitches</a> (const std::string &amp;pitch_A, const std::string &amp;pitch_B)</td></tr>
+<tr class="memdesc:a15a3658836f783d500e92da0e342e7a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the number of semitones between two pitch strings.  <a href="class_helper.html#a15a3658836f783d500e92da0e342e7a6">More...</a><br /></td></tr>
 <tr class="separator:a15a3658836f783d500e92da0e342e7a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3e8de086fcd64749d7a5f5d437b800f6"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a3e8de086fcd64749d7a5f5d437b800f6">noteSimilarity</a> (std::string &amp;pitchClass_A, int octave_A, const float duration_A, std::string &amp;pitchClass_B, int octave_B, const float duration_B, float &amp;durRatio, float &amp;pitRatio, const bool enableEnharmonic=false)</td></tr>
+<tr class="memdesc:a3e8de086fcd64749d7a5f5d437b800f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the similarity between two notes based on pitch class, octave, and duration.  <a href="class_helper.html#a3e8de086fcd64749d7a5f5d437b800f6">More...</a><br /></td></tr>
 <tr class="separator:a3e8de086fcd64749d7a5f5d437b800f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a83972bdf80a472e795dc15381ec297e8"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a83972bdf80a472e795dc15381ec297e8">pitch2freq</a> (const std::string &amp;pitch)</td></tr>
+<tr class="memdesc:a83972bdf80a472e795dc15381ec297e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a pitch string to its frequency in Hz.  <a href="class_helper.html#a83972bdf80a472e795dc15381ec297e8">More...</a><br /></td></tr>
 <tr class="separator:a83972bdf80a472e795dc15381ec297e8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a96de9810e9977869a219149b7184c368"><td class="memItemLeft" align="right" valign="top">static std::pair&lt; std::string, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a96de9810e9977869a219149b7184c368">freq2pitch</a> (const float freq, const std::string &amp;accType=MUSIC_XML::ACCIDENT::SHARP)</td></tr>
-<tr class="separator:a96de9810e9977869a219149b7184c368"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a47e6844554441d6d555bcacfec47d215"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a47e6844554441d6d555bcacfec47d215">pitchRatio</a> (const std::string &amp;pitch_A, const std::string &amp;pitch_B)</td></tr>
-<tr class="separator:a47e6844554441d6d555bcacfec47d215"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a54f9f4a76a49a79cfbc497aaa0d23466"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a54f9f4a76a49a79cfbc497aaa0d23466">splitPitch</a> (const std::string &amp;pitch, std::string &amp;pitchClass, std::string &amp;pitchStep, int &amp;octave, float &amp;alterValue, std::string &amp;alterSymbol)</td></tr>
-<tr class="separator:a54f9f4a76a49a79cfbc497aaa0d23466"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a92018d383f52ad75fd33ffedc55d7bfe"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a92018d383f52ad75fd33ffedc55d7bfe">durationRatio</a> (float duration_A, float duration_B)</td></tr>
-<tr class="separator:a92018d383f52ad75fd33ffedc55d7bfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a90a253f2bb2a24bb3b52182e3010541a"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a90a253f2bb2a24bb3b52182e3010541a">duration2noteType</a> (const Duration duration)</td></tr>
-<tr class="separator:a90a253f2bb2a24bb3b52182e3010541a"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a870e684f6f6a528c3de16e2eb7477562"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a870e684f6f6a528c3de16e2eb7477562">duration2Ticks</a> (const Duration duration, const int divisionsPerQuarterNote=256)</td></tr>
-<tr class="separator:a870e684f6f6a528c3de16e2eb7477562"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae1be6537daadc595d32c8b402568cf5e"><td class="memItemLeft" align="right" valign="top">static Duration&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#ae1be6537daadc595d32c8b402568cf5e">noteType2duration</a> (const std::string &amp;noteType)</td></tr>
-<tr class="separator:ae1be6537daadc595d32c8b402568cf5e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a05f63eff91513d68f3a307a41658523e"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a05f63eff91513d68f3a307a41658523e">transposePitch</a> (const std::string &amp;pitch, const int semitones, const std::string &amp;accType=MUSIC_XML::ACCIDENT::SHARP)</td></tr>
-<tr class="separator:a05f63eff91513d68f3a307a41658523e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4f1199abc33057e32a94fe6cc9b60441"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a4f1199abc33057e32a94fe6cc9b60441">isEnharmonic</a> (const std::string &amp;pitch_A, const std::string &amp;pitch_B)</td></tr>
-<tr class="separator:a4f1199abc33057e32a94fe6cc9b60441"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a272dbfdd41c2e0d6b442da86b66d1212"><td class="memItemLeft" align="right" valign="top">static const nlohmann::json&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a272dbfdd41c2e0d6b442da86b66d1212">getPercentiles</a> (const nlohmann::json &amp;table, const std::vector&lt; float &gt; &amp;desiredPercentiles)</td></tr>
-<tr class="memdesc:a272dbfdd41c2e0d6b442da86b66d1212"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Percentiles object.  <a href="class_helper.html#a272dbfdd41c2e0d6b442da86b66d1212">More...</a><br /></td></tr>
-<tr class="separator:a272dbfdd41c2e0d6b442da86b66d1212"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1ab92d51363ddf6479ce3e736164aee8"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a1ab92d51363ddf6479ce3e736164aee8">alterName2symbol</a> (const std::string &amp;alterName)</td></tr>
-<tr class="separator:a1ab92d51363ddf6479ce3e736164aee8"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a11f86a03147ce41446eaab8f8d94c24e"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a11f86a03147ce41446eaab8f8d94c24e">alterSymbol2Value</a> (const std::string &amp;alterSymbol)</td></tr>
-<tr class="separator:a11f86a03147ce41446eaab8f8d94c24e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2fbb289124e24b98ce76a59cfa66a1ba"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a2fbb289124e24b98ce76a59cfa66a1ba">alterValue2symbol</a> (const float alterValue)</td></tr>
-<tr class="separator:a2fbb289124e24b98ce76a59cfa66a1ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a51255a012f3cd184415637857fd93b1c"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a51255a012f3cd184415637857fd93b1c">alterValue2Name</a> (const float alterValue)</td></tr>
-<tr class="separator:a51255a012f3cd184415637857fd93b1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0f50824e74a435ded662c77a52d4bc24"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a0f50824e74a435ded662c77a52d4bc24">getNoteNodeData</a> (const pugi::xml_node &amp;node, std::string &amp;pitch, std::string &amp;pitchClass, std::string &amp;alterSymbol, int &amp;alterValue, int &amp;octave, std::string &amp;type, float &amp;duration)</td></tr>
-<tr class="memdesc:a0f50824e74a435ded662c77a52d4bc24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the <a class="el" href="class_note.html">Note</a> Node Data object.  <a href="class_helper.html#a0f50824e74a435ded662c77a52d4bc24">More...</a><br /></td></tr>
-<tr class="separator:a0f50824e74a435ded662c77a52d4bc24"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a77dae5f8ea5b9bcb90123323659686d7"><td class="memItemLeft" align="right" valign="top">static const pugi::xpath_node_set&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a77dae5f8ea5b9bcb90123323659686d7">getNodeSet</a> (const pugi::xml_document &amp;doc, const std::string &amp;xPath)</td></tr>
-<tr class="memdesc:a77dae5f8ea5b9bcb90123323659686d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Node Set object.  <a href="class_helper.html#a77dae5f8ea5b9bcb90123323659686d7">More...</a><br /></td></tr>
-<tr class="separator:a77dae5f8ea5b9bcb90123323659686d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1e177c689029d9a213b930159e35815d"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a1e177c689029d9a213b930159e35815d">frequencies2cents</a> (const float freq_A, const float freq_B)</td></tr>
+<tr class="memdesc:a1e177c689029d9a213b930159e35815d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a frequency ratio between two pitches to cents.  <a href="class_helper.html#a1e177c689029d9a213b930159e35815d">More...</a><br /></td></tr>
 <tr class="separator:a1e177c689029d9a213b930159e35815d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ff5801122d046d8a0067ad28fc86784"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a6ff5801122d046d8a0067ad28fc86784">freq2equalTemperament</a> (const float freq, const float referenceFreq=440.0f)</td></tr>
+<tr class="memdesc:a6ff5801122d046d8a0067ad28fc86784"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a frequency to the nearest equal-tempered frequency.  <a href="class_helper.html#a6ff5801122d046d8a0067ad28fc86784">More...</a><br /></td></tr>
 <tr class="separator:a6ff5801122d046d8a0067ad28fc86784"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae429c9f1c384e1acf53635c627779eaa"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#ae429c9f1c384e1acf53635c627779eaa">rhythmFigure2noteType</a> (const RhythmFigure rhythmFigure)</td></tr>
+<tr class="memdesc:ae429c9f1c384e1acf53635c627779eaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a RhythmFigure enum to a MusicXML note type string.  <a href="class_helper.html#ae429c9f1c384e1acf53635c627779eaa">More...</a><br /></td></tr>
+<tr class="separator:ae429c9f1c384e1acf53635c627779eaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0734029a98e701b7260990123a648d27"><td class="memItemLeft" align="right" valign="top">static int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a0734029a98e701b7260990123a648d27">rhythmFigure2Ticks</a> (const RhythmFigure rhythmFigure, const int divisionsPerQuarterNote=256)</td></tr>
+<tr class="memdesc:a0734029a98e701b7260990123a648d27"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a RhythmFigure to a duration in ticks.  <a href="class_helper.html#a0734029a98e701b7260990123a648d27">More...</a><br /></td></tr>
+<tr class="separator:a0734029a98e701b7260990123a648d27"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adbc810813977312401ed2c6a2353df7a"><td class="memItemLeft" align="right" valign="top">static RhythmFigure&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#adbc810813977312401ed2c6a2353df7a">noteType2RhythmFigure</a> (const std::string &amp;noteType)</td></tr>
+<tr class="memdesc:adbc810813977312401ed2c6a2353df7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a MusicXML note type string to a RhythmFigure enum.  <a href="class_helper.html#adbc810813977312401ed2c6a2353df7a">More...</a><br /></td></tr>
+<tr class="separator:adbc810813977312401ed2c6a2353df7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a05f63eff91513d68f3a307a41658523e"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a05f63eff91513d68f3a307a41658523e">transposePitch</a> (const std::string &amp;pitch, const int semitones, const std::string &amp;accType=MUSIC_XML::ACCIDENT::SHARP)</td></tr>
+<tr class="memdesc:a05f63eff91513d68f3a307a41658523e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transposes a pitch string by a number of semitones.  <a href="class_helper.html#a05f63eff91513d68f3a307a41658523e">More...</a><br /></td></tr>
+<tr class="separator:a05f63eff91513d68f3a307a41658523e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f1199abc33057e32a94fe6cc9b60441"><td class="memItemLeft" align="right" valign="top">static bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a4f1199abc33057e32a94fe6cc9b60441">isEnharmonic</a> (const std::string &amp;pitch_A, const std::string &amp;pitch_B)</td></tr>
+<tr class="memdesc:a4f1199abc33057e32a94fe6cc9b60441"><td class="mdescLeft">&#160;</td><td class="mdescRight">Checks if two pitch strings are enharmonically equivalent.  <a href="class_helper.html#a4f1199abc33057e32a94fe6cc9b60441">More...</a><br /></td></tr>
+<tr class="separator:a4f1199abc33057e32a94fe6cc9b60441"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a54f9f4a76a49a79cfbc497aaa0d23466"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a54f9f4a76a49a79cfbc497aaa0d23466">splitPitch</a> (const std::string &amp;pitch, std::string &amp;pitchClass, std::string &amp;pitchStep, int &amp;octave, float &amp;alterValue, std::string &amp;alterSymbol)</td></tr>
+<tr class="memdesc:a54f9f4a76a49a79cfbc497aaa0d23466"><td class="mdescLeft">&#160;</td><td class="mdescRight">Splits a pitch string into its components: pitch class, step, octave, accidental value, and symbol.  <a href="class_helper.html#a54f9f4a76a49a79cfbc497aaa0d23466">More...</a><br /></td></tr>
+<tr class="separator:a54f9f4a76a49a79cfbc497aaa0d23466"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a92018d383f52ad75fd33ffedc55d7bfe"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a92018d383f52ad75fd33ffedc55d7bfe">durationRatio</a> (float duration_A, float duration_B)</td></tr>
+<tr class="memdesc:a92018d383f52ad75fd33ffedc55d7bfe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the ratio between two durations.  <a href="class_helper.html#a92018d383f52ad75fd33ffedc55d7bfe">More...</a><br /></td></tr>
+<tr class="separator:a92018d383f52ad75fd33ffedc55d7bfe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1ab92d51363ddf6479ce3e736164aee8"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a1ab92d51363ddf6479ce3e736164aee8">alterName2symbol</a> (const std::string &amp;alterName)</td></tr>
+<tr class="memdesc:a1ab92d51363ddf6479ce3e736164aee8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts an accidental name (e.g., "sharp") to its symbol (e.g., "#").  <a href="class_helper.html#a1ab92d51363ddf6479ce3e736164aee8">More...</a><br /></td></tr>
+<tr class="separator:a1ab92d51363ddf6479ce3e736164aee8"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a11f86a03147ce41446eaab8f8d94c24e"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a11f86a03147ce41446eaab8f8d94c24e">alterSymbol2Value</a> (const std::string &amp;alterSymbol)</td></tr>
+<tr class="memdesc:a11f86a03147ce41446eaab8f8d94c24e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts an accidental symbol (e.g., "#") to its numeric value.  <a href="class_helper.html#a11f86a03147ce41446eaab8f8d94c24e">More...</a><br /></td></tr>
+<tr class="separator:a11f86a03147ce41446eaab8f8d94c24e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a2fbb289124e24b98ce76a59cfa66a1ba"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a2fbb289124e24b98ce76a59cfa66a1ba">alterValue2symbol</a> (const float alterValue)</td></tr>
+<tr class="memdesc:a2fbb289124e24b98ce76a59cfa66a1ba"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts an accidental value to its symbol (e.g., 1.0 -&gt; "#").  <a href="class_helper.html#a2fbb289124e24b98ce76a59cfa66a1ba">More...</a><br /></td></tr>
+<tr class="separator:a2fbb289124e24b98ce76a59cfa66a1ba"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a51255a012f3cd184415637857fd93b1c"><td class="memItemLeft" align="right" valign="top">static const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a51255a012f3cd184415637857fd93b1c">alterValue2Name</a> (const float alterValue)</td></tr>
+<tr class="memdesc:a51255a012f3cd184415637857fd93b1c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts an accidental value to its name (e.g., 1.0 -&gt; "sharp").  <a href="class_helper.html#a51255a012f3cd184415637857fd93b1c">More...</a><br /></td></tr>
+<tr class="separator:a51255a012f3cd184415637857fd93b1c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a0f50824e74a435ded662c77a52d4bc24"><td class="memItemLeft" align="right" valign="top">static void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a0f50824e74a435ded662c77a52d4bc24">getNoteNodeData</a> (const pugi::xml_node &amp;node, std::string &amp;pitch, std::string &amp;pitchClass, std::string &amp;alterSymbol, int &amp;alterValue, int &amp;octave, std::string &amp;type, float &amp;duration)</td></tr>
+<tr class="memdesc:a0f50824e74a435ded662c77a52d4bc24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Retrieves detailed information from a MusicXML note node.  <a href="class_helper.html#a0f50824e74a435ded662c77a52d4bc24">More...</a><br /></td></tr>
+<tr class="separator:a0f50824e74a435ded662c77a52d4bc24"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a77dae5f8ea5b9bcb90123323659686d7"><td class="memItemLeft" align="right" valign="top">static const pugi::xpath_node_set&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a77dae5f8ea5b9bcb90123323659686d7">getNodeSet</a> (const pugi::xml_document &amp;doc, const std::string &amp;xPath)</td></tr>
+<tr class="memdesc:a77dae5f8ea5b9bcb90123323659686d7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Selects nodes from a MusicXML document using an XPath expression.  <a href="class_helper.html#a77dae5f8ea5b9bcb90123323659686d7">More...</a><br /></td></tr>
+<tr class="separator:a77dae5f8ea5b9bcb90123323659686d7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a272dbfdd41c2e0d6b442da86b66d1212"><td class="memItemLeft" align="right" valign="top">static const nlohmann::json&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a272dbfdd41c2e0d6b442da86b66d1212">getPercentiles</a> (const nlohmann::json &amp;table, const std::vector&lt; float &gt; &amp;desiredPercentiles)</td></tr>
+<tr class="memdesc:a272dbfdd41c2e0d6b442da86b66d1212"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a JSON object with percentiles for a given table and desired percentile values.  <a href="class_helper.html#a272dbfdd41c2e0d6b442da86b66d1212">More...</a><br /></td></tr>
+<tr class="separator:a272dbfdd41c2e0d6b442da86b66d1212"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad195b3418d2ad2c2055935639c7f2930"><td class="memItemLeft" align="right" valign="top">static std::pair&lt; std::string, int &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#ad195b3418d2ad2c2055935639c7f2930">freq2pitch</a> (const float freq, const std::string &amp;accType=MUSIC_XML::ACCIDENT::NONE)</td></tr>
+<tr class="memdesc:ad195b3418d2ad2c2055935639c7f2930"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a frequency in Hz to the closest pitch and cents deviation.  <a href="class_helper.html#ad195b3418d2ad2c2055935639c7f2930">More...</a><br /></td></tr>
+<tr class="separator:ad195b3418d2ad2c2055935639c7f2930"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a47e6844554441d6d555bcacfec47d215"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a47e6844554441d6d555bcacfec47d215">pitchRatio</a> (const std::string &amp;pitch_A, const std::string &amp;pitch_B)</td></tr>
+<tr class="memdesc:a47e6844554441d6d555bcacfec47d215"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the ratio between two pitch strings as a float.  <a href="class_helper.html#a47e6844554441d6d555bcacfec47d215">More...</a><br /></td></tr>
+<tr class="separator:a47e6844554441d6d555bcacfec47d215"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a135ab60b66b74257b946cdf0712d6234"><td class="memItemLeft" align="right" valign="top">static std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a135ab60b66b74257b946cdf0712d6234">toString</a> (const RhythmFigure rhythmFigure)</td></tr>
+<tr class="memdesc:a135ab60b66b74257b946cdf0712d6234"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a RhythmFigure to a string.  <a href="class_helper.html#a135ab60b66b74257b946cdf0712d6234">More...</a><br /></td></tr>
+<tr class="separator:a135ab60b66b74257b946cdf0712d6234"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab3d8c8341dbdef8b012be64c2fdfc826"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#ab3d8c8341dbdef8b012be64c2fdfc826">getSemitonesDifferenceBetweenMelodies</a> (const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;referenceMelody, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;otherMelody)</td></tr>
+<tr class="memdesc:ab3d8c8341dbdef8b012be64c2fdfc826"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the vector of semitone differences between two melodies.  <a href="class_helper.html#ab3d8c8341dbdef8b012be64c2fdfc826">More...</a><br /></td></tr>
+<tr class="separator:ab3d8c8341dbdef8b012be64c2fdfc826"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a1eaba1229b9bc337c3431322c00970d4"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a1eaba1229b9bc337c3431322c00970d4">calculateMelodyEuclideanSimilarity</a> (const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;melodyPattern, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;otherMelody)</td></tr>
+<tr class="memdesc:a1eaba1229b9bc337c3431322c00970d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the Euclidean similarity between two melodies based on semitone differences.  <a href="class_helper.html#a1eaba1229b9bc337c3431322c00970d4">More...</a><br /></td></tr>
+<tr class="separator:a1eaba1229b9bc337c3431322c00970d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a541d362011bd771513a9a6464fe51800"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a541d362011bd771513a9a6464fe51800">calculateMelodyEuclideanSimilarity</a> (const std::vector&lt; float &gt; &amp;semitonesDifference)</td></tr>
+<tr class="memdesc:a541d362011bd771513a9a6464fe51800"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the Euclidean similarity from a vector of semitone differences.  <a href="class_helper.html#a541d362011bd771513a9a6464fe51800">More...</a><br /></td></tr>
+<tr class="separator:a541d362011bd771513a9a6464fe51800"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a9d80f8dc39a98694c668a849320d3aac"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a9d80f8dc39a98694c668a849320d3aac">getDurationDifferenceBetweenRhythms</a> (const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;referenceRhythm, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;otherRhythm)</td></tr>
+<tr class="memdesc:a9d80f8dc39a98694c668a849320d3aac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the vector of normalized duration differences between two rhythms.  <a href="class_helper.html#a9d80f8dc39a98694c668a849320d3aac">More...</a><br /></td></tr>
+<tr class="separator:a9d80f8dc39a98694c668a849320d3aac"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4c584d257e17717b833354790451ba1d"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a4c584d257e17717b833354790451ba1d">calculateRhythmicEuclideanSimilarity</a> (const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;rhythmPattern, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;otherRhythm)</td></tr>
+<tr class="memdesc:a4c584d257e17717b833354790451ba1d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the Euclidean similarity between two rhythms based on duration differences.  <a href="class_helper.html#a4c584d257e17717b833354790451ba1d">More...</a><br /></td></tr>
+<tr class="separator:a4c584d257e17717b833354790451ba1d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a538c6607fc8fdad8f09a2b048d0d9482"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a538c6607fc8fdad8f09a2b048d0d9482">calculateRhythmicEuclideanSimilarity</a> (const std::vector&lt; float &gt; &amp;durationDifferences)</td></tr>
+<tr class="memdesc:a538c6607fc8fdad8f09a2b048d0d9482"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the Euclidean similarity from a vector of duration differences.  <a href="class_helper.html#a538c6607fc8fdad8f09a2b048d0d9482">More...</a><br /></td></tr>
+<tr class="separator:a538c6607fc8fdad8f09a2b048d0d9482"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Member Function Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p ><a class="el" href="class_helper.html" title="Helper class with static utility functions for music analysis, pitch/duration conversion,...">Helper</a> class with static utility functions for music analysis, pitch/duration conversion, and MusicXML processing. </p>
+<p >This class provides a wide range of static methods for manipulating musical data, including pitch and rhythm conversions, MusicXML node handling, similarity calculations, and more. All methods are designed for use in music research and computational musicology. </p>
+</div><h2 class="groupheader">Member Function Documentation</h2>
 <a id="a1ab92d51363ddf6479ce3e736164aee8" name="a1ab92d51363ddf6479ce3e736164aee8"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a1ab92d51363ddf6479ce3e736164aee8">&#9670;&nbsp;</a></span>alterName2symbol()</h2>
 
@@ -191,13 +258,15 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts an accidental name (e.g., "sharp") to its symbol (e.g., "#"). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">alterName</td><td></td></tr>
+    <tr><td class="paramname">alterName</td><td>Accidental name. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Accidental symbol. </dd></dl>
 
 </div>
 </div>
@@ -224,13 +293,15 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts an accidental symbol (e.g., "#") to its numeric value. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">alterSymbol</td><td></td></tr>
+    <tr><td class="paramname">alterSymbol</td><td>Accidental symbol. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>float </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Numeric value (e.g., 1.0 for "#"). </dd></dl>
 
 </div>
 </div>
@@ -257,13 +328,15 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts an accidental value to its name (e.g., 1.0 -&gt; "sharp"). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">alterValue</td><td></td></tr>
+    <tr><td class="paramname">alterValue</td><td>Accidental value. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Accidental name. </dd></dl>
 
 </div>
 </div>
@@ -290,18 +363,20 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts an accidental value to its symbol (e.g., 1.0 -&gt; "#"). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">alterValue</td><td></td></tr>
+    <tr><td class="paramname">alterValue</td><td>Accidental value. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Accidental symbol. </dd></dl>
 
 </div>
 </div>
-<a id="a90a253f2bb2a24bb3b52182e3010541a" name="a90a253f2bb2a24bb3b52182e3010541a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a90a253f2bb2a24bb3b52182e3010541a">&#9670;&nbsp;</a></span>duration2noteType()</h2>
+<a id="a541d362011bd771513a9a6464fe51800" name="a541d362011bd771513a9a6464fe51800"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a541d362011bd771513a9a6464fe51800">&#9670;&nbsp;</a></span>calculateMelodyEuclideanSimilarity() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -310,10 +385,10 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static std::string Helper::duration2noteType </td>
+          <td class="memname">static float Helper::calculateMelodyEuclideanSimilarity </td>
           <td>(</td>
-          <td class="paramtype">const Duration&#160;</td>
-          <td class="paramname"><em>duration</em></td><td>)</td>
+          <td class="paramtype">const std::vector&lt; float &gt; &amp;&#160;</td>
+          <td class="paramname"><em>semitonesDifference</em></td><td>)</td>
           <td></td>
         </tr>
       </table>
@@ -323,18 +398,20 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Calculates the Euclidean similarity from a vector of semitone differences. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">duration</td><td></td></tr>
+    <tr><td class="paramname">semitonesDifference</td><td>Vector of semitone differences. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Similarity value in [0,1]. </dd></dl>
 
 </div>
 </div>
-<a id="a870e684f6f6a528c3de16e2eb7477562" name="a870e684f6f6a528c3de16e2eb7477562"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a870e684f6f6a528c3de16e2eb7477562">&#9670;&nbsp;</a></span>duration2Ticks()</h2>
+<a id="a1eaba1229b9bc337c3431322c00970d4" name="a1eaba1229b9bc337c3431322c00970d4"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1eaba1229b9bc337c3431322c00970d4">&#9670;&nbsp;</a></span>calculateMelodyEuclideanSimilarity() <span class="overload">[2/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -343,16 +420,16 @@ Static Public Member Functions</h2></td></tr>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static int Helper::duration2Ticks </td>
+          <td class="memname">static float Helper::calculateMelodyEuclideanSimilarity </td>
           <td>(</td>
-          <td class="paramtype">const Duration&#160;</td>
-          <td class="paramname"><em>duration</em>, </td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>melodyPattern</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const int&#160;</td>
-          <td class="paramname"><em>divisionsPerQuarterNote</em> = <code>256</code>&#160;</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>otherMelody</em>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -366,14 +443,97 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Calculates the Euclidean similarity between two melodies based on semitone differences. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">duration</td><td></td></tr>
-    <tr><td class="paramname">divisionsPerQuarterNote</td><td></td></tr>
+    <tr><td class="paramname">melodyPattern</td><td>Reference melody. </td></tr>
+    <tr><td class="paramname">otherMelody</td><td>Comparison melody. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Similarity value in [0,1]. </dd></dl>
+
+</div>
+</div>
+<a id="a538c6607fc8fdad8f09a2b048d0d9482" name="a538c6607fc8fdad8f09a2b048d0d9482"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a538c6607fc8fdad8f09a2b048d0d9482">&#9670;&nbsp;</a></span>calculateRhythmicEuclideanSimilarity() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static float Helper::calculateRhythmicEuclideanSimilarity </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; float &gt; &amp;&#160;</td>
+          <td class="paramname"><em>durationDifferences</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Calculates the Euclidean similarity from a vector of duration differences. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">durationDifferences</td><td>Vector of duration differences. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Similarity value in [0,1]. </dd></dl>
+
+</div>
+</div>
+<a id="a4c584d257e17717b833354790451ba1d" name="a4c584d257e17717b833354790451ba1d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4c584d257e17717b833354790451ba1d">&#9670;&nbsp;</a></span>calculateRhythmicEuclideanSimilarity() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static float Helper::calculateRhythmicEuclideanSimilarity </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>rhythmPattern</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>otherRhythm</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Calculates the Euclidean similarity between two rhythms based on duration differences. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">rhythmPattern</td><td>Reference rhythm. </td></tr>
+    <tr><td class="paramname">otherRhythm</td><td>Comparison rhythm. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Similarity value in [0,1]. </dd></dl>
 
 </div>
 </div>
@@ -410,14 +570,16 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Computes the ratio between two durations. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">duration_A</td><td></td></tr>
-    <tr><td class="paramname">duration_B</td><td></td></tr>
+    <tr><td class="paramname">duration_A</td><td><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> of note A. </td></tr>
+    <tr><td class="paramname">duration_B</td><td><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> of note B. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>float </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Ratio in [0,1], where 1 means identical durations. </dd></dl>
 
 </div>
 </div>
@@ -454,14 +616,16 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Formats a floating-point number as a string with a given number of decimal digits. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">floatValue</td><td></td></tr>
-    <tr><td class="paramname">digits</td><td></td></tr>
+    <tr><td class="paramname">floatValue</td><td>The value to format. </td></tr>
+    <tr><td class="paramname">digits</td><td>Number of decimal digits. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Formatted string. </dd></dl>
 
 </div>
 </div>
@@ -498,14 +662,16 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a frequency to the nearest equal-tempered frequency. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">freq</td><td></td></tr>
-    <tr><td class="paramname">referenceFreq</td><td></td></tr>
+    <tr><td class="paramname">freq</td><td>Input frequency. </td></tr>
+    <tr><td class="paramname">referenceFreq</td><td>Reference frequency (default: 440.0 Hz). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>float </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Nearest equal-tempered frequency. </dd></dl>
 
 </div>
 </div>
@@ -542,19 +708,21 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a frequency in Hz to the closest MIDI note and cents deviation. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">freq</td><td></td></tr>
-    <tr><td class="paramname">modelo</td><td></td></tr>
+    <tr><td class="paramname">freq</td><td>Frequency in Hz. </td></tr>
+    <tr><td class="paramname">modelo</td><td>Optional custom mapping function. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>std::pair&lt;int, int&gt; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Pair of MIDI note number and cents deviation. </dd></dl>
 
 </div>
 </div>
-<a id="a96de9810e9977869a219149b7184c368" name="a96de9810e9977869a219149b7184c368"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a96de9810e9977869a219149b7184c368">&#9670;&nbsp;</a></span>freq2pitch()</h2>
+<a id="ad195b3418d2ad2c2055935639c7f2930" name="ad195b3418d2ad2c2055935639c7f2930"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad195b3418d2ad2c2055935639c7f2930">&#9670;&nbsp;</a></span>freq2pitch()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -572,7 +740,7 @@ Static Public Member Functions</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::string &amp;&#160;</td>
-          <td class="paramname"><em>accType</em> = <code>MUSIC_XML::ACCIDENT::SHARP</code>&#160;</td>
+          <td class="paramname"><em>accType</em> = <code>MUSIC_XML::ACCIDENT::NONE</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -586,14 +754,16 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a frequency in Hz to the closest pitch and cents deviation. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">freq</td><td></td></tr>
-    <tr><td class="paramname">accType</td><td></td></tr>
+    <tr><td class="paramname">freq</td><td>Frequency in Hz. </td></tr>
+    <tr><td class="paramname">accType</td><td>Accidental type for output pitch. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>std::pair&lt;std::string, int&gt; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Pair of pitch string and cents deviation. </dd></dl>
 
 </div>
 </div>
@@ -630,14 +800,16 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a frequency ratio between two pitches to cents. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">freq_A</td><td></td></tr>
-    <tr><td class="paramname">freq_B</td><td></td></tr>
+    <tr><td class="paramname">freq_A</td><td>Frequency of the first pitch. </td></tr>
+    <tr><td class="paramname">freq_B</td><td>Frequency of the second pitch. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> in cents. </dd></dl>
 
 </div>
 </div>
@@ -674,14 +846,62 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Generates a string of spaces for indentation, useful for pretty-printing MusicXML. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">identPosition</td><td></td></tr>
-    <tr><td class="paramname">identSize</td><td></td></tr>
+    <tr><td class="paramname">identPosition</td><td>Indentation level. </td></tr>
+    <tr><td class="paramname">identSize</td><td>Number of spaces per level (default: 2). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>String with the requested indentation. </dd></dl>
+
+</div>
+</div>
+<a id="a9d80f8dc39a98694c668a849320d3aac" name="a9d80f8dc39a98694c668a849320d3aac"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9d80f8dc39a98694c668a849320d3aac">&#9670;&nbsp;</a></span>getDurationDifferenceBetweenRhythms()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static std::vector&lt; float &gt; Helper::getDurationDifferenceBetweenRhythms </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>referenceRhythm</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>otherRhythm</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Computes the vector of normalized duration differences between two rhythms. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">referenceRhythm</td><td>Vector of reference notes. </td></tr>
+    <tr><td class="paramname">otherRhythm</td><td>Vector of comparison notes. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of duration differences. </dd></dl>
 
 </div>
 </div>
@@ -719,15 +939,15 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Get the Node Set object. </p>
+<p>Selects nodes from a MusicXML document using an XPath expression. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">doc</td><td></td></tr>
-    <tr><td class="paramname">xPath</td><td></td></tr>
+    <tr><td class="paramname">doc</td><td>XML document. </td></tr>
+    <tr><td class="paramname">xPath</td><td>XPath query string. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const pugi::xpath_node_set </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Set of matching XML nodes. </dd></dl>
 
 </div>
 </div>
@@ -801,17 +1021,17 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Get the <a class="el" href="class_note.html">Note</a> Node Data object. </p>
+<p>Retrieves detailed information from a MusicXML note node. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">node</td><td></td></tr>
-    <tr><td class="paramname">pitch</td><td></td></tr>
-    <tr><td class="paramname">pitchClass</td><td></td></tr>
-    <tr><td class="paramname">alterSymbol</td><td></td></tr>
-    <tr><td class="paramname">alterValue</td><td></td></tr>
-    <tr><td class="paramname">octave</td><td></td></tr>
-    <tr><td class="paramname">type</td><td></td></tr>
-    <tr><td class="paramname">duration</td><td></td></tr>
+    <tr><td class="paramname">node</td><td>XML node of the note. </td></tr>
+    <tr><td class="paramname">pitch</td><td>Output: pitch string. </td></tr>
+    <tr><td class="paramname">pitchClass</td><td>Output: pitch class. </td></tr>
+    <tr><td class="paramname">alterSymbol</td><td>Output: accidental symbol. </td></tr>
+    <tr><td class="paramname">alterValue</td><td>Output: accidental value. </td></tr>
+    <tr><td class="paramname">octave</td><td>Output: octave. </td></tr>
+    <tr><td class="paramname">type</td><td>Output: note type. </td></tr>
+    <tr><td class="paramname">duration</td><td>Output: duration. </td></tr>
   </table>
   </dd>
 </dl>
@@ -852,15 +1072,61 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Get the Percentiles object. </p>
+<p>Returns a JSON object with percentiles for a given table and desired percentile values. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">table</td><td></td></tr>
-    <tr><td class="paramname">desiredPercentiles</td><td></td></tr>
+    <tr><td class="paramname">table</td><td>Input JSON table. </td></tr>
+    <tr><td class="paramname">desiredPercentiles</td><td>Vector of percentiles (0.0 to 1.0). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const nlohmann::json </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>JSON object with percentile values. </dd></dl>
+
+</div>
+</div>
+<a id="ab3d8c8341dbdef8b012be64c2fdfc826" name="ab3d8c8341dbdef8b012be64c2fdfc826"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab3d8c8341dbdef8b012be64c2fdfc826">&#9670;&nbsp;</a></span>getSemitonesDifferenceBetweenMelodies()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static std::vector&lt; float &gt; Helper::getSemitonesDifferenceBetweenMelodies </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>referenceMelody</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>otherMelody</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Computes the vector of semitone differences between two melodies. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">referenceMelody</td><td>Vector of reference notes. </td></tr>
+    <tr><td class="paramname">otherMelody</td><td>Vector of comparison notes. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of semitone differences. </dd></dl>
 
 </div>
 </div>
@@ -897,16 +1163,16 @@ Static Public Member Functions</h2></td></tr>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Checks if two pitch strings are enharmonically equivalent. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitch_A</td><td></td></tr>
-    <tr><td class="paramname">pitch_B</td><td></td></tr>
+    <tr><td class="paramname">pitch_A</td><td>First pitch string. </td></tr>
+    <tr><td class="paramname">pitch_B</td><td>Second pitch string. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if pitches are enharmonic. </dd></dl>
 
 </div>
 </div>
@@ -943,14 +1209,16 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a MIDI note number to frequency in Hz. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">midiNote</td><td></td></tr>
-    <tr><td class="paramname">freqA4</td><td></td></tr>
+    <tr><td class="paramname">midiNote</td><td>MIDI note number. </td></tr>
+    <tr><td class="paramname">freqA4</td><td>Reference frequency for A4 (default: 440.0 Hz). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>float </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Frequency in Hz. </dd></dl>
 
 </div>
 </div>
@@ -977,13 +1245,15 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a MIDI note number to its octave number. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">midiNote</td><td></td></tr>
+    <tr><td class="paramname">midiNote</td><td>MIDI note number. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Octave number. </dd></dl>
 
 </div>
 </div>
@@ -1020,14 +1290,16 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a MIDI note number to a pitch string, with optional accidental type. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">midiNote</td><td></td></tr>
-    <tr><td class="paramname">accType</td><td></td></tr>
+    <tr><td class="paramname">midiNote</td><td>MIDI note number. </td></tr>
+    <tr><td class="paramname">accType</td><td>Accidental type (e.g., "#", "b"). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Pitch string. </dd></dl>
 
 </div>
 </div>
@@ -1054,18 +1326,20 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Returns all possible pitch spellings for a given MIDI note. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">midiNote</td><td></td></tr>
+    <tr><td class="paramname">midiNote</td><td>MIDI note number. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const std::vector&lt;std::string&gt; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of pitch strings. </dd></dl>
 
 </div>
 </div>
 <a id="a5b28f717cd0f49b531dbec8a40b98973" name="a5b28f717cd0f49b531dbec8a40b98973"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5b28f717cd0f49b531dbec8a40b98973">&#9670;&nbsp;</a></span>notes2Intervals()</h2>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b28f717cd0f49b531dbec8a40b98973">&#9670;&nbsp;</a></span>notes2Intervals() <span class="overload">[1/2]</span></h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1097,14 +1371,62 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Computes intervals between a sequence of notes. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">notes</td><td></td></tr>
-    <tr><td class="paramname">firstNoteAsReference</td><td></td></tr>
+    <tr><td class="paramname">notes</td><td>Vector of <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> objects. </td></tr>
+    <tr><td class="paramname">firstNoteAsReference</td><td>If true, intervals are from the first note to each subsequent note. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>std::vector&lt;Interval&gt; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of <a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> objects. </dd></dl>
+
+</div>
+</div>
+<a id="abf044b14f4f51f0657dc5048f11243a2" name="abf044b14f4f51f0657dc5048f11243a2"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abf044b14f4f51f0657dc5048f11243a2">&#9670;&nbsp;</a></span>notes2Intervals() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static std::vector&lt; <a class="el" href="class_interval.html">Interval</a> &gt; Helper::notes2Intervals </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>pitches</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>firstNoteAsReference</em> = <code>false</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Computes intervals between a sequence of pitch strings. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">pitches</td><td>Vector of pitch strings. </td></tr>
+    <tr><td class="paramname">firstNoteAsReference</td><td>If true, intervals are from the first note to each subsequent note. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of <a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> objects. </dd></dl>
 
 </div>
 </div>
@@ -1183,26 +1505,28 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
-<dl class="params"><dt>Parameters</dt><dd>
+
+<p>Computes the similarity between two notes based on pitch class, octave, and duration. </p>
+<p >Used for melodic pattern matching and musicological analysis. </p><dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitchClass_A</td><td></td></tr>
-    <tr><td class="paramname">octave_A</td><td></td></tr>
-    <tr><td class="paramname">duration_A</td><td></td></tr>
-    <tr><td class="paramname">pitchClass_B</td><td></td></tr>
-    <tr><td class="paramname">octave_B</td><td></td></tr>
-    <tr><td class="paramname">duration_B</td><td></td></tr>
-    <tr><td class="paramname">durRatio</td><td></td></tr>
-    <tr><td class="paramname">pitRatio</td><td></td></tr>
-    <tr><td class="paramname">enableEnharmonic</td><td></td></tr>
+    <tr><td class="paramname">pitchClass_A</td><td>Pitch class of note A. </td></tr>
+    <tr><td class="paramname">octave_A</td><td>Octave of note A. </td></tr>
+    <tr><td class="paramname">duration_A</td><td><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> of note A. </td></tr>
+    <tr><td class="paramname">pitchClass_B</td><td>Pitch class of note B. </td></tr>
+    <tr><td class="paramname">octave_B</td><td>Octave of note B. </td></tr>
+    <tr><td class="paramname">duration_B</td><td><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> of note B. </td></tr>
+    <tr><td class="paramname">durRatio</td><td>Output: duration similarity ratio. </td></tr>
+    <tr><td class="paramname">pitRatio</td><td>Output: pitch similarity ratio. </td></tr>
+    <tr><td class="paramname">enableEnharmonic</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>float </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Similarity value in [0,1], where 1 is identical. </dd></dl>
 
 </div>
 </div>
-<a id="ae1be6537daadc595d32c8b402568cf5e" name="ae1be6537daadc595d32c8b402568cf5e"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae1be6537daadc595d32c8b402568cf5e">&#9670;&nbsp;</a></span>noteType2duration()</h2>
+<a id="adbc810813977312401ed2c6a2353df7a" name="adbc810813977312401ed2c6a2353df7a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adbc810813977312401ed2c6a2353df7a">&#9670;&nbsp;</a></span>noteType2RhythmFigure()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1211,7 +1535,7 @@ false </dd></dl>
   <td class="mlabels-left">
       <table class="memname">
         <tr>
-          <td class="memname">static Duration Helper::noteType2duration </td>
+          <td class="memname">static RhythmFigure Helper::noteType2RhythmFigure </td>
           <td>(</td>
           <td class="paramtype">const std::string &amp;&#160;</td>
           <td class="paramname"><em>noteType</em></td><td>)</td>
@@ -1224,13 +1548,15 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a MusicXML note type string to a RhythmFigure enum. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">noteType</td><td></td></tr>
+    <tr><td class="paramname">noteType</td><td><a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> type string (e.g., "quarter"). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Duration </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>RhythmFigure value. </dd></dl>
 
 </div>
 </div>
@@ -1267,14 +1593,16 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a MusicXML note type string to a duration in ticks. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">noteType</td><td></td></tr>
-    <tr><td class="paramname">divisionsPerQuarterNote</td><td></td></tr>
+    <tr><td class="paramname">noteType</td><td><a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> type string (e.g., "quarter"). </td></tr>
+    <tr><td class="paramname">divisionsPerQuarterNote</td><td>Divisions per quarter note (default: 256). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> in ticks. </dd></dl>
 
 </div>
 </div>
@@ -1311,14 +1639,16 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a floating-point pitch number to a pitch string, with optional accidental type. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">number</td><td></td></tr>
-    <tr><td class="paramname">accType</td><td></td></tr>
+    <tr><td class="paramname">number</td><td>Numeric pitch representation. </td></tr>
+    <tr><td class="paramname">accType</td><td>Accidental type (e.g., "#", "b"). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Pitch string. </dd></dl>
 
 </div>
 </div>
@@ -1345,13 +1675,15 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a pitch string to its frequency in Hz. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitch</td><td></td></tr>
+    <tr><td class="paramname">pitch</td><td>Pitch string (e.g., "A4"). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>float </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Frequency in Hz. </dd></dl>
 
 </div>
 </div>
@@ -1378,13 +1710,15 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a pitch string (e.g., "C4") to a MIDI note number. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitch</td><td></td></tr>
+    <tr><td class="paramname">pitch</td><td>Pitch string. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>MIDI note number. </dd></dl>
 
 </div>
 </div>
@@ -1411,13 +1745,15 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a pitch string (e.g., "C4") to a floating-point number representation. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitch</td><td></td></tr>
+    <tr><td class="paramname">pitch</td><td>Pitch string. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>float </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Numeric representation of the pitch. </dd></dl>
 
 </div>
 </div>
@@ -1454,14 +1790,97 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Computes the ratio between two pitch strings as a float. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitch_A</td><td></td></tr>
-    <tr><td class="paramname">pitch_B</td><td></td></tr>
+    <tr><td class="paramname">pitch_A</td><td>First pitch string. </td></tr>
+    <tr><td class="paramname">pitch_B</td><td>Second pitch string. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>float </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Ratio in [0,1]. </dd></dl>
+
+</div>
+</div>
+<a id="ae429c9f1c384e1acf53635c627779eaa" name="ae429c9f1c384e1acf53635c627779eaa"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae429c9f1c384e1acf53635c627779eaa">&#9670;&nbsp;</a></span>rhythmFigure2noteType()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static std::string Helper::rhythmFigure2noteType </td>
+          <td>(</td>
+          <td class="paramtype">const RhythmFigure&#160;</td>
+          <td class="paramname"><em>rhythmFigure</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Converts a RhythmFigure enum to a MusicXML note type string. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">rhythmFigure</td><td>RhythmFigure value. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> type string (e.g., "quarter"). </dd></dl>
+
+</div>
+</div>
+<a id="a0734029a98e701b7260990123a648d27" name="a0734029a98e701b7260990123a648d27"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0734029a98e701b7260990123a648d27">&#9670;&nbsp;</a></span>rhythmFigure2Ticks()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static int Helper::rhythmFigure2Ticks </td>
+          <td>(</td>
+          <td class="paramtype">const RhythmFigure&#160;</td>
+          <td class="paramname"><em>rhythmFigure</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const int&#160;</td>
+          <td class="paramname"><em>divisionsPerQuarterNote</em> = <code>256</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Converts a RhythmFigure to a duration in ticks. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">rhythmFigure</td><td>RhythmFigure value. </td></tr>
+    <tr><td class="paramname">divisionsPerQuarterNote</td><td>Divisions per quarter note (default: 256). </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> in ticks. </dd></dl>
 
 </div>
 </div>
@@ -1498,14 +1917,16 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Calculates the number of semitones between two pitch strings. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitch_A</td><td></td></tr>
-    <tr><td class="paramname">pitch_B</td><td></td></tr>
+    <tr><td class="paramname">pitch_A</td><td>First pitch string. </td></tr>
+    <tr><td class="paramname">pitch_B</td><td>Second pitch string. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of semitones from pitch_A to pitch_B. </dd></dl>
 
 </div>
 </div>
@@ -1566,14 +1987,16 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Splits a pitch string into its components: pitch class, step, octave, accidental value, and symbol. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitch</td><td></td></tr>
-    <tr><td class="paramname">pitchClass</td><td></td></tr>
-    <tr><td class="paramname">pitchStep</td><td></td></tr>
-    <tr><td class="paramname">octave</td><td></td></tr>
-    <tr><td class="paramname">alterValue</td><td></td></tr>
-    <tr><td class="paramname">alterSymbol</td><td></td></tr>
+    <tr><td class="paramname">pitch</td><td>Input pitch string. </td></tr>
+    <tr><td class="paramname">pitchClass</td><td>Output: pitch class (e.g., "C#", "Bb"). </td></tr>
+    <tr><td class="paramname">pitchStep</td><td>Output: step (e.g., "C", "D"). </td></tr>
+    <tr><td class="paramname">octave</td><td>Output: octave number. </td></tr>
+    <tr><td class="paramname">alterValue</td><td>Output: accidental value as float. </td></tr>
+    <tr><td class="paramname">alterSymbol</td><td>Output: accidental symbol (e.g., "#", "b"). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1613,19 +2036,21 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Splits a string into tokens using a specified delimiter. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">s</td><td></td></tr>
-    <tr><td class="paramname">delimiter</td><td></td></tr>
+    <tr><td class="paramname">s</td><td>The input string. </td></tr>
+    <tr><td class="paramname">delimiter</td><td>The character used to split the string. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>std::vector&lt;std::string&gt; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of substrings. </dd></dl>
 
 </div>
 </div>
-<a id="a5fc60ca1f67a97cf8478423deed8c49a" name="a5fc60ca1f67a97cf8478423deed8c49a"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a5fc60ca1f67a97cf8478423deed8c49a">&#9670;&nbsp;</a></span>ticks2noteType()</h2>
+<a id="ad3dc7809cf9cd74578e4e6a349d2c623" name="ad3dc7809cf9cd74578e4e6a349d2c623"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad3dc7809cf9cd74578e4e6a349d2c623">&#9670;&nbsp;</a></span>ticks2noteType()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1636,14 +2061,26 @@ false </dd></dl>
         <tr>
           <td class="memname">static std::pair&lt; std::string, int &gt; Helper::ticks2noteType </td>
           <td>(</td>
-          <td class="paramtype">const int&#160;</td>
-          <td class="paramname"><em>ticks</em>, </td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>durationTicks</em>, </td>
         </tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
-          <td class="paramtype">const int&#160;</td>
-          <td class="paramname"><em>divisionsPerQuarterNote</em> = <code>256</code>&#160;</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>divisionsPerQuarterNote</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>actualNotes</em> = <code>1</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>normalNotes</em> = <code>1</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1657,14 +2094,113 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Converts a duration in ticks to a MusicXML note type and dot count. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">ticks</td><td></td></tr>
-    <tr><td class="paramname">divisionsPerQuarterNote</td><td></td></tr>
+    <tr><td class="paramname">durationTicks</td><td><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> in ticks. </td></tr>
+    <tr><td class="paramname">divisionsPerQuarterNote</td><td>Divisions per quarter note. </td></tr>
+    <tr><td class="paramname">actualNotes</td><td>Tuplet numerator (default: 1). </td></tr>
+    <tr><td class="paramname">normalNotes</td><td>Tuplet denominator (default: 1). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>std::pair&lt;std::string, int&gt; </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Pair of note type string and number of dots. </dd></dl>
+
+</div>
+</div>
+<a id="a0b66180d53de8dc6901b20c755780d8e" name="a0b66180d53de8dc6901b20c755780d8e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0b66180d53de8dc6901b20c755780d8e">&#9670;&nbsp;</a></span>ticks2rhythmFigure()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static std::pair&lt; RhythmFigure, int &gt; Helper::ticks2rhythmFigure </td>
+          <td>(</td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>durationTicks</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>divisionsPerQuarterNote</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>actualNotes</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">int&#160;</td>
+          <td class="paramname"><em>normalNotes</em>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Converts a duration in ticks to a RhythmFigure and dot count. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">durationTicks</td><td><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> in ticks. </td></tr>
+    <tr><td class="paramname">divisionsPerQuarterNote</td><td>Divisions per quarter note. </td></tr>
+    <tr><td class="paramname">actualNotes</td><td>Tuplet numerator. </td></tr>
+    <tr><td class="paramname">normalNotes</td><td>Tuplet denominator. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Pair of RhythmFigure and number of dots. </dd></dl>
+
+</div>
+</div>
+<a id="a135ab60b66b74257b946cdf0712d6234" name="a135ab60b66b74257b946cdf0712d6234"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a135ab60b66b74257b946cdf0712d6234">&#9670;&nbsp;</a></span>toString()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">static std::string Helper::toString </td>
+          <td>(</td>
+          <td class="paramtype">const RhythmFigure&#160;</td>
+          <td class="paramname"><em>rhythmFigure</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">static</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Converts a RhythmFigure to a string. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">rhythmFigure</td><td>RhythmFigure value. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>String representation. </dd></dl>
 
 </div>
 </div>
@@ -1707,15 +2243,17 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Transposes a pitch string by a number of semitones. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitch</td><td></td></tr>
-    <tr><td class="paramname">semitones</td><td></td></tr>
-    <tr><td class="paramname">accType</td><td></td></tr>
+    <tr><td class="paramname">pitch</td><td>Input pitch string. </td></tr>
+    <tr><td class="paramname">semitones</td><td>Number of semitones to transpose. </td></tr>
+    <tr><td class="paramname">accType</td><td>Accidental type for output pitch (default: "#"). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>const std::string </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Transposed pitch string. </dd></dl>
 
 </div>
 </div>

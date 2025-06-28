@@ -90,67 +90,643 @@ $(document).ready(function(){initNavTree('class_score_collection.html',''); init
   <div class="headertitle"><div class="title">ScoreCollection Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Represents a collection of musical scores, supporting batch analysis and management.  
+ <a href="class_score_collection.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="score__collection_8h_source.html">score_collection.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
-<tr class="memitem:a60967c57ae60337acafa7ff851387bd5"><td class="memItemLeft" align="right" valign="top"><a id="a60967c57ae60337acafa7ff851387bd5" name="a60967c57ae60337acafa7ff851387bd5"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>ScoreCollection</b> (const std::string &amp;collectionName, const std::string &amp;directoryPath={})</td></tr>
-<tr class="separator:a60967c57ae60337acafa7ff851387bd5"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:aa793d5ba87d0819db9ff2e160494bf20"><td class="memItemLeft" align="right" valign="top"><a id="aa793d5ba87d0819db9ff2e160494bf20" name="aa793d5ba87d0819db9ff2e160494bf20"></a>
-&#160;</td><td class="memItemRight" valign="bottom"><b>ScoreCollection</b> (const std::string &amp;collectionName, const std::vector&lt; std::string &gt; &amp;directoriesPaths={})</td></tr>
-<tr class="separator:aa793d5ba87d0819db9ff2e160494bf20"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a4dc4ae8d04e94166d7be9f9cf481110c"><td class="memItemLeft" align="right" valign="top"><a id="a4dc4ae8d04e94166d7be9f9cf481110c" name="a4dc4ae8d04e94166d7be9f9cf481110c"></a>
-std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><b>getDirectoriesPaths</b> () const</td></tr>
+<tr class="memitem:a27b2e23aae0b7f96d6cba4c6ded1c258"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a27b2e23aae0b7f96d6cba4c6ded1c258">ScoreCollection</a> (const std::string &amp;directoryPath={})</td></tr>
+<tr class="memdesc:a27b2e23aae0b7f96d6cba4c6ded1c258"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="class_score_collection.html" title="Represents a collection of musical scores, supporting batch analysis and management.">ScoreCollection</a> from a single directory path.  <a href="class_score_collection.html#a27b2e23aae0b7f96d6cba4c6ded1c258">More...</a><br /></td></tr>
+<tr class="separator:a27b2e23aae0b7f96d6cba4c6ded1c258"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a88b9c0f04d0873f0233e2ad1276903fe"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a88b9c0f04d0873f0233e2ad1276903fe">ScoreCollection</a> (const std::vector&lt; std::string &gt; &amp;directoriesPaths={})</td></tr>
+<tr class="memdesc:a88b9c0f04d0873f0233e2ad1276903fe"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs a <a class="el" href="class_score_collection.html" title="Represents a collection of musical scores, supporting batch analysis and management.">ScoreCollection</a> from multiple directory paths.  <a href="class_score_collection.html#a88b9c0f04d0873f0233e2ad1276903fe">More...</a><br /></td></tr>
+<tr class="separator:a88b9c0f04d0873f0233e2ad1276903fe"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4dc4ae8d04e94166d7be9f9cf481110c"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::string &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a4dc4ae8d04e94166d7be9f9cf481110c">getDirectoriesPaths</a> () const</td></tr>
+<tr class="memdesc:a4dc4ae8d04e94166d7be9f9cf481110c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the list of directory paths associated with the collection.  <a href="class_score_collection.html#a4dc4ae8d04e94166d7be9f9cf481110c">More...</a><br /></td></tr>
 <tr class="separator:a4dc4ae8d04e94166d7be9f9cf481110c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a9f69d57a99b9eff03b467f34865f9f9d"><td class="memItemLeft" align="right" valign="top"><a id="a9f69d57a99b9eff03b467f34865f9f9d" name="a9f69d57a99b9eff03b467f34865f9f9d"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>setDirectoriesPaths</b> (const std::vector&lt; std::string &gt; &amp;directoriesPaths)</td></tr>
+<tr class="memitem:a9f69d57a99b9eff03b467f34865f9f9d"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a9f69d57a99b9eff03b467f34865f9f9d">setDirectoriesPaths</a> (const std::vector&lt; std::string &gt; &amp;directoriesPaths)</td></tr>
+<tr class="memdesc:a9f69d57a99b9eff03b467f34865f9f9d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the list of directory paths and reloads the collection.  <a href="class_score_collection.html#a9f69d57a99b9eff03b467f34865f9f9d">More...</a><br /></td></tr>
 <tr class="separator:a9f69d57a99b9eff03b467f34865f9f9d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ad97c090218efe283e60c27b04e2d727c"><td class="memItemLeft" align="right" valign="top"><a id="ad97c090218efe283e60c27b04e2d727c" name="ad97c090218efe283e60c27b04e2d727c"></a>
-std::string&#160;</td><td class="memItemRight" valign="bottom"><b>getName</b> () const</td></tr>
-<tr class="separator:ad97c090218efe283e60c27b04e2d727c"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a2e213a1548a6ab3f79d49d3e2830932e"><td class="memItemLeft" align="right" valign="top"><a id="a2e213a1548a6ab3f79d49d3e2830932e" name="a2e213a1548a6ab3f79d49d3e2830932e"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>setName</b> (const std::string &amp;collectionName)</td></tr>
-<tr class="separator:a2e213a1548a6ab3f79d49d3e2830932e"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a30d7ea18a3914eb8d12af3dcd44dfab9"><td class="memItemLeft" align="right" valign="top"><a id="a30d7ea18a3914eb8d12af3dcd44dfab9" name="a30d7ea18a3914eb8d12af3dcd44dfab9"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>addDirectory</b> (const std::string &amp;directoryPath)</td></tr>
+<tr class="memitem:a30d7ea18a3914eb8d12af3dcd44dfab9"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a30d7ea18a3914eb8d12af3dcd44dfab9">addDirectory</a> (const std::string &amp;directoryPath)</td></tr>
+<tr class="memdesc:a30d7ea18a3914eb8d12af3dcd44dfab9"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a directory path to the collection (does not reload files automatically).  <a href="class_score_collection.html#a30d7ea18a3914eb8d12af3dcd44dfab9">More...</a><br /></td></tr>
 <tr class="separator:a30d7ea18a3914eb8d12af3dcd44dfab9"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a1d5f22395dc23bb64b6318883dc1f706"><td class="memItemLeft" align="right" valign="top"><a id="a1d5f22395dc23bb64b6318883dc1f706" name="a1d5f22395dc23bb64b6318883dc1f706"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>addScore</b> (const <a class="el" href="class_score.html">Score</a> &amp;score)</td></tr>
+<tr class="memitem:a1d5f22395dc23bb64b6318883dc1f706"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a1d5f22395dc23bb64b6318883dc1f706">addScore</a> (const <a class="el" href="class_score.html">Score</a> &amp;score)</td></tr>
+<tr class="memdesc:a1d5f22395dc23bb64b6318883dc1f706"><td class="mdescLeft">&#160;</td><td class="mdescRight">Adds a <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> object to the collection.  <a href="class_score_collection.html#a1d5f22395dc23bb64b6318883dc1f706">More...</a><br /></td></tr>
 <tr class="separator:a1d5f22395dc23bb64b6318883dc1f706"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a03914fa3871b35a2b426d5bc3e773796"><td class="memItemLeft" align="right" valign="top"><a id="a03914fa3871b35a2b426d5bc3e773796" name="a03914fa3871b35a2b426d5bc3e773796"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>addScore</b> (const std::string &amp;filePath)</td></tr>
+<tr class="memitem:a03914fa3871b35a2b426d5bc3e773796"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a03914fa3871b35a2b426d5bc3e773796">addScore</a> (const std::string &amp;filePath)</td></tr>
+<tr class="memdesc:a03914fa3871b35a2b426d5bc3e773796"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads a <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> from a file path and adds it to the collection.  <a href="class_score_collection.html#a03914fa3871b35a2b426d5bc3e773796">More...</a><br /></td></tr>
 <tr class="separator:a03914fa3871b35a2b426d5bc3e773796"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abc0c89bcf928477fc8e9866d4d40efa6"><td class="memItemLeft" align="right" valign="top"><a id="abc0c89bcf928477fc8e9866d4d40efa6" name="abc0c89bcf928477fc8e9866d4d40efa6"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>addScore</b> (const std::vector&lt; std::string &gt; &amp;filePaths)</td></tr>
+<tr class="memitem:abc0c89bcf928477fc8e9866d4d40efa6"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#abc0c89bcf928477fc8e9866d4d40efa6">addScore</a> (const std::vector&lt; std::string &gt; &amp;filePaths)</td></tr>
+<tr class="memdesc:abc0c89bcf928477fc8e9866d4d40efa6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Loads multiple Scores from file paths and adds them to the collection.  <a href="class_score_collection.html#abc0c89bcf928477fc8e9866d4d40efa6">More...</a><br /></td></tr>
 <tr class="separator:abc0c89bcf928477fc8e9866d4d40efa6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a48620845fc59792dd39e9b72eb31d3c7"><td class="memItemLeft" align="right" valign="top"><a id="a48620845fc59792dd39e9b72eb31d3c7" name="a48620845fc59792dd39e9b72eb31d3c7"></a>
 void&#160;</td><td class="memItemRight" valign="bottom"><b>clear</b> ()</td></tr>
+<tr class="memdesc:a48620845fc59792dd39e9b72eb31d3c7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes all scores from the collection. <br /></td></tr>
 <tr class="separator:a48620845fc59792dd39e9b72eb31d3c7"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af4a91f5827e61ee6b59aa8144771c3ec"><td class="memItemLeft" align="right" valign="top"><a id="af4a91f5827e61ee6b59aa8144771c3ec" name="af4a91f5827e61ee6b59aa8144771c3ec"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumDirectories</b> () const</td></tr>
+<tr class="memitem:af4a91f5827e61ee6b59aa8144771c3ec"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#af4a91f5827e61ee6b59aa8144771c3ec">getNumDirectories</a> () const</td></tr>
+<tr class="memdesc:af4a91f5827e61ee6b59aa8144771c3ec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of directories in the collection.  <a href="class_score_collection.html#af4a91f5827e61ee6b59aa8144771c3ec">More...</a><br /></td></tr>
 <tr class="separator:af4a91f5827e61ee6b59aa8144771c3ec"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af516f91552385ebe97289bda7d053361"><td class="memItemLeft" align="right" valign="top"><a id="af516f91552385ebe97289bda7d053361" name="af516f91552385ebe97289bda7d053361"></a>
-int&#160;</td><td class="memItemRight" valign="bottom"><b>getNumScores</b> () const</td></tr>
+<tr class="memitem:af516f91552385ebe97289bda7d053361"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#af516f91552385ebe97289bda7d053361">getNumScores</a> () const</td></tr>
+<tr class="memdesc:af516f91552385ebe97289bda7d053361"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of scores in the collection.  <a href="class_score_collection.html#af516f91552385ebe97289bda7d053361">More...</a><br /></td></tr>
 <tr class="separator:af516f91552385ebe97289bda7d053361"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:af11dc6d2a3a4dafbb1032f97bf810f48"><td class="memItemLeft" align="right" valign="top"><a id="af11dc6d2a3a4dafbb1032f97bf810f48" name="af11dc6d2a3a4dafbb1032f97bf810f48"></a>
-std::vector&lt; <a class="el" href="class_score.html">Score</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getScores</b> ()</td></tr>
+<tr class="memitem:af11dc6d2a3a4dafbb1032f97bf810f48"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="class_score.html">Score</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#af11dc6d2a3a4dafbb1032f97bf810f48">getScores</a> ()</td></tr>
+<tr class="memdesc:af11dc6d2a3a4dafbb1032f97bf810f48"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a reference to the vector of <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> objects (modifiable).  <a href="class_score_collection.html#af11dc6d2a3a4dafbb1032f97bf810f48">More...</a><br /></td></tr>
 <tr class="separator:af11dc6d2a3a4dafbb1032f97bf810f48"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0857cdd44fd45d7cc220590ae1a65267"><td class="memItemLeft" align="right" valign="top"><a id="a0857cdd44fd45d7cc220590ae1a65267" name="a0857cdd44fd45d7cc220590ae1a65267"></a>
-const std::vector&lt; <a class="el" href="class_score.html">Score</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><b>getScores</b> () const</td></tr>
+<tr class="memitem:a0857cdd44fd45d7cc220590ae1a65267"><td class="memItemLeft" align="right" valign="top">const std::vector&lt; <a class="el" href="class_score.html">Score</a> &gt; &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a0857cdd44fd45d7cc220590ae1a65267">getScores</a> () const</td></tr>
+<tr class="memdesc:a0857cdd44fd45d7cc220590ae1a65267"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns a const reference to the vector of <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> objects.  <a href="class_score_collection.html#a0857cdd44fd45d7cc220590ae1a65267">More...</a><br /></td></tr>
 <tr class="separator:a0857cdd44fd45d7cc220590ae1a65267"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a31ea59326ddc6fe8c22af3b5d6cdc845"><td class="memItemLeft" align="right" valign="top"><a id="a31ea59326ddc6fe8c22af3b5d6cdc845" name="a31ea59326ddc6fe8c22af3b5d6cdc845"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isEmpty</b> () const</td></tr>
+<tr class="memitem:a31ea59326ddc6fe8c22af3b5d6cdc845"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a31ea59326ddc6fe8c22af3b5d6cdc845">isEmpty</a> () const</td></tr>
+<tr class="memdesc:a31ea59326ddc6fe8c22af3b5d6cdc845"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the collection contains no scores.  <a href="class_score_collection.html#a31ea59326ddc6fe8c22af3b5d6cdc845">More...</a><br /></td></tr>
 <tr class="separator:a31ea59326ddc6fe8c22af3b5d6cdc845"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a84726962fa66e9b8252b5651946ced16"><td class="memItemLeft" align="right" valign="top"><a id="a84726962fa66e9b8252b5651946ced16" name="a84726962fa66e9b8252b5651946ced16"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>merge</b> (const <a class="el" href="class_score_collection.html">ScoreCollection</a> &amp;other, const std::string &amp;mergedCollectionName={})</td></tr>
-<tr class="separator:a84726962fa66e9b8252b5651946ced16"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab4d02f9e29c48d0b19ba70cf1177488f"><td class="memItemLeft" align="right" valign="top"><a id="ab4d02f9e29c48d0b19ba70cf1177488f" name="ab4d02f9e29c48d0b19ba70cf1177488f"></a>
-void&#160;</td><td class="memItemRight" valign="bottom"><b>removeScore</b> (const int scoreIdx)</td></tr>
+<tr class="memitem:ad75c99f5d3fbe090f368a425aaddc7b0"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#ad75c99f5d3fbe090f368a425aaddc7b0">merge</a> (const <a class="el" href="class_score_collection.html">ScoreCollection</a> &amp;other)</td></tr>
+<tr class="memdesc:ad75c99f5d3fbe090f368a425aaddc7b0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Merges another <a class="el" href="class_score_collection.html" title="Represents a collection of musical scores, supporting batch analysis and management.">ScoreCollection</a> into this one, combining directories and scores.  <a href="class_score_collection.html#ad75c99f5d3fbe090f368a425aaddc7b0">More...</a><br /></td></tr>
+<tr class="separator:ad75c99f5d3fbe090f368a425aaddc7b0"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ab4d02f9e29c48d0b19ba70cf1177488f"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#ab4d02f9e29c48d0b19ba70cf1177488f">removeScore</a> (const int scoreIdx)</td></tr>
+<tr class="memdesc:ab4d02f9e29c48d0b19ba70cf1177488f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Removes a score from the collection by its index.  <a href="class_score_collection.html#ab4d02f9e29c48d0b19ba70cf1177488f">More...</a><br /></td></tr>
 <tr class="separator:ab4d02f9e29c48d0b19ba70cf1177488f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a07322ec04a46f40f0849687f651ea669"><td class="memItemLeft" align="right" valign="top"><a id="a07322ec04a46f40f0849687f651ea669" name="a07322ec04a46f40f0849687f651ea669"></a>
-<a class="el" href="class_score_collection.html">ScoreCollection</a>&#160;</td><td class="memItemRight" valign="bottom"><b>operator+</b> (const <a class="el" href="class_score_collection.html">ScoreCollection</a> &amp;other) const</td></tr>
+<tr class="memitem:a9896ccdf0862ac102bd2be346d07da4f"><td class="memItemLeft" align="right" valign="top">ExtendedMelodyPatternTable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a9896ccdf0862ac102bd2be346d07da4f">findMelodyPattern</a> (const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;melodyPattern, const float totalIntervalsSimilarityThreshold=0.5f, const float totalRhythmSimilarityThreshold=0.5f, const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; &amp;intervalsSimilarityCallback=nullptr, const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; &amp;rhythmSimilarityCallback=nullptr, const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; &amp;totalIntervalSimilarityCallback=nullptr, const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; &amp;totalRhythmSimilarityCallback=nullptr, const std::function&lt; float(float, float)&gt; &amp;totalSimilarityCallback=nullptr) const</td></tr>
+<tr class="memdesc:a9896ccdf0862ac102bd2be346d07da4f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Searches for a melodic pattern in all scores, returning extended results.  <a href="class_score_collection.html#a9896ccdf0862ac102bd2be346d07da4f">More...</a><br /></td></tr>
+<tr class="separator:a9896ccdf0862ac102bd2be346d07da4f"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a5b47b870d1670200d51f3bfa7eb8a755"><td class="memItemLeft" align="right" valign="top">std::vector&lt; ExtendedMultiMelodyPatternTable &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a5b47b870d1670200d51f3bfa7eb8a755">findMelodyPattern</a> (const std::vector&lt; std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &gt; &amp;melodyPatterns, const float totalIntervalsSimilarityThreshold=0.5f, const float totalRhythmSimilarityThreshold=0.5f, const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; &amp;intervalsSimilarityCallback=nullptr, const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; &amp;rhythmSimilarityCallback=nullptr, const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; &amp;totalIntervalSimilarityCallback=nullptr, const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; &amp;totalRhythmSimilarityCallback=nullptr, const std::function&lt; float(float, float)&gt; &amp;totalSimilarityCallback=nullptr) const</td></tr>
+<tr class="memdesc:a5b47b870d1670200d51f3bfa7eb8a755"><td class="mdescLeft">&#160;</td><td class="mdescRight">Searches for multiple melodic patterns in all scores, returning extended results for each pattern.  <a href="class_score_collection.html#a5b47b870d1670200d51f3bfa7eb8a755">More...</a><br /></td></tr>
+<tr class="separator:a5b47b870d1670200d51f3bfa7eb8a755"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a07322ec04a46f40f0849687f651ea669"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_score_collection.html">ScoreCollection</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score_collection.html#a07322ec04a46f40f0849687f651ea669">operator+</a> (const <a class="el" href="class_score_collection.html">ScoreCollection</a> &amp;other) const</td></tr>
+<tr class="memdesc:a07322ec04a46f40f0849687f651ea669"><td class="mdescLeft">&#160;</td><td class="mdescRight">Merges two ScoreCollections using the + operator.  <a href="class_score_collection.html#a07322ec04a46f40f0849687f651ea669">More...</a><br /></td></tr>
 <tr class="separator:a07322ec04a46f40f0849687f651ea669"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p >Represents a collection of musical scores, supporting batch analysis and management. </p>
+<p >The <a class="el" href="class_score_collection.html" title="Represents a collection of musical scores, supporting batch analysis and management.">ScoreCollection</a> class provides methods for loading, managing, and analyzing multiple <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> objects. It is designed for large-scale musicological research, corpus studies, and batch processing of MusicXML files. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a id="a27b2e23aae0b7f96d6cba4c6ded1c258" name="a27b2e23aae0b7f96d6cba4c6ded1c258"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a27b2e23aae0b7f96d6cba4c6ded1c258">&#9670;&nbsp;</a></span>ScoreCollection() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">ScoreCollection::ScoreCollection </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>directoryPath</em> = <code>{}</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructs a <a class="el" href="class_score_collection.html" title="Represents a collection of musical scores, supporting batch analysis and management.">ScoreCollection</a> from a single directory path. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">directoryPath</td><td>Path to a directory containing MusicXML files. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a88b9c0f04d0873f0233e2ad1276903fe" name="a88b9c0f04d0873f0233e2ad1276903fe"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a88b9c0f04d0873f0233e2ad1276903fe">&#9670;&nbsp;</a></span>ScoreCollection() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname">ScoreCollection::ScoreCollection </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>directoriesPaths</em> = <code>{}</code></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">explicit</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Constructs a <a class="el" href="class_score_collection.html" title="Represents a collection of musical scores, supporting batch analysis and management.">ScoreCollection</a> from multiple directory paths. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">directoriesPaths</td><td>Vector of directory paths. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<h2 class="groupheader">Member Function Documentation</h2>
+<a id="a30d7ea18a3914eb8d12af3dcd44dfab9" name="a30d7ea18a3914eb8d12af3dcd44dfab9"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a30d7ea18a3914eb8d12af3dcd44dfab9">&#9670;&nbsp;</a></span>addDirectory()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ScoreCollection::addDirectory </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>directoryPath</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Adds a directory path to the collection (does not reload files automatically). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">directoryPath</td><td>Directory path string. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a1d5f22395dc23bb64b6318883dc1f706" name="a1d5f22395dc23bb64b6318883dc1f706"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a1d5f22395dc23bb64b6318883dc1f706">&#9670;&nbsp;</a></span>addScore() <span class="overload">[1/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ScoreCollection::addScore </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_score.html">Score</a> &amp;&#160;</td>
+          <td class="paramname"><em>score</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Adds a <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> object to the collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">score</td><td><a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> object to add. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a03914fa3871b35a2b426d5bc3e773796" name="a03914fa3871b35a2b426d5bc3e773796"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a03914fa3871b35a2b426d5bc3e773796">&#9670;&nbsp;</a></span>addScore() <span class="overload">[2/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ScoreCollection::addScore </td>
+          <td>(</td>
+          <td class="paramtype">const std::string &amp;&#160;</td>
+          <td class="paramname"><em>filePath</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Loads a <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> from a file path and adds it to the collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filePath</td><td>Path to a MusicXML file. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="abc0c89bcf928477fc8e9866d4d40efa6" name="abc0c89bcf928477fc8e9866d4d40efa6"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#abc0c89bcf928477fc8e9866d4d40efa6">&#9670;&nbsp;</a></span>addScore() <span class="overload">[3/3]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ScoreCollection::addScore </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>filePaths</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Loads multiple Scores from file paths and adds them to the collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">filePaths</td><td>Vector of MusicXML file paths. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a9896ccdf0862ac102bd2be346d07da4f" name="a9896ccdf0862ac102bd2be346d07da4f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9896ccdf0862ac102bd2be346d07da4f">&#9670;&nbsp;</a></span>findMelodyPattern() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">ExtendedMelodyPatternTable ScoreCollection::findMelodyPattern </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;&#160;</td>
+          <td class="paramname"><em>melodyPattern</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>totalIntervalsSimilarityThreshold</em> = <code>0.5f</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>totalRhythmSimilarityThreshold</em> = <code>0.5f</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>intervalsSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>rhythmSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>totalIntervalSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>totalRhythmSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(float, float)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>totalSimilarityCallback</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Searches for a melodic pattern in all scores, returning extended results. </p>
+<p >Each result row includes file metadata and all fields from <a class="el" href="class_score.html#a76a35ae2c0d094843f85f3b08a1d1a25" title="Table row type for melodic pattern search results.">Score::MelodyPatternRow</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">melodyPattern</td><td>Vector of <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> objects representing the pattern. </td></tr>
+    <tr><td class="paramname">totalIntervalsSimilarityThreshold</td><td>Minimum interval similarity threshold. </td></tr>
+    <tr><td class="paramname">totalRhythmSimilarityThreshold</td><td>Minimum rhythm similarity threshold. </td></tr>
+    <tr><td class="paramname">intervalsSimilarityCallback</td><td>Custom function to calculate interval similarity. </td></tr>
+    <tr><td class="paramname">rhythmSimilarityCallback</td><td>Custom function to calculate rhythm similarity. </td></tr>
+    <tr><td class="paramname">totalIntervalSimilarityCallback</td><td>Function to aggregate interval similarity. </td></tr>
+    <tr><td class="paramname">totalRhythmSimilarityCallback</td><td>Function to aggregate rhythm similarity. </td></tr>
+    <tr><td class="paramname">totalSimilarityCallback</td><td>Function to combine total similarities. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>ExtendedMelodyPatternTable with results from all scores. </dd></dl>
+
+</div>
+</div>
+<a id="a5b47b870d1670200d51f3bfa7eb8a755" name="a5b47b870d1670200d51f3bfa7eb8a755"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a5b47b870d1670200d51f3bfa7eb8a755">&#9670;&nbsp;</a></span>findMelodyPattern() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; ExtendedMultiMelodyPatternTable &gt; ScoreCollection::findMelodyPattern </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &gt; &amp;&#160;</td>
+          <td class="paramname"><em>melodyPatterns</em>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>totalIntervalsSimilarityThreshold</em> = <code>0.5f</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>totalRhythmSimilarityThreshold</em> = <code>0.5f</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>intervalsSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>rhythmSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>totalIntervalSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(const std::vector&lt; float &gt; &amp;)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>totalRhythmSimilarityCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const std::function&lt; float(float, float)&gt; &amp;&#160;</td>
+          <td class="paramname"><em>totalSimilarityCallback</em> = <code>nullptr</code>&#160;</td>
+        </tr>
+        <tr>
+          <td></td>
+          <td>)</td>
+          <td></td><td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Searches for multiple melodic patterns in all scores, returning extended results for each pattern. </p>
+<p >Each result row includes pattern index, file metadata, and all fields from <a class="el" href="class_score.html#a76a35ae2c0d094843f85f3b08a1d1a25" title="Table row type for melodic pattern search results.">Score::MelodyPatternRow</a>. </p><dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">melodyPatterns</td><td>Vector of melodic patterns (each a vector of <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a>). </td></tr>
+    <tr><td class="paramname">totalIntervalsSimilarityThreshold</td><td>Minimum interval similarity threshold. </td></tr>
+    <tr><td class="paramname">totalRhythmSimilarityThreshold</td><td>Minimum rhythm similarity threshold. </td></tr>
+    <tr><td class="paramname">intervalsSimilarityCallback</td><td>Custom function to calculate interval similarity. </td></tr>
+    <tr><td class="paramname">rhythmSimilarityCallback</td><td>Custom function to calculate rhythm similarity. </td></tr>
+    <tr><td class="paramname">totalIntervalSimilarityCallback</td><td>Function to aggregate interval similarity. </td></tr>
+    <tr><td class="paramname">totalRhythmSimilarityCallback</td><td>Function to aggregate rhythm similarity. </td></tr>
+    <tr><td class="paramname">totalSimilarityCallback</td><td>Function to combine total similarities. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of ExtendedMultiMelodyPatternTable, one for each pattern. </dd></dl>
+
+</div>
+</div>
+<a id="a4dc4ae8d04e94166d7be9f9cf481110c" name="a4dc4ae8d04e94166d7be9f9cf481110c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4dc4ae8d04e94166d7be9f9cf481110c">&#9670;&nbsp;</a></span>getDirectoriesPaths()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; std::string &gt; ScoreCollection::getDirectoriesPaths </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the list of directory paths associated with the collection. </p>
+<dl class="section return"><dt>Returns</dt><dd>Vector of directory path strings. </dd></dl>
+
+</div>
+</div>
+<a id="af4a91f5827e61ee6b59aa8144771c3ec" name="af4a91f5827e61ee6b59aa8144771c3ec"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af4a91f5827e61ee6b59aa8144771c3ec">&#9670;&nbsp;</a></span>getNumDirectories()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ScoreCollection::getNumDirectories </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the number of directories in the collection. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of directories. </dd></dl>
+
+</div>
+</div>
+<a id="af516f91552385ebe97289bda7d053361" name="af516f91552385ebe97289bda7d053361"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af516f91552385ebe97289bda7d053361">&#9670;&nbsp;</a></span>getNumScores()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ScoreCollection::getNumScores </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the number of scores in the collection. </p>
+<dl class="section return"><dt>Returns</dt><dd>Number of <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> objects. </dd></dl>
+
+</div>
+</div>
+<a id="af11dc6d2a3a4dafbb1032f97bf810f48" name="af11dc6d2a3a4dafbb1032f97bf810f48"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#af11dc6d2a3a4dafbb1032f97bf810f48">&#9670;&nbsp;</a></span>getScores() <span class="overload">[1/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::vector&lt; <a class="el" href="class_score.html">Score</a> &gt; &amp; ScoreCollection::getScores </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns a reference to the vector of <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> objects (modifiable). </p>
+<dl class="section return"><dt>Returns</dt><dd>Reference to vector of <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a>. </dd></dl>
+
+</div>
+</div>
+<a id="a0857cdd44fd45d7cc220590ae1a65267" name="a0857cdd44fd45d7cc220590ae1a65267"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a0857cdd44fd45d7cc220590ae1a65267">&#9670;&nbsp;</a></span>getScores() <span class="overload">[2/2]</span></h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">const std::vector&lt; <a class="el" href="class_score.html">Score</a> &gt; &amp; ScoreCollection::getScores </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns a const reference to the vector of <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a> objects. </p>
+<dl class="section return"><dt>Returns</dt><dd>Const reference to vector of <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a>. </dd></dl>
+
+</div>
+</div>
+<a id="a31ea59326ddc6fe8c22af3b5d6cdc845" name="a31ea59326ddc6fe8c22af3b5d6cdc845"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a31ea59326ddc6fe8c22af3b5d6cdc845">&#9670;&nbsp;</a></span>isEmpty()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool ScoreCollection::isEmpty </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns true if the collection contains no scores. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if empty. </dd></dl>
+
+</div>
+</div>
+<a id="ad75c99f5d3fbe090f368a425aaddc7b0" name="ad75c99f5d3fbe090f368a425aaddc7b0"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad75c99f5d3fbe090f368a425aaddc7b0">&#9670;&nbsp;</a></span>merge()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ScoreCollection::merge </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_score_collection.html">ScoreCollection</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Merges another <a class="el" href="class_score_collection.html" title="Represents a collection of musical scores, supporting batch analysis and management.">ScoreCollection</a> into this one, combining directories and scores. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>Another <a class="el" href="class_score_collection.html" title="Represents a collection of musical scores, supporting batch analysis and management.">ScoreCollection</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a07322ec04a46f40f0849687f651ea669" name="a07322ec04a46f40f0849687f651ea669"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a07322ec04a46f40f0849687f651ea669">&#9670;&nbsp;</a></span>operator+()</h2>
+
+<div class="memitem">
+<div class="memproto">
+<table class="mlabels">
+  <tr>
+  <td class="mlabels-left">
+      <table class="memname">
+        <tr>
+          <td class="memname"><a class="el" href="class_score_collection.html">ScoreCollection</a> ScoreCollection::operator+ </td>
+          <td>(</td>
+          <td class="paramtype">const <a class="el" href="class_score_collection.html">ScoreCollection</a> &amp;&#160;</td>
+          <td class="paramname"><em>other</em></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+  </td>
+  <td class="mlabels-right">
+<span class="mlabels"><span class="mlabel">inline</span></span>  </td>
+  </tr>
+</table>
+</div><div class="memdoc">
+
+<p>Merges two ScoreCollections using the + operator. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">other</td><td>Another <a class="el" href="class_score_collection.html" title="Represents a collection of musical scores, supporting batch analysis and management.">ScoreCollection</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>New <a class="el" href="class_score_collection.html" title="Represents a collection of musical scores, supporting batch analysis and management.">ScoreCollection</a> containing all scores and directories from both. </dd></dl>
+
+</div>
+</div>
+<a id="ab4d02f9e29c48d0b19ba70cf1177488f" name="ab4d02f9e29c48d0b19ba70cf1177488f"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ab4d02f9e29c48d0b19ba70cf1177488f">&#9670;&nbsp;</a></span>removeScore()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ScoreCollection::removeScore </td>
+          <td>(</td>
+          <td class="paramtype">const int&#160;</td>
+          <td class="paramname"><em>scoreIdx</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Removes a score from the collection by its index. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">scoreIdx</td><td>Index of the score to remove. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
+<a id="a9f69d57a99b9eff03b467f34865f9f9d" name="a9f69d57a99b9eff03b467f34865f9f9d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a9f69d57a99b9eff03b467f34865f9f9d">&#9670;&nbsp;</a></span>setDirectoriesPaths()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void ScoreCollection::setDirectoriesPaths </td>
+          <td>(</td>
+          <td class="paramtype">const std::vector&lt; std::string &gt; &amp;&#160;</td>
+          <td class="paramname"><em>directoriesPaths</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Sets the list of directory paths and reloads the collection. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">directoriesPaths</td><td>Vector of directory path strings. </td></tr>
+  </table>
+  </dd>
+</dl>
+
+</div>
+</div>
 <hr/>The documentation for this class was generated from the following file:<ul>
 <li>maiacore/include/maiacore/<a class="el" href="score__collection_8h_source.html">score_collection.h</a></li>
 </ul>

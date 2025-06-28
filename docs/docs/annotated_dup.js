@@ -3,15 +3,14 @@ var annotated_dup =
     [ "Barline", "class_barline.html", "class_barline" ],
     [ "Chord", "class_chord.html", "class_chord" ],
     [ "Clef", "class_clef.html", "class_clef" ],
-    [ "duration_st", "structduration__st.html", null ],
+    [ "Duration", "class_duration.html", "class_duration" ],
     [ "Helper", "class_helper.html", null ],
     [ "Interval", "class_interval.html", "class_interval" ],
-    [ "Key", "class_key.html", null ],
+    [ "Key", "class_key.html", "class_key" ],
     [ "Measure", "class_measure.html", "class_measure" ],
     [ "Note", "class_note.html", "class_note" ],
-    [ "NoteData", "struct_note_data.html", null ],
-    [ "Part", "class_part.html", null ],
+    [ "Part", "class_part.html", "class_part" ],
     [ "Score", "class_score.html", "class_score" ],
-    [ "ScoreCollection", "class_score_collection.html", null ],
-    [ "timeModification_st", "structtime_modification__st.html", null ]
+    [ "ScoreCollection", "class_score_collection.html", "class_score_collection" ],
+    [ "TimeSignature", "class_time_signature.html", "class_time_signature" ]
 ];

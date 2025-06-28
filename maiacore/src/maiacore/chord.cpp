@@ -2154,7 +2154,7 @@ bool Chord::haveAnyOctaveAugmentedFourth(const bool useEnharmony) const {
                        });
 }
 
-bool Chord::haveAnyOctaveDiminhavehedFifth(const bool useEnharmony) const {
+bool Chord::haveAnyOctaveDiminishedFifth(const bool useEnharmony) const {
     const auto intervals = getIntervalsFromOriginalSortedNotes();
     return std::any_of(intervals.begin(), intervals.end(),
                        [useEnharmony](const Interval& interval) {
@@ -2194,7 +2194,7 @@ bool Chord::haveAnyOctaveMajorSixth(const bool useEnharmony) const {
                        });
 }
 
-bool Chord::haveAnyOctaveDiminhavehedSeventh(const bool useEnharmony) const {
+bool Chord::haveAnyOctaveDiminishedSeventh(const bool useEnharmony) const {
     const auto intervals = getIntervalsFromOriginalSortedNotes();
     return std::any_of(intervals.begin(), intervals.end(),
                        [useEnharmony](const Interval& interval) {
@@ -2218,7 +2218,7 @@ bool Chord::haveAnyOctaveMajorSeventh(const bool useEnharmony) const {
                        });
 }
 
-bool Chord::haveAnyOctaveDiminhavehedOctave(const bool useEnharmony) const {
+bool Chord::haveAnyOctaveDiminishedOctave(const bool useEnharmony) const {
     const auto intervals = getIntervalsFromOriginalSortedNotes();
     return std::any_of(intervals.begin(), intervals.end(),
                        [useEnharmony](const Interval& interval) {

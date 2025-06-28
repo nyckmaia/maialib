@@ -13,13 +13,6 @@ const std::map<ClefSign, int> c_mapClefSign_Line = {
     {ClefSign::PERCUSSION, 2},
 };
 
-// const std::map<int, ClefSign> c_mapLine_ClefSign = {
-//     {2, ClefSign::G},
-//     {4, ClefSign::F},
-//     {3, ClefSign::C},
-//     {2, ClefSign::PERCUSSION},
-// };
-
 Clef::Clef(const ClefSign sign, int line) : _sign(sign), _line(line), _isClefChanged(false) {
     switch (sign) {
         case ClefSign::G:

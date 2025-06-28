@@ -90,189 +90,271 @@ $(document).ready(function(){initNavTree('class_interval.html',''); initResizabl
   <div class="headertitle"><div class="title">Interval Class Reference</div></div>
 </div><!--header-->
 <div class="contents">
+
+<p>Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.  
+ <a href="class_interval.html#details">More...</a></p>
+
+<p><code>#include &lt;<a class="el" href="interval_8h_source.html">interval.h</a>&gt;</code></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="pub-methods" name="pub-methods"></a>
 Public Member Functions</h2></td></tr>
 <tr class="memitem:a9799786e2cbfe2e88e09717d3e223951"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a9799786e2cbfe2e88e09717d3e223951">Interval</a> (const std::string &amp;pitch_A=&quot;C4&quot;, const std::string &amp;pitch_B=&quot;C4&quot;)</td></tr>
-<tr class="memdesc:a9799786e2cbfe2e88e09717d3e223951"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_interval.html">Interval</a> object.  <a href="class_interval.html#a9799786e2cbfe2e88e09717d3e223951">More...</a><br /></td></tr>
+<tr class="memdesc:a9799786e2cbfe2e88e09717d3e223951"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> from two pitch strings.  <a href="class_interval.html#a9799786e2cbfe2e88e09717d3e223951">More...</a><br /></td></tr>
 <tr class="separator:a9799786e2cbfe2e88e09717d3e223951"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aebc7c823d1433d0a924a3d1f0e09476d"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aebc7c823d1433d0a924a3d1f0e09476d">Interval</a> (const <a class="el" href="class_note.html">Note</a> &amp;note_A, const <a class="el" href="class_note.html">Note</a> &amp;note_B)</td></tr>
-<tr class="memdesc:aebc7c823d1433d0a924a3d1f0e09476d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Construct a new <a class="el" href="class_interval.html">Interval</a> object.  <a href="class_interval.html#aebc7c823d1433d0a924a3d1f0e09476d">More...</a><br /></td></tr>
+<tr class="memdesc:aebc7c823d1433d0a924a3d1f0e09476d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Constructs an <a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> from two <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> objects.  <a href="class_interval.html#aebc7c823d1433d0a924a3d1f0e09476d">More...</a><br /></td></tr>
 <tr class="separator:aebc7c823d1433d0a924a3d1f0e09476d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac948ef8c214c6dced560538839027bfa"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ac948ef8c214c6dced560538839027bfa">setNotes</a> (const std::string &amp;pitch_A, const std::string &amp;pitch_B)</td></tr>
-<tr class="memdesc:ac948ef8c214c6dced560538839027bfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Notes object.  <a href="class_interval.html#ac948ef8c214c6dced560538839027bfa">More...</a><br /></td></tr>
+<tr class="memdesc:ac948ef8c214c6dced560538839027bfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the notes of the interval using pitch strings.  <a href="class_interval.html#ac948ef8c214c6dced560538839027bfa">More...</a><br /></td></tr>
 <tr class="separator:ac948ef8c214c6dced560538839027bfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a706ab003f21b56befeb4242da333fde2"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a706ab003f21b56befeb4242da333fde2">setNotes</a> (const <a class="el" href="class_note.html">Note</a> &amp;note_A, const <a class="el" href="class_note.html">Note</a> &amp;note_B)</td></tr>
-<tr class="memdesc:a706ab003f21b56befeb4242da333fde2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Set the Notes object.  <a href="class_interval.html#a706ab003f21b56befeb4242da333fde2">More...</a><br /></td></tr>
+<tr class="memdesc:a706ab003f21b56befeb4242da333fde2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the notes of the interval using <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> objects.  <a href="class_interval.html#a706ab003f21b56befeb4242da333fde2">More...</a><br /></td></tr>
 <tr class="separator:a706ab003f21b56befeb4242da333fde2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aff0614f7943d772a068aabb75331fd1e"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aff0614f7943d772a068aabb75331fd1e">getName</a> () const</td></tr>
-<tr class="memdesc:aff0614f7943d772a068aabb75331fd1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Name object.  <a href="class_interval.html#aff0614f7943d772a068aabb75331fd1e">More...</a><br /></td></tr>
+<tr class="memdesc:aff0614f7943d772a068aabb75331fd1e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the interval name (e.g., "M3", "P5", "m2").  <a href="class_interval.html#aff0614f7943d772a068aabb75331fd1e">More...</a><br /></td></tr>
 <tr class="separator:aff0614f7943d772a068aabb75331fd1e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a062cbab5dbf1e458a1219d34a986078c"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a062cbab5dbf1e458a1219d34a986078c">getNumSemitones</a> (const bool absoluteValue=false) const</td></tr>
-<tr class="memdesc:a062cbab5dbf1e458a1219d34a986078c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Num Semitones object.  <a href="class_interval.html#a062cbab5dbf1e458a1219d34a986078c">More...</a><br /></td></tr>
+<tr class="memdesc:a062cbab5dbf1e458a1219d34a986078c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of semitones between the notes.  <a href="class_interval.html#a062cbab5dbf1e458a1219d34a986078c">More...</a><br /></td></tr>
 <tr class="separator:a062cbab5dbf1e458a1219d34a986078c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab406b1cad8950ee952b9529011bb19df"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ab406b1cad8950ee952b9529011bb19df">getNumOctaves</a> (const bool absoluteValue=false) const</td></tr>
-<tr class="memdesc:ab406b1cad8950ee952b9529011bb19df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Num Octaves object.  <a href="class_interval.html#ab406b1cad8950ee952b9529011bb19df">More...</a><br /></td></tr>
+<tr class="memdesc:ab406b1cad8950ee952b9529011bb19df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of octaves between the notes.  <a href="class_interval.html#ab406b1cad8950ee952b9529011bb19df">More...</a><br /></td></tr>
 <tr class="separator:ab406b1cad8950ee952b9529011bb19df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab8bc769e50f9fd121d8694b9c231f30b"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ab8bc769e50f9fd121d8694b9c231f30b">getDiatonicInterval</a> (const bool useSingleOctave=true, const bool absoluteValue=false) const</td></tr>
-<tr class="memdesc:ab8bc769e50f9fd121d8694b9c231f30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Diatonic <a class="el" href="class_interval.html">Interval</a> object.  <a href="class_interval.html#ab8bc769e50f9fd121d8694b9c231f30b">More...</a><br /></td></tr>
+<tr class="memdesc:ab8bc769e50f9fd121d8694b9c231f30b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the diatonic interval number (e.g., 3 for a third).  <a href="class_interval.html#ab8bc769e50f9fd121d8694b9c231f30b">More...</a><br /></td></tr>
 <tr class="separator:ab8bc769e50f9fd121d8694b9c231f30b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a532f67cc2f4afeae2f3530108429bba4"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a532f67cc2f4afeae2f3530108429bba4">getDiatonicSteps</a> (const bool useSingleOctave=true, const bool absoluteValue=false) const</td></tr>
-<tr class="memdesc:a532f67cc2f4afeae2f3530108429bba4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Diatonic Steps object.  <a href="class_interval.html#a532f67cc2f4afeae2f3530108429bba4">More...</a><br /></td></tr>
+<tr class="memdesc:a532f67cc2f4afeae2f3530108429bba4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the number of diatonic steps between the notes.  <a href="class_interval.html#a532f67cc2f4afeae2f3530108429bba4">More...</a><br /></td></tr>
 <tr class="separator:a532f67cc2f4afeae2f3530108429bba4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2c808da88e0f8234d671fb135b6c7d5a"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2c808da88e0f8234d671fb135b6c7d5a">getPitchStepInterval</a> () const</td></tr>
-<tr class="memdesc:a2c808da88e0f8234d671fb135b6c7d5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Pitch Step <a class="el" href="class_interval.html">Interval</a> object.  <a href="class_interval.html#a2c808da88e0f8234d671fb135b6c7d5a">More...</a><br /></td></tr>
+<tr class="memdesc:a2c808da88e0f8234d671fb135b6c7d5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pitch step interval (e.g., 1 for unison, 2 for second).  <a href="class_interval.html#a2c808da88e0f8234d671fb135b6c7d5a">More...</a><br /></td></tr>
 <tr class="separator:a2c808da88e0f8234d671fb135b6c7d5a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9a0fc9cef8ff577568893aa7d04dada6"><td class="memItemLeft" align="right" valign="top">std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a9a0fc9cef8ff577568893aa7d04dada6">getNotes</a> () const</td></tr>
-<tr class="memdesc:a9a0fc9cef8ff577568893aa7d04dada6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the Notes object.  <a href="class_interval.html#a9a0fc9cef8ff577568893aa7d04dada6">More...</a><br /></td></tr>
+<tr class="memdesc:a9a0fc9cef8ff577568893aa7d04dada6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the two notes defining the interval.  <a href="class_interval.html#a9a0fc9cef8ff577568893aa7d04dada6">More...</a><br /></td></tr>
 <tr class="separator:a9a0fc9cef8ff577568893aa7d04dada6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a94cd02dce7427f4b5447b19c7732af0e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a94cd02dce7427f4b5447b19c7732af0e">isAscendant</a> () const</td></tr>
+<tr class="memdesc:a94cd02dce7427f4b5447b19c7732af0e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is ascending.  <a href="class_interval.html#a94cd02dce7427f4b5447b19c7732af0e">More...</a><br /></td></tr>
 <tr class="separator:a94cd02dce7427f4b5447b19c7732af0e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acb4971dee5145e4fb87c1415d843a09b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#acb4971dee5145e4fb87c1415d843a09b">isDescendant</a> () const</td></tr>
+<tr class="memdesc:acb4971dee5145e4fb87c1415d843a09b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is descending.  <a href="class_interval.html#acb4971dee5145e4fb87c1415d843a09b">More...</a><br /></td></tr>
 <tr class="separator:acb4971dee5145e4fb87c1415d843a09b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a62cf7598dea1aa0bf13560770ff14b7d"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a62cf7598dea1aa0bf13560770ff14b7d">getDirection</a> () const</td></tr>
+<tr class="memdesc:a62cf7598dea1aa0bf13560770ff14b7d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the direction of the interval as a string ("asc", "desc", or empty for unison).  <a href="class_interval.html#a62cf7598dea1aa0bf13560770ff14b7d">More...</a><br /></td></tr>
+<tr class="separator:a62cf7598dea1aa0bf13560770ff14b7d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aaa611df6435f748906eb38ee46465a12"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aaa611df6435f748906eb38ee46465a12">isSimple</a> () const</td></tr>
+<tr class="memdesc:aaa611df6435f748906eb38ee46465a12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is simple (within an octave).  <a href="class_interval.html#aaa611df6435f748906eb38ee46465a12">More...</a><br /></td></tr>
 <tr class="separator:aaa611df6435f748906eb38ee46465a12"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa9ca8ca3dfc9532fbbefb9f6989130c4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aa9ca8ca3dfc9532fbbefb9f6989130c4">isCompound</a> () const</td></tr>
+<tr class="memdesc:aa9ca8ca3dfc9532fbbefb9f6989130c4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is compound (greater than an octave).  <a href="class_interval.html#aa9ca8ca3dfc9532fbbefb9f6989130c4">More...</a><br /></td></tr>
 <tr class="separator:aa9ca8ca3dfc9532fbbefb9f6989130c4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1acf35cbe55711d4f6bc81b206cd42df"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a1acf35cbe55711d4f6bc81b206cd42df">isTonal</a> () const</td></tr>
+<tr class="memdesc:a1acf35cbe55711d4f6bc81b206cd42df"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is tonal (major, minor, perfect, etc.).  <a href="class_interval.html#a1acf35cbe55711d4f6bc81b206cd42df">More...</a><br /></td></tr>
 <tr class="separator:a1acf35cbe55711d4f6bc81b206cd42df"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa0e54b2a96015decdf3c2d8e36fa8f1f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aa0e54b2a96015decdf3c2d8e36fa8f1f">isMajor</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:aa0e54b2a96015decdf3c2d8e36fa8f1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is major.  <a href="class_interval.html#aa0e54b2a96015decdf3c2d8e36fa8f1f">More...</a><br /></td></tr>
 <tr class="separator:aa0e54b2a96015decdf3c2d8e36fa8f1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ec7093e8049ee57bd32e88b63c0079f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a6ec7093e8049ee57bd32e88b63c0079f">isMinor</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a6ec7093e8049ee57bd32e88b63c0079f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is minor.  <a href="class_interval.html#a6ec7093e8049ee57bd32e88b63c0079f">More...</a><br /></td></tr>
 <tr class="separator:a6ec7093e8049ee57bd32e88b63c0079f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:acbe2434fb374e73b74d0e72652c62705"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#acbe2434fb374e73b74d0e72652c62705">isPerfect</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:acbe2434fb374e73b74d0e72652c62705"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is perfect.  <a href="class_interval.html#acbe2434fb374e73b74d0e72652c62705">More...</a><br /></td></tr>
 <tr class="separator:acbe2434fb374e73b74d0e72652c62705"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac887f849a50de0f3f3026c43eae901d2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ac887f849a50de0f3f3026c43eae901d2">isDiminished</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:ac887f849a50de0f3f3026c43eae901d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is diminished.  <a href="class_interval.html#ac887f849a50de0f3f3026c43eae901d2">More...</a><br /></td></tr>
 <tr class="separator:ac887f849a50de0f3f3026c43eae901d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a803492efcc18aa11bebe0e465d901249"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a803492efcc18aa11bebe0e465d901249">isAugmented</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a803492efcc18aa11bebe0e465d901249"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is augmented.  <a href="class_interval.html#a803492efcc18aa11bebe0e465d901249">More...</a><br /></td></tr>
 <tr class="separator:a803492efcc18aa11bebe0e465d901249"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a48a43e496ddcc8ef79d89aa2cb107933"><td class="memItemLeft" align="right" valign="top"><a id="a48a43e496ddcc8ef79d89aa2cb107933" name="a48a43e496ddcc8ef79d89aa2cb107933"></a>
-bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</b> (const bool useEnharmony=false) const</td></tr>
+<tr class="memitem:a48a43e496ddcc8ef79d89aa2cb107933"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a48a43e496ddcc8ef79d89aa2cb107933">isDiminishedUnisson</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a48a43e496ddcc8ef79d89aa2cb107933"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a diminished unison.  <a href="class_interval.html#a48a43e496ddcc8ef79d89aa2cb107933">More...</a><br /></td></tr>
 <tr class="separator:a48a43e496ddcc8ef79d89aa2cb107933"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a53fc5c24572331bf0da1a0c06be2daed"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a53fc5c24572331bf0da1a0c06be2daed">isPerfectUnisson</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a53fc5c24572331bf0da1a0c06be2daed"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a perfect unison.  <a href="class_interval.html#a53fc5c24572331bf0da1a0c06be2daed">More...</a><br /></td></tr>
 <tr class="separator:a53fc5c24572331bf0da1a0c06be2daed"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a75a144da30d05dd3be6ce4140020c8fc"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a75a144da30d05dd3be6ce4140020c8fc">isAugmentedUnisson</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a75a144da30d05dd3be6ce4140020c8fc"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is an augmented unison.  <a href="class_interval.html#a75a144da30d05dd3be6ce4140020c8fc">More...</a><br /></td></tr>
 <tr class="separator:a75a144da30d05dd3be6ce4140020c8fc"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac0fdc10b0fe4ed9011bac6c3f4c7cf2c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ac0fdc10b0fe4ed9011bac6c3f4c7cf2c">isMinorSecond</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:ac0fdc10b0fe4ed9011bac6c3f4c7cf2c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a minor second.  <a href="class_interval.html#ac0fdc10b0fe4ed9011bac6c3f4c7cf2c">More...</a><br /></td></tr>
 <tr class="separator:ac0fdc10b0fe4ed9011bac6c3f4c7cf2c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aab6d3ee0930d6be33bb39076b42d4f14"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aab6d3ee0930d6be33bb39076b42d4f14">isMajorSecond</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:aab6d3ee0930d6be33bb39076b42d4f14"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a major second.  <a href="class_interval.html#aab6d3ee0930d6be33bb39076b42d4f14">More...</a><br /></td></tr>
 <tr class="separator:aab6d3ee0930d6be33bb39076b42d4f14"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad027a63f04f04e53bb18dd0e5aabb48a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ad027a63f04f04e53bb18dd0e5aabb48a">isMinorThird</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:ad027a63f04f04e53bb18dd0e5aabb48a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a minor third.  <a href="class_interval.html#ad027a63f04f04e53bb18dd0e5aabb48a">More...</a><br /></td></tr>
 <tr class="separator:ad027a63f04f04e53bb18dd0e5aabb48a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a5a70ca7777bfa3726027ef0f841be9dd"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a5a70ca7777bfa3726027ef0f841be9dd">isMajorThird</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a5a70ca7777bfa3726027ef0f841be9dd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a major third.  <a href="class_interval.html#a5a70ca7777bfa3726027ef0f841be9dd">More...</a><br /></td></tr>
 <tr class="separator:a5a70ca7777bfa3726027ef0f841be9dd"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a16ca98904da9b6eda32e58f47146ed3b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a16ca98904da9b6eda32e58f47146ed3b">isPerfectFourth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a16ca98904da9b6eda32e58f47146ed3b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a perfect fourth.  <a href="class_interval.html#a16ca98904da9b6eda32e58f47146ed3b">More...</a><br /></td></tr>
 <tr class="separator:a16ca98904da9b6eda32e58f47146ed3b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa87444334754e60e07dd2ec82d14e60b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aa87444334754e60e07dd2ec82d14e60b">isAugmentedFourth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:aa87444334754e60e07dd2ec82d14e60b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is an augmented fourth (tritone).  <a href="class_interval.html#aa87444334754e60e07dd2ec82d14e60b">More...</a><br /></td></tr>
 <tr class="separator:aa87444334754e60e07dd2ec82d14e60b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a22e2392f8052fbd00bcaa8b8963e8468"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a22e2392f8052fbd00bcaa8b8963e8468">isDiminishedFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a22e2392f8052fbd00bcaa8b8963e8468"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a diminished fifth (tritone).  <a href="class_interval.html#a22e2392f8052fbd00bcaa8b8963e8468">More...</a><br /></td></tr>
 <tr class="separator:a22e2392f8052fbd00bcaa8b8963e8468"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1fc0eab7b93b5cfde2bb09c855219681"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a1fc0eab7b93b5cfde2bb09c855219681">isPerfectFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a1fc0eab7b93b5cfde2bb09c855219681"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a perfect fifth.  <a href="class_interval.html#a1fc0eab7b93b5cfde2bb09c855219681">More...</a><br /></td></tr>
 <tr class="separator:a1fc0eab7b93b5cfde2bb09c855219681"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9d2736370425e73244d937bf40c30e52"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a9d2736370425e73244d937bf40c30e52">isAugmentedFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a9d2736370425e73244d937bf40c30e52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is an augmented fifth.  <a href="class_interval.html#a9d2736370425e73244d937bf40c30e52">More...</a><br /></td></tr>
 <tr class="separator:a9d2736370425e73244d937bf40c30e52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a94f3358011405baaf9e2f686f65245b6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a94f3358011405baaf9e2f686f65245b6">isMinorSixth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a94f3358011405baaf9e2f686f65245b6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a minor sixth.  <a href="class_interval.html#a94f3358011405baaf9e2f686f65245b6">More...</a><br /></td></tr>
 <tr class="separator:a94f3358011405baaf9e2f686f65245b6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a91f9854cba33145d3249dbe12b7cbc0f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a91f9854cba33145d3249dbe12b7cbc0f">isMajorSixth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a91f9854cba33145d3249dbe12b7cbc0f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a major sixth.  <a href="class_interval.html#a91f9854cba33145d3249dbe12b7cbc0f">More...</a><br /></td></tr>
 <tr class="separator:a91f9854cba33145d3249dbe12b7cbc0f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abf922397502eb5696b983eea530d7929"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#abf922397502eb5696b983eea530d7929">isDiminishedSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:abf922397502eb5696b983eea530d7929"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a diminished seventh.  <a href="class_interval.html#abf922397502eb5696b983eea530d7929">More...</a><br /></td></tr>
 <tr class="separator:abf922397502eb5696b983eea530d7929"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2e3e8ad7d48e76992918aa8f33b8e0a4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2e3e8ad7d48e76992918aa8f33b8e0a4">isMinorSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a2e3e8ad7d48e76992918aa8f33b8e0a4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a minor seventh.  <a href="class_interval.html#a2e3e8ad7d48e76992918aa8f33b8e0a4">More...</a><br /></td></tr>
 <tr class="separator:a2e3e8ad7d48e76992918aa8f33b8e0a4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4d0c5c82215098c9c0f3b9d47f211069"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a4d0c5c82215098c9c0f3b9d47f211069">isMajorSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a4d0c5c82215098c9c0f3b9d47f211069"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a major seventh.  <a href="class_interval.html#a4d0c5c82215098c9c0f3b9d47f211069">More...</a><br /></td></tr>
 <tr class="separator:a4d0c5c82215098c9c0f3b9d47f211069"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a002b90c2ab0109e51a957bfeacd7cc9e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a002b90c2ab0109e51a957bfeacd7cc9e">isDiminishedOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a002b90c2ab0109e51a957bfeacd7cc9e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a diminished octave.  <a href="class_interval.html#a002b90c2ab0109e51a957bfeacd7cc9e">More...</a><br /></td></tr>
 <tr class="separator:a002b90c2ab0109e51a957bfeacd7cc9e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a7424c1f8be2b28b223156c01751bc6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2a7424c1f8be2b28b223156c01751bc6">isPerfectOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a2a7424c1f8be2b28b223156c01751bc6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a perfect octave.  <a href="class_interval.html#a2a7424c1f8be2b28b223156c01751bc6">More...</a><br /></td></tr>
 <tr class="separator:a2a7424c1f8be2b28b223156c01751bc6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa59b70456e29476e35137a0aea053d67"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aa59b70456e29476e35137a0aea053d67">isAugmentedOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:aa59b70456e29476e35137a0aea053d67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is an augmented octave.  <a href="class_interval.html#aa59b70456e29476e35137a0aea053d67">More...</a><br /></td></tr>
 <tr class="separator:aa59b70456e29476e35137a0aea053d67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a95fb2a403e03cb6986be09437a963e52"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a95fb2a403e03cb6986be09437a963e52">isMinorNinth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a95fb2a403e03cb6986be09437a963e52"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a minor ninth.  <a href="class_interval.html#a95fb2a403e03cb6986be09437a963e52">More...</a><br /></td></tr>
 <tr class="separator:a95fb2a403e03cb6986be09437a963e52"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3b82daafb2b0f1c96591859c125abefa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a3b82daafb2b0f1c96591859c125abefa">isMajorNinth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a3b82daafb2b0f1c96591859c125abefa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a major ninth.  <a href="class_interval.html#a3b82daafb2b0f1c96591859c125abefa">More...</a><br /></td></tr>
 <tr class="separator:a3b82daafb2b0f1c96591859c125abefa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9179f65138f70fe0e981d4f09a3df46b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a9179f65138f70fe0e981d4f09a3df46b">isPerfectEleventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a9179f65138f70fe0e981d4f09a3df46b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a perfect eleventh.  <a href="class_interval.html#a9179f65138f70fe0e981d4f09a3df46b">More...</a><br /></td></tr>
 <tr class="separator:a9179f65138f70fe0e981d4f09a3df46b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad0ccfa85363c8b5bd1535b265e179e61"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ad0ccfa85363c8b5bd1535b265e179e61">isSharpEleventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:ad0ccfa85363c8b5bd1535b265e179e61"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a sharp eleventh.  <a href="class_interval.html#ad0ccfa85363c8b5bd1535b265e179e61">More...</a><br /></td></tr>
 <tr class="separator:ad0ccfa85363c8b5bd1535b265e179e61"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9ad00576adc3188c98e79fb953be1f67"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a9ad00576adc3188c98e79fb953be1f67">isMinorThirdteenth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a9ad00576adc3188c98e79fb953be1f67"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a minor thirteenth.  <a href="class_interval.html#a9ad00576adc3188c98e79fb953be1f67">More...</a><br /></td></tr>
 <tr class="separator:a9ad00576adc3188c98e79fb953be1f67"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a14e3106e365818c00ece755e2b3f59a6"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a14e3106e365818c00ece755e2b3f59a6">isMajorThirdteenth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a14e3106e365818c00ece755e2b3f59a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a major thirteenth.  <a href="class_interval.html#a14e3106e365818c00ece755e2b3f59a6">More...</a><br /></td></tr>
 <tr class="separator:a14e3106e365818c00ece755e2b3f59a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6ea7c463dbf4a8a43b1af444a632b6b4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a6ea7c463dbf4a8a43b1af444a632b6b4">isSecond</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a6ea7c463dbf4a8a43b1af444a632b6b4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic second (major or minor).  <a href="class_interval.html#a6ea7c463dbf4a8a43b1af444a632b6b4">More...</a><br /></td></tr>
 <tr class="separator:a6ea7c463dbf4a8a43b1af444a632b6b4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2c16adc2da667054266a9f3fd8ea8d2e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2c16adc2da667054266a9f3fd8ea8d2e">isThird</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a2c16adc2da667054266a9f3fd8ea8d2e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic third (major or minor).  <a href="class_interval.html#a2c16adc2da667054266a9f3fd8ea8d2e">More...</a><br /></td></tr>
 <tr class="separator:a2c16adc2da667054266a9f3fd8ea8d2e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2d503264cf9c1b9221a29459b57e19e0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2d503264cf9c1b9221a29459b57e19e0">isFourth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a2d503264cf9c1b9221a29459b57e19e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic fourth (perfect, augmented, or diminished).  <a href="class_interval.html#a2d503264cf9c1b9221a29459b57e19e0">More...</a><br /></td></tr>
 <tr class="separator:a2d503264cf9c1b9221a29459b57e19e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a61597789b92697bb2f5420b22fa7d375"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a61597789b92697bb2f5420b22fa7d375">isFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a61597789b92697bb2f5420b22fa7d375"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic fifth (perfect, augmented, or diminished).  <a href="class_interval.html#a61597789b92697bb2f5420b22fa7d375">More...</a><br /></td></tr>
 <tr class="separator:a61597789b92697bb2f5420b22fa7d375"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac281717a430bada6b855c8aff14f942d"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ac281717a430bada6b855c8aff14f942d">isSixth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:ac281717a430bada6b855c8aff14f942d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic sixth (major or minor).  <a href="class_interval.html#ac281717a430bada6b855c8aff14f942d">More...</a><br /></td></tr>
 <tr class="separator:ac281717a430bada6b855c8aff14f942d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a44c5b8fd54e778e1b34b081615ea861e"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a44c5b8fd54e778e1b34b081615ea861e">isSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a44c5b8fd54e778e1b34b081615ea861e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic seventh (major, minor, or diminished).  <a href="class_interval.html#a44c5b8fd54e778e1b34b081615ea861e">More...</a><br /></td></tr>
 <tr class="separator:a44c5b8fd54e778e1b34b081615ea861e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a84ca7114f5a926057d28876ef7166995"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a84ca7114f5a926057d28876ef7166995">isOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a84ca7114f5a926057d28876ef7166995"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is an octave (perfect, augmented, or diminished).  <a href="class_interval.html#a84ca7114f5a926057d28876ef7166995">More...</a><br /></td></tr>
 <tr class="separator:a84ca7114f5a926057d28876ef7166995"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aecd25d57d08dcfa2619899442cf40e1f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aecd25d57d08dcfa2619899442cf40e1f">isNinth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:aecd25d57d08dcfa2619899442cf40e1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a ninth (major or minor).  <a href="class_interval.html#aecd25d57d08dcfa2619899442cf40e1f">More...</a><br /></td></tr>
 <tr class="separator:aecd25d57d08dcfa2619899442cf40e1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a40487f5342a2dafa91d4b05e794e7086"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a40487f5342a2dafa91d4b05e794e7086">isEleventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a40487f5342a2dafa91d4b05e794e7086"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is an eleventh (perfect or sharp).  <a href="class_interval.html#a40487f5342a2dafa91d4b05e794e7086">More...</a><br /></td></tr>
 <tr class="separator:a40487f5342a2dafa91d4b05e794e7086"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1c1df602800bb5fe49d47f7632ba29c0"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a1c1df602800bb5fe49d47f7632ba29c0">isThirdteenth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a1c1df602800bb5fe49d47f7632ba29c0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a thirteenth (major or minor).  <a href="class_interval.html#a1c1df602800bb5fe49d47f7632ba29c0">More...</a><br /></td></tr>
 <tr class="separator:a1c1df602800bb5fe49d47f7632ba29c0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a966820cd067911ae0be3c893c6079fec"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a966820cd067911ae0be3c893c6079fec">isAnyOctaveMinorSecond</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a966820cd067911ae0be3c893c6079fec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a minor second in any octave.  <a href="class_interval.html#a966820cd067911ae0be3c893c6079fec">More...</a><br /></td></tr>
 <tr class="separator:a966820cd067911ae0be3c893c6079fec"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0166dba6d8063e2b5cb6a218e157cb02"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a0166dba6d8063e2b5cb6a218e157cb02">isAnyOctaveMajorSecond</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a0166dba6d8063e2b5cb6a218e157cb02"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a major second in any octave.  <a href="class_interval.html#a0166dba6d8063e2b5cb6a218e157cb02">More...</a><br /></td></tr>
 <tr class="separator:a0166dba6d8063e2b5cb6a218e157cb02"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae77b553df50f7bf317a08313d992740c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ae77b553df50f7bf317a08313d992740c">isAnyOctaveMinorThird</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:ae77b553df50f7bf317a08313d992740c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a minor third in any octave.  <a href="class_interval.html#ae77b553df50f7bf317a08313d992740c">More...</a><br /></td></tr>
 <tr class="separator:ae77b553df50f7bf317a08313d992740c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a030c32128e85e37c673902a62218feaa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a030c32128e85e37c673902a62218feaa">isAnyOctaveMajorThird</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a030c32128e85e37c673902a62218feaa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a major third in any octave.  <a href="class_interval.html#a030c32128e85e37c673902a62218feaa">More...</a><br /></td></tr>
 <tr class="separator:a030c32128e85e37c673902a62218feaa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afbd16c3551bdb0c7cb0cdf5e85aec109"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#afbd16c3551bdb0c7cb0cdf5e85aec109">isAnyOctavePerfectFourth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:afbd16c3551bdb0c7cb0cdf5e85aec109"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a perfect fourth in any octave.  <a href="class_interval.html#afbd16c3551bdb0c7cb0cdf5e85aec109">More...</a><br /></td></tr>
 <tr class="separator:afbd16c3551bdb0c7cb0cdf5e85aec109"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa72599cb273eae64f459bdd058ac9dac"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#aa72599cb273eae64f459bdd058ac9dac">isAnyOctaveAugmentedFourth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:aa72599cb273eae64f459bdd058ac9dac"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is an augmented fourth in any octave.  <a href="class_interval.html#aa72599cb273eae64f459bdd058ac9dac">More...</a><br /></td></tr>
 <tr class="separator:aa72599cb273eae64f459bdd058ac9dac"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a87b231c69f17608cd74b359bdf2ce230"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a87b231c69f17608cd74b359bdf2ce230">isAnyOctaveDiminishedFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a87b231c69f17608cd74b359bdf2ce230"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a diminished fifth in any octave.  <a href="class_interval.html#a87b231c69f17608cd74b359bdf2ce230">More...</a><br /></td></tr>
 <tr class="separator:a87b231c69f17608cd74b359bdf2ce230"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abb80741086d94cafacbe6361c02e2cfa"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#abb80741086d94cafacbe6361c02e2cfa">isAnyOctavePerfectFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:abb80741086d94cafacbe6361c02e2cfa"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a perfect fifth in any octave.  <a href="class_interval.html#abb80741086d94cafacbe6361c02e2cfa">More...</a><br /></td></tr>
 <tr class="separator:abb80741086d94cafacbe6361c02e2cfa"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:af354e6d4ec570524fc8574b9ad84e8f1"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#af354e6d4ec570524fc8574b9ad84e8f1">isAnyOctaveAugmentedFifth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:af354e6d4ec570524fc8574b9ad84e8f1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is an augmented fifth in any octave.  <a href="class_interval.html#af354e6d4ec570524fc8574b9ad84e8f1">More...</a><br /></td></tr>
 <tr class="separator:af354e6d4ec570524fc8574b9ad84e8f1"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a484b7df20325b8667192201eb00b3e12"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a484b7df20325b8667192201eb00b3e12">isAnyOctaveMinorSixth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a484b7df20325b8667192201eb00b3e12"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a minor sixth in any octave.  <a href="class_interval.html#a484b7df20325b8667192201eb00b3e12">More...</a><br /></td></tr>
 <tr class="separator:a484b7df20325b8667192201eb00b3e12"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6895d48cc389733d2b2264ff1101c47b"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a6895d48cc389733d2b2264ff1101c47b">isAnyOctaveMajorSixth</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a6895d48cc389733d2b2264ff1101c47b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a major sixth in any octave.  <a href="class_interval.html#a6895d48cc389733d2b2264ff1101c47b">More...</a><br /></td></tr>
 <tr class="separator:a6895d48cc389733d2b2264ff1101c47b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a56d5293b5deb1ec87b02e894e8c6af1f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a56d5293b5deb1ec87b02e894e8c6af1f">isAnyOctaveDiminishedSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a56d5293b5deb1ec87b02e894e8c6af1f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a diminished seventh in any octave.  <a href="class_interval.html#a56d5293b5deb1ec87b02e894e8c6af1f">More...</a><br /></td></tr>
 <tr class="separator:a56d5293b5deb1ec87b02e894e8c6af1f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a61bbf068aa13a8642ac7499be90996da"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a61bbf068aa13a8642ac7499be90996da">isAnyOctaveMinorSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a61bbf068aa13a8642ac7499be90996da"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a minor seventh in any octave.  <a href="class_interval.html#a61bbf068aa13a8642ac7499be90996da">More...</a><br /></td></tr>
 <tr class="separator:a61bbf068aa13a8642ac7499be90996da"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ade5a5fe7050e27e72b0618b3fa6b0d7a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ade5a5fe7050e27e72b0618b3fa6b0d7a">isAnyOctaveMajorSeventh</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:ade5a5fe7050e27e72b0618b3fa6b0d7a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a major seventh in any octave.  <a href="class_interval.html#ade5a5fe7050e27e72b0618b3fa6b0d7a">More...</a><br /></td></tr>
 <tr class="separator:ade5a5fe7050e27e72b0618b3fa6b0d7a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:abdc99343833ae38f23280ae2e305cfbf"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#abdc99343833ae38f23280ae2e305cfbf">isAnyOctaveDiminishedOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:abdc99343833ae38f23280ae2e305cfbf"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a diminished octave in any octave.  <a href="class_interval.html#abdc99343833ae38f23280ae2e305cfbf">More...</a><br /></td></tr>
 <tr class="separator:abdc99343833ae38f23280ae2e305cfbf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a8e418b4aed8289e8c61ee051f91be5f4"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a8e418b4aed8289e8c61ee051f91be5f4">isAnyOctavePerfectOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:a8e418b4aed8289e8c61ee051f91be5f4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a perfect octave in any octave.  <a href="class_interval.html#a8e418b4aed8289e8c61ee051f91be5f4">More...</a><br /></td></tr>
 <tr class="separator:a8e418b4aed8289e8c61ee051f91be5f4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab2cde851839b15330ae8005aa166a3f2"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ab2cde851839b15330ae8005aa166a3f2">isAnyOctaveAugmentedOctave</a> (const bool useEnharmony=false) const</td></tr>
+<tr class="memdesc:ab2cde851839b15330ae8005aa166a3f2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is an augmented octave in any octave.  <a href="class_interval.html#ab2cde851839b15330ae8005aa166a3f2">More...</a><br /></td></tr>
 <tr class="separator:ab2cde851839b15330ae8005aa166a3f2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ac95a6f91c90e4b8487a7c595187e8c6c"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ac95a6f91c90e4b8487a7c595187e8c6c">isAnyOctaveSecond</a> () const</td></tr>
+<tr class="memdesc:ac95a6f91c90e4b8487a7c595187e8c6c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic second (any octave).  <a href="class_interval.html#ac95a6f91c90e4b8487a7c595187e8c6c">More...</a><br /></td></tr>
 <tr class="separator:ac95a6f91c90e4b8487a7c595187e8c6c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a567ee0f2db16f3108a97445e60355f28"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a567ee0f2db16f3108a97445e60355f28">isAnyOctaveThird</a> () const</td></tr>
+<tr class="memdesc:a567ee0f2db16f3108a97445e60355f28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic third (any octave).  <a href="class_interval.html#a567ee0f2db16f3108a97445e60355f28">More...</a><br /></td></tr>
 <tr class="separator:a567ee0f2db16f3108a97445e60355f28"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae4588019eb3ff5b5dc21bbecc8f0d124"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ae4588019eb3ff5b5dc21bbecc8f0d124">isAnyOctaveFourth</a> () const</td></tr>
+<tr class="memdesc:ae4588019eb3ff5b5dc21bbecc8f0d124"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic fourth (any octave).  <a href="class_interval.html#ae4588019eb3ff5b5dc21bbecc8f0d124">More...</a><br /></td></tr>
 <tr class="separator:ae4588019eb3ff5b5dc21bbecc8f0d124"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a26f74b4cee28a22700db6dabf2b94582"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a26f74b4cee28a22700db6dabf2b94582">isAnyOctaveFifth</a> () const</td></tr>
+<tr class="memdesc:a26f74b4cee28a22700db6dabf2b94582"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic fifth (any octave).  <a href="class_interval.html#a26f74b4cee28a22700db6dabf2b94582">More...</a><br /></td></tr>
 <tr class="separator:a26f74b4cee28a22700db6dabf2b94582"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad0dffdff7d5e3fdea41e5327971b7e69"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#ad0dffdff7d5e3fdea41e5327971b7e69">isAnyOctaveSixth</a> () const</td></tr>
+<tr class="memdesc:ad0dffdff7d5e3fdea41e5327971b7e69"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic sixth (any octave).  <a href="class_interval.html#ad0dffdff7d5e3fdea41e5327971b7e69">More...</a><br /></td></tr>
 <tr class="separator:ad0dffdff7d5e3fdea41e5327971b7e69"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a03f14d64daf2c0e4c33bf7a76b998dca"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a03f14d64daf2c0e4c33bf7a76b998dca">isAnyOctaveSeventh</a> () const</td></tr>
+<tr class="memdesc:a03f14d64daf2c0e4c33bf7a76b998dca"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic seventh (any octave).  <a href="class_interval.html#a03f14d64daf2c0e4c33bf7a76b998dca">More...</a><br /></td></tr>
 <tr class="separator:a03f14d64daf2c0e4c33bf7a76b998dca"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a2a77a4fa64e4f915ea7067fbdf0c505f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2a77a4fa64e4f915ea7067fbdf0c505f">isAnyOctaveOctave</a> () const</td></tr>
+<tr class="memdesc:a2a77a4fa64e4f915ea7067fbdf0c505f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic octave (any octave).  <a href="class_interval.html#a2a77a4fa64e4f915ea7067fbdf0c505f">More...</a><br /></td></tr>
 <tr class="separator:a2a77a4fa64e4f915ea7067fbdf0c505f"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a76f645c167b18871ec37c31ecbef4ad7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a76f645c167b18871ec37c31ecbef4ad7">toCents</a> () const</td></tr>
+<tr class="memdesc:a76f645c167b18871ec37c31ecbef4ad7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the interval size in cents (for microtonal/tuning analysis).  <a href="class_interval.html#a76f645c167b18871ec37c31ecbef4ad7">More...</a><br /></td></tr>
 <tr class="separator:a76f645c167b18871ec37c31ecbef4ad7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a663fdf847253062d1b77f33879163f8a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a663fdf847253062d1b77f33879163f8a">operator&lt;</a> (const <a class="el" href="class_interval.html">Interval</a> &amp;otherInterval) const</td></tr>
+<tr class="memdesc:a663fdf847253062d1b77f33879163f8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Less-than operator for comparing intervals by number of semitones.  <a href="class_interval.html#a663fdf847253062d1b77f33879163f8a">More...</a><br /></td></tr>
 <tr class="separator:a663fdf847253062d1b77f33879163f8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
-<h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
+<a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
+<div class="textblock"><p >Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis. </p>
+<p >The <a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> class provides methods for constructing, analyzing, and classifying musical intervals. It supports both pitch string and <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> object input, and offers detailed intervallic queries for music analysis and computational musicology. </p>
+</div><h2 class="groupheader">Constructor &amp; Destructor Documentation</h2>
 <a id="a9799786e2cbfe2e88e09717d3e223951" name="a9799786e2cbfe2e88e09717d3e223951"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a9799786e2cbfe2e88e09717d3e223951">&#9670;&nbsp;</a></span>Interval() <span class="overload">[1/2]</span></h2>
 
@@ -299,11 +381,11 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</
       </table>
 </div><div class="memdoc">
 
-<p>Construct a new <a class="el" href="class_interval.html">Interval</a> object. </p>
+<p>Constructs an <a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> from two pitch strings. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitch_A</td><td></td></tr>
-    <tr><td class="paramname">pitch_B</td><td></td></tr>
+    <tr><td class="paramname">pitch_A</td><td>First pitch string (default: "C4"). </td></tr>
+    <tr><td class="paramname">pitch_B</td><td>Second pitch string (default: "C4"). </td></tr>
   </table>
   </dd>
 </dl>
@@ -336,11 +418,11 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</
       </table>
 </div><div class="memdoc">
 
-<p>Construct a new <a class="el" href="class_interval.html">Interval</a> object. </p>
+<p>Constructs an <a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> from two <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> objects. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">note_A</td><td></td></tr>
-    <tr><td class="paramname">note_B</td><td></td></tr>
+    <tr><td class="paramname">note_A</td><td>First <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a>. </td></tr>
+    <tr><td class="paramname">note_B</td><td>Second <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a>. </td></tr>
   </table>
   </dd>
 </dl>
@@ -374,15 +456,15 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</
       </table>
 </div><div class="memdoc">
 
-<p>Get the Diatonic <a class="el" href="class_interval.html">Interval</a> object. </p>
+<p>Returns the diatonic interval number (e.g., 3 for a third). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useSingleOctave</td><td></td></tr>
-    <tr><td class="paramname">absoluteValue</td><td></td></tr>
+    <tr><td class="paramname">useSingleOctave</td><td>If true, computes within a single octave. </td></tr>
+    <tr><td class="paramname">absoluteValue</td><td>If true, returns absolute value. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Diatonic interval number. </dd></dl>
 
 </div>
 </div>
@@ -412,15 +494,35 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</
       </table>
 </div><div class="memdoc">
 
-<p>Get the Diatonic Steps object. </p>
+<p>Returns the number of diatonic steps between the notes. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useSingleOctave</td><td></td></tr>
-    <tr><td class="paramname">absoluteValue</td><td></td></tr>
+    <tr><td class="paramname">useSingleOctave</td><td>If true, computes within a single octave. </td></tr>
+    <tr><td class="paramname">absoluteValue</td><td>If true, returns absolute value. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of diatonic steps. </dd></dl>
+
+</div>
+</div>
+<a id="a62cf7598dea1aa0bf13560770ff14b7d" name="a62cf7598dea1aa0bf13560770ff14b7d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a62cf7598dea1aa0bf13560770ff14b7d">&#9670;&nbsp;</a></span>getDirection()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">std::string Interval::getDirection </td>
+          <td>(</td>
+          <td class="paramname"></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns the direction of the interval as a string ("asc", "desc", or empty for unison). </p>
+<dl class="section return"><dt>Returns</dt><dd>Direction string. </dd></dl>
 
 </div>
 </div>
@@ -439,8 +541,8 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</
       </table>
 </div><div class="memdoc">
 
-<p>Get the Name object. </p>
-<dl class="section return"><dt>Returns</dt><dd>std::string </dd></dl>
+<p>Returns the interval name (e.g., "M3", "P5", "m2"). </p>
+<dl class="section return"><dt>Returns</dt><dd>String with the interval name. </dd></dl>
 
 </div>
 </div>
@@ -459,8 +561,8 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</
       </table>
 </div><div class="memdoc">
 
-<p>Get the Notes object. </p>
-<dl class="section return"><dt>Returns</dt><dd>std::vector&lt;Note&gt; </dd></dl>
+<p>Returns the two notes defining the interval. </p>
+<dl class="section return"><dt>Returns</dt><dd>Vector of <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> objects. </dd></dl>
 
 </div>
 </div>
@@ -480,14 +582,14 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</
       </table>
 </div><div class="memdoc">
 
-<p>Get the Num Octaves object. </p>
+<p>Returns the number of octaves between the notes. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">absoluteValue</td><td></td></tr>
+    <tr><td class="paramname">absoluteValue</td><td>If true, returns absolute value. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of octaves. </dd></dl>
 
 </div>
 </div>
@@ -507,14 +609,14 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</
       </table>
 </div><div class="memdoc">
 
-<p>Get the Num Semitones object. </p>
+<p>Returns the number of semitones between the notes. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">absoluteValue</td><td></td></tr>
+    <tr><td class="paramname">absoluteValue</td><td>If true, returns absolute value. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Number of semitones. </dd></dl>
 
 </div>
 </div>
@@ -533,8 +635,8 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</
       </table>
 </div><div class="memdoc">
 
-<p>Get the Pitch Step <a class="el" href="class_interval.html">Interval</a> object. </p>
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+<p>Returns the pitch step interval (e.g., 1 for unison, 2 for second). </p>
+<dl class="section return"><dt>Returns</dt><dd>Pitch step interval as integer. </dd></dl>
 
 </div>
 </div>
@@ -553,15 +655,15 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>isDiminishedUnisson</
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is an augmented fifth in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave augmented fifth. </dd></dl>
 
 </div>
 </div>
@@ -580,15 +682,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is an augmented fourth in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave augmented fourth. </dd></dl>
 
 </div>
 </div>
@@ -607,15 +709,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is an augmented octave in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave augmented octave. </dd></dl>
 
 </div>
 </div>
@@ -634,15 +736,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a diminished fifth in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave diminished fifth. </dd></dl>
 
 </div>
 </div>
@@ -661,15 +763,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a diminished octave in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave diminished octave. </dd></dl>
 
 </div>
 </div>
@@ -688,15 +790,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a diminished seventh in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave diminished seventh. </dd></dl>
 
 </div>
 </div>
@@ -714,9 +816,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is a generic fifth (any octave). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave fifth. </dd></dl>
 
 </div>
 </div>
@@ -734,9 +836,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is a generic fourth (any octave). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave fourth. </dd></dl>
 
 </div>
 </div>
@@ -755,15 +857,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a major second in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave major second. </dd></dl>
 
 </div>
 </div>
@@ -782,15 +884,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a major seventh in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave major seventh. </dd></dl>
 
 </div>
 </div>
@@ -809,15 +911,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a major sixth in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave major sixth. </dd></dl>
 
 </div>
 </div>
@@ -836,15 +938,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a major third in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave major third. </dd></dl>
 
 </div>
 </div>
@@ -863,15 +965,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a minor second in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave minor second. </dd></dl>
 
 </div>
 </div>
@@ -890,15 +992,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a minor seventh in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave minor seventh. </dd></dl>
 
 </div>
 </div>
@@ -917,15 +1019,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a minor sixth in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave minor sixth. </dd></dl>
 
 </div>
 </div>
@@ -944,15 +1046,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a minor third in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave minor third. </dd></dl>
 
 </div>
 </div>
@@ -970,9 +1072,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is a generic octave (any octave). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave octave. </dd></dl>
 
 </div>
 </div>
@@ -991,15 +1093,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a perfect fifth in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave perfect fifth. </dd></dl>
 
 </div>
 </div>
@@ -1018,15 +1120,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a perfect fourth in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave perfect fourth. </dd></dl>
 
 </div>
 </div>
@@ -1045,15 +1147,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a perfect octave in any octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave perfect octave. </dd></dl>
 
 </div>
 </div>
@@ -1071,9 +1173,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is a generic second (any octave). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave second. </dd></dl>
 
 </div>
 </div>
@@ -1091,9 +1193,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is a generic seventh (any octave). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave seventh. </dd></dl>
 
 </div>
 </div>
@@ -1111,9 +1213,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is a generic sixth (any octave). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave sixth. </dd></dl>
 
 </div>
 </div>
@@ -1131,9 +1233,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is a generic third (any octave). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if any-octave third. </dd></dl>
 
 </div>
 </div>
@@ -1151,9 +1253,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is ascending. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if ascending. </dd></dl>
 
 </div>
 </div>
@@ -1172,15 +1274,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is augmented. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if augmented. </dd></dl>
 
 </div>
 </div>
@@ -1199,15 +1301,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is an augmented fifth. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if augmented fifth. </dd></dl>
 
 </div>
 </div>
@@ -1226,15 +1328,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is an augmented fourth (tritone). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if augmented fourth. </dd></dl>
 
 </div>
 </div>
@@ -1253,15 +1355,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is an augmented octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if augmented octave. </dd></dl>
 
 </div>
 </div>
@@ -1280,15 +1382,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is an augmented unison. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if augmented unison. </dd></dl>
 
 </div>
 </div>
@@ -1306,9 +1408,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is compound (greater than an octave). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if compound. </dd></dl>
 
 </div>
 </div>
@@ -1326,9 +1428,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is descending. </p>
+<dl class="section return"><dt>Returns</dt><dd>True if descending. </dd></dl>
 
 </div>
 </div>
@@ -1347,15 +1449,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is diminished. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if diminished. </dd></dl>
 
 </div>
 </div>
@@ -1374,15 +1476,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a diminished fifth (tritone). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if diminished fifth. </dd></dl>
 
 </div>
 </div>
@@ -1401,15 +1503,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a diminished octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if diminished octave. </dd></dl>
 
 </div>
 </div>
@@ -1428,15 +1530,42 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a diminished seventh. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if diminished seventh. </dd></dl>
+
+</div>
+</div>
+<a id="a48a43e496ddcc8ef79d89aa2cb107933" name="a48a43e496ddcc8ef79d89aa2cb107933"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a48a43e496ddcc8ef79d89aa2cb107933">&#9670;&nbsp;</a></span>isDiminishedUnisson()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool Interval::isDiminishedUnisson </td>
+          <td>(</td>
+          <td class="paramtype">const bool&#160;</td>
+          <td class="paramname"><em>useEnharmony</em> = <code>false</code></td><td>)</td>
+          <td> const</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Returns true if the interval is a diminished unison. </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>True if diminished unison. </dd></dl>
 
 </div>
 </div>
@@ -1455,15 +1584,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is an eleventh (perfect or sharp). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if eleventh. </dd></dl>
 
 </div>
 </div>
@@ -1482,15 +1611,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a generic fifth (perfect, augmented, or diminished). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if fifth. </dd></dl>
 
 </div>
 </div>
@@ -1509,15 +1638,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a generic fourth (perfect, augmented, or diminished). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if fourth. </dd></dl>
 
 </div>
 </div>
@@ -1536,15 +1665,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is major. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if major. </dd></dl>
 
 </div>
 </div>
@@ -1563,15 +1692,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a major ninth. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if major ninth. </dd></dl>
 
 </div>
 </div>
@@ -1590,15 +1719,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a major second. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if major second. </dd></dl>
 
 </div>
 </div>
@@ -1617,15 +1746,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a major seventh. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if major seventh. </dd></dl>
 
 </div>
 </div>
@@ -1644,15 +1773,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a major sixth. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if major sixth. </dd></dl>
 
 </div>
 </div>
@@ -1671,15 +1800,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a major third. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if major third. </dd></dl>
 
 </div>
 </div>
@@ -1698,15 +1827,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a major thirteenth. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if major thirteenth. </dd></dl>
 
 </div>
 </div>
@@ -1725,15 +1854,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is minor. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if minor. </dd></dl>
 
 </div>
 </div>
@@ -1752,15 +1881,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a minor ninth. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if minor ninth. </dd></dl>
 
 </div>
 </div>
@@ -1779,15 +1908,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a minor second. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if minor second. </dd></dl>
 
 </div>
 </div>
@@ -1806,15 +1935,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a minor seventh. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if minor seventh. </dd></dl>
 
 </div>
 </div>
@@ -1833,15 +1962,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a minor sixth. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if minor sixth. </dd></dl>
 
 </div>
 </div>
@@ -1860,15 +1989,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a minor third. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if minor third. </dd></dl>
 
 </div>
 </div>
@@ -1887,15 +2016,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a minor thirteenth. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if minor thirteenth. </dd></dl>
 
 </div>
 </div>
@@ -1914,15 +2043,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a ninth (major or minor). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if ninth. </dd></dl>
 
 </div>
 </div>
@@ -1941,15 +2070,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is an octave (perfect, augmented, or diminished). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if octave. </dd></dl>
 
 </div>
 </div>
@@ -1968,15 +2097,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is perfect. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if perfect. </dd></dl>
 
 </div>
 </div>
@@ -1995,15 +2124,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a perfect eleventh. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if perfect eleventh. </dd></dl>
 
 </div>
 </div>
@@ -2022,15 +2151,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a perfect fifth. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if perfect fifth. </dd></dl>
 
 </div>
 </div>
@@ -2049,15 +2178,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a perfect fourth. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if perfect fourth. </dd></dl>
 
 </div>
 </div>
@@ -2076,15 +2205,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a perfect octave. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if perfect octave. </dd></dl>
 
 </div>
 </div>
@@ -2103,15 +2232,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a perfect unison. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if perfect unison. </dd></dl>
 
 </div>
 </div>
@@ -2130,15 +2259,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a generic second (major or minor). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if second. </dd></dl>
 
 </div>
 </div>
@@ -2157,15 +2286,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a generic seventh (major, minor, or diminished). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if seventh. </dd></dl>
 
 </div>
 </div>
@@ -2184,15 +2313,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a sharp eleventh. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if sharp eleventh. </dd></dl>
 
 </div>
 </div>
@@ -2210,9 +2339,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is simple (within an octave). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if simple. </dd></dl>
 
 </div>
 </div>
@@ -2231,15 +2360,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a generic sixth (major or minor). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if sixth. </dd></dl>
 
 </div>
 </div>
@@ -2258,15 +2387,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a generic third (major or minor). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if third. </dd></dl>
 
 </div>
 </div>
@@ -2285,15 +2414,15 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
+
+<p>Returns true if the interval is a thirteenth (major or minor). </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">useEnharmony</td><td></td></tr>
+    <tr><td class="paramname">useEnharmony</td><td>If true, considers enharmonic equivalence. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if thirteenth. </dd></dl>
 
 </div>
 </div>
@@ -2311,9 +2440,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+
+<p>Returns true if the interval is tonal (major, minor, perfect, etc.). </p>
+<dl class="section return"><dt>Returns</dt><dd>True if tonal. </dd></dl>
 
 </div>
 </div>
@@ -2340,15 +2469,15 @@ false </dd></dl>
   </tr>
 </table>
 </div><div class="memdoc">
+
+<p>Less-than operator for comparing intervals by number of semitones. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">otherInterval</td><td></td></tr>
+    <tr><td class="paramname">otherInterval</td><td><a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> to compare. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>true </dd>
-<dd>
-false </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>True if this interval is smaller. </dd></dl>
 
 </div>
 </div>
@@ -2378,11 +2507,11 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Set the Notes object. </p>
+<p>Sets the notes of the interval using <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a> objects. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">note_A</td><td></td></tr>
-    <tr><td class="paramname">note_B</td><td></td></tr>
+    <tr><td class="paramname">note_A</td><td>First <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a>. </td></tr>
+    <tr><td class="paramname">note_B</td><td>Second <a class="el" href="class_note.html" title="Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.">Note</a>. </td></tr>
   </table>
   </dd>
 </dl>
@@ -2415,11 +2544,11 @@ false </dd></dl>
       </table>
 </div><div class="memdoc">
 
-<p>Set the Notes object. </p>
+<p>Sets the notes of the interval using pitch strings. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitch_A</td><td></td></tr>
-    <tr><td class="paramname">pitch_B</td><td></td></tr>
+    <tr><td class="paramname">pitch_A</td><td>First pitch string. </td></tr>
+    <tr><td class="paramname">pitch_B</td><td>Second pitch string. </td></tr>
   </table>
   </dd>
 </dl>
@@ -2440,7 +2569,9 @@ false </dd></dl>
         </tr>
       </table>
 </div><div class="memdoc">
-<dl class="section return"><dt>Returns</dt><dd>int </dd></dl>
+
+<p>Returns the interval size in cents (for microtonal/tuning analysis). </p>
+<dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> size in cents. </dd></dl>
 
 </div>
 </div>

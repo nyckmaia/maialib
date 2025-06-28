@@ -1,7 +1,10 @@
 var searchData=
 [
-  ['chord_0',['Chord',['../class_chord.html#a454caa28a4d0caa51904eae2b0d532f9',1,'Chord::Chord()'],['../class_chord.html#afebd7ce0ce16e6d2e8e94dfeafd34aa1',1,'Chord::Chord(const std::vector&lt; Note &gt; &amp;notes)'],['../class_chord.html#aab4dd251251b910f944e741267b8c404',1,'Chord::Chord(const std::vector&lt; std::string &gt; &amp;pitches)']]],
-  ['clear_1',['clear',['../class_score.html#a0b19e00bea38679a5c627b7df3fe0cea',1,'Score']]],
-  ['clef_2',['Clef',['../class_clef.html#a13a4d2422b787e9146d46e367b659ef1',1,'Clef']]],
-  ['clefsignstr2clefsign_3',['clefSignStr2ClefSign',['../class_clef.html#a625a1855921cf8be75ca7832d7bbeb0b',1,'Clef']]]
+  ['calculatemelodyeuclideansimilarity_0',['calculateMelodyEuclideanSimilarity',['../class_helper.html#a1eaba1229b9bc337c3431322c00970d4',1,'Helper::calculateMelodyEuclideanSimilarity(const std::vector&lt; Note &gt; &amp;melodyPattern, const std::vector&lt; Note &gt; &amp;otherMelody)'],['../class_helper.html#a541d362011bd771513a9a6464fe51800',1,'Helper::calculateMelodyEuclideanSimilarity(const std::vector&lt; float &gt; &amp;semitonesDifference)']]],
+  ['calculaterhythmiceuclideansimilarity_1',['calculateRhythmicEuclideanSimilarity',['../class_helper.html#a4c584d257e17717b833354790451ba1d',1,'Helper::calculateRhythmicEuclideanSimilarity(const std::vector&lt; Note &gt; &amp;rhythmPattern, const std::vector&lt; Note &gt; &amp;otherRhythm)'],['../class_helper.html#a538c6607fc8fdad8f09a2b048d0d9482',1,'Helper::calculateRhythmicEuclideanSimilarity(const std::vector&lt; float &gt; &amp;durationDifferences)']]],
+  ['chord_2',['Chord',['../class_chord.html#a454caa28a4d0caa51904eae2b0d532f9',1,'Chord::Chord()'],['../class_chord.html#a739a1c14e2dfbb108b87e211d0a15c52',1,'Chord::Chord(const std::vector&lt; Note &gt; &amp;notes, const RhythmFigure rhythmFigure=RhythmFigure::QUARTER)'],['../class_chord.html#a6fa5d3e5dac8525e3873ddeb42496f4a',1,'Chord::Chord(const std::vector&lt; std::string &gt; &amp;pitches, const RhythmFigure rhythmFigure=RhythmFigure::QUARTER)']]],
+  ['clean_3',['clean',['../class_barline.html#a4920dafc455a9ceee189c48065b882a6',1,'Barline']]],
+  ['clear_4',['clear',['../class_chord.html#ab14288e63324ce844fa72a9c1fba3488',1,'Chord::clear()'],['../class_measure.html#a222b54445c0360a20d54c096926759f6',1,'Measure::clear()'],['../class_part.html#abaa998450a265b04292b922b79a1b420',1,'Part::clear()'],['../class_score.html#a0b19e00bea38679a5c627b7df3fe0cea',1,'Score::clear()'],['../class_score_collection.html#a48620845fc59792dd39e9b72eb31d3c7',1,'ScoreCollection::clear()']]],
+  ['clef_5',['Clef',['../class_clef.html#a13a4d2422b787e9146d46e367b659ef1',1,'Clef']]],
+  ['clefsignstr2clefsign_6',['clefSignStr2ClefSign',['../class_clef.html#a625a1855921cf8be75ca7832d7bbeb0b',1,'Clef']]]
 ];

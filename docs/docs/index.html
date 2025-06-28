@@ -100,7 +100,7 @@ Advantages</h1>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Get Python Package</h1>
 <div class="fragment"><div class="line">pip install maialib</div>
-</div><!-- fragment --><p> Or, if you have a older <code>maialib</code> version installed on your system, please get the latest version running: <code>pip install maialib --upgrade</code></p>
+</div><!-- fragment --><p >Or, if you have a older <code>maialib</code> version installed on your system, please get the latest version running: <code>pip install maialib --upgrade</code></p>
 <h1><a class="anchor" id="autotoc_md2"></a>
 Get Started</h1>
 <p >You can easily import your sheet music (<code>*.xml</code> file) to Python environment using:</p>
@@ -149,7 +149,8 @@ Documentation (in development)</h1>
 <h2><a class="anchor" id="autotoc_md7"></a>
 Level 1: Python Tutorial</h2>
 <p >You can explore <code>maialib</code> features looking at <code>python-tutorial</code> folder (<a href="https://github.com/nyckmaia/maialib/tree/main/python-tutorial">link here</a>). <br  />
- There you will learn how to use and mix <code>maialib</code> classes and functions to reach your musical goals If you are starting, please check these 3 basic <code>maialib</code> Python tutorials:</p><ul>
+ There you will learn how to use and mix <code>maialib</code> classes and functions to reach your musical goals If you are starting, please check these 3 basic <code>maialib</code> Python tutorials:</p>
+<ul>
 <li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_notes_chords.ipynb">Create Notes and Chords</a></li>
 <li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_score.ipynb">Create a Score</a></li>
 <li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/dataframe.ipynb">Using Dataframes</a></li>
@@ -157,12 +158,18 @@ Level 1: Python Tutorial</h2>
 <h2><a class="anchor" id="autotoc_md8"></a>
 Level 2: Developer Documentation</h2>
 <p ><a href="https://maialib.com/">Maialib Documentation WebSite</a></p>
+<h1><a class="anchor" id="autotoc_md9"></a>
+VS Code Users</h1>
+<ul>
+<li>You can write your Python scripts using <code>*.py</code> or <code>*.ipynb</code> file extensions.</li>
+<li>If you decide to use <code>*.ipynb</code> extension, make shure to install <code>nbformat</code> Python package to enable visualize maialib graphs on VS Code editor. To do that: <code>pip install nbformat --upgrade</code></li>
+</ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md10"></a>
+<h1><a class="anchor" id="autotoc_md11"></a>
 Would you like to improve any maialib function?</h1>
-<h2><a class="anchor" id="autotoc_md11"></a>
+<h2><a class="anchor" id="autotoc_md12"></a>
 Are you a C++ developer?</h2>
-<h3><a class="anchor" id="autotoc_md12"></a>
+<h3><a class="anchor" id="autotoc_md13"></a>
 Requirements to build from C++ sources:</h3>
 <ul>
 <li>C++17 compatible compiler</li>
@@ -173,9 +180,9 @@ Requirements to build from C++ sources:</h3>
 <li>Buildcache (Optional: To accelerate the build process)</li>
 <li>CppCheck (Optional: C++ Static Analyzer)</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md13"></a>
+<h2><a class="anchor" id="autotoc_md14"></a>
 Are you a Python developer?</h2>
-<h3><a class="anchor" id="autotoc_md14"></a>
+<h3><a class="anchor" id="autotoc_md15"></a>
 Python Dev-only dependencies</h3>
 <div class="fragment"><div class="line">pip install pathlib</div>
 <div class="line">pip install cpplint</div>
@@ -188,50 +195,51 @@ Python Dev-only dependencies</h3>
 <div class="line"> </div>
 <div class="line">pybind11_mkdoc (github)</div>
 <div class="line">sudo apt install clang (pybind11_mkdoc dependency) - Linux/Mac Only</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md15"></a>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md16"></a>
 Tested Environments</h2>
 <table class="markdownTable">
 <tr class="markdownTableHead">
 <th class="markdownTableHeadNone">Operational System   </th><th class="markdownTableHeadNone">Compilers    </th></tr>
 <tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Windows 10 x64   </td><td class="markdownTableBodyNone">Clang 15.0 (MSYS2)    </td></tr>
+<td class="markdownTableBodyNone">Windows 10 x64   </td><td class="markdownTableBodyNone">Clang 18.0    </td></tr>
 <tr class="markdownTableRowEven">
 <td class="markdownTableBodyNone">Linux Ubuntu 20.04   </td><td class="markdownTableBodyNone">GCC 9.3    </td></tr>
 <tr class="markdownTableRowOdd">
 <td class="markdownTableBodyNone">Apple OSX 10.15   </td><td class="markdownTableBodyNone">XCode 11.5 (Command Line Tools)   </td></tr>
 </table>
-<h2><a class="anchor" id="autotoc_md16"></a>
+<h2><a class="anchor" id="autotoc_md17"></a>
 Quick Start</h2>
-<h3><a class="anchor" id="autotoc_md17"></a>
+<h3><a class="anchor" id="autotoc_md18"></a>
 Build Python module from C++ source</h3>
 <p >Open a terminal (or CMD in Windows), enter inside of the <code>maialib</code> folder. <br  />
  Type: <code>make</code> to build the Python module <br  />
  When the build process finishes, type: <code>make install</code> <br  />
  Done!</p>
-<h2><a class="anchor" id="autotoc_md18"></a>
+<h2><a class="anchor" id="autotoc_md19"></a>
 Known issues to build from source</h2>
-<h3><a class="anchor" id="autotoc_md19"></a>
+<h3><a class="anchor" id="autotoc_md20"></a>
 All Platforms</h3>
 <ul>
 <li>Multiple Python versions installed, like: <code>Official Python</code>, <code>Microsoft Python</code>, <code>MSYS2 Python</code> and others can direct the build system to choose a wrong version to build and install the library. <br  />
  To check all Python versions installed on your system, open the <code>Terminal</code> (or <code>CMD</code> on Windows) and type: - Linux or Mac: - <code>which python</code> - <code>which python3</code> - Windows: - <code>where.exe python</code> - <code>where.exe python3</code></li>
+<li>If <code>maialib</code> Python stubs and autocomplete are not working good on VS Code. Run: "Pylance: Clear Persisted Indices"</li>
 </ul>
-<h3><a class="anchor" id="autotoc_md20"></a>
+<h3><a class="anchor" id="autotoc_md21"></a>
 Windows-Only</h3>
 <ul>
 <li>Disable your antivirus or create a exception (CMake permissions)</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md21"></a>
+<h2><a class="anchor" id="autotoc_md22"></a>
 Contact</h2>
 <p >Nycholas Maia - <a href="#" onclick="location.href='mai'+'lto:'+'nyc'+'km'+'aia'+'@g'+'mai'+'l.'+'com'; return false;">nyckm<span class="obfuscator">.nosp@m.</span>aia@<span class="obfuscator">.nosp@m.</span>gmail<span class="obfuscator">.nosp@m.</span>.com</a></p>
-<h2><a class="anchor" id="autotoc_md22"></a>
+<h2><a class="anchor" id="autotoc_md23"></a>
 Contributing</h2>
 <ul>
 <li>Fork this project</li>
 <li>Make your custumizations and improvments</li>
 <li>Please, send me a pull request</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md23"></a>
+<h2><a class="anchor" id="autotoc_md24"></a>
 License</h2>
 <p >Maialib is licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPLv3 License</a> </p>
 </div></div><!-- PageDoc -->

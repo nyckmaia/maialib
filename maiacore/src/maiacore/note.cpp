@@ -2036,3 +2036,24 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
 }
 
 int Note::getMidiNumber() const { return _midiNumber; }
+
+
+bool Note::operator<(const Note& otherNote) const {
+        return (_midiNumber < otherNote.getMidiNumber());
+    }
+
+bool Note::operator>(const Note& otherNote) const {
+    return (_midiNumber > otherNote.getMidiNumber());
+}
+
+bool Note::operator<=(const Note& otherNote) const {
+    return (_midiNumber <= otherNote.getMidiNumber());
+}
+
+bool Note::operator>=(const Note& otherNote) const {
+    return (_midiNumber >= otherNote.getMidiNumber());
+}
+
+bool Note::operator==(const Note& otherNote) const { return getPitch() == otherNote.getPitch(); }
+
+bool Note::operator!=(const Note& otherNote) const { return getPitch() != otherNote.getPitch(); }

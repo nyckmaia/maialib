@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.9.2] - 2025-06-28
+
+### Improve
+
+- Multiple classes doxygen documentation
+
+## Fix
+
+- Interval::_Diminished_ word spelling is correct now
+
+---
+
 ## [v1.9.1] - 2025-06-11
 
 ### New features

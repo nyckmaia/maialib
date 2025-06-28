@@ -37,24 +37,25 @@ var NAVTREE =
         [ "Level 1: Python Tutorial", "index.html#autotoc_md7", null ],
         [ "Level 2: Developer Documentation", "index.html#autotoc_md8", null ]
       ] ],
-      [ "Would you like to improve any maialib function?", "index.html#autotoc_md10", [
-        [ "Are you a C++ developer?", "index.html#autotoc_md11", [
-          [ "Requirements to build from C++ sources:", "index.html#autotoc_md12", null ]
+      [ "VS Code Users", "index.html#autotoc_md9", null ],
+      [ "Would you like to improve any maialib function?", "index.html#autotoc_md11", [
+        [ "Are you a C++ developer?", "index.html#autotoc_md12", [
+          [ "Requirements to build from C++ sources:", "index.html#autotoc_md13", null ]
         ] ],
-        [ "Are you a Python developer?", "index.html#autotoc_md13", [
-          [ "Python Dev-only dependencies", "index.html#autotoc_md14", null ]
+        [ "Are you a Python developer?", "index.html#autotoc_md14", [
+          [ "Python Dev-only dependencies", "index.html#autotoc_md15", null ]
         ] ],
-        [ "Tested Environments", "index.html#autotoc_md15", null ],
-        [ "Quick Start", "index.html#autotoc_md16", [
-          [ "Build Python module from C++ source", "index.html#autotoc_md17", null ]
+        [ "Tested Environments", "index.html#autotoc_md16", null ],
+        [ "Quick Start", "index.html#autotoc_md17", [
+          [ "Build Python module from C++ source", "index.html#autotoc_md18", null ]
         ] ],
-        [ "Known issues to build from source", "index.html#autotoc_md18", [
-          [ "All Platforms", "index.html#autotoc_md19", null ],
-          [ "Windows-Only", "index.html#autotoc_md20", null ]
+        [ "Known issues to build from source", "index.html#autotoc_md19", [
+          [ "All Platforms", "index.html#autotoc_md20", null ],
+          [ "Windows-Only", "index.html#autotoc_md21", null ]
         ] ],
-        [ "Contact", "index.html#autotoc_md21", null ],
-        [ "Contributing", "index.html#autotoc_md22", null ],
-        [ "License", "index.html#autotoc_md23", null ]
+        [ "Contact", "index.html#autotoc_md22", null ],
+        [ "Contributing", "index.html#autotoc_md23", null ],
+        [ "License", "index.html#autotoc_md24", null ]
       ] ]
     ] ],
     [ "Classes", "annotated.html", [
@@ -62,7 +63,9 @@ var NAVTREE =
       [ "Class Index", "classes.html", null ],
       [ "Class Members", "functions.html", [
         [ "All", "functions.html", "functions_dup" ],
-        [ "Functions", "functions_func.html", "functions_func" ]
+        [ "Functions", "functions_func.html", "functions_func" ],
+        [ "Typedefs", "functions_type.html", null ],
+        [ "Related Functions", "functions_rela.html", null ]
       ] ]
     ] ],
     [ "Files", "files.html", [
@@ -74,7 +77,8 @@ var NAVTREE =
 var NAVTREEINDEX =
 [
 "annotated.html",
-"class_measure.html#a206331a7a64c23fd4cfa3a0f742fc4f8"
+"class_interval.html#ab406b1cad8950ee952b9529011bb19df",
+"class_score.html#a7ee7f7fdd72c7a961d5469ae31fcc983"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
