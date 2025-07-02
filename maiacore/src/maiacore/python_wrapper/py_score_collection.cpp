@@ -48,7 +48,7 @@ void ScoreCollectionClass(const py::module& m) {
     cls.def("removeScore", &ScoreCollection::removeScore, py::arg("scoreIdx"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def("findMelodyPattern",
+    cls.def("findMelodyPatternDataFrame",
             [](const ScoreCollection& collection, const std::vector<Note>& melodyPattern,
                float totalIntervalsSimilarityThreshold, float totalRhythmSimilarityThreshold,
                const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& intervalsSimilarityCallback,
@@ -100,8 +100,8 @@ void ScoreCollectionClass(const py::module& m) {
             py::arg("totalRhythmSimilarityCallback") = nullptr,
             py::arg("totalSimilarityCallback") = nullptr);
 
-    // Wrapper para a segunda versão de findMelodyPattern, que aceita múltiplos padrões
-    cls.def("findMelodyPattern",
+    // Wrapper para a segunda versão de findMelodyPatternDataFrame, que aceita múltiplos padrões
+    cls.def("findMelodyPatternDataFrame",
             [](const ScoreCollection& collection, const std::vector<std::vector<Note>>& melodyPatterns,
                float totalIntervalsSimilarityThreshold, float totalRhythmSimilarityThreshold,
                const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& intervalsSimilarityCallback,

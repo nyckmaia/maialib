@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.9.3] - 2025-07-02
+
+## Fix
+
+- Rename Python wrapper ScoreCollection.findMelodyPattern to .findMelodyPatternDataFrame
+- Update Doxygen documentation
+
+---
+
 ## [v1.9.2] - 2025-06-28
 
 ### Improve
