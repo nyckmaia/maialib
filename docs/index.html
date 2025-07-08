@@ -88,19 +88,22 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </div><!--header-->
 <div class="contents">
 <div class="textblock"><p ><a class="anchor" id="mainpage"></a> <img src="https://github.com/nyckmaia/maialib/actions/workflows/wheels.yml/badge.svg" alt="Maialib CI/CD" style="pointer-events: none;" class="inline"/></p>
-<p >This library is a multiplatform set of musical tools that enable musical score analisys and composition in a easy and fast way. <br  />
- The project <b>core</b> was wrote in <code>C++17</code>, but it also has a <code>Python</code> wrapper that allows a greater number of people (ie musicians not trained in IT) to also have in their hands the same power and musical tools available in <code>maialib</code>.</p>
+<p >This library is a multiplatform set of musical tools that enable musical score analysis and composition in an easy and fast way. <br  />
+ The project <b>maiacore</b> was written in <code>C++17</code>, but it also has a <code>Python</code> wrapper that allows a greater number of people (i.e. musicians not trained in IT) to also have in their hands the same power and musical tools available in <code>maialib</code>.<br  />
+<br  />
+ <b>IMPORTANT: The maialib Python package includes all maiacore classes and functions and some additional other pure python functions. This website covers the maiacore-only classes and functions documentation, which are also present inside the maialib python package.<br  />
+We hope to add documentation of functions written in Python to this site in the future, so that we can have complete documentation of maialib.</b></p>
 <h1><a class="anchor" id="autotoc_md0"></a>
 Advantages</h1>
 <ul>
-<li>Easy to use to musicians and musical researchers</li>
+<li>Easy to use to by musicians and musical researchers</li>
 <li>High computer perfomance and fast calculations</li>
 <li>Read and write musical scores (MusicXML file format)</li>
 </ul>
 <h1><a class="anchor" id="autotoc_md1"></a>
 Get Python Package</h1>
 <div class="fragment"><div class="line">pip install maialib</div>
-</div><!-- fragment --><p >Or, if you have a older <code>maialib</code> version installed on your system, please get the latest version running: <code>pip install maialib --upgrade</code></p>
+</div><!-- fragment --><p >Or, if you have an older <code>maialib</code> version installed on your system, please get the latest version running: <code>pip install maialib --upgrade</code></p>
 <h1><a class="anchor" id="autotoc_md2"></a>
 Get Started</h1>
 <p >You can easily import your sheet music (<code>*.xml</code> file) to Python environment using:</p>
@@ -126,18 +129,27 @@ Frequent Asked Questions</h1>
 <li>Finale</li>
 <li>Others</li>
 </ul>
-<p >Many <code>MusicXML</code> files are avaliable for free in the internet for download.</p>
+<p >Many <code>MusicXML</code> files are avaliable for free in the Internet for download.</p>
 <h2><a class="anchor" id="autotoc_md5"></a>
 2) What can I do if I don't have a &lt;tt&gt;*.xml&lt;/tt&gt; file of my target music?</h2>
 <ul>
-<li>First, make shure and look at different websites and online repositories trying to find the <code>*.xml</code> file</li>
-<li>You can find on the internet the desired MIDI file and import it in a score editor (like MuseScore, Sibelius, Finale, etc.) and then export the <code>MusicXML</code> file from it</li>
-<li>You can use scan the sheet music paper and get a PDF version of it, so:<ul>
-<li>You can use a OMR software to try to convert the PDF file into a <code>*.xml</code> file</li>
-<li>You can pay for other people to type manually note-by-note the PDF into a musical software (link MuseScore, Sibelius, Finale, etc.)</li>
+<li>First, make sure, and look at different websites and online repositories trying to find the <code>*.xml</code> (or <code>*.musicxml</code> or <code>*.mxl</code>) file.</li>
+<li>After that, you can try these 4 options below:<ul>
+<li>Find on the internet the desired MIDI file and import it in a score editor (like MuseScore, Sibelius, Finale, etc.) and then export the <code>MusicXML</code> file from it</li>
+<li>Scan the sheet music paper and get a PDF version of it, and after that, use a OMR software to try to convert the PDF file into a <code>*.xml</code> file:<ul>
+<li><a href="https://musescore.com/import">MuseScore Import - Experimental</a></li>
+<li><a href="https://acestudio.ai/pdf-to-musicxml/">ACE Studio PDF to MusicXML Converter</a></li>
+<li><a href="https://www.avid.com/photoscore-and-notateme-lite">Sibelius PhotoScore</a></li>
+<li><a href="https://scan-score.com/en/">ScanScore</a></li>
+<li><a href="https://www.musitek.com/">SmartScore 64 NE</a></li>
+<li><a href="https://melogenai.com/">Melogen AI</a></li>
+<li><a href="https://www.myriad-online.com/en/products/pdftomusic.htm">PDFtoMusic</a></li>
 </ul>
 </li>
-<li>You can type manually note-by-note the music paper into a musical software (link MuseScore, Sibelius, Finale, etc.)</li>
+<li>Pay for other people to type manually note-by-note the PDF into a musical software (link MuseScore, Sibelius, Finale, etc.)</li>
+<li>Type manually note-by-note the music paper into a musical software (link MuseScore, Sibelius, Finale, etc.)</li>
+</ul>
+</li>
 </ul>
 <h1><a class="anchor" id="autotoc_md6"></a>
 Documentation (in development)</h1>
@@ -149,7 +161,7 @@ Documentation (in development)</h1>
 <h2><a class="anchor" id="autotoc_md7"></a>
 Level 1: Python Tutorial</h2>
 <p >You can explore <code>maialib</code> features looking at <code>python-tutorial</code> folder (<a href="https://github.com/nyckmaia/maialib/tree/main/python-tutorial">link here</a>). <br  />
- There you will learn how to use and mix <code>maialib</code> classes and functions to reach your musical goals If you are starting, please check these 3 basic <code>maialib</code> Python tutorials:</p>
+ There you will learn how to use and mix <code>maialib</code> classes and functions to reach your musical goals If you are starting out, please check these 3 basic <code>maialib</code> Python tutorials:</p>
 <ul>
 <li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_notes_chords.ipynb">Create Notes and Chords</a></li>
 <li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_score.ipynb">Create a Score</a></li>
@@ -162,7 +174,7 @@ Level 2: Developer Documentation</h2>
 VS Code Users</h1>
 <ul>
 <li>You can write your Python scripts using <code>*.py</code> or <code>*.ipynb</code> file extensions.</li>
-<li>If you decide to use <code>*.ipynb</code> extension, make shure to install <code>nbformat</code> Python package to enable visualize maialib graphs on VS Code editor. To do that: <code>pip install nbformat --upgrade</code></li>
+<li>If you decide to use <code>*.ipynb</code> extension, make sure to install <code>nbformat</code> Python package to enable visualize maialib graphs on VS Code editor. To do that: <code>pip install nbformat --upgrade</code></li>
 </ul>
 <hr  />
 <h1><a class="anchor" id="autotoc_md11"></a>
@@ -236,7 +248,7 @@ Contact</h2>
 Contributing</h2>
 <ul>
 <li>Fork this project</li>
-<li>Make your custumizations and improvments</li>
+<li>Make your custumizations and improvements</li>
 <li>Please, send me a pull request</li>
 </ul>
 <h2><a class="anchor" id="autotoc_md24"></a>
