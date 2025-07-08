@@ -2,12 +2,13 @@
 
 ![Maialib CI/CD](https://github.com/nyckmaia/maialib/actions/workflows/wheels.yml/badge.svg)
 
-This library is a multiplatform set of musical tools that enable musical score analisys and composition in a easy and fast way. <br>
-The project **core** was wrote in `C++17`, but it also has a `Python` wrapper that allows a greater number of people (ie musicians not trained in IT) to also have in their hands the same power and musical tools available in `maialib`.
+This library is a multiplatform set of musical tools that enable musical score analysis and composition in an easy and fast way. <br>
+The project **maiacore** was written in `C++17`, but it also has a `Python` wrapper that allows a greater number of people (i.e. musicians not trained in IT) to also have in their hands the same power and musical tools available in `maialib`.<br><br>
+**IMPORTANT: The maialib Python package includes all maiacore classes and functions and some additional other pure python functions. This website covers the maiacore-only classes and functions documentation, which are also present inside the maialib python package.<br>We hope to add documentation of functions written in Python to this site in the future, so that we can have complete documentation of maialib.**
 
 ## Advantages
 
-- Easy to use to musicians and musical researchers
+- Easy to use to by musicians and musical researchers
 - High computer perfomance and fast calculations
 - Read and write musical scores (MusicXML file format)
 
@@ -17,7 +18,7 @@ The project **core** was wrote in `C++17`, but it also has a `Python` wrapper th
 pip install maialib
 ```
 
-Or, if you have a older `maialib` version installed on your system, please get the latest version running: `pip install maialib --upgrade`
+Or, if you have an older `maialib` version installed on your system, please get the latest version running: `pip install maialib --upgrade`
 
 ## Get Started
 
@@ -48,16 +49,23 @@ You can easily export your music files to these file formats above from score ed
 - Finale
 - Others
 
-Many `MusicXML` files are avaliable for free in the internet for download.
+Many `MusicXML` files are avaliable for free in the Internet for download.
 
 ### 2) What can I do if I don't have a `*.xml` file of my target music?
 
-- First, make shure and look at different websites and online repositories trying to find the `*.xml` file
-- You can find on the internet the desired MIDI file and import it in a score editor (like MuseScore, Sibelius, Finale, etc.) and then export the `MusicXML` file from it
-- You can use scan the sheet music paper and get a PDF version of it, so:
-  - You can use a OMR software to try to convert the PDF file into a `*.xml` file
-  - You can pay for other people to type manually note-by-note the PDF into a musical software (link MuseScore, Sibelius, Finale, etc.)
-- You can type manually note-by-note the music paper into a musical software (link MuseScore, Sibelius, Finale, etc.)
+- First, make sure, and look at different websites and online repositories trying to find the `*.xml` (or `*.musicxml` or `*.mxl`) file.
+- After that, you can try these 4 options below:
+  - Find on the internet the desired MIDI file and import it in a score editor (like MuseScore, Sibelius, Finale, etc.) and then export the `MusicXML` file from it
+  - Scan the sheet music paper and get a PDF version of it, and after that, use a OMR software to try to convert the PDF file into a `*.xml` file:
+    - [MuseScore Import - Experimental](https://musescore.com/import)
+    - [ACE Studio PDF to MusicXML Converter](https://acestudio.ai/pdf-to-musicxml/)
+    - [Sibelius PhotoScore](https://www.avid.com/photoscore-and-notateme-lite)
+    - [ScanScore](https://scan-score.com/en/)
+    - [SmartScore 64 NE](https://www.musitek.com/)
+    - [Melogen AI](https://melogenai.com/)
+    - [PDFtoMusic](https://www.myriad-online.com/en/products/pdftomusic.htm)
+  - Pay for other people to type manually note-by-note the PDF into a musical software (link MuseScore, Sibelius, Finale, etc.)
+  - Type manually note-by-note the music paper into a musical software (link MuseScore, Sibelius, Finale, etc.)
 
 ## Documentation (in development)
 
@@ -70,7 +78,7 @@ This project have 2 documentation levels. One for each user type:
 
 You can explore `maialib` features looking at `python-tutorial` folder ([link here](https://github.com/nyckmaia/maialib/tree/main/python-tutorial)). <br>
 There you will learn how to use and mix `maialib` classes and functions to reach your musical goals
-If you are starting, please check these 3 basic `maialib` Python tutorials:
+If you are starting out, please check these 3 basic `maialib` Python tutorials:
 
 - [Create Notes and Chords](https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_notes_chords.ipynb)
 - [Create a Score](https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_score.ipynb)
@@ -83,7 +91,7 @@ If you are starting, please check these 3 basic `maialib` Python tutorials:
 ## VS Code Users
 
 - You can write your Python scripts using `*.py` or `*.ipynb` file extensions.
-- If you decide to use `*.ipynb` extension, make shure to install `nbformat` Python package to enable visualize maialib graphs on VS Code editor.
+- If you decide to use `*.ipynb` extension, make sure to install `nbformat` Python package to enable visualize maialib graphs on VS Code editor.
   To do that: `pip install nbformat --upgrade`
 
 ---
@@ -156,7 +164,7 @@ Nycholas Maia - nyckmaia@gmail.com
 ## Contributing
 
 - Fork this project
-- Make your custumizations and improvments
+- Make your custumizations and improvements
 - Please, send me a pull request
 
 ## License
