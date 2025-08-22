@@ -282,7 +282,8 @@ def plotScoreSetharesDissonance(score: mc.Score, plotType='line', lineShape='lin
 
 
 def plotChordDyadsSetharesDissonanceHeatmap(chord: mc.Chord, numPartialsPerNote: int = 6, useMinModel: bool = True, amplCallback: Optional[Callable[[
-        List[float]], List[float]]] = None, dissonanceThreshold: float = 0.1, dissonanceDecimalPoint: int = 2) -> Tuple[plotly.graph_objs._figure.Figure, pd.DataFrame]:
+    List[float]], List[float]]] = None, dissonanceThreshold: float = 0.1, dissonanceDecimalPoint: int = 2, showValues: bool = False,
+        valuesDecimalPlaces: int = 2) -> Tuple[plotly.graph_objs._figure.Figure, pd.DataFrame]:
     """Plot chord dyads Sethares dissonance heatmap
 
     Args:
@@ -295,6 +296,8 @@ def plotChordDyadsSetharesDissonanceHeatmap(chord: mc.Chord, numPartialsPerNote:
        amplCallback: Custom user function callback to generate the amplitude of each spectrum partial
        dissonanceThreshold (float): Dissonance threshold to skip small dissonance values
        dissonanceDecimalPoint (int): Round chord dissonance value in the plot title
+       showValues (bool): If True, show numerical values inside heatmap cells
+       valuesDecimalPlaces (int): Number of decimal places to display in cell values
 
     Returns:
        A list: [Plotly Figure, The plot data as a Pandas Dataframe]
@@ -313,30 +316,61 @@ def plotChordDyadsSetharesDissonanceHeatmap(chord: mc.Chord, numPartialsPerNote:
         numPartialsPerNote=numPartialsPerNote, useMinModel=useMinModel, amplCallback=amplCallback)
     dfFiltered = df[df.dissonance > dissonanceThreshold]
 
-    # Pivot the dataframe to create a matrix with baseFreq on X and targetFreq on Y
+    # Pivot para matriz (targetFreq como linhas, baseFreq como colunas)
     matrix_df = dfFiltered.pivot(
-        index='targetFreq', columns='baseFreq', values='dissonance')
+        index='targetFreq', columns='baseFreq', values='dissonance'
+    )
 
-    # Create a heatmap using Plotly
-    fig = px.imshow(matrix_df,
-                    labels=dict(x="Base Frequency (Hz)",
-                                y="Target Frequency (Hz)", color="Dissonance"),
-                    color_continuous_scale='Inferno')
+    # Reordena linhas e colunas para consistência
+    matrix_df = matrix_df.reindex(
+        index=sorted(matrix_df.index),
+        columns=sorted(matrix_df.columns)
+    )
 
-    # Extract unique frequencies for x and y ticks
-    x_ticks = sorted(matrix_df.columns.unique())  # baseFreq
-    y_ticks = sorted(matrix_df.index.unique())    # targetFreq
+    # Índices para o heatmap uniforme
+    x_ticks = list(range(len(matrix_df.columns)))
+    y_ticks = list(range(len(matrix_df.index)))
 
-    roundedXTicksValues = [round(num, 0) for num in x_ticks]
-    roundedYTicksValues = [round(num, 0) for num in y_ticks]
+    # Labels reais (frequências)
+    x_labels = [round(v, 0) for v in matrix_df.columns]
+    y_labels = [round(v, 0) for v in matrix_df.index]
 
-    fig.update_xaxes(type='linear', tickvals=x_ticks,
-                     ticktext=roundedXTicksValues)
-    fig.update_yaxes(type='linear', tickvals=y_ticks,
-                     ticktext=roundedYTicksValues, autorange=True)
+    # Formatação do texto (caso showValues=True)
+    if showValues:
+        text_format = f".{valuesDecimalPlaces}f"
+    else:
+        text_format = False
 
+    # Criar heatmap com quadrados iguais
+    fig = px.imshow(
+        matrix_df.values,
+        labels=dict(x="Base Frequency (Hz)",
+                    y="Target Frequency (Hz)", color="Dissonance"),
+        color_continuous_scale="Inferno",
+        origin="lower",   # força o eixo Y a começar por baixo
+        text_auto=text_format
+    )
+
+    # Ajusta ticks para mostrar frequências reais
+    fig.update_xaxes(
+        tickmode="array",
+        tickvals=x_ticks,
+        ticktext=x_labels
+    )
+    fig.update_yaxes(
+        tickmode="array",
+        tickvals=y_ticks,
+        ticktext=y_labels,
+    )
+
+    # Mantém os quadrados sempre iguais
+    fig.update_yaxes(scaleanchor="x", scaleratio=1)
+
+    # Título
     roundedDissonanceValue = round(df.dissonance.sum(), dissonanceDecimalPoint)
     fig.update_layout(
-        title=f'<b>Chord Dyads Sethares Dissonance Heatmap</b><br><i>Chord Dissonance={str(roundedDissonanceValue)}</i>', title_x=0.5)
+        title=f'<b>Chord Dyads Sethares Dissonance Heatmap</b><br><i>Chord Dissonance={roundedDissonanceValue}</i>',
+        title_x=0.5
+    )
 
     return fig, dfFiltered
