@@ -338,9 +338,9 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>removeTies</b> ()</td
 <tr class="memitem:abdb267251ab854095fd9da768ecb0878"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_note.html#abdb267251ab854095fd9da768ecb0878">getFrequency</a> (const bool equalTemperament=true, const float freqA4=440.0f) const</td></tr>
 <tr class="memdesc:abdb267251ab854095fd9da768ecb0878"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the frequency of the note in Hz.  <a href="class_note.html#abdb267251ab854095fd9da768ecb0878">More...</a><br /></td></tr>
 <tr class="separator:abdb267251ab854095fd9da768ecb0878"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a0fcfb20940350e16e26c5187f4ddf66b"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; float &gt;, std::vector&lt; float &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_note.html#a0fcfb20940350e16e26c5187f4ddf66b">getHarmonicSpectrum</a> (const int numPartials=6, const std::function&lt; std::vector&lt; float &gt;(std::vector&lt; float &gt;)&gt; amplCallback=nullptr) const</td></tr>
-<tr class="memdesc:a0fcfb20940350e16e26c5187f4ddf66b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the harmonic spectrum of the note (partials and amplitudes).  <a href="class_note.html#a0fcfb20940350e16e26c5187f4ddf66b">More...</a><br /></td></tr>
-<tr class="separator:a0fcfb20940350e16e26c5187f4ddf66b"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae65249962ec235b0f09cc90f2efa894d"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; float &gt;, std::vector&lt; float &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_note.html#ae65249962ec235b0f09cc90f2efa894d">getHarmonicSpectrum</a> (const int numPartials=6, const std::function&lt; std::vector&lt; float &gt;(std::vector&lt; float &gt;)&gt; amplCallback=nullptr, const float partialsDecayExpRate=0.88f) const</td></tr>
+<tr class="memdesc:ae65249962ec235b0f09cc90f2efa894d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the harmonic spectrum of the note (partials and amplitudes).  <a href="class_note.html#ae65249962ec235b0f09cc90f2efa894d">More...</a><br /></td></tr>
+<tr class="separator:ae65249962ec235b0f09cc90f2efa894d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a043f483f6e74d1802a81dd31288a9847"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_note.html#a043f483f6e74d1802a81dd31288a9847">transpose</a> (const int semitones, const std::string &amp;accType=MUSIC_XML::ACCIDENT::NONE)</td></tr>
 <tr class="memdesc:a043f483f6e74d1802a81dd31288a9847"><td class="mdescLeft">&#160;</td><td class="mdescRight">Transposes the note by a number of semitones and optional accidental type.  <a href="class_note.html#a043f483f6e74d1802a81dd31288a9847">More...</a><br /></td></tr>
 <tr class="separator:a043f483f6e74d1802a81dd31288a9847"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -969,8 +969,8 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (const
 
 </div>
 </div>
-<a id="a0fcfb20940350e16e26c5187f4ddf66b" name="a0fcfb20940350e16e26c5187f4ddf66b"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a0fcfb20940350e16e26c5187f4ddf66b">&#9670;&nbsp;</a></span>getHarmonicSpectrum()</h2>
+<a id="ae65249962ec235b0f09cc90f2efa894d" name="ae65249962ec235b0f09cc90f2efa894d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae65249962ec235b0f09cc90f2efa894d">&#9670;&nbsp;</a></span>getHarmonicSpectrum()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -985,7 +985,13 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (const
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(std::vector&lt; float &gt;)&gt;&#160;</td>
-          <td class="paramname"><em>amplCallback</em> = <code>nullptr</code>&#160;</td>
+          <td class="paramname"><em>amplCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>partialsDecayExpRate</em> = <code>0.88f</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1000,6 +1006,7 @@ bool&#160;</td><td class="memItemRight" valign="bottom"><b>operator!=</b> (const
   <table class="params">
     <tr><td class="paramname">numPartials</td><td>Number of partials. </td></tr>
     <tr><td class="paramname">amplCallback</td><td>Optional amplitude callback. </td></tr>
+    <tr><td class="paramname">partialsDecayExpRate</td><td>Optional Partials decay exponential rate (default: 0.88). </td></tr>
   </table>
   </dd>
 </dl>

@@ -21,7 +21,7 @@ var class_note =
     [ "getEnharmonicPitch", "class_note.html#aee9f31ec0f9986de5a6d88fdc4a6e51e", null ],
     [ "getEnharmonicPitches", "class_note.html#a19fc41e8970b38e6489349acc460b2cd", null ],
     [ "getFrequency", "class_note.html#abdb267251ab854095fd9da768ecb0878", null ],
-    [ "getHarmonicSpectrum", "class_note.html#a0fcfb20940350e16e26c5187f4ddf66b", null ],
+    [ "getHarmonicSpectrum", "class_note.html#ae65249962ec235b0f09cc90f2efa894d", null ],
     [ "getLongType", "class_note.html#ae4cea2767b83f13be910a3d9256c7972", null ],
     [ "getMidiNumber", "class_note.html#a3f9e6a697369623a2a80a4c40998ca7a", null ],
     [ "getNumDots", "class_note.html#a8869572fee91376279894172856b6644", null ],

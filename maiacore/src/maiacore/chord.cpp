@@ -2514,7 +2514,8 @@ std::string Chord::getMeanOfExtremesPitch(const std::string& accType) const {
 
 std::pair<std::vector<float>, std::vector<float>> Chord::getHarmonicSpectrum(
     const int numPartialsPerNote,
-    const std::function<std::vector<float>(std::vector<float>)> amplCallback) const {
+    const std::function<std::vector<float>(std::vector<float>)> amplCallback,
+    const float partialsDecayExpRate) const {
     if (numPartialsPerNote <= 0) {
         LOG_ERROR("The 'numPartialsPerNote' must be a positive value");
     }
@@ -2522,7 +2523,7 @@ std::pair<std::vector<float>, std::vector<float>> Chord::getHarmonicSpectrum(
     std::map<float, float> freqAmplMap;
 
     for (const auto& note : _originalNotes) {
-        const auto freqsAmplsPair = note.getHarmonicSpectrum(numPartialsPerNote, amplCallback);
+        const auto freqsAmplsPair = note.getHarmonicSpectrum(numPartialsPerNote, amplCallback, partialsDecayExpRate);
 
         for (size_t i = 0; i < freqsAmplsPair.first.size(); ++i) {
             auto freq = freqsAmplsPair.first[i];
@@ -2547,7 +2548,8 @@ std::pair<std::vector<float>, std::vector<float>> Chord::getHarmonicSpectrum(
 
 SetharesDissonanceTable Chord::getSetharesDyadsDissonanceValue(
     const int numPartialsPerNote, const bool useMinModel,
-    const std::function<std::vector<float>(std::vector<float>)> amplCallback) const {
+    const std::function<std::vector<float>(std::vector<float>)> amplCallback,
+    const float partialsDecayExpRate) const {
     /*
     Given a list of partials in fvec, with amplitudes in amp, this routine
     calculates the dissonance by summing the roughness of every sine pair
@@ -2558,7 +2560,7 @@ SetharesDissonanceTable Chord::getSetharesDyadsDissonanceValue(
     of the two amplitudes, since this matches the beat frequency amplitude.
     */
 
-    const auto& freqAmplPair = getHarmonicSpectrum(numPartialsPerNote, amplCallback);
+    const auto& freqAmplPair = getHarmonicSpectrum(numPartialsPerNote, amplCallback, partialsDecayExpRate);
 
     const std::vector<float>& fvec = freqAmplPair.first;
     const std::vector<float>& amp = freqAmplPair.second;
@@ -2589,12 +2591,7 @@ SetharesDissonanceTable Chord::getSetharesDyadsDissonanceValue(
     for (size_t i = 0; i < sort_idx.size(); ++i) {
         fr_sorted[i] = fvec[sort_idx[i]];
         am_sorted[i] = amp[sort_idx[i]];
-
-        // std::cout << "[i=" << i << "] freq=" << fr_sorted[i] << " | amp=" << am_sorted[i]
-        //           << std::endl;
     }
-
-    // float D = 0.0f;
 
     const int freqSortedSize = fr_sorted.size();
 
@@ -2639,9 +2636,10 @@ SetharesDissonanceTable Chord::getSetharesDyadsDissonanceValue(
 float Chord::getSetharesDissonance(
     const int numPartialsPerNote, const bool useMinModel,
     const std::function<std::vector<float>(std::vector<float>)> amplCallback,
+    const float partialsDecayExpRate,
     const std::function<float(std::vector<float>)> dissCallback) const {
     const SetharesDissonanceTable table =
-        getSetharesDyadsDissonanceValue(numPartialsPerNote, useMinModel, amplCallback);
+        getSetharesDyadsDissonanceValue(numPartialsPerNote, useMinModel, amplCallback, partialsDecayExpRate);
 
     const int tableSize = table.size();
     const int dissColIdx = 12;

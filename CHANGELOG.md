@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.9.5] - 2025-08-31
+
+### Improve
+
+- Note and Chord class: Add partialsDecayExpRate optional parameter to control the partials decay exponential rate (default: 0.88).
+- Improve Doxygen documentation
+
+## Fix
+
+- Fix Beethoven 5th Symphony notes trill
+
+---
+
 ## [v1.9.3] - 2025-07-02
 
 ## Fix

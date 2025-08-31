@@ -67,16 +67,69 @@ def _dissmeasure(fvec: List[float], amp: List[float], model: str = 'min') -> flo
     return D, fr_pairs, am_pairs
 
 
-def plotSetharesDissonanceCurve(fundamentalFreq: float = 440, numPartials: int = 6, ratioLowLimit: float = 1.0, ratioHighLimit: float = 2.3, ratioStepIncrement: float = 0.001, amplCallback: Optional[Callable[[List[float]], List[float]]] = None) -> Tuple[go.Figure, pd.DataFrame]:
+def plotSetharesDissonanceCurve(fundamentalFreq: float = 440, numPartials: int = 6, ratioLowLimit: float = 1.0, ratioHighLimit: float = 2.3, ratioStepIncrement: float = 0.001, amplCallback: Optional[Callable[[List[float]], List[float]]] = None, partialsDecayExpRate: float = 0.88) -> Tuple[go.Figure, pd.DataFrame]:
     """
-    Compute the Sethares Dissonance Curve of a given base frequency
+    Generate and return the sensory dissonance curve (Sethares) for a harmonic spectrum.
 
-    Return
-        A tuple that contains a Plotly figure, and the pair 'ratios' and 'dissonance' lists
+    Parameters
+    ----------
+    fundamentalFreq : float, default=440
+        Base frequency (f₀) in Hz on which the partials are built.
+
+    numPartials : int, default=6
+        Number of harmonics (partials) to include.
+
+    ratioLowLimit : float, default=1.0
+        Lower bound of the frequency ratio axis (intervals).
+
+    ratioHighLimit : float, default=2.3
+        Upper bound of the frequency ratio axis.
+
+    ratioStepIncrement : float, default=0.001
+        Step size between successive frequency ratios in the dissonance curve.
+
+    amplCallback : Optional[Callable[[List[float]], List[float]]], default=None
+        Optional function that receives a list of partial frequencies and returns
+        corresponding amplitudes. If None, amplitudes decay exponentially by
+        `partialsDecayExpRate`.
+
+    partialsDecayExpRate : float, default=0.88
+        Exponential decay rate for harmonics when `amplCallback` is None:
+        amplitude_i = (partialsDecayExpRate)**i.
+
+    Returns
+    -------
+    fig : go.Figure
+        Plotly figure of the sensory dissonance curve with a log-scaled frequency ratio
+        axis. Includes vertical lines for musically notable intervals (e.g., 3/2, 5/4).
+
+    df : pandas.DataFrame
+        DataFrame with columns:
+            - 'ratio': frequency ratio values
+            - 'dissonance': sensory dissonance computed for each ratio
+            - 'freqs': frequency pair vectors used for calculation
+            - 'amps': amplitude pair vectors used in calculation
+
+    Behavior
+    --------
+    1. Constructs frequency vector `freqs` with integer multiples of `fundamentalFreq`.
+    2. Computes amplitude vector `amps` via `amplCallback`, or using exponential decay.
+    3. Validates matching lengths for `freqs` and `amps`, raising ValueError if mismatched.
+    4. Constructs a `ratios` array from `ratioLowLimit` to `ratioHighLimit`.
+    5. For each ratio r:
+       - Concatenates `freqs` with r × `freqs`; likewise for amplitudes.
+       - Applies `_dissmeasure` to compute sensory dissonance, frequency pairs, and amplitude pairs.
+    6. Builds a Plotly figure plotting dissonance vs. ratio and overlays lines at common musical intervals.
+    7. Returns the figure and a pandas DataFrame for further analysis.
+
+    Exceptions
+    ----------
+    ValueError:
+        Raised if the output of `amplCallback` (if provided) does not match `numPartials` in length.
     """
     freqs = fundamentalFreq * np.array(list(range(1, numPartials+1)))
-    amps = 0.88**np.array(list(range(0, numPartials))
-                          ) if amplCallback == None else amplCallback(freqs)
+    amps = partialsDecayExpRate**np.array(list(range(0, numPartials))
+                                          ) if amplCallback == None else amplCallback(freqs)
 
     if len(freqs) != len(amps):
         raise ValueError(
@@ -190,6 +243,7 @@ def _setharesDissonanceDataFrameInterpolation(df: pd.DataFrame, interpolatePoint
 
 
 def plotScoreSetharesDissonance(score: mc.Score, plotType='line', lineShape='linear', numPartialsPerNote: int = 6, useMinModel: bool = True,
+                                partialsDecayExpRate: float = 0.88,
                                 amplCallback: Optional[Callable[[
                                     List[float]], List[float]]] = None,
                                 dissCallback: Optional[Callable[[List[float]], float]] = None, **kwargs) -> Tuple[go.Figure, pd.DataFrame]:
@@ -202,6 +256,7 @@ def plotScoreSetharesDissonance(score: mc.Score, plotType='line', lineShape='lin
        numPartialsPerNote (int): Amount of spectral partials for each note
        useMinModel (bool): Sethares dissonance values can be computed using the 'minimal amplitude' model
                     or the 'product amplitudes' model. The 'min' model is a more recent approach
+       partialsDecayExpRate (float): Partials decay exponential rate (default: 0.88)
        amplCallback: Custom user function callback to generate the amplitude of each spectrum partial
        dissCallback: Custom user function callback to receive all paired partial dissonances and computes 
                      a single total dissonance value output
@@ -233,7 +288,7 @@ def plotScoreSetharesDissonance(score: mc.Score, plotType='line', lineShape='lin
     df = score.getChordsDataFrame(kwargs)
 
     df["dissonance"] = df.apply(lambda row: row.chord.getSetharesDissonance(
-        numPartialsPerNote, useMinModel, amplCallback, dissCallback), axis=1)
+        numPartialsPerNote, useMinModel, amplCallback, partialsDecayExpRate, dissCallback), axis=1)
     df["chordNotes"] = df.apply(lambda row: ', '.join(
         [str(x.getPitch()) for x in row.chord.getNotes()]), axis=1)
     df["chordSize"] = df.apply(lambda row: row.chord.size(), axis=1)
@@ -282,7 +337,7 @@ def plotScoreSetharesDissonance(score: mc.Score, plotType='line', lineShape='lin
 
 
 def plotChordDyadsSetharesDissonanceHeatmap(chord: mc.Chord, numPartialsPerNote: int = 6, useMinModel: bool = True, amplCallback: Optional[Callable[[
-    List[float]], List[float]]] = None, dissonanceThreshold: float = 0.1, dissonanceDecimalPoint: int = 2, showValues: bool = False,
+    List[float]], List[float]]] = None, partialsDecayExpRate: float = 0.88, dissonanceThreshold: float = 0.1, dissonanceDecimalPoint: int = 2, showValues: bool = False,
         valuesDecimalPlaces: int = 2) -> Tuple[plotly.graph_objs._figure.Figure, pd.DataFrame]:
     """Plot chord dyads Sethares dissonance heatmap
 
@@ -294,6 +349,7 @@ def plotChordDyadsSetharesDissonanceHeatmap(chord: mc.Chord, numPartialsPerNote:
        useMinModel (bool): Sethares dissonance values can be computed using the 'minimal amplitude' model
                     or the 'product amplitudes' model. The 'min' model is a more recent approach
        amplCallback: Custom user function callback to generate the amplitude of each spectrum partial
+       partialsDecayExpRate (float): Partials decay exponential rate (default: 0.88)
        dissonanceThreshold (float): Dissonance threshold to skip small dissonance values
        dissonanceDecimalPoint (int): Round chord dissonance value in the plot title
        showValues (bool): If True, show numerical values inside heatmap cells
@@ -313,7 +369,7 @@ def plotChordDyadsSetharesDissonanceHeatmap(chord: mc.Chord, numPartialsPerNote:
     >>> fig.show()
     """
     df = chord.getSetharesDyadsDataFrame(
-        numPartialsPerNote=numPartialsPerNote, useMinModel=useMinModel, amplCallback=amplCallback)
+        numPartialsPerNote=numPartialsPerNote, useMinModel=useMinModel, amplCallback=amplCallback, partialsDecayExpRate=partialsDecayExpRate)
     dfFiltered = df[df.dissonance > dissonanceThreshold]
 
     # Pivot para matriz (targetFreq como linhas, baseFreq como colunas)

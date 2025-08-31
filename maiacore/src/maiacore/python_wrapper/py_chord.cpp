@@ -342,19 +342,25 @@ void ChordClass(const py::module& m) {
     cls.def("getMeanPitch", &Chord::getMeanPitch, py::arg("accType") = "");
     cls.def("getMeanOfExtremesPitch", &Chord::getMeanOfExtremesPitch, py::arg("accType") = "");
 
-    cls.def("getHarmonicSpectrum", &Chord::getHarmonicSpectrum, py::arg("numPartialsPerNote") = 6,
-            py::arg("amplCallback") = nullptr);
+    cls.def("getHarmonicSpectrum", &Chord::getHarmonicSpectrum, 
+        py::arg("numPartialsPerNote") = 6,
+        py::arg("amplCallback") = nullptr,
+        py::arg("partialsDecayExpRate") = 0.88f);
 
     cls.def("getSetharesDissonance", &Chord::getSetharesDissonance,
-            py::arg("numPartialsPerNote") = 6, py::arg("useMinModel") = true,
-            py::arg("amplCallback") = nullptr, py::arg("dissCallback") = nullptr);
+            py::arg("numPartialsPerNote") = 6, 
+            py::arg("useMinModel") = true,
+            py::arg("amplCallback") = nullptr,
+            py::arg("partialsDecayExpRate") = 0.88f,
+            py::arg("dissCallback") = nullptr);
 
     cls.def(
         "getSetharesDyadsDataFrame",
         [](const Chord& chord, const int numPartialsPerNote, const bool useMinModel,
-           const std::function<std::vector<float>(std::vector<float>)> amplCallback) {
+           const std::function<std::vector<float>(std::vector<float>)> amplCallback,
+            const float partialsDecayExpRate) {
             const SetharesDissonanceTable table = chord.getSetharesDyadsDissonanceValue(
-                numPartialsPerNote, useMinModel, amplCallback);
+                numPartialsPerNote, useMinModel, amplCallback, partialsDecayExpRate);
 
             // Import Pandas module
             py::object Pandas = py::module_::import("pandas");
@@ -403,8 +409,10 @@ void ChordClass(const py::module& m) {
 
             return df;
         },
-        py::arg("numPartialsPerNote") = 6, py::arg("useMinModel") = true,
+        py::arg("numPartialsPerNote") = 6, 
+        py::arg("useMinModel") = true,
         py::arg("amplCallback") = nullptr,
+        py::arg("partialsDecayExpRate") = 0.88f,
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def(py::self == py::self);

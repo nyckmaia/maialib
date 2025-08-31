@@ -1571,7 +1571,8 @@ float Note::getFrequency(bool equalTemperament, const float freqA4) const {
 
 std::pair<std::vector<float>, std::vector<float>> Note::getHarmonicSpectrum(
     const int numPartials,
-    const std::function<std::vector<float>(std::vector<float>)> amplCallback) const {
+    const std::function<std::vector<float>(std::vector<float>)> amplCallback,
+    const float partialsDecayExpRate) const {
     if (numPartials <= 0) {
         LOG_ERROR("The 'numPartials' must be a positive value");
     }
@@ -1584,7 +1585,7 @@ std::pair<std::vector<float>, std::vector<float>> Note::getHarmonicSpectrum(
     std::vector<float> ampls(numPartials, 0);
     if (amplCallback == nullptr) {
         for (int i = 0; i < numPartials; i++) {
-            ampls[i] = std::pow(0.88f, i);
+            ampls[i] = std::pow(partialsDecayExpRate, i);
         }
     } else {
         ampls = amplCallback(freqs);

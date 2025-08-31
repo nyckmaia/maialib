@@ -569,9 +569,6 @@ class Score {
             nullptr,
         const std::function<float(float, float)> totalSimilarityCallback = nullptr) const;
     
-    
-    // nlohmann::json instrumentFragmentation(nlohmann::json config = nlohmann::json());
-
     /**
      * @brief Get the vertical stacked chords from the score object
      *

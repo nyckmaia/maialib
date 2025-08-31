@@ -502,15 +502,15 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>removeDuplicateNotes<
 <tr class="memitem:a9f4ed9c03141a8cbb6284c4a4f9adc4d"><td class="memItemLeft" align="right" valign="top">std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_chord.html#a9f4ed9c03141a8cbb6284c4a4f9adc4d">getMeanOfExtremesPitch</a> (const std::string &amp;accType={}) const</td></tr>
 <tr class="memdesc:a9f4ed9c03141a8cbb6284c4a4f9adc4d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the pitch name corresponding to the mean of the lowest and highest MIDI values in the chord.  <a href="class_chord.html#a9f4ed9c03141a8cbb6284c4a4f9adc4d">More...</a><br /></td></tr>
 <tr class="separator:a9f4ed9c03141a8cbb6284c4a4f9adc4d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a93719173702f4b5255a8f4e01e07da24"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; float &gt;, std::vector&lt; float &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_chord.html#a93719173702f4b5255a8f4e01e07da24">getHarmonicSpectrum</a> (const int numPartialsPerNote=6, const std::function&lt; std::vector&lt; float &gt;(std::vector&lt; float &gt;)&gt; amplCallback=nullptr) const</td></tr>
-<tr class="memdesc:a93719173702f4b5255a8f4e01e07da24"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the combined harmonic spectrum of the chord by summing the spectra of all notes.  <a href="class_chord.html#a93719173702f4b5255a8f4e01e07da24">More...</a><br /></td></tr>
-<tr class="separator:a93719173702f4b5255a8f4e01e07da24"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ae9f0911e746f489d6b7c5061cb7f8ec0"><td class="memItemLeft" align="right" valign="top">SetharesDissonanceTable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_chord.html#ae9f0911e746f489d6b7c5061cb7f8ec0">getSetharesDyadsDissonanceValue</a> (const int numPartials=6, const bool useMinModel=true, const std::function&lt; std::vector&lt; float &gt;(std::vector&lt; float &gt;)&gt; amplCallback=nullptr) const</td></tr>
-<tr class="memdesc:ae9f0911e746f489d6b7c5061cb7f8ec0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the Sethares dissonance value for all dyads in the chord.  <a href="class_chord.html#ae9f0911e746f489d6b7c5061cb7f8ec0">More...</a><br /></td></tr>
-<tr class="separator:ae9f0911e746f489d6b7c5061cb7f8ec0"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:ab844f294dc74bc8987b11fe19485cb88"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_chord.html#ab844f294dc74bc8987b11fe19485cb88">getSetharesDissonance</a> (const int numPartialsPerNote=6, const bool useMinModel=true, const std::function&lt; std::vector&lt; float &gt;(std::vector&lt; float &gt;)&gt; amplCallback=nullptr, const std::function&lt; float(std::vector&lt; float &gt;)&gt; dissCallback=nullptr) const</td></tr>
-<tr class="memdesc:ab844f294dc74bc8987b11fe19485cb88"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the total Sethares dissonance for the chord.  <a href="class_chord.html#ab844f294dc74bc8987b11fe19485cb88">More...</a><br /></td></tr>
-<tr class="separator:ab844f294dc74bc8987b11fe19485cb88"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ad73b58b2b35ab41c0598941cc0a8bd3c"><td class="memItemLeft" align="right" valign="top">std::pair&lt; std::vector&lt; float &gt;, std::vector&lt; float &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_chord.html#ad73b58b2b35ab41c0598941cc0a8bd3c">getHarmonicSpectrum</a> (const int numPartialsPerNote=6, const std::function&lt; std::vector&lt; float &gt;(std::vector&lt; float &gt;)&gt; amplCallback=nullptr, const float partialsDecayExpRate=0.88f) const</td></tr>
+<tr class="memdesc:ad73b58b2b35ab41c0598941cc0a8bd3c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the combined harmonic spectrum of the chord by summing the spectra of all notes.  <a href="class_chord.html#ad73b58b2b35ab41c0598941cc0a8bd3c">More...</a><br /></td></tr>
+<tr class="separator:ad73b58b2b35ab41c0598941cc0a8bd3c"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:ae6480991630c063a1c58ef7d48708d6e"><td class="memItemLeft" align="right" valign="top">SetharesDissonanceTable&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_chord.html#ae6480991630c063a1c58ef7d48708d6e">getSetharesDyadsDissonanceValue</a> (const int numPartials=6, const bool useMinModel=true, const std::function&lt; std::vector&lt; float &gt;(std::vector&lt; float &gt;)&gt; amplCallback=nullptr, const float partialsDecayExpRate=0.88f) const</td></tr>
+<tr class="memdesc:ae6480991630c063a1c58ef7d48708d6e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the Sethares dissonance value for all dyads in the chord.  <a href="class_chord.html#ae6480991630c063a1c58ef7d48708d6e">More...</a><br /></td></tr>
+<tr class="separator:ae6480991630c063a1c58ef7d48708d6e"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a55696f48c11a664bc5aa5a6a360dbe95"><td class="memItemLeft" align="right" valign="top">float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_chord.html#a55696f48c11a664bc5aa5a6a360dbe95">getSetharesDissonance</a> (const int numPartialsPerNote=6, const bool useMinModel=true, const std::function&lt; std::vector&lt; float &gt;(std::vector&lt; float &gt;)&gt; amplCallback=nullptr, const float partialsDecayExpRate=0.88f, const std::function&lt; float(std::vector&lt; float &gt;)&gt; dissCallback=nullptr) const</td></tr>
+<tr class="memdesc:a55696f48c11a664bc5aa5a6a360dbe95"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the total Sethares dissonance for the chord.  <a href="class_chord.html#a55696f48c11a664bc5aa5a6a360dbe95">More...</a><br /></td></tr>
+<tr class="separator:a55696f48c11a664bc5aa5a6a360dbe95"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a6c97eca9d896db84f2bc6337e2342eaf"><td class="memItemLeft" align="right" valign="top">const <a class="el" href="class_note.html">Note</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_chord.html#a6c97eca9d896db84f2bc6337e2342eaf">operator[]</a> (size_t index) const</td></tr>
 <tr class="separator:a6c97eca9d896db84f2bc6337e2342eaf"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7cee986dae263db436beb514ad9f9707"><td class="memItemLeft" align="right" valign="top"><a class="el" href="class_note.html">Note</a> &amp;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_chord.html#a7cee986dae263db436beb514ad9f9707">operator[]</a> (size_t index)</td></tr>
@@ -1059,8 +1059,8 @@ Friends</h2></td></tr>
 
 </div>
 </div>
-<a id="a93719173702f4b5255a8f4e01e07da24" name="a93719173702f4b5255a8f4e01e07da24"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a93719173702f4b5255a8f4e01e07da24">&#9670;&nbsp;</a></span>getHarmonicSpectrum()</h2>
+<a id="ad73b58b2b35ab41c0598941cc0a8bd3c" name="ad73b58b2b35ab41c0598941cc0a8bd3c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ad73b58b2b35ab41c0598941cc0a8bd3c">&#9670;&nbsp;</a></span>getHarmonicSpectrum()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1075,7 +1075,13 @@ Friends</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(std::vector&lt; float &gt;)&gt;&#160;</td>
-          <td class="paramname"><em>amplCallback</em> = <code>nullptr</code>&#160;</td>
+          <td class="paramname"><em>amplCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>partialsDecayExpRate</em> = <code>0.88f</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1090,6 +1096,7 @@ Friends</h2></td></tr>
   <table class="params">
     <tr><td class="paramname">numPartialsPerNote</td><td>Number of partials to include for each note. </td></tr>
     <tr><td class="paramname">amplCallback</td><td>Optional: function to modify amplitude vector. </td></tr>
+    <tr><td class="paramname">partialsDecayExpRate</td><td>Optional Partials decay exponential rate (default: 0.88). </td></tr>
   </table>
   </dd>
 </dl>
@@ -1591,8 +1598,8 @@ Friends</h2></td></tr>
 
 </div>
 </div>
-<a id="ab844f294dc74bc8987b11fe19485cb88" name="ab844f294dc74bc8987b11fe19485cb88"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ab844f294dc74bc8987b11fe19485cb88">&#9670;&nbsp;</a></span>getSetharesDissonance()</h2>
+<a id="a55696f48c11a664bc5aa5a6a360dbe95" name="a55696f48c11a664bc5aa5a6a360dbe95"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a55696f48c11a664bc5aa5a6a360dbe95">&#9670;&nbsp;</a></span>getSetharesDissonance()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1618,6 +1625,12 @@ Friends</h2></td></tr>
         <tr>
           <td class="paramkey"></td>
           <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>partialsDecayExpRate</em> = <code>0.88f</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">const std::function&lt; float(std::vector&lt; float &gt;)&gt;&#160;</td>
           <td class="paramname"><em>dissCallback</em> = <code>nullptr</code>&#160;</td>
         </tr>
@@ -1635,6 +1648,7 @@ Friends</h2></td></tr>
     <tr><td class="paramname">numPartialsPerNote</td><td>Number of partials per note. </td></tr>
     <tr><td class="paramname">useMinModel</td><td>If true, uses the minimum amplitude model; otherwise, uses the product. </td></tr>
     <tr><td class="paramname">amplCallback</td><td>Optional: function to modify amplitude vector. </td></tr>
+    <tr><td class="paramname">partialsDecayExpRate</td><td>Optional Partials decay exponential rate (default: 0.88). </td></tr>
     <tr><td class="paramname">dissCallback</td><td>Optional: function to aggregate dissonance values (e.g., mean, max). </td></tr>
   </table>
   </dd>
@@ -1643,8 +1657,8 @@ Friends</h2></td></tr>
 
 </div>
 </div>
-<a id="ae9f0911e746f489d6b7c5061cb7f8ec0" name="ae9f0911e746f489d6b7c5061cb7f8ec0"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#ae9f0911e746f489d6b7c5061cb7f8ec0">&#9670;&nbsp;</a></span>getSetharesDyadsDissonanceValue()</h2>
+<a id="ae6480991630c063a1c58ef7d48708d6e" name="ae6480991630c063a1c58ef7d48708d6e"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae6480991630c063a1c58ef7d48708d6e">&#9670;&nbsp;</a></span>getSetharesDyadsDissonanceValue()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -1665,7 +1679,13 @@ Friends</h2></td></tr>
           <td class="paramkey"></td>
           <td></td>
           <td class="paramtype">const std::function&lt; std::vector&lt; float &gt;(std::vector&lt; float &gt;)&gt;&#160;</td>
-          <td class="paramname"><em>amplCallback</em> = <code>nullptr</code>&#160;</td>
+          <td class="paramname"><em>amplCallback</em> = <code>nullptr</code>, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>partialsDecayExpRate</em> = <code>0.88f</code>&#160;</td>
         </tr>
         <tr>
           <td></td>
@@ -1681,6 +1701,7 @@ Friends</h2></td></tr>
     <tr><td class="paramname">numPartials</td><td>Number of partials per note. </td></tr>
     <tr><td class="paramname">useMinModel</td><td>If true, uses the minimum amplitude model; otherwise, uses the product. </td></tr>
     <tr><td class="paramname">amplCallback</td><td>Optional: function to modify amplitude vector. </td></tr>
+    <tr><td class="paramname">partialsDecayExpRate</td><td>Optional Partials decay exponential rate (default: 0.88). </td></tr>
   </table>
   </dd>
 </dl>

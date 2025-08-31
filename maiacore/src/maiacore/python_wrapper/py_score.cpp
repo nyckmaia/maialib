@@ -208,96 +208,108 @@ void ScoreClass(const py::module& m) {
         py::arg("totalSimilarityCallback") = nullptr
     );
 
-//     cls.def(
-//     "findAnyMelodyPatternDataFrame",
-//     [](Score& score, const int patternNumNotes,
-//        float totalIntervalsSimilarityThreshold, float totalRhythmSimilarityThreshold,
-//        const std::function<std::vector<float>(const std::vector<Note>&,
-//                                               const std::vector<Note>&)> intervalsSimilarityCallback,
-//        const std::function<std::vector<float>(const std::vector<Note>&,
-//                                               const std::vector<Note>&)> rhythmSimilarityCallback,
-//        const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
-//        const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
-//        const std::function<float(float, float)> totalSimilarityCallback) {
+    // cls.def(
+    // "findAnyMelodyPatternDataFrame",
+    // [](Score& score, const int patternNumNotes,
+    //    float totalIntervalsSimilarityThreshold, float totalRhythmSimilarityThreshold,
+    //    const std::function<std::vector<float>(const std::vector<Note>&,
+    //                                           const std::vector<Note>&)> intervalsSimilarityCallback,
+    //    const std::function<std::vector<float>(const std::vector<Note>&,
+    //                                           const std::vector<Note>&)> rhythmSimilarityCallback,
+    //    const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
+    //    const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
+    //    const std::function<float(float, float)> totalSimilarityCallback) {
 
-//         const auto& results = score.findAnyMelodyPattern(patternNumNotes, totalIntervalsSimilarityThreshold,
-//                                     totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
-//                                     rhythmSimilarityCallback, totalIntervalSimilarityCallback,
-//                                     totalRhythmSimilarityCallback, totalSimilarityCallback);
+    //     const auto& results = score.findAnyMelodyPattern(patternNumNotes, totalIntervalsSimilarityThreshold,
+    //                                 totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
+    //                                 rhythmSimilarityCallback, totalIntervalSimilarityCallback,
+    //                                 totalRhythmSimilarityCallback, totalSimilarityCallback);
 
-//         // Converte os resultados para DataFrames no contexto principal (com o GIL adquirido)
-//         py::gil_scoped_acquire acquire;
-//         py::object Pandas = py::module_::import("pandas");
-//         py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
-//         std::vector<py::object> dataframes;
+    //     // Converte os resultados para DataFrames no contexto principal (com o GIL adquirido)
+    //     py::gil_scoped_acquire acquire;
+    //     py::object Pandas = py::module_::import("pandas");
+    //     py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
+    //     std::vector<py::object> dataframes;
 
-//         // Definindo as colunas do DataFrame
-//         std::vector<std::string> columns = {"partName",
-//                                             "measureId",
-//                                             "staveId",
-//                                             "writtenClefKey",
-//                                             "transposeInterval",
-//                                             "segmentWrittenPitch",
-//                                             "semitonesDiff",
-//                                             "rhythmDiff",
-//                                             "totalIntervalSimilarity",
-//                                             "totalRhythmSimilarity",
-//                                             "totalSimilarity"};
+    //     // Definindo as colunas do DataFrame
+    //     std::vector<std::string> columns = {"partName",
+    //                                         "measureId",
+    //                                         "staveId",
+    //                                         "writtenClefKey",
+    //                                         "transposeInterval",
+    //                                         "segmentWrittenPitch",
+    //                                         "semitonesDiff",
+    //                                         "rhythmDiff",
+    //                                         "totalIntervalSimilarity",
+    //                                         "totalRhythmSimilarity",
+    //                                         "totalSimilarity"};
 
-//         for (size_t idx = 0; idx < results.size(); ++idx) {
-//             py::object df = FromRecords(results[idx], "columns"_a = columns);
+    //     for (size_t idx = 0; idx < results.size(); ++idx) {
+    //         py::object df = FromRecords(results[idx], "columns"_a = columns);
             
-//             // Verifica se o DataFrame possui dados antes de adicioná-lo
-//             if (df.attr("empty").cast<bool>()) {
-//                 continue;  // Pula DataFrames vazios
-//             }
+    //         // Verifica se o DataFrame possui dados antes de adicioná-lo
+    //         if (df.attr("empty").cast<bool>()) {
+    //             continue;  // Pula DataFrames vazios
+    //         }
 
-//             // Adiciona coluna "patternIdx" para identificar o índice do padrão
-//             int num_columns = df.attr("shape").cast<py::tuple>()[1].cast<int>();
-//             df.attr("insert")(num_columns, "patternIdx", idx);
+    //         // Adiciona coluna "patternIdx" para identificar o índice do padrão
+    //         // int num_columns = df.attr("shape").cast<py::tuple>()[1].cast<int>();
+    //         df.attr("insert")(0, "patternIdx", idx);
 
-//             dataframes.push_back(df);
-//         }
+    //         dataframes.push_back(df);
+    //     }
 
-//         // Concatena todos os DataFrames processados com sucesso
-//         if (!dataframes.empty()) {
-//             py::object result_df = Pandas.attr("concat")(dataframes, "ignore_index"_a = true);
+    //     // Concatena todos os DataFrames processados com sucesso
+    //     if (!dataframes.empty()) {
+    //         py::object result_df = Pandas.attr("concat")(dataframes, "ignore_index"_a = true);
 
-//             // Ordena o DataFrame pelo campo "measureId" antes de aplicar filtros
-//             result_df.attr("sort_values")("by"_a = "measureId", "ascending"_a = true, "inplace"_a = true);
+    //         // Ordena o DataFrame pelo campo "measureId" antes de aplicar filtros
+    //         // result_df.attr("sort_values")("by"_a = "measureId", "ascending"_a = true, "inplace"_a = true);
 
-//             // Filtra as linhas onde "segmentWrittenPitch" contém apenas "rest"
-//             py::object filtered_df = result_df.attr("loc")[
-//                 result_df.attr("segmentWrittenPitch").attr("apply")(
-//                     py::cpp_function([](const py::object& pitchList) {
-//                         auto list = pitchList.cast<std::vector<std::string>>();
-//                         return std::any_of(list.begin(), list.end(), [](const std::string& s) { return s != "rest"; });
-//                     })
-//                 )
-//             ];
+    //         py::list sort_cols;
+    //         sort_cols.append("patternIdx");
+    //         sort_cols.append("measureId");
+    //         sort_cols.append("partName");
 
-//             // Reseta o índice do DataFrame final após o filtro
-//             filtered_df = filtered_df.attr("reset_index")("drop"_a = true);
+    //         py::list ascending;
+    //         ascending.append(true);
+    //         ascending.append(true);
+    //         ascending.append(true);
 
-//             return filtered_df;
-//         } else {
-//             throw std::runtime_error("Nenhum DataFrame foi concatenado devido a erro de memória ou outro problema.");
-//         }
-//     },
-//     py::arg("patternNumNotes") = 5,
-//     py::arg("intervalSimilarityThreshold") = 1.0f,
-//     py::arg("rhythmSimilarityThreshold") = 1.0f,
-//     py::arg("intervalsSimilarityCallback") = nullptr,
-//     py::arg("rhythmSimilarityCallback") = nullptr,
-//     py::arg("totalIntervalSimilarityCallback") = nullptr,
-//     py::arg("totalRhythmSimilarityCallback") = nullptr,
-//     py::arg("totalSimilarityCallback") = nullptr
-// );
+    //         result_df.attr("sort_values")(
+    //             "by"_a = sort_cols,
+    //             "ascending"_a = ascending,
+    //             "inplace"_a = true
+    //         );
 
+    //         // Filtra as linhas onde "segmentWrittenPitch" contém apenas "rest"
+    //         py::object filtered_df = result_df.attr("loc")[
+    //             result_df.attr("segmentWrittenPitch").attr("apply")(
+    //                 py::cpp_function([](const py::object& pitchList) {
+    //                     auto list = pitchList.cast<std::vector<std::string>>();
+    //                     return std::any_of(list.begin(), list.end(), [](const std::string& s) { return s != "rest"; });
+    //                 })
+    //             )
+    //         ];
 
-    // cls.def("instrumentFragmentation", &Score::instrumentFragmentation,
-    //         py::arg("config") = nlohmann::json(),
-    //         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    //         // Reseta o índice do DataFrame final após o filtro
+    //         filtered_df = filtered_df.attr("reset_index")("drop"_a = true);
+
+    //         return filtered_df;
+    //     } else {
+    //         throw std::runtime_error("Nenhum DataFrame foi concatenado devido a erro de memória ou outro problema.");
+    //     }
+    // },
+    //     py::arg("patternNumNotes") = 5,
+    //     py::arg("intervalSimilarityThreshold") = 1.0f,
+    //     py::arg("rhythmSimilarityThreshold") = 1.0f,
+    //     py::arg("intervalsSimilarityCallback") = nullptr,
+    //     py::arg("rhythmSimilarityCallback") = nullptr,
+    //     py::arg("totalIntervalSimilarityCallback") = nullptr,
+    //     py::arg("totalRhythmSimilarityCallback") = nullptr,
+    //     py::arg("totalSimilarityCallback") = nullptr
+    // );
+
     cls.def("getChords", &Score::getChords, py::arg("config") = nlohmann::json(),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def(

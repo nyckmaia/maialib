@@ -1233,11 +1233,13 @@ class Chord {
      * @details Useful for timbral and psychoacoustic analysis.
      * @param numPartialsPerNote Number of partials to include for each note.
      * @param amplCallback Optional: function to modify amplitude vector.
+     * @param partialsDecayExpRate Optional Partials decay exponential rate (default: 0.88).
      * @return Pair of vectors: frequencies and corresponding amplitudes.
      */
     std::pair<std::vector<float>, std::vector<float>> getHarmonicSpectrum(
         const int numPartialsPerNote = 6,
-        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
+        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr,
+        const float partialsDecayExpRate = 0.88f) const;
 
     /**
      * @brief Calculates the Sethares dissonance value for all dyads in the chord.
@@ -1245,11 +1247,13 @@ class Chord {
      * @param numPartials Number of partials per note.
      * @param useMinModel If true, uses the minimum amplitude model; otherwise, uses the product.
      * @param amplCallback Optional: function to modify amplitude vector.
+     * @param partialsDecayExpRate Optional Partials decay exponential rate (default: 0.88).
      * @return Table with detailed dissonance information for each dyad.
      */
     SetharesDissonanceTable getSetharesDyadsDissonanceValue(
         const int numPartials = 6, const bool useMinModel = true,
-        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
+        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr,
+        const float partialsDecayExpRate = 0.88f) const;
 
     /**
      * @brief Calculates the total Sethares dissonance for the chord.
@@ -1257,12 +1261,14 @@ class Chord {
      * @param numPartialsPerNote Number of partials per note.
      * @param useMinModel If true, uses the minimum amplitude model; otherwise, uses the product.
      * @param amplCallback Optional: function to modify amplitude vector.
+     * @param partialsDecayExpRate Optional Partials decay exponential rate (default: 0.88).
      * @param dissCallback Optional: function to aggregate dissonance values (e.g., mean, max).
      * @return Total dissonance as a float.
      */
     float getSetharesDissonance(
         const int numPartialsPerNote = 6, const bool useMinModel = true,
         const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr,
+        const float partialsDecayExpRate = 0.88f,
         const std::function<float(std::vector<float>)> dissCallback = nullptr) const;
 
     /**

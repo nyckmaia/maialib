@@ -546,11 +546,13 @@ class Note {
      * @brief Returns the harmonic spectrum of the note (partials and amplitudes).
      * @param numPartials Number of partials.
      * @param amplCallback Optional amplitude callback.
+     * @param partialsDecayExpRate Optional Partials decay exponential rate (default: 0.88).
      * @return Pair of vectors: frequencies and amplitudes.
      */
     std::pair<std::vector<float>, std::vector<float>> getHarmonicSpectrum(
         const int numPartials = 6,
-        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr) const;
+        const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr,
+        const float partialsDecayExpRate = 0.88f) const;
 
     /**
      * @brief Transposes the note by a number of semitones and optional accidental type.

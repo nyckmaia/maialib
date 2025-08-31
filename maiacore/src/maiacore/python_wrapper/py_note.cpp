@@ -151,8 +151,10 @@ void NoteClass(const py::module& m) {
     cls.def("getScaleDegree", &Note::getScaleDegree, py::arg("key"));
     cls.def("getFrequency", &Note::getFrequency, py::arg("equalTemperament") = true,
             py::arg("freqA4") = 440.0f);
-    cls.def("getHarmonicSpectrum", &Note::getHarmonicSpectrum, py::arg("numPartials") = 6,
-            py::arg("amplCallback") = nullptr);
+    cls.def("getHarmonicSpectrum", &Note::getHarmonicSpectrum, 
+            py::arg("numPartials") = 6,
+            py::arg("amplCallback") = nullptr,
+            py::arg("partialsDecayExpRate") = 0.88f);
 
     cls.def("transpose", &Note::transpose, py::arg("semitones"),
             py::arg("accType") = MUSIC_XML::ACCIDENT::NONE);
