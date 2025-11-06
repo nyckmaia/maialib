@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.9.6] - 2025-11-06
+
+### Improve
+
+- Add support to Python 3.13 and 3.14
+
+---
+
 ## [v1.9.5] - 2025-08-31
 
 ### Improve
