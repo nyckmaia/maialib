@@ -13,6 +13,8 @@ stubs/
 .mypy_cache/
 **/.mypy_cache/
 temp.xml
+.claude/
+CLAUDE.md
 
 # Prerequisites
 *.d

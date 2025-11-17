@@ -1940,8 +1940,8 @@ std::pair<RhythmFigure, int> Helper::ticks2rhythmFigure(int durationTicks,
 // #endif
 // }
 
-float Helper::noteSimilarity(std::string& pitchClass_A, int octave_A, const float duration_A,
-                             std::string& pitchClass_B, int octave_B, const float duration_B,
+float Helper::noteSimilarity(const std::string& pitchClass_A, int octave_A, const float duration_A,
+                             const std::string& pitchClass_B, int octave_B, const float duration_B,
                              float& durRatio, float& pitRatio, const bool enableEnharmonic) {
     // Special case: Mixing unknown pitches comparison:
     if ((pitchClass_A == MUSIC_XML::PITCH::ALL) && (pitchClass_B == MUSIC_XML::PITCH::ALL)) {

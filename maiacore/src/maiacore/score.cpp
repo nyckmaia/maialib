@@ -139,6 +139,11 @@ void Score::loadXMLFile(const std::string& filePath) {
         return path.substr(pos + 1);
     }(_filePath);
 
+    if (filePath.size() < 4) {  // mínimo "a.ml"
+        LOG_ERROR("Invalid file path: too short");
+        return;
+    }
+    
     const std::string fileExtension = filePath.substr(filePath.size() - 3, filePath.size());
 
     std::vector<std::string> result2 = Helper::splitString(filePath, '/');

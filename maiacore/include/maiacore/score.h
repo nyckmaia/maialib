@@ -472,9 +472,20 @@ class Score {
      * @return Reference to this Score.
      */
     Score& operator=(const Score& other) {
-        if (this == &other) {
-            return *this;
-        }
+        if (this == &other) return *this;
+        
+        _title = other._title;
+        _composerName = other._composerName;
+        _part = other._part;
+        _numParts = other._numParts;
+        _numMeasures = other._numMeasures;
+        _numNotes = other._numNotes;
+        _isValidXML = other._isValidXML;
+        _haveTypeTag = other._haveTypeTag;
+        _isLoadedXML = other._isLoadedXML;
+        _lcmDivisionsPerQuarterNote = other._lcmDivisionsPerQuarterNote;
+        _haveAnacrusisMeasure = other._haveAnacrusisMeasure;
+        
         return *this;
     }
 
