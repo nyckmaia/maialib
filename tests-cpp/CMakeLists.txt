@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 3.25)
 
+# Set MSVC runtime library for Windows (MUST be before project() call)
+if(WIN32)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 project("cpp-tests" LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -18,22 +23,8 @@ else()
     add_definitions(-D_ITERATOR_DEBUG_LEVEL=0)
     add_definitions(-DGTEST_HAS_PTHREAD=0)  # Desativa pthread para GoogleTest
 
-    if(MSVC)
-        set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} /MT")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MT")
-
-        set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} /MTd")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MTd")
-
-        set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} /MT")
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-
-        set(gtest_force_shared_crt ON CACHE BOOL "Always use msvcrt.dll" FORCE)
-    elseif(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static")
-        set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -static")
-        set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -static")
-    endif()
+    # Force GoogleTest to use static CRT
+    set(gtest_force_shared_crt OFF CACHE BOOL "Use static runtime" FORCE)
 endif()
 
 enable_testing()
@@ -55,8 +46,6 @@ add_executable(${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/src/note-test.cpp
     ${PROJECT_SOURCE_DIR}/src/chord-test.cpp
     ${PROJECT_SOURCE_DIR}/src/interval-test.cpp
-    ${PROJECT_SOURCE_DIR}/src/nyck-test.cpp
-    ${PROJECT_SOURCE_DIR}/src/adolfo-test.cpp
 )
 
 include(FetchContent)

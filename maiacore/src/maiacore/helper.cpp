@@ -205,6 +205,12 @@ std::vector<Interval> Helper::notes2Intervals(const std::vector<std::string>& pi
 }
 
 int Helper::pitch2midiNote(const std::string& pitch) {
+
+    // Se contiver o caractere '-' (valores negativos de oitava), retorna REST
+    if (pitch.find('-') != std::string::npos) {
+        return MUSIC_XML::MIDI::NUMBER::MIDI_REST;
+    }
+
     switch (hash(pitch.c_str())) {
         case hash("C0"):
             return MUSIC_XML::MIDI::NUMBER::MIDI_012;
@@ -1940,8 +1946,8 @@ std::pair<RhythmFigure, int> Helper::ticks2rhythmFigure(int durationTicks,
 // #endif
 // }
 
-float Helper::noteSimilarity(const std::string& pitchClass_A, int octave_A, const float duration_A,
-                             const std::string& pitchClass_B, int octave_B, const float duration_B,
+float Helper::noteSimilarity(std::string& pitchClass_A, int octave_A, const float duration_A,
+                             std::string& pitchClass_B, int octave_B, const float duration_B,
                              float& durRatio, float& pitRatio, const bool enableEnharmonic) {
     // Special case: Mixing unknown pitches comparison:
     if ((pitchClass_A == MUSIC_XML::PITCH::ALL) && (pitchClass_B == MUSIC_XML::PITCH::ALL)) {
@@ -2213,8 +2219,21 @@ void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::
     const bool isFullPitch = (isdigit(pitch.back())) ? true : false;
 
     pitchStep = pitch.substr(0, 1);
-    pitchClass = (isFullPitch) ? pitch.substr(0, pitchSize - 1) : pitch;
-    octave = (isFullPitch) ? static_cast<int>(pitch.back()) - 48 : 4;
+
+    if (isFullPitch) {
+        // Extract octave (support multi-digit: 0-11)
+        size_t octaveStartPos = pitchSize - 1;
+        // Find where the octave digits start (scan backwards)
+        while (octaveStartPos > 0 && isdigit(pitch[octaveStartPos - 1])) {
+            octaveStartPos--;
+        }
+        pitchClass = pitch.substr(0, octaveStartPos);
+        std::string octaveStr = pitch.substr(octaveStartPos);
+        octave = std::stoi(octaveStr);
+    } else {
+        pitchClass = pitch;
+        octave = 4;  // default octave
+    }
 
     const size_t pitchClassSize = pitchClass.size();
 
@@ -2230,17 +2249,9 @@ void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::
         LOG_ERROR("Unknown alter symbol: " + alterSymbol);
     }
 
-    switch (pitchSize) {
-        case 2:
-            alterSymbol = "";
-            break;
-        case 3:
-            alterSymbol = pitch.substr(1, 1);
-            break;
-        case 4:
-            alterSymbol = pitch.substr(1, 2);
-            break;
-    }
+    // Note: The old switch statement based on pitchSize has been removed
+    // because it doesn't work with multi-digit octaves (e.g., C10, C11)
+    // The alterSymbol is already correctly extracted from pitchClass above
 
     alterValue = alterSymbol2Value(alterSymbol);
 

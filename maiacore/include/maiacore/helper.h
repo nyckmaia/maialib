@@ -176,8 +176,8 @@ class Helper {
      * @param enableEnharmonic If true, considers enharmonic equivalence.
      * @return Similarity value in [0,1], where 1 is identical.
      */
-    static float noteSimilarity(const std::string& pitchClass_A, int octave_A, const float duration_A,
-                                const std::string& pitchClass_B, int octave_B, const float duration_B,
+    static float noteSimilarity(std::string& pitchClass_A, int octave_A, const float duration_A,
+                                std::string& pitchClass_B, int octave_B, const float duration_B,
                                 float& durRatio, float& pitRatio,
                                 const bool enableEnharmonic = false);
 

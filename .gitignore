@@ -15,6 +15,7 @@ stubs/
 temp.xml
 .claude/
 CLAUDE.md
+TODO.txt
 
 # Prerequisites
 *.d

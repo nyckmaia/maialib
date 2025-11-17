@@ -113,6 +113,13 @@ class Note {
     void setDuration(const float quarterDuration, const int divisionsPerQuarterNote = 256);
 
     /**
+     * @brief Sets the duration for the note using tick values.
+     * @param durationTicks Duration in ticks.
+     * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
+     */
+    void setDuration(const int durationTicks, const int divisionsPerQuarterNote);
+
+    /**
      * @brief Sets whether the note is sounding (note on) or a rest (note off).
      * @param isNoteOn True for sounding note, false for rest.
      */

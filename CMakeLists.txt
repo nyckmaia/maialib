@@ -1,4 +1,15 @@
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.15)
+
+# Enable policy for MSVC runtime library selection
+if(POLICY CMP0091)
+    cmake_policy(SET CMP0091 NEW)
+endif()
+
+# Set MSVC runtime library for Windows (MUST be before project() call)
+if(WIN32)
+    set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+endif()
+
 project(maiacore LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -22,7 +33,12 @@ if(PROFILING)
   add_definitions(-DPROFILING)
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 --coverage")
+# Set debug flags - only enable coverage on Linux (causes linking issues on Windows with Clang)
+if(UNIX AND NOT APPLE)
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 --coverage")
+else()
+    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+endif()
 
 if(WIN32)
     set(OS "Windows")
@@ -46,6 +62,10 @@ if (MSVC)
     add_definitions("/wd4244 /wd4267")
 else()
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+    # Set iterator debug level to 0 on Windows for compatibility with tests
+    if(WIN32)
+        add_definitions(-D_ITERATOR_DEBUG_LEVEL=0)
+    endif()
     set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 endif()
 

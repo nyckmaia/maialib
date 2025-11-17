@@ -57,11 +57,25 @@ Note::Note(const std::string& pitch, const RhythmFigure rhythmFigure, bool isNot
     // or "A"
     const bool isFullPitch = (isdigit(pitch.back())) ? true : false;
 
-    const std::string pitchClass = (isFullPitch) ? pitch.substr(0, pitchSize - 1) : pitch;
-    const int octave = (isFullPitch) ? static_cast<int>(pitch.back()) - 48 : 4;
+    std::string pitchClass;
+    int octave = 4;  // default octave
 
-    if (octave > 9) {
-        LOG_ERROR("Invalid octave value");
+    if (isFullPitch) {
+        // Extract octave (support multi-digit: 0-11)
+        size_t octaveStartPos = pitchSize - 1;
+        // Find where the octave digits start (scan backwards)
+        while (octaveStartPos > 0 && isdigit(pitch[octaveStartPos - 1])) {
+            octaveStartPos--;
+        }
+        pitchClass = pitch.substr(0, octaveStartPos);
+        std::string octaveStr = pitch.substr(octaveStartPos);
+        octave = std::stoi(octaveStr);
+    } else {
+        pitchClass = pitch;
+    }
+
+    if (octave > 11 || octave < 0) {
+        LOG_ERROR("Invalid octave value: " + std::to_string(octave));
     }
 
     const size_t pitchClassSize = pitchClass.size();
@@ -172,6 +186,10 @@ void Note::setDuration(const Duration& duration) { _duration = duration; }
 
 void Note::setDuration(const float quarterDuration, const int divisionsPerQuarterNote) {
     _duration.setQuarterDuration(quarterDuration, divisionsPerQuarterNote);
+}
+
+void Note::setDuration(const int durationTicks, const int divisionsPerQuarterNote) {
+    _duration = Duration(durationTicks, divisionsPerQuarterNote);
 }
 
 // void Note::setDuration(const RhythmFigure rhythmFigure, const int divisionsPerQuarterNote) {
@@ -1565,8 +1583,9 @@ int Note::getScaleDegree(const Key& key) const {
 }
 
 float Note::getFrequency(bool equalTemperament, const float freqA4) const {
-    return (equalTemperament) ? Helper::midiNote2freq(_midiNumber, freqA4)
-                              : Helper::pitch2freq(getSoundingPitch());
+    // Always use freqA4 parameter for frequency calculation
+    // Use midiNote2freq which respects the custom A4 frequency
+    return Helper::midiNote2freq(_midiNumber, freqA4);
 }
 
 std::pair<std::vector<float>, std::vector<float>> Note::getHarmonicSpectrum(

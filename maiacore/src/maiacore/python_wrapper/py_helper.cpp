@@ -87,8 +87,8 @@ void HelperClass(const py::module& m) {
     //--------------------- //
     cls.def_static(
         "noteSimilarity",
-        [](const std::string& pitchClass_A, int octave_A, const float duration_A,
-           const std::string& pitchClass_B, int octave_B, const float duration_B,
+        [](std::string& pitchClass_A, int octave_A, const float duration_A,
+           std::string& pitchClass_B, int octave_B, const float duration_B,
            const bool enableEnharmonic) {
             float durRatio = 0.0f;
             float pitchRatio = 0.0f;

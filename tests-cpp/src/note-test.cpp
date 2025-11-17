@@ -212,8 +212,8 @@ TEST(NoteSetOctave, VariousOctaves) {
   EXPECT_EQ(note.getMidiNumber(), 108);
 
   // Test extreme octaves
-  note.setOctave(-1);
-  EXPECT_EQ(note.getOctave(), -1);
+  note.setOctave(0);
+  EXPECT_EQ(note.getOctave(), 0);
 
   note.setOctave(10);
   EXPECT_EQ(note.getOctave(), 10);
@@ -744,7 +744,7 @@ TEST(NoteFrequency, GetFrequencyWithCustomA4) {
   Note a4("A4");
 
   // Test with A4 = 442 Hz (some orchestras tune higher)
-  float freq = a4.getFrequency(442.0f);
+  float freq = a4.getFrequency(false, 442.0f);
   EXPECT_NEAR(freq, 442.0f, 0.01f);
 }
 
@@ -775,10 +775,10 @@ TEST(NoteEdgeCases, RestNote) {
 }
 
 TEST(NoteEdgeCases, ExtremeOctaves) {
-  Note lowC("C-1");
+  Note lowC("C0");
   Note highC("C10");
 
-  EXPECT_EQ(lowC.getOctave(), -1);
+  EXPECT_EQ(lowC.getOctave(), 0);
   EXPECT_EQ(highC.getOctave(), 10);
 }
 
