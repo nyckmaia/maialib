@@ -55,6 +55,9 @@ add_executable(${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/src/time-signature-test.cpp
     ${PROJECT_SOURCE_DIR}/src/clef-test.cpp
     ${PROJECT_SOURCE_DIR}/src/score-collection-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/barline-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/utils-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/config-test.cpp
 )
 
 include(FetchContent)

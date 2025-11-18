@@ -243,7 +243,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
 <tr class="memdesc:a7d64768cd2985912caf015a190f03e4e"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets repeat barlines for a range of measures.  <a href="class_score.html#a7d64768cd2985912caf015a190f03e4e">More...</a><br /></td></tr>
 <tr class="separator:a7d64768cd2985912caf015a190f03e4e"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a7ffa5ef4975c4ff74dea9954a5b4b14a"><td class="memItemLeft" align="right" valign="top">nlohmann::json&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a7ffa5ef4975c4ff74dea9954a5b4b14a">instrumentFragmentation</a> (nlohmann::json config=nlohmann::json())</td></tr>
-<tr class="memdesc:a7ffa5ef4975c4ff74dea9954a5b4b14a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Analyzes instrumental fragmentation in the score, returning data for visualization.  <a href="class_score.html#a7ffa5ef4975c4ff74dea9954a5b4b14a">More...</a><br /></td></tr>
+<tr class="memdesc:a7ffa5ef4975c4ff74dea9954a5b4b14a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Analyzes instrumental fragmentation patterns across the score timeline.  <a href="class_score.html#a7ffa5ef4975c4ff74dea9954a5b4b14a">More...</a><br /></td></tr>
 <tr class="separator:a7ffa5ef4975c4ff74dea9954a5b4b14a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a4c6ce2665f8a88360a58b2db399f79cd"><td class="memItemLeft" align="right" valign="top">&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#a4c6ce2665f8a88360a58b2db399f79cd">Score</a> (const <a class="el" href="class_score.html">Score</a> &amp;other)</td></tr>
 <tr class="memdesc:a4c6ce2665f8a88360a58b2db399f79cd"><td class="mdescLeft">&#160;</td><td class="mdescRight">Copy constructor for <a class="el" href="class_score.html" title="Represents a complete musical score, including metadata, parts, measures, and notes.">Score</a>.  <a href="class_score.html#a4c6ce2665f8a88360a58b2db399f79cd">More...</a><br /></td></tr>
@@ -261,7 +261,7 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
 <tr class="memdesc:aded7af68cc190ce5d365e891c16861e0"><td class="mdescLeft">&#160;</td><td class="mdescRight">Finds all possible melodic patterns of a given length in the score.  <a href="class_score.html#aded7af68cc190ce5d365e891c16861e0">More...</a><br /></td></tr>
 <tr class="separator:aded7af68cc190ce5d365e891c16861e0"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab1df59bbea62fd23b0f3334b65e99eff"><td class="memItemLeft" align="right" valign="top">std::vector&lt; std::tuple&lt; int, float, <a class="el" href="class_key.html">Key</a>, <a class="el" href="class_chord.html">Chord</a>, bool &gt; &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_score.html#ab1df59bbea62fd23b0f3334b65e99eff">getChords</a> (nlohmann::json config={})</td></tr>
-<tr class="memdesc:ab1df59bbea62fd23b0f3334b65e99eff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the vertical stacked chords from the score object.  <a href="class_score.html#ab1df59bbea62fd23b0f3334b65e99eff">More...</a><br /></td></tr>
+<tr class="memdesc:ab1df59bbea62fd23b0f3334b65e99eff"><td class="mdescLeft">&#160;</td><td class="mdescRight">Extracts vertical chord structures from the score with configurable analysis parameters.  <a href="class_score.html#ab1df59bbea62fd23b0f3334b65e99eff">More...</a><br /></td></tr>
 <tr class="separator:ab1df59bbea62fd23b0f3334b65e99eff"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -671,11 +671,11 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
 </div><div class="memdoc">
 
 <p>Searches for a melodic pattern throughout the score, returning detailed results. </p>
-<p >Allows searching for melodic patterns with interval and rhythmic similarity criteria. </p><dl class="params"><dt>Parameters</dt><dd>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">melodyPattern</td><td>Vector of notes representing the pattern to search for. </td></tr>
-    <tr><td class="paramname">totalIntervalsSimilarityThreshold</td><td>Minimum interval similarity threshold. </td></tr>
-    <tr><td class="paramname">totalRhythmSimilarityThreshold</td><td>Minimum rhythm similarity threshold. </td></tr>
+    <tr><td class="paramname">totalIntervalsSimilarityThreshold</td><td>Minimum interval similarity threshold (0.0-1.0). </td></tr>
+    <tr><td class="paramname">totalRhythmSimilarityThreshold</td><td>Minimum rhythm similarity threshold (0.0-1.0). </td></tr>
     <tr><td class="paramname">intervalsSimilarityCallback</td><td>Custom function to calculate interval similarity. </td></tr>
     <tr><td class="paramname">rhythmSimilarityCallback</td><td>Custom function to calculate rhythm similarity. </td></tr>
     <tr><td class="paramname">totalIntervalSimilarityCallback</td><td>Function to aggregate interval similarity. </td></tr>
@@ -684,7 +684,37 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Table of results with detailed information about found patterns. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Table of results with detailed information about found patterns.</dd></dl>
+<p>Performs comprehensive melodic pattern matching across all parts and measures of the score, supporting flexible similarity metrics for both intervallic contour and rhythmic structure. This function enables motivic analysis, thematic transformation studies, and computational detection of melodic recurrence.</p>
+<p ><b>Pattern Matching Process</b>:</p><ol type="1">
+<li>Sliding window search across all melodic sequences in the score</li>
+<li>For each candidate match: a. Compute intervallic similarity (pitch contour matching) b. Compute rhythmic similarity (durational pattern matching) c. Aggregate similarities using custom or default models</li>
+<li>Filter results by threshold criteria</li>
+<li>Return matches with positional metadata (part, measure, beat)</li>
+</ol>
+<p ><b>Similarity Calculation</b>:</p><ul>
+<li><b>Default <a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> Similarity</b>: Normalized edit distance or contour correlation between semitone interval sequences. Allows approximate matching (transposition, modal mutation, chromatic alteration).</li>
+<li><b>Default Rhythm Similarity</b>: Durational ratio comparison with tolerance for rhythmic augmentation/diminution and metric displacement.</li>
+<li><b>Custom Callbacks</b>: User-defined similarity models enable:<ul>
+<li>Weighted interval classes (emphasize melodic leaps vs. stepwise motion)</li>
+<li>Parsons code contour matching (directional contour only)</li>
+<li>Fuzzy matching with configurable tolerance bands</li>
+</ul>
+</li>
+</ul>
+<p ><b>Threshold Parameters</b>:</p><ul>
+<li>Values near 1.0: Require near-exact matches (strict motivic repetition)</li>
+<li>Values near 0.5: Allow moderate variation (thematic transformation, development)</li>
+<li>Values near 0.0: Detect loose similarity (distant motivic relationships)</li>
+</ul>
+<p ><b>Applications</b>:</p><ul>
+<li>Motivic analysis (leitmotif tracking in Wagner, Brahms developing variation)</li>
+<li>Thematic cataloging (identifying subject entries in fugues, variation themes)</li>
+<li>Computational musicology (corpus-wide melodic similarity studies)</li>
+<li>Plagiarism detection (melodic borrowing, paraphrase identification)</li>
+<li>Style analysis (characteristic melodic gestures across composers/periods)</li>
+</ul>
+<dl class="section note"><dt>Note</dt><dd>Computational complexity is O(n × m) where n = total notes in score, m = pattern length. For large scores, consider restricting search to specific parts or measure ranges. </dd></dl>
 
 </div>
 </div>
@@ -835,23 +865,36 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
       </table>
 </div><div class="memdoc">
 
-<p>Get the vertical stacked chords from the score object. </p>
+<p>Extracts vertical chord structures from the score with configurable analysis parameters. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">config</td><td>(Optional) A JSON object that contains: <br  />
- <br  />
-<code>partNames:</code> list of strings <br  />
-<code>measureStart:</code> integer <br  />
-<code>measureEnd:</code> integer <br  />
-<code>minStack:</code> integer <br  />
-<code>maxStack:</code> integer <br  />
-<code>minDuration:</code> string <br  />
-<code>maxDuration:</code> string <br  />
-<code>continuosMode:</code> boolean <br  />
-<code>includeDuplicates:</code> boolean <br  />
-<code>includeUnpitched:</code> boolean <br  />
- <br  />
-<b>Example:</b> <div class="fragment"><div class="line">{</div>
+    <tr><td class="paramname">config</td><td>Optional JSON configuration object controlling chord extraction criteria. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of tuples: {measure number, beat position, <a class="el" href="class_key.html" title="Represents a musical key signature (tonality), including circle of fifths and mode (major/minor).">Key</a>, <a class="el" href="class_chord.html" title="Represents a musical chord.">Chord</a>, homophony flag}.</dd></dl>
+<p>Performs vertical harmonic analysis by extracting simultaneities (vertical chord slices) from the polyphonic texture, with extensive filtering and processing options for texture analysis, harmonic progression studies, and style-specific chord detection.</p>
+<p ><b>Configuration Parameters</b> (all optional):</p><ul>
+<li><code>partNames</code> (list of strings): Restrict analysis to specific instrumental parts (e.g., ["Violino", "Viola", "Violoncelo"] for string trio texture)</li>
+<li><code>measureStart</code>, <code>measureEnd</code> (integers): Define measure range for analysis</li>
+<li><code>minStack</code>, <code>maxStack</code> (integers): Filter by chord cardinality (number of notes)<ul>
+<li>minStack=3, maxStack=4 → only triads and seventh chords</li>
+</ul>
+</li>
+<li><code>minDuration</code>, <code>maxDuration</code> (strings): Filter by note duration (e.g., "quarter", "half", "whole")</li>
+<li><code>continuosMode</code> (boolean): Texture analysis mode selector<ul>
+<li><b>true</b>: Continuous vertical slicing—captures ALL vertical alignments including non-aligned notes (polyphonic/contrapuntal texture analysis)</li>
+<li><b>false</b>: Attack-point synchronization—only chords formed by simultaneous note onsets (homophonic texture, block chord analysis)</li>
+</ul>
+</li>
+<li><code>includeDuplicates</code> (boolean): Octave doubling handling<ul>
+<li><b>true</b>: Preserve pitch-class duplications (["C4", "C4", "E4", "G4"])</li>
+<li><b>false</b>: Remove duplicate pitch classes (["C4", "E4", "G4"])</li>
+</ul>
+</li>
+<li><code>includeUnpitched</code> (boolean): Include percussion/unpitched elements</li>
+</ul>
+<p ><b>Example Configuration</b>: </p><div class="fragment"><div class="line">{</div>
 <div class="line">  &quot;partNames&quot;: [&quot;Violino&quot;, &quot;Viola&quot;, &quot;Violoncelo&quot;],</div>
 <div class="line">  &quot;measureStart&quot;: 4,</div>
 <div class="line">  &quot;measureEnd&quot;: 10,</div>
@@ -861,23 +904,25 @@ void&#160;</td><td class="memItemRight" valign="bottom"><b>printPartNames</b> ()
 <div class="line">  &quot;includeDuplicates&quot;: false,</div>
 <div class="line">  &quot;includeUnpitched&quot;: false</div>
 <div class="line">}</div>
-</div><!-- fragment --> <br  />
-<b>continuosMode</b> <br  />
-When <code>continuosMode</code> is <code>true</code> the algorithm will detect all vertical chords, including counterpoint notes <br  />
- When <code>continuosMode</code> is <code>false</code> the algorithm will detect only the chords formed by the same attack notes, excluding counterpoint <br  />
- <br  />
- <b>includeDuplicates</b> <br  />
- When <code>includeDuplicates</code> is <code>true</code> the return chords can have multiple notes with the same pitch value (duplicate notes) <br  />
-Example: ["C4", "C4", "E4", "G4"] <br  />
-When <code>includeDuplicates</code> is <code>false</code> each chord will be filtered in post processing, returning the same chord but removing the duplicate pitch notes <br  />
- Example: The original chord ["C4", "C4", "E4", "G4"] will be returned as ["C4", "E4", "G4"] <br  />
- <br  />
- <b>includeUnpitched</b> <br  />
- </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>A list of tuples: {measure, floatMeasure, <a class="el" href="class_key.html" title="Represents a musical key signature (tonality), including circle of fifths and mode (major/minor).">Key</a> object, <a class="el" href="class_chord.html" title="Represents a musical chord.">Chord</a> object} </dd></dl>
+</div><!-- fragment --><p ><b>Return Value Structure</b>: Each tuple contains:</p><ol type="1">
+<li><b><a class="el" href="class_measure.html" title="Represents a musical measure (bar) within a score, containing notes, staves, key/time signatures,...">Measure</a> number</b> (int): Absolute measure position in score</li>
+<li><b>Beat position</b> (float): Fractional beat location within measure</li>
+<li><b><a class="el" href="class_key.html" title="Represents a musical key signature (tonality), including circle of fifths and mode (major/minor).">Key</a></b> (<a class="el" href="class_key.html" title="Represents a musical key signature (tonality), including circle of fifths and mode (major/minor).">Key</a> object): Prevailing key signature at this position</li>
+<li><b><a class="el" href="class_chord.html" title="Represents a musical chord.">Chord</a></b> (<a class="el" href="class_chord.html" title="Represents a musical chord.">Chord</a> object): Extracted vertical sonority</li>
+<li><b>Homophony flag</b> (bool): True if all voices share identical rhythm (homophonic texture indicator)</li>
+</ol>
+<p ><b>Applications</b>:</p><ul>
+<li>Harmonic analysis (chord progression extraction, functional harmony labeling)</li>
+<li>Texture classification (homophonic vs. polyphonic density analysis)</li>
+<li>Voice-leading analysis (chord-to-chord motion studies)</li>
+<li>Statistical harmony studies (chord frequency distributions, bigram models)</li>
+<li>Dissonance trajectory analysis (tracking harmonic tension across time)</li>
+</ul>
+<dl class="section note"><dt>Note</dt><dd>The <code>continuosMode</code> parameter critically affects results:<ul>
+<li>For homophonic textures (hymns, chorales): use continuosMode=false</li>
+<li>For contrapuntal textures (fugues, inventions): use continuosMode=true </li>
+</ul>
+</dd></dl>
 
 </div>
 </div>
@@ -1549,14 +1594,54 @@ When <code>includeDuplicates</code> is <code>false</code> each chord will be fil
       </table>
 </div><div class="memdoc">
 
-<p>Analyzes instrumental fragmentation in the score, returning data for visualization. </p>
-<p >Generates a JSON with activation, fragmentation, and execution lines for each instrument. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Analyzes instrumental fragmentation patterns across the score timeline. </p>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">config</td><td>JSON object with configuration parameters (parts, measures, etc). </td></tr>
+    <tr><td class="paramname">config</td><td>JSON configuration object specifying analysis parameters (parts, measures, etc). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>JSON with data for analysis and plotting. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>JSON structure with activation, fragmentation, and execution metrics per instrument.</dd></dl>
+<p>Performs temporal analysis of instrumental activity distribution, quantifying how melodic lines are fragmented across different instruments over time. This analysis is essential for orchestration studies, texture evolution tracking, and compositional strategy research.</p>
+<p ><b>Fragmentation Metrics Computed</b>:</p><ol type="1">
+<li><b>Activation Lines</b>: Temporal intervals where each instrument is active (sounding notes)</li>
+<li><b>Fragmentation Patterns</b>: Transitions of melodic material between instruments (e.g., melody alternating between violin and flute—klangfarbenmelodie analysis)</li>
+<li><b>Execution Density</b>: Proportion of time each instrument participates in texture</li>
+</ol>
+<p ><b>Analysis Categories</b>:</p><ul>
+<li><b>Continuous Execution</b>: Sustained melodic lines without rests (legato passages)</li>
+<li><b>Fragmented Execution</b>: Interrupted melodic lines with rests (staccato, pointillism)</li>
+<li><b>Hand-off Patterns</b>: Melodic continuation across instrument changes (orchestral dialogue)</li>
+<li><b>Tutti vs. Solo Distributions</b>: Ensemble density fluctuations</li>
+</ul>
+<p ><b>Configuration Parameters</b> (config JSON):</p><ul>
+<li><code>partNames</code> (list): Restrict analysis to specific instrumental parts</li>
+<li><code>measureStart</code>, <code>measureEnd</code> (int): Define temporal analysis window</li>
+<li><code>timeResolution</code> (float): Granularity for temporal slicing (e.g., 0.25 = sixteenth note)</li>
+</ul>
+<p ><b>Return JSON Structure</b>: </p><div class="fragment"><div class="line">{</div>
+<div class="line">  &quot;instruments&quot;: [</div>
+<div class="line">    {</div>
+<div class="line">      &quot;name&quot;: &quot;Violin I&quot;,</div>
+<div class="line">      &quot;activationIntervals&quot;: [[1.0, 4.5], [8.0, 12.5]],</div>
+<div class="line">      &quot;fragmentationCount&quot;: 3,</div>
+<div class="line">      &quot;executionDensity&quot;: 0.67</div>
+<div class="line">    },</div>
+<div class="line">    ...</div>
+<div class="line">  ],</div>
+<div class="line">  &quot;fragmentationEvents&quot;: [</div>
+<div class="line">    {&quot;measure&quot;: 4, &quot;fromInstrument&quot;: &quot;Violin I&quot;, &quot;toInstrument&quot;: &quot;Flute&quot;},</div>
+<div class="line">    ...</div>
+<div class="line">  ]</div>
+<div class="line">}</div>
+</div><!-- fragment --><p ><b>Applications</b>:</p><ul>
+<li>Orchestration analysis (instrument usage patterns in Mahler, Ravel, Stravinsky)</li>
+<li>Klangfarbenmelodie detection (Schoenberg, Webern timbral melody techniques)</li>
+<li>Texture evolution studies (gradual thickening/thinning of orchestral fabric)</li>
+<li>Compositional fingerprinting (characteristic orchestration strategies per composer)</li>
+<li>Performance part difficulty assessment (rest distribution, endurance requirements)</li>
+</ul>
+<dl class="section note"><dt>Note</dt><dd>This function is computationally intensive for large orchestral scores. Consider restricting analysis to specific measure ranges or part subsets. </dd></dl>
 
 </div>
 </div>

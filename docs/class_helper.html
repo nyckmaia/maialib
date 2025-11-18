@@ -150,7 +150,7 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memdesc:a15a3658836f783d500e92da0e342e7a6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the number of semitones between two pitch strings.  <a href="class_helper.html#a15a3658836f783d500e92da0e342e7a6">More...</a><br /></td></tr>
 <tr class="separator:a15a3658836f783d500e92da0e342e7a6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a3e8de086fcd64749d7a5f5d437b800f6"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a3e8de086fcd64749d7a5f5d437b800f6">noteSimilarity</a> (std::string &amp;pitchClass_A, int octave_A, const float duration_A, std::string &amp;pitchClass_B, int octave_B, const float duration_B, float &amp;durRatio, float &amp;pitRatio, const bool enableEnharmonic=false)</td></tr>
-<tr class="memdesc:a3e8de086fcd64749d7a5f5d437b800f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the similarity between two notes based on pitch class, octave, and duration.  <a href="class_helper.html#a3e8de086fcd64749d7a5f5d437b800f6">More...</a><br /></td></tr>
+<tr class="memdesc:a3e8de086fcd64749d7a5f5d437b800f6"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes multidimensional similarity between two notes using pitch-space and rhythmic metrics.  <a href="class_helper.html#a3e8de086fcd64749d7a5f5d437b800f6">More...</a><br /></td></tr>
 <tr class="separator:a3e8de086fcd64749d7a5f5d437b800f6"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a83972bdf80a472e795dc15381ec297e8"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a83972bdf80a472e795dc15381ec297e8">pitch2freq</a> (const std::string &amp;pitch)</td></tr>
 <tr class="memdesc:a83972bdf80a472e795dc15381ec297e8"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a pitch string to its frequency in Hz.  <a href="class_helper.html#a83972bdf80a472e795dc15381ec297e8">More...</a><br /></td></tr>
@@ -213,10 +213,10 @@ Static Public Member Functions</h2></td></tr>
 <tr class="memdesc:a135ab60b66b74257b946cdf0712d6234"><td class="mdescLeft">&#160;</td><td class="mdescRight">Converts a RhythmFigure to a string.  <a href="class_helper.html#a135ab60b66b74257b946cdf0712d6234">More...</a><br /></td></tr>
 <tr class="separator:a135ab60b66b74257b946cdf0712d6234"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab3d8c8341dbdef8b012be64c2fdfc826"><td class="memItemLeft" align="right" valign="top">static std::vector&lt; float &gt;&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#ab3d8c8341dbdef8b012be64c2fdfc826">getSemitonesDifferenceBetweenMelodies</a> (const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;referenceMelody, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;otherMelody)</td></tr>
-<tr class="memdesc:ab3d8c8341dbdef8b012be64c2fdfc826"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the vector of semitone differences between two melodies.  <a href="class_helper.html#ab3d8c8341dbdef8b012be64c2fdfc826">More...</a><br /></td></tr>
+<tr class="memdesc:ab3d8c8341dbdef8b012be64c2fdfc826"><td class="mdescLeft">&#160;</td><td class="mdescRight">Computes the intervallic contour difference vector between two melodic sequences.  <a href="class_helper.html#ab3d8c8341dbdef8b012be64c2fdfc826">More...</a><br /></td></tr>
 <tr class="separator:ab3d8c8341dbdef8b012be64c2fdfc826"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a1eaba1229b9bc337c3431322c00970d4"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a1eaba1229b9bc337c3431322c00970d4">calculateMelodyEuclideanSimilarity</a> (const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;melodyPattern, const std::vector&lt; <a class="el" href="class_note.html">Note</a> &gt; &amp;otherMelody)</td></tr>
-<tr class="memdesc:a1eaba1229b9bc337c3431322c00970d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the Euclidean similarity between two melodies based on semitone differences.  <a href="class_helper.html#a1eaba1229b9bc337c3431322c00970d4">More...</a><br /></td></tr>
+<tr class="memdesc:a1eaba1229b9bc337c3431322c00970d4"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates Euclidean distance-based melodic similarity from intervallic contour comparison.  <a href="class_helper.html#a1eaba1229b9bc337c3431322c00970d4">More...</a><br /></td></tr>
 <tr class="separator:a1eaba1229b9bc337c3431322c00970d4"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a541d362011bd771513a9a6464fe51800"><td class="memItemLeft" align="right" valign="top">static float&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_helper.html#a541d362011bd771513a9a6464fe51800">calculateMelodyEuclideanSimilarity</a> (const std::vector&lt; float &gt; &amp;semitonesDifference)</td></tr>
 <tr class="memdesc:a541d362011bd771513a9a6464fe51800"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculates the Euclidean similarity from a vector of semitone differences.  <a href="class_helper.html#a541d362011bd771513a9a6464fe51800">More...</a><br /></td></tr>
@@ -444,15 +444,37 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Calculates the Euclidean similarity between two melodies based on semitone differences. </p>
+<p>Calculates Euclidean distance-based melodic similarity from intervallic contour comparison. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">melodyPattern</td><td>Reference melody. </td></tr>
-    <tr><td class="paramname">otherMelody</td><td>Comparison melody. </td></tr>
+    <tr><td class="paramname">melodyPattern</td><td>Reference melodic pattern to match against. </td></tr>
+    <tr><td class="paramname">otherMelody</td><td>Candidate melody to compare for similarity. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Similarity value in [0,1]. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Normalized similarity score in [0,1] where 1.0 = identical contour, 0.0 = maximal divergence.</dd></dl>
+<p>Computes global melodic similarity by measuring the Euclidean distance in pitch-space between two melodic sequences, accounting for transposition, intervallic distortion, and contour preservation. This metric is transposition-sensitive, meaning exact transpositions yield high similarity while contour-preserving transformations with interval alterations yield moderate similarity.</p>
+<p ><b>Computation Process</b>:</p><ol type="1">
+<li>Extract semitone difference vector: getSemitonesDifferenceBetweenMelodies(melodyPattern, otherMelody)</li>
+<li>Compute Euclidean distance: sqrt(Σ(difference[i]²))</li>
+<li>Normalize to [0,1] similarity: similarity = 1 / (1 + distance/scaling_factor)</li>
+</ol>
+<p ><b>Interpretation of Results</b>:</p><ul>
+<li><b>similarity ≈ 1.0</b> (0.95-1.0): Near-identical melodies, possibly exact transposition</li>
+<li><b>similarity ≈ 0.7-0.9</b>: High similarity with minor intervallic variations (e.g., chromatic alterations, octave displacements in 1-2 notes)</li>
+<li><b>similarity ≈ 0.4-0.7</b>: Moderate similarity, recognizable contour with significant transformations (e.g., modal transposition, rhythmic variation, ornamentation)</li>
+<li><b>similarity &lt; 0.4</b>: Low similarity, different melodic material or inverted contours</li>
+</ul>
+<p ><b>Transposition Invariance</b>: This metric is NOT fully transposition-invariant. Melodies transposed by a constant interval will have high but not perfect similarity (distance proportional to transposition distance). For exact transposition-invariance, compute interval sequence differences instead.</p>
+<p ><b>Applications</b>:</p><ul>
+<li>Melodic pattern matching in thematic analysis (identifying motivic recurrence)</li>
+<li>Theme-and-variation studies (quantifying melodic transformation degree)</li>
+<li>Plagiarism detection (measuring melodic borrowing/paraphrase)</li>
+<li>Music information retrieval (query-by-example melodic search)</li>
+<li>Corpus analysis (clustering melodies by contour similarity)</li>
+</ul>
+<dl class="section note"><dt>Note</dt><dd>Both melodies must have the same length for meaningful comparison. If lengths differ, the function processes min(melodyPattern.size(), otherMelody.size()) notes.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>This metric emphasizes pitch contour over rhythmic structure. For combined pitch+rhythm similarity, use findMelodyPattern() with custom similarity callbacks. </dd></dl>
 
 </div>
 </div>
@@ -1118,15 +1140,40 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Computes the vector of semitone differences between two melodies. </p>
+<p>Computes the intervallic contour difference vector between two melodic sequences. </p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">referenceMelody</td><td>Vector of reference notes. </td></tr>
-    <tr><td class="paramname">otherMelody</td><td>Vector of comparison notes. </td></tr>
+    <tr><td class="paramname">referenceMelody</td><td>Vector of notes representing the reference melodic pattern. </td></tr>
+    <tr><td class="paramname">otherMelody</td><td>Vector of notes to compare against the reference melody. </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Vector of semitone differences. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Vector of signed semitone differences (positive = upward transposition, negative = downward).</dd></dl>
+<p>Calculates the interval-by-interval pitch displacement between two melodies of equal length, producing a difference vector that quantifies melodic transposition, contour divergence, and pitch-space transformation. This function is fundamental for melodic similarity analysis, thematic variation studies, and computational pattern matching.</p>
+<p ><b>Computation Process</b>: For each aligned note pair (referenceMelody[i], otherMelody[i]):</p><ul>
+<li>Compute signed semitone distance: otherMelody[i].pitch - referenceMelody[i].pitch</li>
+<li>Positive values indicate upward transposition (otherMelody higher than reference)</li>
+<li>Negative values indicate downward transposition (otherMelody lower than reference)</li>
+<li>Zero values indicate exact pitch match at that position</li>
+</ul>
+<p ><b>Example</b>: </p><div class="fragment"><div class="line">referenceMelody: C4-E4-G4 (semitone sequence: 60-64-67)</div>
+<div class="line">otherMelody:     D4-F<span class="preprocessor">#4-A4 (semitone sequence: 62-66-69)</span></div>
+<div class="line">Difference vector: [+2, +2, +2] → uniform transposition up by major second</div>
+</div><!-- fragment --><p ><b>Interpretation of Results</b>:</p><ul>
+<li><b>Constant difference vector</b> (e.g., [+5, +5, +5]): Exact transposition</li>
+<li><b>Zero-centered fluctuations</b> (e.g., [-1, 0, +1]): Approximate contour match with chromatic variation</li>
+<li><b>Large absolute values</b> (e.g., [+12, +7, -3]): Significant contour divergence, octave displacements</li>
+<li><b>Alternating signs</b>: Contour inversion or melodic inversion transformation</li>
+</ul>
+<p ><b>Applications</b>:</p><ul>
+<li>Melodic variation analysis (identifying theme-and-variation relationships)</li>
+<li>Fugue analysis (detecting transposed subject entries at different pitch levels)</li>
+<li>Melodic similarity scoring (input to calculateMelodyEuclideanSimilarity)</li>
+<li>Contour analysis (studying intervallic contour preservation vs. transformation)</li>
+<li>Computational musicology (corpus-wide melodic relationship detection)</li>
+</ul>
+<dl class="section note"><dt>Note</dt><dd>Both melodies must have the same length. If lengths differ, the function processes min(referenceMelody.size(), otherMelody.size()) notes and ignores excess notes.</dd></dl>
+<dl class="section warning"><dt>Warning</dt><dd>This function compares absolute pitch, not pitch-class. C4 and C5 differ by 12 semitones. For pitch-class comparison (octave-invariant), reduce results modulo 12. </dd></dl>
 
 </div>
 </div>
@@ -1506,22 +1553,53 @@ Static Public Member Functions</h2></td></tr>
 </table>
 </div><div class="memdoc">
 
-<p>Computes the similarity between two notes based on pitch class, octave, and duration. </p>
-<p >Used for melodic pattern matching and musicological analysis. </p><dl class="params"><dt>Parameters</dt><dd>
+<p>Computes multidimensional similarity between two notes using pitch-space and rhythmic metrics. </p>
+<dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
-    <tr><td class="paramname">pitchClass_A</td><td>Pitch class of note A. </td></tr>
-    <tr><td class="paramname">octave_A</td><td>Octave of note A. </td></tr>
-    <tr><td class="paramname">duration_A</td><td><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> of note A. </td></tr>
+    <tr><td class="paramname">pitchClass_A</td><td>Pitch class of note A (e.g., "C", "F#", "Bb"). </td></tr>
+    <tr><td class="paramname">octave_A</td><td>Octave register of note A (MIDI octave numbering: A4=440Hz). </td></tr>
+    <tr><td class="paramname">duration_A</td><td><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> of note A in quarter-note units (1.0 = quarter, 0.5 = eighth). </td></tr>
     <tr><td class="paramname">pitchClass_B</td><td>Pitch class of note B. </td></tr>
-    <tr><td class="paramname">octave_B</td><td>Octave of note B. </td></tr>
-    <tr><td class="paramname">duration_B</td><td><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> of note B. </td></tr>
-    <tr><td class="paramname">durRatio</td><td>Output: duration similarity ratio. </td></tr>
-    <tr><td class="paramname">pitRatio</td><td>Output: pitch similarity ratio. </td></tr>
-    <tr><td class="paramname">enableEnharmonic</td><td>If true, considers enharmonic equivalence. </td></tr>
+    <tr><td class="paramname">octave_B</td><td>Octave register of note B. </td></tr>
+    <tr><td class="paramname">duration_B</td><td><a class="el" href="class_duration.html" title="Represents the duration of a musical note, supporting multiple temporal representations.">Duration</a> of note B in quarter-note units. </td></tr>
+    <tr><td class="paramname">durRatio</td><td>Output parameter: rhythmic similarity ratio in [0,1]. </td></tr>
+    <tr><td class="paramname">pitRatio</td><td>Output parameter: pitch proximity ratio in [0,1]. </td></tr>
+    <tr><td class="paramname">enableEnharmonic</td><td>If true, treats enharmonic equivalents as identical (C# ≡ Db). </td></tr>
   </table>
   </dd>
 </dl>
-<dl class="section return"><dt>Returns</dt><dd>Similarity value in [0,1], where 1 is identical. </dd></dl>
+<dl class="section return"><dt>Returns</dt><dd>Overall similarity score in [0,1] where 1.0 = perfect identity, 0.0 = maximal dissimilarity.</dd></dl>
+<p>Calculates composite similarity by combining pitch-space distance and rhythmic congruence, enabling flexible note-matching for melodic pattern recognition, variation analysis, and approximate music information retrieval.</p>
+<p ><b>Similarity Components</b>:</p><ol type="1">
+<li><b>Pitch Similarity (pitRatio)</b>:<ul>
+<li>Computed as inverse exponential decay function of semitone distance</li>
+<li>Adjacent semitones (C→C#) → high similarity (≈0.9)</li>
+<li>Octave displacement (C4→C5) → moderate similarity (≈0.6-0.7)</li>
+<li>Large intervals (C4→G5) → low similarity (≈0.2-0.4)</li>
+<li>When enableEnharmonic=true: C# and Db are treated as identical (distance=0)</li>
+</ul>
+</li>
+<li><b>Rhythmic Similarity (durRatio)</b>:<ul>
+<li>Computed as inverse ratio of duration difference</li>
+<li>Identical durations → durRatio = 1.0</li>
+<li>Augmentation/diminution by factor of 2 (quarter vs. half) → durRatio ≈ 0.5</li>
+<li>Large durational differences (whole vs. sixteenth) → durRatio → 0.0</li>
+</ul>
+</li>
+<li><b>Combined Similarity (return value)</b>:<ul>
+<li>Weighted combination: similarity = α × pitRatio + β × durRatio</li>
+<li>Default weighting emphasizes pitch over rhythm (typical: α=0.7, β=0.3)</li>
+</ul>
+</li>
+</ol>
+<p ><b>Applications</b>:</p><ul>
+<li>Melodic pattern matching with tolerance for ornamentation and metric variation</li>
+<li>Variation analysis (comparing theme vs. variations in sonata/rondo forms)</li>
+<li>Approximate music search (query-by-humming with pitch/rhythm flexibility)</li>
+<li>Voice-leading analysis (tracking note continuity across harmonic changes)</li>
+<li>Motivic analysis with rhythmic transformation (augmentation, diminution)</li>
+</ul>
+<dl class="section note"><dt>Note</dt><dd>This is a local (note-to-note) similarity metric. For global melodic similarity (entire phrase comparison), use <a class="el" href="class_helper.html#a1eaba1229b9bc337c3431322c00970d4" title="Calculates Euclidean distance-based melodic similarity from intervallic contour comparison.">calculateMelodyEuclideanSimilarity()</a> instead. </dd></dl>
 
 </div>
 </div>

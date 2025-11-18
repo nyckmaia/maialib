@@ -354,6 +354,28 @@ class Chord {
      * @brief Compute the harmonic complexity of the chord in closed position.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return Normalized complexity value (0.0 to 1.0).
+     * @details Calculates harmonic complexity by analyzing the intervallic structure of the chord
+     *          in its closed-stack (root position) configuration. The complexity metric quantifies
+     *          the degree of dissonance and intervallic tension based on:
+     *          - Interval quality distribution (consonant vs. dissonant intervals)
+     *          - Number of distinct interval classes present
+     *          - Presence of augmented/diminished intervals (chromaticism indicator)
+     *
+     *          Returns a normalized value where:
+     *          - 0.0 represents minimal complexity (e.g., perfect unisons, octaves, simple triads)
+     *          - 1.0 represents maximal complexity (highly chromatic cluster chords, tone clusters)
+     *
+     *          When useEnharmony=true, enharmonic equivalents (e.g., C# ≡ Db) are treated as
+     *          identical pitch classes, reducing perceived complexity in chromatic contexts.
+     *
+     *          This metric is useful for:
+     *          - Quantifying harmonic tension in tonal and post-tonal music
+     *          - Analyzing chord progressions for complexity contours
+     *          - Identifying moments of harmonic density in scores
+     *          - Comparative analysis of tertian vs. quartal/quintal harmony
+     *
+     * @note The closed-stack representation ensures transposition and inversion invariance
+     *       for complexity calculations, enabling direct comparison across different voicings.
      */
     float getCloseStackHarmonicComplexity(const bool useEnharmony = false);
 
@@ -362,6 +384,28 @@ class Chord {
      * @param lowerBoundMIDI Lowest MIDI note (default: -1, auto-detect).
      * @param higherBoundMIDI Highest MIDI note (default: -1, auto-detect).
      * @return Density as float.
+     * @details Calculates the spatial distribution of notes within a specified MIDI pitch range,
+     *          quantifying how densely packed the harmonic content is across the frequency spectrum.
+     *          The density metric reflects:
+     *          - Average interval spacing between adjacent notes in ascending pitch order
+     *          - Registral compression (cluster chords) vs. expansion (open voicings)
+     *          - Spectral distribution of harmonic energy
+     *
+     *          When bounds are set to -1 (default), the function automatically detects the range
+     *          using the chord's lowest and highest notes. Custom bounds enable:
+     *          - Fixed-range density comparison across different chords
+     *          - Orchestral register analysis (e.g., bass register density C1-C3)
+     *          - Texture analysis within specific frequency bands
+     *
+     *          Higher density values indicate:
+     *          - Close-voiced harmonies, tone clusters, chromatic saturation
+     *          - Potential for increased psychoacoustic roughness (critical band interactions)
+     *
+     *          Lower density values indicate:
+     *          - Open voicings, wide spacing, arpeggiated textures
+     *          - Greater spectral clarity and reduced masking effects
+     *
+     *          Useful for analyzing orchestration, voice-leading efficiency, and harmonic texture.
      */
     float getHarmonicDensity(int lowerBoundMIDI = -1, int higherBoundMIDI = -1) const;
 
@@ -1019,10 +1063,37 @@ class Chord {
 
     /**
      * @brief Determines if the chord is tonal according to a given model or default rules.
-     * @details By default, checks if all intervals in the closed stack are tonal (major, minor, perfect, etc).
-     *          If a custom model is provided, it is used to evaluate the chord's tonality.
      * @param model Optional: a function that takes a Chord and returns true if it is tonal.
      * @return True if the chord is considered tonal.
+     * @details Evaluates whether the chord conforms to tonal harmonic principles based on its
+     *          intervallic content in closed-stack configuration. Two evaluation modes:
+     *
+     *          **Default Model (model = nullptr)**:
+     *          Analyzes all intervals in the closed stack and verifies they belong to the tonal
+     *          interval inventory:
+     *          - Consonances: perfect unison/octave (P1/P8), perfect fifth (P5), perfect fourth (P4),
+     *            major/minor thirds (M3/m3), major/minor sixths (M6/m6)
+     *          - Diatonic dissonances: major/minor seconds (M2/m2), major/minor sevenths (M7/m7)
+     *
+     *          Returns false if ANY interval is:
+     *          - Augmented or diminished (except diminished fifth in dominant seventh contexts)
+     *          - Microtonal or non-12TET intervals
+     *          - Extended jazz intervals beyond the 13th
+     *
+     *          **Custom Model**:
+     *          Allows user-defined tonality criteria via callback function. Useful for:
+     *          - Period-specific tonality rules (Renaissance vs. Romantic harmony)
+     *          - Genre-specific harmonic syntax (jazz altered dominants, modal harmony)
+     *          - Experimental tonal systems (extended tonality, pandiatonicism)
+     *
+     *          Applications:
+     *          - Identifying tonal vs. atonal/post-tonal harmonic regions in scores
+     *          - Filtering tonal subsets from chromatic harmonic progressions
+     *          - Analyzing functional harmonic syntax vs. non-functional chromaticism
+     *          - Historical style analysis (tonal practice across musical periods)
+     *
+     * @note This function operates on the closed-stack representation, ensuring consistent
+     *       tonality evaluation regardless of chord voicing or register.
      */
     bool isTonal(std::function<bool(const Chord& chord)> model = nullptr);
 
@@ -1246,12 +1317,52 @@ class Chord {
 
     /**
      * @brief Calculates the Sethares dissonance value for all dyads in the chord.
-     * @details Uses the Sethares model for sensory dissonance, considering all pairs of partials.
      * @param numPartials Number of partials per note.
      * @param useMinModel If true, uses the minimum amplitude model; otherwise, uses the product.
      * @param amplCallback Optional: function to modify amplitude vector.
      * @param partialsDecayExpRate Optional Partials decay exponential rate (default: 0.88).
      * @return Table with detailed dissonance information for each dyad.
+     * @details Computes psychoacoustic sensory dissonance using the Sethares spectral dissonance model,
+     *          which quantifies roughness perception arising from critical band interactions between
+     *          harmonic partials. The model calculates dissonance for all unique dyads (note pairs)
+     *          in the chord by analyzing beating patterns and frequency proximity effects.
+     *
+     *          **Dissonance Calculation Process**:
+     *          1. Generate harmonic spectra for each note (fundamental + overtones)
+     *          2. For each dyad, compute pairwise partial interactions
+     *          3. Apply critical band masking curves (Plomp-Levelt dissonance function)
+     *          4. Weight contributions by partial amplitudes
+     *          5. Aggregate dissonance values across all dyads
+     *
+     *          **Parameters**:
+     *          - `numPartials`: Higher values increase spectral accuracy but computational cost.
+     *            Typical range: 6-10 for realistic timbral modeling.
+     *          - `useMinModel`: Amplitude weighting strategy
+     *            - true: min(amp1, amp2) - assumes weaker partial dominates perception
+     *            - false: amp1 × amp2 - assumes multiplicative interaction
+     *          - `amplCallback`: Custom spectral envelope shaping (e.g., formant filtering,
+     *            instrument-specific harmonic rolloff). Input/output: vector of partial amplitudes.
+     *          - `partialsDecayExpRate`: Exponential decay rate for overtone amplitudes.
+     *            Default 0.88 models typical harmonic decay (~-1.5 dB per partial).
+     *
+     *          **Return Value**:
+     *          SetharesDissonanceTable containing per-dyad dissonance values, enabling:
+     *          - Identification of most/least dissonant intervals in the chord
+     *          - Voice-leading optimization (minimize dissonance motion)
+     *          - Timbral dissonance profiling across different tuning systems
+     *
+     *          **Applications**:
+     *          - Microtonal harmony analysis (optimal tuning selection)
+     *          - Orchestration timbre studies (spectral clash identification)
+     *          - Historical tuning system comparisons (just intonation vs. equal temperament)
+     *          - Consonance/dissonance trajectory analysis in harmonic progressions
+     *
+     * @note This model reflects sensory (psychoacoustic) dissonance, NOT tonal/functional dissonance.
+     *       A dominant seventh chord (functionally dissonant in tonal theory) may have low Sethares
+     *       dissonance due to its harmonic series alignment.
+     *
+     * @warning Computational complexity is O(n² × p²) where n = number of notes, p = numPartials.
+     *          Use sparingly in real-time applications for large chords.
      */
     SetharesDissonanceTable getSetharesDyadsDissonanceValue(
         const int numPartials = 6, const bool useMinModel = true,
@@ -1275,27 +1386,49 @@ class Chord {
         const std::function<float(std::vector<float>)> dissCallback = nullptr) const;
 
     /**
-     * @brief
-     *
-     * @param index
-     * @return const Note&
+     * @brief Array subscript operator for read-only access to notes in original (unsorted) order.
+     * @param index Zero-based index of the note to retrieve (0 ≤ index < size()).
+     * @return Const reference to the Note at the specified index position.
+     * @throws std::out_of_range if index >= size().
+     * @details Provides direct access to notes in their original input order, preserving
+     *          the vertical arrangement as specified in MusicXML or programmatic construction.
+     *          Does not reflect sorted or closed-stack ordering used in harmonic analysis.
+     *          Useful for voice-leading analysis, pitch-space operations, and preserving
+     *          registral relationships.
      */
     const Note& operator[](size_t index) const { return _originalNotes.at(index); }
 
     /**
-     * @brief
-     *
-     * @param index
-     * @return Note&
+     * @brief Array subscript operator for mutable access to notes in original (unsorted) order.
+     * @param index Zero-based index of the note to retrieve (0 ≤ index < size()).
+     * @return Mutable reference to the Note at the specified index position.
+     * @throws std::out_of_range if index >= size().
+     * @details Allows modification of notes while preserving their positional order.
+     *          Changes to individual notes do not automatically update cached harmonic
+     *          analysis results—those are recomputed on demand. Use for transposition,
+     *          dynamic modification, articulation changes, or other note-level edits.
      */
     Note& operator[](size_t index) { return _originalNotes.at(index); }
 
     /**
-     * @brief
+     * @brief Equality operator comparing chords by pitch-space note ordering.
+     * @param otherChord Chord to compare against.
+     * @return True if both chords contain identical notes in the same original order.
+     * @details Performs pitch-wise equality comparison using the original (unsorted) note sequence.
+     *          Two chords are considered equal if and only if:
+     *          1. They contain the same number of notes (cardinality equality)
+     *          2. Each corresponding note pair is identical (Note::operator==)
      *
-     * @param otherChord
-     * @return true
-     * @return false
+     *          This is a strict pitch-space comparison that preserves registral and voice-leading
+     *          relationships. It does NOT compare:
+     *          - Closed-stack or root-position equivalence
+     *          - Pitch-class set equivalence (enharmonic equivalence)
+     *          - Inversional or transpositional equivalence
+     *
+     *          For harmonic function equivalence analysis (e.g., comparing C-E-G vs. E-G-C as
+     *          both being C major triads), use getPitchClassSet() or getChordName() instead.
+     * @note Enharmonic notes (e.g., C# vs. Db) are NOT considered equal by this operator,
+     *       as Note::operator== performs exact pitch-class comparison.
      */
     bool operator==(const Chord& otherChord) const {
         size_t sizeA = this->size();
@@ -1315,11 +1448,23 @@ class Chord {
     }
 
     /**
-     * @brief
+     * @brief Inequality operator comparing chords by pitch-space note ordering.
+     * @param otherChord Chord to compare against.
+     * @return True if chords differ in size or contain non-identical notes at any position.
+     * @details Logical negation of operator==. Returns true if chords are not pitch-wise identical
+     *          in their original note ordering. Inequality holds if:
+     *          1. Chord cardinalities differ (different number of notes), OR
+     *          2. Any corresponding note pair differs (Note::operator!=)
      *
-     * @param otherChord
-     * @return true
-     * @return false
+     *          This is a strict pitch-space inequality preserving registral distinctions.
+     *          Does NOT account for:
+     *          - Harmonic function equivalence (e.g., inversions of the same chord)
+     *          - Enharmonic equivalence (e.g., C# vs. Db)
+     *          - Pitch-class set equivalence under transposition/inversion
+     *
+     *          For functional harmonic analysis, use chord quality/root comparison methods instead.
+     * @note Two chords may be harmonically equivalent but still return true for inequality
+     *       if their voicings differ (e.g., C4-E4-G4 vs. E4-G4-C5).
      */
     bool operator!=(const Chord& otherChord) const {
         size_t sizeA = this->size();
@@ -1339,10 +1484,36 @@ class Chord {
     }
 
     /**
-     * @brief
+     * @brief Chord concatenation operator merging note collections in pitch-space order.
+     * @param otherChord Chord whose notes will be appended to the current chord.
+     * @return New Chord containing all notes from both chords in concatenated order.
+     * @details Creates a composite chord by appending all notes from otherChord to a copy
+     *          of the current chord's note sequence. The resulting chord preserves:
+     *          - Original note ordering from the left operand (this chord)
+     *          - Original note ordering from the right operand (appended notes)
+     *          - All registral and voice-leading relationships
      *
-     * @param otherChord
-     * @return Chord
+     *          This operation is useful for:
+     *          - Polychord construction (e.g., C major triad + F# major triad → bitonality)
+     *          - Voice accumulation in orchestration analysis
+     *          - Combining melodic and harmonic layers
+     *          - Building complex harmonic structures from simpler tertian components
+     *
+     *          The operation does NOT:
+     *          - Remove duplicate notes (allows octave doubling, unison reinforcement)
+     *          - Sort notes by pitch (preserves original vertical ordering)
+     *          - Merge enharmonic equivalents
+     *
+     * @note The resulting chord may contain duplicate pitch classes if both operands share
+     *       common notes. Use Chord::removeDuplicates() if unique pitch-class collection
+     *       is required for set-theoretic analysis.
+     *
+     * @example
+     * @code
+     * Chord triadC({"C4", "E4", "G4"});      // C major triad
+     * Chord triadF({"F4", "A4", "C5"});      // F major triad
+     * Chord poly = triadC + triadF;          // Polychord: C4-E4-G4-F4-A4-C5
+     * @endcode
      */
     Chord operator+(const Chord& otherChord) const {
         Chord x = *this;

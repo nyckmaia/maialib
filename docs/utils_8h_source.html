@@ -87,29 +87,33 @@ $(document).ready(function(){initNavTree('utils_8h_source.html',''); initResizab
   <div class="headertitle"><div class="title">utils.h</div></div>
 </div><!--header-->
 <div class="contents">
-<div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#pragma once</span></div>
+<a href="utils_8h.html">Go to the documentation of this file.</a><div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#pragma once</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span> </div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span><span class="preprocessor">#include &lt;iostream&gt;</span></div>
 <div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &lt;numeric&gt;</span></div>
 <div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span> </div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="keywordtype">void</span> ignore(T &amp;&amp;) {}</div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span> </div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="keyword">constexpr</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> hash(<span class="keyword">const</span> <span class="keywordtype">char</span> *s, <span class="keywordtype">int</span> off = 0) {</div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span>    <span class="keywordflow">return</span> !s[off] ? 5381 : (hash(s, off + 1) * 33) ^ s[off];</div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span>}</div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span> </div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="keyword">constexpr</span> <span class="keywordtype">int</span> factorial(<span class="keyword">const</span> <span class="keywordtype">int</span> n) { <span class="keywordflow">return</span> (n == 0) || (n == 1) ? 1 : n * factorial(n - 1); }</div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span> </div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="keyword">inline</span> <span class="keywordtype">bool</span> isFloatEqual(<span class="keywordtype">float</span> A, <span class="keywordtype">float</span> B, <span class="keywordtype">float</span> epsilon = 0.005f) {</div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span>    <span class="keywordflow">return</span> (std::fabs(A - B) &lt; epsilon);</div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span>}</div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="keyword">template</span> &lt;<span class="keyword">typename</span> T&gt;</div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno"><a class="line" href="utils_8h.html#a36bd0eeb7fa9ec47dc8dc93e230d25f2">   23</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="utils_8h.html#a36bd0eeb7fa9ec47dc8dc93e230d25f2">ignore</a>(T &amp;&amp;) {}</div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span> </div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno"><a class="line" href="utils_8h.html#a87f1aa8a489cca497376d39d142aceb9">   35</a></span><span class="keyword">constexpr</span> <span class="keywordtype">unsigned</span> <span class="keywordtype">int</span> <a class="code hl_function" href="utils_8h.html#a87f1aa8a489cca497376d39d142aceb9">hash</a>(<span class="keyword">const</span> <span class="keywordtype">char</span> *s, <span class="keywordtype">int</span> off = 0) {</div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span>    <span class="keywordflow">return</span> !s[off] ? 5381 : (<a class="code hl_function" href="utils_8h.html#a87f1aa8a489cca497376d39d142aceb9">hash</a>(s, off + 1) * 33) ^ s[off];</div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>}</div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno"><a class="line" href="utils_8h.html#a20aaeb5b82ac2d15a6f4539143541181">   48</a></span><span class="keyword">constexpr</span> <span class="keywordtype">int</span> <a class="code hl_function" href="utils_8h.html#a20aaeb5b82ac2d15a6f4539143541181">factorial</a>(<span class="keyword">const</span> <span class="keywordtype">int</span> n) { <span class="keywordflow">return</span> (n == 0) || (n == 1) ? 1 : n * <a class="code hl_function" href="utils_8h.html#a20aaeb5b82ac2d15a6f4539143541181">factorial</a>(n - 1); }</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno"><a class="line" href="utils_8h.html#a2e7bbf7babf1247a7c83737472ec5203">   64</a></span><span class="keyword">inline</span> <span class="keywordtype">bool</span> <a class="code hl_function" href="utils_8h.html#a2e7bbf7babf1247a7c83737472ec5203">isFloatEqual</a>(<span class="keywordtype">float</span> A, <span class="keywordtype">float</span> B, <span class="keywordtype">float</span> epsilon = 0.005f) {</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>    <span class="keywordflow">return</span> (std::fabs(A - B) &lt; epsilon);</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span>}</div>
+<div class="ttc" id="autils_8h_html_a20aaeb5b82ac2d15a6f4539143541181"><div class="ttname"><a href="utils_8h.html#a20aaeb5b82ac2d15a6f4539143541181">factorial</a></div><div class="ttdeci">constexpr int factorial(const int n)</div><div class="ttdoc">Compile-time factorial calculation using recursive template evaluation.</div><div class="ttdef"><b>Definition:</b> utils.h:48</div></div>
+<div class="ttc" id="autils_8h_html_a2e7bbf7babf1247a7c83737472ec5203"><div class="ttname"><a href="utils_8h.html#a2e7bbf7babf1247a7c83737472ec5203">isFloatEqual</a></div><div class="ttdeci">bool isFloatEqual(float A, float B, float epsilon=0.005f)</div><div class="ttdoc">Floating-point equality comparison with epsilon tolerance for approximate matching.</div><div class="ttdef"><b>Definition:</b> utils.h:64</div></div>
+<div class="ttc" id="autils_8h_html_a36bd0eeb7fa9ec47dc8dc93e230d25f2"><div class="ttname"><a href="utils_8h.html#a36bd0eeb7fa9ec47dc8dc93e230d25f2">ignore</a></div><div class="ttdeci">void ignore(T &amp;&amp;)</div><div class="ttdoc">Suppresses unused variable warnings by accepting and discarding a forwarding reference.</div><div class="ttdef"><b>Definition:</b> utils.h:23</div></div>
+<div class="ttc" id="autils_8h_html_a87f1aa8a489cca497376d39d142aceb9"><div class="ttname"><a href="utils_8h.html#a87f1aa8a489cca497376d39d142aceb9">hash</a></div><div class="ttdeci">constexpr unsigned int hash(const char *s, int off=0)</div><div class="ttdoc">Compile-time string hash function using the djb2 algorithm.</div><div class="ttdef"><b>Definition:</b> utils.h:35</div></div>
 </div><!-- fragment --></div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
-    <li class="navelem"><a class="el" href="dir_cdf0799f3e1137935e0f500bb15dd698.html">maiacore</a></li><li class="navelem"><a class="el" href="dir_68a85adc19bb40a8f7d54edbeafcde58.html">include</a></li><li class="navelem"><a class="el" href="dir_18feaa2e564789a7b0862bb32aaf59df.html">maiacore</a></li><li class="navelem"><b>utils.h</b></li>
+    <li class="navelem"><a class="el" href="dir_cdf0799f3e1137935e0f500bb15dd698.html">maiacore</a></li><li class="navelem"><a class="el" href="dir_68a85adc19bb40a8f7d54edbeafcde58.html">include</a></li><li class="navelem"><a class="el" href="dir_18feaa2e564789a7b0862bb32aaf59df.html">maiacore</a></li><li class="navelem"><a class="el" href="utils_8h.html">utils.h</a></li>
     <li class="footer">Generated by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.3 </li>
   </ul>
 </div>

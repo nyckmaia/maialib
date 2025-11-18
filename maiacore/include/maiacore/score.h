@@ -434,10 +434,59 @@ class Score {
     void setRepeat(int measureStart, int measureEnd = -1);
 
     /**
-     * @brief Analyzes instrumental fragmentation in the score, returning data for visualization.
-     * @details Generates a JSON with activation, fragmentation, and execution lines for each instrument.
-     * @param config JSON object with configuration parameters (parts, measures, etc).
-     * @return JSON with data for analysis and plotting.
+     * @brief Analyzes instrumental fragmentation patterns across the score timeline.
+     * @param config JSON configuration object specifying analysis parameters (parts, measures, etc).
+     * @return JSON structure with activation, fragmentation, and execution metrics per instrument.
+     * @details Performs temporal analysis of instrumental activity distribution, quantifying how
+     *          melodic lines are fragmented across different instruments over time. This analysis
+     *          is essential for orchestration studies, texture evolution tracking, and compositional
+     *          strategy research.
+     *
+     *          **Fragmentation Metrics Computed**:
+     *          1. **Activation Lines**: Temporal intervals where each instrument is active (sounding notes)
+     *          2. **Fragmentation Patterns**: Transitions of melodic material between instruments
+     *             (e.g., melody alternating between violin and flute—klangfarbenmelodie analysis)
+     *          3. **Execution Density**: Proportion of time each instrument participates in texture
+     *
+     *          **Analysis Categories**:
+     *          - **Continuous Execution**: Sustained melodic lines without rests (legato passages)
+     *          - **Fragmented Execution**: Interrupted melodic lines with rests (staccato, pointillism)
+     *          - **Hand-off Patterns**: Melodic continuation across instrument changes (orchestral dialogue)
+     *          - **Tutti vs. Solo Distributions**: Ensemble density fluctuations
+     *
+     *          **Configuration Parameters** (config JSON):
+     *          - `partNames` (list): Restrict analysis to specific instrumental parts
+     *          - `measureStart`, `measureEnd` (int): Define temporal analysis window
+     *          - `timeResolution` (float): Granularity for temporal slicing (e.g., 0.25 = sixteenth note)
+     *
+     *          **Return JSON Structure**:
+     *          \code{.json}
+     *          {
+     *            "instruments": [
+     *              {
+     *                "name": "Violin I",
+     *                "activationIntervals": [[1.0, 4.5], [8.0, 12.5]],
+     *                "fragmentationCount": 3,
+     *                "executionDensity": 0.67
+     *              },
+     *              ...
+     *            ],
+     *            "fragmentationEvents": [
+     *              {"measure": 4, "fromInstrument": "Violin I", "toInstrument": "Flute"},
+     *              ...
+     *            ]
+     *          }
+     *          \endcode
+     *
+     *          **Applications**:
+     *          - Orchestration analysis (instrument usage patterns in Mahler, Ravel, Stravinsky)
+     *          - Klangfarbenmelodie detection (Schoenberg, Webern timbral melody techniques)
+     *          - Texture evolution studies (gradual thickening/thinning of orchestral fabric)
+     *          - Compositional fingerprinting (characteristic orchestration strategies per composer)
+     *          - Performance part difficulty assessment (rest distribution, endurance requirements)
+     *
+     * @note This function is computationally intensive for large orchestral scores.
+     *       Consider restricting analysis to specific measure ranges or part subsets.
      */
     nlohmann::json instrumentFragmentation(nlohmann::json config = nlohmann::json());
 
@@ -504,16 +553,54 @@ class Score {
 
     /**
      * @brief Searches for a melodic pattern throughout the score, returning detailed results.
-     * @details Allows searching for melodic patterns with interval and rhythmic similarity criteria.
      * @param melodyPattern Vector of notes representing the pattern to search for.
-     * @param totalIntervalsSimilarityThreshold Minimum interval similarity threshold.
-     * @param totalRhythmSimilarityThreshold Minimum rhythm similarity threshold.
+     * @param totalIntervalsSimilarityThreshold Minimum interval similarity threshold (0.0-1.0).
+     * @param totalRhythmSimilarityThreshold Minimum rhythm similarity threshold (0.0-1.0).
      * @param intervalsSimilarityCallback Custom function to calculate interval similarity.
      * @param rhythmSimilarityCallback Custom function to calculate rhythm similarity.
      * @param totalIntervalSimilarityCallback Function to aggregate interval similarity.
      * @param totalRhythmSimilarityCallback Function to aggregate rhythm similarity.
      * @param totalSimilarityCallback Function to combine total similarities.
      * @return Table of results with detailed information about found patterns.
+     * @details Performs comprehensive melodic pattern matching across all parts and measures of the score,
+     *          supporting flexible similarity metrics for both intervallic contour and rhythmic structure.
+     *          This function enables motivic analysis, thematic transformation studies, and computational
+     *          detection of melodic recurrence.
+     *
+     *          **Pattern Matching Process**:
+     *          1. Sliding window search across all melodic sequences in the score
+     *          2. For each candidate match:
+     *             a. Compute intervallic similarity (pitch contour matching)
+     *             b. Compute rhythmic similarity (durational pattern matching)
+     *             c. Aggregate similarities using custom or default models
+     *          3. Filter results by threshold criteria
+     *          4. Return matches with positional metadata (part, measure, beat)
+     *
+     *          **Similarity Calculation**:
+     *          - **Default Interval Similarity**: Normalized edit distance or contour correlation
+     *            between semitone interval sequences. Allows approximate matching (transposition,
+     *            modal mutation, chromatic alteration).
+     *          - **Default Rhythm Similarity**: Durational ratio comparison with tolerance for
+     *            rhythmic augmentation/diminution and metric displacement.
+     *          - **Custom Callbacks**: User-defined similarity models enable:
+     *            - Weighted interval classes (emphasize melodic leaps vs. stepwise motion)
+     *            - Parsons code contour matching (directional contour only)
+     *            - Fuzzy matching with configurable tolerance bands
+     *
+     *          **Threshold Parameters**:
+     *          - Values near 1.0: Require near-exact matches (strict motivic repetition)
+     *          - Values near 0.5: Allow moderate variation (thematic transformation, development)
+     *          - Values near 0.0: Detect loose similarity (distant motivic relationships)
+     *
+     *          **Applications**:
+     *          - Motivic analysis (leitmotif tracking in Wagner, Brahms developing variation)
+     *          - Thematic cataloging (identifying subject entries in fugues, variation themes)
+     *          - Computational musicology (corpus-wide melodic similarity studies)
+     *          - Plagiarism detection (melodic borrowing, paraphrase identification)
+     *          - Style analysis (characteristic melodic gestures across composers/periods)
+     *
+     * @note Computational complexity is O(n × m) where n = total notes in score, m = pattern length.
+     *       For large scores, consider restricting search to specific parts or measure ranges.
      */
     MelodyPatternTable findMelodyPattern(
         const std::vector<Note>& melodyPattern, const float totalIntervalsSimilarityThreshold = 0.5,
@@ -581,46 +668,64 @@ class Score {
         const std::function<float(float, float)> totalSimilarityCallback = nullptr) const;
     
     /**
-     * @brief Get the vertical stacked chords from the score object
+     * @brief Extracts vertical chord structures from the score with configurable analysis parameters.
+     * @param config Optional JSON configuration object controlling chord extraction criteria.
+     * @return Vector of tuples: {measure number, beat position, Key, Chord, homophony flag}.
+     * @details Performs vertical harmonic analysis by extracting simultaneities (vertical chord slices)
+     *          from the polyphonic texture, with extensive filtering and processing options for
+     *          texture analysis, harmonic progression studies, and style-specific chord detection.
      *
-     * @param config (Optional) A JSON object that contains: \n \n
-     * \c partNames: list of strings \n
-     * \c measureStart: integer \n
-     * \c measureEnd: integer \n
-     * \c minStack: integer \n
-     * \c maxStack: integer \n
-     * \c minDuration: string \n
-     * \c maxDuration: string \n
-     * \c continuosMode: boolean \n
-     * \c includeDuplicates: boolean \n
-     * \c includeUnpitched: boolean \n \n
-     * \b Example:
-     * \code{.json}
-     * {
-     *   "partNames": ["Violino", "Viola", "Violoncelo"],
-     *   "measureStart": 4,
-     *   "measureEnd": 10,
-     *   "minDuration": "quarter",
-     *   "maxDuration": "whole",
-     *   "continuosMode": true,
-     *   "includeDuplicates": false,
-     *   "includeUnpitched": false
-     * }
-     * \endcode \n
-     * \b continuosMode \n
-     * When \c continuosMode is \c true the algorithm will detect all vertical
-     * chords, including counterpoint notes \n When \c continuosMode is \c false
-     * the algorithm will detect only the chords formed by the same attack
-     * notes, excluding counterpoint \n \n \b includeDuplicates \n When \c
-     * includeDuplicates is \c true the return chords can have multiple notes
-     * with the same pitch value (duplicate notes) \n
-     * Example: ["C4", "C4", "E4", "G4"] \n
-     * When \c includeDuplicates is \c false each chord will be filtered in post
-     * processing, returning the same chord but removing the duplicate pitch
-     * notes \n Example: The original chord ["C4", "C4", "E4", "G4"] will be
-     * returned as ["C4", "E4", "G4"] \n \n \b includeUnpitched \n
+     *          **Configuration Parameters** (all optional):
+     *          - `partNames` (list of strings): Restrict analysis to specific instrumental parts
+     *            (e.g., ["Violino", "Viola", "Violoncelo"] for string trio texture)
+     *          - `measureStart`, `measureEnd` (integers): Define measure range for analysis
+     *          - `minStack`, `maxStack` (integers): Filter by chord cardinality (number of notes)
+     *            - minStack=3, maxStack=4 → only triads and seventh chords
+     *          - `minDuration`, `maxDuration` (strings): Filter by note duration
+     *            (e.g., "quarter", "half", "whole")
+     *          - `continuosMode` (boolean): Texture analysis mode selector
+     *            - **true**: Continuous vertical slicing—captures ALL vertical alignments including
+     *              non-aligned notes (polyphonic/contrapuntal texture analysis)
+     *            - **false**: Attack-point synchronization—only chords formed by simultaneous
+     *              note onsets (homophonic texture, block chord analysis)
+     *          - `includeDuplicates` (boolean): Octave doubling handling
+     *            - **true**: Preserve pitch-class duplications (["C4", "C4", "E4", "G4"])
+     *            - **false**: Remove duplicate pitch classes (["C4", "E4", "G4"])
+     *          - `includeUnpitched` (boolean): Include percussion/unpitched elements
      *
-     * @return A list of tuples: {measure, floatMeasure, Key object, Chord object}
+     *          **Example Configuration**:
+     *          \code{.json}
+     *          {
+     *            "partNames": ["Violino", "Viola", "Violoncelo"],
+     *            "measureStart": 4,
+     *            "measureEnd": 10,
+     *            "minDuration": "quarter",
+     *            "maxDuration": "whole",
+     *            "continuosMode": true,
+     *            "includeDuplicates": false,
+     *            "includeUnpitched": false
+     *          }
+     *          \endcode
+     *
+     *          **Return Value Structure**:
+     *          Each tuple contains:
+     *          1. **Measure number** (int): Absolute measure position in score
+     *          2. **Beat position** (float): Fractional beat location within measure
+     *          3. **Key** (Key object): Prevailing key signature at this position
+     *          4. **Chord** (Chord object): Extracted vertical sonority
+     *          5. **Homophony flag** (bool): True if all voices share identical rhythm
+     *             (homophonic texture indicator)
+     *
+     *          **Applications**:
+     *          - Harmonic analysis (chord progression extraction, functional harmony labeling)
+     *          - Texture classification (homophonic vs. polyphonic density analysis)
+     *          - Voice-leading analysis (chord-to-chord motion studies)
+     *          - Statistical harmony studies (chord frequency distributions, bigram models)
+     *          - Dissonance trajectory analysis (tracking harmonic tension across time)
+     *
+     * @note The `continuosMode` parameter critically affects results:
+     *       - For homophonic textures (hymns, chorales): use continuosMode=false
+     *       - For contrapuntal textures (fugues, inventions): use continuosMode=true
      */
     std::vector<std::tuple<int, float, Key, Chord, bool>> getChords(nlohmann::json config = {});
 };

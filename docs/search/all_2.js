@@ -6,5 +6,6 @@ var searchData=
   ['clean_3',['clean',['../class_barline.html#a4920dafc455a9ceee189c48065b882a6',1,'Barline']]],
   ['clear_4',['clear',['../class_chord.html#ab14288e63324ce844fa72a9c1fba3488',1,'Chord::clear()'],['../class_measure.html#a222b54445c0360a20d54c096926759f6',1,'Measure::clear()'],['../class_part.html#abaa998450a265b04292b922b79a1b420',1,'Part::clear()'],['../class_score.html#a0b19e00bea38679a5c627b7df3fe0cea',1,'Score::clear()'],['../class_score_collection.html#a48620845fc59792dd39e9b72eb31d3c7',1,'ScoreCollection::clear()']]],
   ['clef_5',['Clef',['../class_clef.html',1,'Clef'],['../class_clef.html#a13a4d2422b787e9146d46e367b659ef1',1,'Clef::Clef(const ClefSign sign=ClefSign::G, int line=-1)']]],
-  ['clefsignstr2clefsign_6',['clefSignStr2ClefSign',['../class_clef.html#a625a1855921cf8be75ca7832d7bbeb0b',1,'Clef']]]
+  ['clefsignstr2clefsign_6',['clefSignStr2ClefSign',['../class_clef.html#a625a1855921cf8be75ca7832d7bbeb0b',1,'Clef']]],
+  ['config_2eh_7',['config.h',['../config_8h.html',1,'']]]
 ];

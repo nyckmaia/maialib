@@ -1,9 +1,14 @@
 var searchData=
 [
-  ['note_0',['Note',['../class_note.html',1,'Note'],['../class_note.html#a11dfaf68eb7a094b121add4adb18620e',1,'Note::Note()'],['../class_note.html#a575ddd55fea045afa3be87cdef40df7b',1,'Note::Note(const std::string &amp;pitch, const RhythmFigure rhythmFigure=RhythmFigure::QUARTER, bool isNoteOn=true, bool inChord=false, const int transposeDiatonic=0, const int transposeChromatic=0, const int divisionsPerQuarterNote=256)'],['../class_note.html#aa2389e69b0b80b2fde49561e0440425c',1,'Note::Note(const int midiNumber, const std::string &amp;accType=&quot;&quot;, const RhythmFigure rhythmFigure=RhythmFigure::QUARTER, bool isNoteOn=true, bool inChord=false, const int transposeDiatonic=0, const int transposeChromatic=0, const int divisionsPerQuarterNote=256)']]],
-  ['notes2intervals_1',['notes2Intervals',['../class_helper.html#a5b28f717cd0f49b531dbec8a40b98973',1,'Helper::notes2Intervals(const std::vector&lt; Note &gt; &amp;notes, const bool firstNoteAsReference=false)'],['../class_helper.html#abf044b14f4f51f0657dc5048f11243a2',1,'Helper::notes2Intervals(const std::vector&lt; std::string &gt; &amp;pitches, const bool firstNoteAsReference=false)']]],
-  ['notesimilarity_2',['noteSimilarity',['../class_helper.html#a3e8de086fcd64749d7a5f5d437b800f6',1,'Helper']]],
-  ['notetype2rhythmfigure_3',['noteType2RhythmFigure',['../class_helper.html#adbc810813977312401ed2c6a2353df7a',1,'Helper']]],
-  ['notetype2ticks_4',['noteType2ticks',['../class_helper.html#a7c1f49532b06ffea95c9ff72f673ea68',1,'Helper']]],
-  ['number2pitch_5',['number2pitch',['../class_helper.html#a449398a519412e6aab7d6080aab031b5',1,'Helper']]]
+  ['maialib_20_2d_20music_20analysis_20library_0',['Maialib - Music Analysis Library',['../index.html',1,'']]],
+  ['meantone_5ftemperament_1',['MEANTONE_TEMPERAMENT',['../config_8h.html#a25aa34250819b02136702297a184347fa22166c23bc8fd12012a5ea987ccfb4ec',1,'config.h']]],
+  ['measure_2',['Measure',['../class_measure.html',1,'Measure'],['../class_measure.html#a52707a3e71227e8d1835184cd4a46f95',1,'Measure::Measure()']]],
+  ['melodypatternrow_3',['MelodyPatternRow',['../class_score.html#a76a35ae2c0d094843f85f3b08a1d1a25',1,'Score']]],
+  ['melodypatterntable_4',['MelodyPatternTable',['../class_score.html#ab5c6f5794b338382a7cf864667bc6ecb',1,'Score']]],
+  ['merge_5',['merge',['../class_score_collection.html#ad75c99f5d3fbe090f368a425aaddc7b0',1,'ScoreCollection']]],
+  ['metronomechanged_6',['metronomeChanged',['../class_measure.html#a1409f433d9562097a5bd40c60dfdd1cb',1,'Measure']]],
+  ['midinote2freq_7',['midiNote2freq',['../class_helper.html#a6f459665ed2173f7a47a6a0358c74b54',1,'Helper']]],
+  ['midinote2octave_8',['midiNote2octave',['../class_helper.html#ae50a50463d228d9a36749b0a522a3bf9',1,'Helper']]],
+  ['midinote2pitch_9',['midiNote2pitch',['../class_helper.html#a9c3fc360fa220ce5c05107f205c7bb20',1,'Helper']]],
+  ['midinote2pitches_10',['midiNote2pitches',['../class_helper.html#a061f37a1ca57b63e7385777d9fd2947d',1,'Helper']]]
 ];

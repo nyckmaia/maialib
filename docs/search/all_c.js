@@ -1,13 +1,9 @@
 var searchData=
 [
-  ['operator_21_3d_0',['operator!=',['../class_chord.html#a6940d2a8a1770e8604be27e026724b51',1,'Chord::operator!=()'],['../class_note.html#ac16477f40dfcf99776419f342b29856a',1,'Note::operator!=()']]],
-  ['operator_2b_1',['operator+',['../class_chord.html#aa8b407f542bf5b0d19d71e3410b2df35',1,'Chord::operator+()'],['../class_score_collection.html#a07322ec04a46f40f0849687f651ea669',1,'ScoreCollection::operator+()']]],
-  ['operator_3c_2',['operator&lt;',['../class_interval.html#a663fdf847253062d1b77f33879163f8a',1,'Interval::operator&lt;()'],['../class_note.html#a9817c592ad04c44cf0b7c042bf8710ee',1,'Note::operator&lt;()']]],
-  ['operator_3c_3c_3',['operator&lt;&lt;',['../class_chord.html#af90b98bbd0f23de0157af430b48c748e',1,'Chord']]],
-  ['operator_3c_3d_4',['operator&lt;=',['../class_note.html#a4fa8bc69f20bbed6e6ed6a9a190df7c2',1,'Note']]],
-  ['operator_3d_5',['operator=',['../class_score.html#aaac75eb74d741745214738d0f040c79a',1,'Score']]],
-  ['operator_3d_3d_6',['operator==',['../class_chord.html#a1eafd605ed77264e5d23a72753ac7099',1,'Chord::operator==()'],['../class_note.html#a52f62b26a35ad293bdceb1c7807d3c73',1,'Note::operator==(const Note &amp;otherNote) const']]],
-  ['operator_3e_7',['operator&gt;',['../class_note.html#a31e0e49276c0466ebf270e356fb16fc1',1,'Note']]],
-  ['operator_3e_3d_8',['operator&gt;=',['../class_note.html#af658c33d3df1d97b5185ea9b40fca90d',1,'Note']]],
-  ['operator_5b_5d_9',['operator[]',['../class_chord.html#a6c97eca9d896db84f2bc6337e2342eaf',1,'Chord::operator[](size_t index) const'],['../class_chord.html#a7cee986dae263db436beb514ad9f9707',1,'Chord::operator[](size_t index)']]]
+  ['note_0',['Note',['../class_note.html',1,'Note'],['../class_note.html#a11dfaf68eb7a094b121add4adb18620e',1,'Note::Note()'],['../class_note.html#a575ddd55fea045afa3be87cdef40df7b',1,'Note::Note(const std::string &amp;pitch, const RhythmFigure rhythmFigure=RhythmFigure::QUARTER, bool isNoteOn=true, bool inChord=false, const int transposeDiatonic=0, const int transposeChromatic=0, const int divisionsPerQuarterNote=256)'],['../class_note.html#aa2389e69b0b80b2fde49561e0440425c',1,'Note::Note(const int midiNumber, const std::string &amp;accType=&quot;&quot;, const RhythmFigure rhythmFigure=RhythmFigure::QUARTER, bool isNoteOn=true, bool inChord=false, const int transposeDiatonic=0, const int transposeChromatic=0, const int divisionsPerQuarterNote=256)']]],
+  ['notes2intervals_1',['notes2Intervals',['../class_helper.html#a5b28f717cd0f49b531dbec8a40b98973',1,'Helper::notes2Intervals(const std::vector&lt; Note &gt; &amp;notes, const bool firstNoteAsReference=false)'],['../class_helper.html#abf044b14f4f51f0657dc5048f11243a2',1,'Helper::notes2Intervals(const std::vector&lt; std::string &gt; &amp;pitches, const bool firstNoteAsReference=false)']]],
+  ['notesimilarity_2',['noteSimilarity',['../class_helper.html#a3e8de086fcd64749d7a5f5d437b800f6',1,'Helper']]],
+  ['notetype2rhythmfigure_3',['noteType2RhythmFigure',['../class_helper.html#adbc810813977312401ed2c6a2353df7a',1,'Helper']]],
+  ['notetype2ticks_4',['noteType2ticks',['../class_helper.html#a7c1f49532b06ffea95c9ff72f673ea68',1,'Helper']]],
+  ['number2pitch_5',['number2pitch',['../class_helper.html#a449398a519412e6aab7d6080aab031b5',1,'Helper']]]
 ];

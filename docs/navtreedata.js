@@ -69,16 +69,22 @@ var NAVTREE =
       ] ]
     ] ],
     [ "Files", "files.html", [
-      [ "File List", "files.html", "files_dup" ]
-    ] ]
+      [ "File List", "files.html", "files_dup" ],
+      [ "File Members", "globals.html", [
+        [ "All", "globals.html", null ],
+        [ "Functions", "globals_func.html", null ],
+        [ "Enumerations", "globals_enum.html", null ]
+      ] ]
+    ] ],
+    [ "Examples", "examples.html", "examples" ]
   ] ]
 ];
 
 var NAVTREEINDEX =
 [
-"annotated.html",
-"class_interval.html#ab8bc769e50f9fd121d8694b9c231f30b",
-"class_score.html#a7d64768cd2985912caf015a190f03e4e"
+"_c_1_2_users_2nyck_2_desktop_2maialib_2maiacore_2include_2maiacore_2chord_8h-example.html",
+"class_interval.html#ab406b1cad8950ee952b9529011bb19df",
+"class_score.html#a796566e50112f9c669037705e8efbf63"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';

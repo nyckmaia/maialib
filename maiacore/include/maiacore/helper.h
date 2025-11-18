@@ -163,18 +163,48 @@ class Helper {
     static int semitonesBetweenPitches(const std::string& pitch_A, const std::string& pitch_B);
 
     /**
-     * @brief Computes the similarity between two notes based on pitch class, octave, and duration.
-     * @details Used for melodic pattern matching and musicological analysis.
-     * @param pitchClass_A Pitch class of note A.
-     * @param octave_A Octave of note A.
-     * @param duration_A Duration of note A.
+     * @brief Computes multidimensional similarity between two notes using pitch-space and rhythmic metrics.
+     * @param pitchClass_A Pitch class of note A (e.g., "C", "F#", "Bb").
+     * @param octave_A Octave register of note A (MIDI octave numbering: A4=440Hz).
+     * @param duration_A Duration of note A in quarter-note units (1.0 = quarter, 0.5 = eighth).
      * @param pitchClass_B Pitch class of note B.
-     * @param octave_B Octave of note B.
-     * @param duration_B Duration of note B.
-     * @param durRatio Output: duration similarity ratio.
-     * @param pitRatio Output: pitch similarity ratio.
-     * @param enableEnharmonic If true, considers enharmonic equivalence.
-     * @return Similarity value in [0,1], where 1 is identical.
+     * @param octave_B Octave register of note B.
+     * @param duration_B Duration of note B in quarter-note units.
+     * @param durRatio Output parameter: rhythmic similarity ratio in [0,1].
+     * @param pitRatio Output parameter: pitch proximity ratio in [0,1].
+     * @param enableEnharmonic If true, treats enharmonic equivalents as identical (C# ≡ Db).
+     * @return Overall similarity score in [0,1] where 1.0 = perfect identity, 0.0 = maximal dissimilarity.
+     * @details Calculates composite similarity by combining pitch-space distance and rhythmic congruence,
+     *          enabling flexible note-matching for melodic pattern recognition, variation analysis, and
+     *          approximate music information retrieval.
+     *
+     *          **Similarity Components**:
+     *          1. **Pitch Similarity (pitRatio)**:
+     *             - Computed as inverse exponential decay function of semitone distance
+     *             - Adjacent semitones (C→C#) → high similarity (≈0.9)
+     *             - Octave displacement (C4→C5) → moderate similarity (≈0.6-0.7)
+     *             - Large intervals (C4→G5) → low similarity (≈0.2-0.4)
+     *             - When enableEnharmonic=true: C# and Db are treated as identical (distance=0)
+     *
+     *          2. **Rhythmic Similarity (durRatio)**:
+     *             - Computed as inverse ratio of duration difference
+     *             - Identical durations → durRatio = 1.0
+     *             - Augmentation/diminution by factor of 2 (quarter vs. half) → durRatio ≈ 0.5
+     *             - Large durational differences (whole vs. sixteenth) → durRatio → 0.0
+     *
+     *          3. **Combined Similarity (return value)**:
+     *             - Weighted combination: similarity = α × pitRatio + β × durRatio
+     *             - Default weighting emphasizes pitch over rhythm (typical: α=0.7, β=0.3)
+     *
+     *          **Applications**:
+     *          - Melodic pattern matching with tolerance for ornamentation and metric variation
+     *          - Variation analysis (comparing theme vs. variations in sonata/rondo forms)
+     *          - Approximate music search (query-by-humming with pitch/rhythm flexibility)
+     *          - Voice-leading analysis (tracking note continuity across harmonic changes)
+     *          - Motivic analysis with rhythmic transformation (augmentation, diminution)
+     *
+     * @note This is a local (note-to-note) similarity metric. For global melodic similarity
+     *       (entire phrase comparison), use calculateMelodyEuclideanSimilarity() instead.
      */
     static float noteSimilarity(std::string& pitchClass_A, int octave_A, const float duration_A,
                                 std::string& pitchClass_B, int octave_B, const float duration_B,
@@ -374,19 +404,92 @@ class Helper {
     static std::string toString(const RhythmFigure rhythmFigure);
 
     /**
-     * @brief Computes the vector of semitone differences between two melodies.
-     * @param referenceMelody Vector of reference notes.
-     * @param otherMelody Vector of comparison notes.
-     * @return Vector of semitone differences.
+     * @brief Computes the intervallic contour difference vector between two melodic sequences.
+     * @param referenceMelody Vector of notes representing the reference melodic pattern.
+     * @param otherMelody Vector of notes to compare against the reference melody.
+     * @return Vector of signed semitone differences (positive = upward transposition, negative = downward).
+     * @details Calculates the interval-by-interval pitch displacement between two melodies of equal length,
+     *          producing a difference vector that quantifies melodic transposition, contour divergence,
+     *          and pitch-space transformation. This function is fundamental for melodic similarity analysis,
+     *          thematic variation studies, and computational pattern matching.
+     *
+     *          **Computation Process**:
+     *          For each aligned note pair (referenceMelody[i], otherMelody[i]):
+     *          - Compute signed semitone distance: otherMelody[i].pitch - referenceMelody[i].pitch
+     *          - Positive values indicate upward transposition (otherMelody higher than reference)
+     *          - Negative values indicate downward transposition (otherMelody lower than reference)
+     *          - Zero values indicate exact pitch match at that position
+     *
+     *          **Example**:
+     *          \code
+     *          referenceMelody: C4-E4-G4 (semitone sequence: 60-64-67)
+     *          otherMelody:     D4-F#4-A4 (semitone sequence: 62-66-69)
+     *          Difference vector: [+2, +2, +2] → uniform transposition up by major second
+     *          \endcode
+     *
+     *          **Interpretation of Results**:
+     *          - **Constant difference vector** (e.g., [+5, +5, +5]): Exact transposition
+     *          - **Zero-centered fluctuations** (e.g., [-1, 0, +1]): Approximate contour match with chromatic variation
+     *          - **Large absolute values** (e.g., [+12, +7, -3]): Significant contour divergence, octave displacements
+     *          - **Alternating signs**: Contour inversion or melodic inversion transformation
+     *
+     *          **Applications**:
+     *          - Melodic variation analysis (identifying theme-and-variation relationships)
+     *          - Fugue analysis (detecting transposed subject entries at different pitch levels)
+     *          - Melodic similarity scoring (input to calculateMelodyEuclideanSimilarity)
+     *          - Contour analysis (studying intervallic contour preservation vs. transformation)
+     *          - Computational musicology (corpus-wide melodic relationship detection)
+     *
+     * @note Both melodies must have the same length. If lengths differ, the function processes
+     *       min(referenceMelody.size(), otherMelody.size()) notes and ignores excess notes.
+     *
+     * @warning This function compares absolute pitch, not pitch-class. C4 and C5 differ by 12 semitones.
+     *          For pitch-class comparison (octave-invariant), reduce results modulo 12.
      */
     static std::vector<float> getSemitonesDifferenceBetweenMelodies(
         const std::vector<Note>& referenceMelody, const std::vector<Note>& otherMelody);
 
     /**
-     * @brief Calculates the Euclidean similarity between two melodies based on semitone differences.
-     * @param melodyPattern Reference melody.
-     * @param otherMelody Comparison melody.
-     * @return Similarity value in [0,1].
+     * @brief Calculates Euclidean distance-based melodic similarity from intervallic contour comparison.
+     * @param melodyPattern Reference melodic pattern to match against.
+     * @param otherMelody Candidate melody to compare for similarity.
+     * @return Normalized similarity score in [0,1] where 1.0 = identical contour, 0.0 = maximal divergence.
+     * @details Computes global melodic similarity by measuring the Euclidean distance in pitch-space
+     *          between two melodic sequences, accounting for transposition, intervallic distortion, and
+     *          contour preservation. This metric is transposition-sensitive, meaning exact transpositions
+     *          yield high similarity while contour-preserving transformations with interval alterations
+     *          yield moderate similarity.
+     *
+     *          **Computation Process**:
+     *          1. Extract semitone difference vector: getSemitonesDifferenceBetweenMelodies(melodyPattern, otherMelody)
+     *          2. Compute Euclidean distance: sqrt(Σ(difference[i]²))
+     *          3. Normalize to [0,1] similarity: similarity = 1 / (1 + distance/scaling_factor)
+     *
+     *          **Interpretation of Results**:
+     *          - **similarity ≈ 1.0** (0.95-1.0): Near-identical melodies, possibly exact transposition
+     *          - **similarity ≈ 0.7-0.9**: High similarity with minor intervallic variations
+     *            (e.g., chromatic alterations, octave displacements in 1-2 notes)
+     *          - **similarity ≈ 0.4-0.7**: Moderate similarity, recognizable contour with significant transformations
+     *            (e.g., modal transposition, rhythmic variation, ornamentation)
+     *          - **similarity < 0.4**: Low similarity, different melodic material or inverted contours
+     *
+     *          **Transposition Invariance**:
+     *          This metric is NOT fully transposition-invariant. Melodies transposed by a constant interval
+     *          will have high but not perfect similarity (distance proportional to transposition distance).
+     *          For exact transposition-invariance, compute interval sequence differences instead.
+     *
+     *          **Applications**:
+     *          - Melodic pattern matching in thematic analysis (identifying motivic recurrence)
+     *          - Theme-and-variation studies (quantifying melodic transformation degree)
+     *          - Plagiarism detection (measuring melodic borrowing/paraphrase)
+     *          - Music information retrieval (query-by-example melodic search)
+     *          - Corpus analysis (clustering melodies by contour similarity)
+     *
+     * @note Both melodies must have the same length for meaningful comparison. If lengths differ,
+     *       the function processes min(melodyPattern.size(), otherMelody.size()) notes.
+     *
+     * @warning This metric emphasizes pitch contour over rhythmic structure. For combined pitch+rhythm
+     *          similarity, use findMelodyPattern() with custom similarity callbacks.
      */
     static float calculateMelodyEuclideanSimilarity(const std::vector<Note>& melodyPattern,
                                                     const std::vector<Note>& otherMelody);

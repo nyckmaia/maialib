@@ -125,7 +125,6 @@ var class_chord =
     [ "isTonal", "class_chord.html#a127f3bbab5dac8dc2519545bf48f7d7a", null ],
     [ "isWholeDiminishedChord", "class_chord.html#a84d532dab58bb03c528262068c5e5686", null ],
     [ "operator!=", "class_chord.html#a6940d2a8a1770e8604be27e026724b51", null ],
-    [ "operator+", "class_chord.html#aa8b407f542bf5b0d19d71e3410b2df35", null ],
     [ "operator==", "class_chord.html#a1eafd605ed77264e5d23a72753ac7099", null ],
     [ "operator[]", "class_chord.html#a7cee986dae263db436beb514ad9f9707", null ],
     [ "operator[]", "class_chord.html#a6c97eca9d896db84f2bc6337e2342eaf", null ],

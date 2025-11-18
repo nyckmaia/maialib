@@ -136,12 +136,13 @@ var searchData=
   ['gettitle_133',['getTitle',['../class_score.html#a796566e50112f9c669037705e8efbf63',1,'Score']]],
   ['gettransposechromatic_134',['getTransposeChromatic',['../class_note.html#ae1286cb9ec7aacb55a1a9b453f91a12a',1,'Note']]],
   ['gettransposediatonic_135',['getTransposeDiatonic',['../class_note.html#ae46d5c67a8cc7a406e625139408dbfda',1,'Note']]],
-  ['gettype_136',['getType',['../class_note.html#acbcc5f481d6ef786f3dc680e162f0f35',1,'Note']]],
-  ['getunpitchedindex_137',['getUnpitchedIndex',['../class_note.html#a702443ceeb3de79c0fd8a42c2ffcb3dd',1,'Note']]],
-  ['getuppervalue_138',['getUpperValue',['../class_time_signature.html#a6e159baf138f678fbb5def79c534dbfc',1,'TimeSignature']]],
-  ['getvoice_139',['getVoice',['../class_note.html#acfb72a351375eabdfebb9bacd9c07226',1,'Note']]],
-  ['getwrittenoctave_140',['getWrittenOctave',['../class_note.html#ad73feabfbfe109666956c41a024ec45a',1,'Note']]],
-  ['getwrittenpitch_141',['getWrittenPitch',['../class_note.html#a08f1a0773d0b937772f46ca7db9322ce',1,'Note']]],
-  ['getwrittenpitchclass_142',['getWrittenPitchClass',['../class_note.html#ab2087a52c62ef87d04e9dd5014e8229f',1,'Note']]],
-  ['getwrittenpitchstep_143',['getWrittenPitchStep',['../class_note.html#ad141745ebb00b2824ac2bb6e43e299d6',1,'Note']]]
+  ['gettuningsystem_136',['getTuningSystem',['../config_8h.html#af6232756a2a35c5db7524362f1ef5a5a',1,'config.h']]],
+  ['gettype_137',['getType',['../class_note.html#acbcc5f481d6ef786f3dc680e162f0f35',1,'Note']]],
+  ['getunpitchedindex_138',['getUnpitchedIndex',['../class_note.html#a702443ceeb3de79c0fd8a42c2ffcb3dd',1,'Note']]],
+  ['getuppervalue_139',['getUpperValue',['../class_time_signature.html#a6e159baf138f678fbb5def79c534dbfc',1,'TimeSignature']]],
+  ['getvoice_140',['getVoice',['../class_note.html#acfb72a351375eabdfebb9bacd9c07226',1,'Note']]],
+  ['getwrittenoctave_141',['getWrittenOctave',['../class_note.html#ad73feabfbfe109666956c41a024ec45a',1,'Note']]],
+  ['getwrittenpitch_142',['getWrittenPitch',['../class_note.html#a08f1a0773d0b937772f46ca7db9322ce',1,'Note']]],
+  ['getwrittenpitchclass_143',['getWrittenPitchClass',['../class_note.html#ab2087a52c62ef87d04e9dd5014e8229f',1,'Note']]],
+  ['getwrittenpitchstep_144',['getWrittenPitchStep',['../class_note.html#ad141745ebb00b2824ac2bb6e43e299d6',1,'Note']]]
 ];

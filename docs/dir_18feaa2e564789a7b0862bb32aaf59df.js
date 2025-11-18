@@ -3,7 +3,7 @@ var dir_18feaa2e564789a7b0862bb32aaf59df =
     [ "barline.h", "barline_8h_source.html", null ],
     [ "chord.h", "chord_8h_source.html", null ],
     [ "clef.h", "clef_8h_source.html", null ],
-    [ "config.h", "config_8h_source.html", null ],
+    [ "config.h", "config_8h.html", "config_8h" ],
     [ "constants.h", "constants_8h_source.html", null ],
     [ "duration.h", "duration_8h_source.html", null ],
     [ "fraction.h", "fraction_8h_source.html", null ],
@@ -17,5 +17,5 @@ var dir_18feaa2e564789a7b0862bb32aaf59df =
     [ "score.h", "score_8h_source.html", null ],
     [ "score_collection.h", "score__collection_8h_source.html", null ],
     [ "time-signature.h", "time-signature_8h_source.html", null ],
-    [ "utils.h", "utils_8h_source.html", null ]
+    [ "utils.h", "utils_8h.html", "utils_8h" ]
 ];
