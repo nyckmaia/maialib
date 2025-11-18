@@ -138,7 +138,7 @@ void IntervalClass(const py::module& m) {
     cls.def("isAnyOctaveSeventh", &Interval::isAnyOctaveSeventh);
     cls.def("isAnyOctaveOctave", &Interval::isAnyOctaveOctave);
 
-    cls.def("toCents", &Interval::toCents);
+    cls.def("toCents", &Interval::toCents, py::arg("freqA4") = 440.0f);
 
     // Default Python 'print' function:
     cls.def("__repr__", [](const Interval& interval) {

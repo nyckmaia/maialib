@@ -1003,6 +1003,6 @@ bool Interval::isAnyOctaveSeventh() const { return getDiatonicInterval(true, tru
 
 bool Interval::isAnyOctaveOctave() const { return getDiatonicInterval(true, true) == 1; }
 
-int Interval::toCents() const {
-    return Helper::frequencies2cents(_note[0].getFrequency(), _note[1].getFrequency());
+int Interval::toCents(const float freqA4) const {
+    return Helper::frequencies2cents(_note[0].getFrequency(freqA4), _note[1].getFrequency(freqA4));
 }

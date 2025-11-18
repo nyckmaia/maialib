@@ -344,9 +344,9 @@ Public Member Functions</h2></td></tr>
 <tr class="memitem:a2a77a4fa64e4f915ea7067fbdf0c505f"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a2a77a4fa64e4f915ea7067fbdf0c505f">isAnyOctaveOctave</a> () const</td></tr>
 <tr class="memdesc:a2a77a4fa64e4f915ea7067fbdf0c505f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns true if the interval is a generic octave (any octave).  <a href="class_interval.html#a2a77a4fa64e4f915ea7067fbdf0c505f">More...</a><br /></td></tr>
 <tr class="separator:a2a77a4fa64e4f915ea7067fbdf0c505f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a76f645c167b18871ec37c31ecbef4ad7"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a76f645c167b18871ec37c31ecbef4ad7">toCents</a> () const</td></tr>
-<tr class="memdesc:a76f645c167b18871ec37c31ecbef4ad7"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the interval size in cents (for microtonal/tuning analysis).  <a href="class_interval.html#a76f645c167b18871ec37c31ecbef4ad7">More...</a><br /></td></tr>
-<tr class="separator:a76f645c167b18871ec37c31ecbef4ad7"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:adaef807405612818573eb726a061cd59"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#adaef807405612818573eb726a061cd59">toCents</a> (const float freqA4=440.0f) const</td></tr>
+<tr class="memdesc:adaef807405612818573eb726a061cd59"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the interval size in cents (for microtonal/tuning analysis).  <a href="class_interval.html#adaef807405612818573eb726a061cd59">More...</a><br /></td></tr>
+<tr class="separator:adaef807405612818573eb726a061cd59"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a663fdf847253062d1b77f33879163f8a"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_interval.html#a663fdf847253062d1b77f33879163f8a">operator&lt;</a> (const <a class="el" href="class_interval.html">Interval</a> &amp;otherInterval) const</td></tr>
 <tr class="memdesc:a663fdf847253062d1b77f33879163f8a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Less-than operator for comparing intervals by number of semitones.  <a href="class_interval.html#a663fdf847253062d1b77f33879163f8a">More...</a><br /></td></tr>
 <tr class="separator:a663fdf847253062d1b77f33879163f8a"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2555,8 +2555,8 @@ Public Member Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a76f645c167b18871ec37c31ecbef4ad7" name="a76f645c167b18871ec37c31ecbef4ad7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a76f645c167b18871ec37c31ecbef4ad7">&#9670;&nbsp;</a></span>toCents()</h2>
+<a id="adaef807405612818573eb726a061cd59" name="adaef807405612818573eb726a061cd59"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#adaef807405612818573eb726a061cd59">&#9670;&nbsp;</a></span>toCents()</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2564,13 +2564,20 @@ Public Member Functions</h2></td></tr>
         <tr>
           <td class="memname">int Interval::toCents </td>
           <td>(</td>
-          <td class="paramname"></td><td>)</td>
+          <td class="paramtype">const float&#160;</td>
+          <td class="paramname"><em>freqA4</em> = <code>440.0f</code></td><td>)</td>
           <td> const</td>
         </tr>
       </table>
 </div><div class="memdoc">
 
 <p>Returns the interval size in cents (for microtonal/tuning analysis). </p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">freqA4</td><td>Reference frequency for A4 (default: 440.0 Hz). </td></tr>
+  </table>
+  </dd>
+</dl>
 <dl class="section return"><dt>Returns</dt><dd><a class="el" href="class_interval.html" title="Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.">Interval</a> size in cents. </dd></dl>
 
 </div>

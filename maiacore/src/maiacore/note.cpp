@@ -1582,23 +1582,22 @@ int Note::getScaleDegree(const Key& key) const {
     return degree;
 }
 
-float Note::getFrequency(bool equalTemperament, const float freqA4) const {
-    // Always use freqA4 parameter for frequency calculation
-    // Use midiNote2freq which respects the custom A4 frequency
+float Note::getFrequency(const float freqA4) const {
     return Helper::midiNote2freq(_midiNumber, freqA4);
 }
 
 std::pair<std::vector<float>, std::vector<float>> Note::getHarmonicSpectrum(
     const int numPartials,
     const std::function<std::vector<float>(std::vector<float>)> amplCallback,
-    const float partialsDecayExpRate) const {
+    const float partialsDecayExpRate,
+    const float freqA4) const {
     if (numPartials <= 0) {
         LOG_ERROR("The 'numPartials' must be a positive value");
     }
 
     std::vector<float> freqs(numPartials, 0);
     for (int i = 0; i < numPartials; i++) {
-        freqs[i] = getFrequency() * (i + 1);
+        freqs[i] = getFrequency(freqA4) * (i + 1);
     }
 
     std::vector<float> ampls(numPartials, 0);

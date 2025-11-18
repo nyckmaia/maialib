@@ -71,6 +71,13 @@ void ScoreCollection::loadCollectionFiles() {
 }
 
 void ScoreCollection::merge(const ScoreCollection& other) {
+    // Detect self-merge to avoid iterator invalidation (undefined behavior)
+    if (this == &other) {
+        ScoreCollection copy = other;  // Make a copy
+        merge(copy);  // Merge with the copy
+        return;
+    }
+
     // Merge directories paths
     for (const auto& dir : other.getDirectoriesPaths()) {
         _directoriesPaths.push_back(dir);
@@ -128,6 +135,12 @@ std::vector<ScoreCollection::ExtendedMultiMelodyPatternTable> ScoreCollection::f
     const std::function<float(float, float)>& totalSimilarityCallback) const {
     
     std::vector<ExtendedMultiMelodyPatternTable> allResults;
+
+    // Error checking: empty patterns list
+    if (melodyPatterns.empty()) {
+        return allResults;
+    }
+
     for (const auto& score : _scores) {
         auto scoreResults = score.findMelodyPattern(melodyPatterns, totalIntervalsSimilarityThreshold,
                                                     totalRhythmSimilarityThreshold,

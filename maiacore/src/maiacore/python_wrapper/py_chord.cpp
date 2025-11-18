@@ -331,9 +331,9 @@ void ChordClass(const py::module& m) {
     cls.def("getRomanDegree", &Chord::getRomanDegree, py::arg("key"),
             py::arg("enharmonyNotes") = false);
 
-    cls.def("getMeanFrequency", &Chord::getMeanFrequency);
-    cls.def("getMeanOfExtremesFrequency", &Chord::getMeanOfExtremesFrequency);
-    cls.def("getFrequencyStd", &Chord::getFrequencyStd);
+    cls.def("getMeanFrequency", &Chord::getMeanFrequency, py::arg("freqA4") = 440.0f);
+    cls.def("getMeanOfExtremesFrequency", &Chord::getMeanOfExtremesFrequency, py::arg("freqA4") = 440.0f);
+    cls.def("getFrequencyStd", &Chord::getFrequencyStd, py::arg("freqA4") = 440.0f);
 
     cls.def("getMeanMidiValue", &Chord::getMeanMidiValue);
     cls.def("getMeanOfExtremesMidiValue", &Chord::getMeanOfExtremesMidiValue);

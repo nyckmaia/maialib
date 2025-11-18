@@ -286,8 +286,10 @@ void Score::loadXMLFile(const std::string& filePath) {
         std::vector<int> div_vec(divisionsPerQuarterNoteSize, 0);
 
         for (int d = 0; d < divisionsPerQuarterNoteSize; d++) {
-            const int divisions = divisionsPerQuarterNote[d].node().text().as_int();
-            div_vec[d] = divisions;
+            if (divisionsPerQuarterNote[d].node()) {
+                const int divisions = divisionsPerQuarterNote[d].node().text().as_int();
+                div_vec[d] = divisions;
+            }
 
             // LOG_DEBUG("div_vec[" << d << "]: " << div_vec[d]);
         }
@@ -312,10 +314,19 @@ void Score::loadXMLFile(const std::string& filePath) {
     }
 
     // ===== GET SCORE METADATA ===== //
-    const std::string workTitle =
-        _doc.select_node("/score-partwise/work/work-title").node().text().as_string();
-    const std::string composerName =
-        _doc.select_node("/score-partwise/identification/creator").node().text().as_string();
+    // Safely extract work title (optional in MusicXML)
+    std::string workTitle;
+    auto workTitleNode = _doc.select_node("/score-partwise/work/work-title");
+    if (workTitleNode.node()) {
+        workTitle = workTitleNode.node().text().as_string();
+    }
+
+    // Safely extract composer name (optional in MusicXML)
+    std::string composerName;
+    auto composerNode = _doc.select_node("/score-partwise/identification/creator");
+    if (composerNode.node()) {
+        composerName = composerNode.node().text().as_string();
+    }
 
     setTitle(workTitle);
     setComposerName(composerName);
@@ -349,12 +360,14 @@ void Score::loadXMLFile(const std::string& filePath) {
 
         // ===== CHECK IF THERE MORE THAN ONE STAVES ===== //
         const std::string firstMeasure = xPathPart + "/measure[1]";
-        const pugi::xpath_node staves =
-            _doc.select_node(firstMeasure.c_str()).node().select_node("attributes/staves");
+        auto firstMeasureNode = _doc.select_node(firstMeasure.c_str());
 
-        if (!staves.node().empty()) {
-            const int numStaves = atoi(staves.node().first_child().value());
-            _part[p].setNumStaves(numStaves);
+        if (firstMeasureNode.node()) {
+            const pugi::xpath_node staves = firstMeasureNode.node().select_node("attributes/staves");
+            if (staves.node() && !staves.node().empty()) {
+                const int numStaves = atoi(staves.node().first_child().value());
+                _part[p].setNumStaves(numStaves);
+            }
         }
 
         // ===== STEP 1: GET THE PART 'i' STAFF LINES ===== //
@@ -389,15 +402,23 @@ void Score::loadXMLFile(const std::string& filePath) {
             const pugi::xpath_node_set chromatic =
                 Helper::getNodeSet(_doc, xPathTranspose + xPathChormatic);
 
-            transposeDiatonic = diatonic[0].node().text().as_int();
-            transposeChromatic = chromatic[0].node().text().as_int();
+            if (diatonic.size() > 0 && diatonic[0].node()) {
+                transposeDiatonic = diatonic[0].node().text().as_int();
+            }
+            if (chromatic.size() > 0 && chromatic[0].node()) {
+                transposeChromatic = chromatic[0].node().text().as_int();
+            }
         }
 
         // Get the part 'p' first measure divisions per quarter note
-        const pugi::xpath_node firstMeasureDivisionsPerQuarterNote =
-            _doc.select_node(firstMeasure.c_str()).node().select_node("attributes/divisions");
-
-        const int firstDivisionsTemp = firstMeasureDivisionsPerQuarterNote.node().text().as_int();
+        int firstDivisionsTemp = 0;
+        if (firstMeasureNode.node()) {
+            const pugi::xpath_node firstMeasureDivisionsPerQuarterNote =
+                firstMeasureNode.node().select_node("attributes/divisions");
+            if (firstMeasureDivisionsPerQuarterNote.node()) {
+                firstDivisionsTemp = firstMeasureDivisionsPerQuarterNote.node().text().as_int();
+            }
+        }
 
         // If the XML file contains the DPQ info, use that information
         // But if the XML file does not contain this info, use the default value of 256
@@ -412,6 +433,7 @@ void Score::loadXMLFile(const std::string& filePath) {
         std::vector<Clef> defaultClefs(numClefs);
 
         for (int i = 0; i < numClefs; i++) {
+            if (!defaultClefsNodes[i].node()) continue;
             const std::string sign = defaultClefsNodes[i].node().child_value("sign");
             const int line = atoi(defaultClefsNodes[i].node().child_value("line"));
             defaultClefs[i].setSign(Clef::clefSignStr2ClefSign(sign));
@@ -424,12 +446,17 @@ void Score::loadXMLFile(const std::string& filePath) {
 
             // Get the xPath for the measure 'm'
             const std::string xPathMeasure = xPathPart + "/measure[" + std::to_string(m + 1) + "]";
+            auto measureNode = _doc.select_node(xPathMeasure.c_str());
+
+            if (!measureNode.node()) {
+                continue;  // Skip this measure if it doesn't exist
+            }
 
             // ===== DIVISIONS PER QUARTER NOTE CHANGES ===== //
             const pugi::xpath_node measureDivisionsPerQuarterNote =
-                _doc.select_node(xPathMeasure.c_str()).node().select_node("attributes/divisions");
+                measureNode.node().select_node("attributes/divisions");
 
-            if (!measureDivisionsPerQuarterNote.node().empty()) {
+            if (measureDivisionsPerQuarterNote.node() && !measureDivisionsPerQuarterNote.node().empty()) {
                 _part[p].getMeasure(m).setIsDivisionsPerQuarterNoteChanged(true);
                 const int divisions = measureDivisionsPerQuarterNote.node().text().as_int();
                 _part[p].getMeasure(m).setDivisionsPerQuarterNote(divisions);
@@ -439,18 +466,18 @@ void Score::loadXMLFile(const std::string& filePath) {
 
             // ===== KEY SIGNATURE CHANGES ===== //
             const pugi::xpath_node measureKeyFifths =
-                _doc.select_node(xPathMeasure.c_str()).node().select_node("attributes/key");
-            if (!measureKeyFifths.node().empty()) {
+                measureNode.node().select_node("attributes/key");
+            if (measureKeyFifths.node() && !measureKeyFifths.node().empty()) {
                 _part[p].getMeasure(m).setIsKeySignatureChanged(true);
                 const int fifthCircle = atoi(measureKeyFifths.node().child_value("fifths"));
                 _part[p].getMeasure(m).setKeySignature(fifthCircle);
 
                 const std::string keyModeStr = measureKeyFifths.node().child_value("mode");
 
-                if (keyModeStr.empty()) {
-                    LOG_WARN("[XML MISSING TAG][" + _part[p].getName() + "][" + std::to_string(m) +
-                             "] The key signature mode is empty. Auto-configing to 'major' mode");
-                }
+                // if (keyModeStr.empty()) {
+                //     LOG_WARN("[XML MISSING TAG][" + _part[p].getName() + "][" + std::to_string(m) +
+                //              "] The key signature mode is empty. Auto-configing to 'major' mode");
+                // }
 
                 const bool isMajorKey =
                     (keyModeStr.empty() || keyModeStr == "major") ? true : false;
@@ -465,8 +492,8 @@ void Score::loadXMLFile(const std::string& filePath) {
 
             // ===== TIME SIGNATURE CHANGES ===== //
             const pugi::xpath_node measureTimeSignature =
-                _doc.select_node(xPathMeasure.c_str()).node().select_node("attributes/time");
-            if (!measureTimeSignature.node().empty()) {
+                measureNode.node().select_node("attributes/time");
+            if (measureTimeSignature.node() && !measureTimeSignature.node().empty()) {
                 _part[p].getMeasure(m).setIsTimeSignatureChanged(true);
                 const int upper = atoi(measureTimeSignature.node().child_value("beats"));
                 const int lower = atoi(measureTimeSignature.node().child_value("beat-type"));
@@ -475,8 +502,8 @@ void Score::loadXMLFile(const std::string& filePath) {
 
             // ===== STAVES ===== //
             const pugi::xpath_node measureStaves =
-                _doc.select_node(xPathMeasure.c_str()).node().select_node("attributes/staves");
-            if (!measureStaves.node().empty()) {
+                measureNode.node().select_node("attributes/staves");
+            if (measureStaves.node() && !measureStaves.node().empty()) {
                 const int numStaves = measureStaves.node().text().as_int();
                 _part[p].getMeasure(m).setNumStaves(numStaves);
             }
@@ -491,7 +518,8 @@ void Score::loadXMLFile(const std::string& filePath) {
             if (!currentClefsInMeasureChange) {
                 _part[p].getMeasure(m).getClefs() = defaultClefs;
             } else {
-                for (int c = 0; c < numClefs; c++) {
+                for (int c = 0; c < currentNumClefs; c++) {
+                    if (!measureClef[c].node()) continue;
                     const std::string sign = measureClef[c].node().child_value("sign");
                     const int line = atoi(measureClef[c].node().child_value("line"));
                     _part[p].getMeasure(m).getClef(c).setSign(Clef::clefSignStr2ClefSign(sign));
@@ -503,10 +531,19 @@ void Score::loadXMLFile(const std::string& filePath) {
             const std::string xPathBarline = xPathMeasure + "/barline";
             const pugi::xpath_node_set measureBarlines = _doc.select_nodes(xPathBarline.c_str());
             for (const auto& barline : measureBarlines) {
+                if (!barline.node()) continue;
+
                 const std::string barlineLocation = barline.node().attribute("location").value();
                 const std::string barStyle = barline.node().child_value("bar-style");
-                const std::string barDirection =
-                    barline.node().child("repeat").attribute("direction").as_string();
+
+                std::string barDirection;
+                auto repeatChild = barline.node().child("repeat");
+                if (repeatChild) {
+                    auto directionAttr = repeatChild.attribute("direction");
+                    if (directionAttr) {
+                        barDirection = directionAttr.as_string();
+                    }
+                }
 
                 if (barlineLocation == "left") {
                     _part[p].getMeasure(m).getBarlineLeft().setLocation(barlineLocation);
@@ -578,38 +615,47 @@ void Score::loadXMLFile(const std::string& filePath) {
                 }
 
                 // ===== GET NOTE PITCH ===== //
-                step = (!isUnpitched) ? node.child("pitch").child_value("step")
-                                      : node.child("unpitched").child_value("display-step");
-
-                if (isUnpitched) {
-                    const auto idAttr = node.child("instrument").attribute("id").as_string();
-                    unpitchedIndex = atoi(Helper::splitString(idAttr, '-')[1].substr(1).c_str());
-                }
-
-                const std::string alterTag = node.child("pitch").child_value("alter");
-
-                std::string alterSymbol;
-                if (!alterTag.empty()) {
-                    switch (hash(alterTag.c_str())) {
-                        case hash("-2"):
-                            alterSymbol = "bb";
-                            break;
-                        case hash("-1"):
-                            alterSymbol = "b";
-                            break;
-                        case hash("1"):
-                            alterSymbol = "#";
-                            break;
-                        case hash("2"):
-                            alterSymbol = "x";
-                            break;
-                    }
-                }
-
                 if (!isNoteOn) {
                     // octave = MUSIC_XML::OCTAVE::ALL;
                     pitch = MUSIC_XML::PITCH::REST;
                 } else {
+                    step = (!isUnpitched) ? node.child("pitch").child_value("step")
+                                          : node.child("unpitched").child_value("display-step");
+
+                    if (isUnpitched) {
+                        auto instrumentChild = node.child("instrument");
+                        if (instrumentChild) {
+                            const auto idAttr = instrumentChild.attribute("id");
+                            if (idAttr) {
+                                unpitchedIndex = atoi(Helper::splitString(idAttr.as_string(), '-')[1].substr(1).c_str());
+                            }
+                        }
+                    }
+
+                    std::string alterSymbol;
+                    if (!isUnpitched) {
+                        auto pitchChild = node.child("pitch");
+                        if (pitchChild) {
+                            const std::string alterTag = pitchChild.child_value("alter");
+                            if (!alterTag.empty()) {
+                                switch (hash(alterTag.c_str())) {
+                                    case hash("-2"):
+                                        alterSymbol = "bb";
+                                        break;
+                                    case hash("-1"):
+                                        alterSymbol = "b";
+                                        break;
+                                    case hash("1"):
+                                        alterSymbol = "#";
+                                        break;
+                                    case hash("2"):
+                                        alterSymbol = "x";
+                                        break;
+                                }
+                            }
+                        }
+                    }
+
                     octave = (!isUnpitched)
                                  ? atoi(node.child("pitch").child_value("octave"))
                                  : atoi(node.child("unpitched").child_value("display-octave"));
@@ -655,8 +701,10 @@ void Score::loadXMLFile(const std::string& filePath) {
                 const int numBeams = beamNodes.size();
 
                 for (int b = 0; b < numBeams; b++) {
-                    const std::string beam = beamNodes[b].node().text().as_string();
-                    note.addBeam(beam);
+                    if (beamNodes[b].node()) {
+                        const std::string beam = beamNodes[b].node().text().as_string();
+                        note.addBeam(beam);
+                    }
                 }
                 // ===== TIES ===== //
                 const auto tieNodes = node.select_nodes("tie");
@@ -730,6 +778,8 @@ void Score::addMeasure(const int numMeasures) {
     for (int i = 0; i < partSize; i++) {
         _part[i].addMeasure(numMeasures);
     }
+
+    _numMeasures += numMeasures;
 }
 
 void Score::removeMeasure(const int measureStart, const int measureEnd) {
@@ -744,6 +794,9 @@ void Score::removeMeasure(const int measureStart, const int measureEnd) {
     for (int i = 0; i < partSize; i++) {
         _part[i].removeMeasure(measureStart, measureEnd);
     }
+
+    const int numRemoved = measureEnd - measureStart + 1;
+    _numMeasures -= numRemoved;
 }
 
 Part& Score::getPart(const int partId) {
@@ -828,14 +881,15 @@ void Score::setKeySignature(const int fifthCicle, const bool isMajorMode, const 
 
 void Score::setKeySignature(const std::string& key, const int measureId) {
     // PROFILE_FUNCTION();
-    const bool isMajorKey = (key.back() != 'm') ? true : false;
+    const bool isMajorKey = (key.empty() || key.back() != 'm');
 
     const std::map<std::string, int> c_majorKeySignatureMap{
-        std::make_pair("", 0),    std::make_pair("G", 1),   std::make_pair("D", 2),
-        std::make_pair("A", 3),   std::make_pair("E", 4),   std::make_pair("B", 5),
-        std::make_pair("F#", 6),  std::make_pair("C#", 7),  std::make_pair("G#", 8),
-        std::make_pair("D#", 9),  std::make_pair("A#", 10), std::make_pair("E#", 11),
-        std::make_pair("B#", 12), std::make_pair("Gb", -6), std::make_pair("Db", -5),
+        std::make_pair("", 0),    std::make_pair("C", 0),   std::make_pair("G", 1),
+        std::make_pair("D", 2),   std::make_pair("A", 3),   std::make_pair("Am", 0),
+        std::make_pair("E", 4),   std::make_pair("B", 5),   std::make_pair("F#", 6),
+        std::make_pair("C#", 7),  std::make_pair("G#", 8),  std::make_pair("D#", 9),
+        std::make_pair("A#", 10), std::make_pair("E#", 11), std::make_pair("B#", 12),
+        std::make_pair("Gb", -6), std::make_pair("Db", -5), std::make_pair("Dm", -1),
         std::make_pair("Ab", -4), std::make_pair("Eb", -3), std::make_pair("Bb", -2),
         std::make_pair("F", -1)};
 
@@ -1963,8 +2017,14 @@ Score::MelodyPatternTable Score::findMelodyPattern(
         LOG_ERROR("The melody pattern is bigger than the score");
     }
 
-    const auto& noteEvents = collectNoteEvents(); // Obtém o cache de eventos de nota
     MelodyPatternTable resultTable;
+
+    // Error checking: empty pattern
+    if (melodyPatternSize == 0) {
+        return resultTable;
+    }
+
+    const auto& noteEvents = collectNoteEvents(); // Obtém o cache de eventos de nota
     resultTable.reserve(noteEvents.size() - melodyPattern.size());
 
     // ===== STEP 1: COLETAR TODAS AS NOTAS DA PARTITURA ===== //
@@ -2624,6 +2684,16 @@ nlohmann::json Score::instrumentFragmentation(nlohmann::json config) {
 
         if (divisions.size() < 1) {
             LOG_ERROR("divisions is empty");
+            return nlohmann::json();
+        }
+
+        if (beatType.size() < 1) {
+            LOG_ERROR("beatType is empty");
+            return nlohmann::json();
+        }
+
+        if (!beatNumber[0].node() || !divisions[0].node() || !beatType[0].node()) {
+            LOG_ERROR("Required XML nodes are null");
             return nlohmann::json();
         }
 

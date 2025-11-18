@@ -12,18 +12,18 @@ void TimeSignature::setUpperValue(int upperValue) { _timeUpper = upperValue; }
 void TimeSignature::setLowerValue(int lowerValue) { _timeLower = lowerValue; }
 
 METRIC TimeSignature::getMetric() const {
-    // Check simple metrics
-    if ((_timeUpper == 2 || _timeUpper == 3 || _timeUpper == 4) && _timeLower != 8) {
+    // SIMPLE: numerator ∈ {2, 3, 4} (binary subdivision)
+    if (_timeUpper == 2 || _timeUpper == 3 || _timeUpper == 4) {
         return METRIC::SIMPLE;
     }
 
-    // Check compound metrics
-    if (_timeUpper % 3 == 0 && _timeLower == 8) {
+    // COMPOUND: numerator is multiple of 3 and > 3 (ternary subdivision)
+    if (_timeUpper > 3 && _timeUpper % 3 == 0) {
         return METRIC::COMPOUND;
     }
 
-    // Other cases
-    return METRIC::COMPLEX;
+    // IRREGULAR: asymmetric meters (everything else)
+    return METRIC::IRREGULAR;
 }
 
 const std::string TimeSignature::getMetricAsString() const {
@@ -32,8 +32,8 @@ const std::string TimeSignature::getMetricAsString() const {
             return "SIMPLE";
         case METRIC::COMPOUND:
             return "COMPOUND";
-        case METRIC::COMPLEX:
-            return "COMPLEX";
+        case METRIC::IRREGULAR:
+            return "IRREGULAR";
     }
 
     return {};

@@ -114,10 +114,10 @@ Public Member Functions</h2></td></tr>
 <tr class="memdesc:aa0ec05dac9fca9802d3e594e9237e723"><td class="mdescLeft">&#160;</td><td class="mdescRight">Sets the lower value (denominator) of the time signature.  <a href="class_time_signature.html#aa0ec05dac9fca9802d3e594e9237e723">More...</a><br /></td></tr>
 <tr class="separator:aa0ec05dac9fca9802d3e594e9237e723"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a9f466671ef763e472d132f02bcb78f33"><td class="memItemLeft" align="right" valign="top">METRIC&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_time_signature.html#a9f466671ef763e472d132f02bcb78f33">getMetric</a> () const</td></tr>
-<tr class="memdesc:a9f466671ef763e472d132f02bcb78f33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the metric type of the time signature (simple, compound, or complex).  <a href="class_time_signature.html#a9f466671ef763e472d132f02bcb78f33">More...</a><br /></td></tr>
+<tr class="memdesc:a9f466671ef763e472d132f02bcb78f33"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the metric type of the time signature (simple, compound, or irregular).  <a href="class_time_signature.html#a9f466671ef763e472d132f02bcb78f33">More...</a><br /></td></tr>
 <tr class="separator:a9f466671ef763e472d132f02bcb78f33"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:afb67ee7cdbbd4246287718e5c202083b"><td class="memItemLeft" align="right" valign="top">const std::string&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="class_time_signature.html#afb67ee7cdbbd4246287718e5c202083b">getMetricAsString</a> () const</td></tr>
-<tr class="memdesc:afb67ee7cdbbd4246287718e5c202083b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the metric type as a string ("SIMPLE", "COMPOUND", "COMPLEX").  <a href="class_time_signature.html#afb67ee7cdbbd4246287718e5c202083b">More...</a><br /></td></tr>
+<tr class="memdesc:afb67ee7cdbbd4246287718e5c202083b"><td class="mdescLeft">&#160;</td><td class="mdescRight">Returns the metric type as a string ("SIMPLE", "COMPOUND", "IRREGULAR").  <a href="class_time_signature.html#afb67ee7cdbbd4246287718e5c202083b">More...</a><br /></td></tr>
 <tr class="separator:afb67ee7cdbbd4246287718e5c202083b"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
 <a name="details" id="details"></a><h2 class="groupheader">Detailed Description</h2>
@@ -197,8 +197,8 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Returns the metric type of the time signature (simple, compound, or complex). </p>
-<p >Simple: 2/4, 3/4, 4/4, etc.; Compound: 6/8, 9/8, etc.; Complex: irregular or mixed meters. </p><dl class="section return"><dt>Returns</dt><dd>METRIC enum value. </dd></dl>
+<p>Returns the metric type of the time signature (simple, compound, or irregular). </p>
+<p >Simple: 2/4, 3/4, 4/4, 2/8, 3/8, 4/8, etc.; Compound: 6/8, 9/8, 12/8, 6/4, 9/4, 15/16, etc.; Irregular: 5/4, 7/8, 11/8, 13/8, etc. </p><dl class="section return"><dt>Returns</dt><dd>METRIC enum value. </dd></dl>
 
 </div>
 </div>
@@ -217,7 +217,7 @@ Public Member Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p>Returns the metric type as a string ("SIMPLE", "COMPOUND", "COMPLEX"). </p>
+<p>Returns the metric type as a string ("SIMPLE", "COMPOUND", "IRREGULAR"). </p>
 <dl class="section return"><dt>Returns</dt><dd>String representation of the metric type. </dd></dl>
 
 </div>

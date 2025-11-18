@@ -40,12 +40,21 @@ if(${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
     set_target_properties(gmock_main PROPERTIES COMPILE_FLAGS "-static")
 endif()
 
-add_executable(${PROJECT_NAME} 
+add_executable(${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/src/main.cpp
     ${PROJECT_SOURCE_DIR}/src/helpers-test.cpp
     ${PROJECT_SOURCE_DIR}/src/note-test.cpp
     ${PROJECT_SOURCE_DIR}/src/chord-test.cpp
     ${PROJECT_SOURCE_DIR}/src/interval-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/score-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/part-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/measure-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/fraction-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/duration-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/key-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/time-signature-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/clef-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/score-collection-test.cpp
 )
 
 include(FetchContent)

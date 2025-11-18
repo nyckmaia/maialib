@@ -744,7 +744,7 @@ TEST(NoteFrequency, GetFrequencyWithCustomA4) {
   Note a4("A4");
 
   // Test with A4 = 442 Hz (some orchestras tune higher)
-  float freq = a4.getFrequency(false, 442.0f);
+  float freq = a4.getFrequency(442.0f);
   EXPECT_NEAR(freq, 442.0f, 0.01f);
 }
 

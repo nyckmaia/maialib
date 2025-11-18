@@ -83,5 +83,5 @@ var class_interval =
     [ "operator<", "class_interval.html#a663fdf847253062d1b77f33879163f8a", null ],
     [ "setNotes", "class_interval.html#a706ab003f21b56befeb4242da333fde2", null ],
     [ "setNotes", "class_interval.html#ac948ef8c214c6dced560538839027bfa", null ],
-    [ "toCents", "class_interval.html#a76f645c167b18871ec37c31ecbef4ad7", null ]
+    [ "toCents", "class_interval.html#adaef807405612818573eb726a061cd59", null ]
 ];

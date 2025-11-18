@@ -600,9 +600,10 @@ class Interval {
 
     /**
      * @brief Returns the interval size in cents (for microtonal/tuning analysis).
+     * @param freqA4 Reference frequency for A4 (default: 440.0 Hz).
      * @return Interval size in cents.
      */
-    int toCents() const;
+    int toCents(const float freqA4 = 440.0f) const;
 
     /**
      * @brief Less-than operator for comparing intervals by number of semitones.

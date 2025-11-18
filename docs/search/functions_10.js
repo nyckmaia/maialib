@@ -4,7 +4,7 @@ var searchData=
   ['ticks2rhythmfigure_1',['ticks2rhythmFigure',['../class_helper.html#a0b66180d53de8dc6901b20c755780d8e',1,'Helper']]],
   ['timesignature_2',['TimeSignature',['../class_time_signature.html#a2f4f8c7964a3d1f7c52290545807884d',1,'TimeSignature']]],
   ['timesignaturechanged_3',['timeSignatureChanged',['../class_measure.html#a08dbfc57e1341c1105750a1397570912',1,'Measure']]],
-  ['tocents_4',['toCents',['../class_chord.html#a6a6ca8a425adef54fc18f7b48240c477',1,'Chord::toCents()'],['../class_interval.html#a76f645c167b18871ec37c31ecbef4ad7',1,'Interval::toCents()']]],
+  ['tocents_4',['toCents',['../class_chord.html#a6a6ca8a425adef54fc18f7b48240c477',1,'Chord::toCents()'],['../class_interval.html#adaef807405612818573eb726a061cd59',1,'Interval::toCents()']]],
   ['toenharmonicpitch_5',['toEnharmonicPitch',['../class_note.html#ad7395d57345d59561836cdf056035343',1,'Note']]],
   ['tofile_6',['toFile',['../class_score.html#a45a957a47c9d6dd9584b98f182c1ed98',1,'Score']]],
   ['toinversion_7',['toInversion',['../class_chord.html#a3a893548f13814d986d61a9e5653a036',1,'Chord']]],

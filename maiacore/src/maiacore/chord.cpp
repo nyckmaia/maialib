@@ -2428,35 +2428,35 @@ std::string Chord::getRomanDegree(const Key& key, bool enharmonyNotes) {
     return c_harmonyKeyDegrees.at(index);
 }
 
-float Chord::getMeanFrequency() const {
+float Chord::getMeanFrequency(const float freqA4) const {
     float sum = 0.0f;
     for (const auto& note : _originalNotes) {
-        sum += note.getFrequency();
+        sum += note.getFrequency(freqA4);
     }
 
     const int mean = sum / _originalNotes.size();
     return mean;
 }
 
-float Chord::getMeanOfExtremesFrequency() const {
+float Chord::getMeanOfExtremesFrequency(const float freqA4) const {
     if (_originalNotes.size() == 0) {
         return 0.0f;
     }
 
     auto copyNotes = _originalNotes;
     std::sort(copyNotes.begin(), copyNotes.end());
-    int lowFreq = copyNotes.at(0).getFrequency();
-    int highFreq = copyNotes.at(copyNotes.size() - 1).getFrequency();
+    int lowFreq = copyNotes.at(0).getFrequency(freqA4);
+    int highFreq = copyNotes.at(copyNotes.size() - 1).getFrequency(freqA4);
 
     const float mean = (static_cast<float>(lowFreq) + static_cast<float>(highFreq)) / 2.0f;
     return mean;
 }
 
-float Chord::getFrequencyStd() const {
+float Chord::getFrequencyStd(const float freqA4) const {
     std::vector<float> freqVec(_originalNotes.size(), 0.0f);
 
     for (const auto& note : _originalNotes) {
-        freqVec.push_back(note.getFrequency());
+        freqVec.push_back(note.getFrequency(freqA4));
     }
 
     return computeStandardDeviation(freqVec);

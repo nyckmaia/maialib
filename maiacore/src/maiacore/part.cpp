@@ -96,7 +96,8 @@ void Part::addMeasure(const int numMeasures) {
 }
 
 void Part::removeMeasure(const int measureStart, const int measureEnd) {
-    _measure.erase(_measure.begin() + measureStart, _measure.begin() + measureEnd);
+    // +1 to make measureEnd inclusive (as per documentation)
+    _measure.erase(_measure.begin() + measureStart, _measure.begin() + measureEnd + 1);
 }
 
 Measure& Part::getMeasure(const int measureId) { return _measure.at(measureId); }

@@ -1173,23 +1173,26 @@ class Chord {
     /**
      * @brief Calculates the arithmetic mean of the frequencies of all notes in the chord.
      * @details Useful for spectral centroid and timbral analysis.
+     * @param freqA4 Reference frequency for A4 (default: 440.0 Hz).
      * @return Mean frequency as a float.
      */
-    float getMeanFrequency() const;
+    float getMeanFrequency(const float freqA4 = 440.0f) const;
 
     /**
      * @brief Calculates the mean frequency between the lowest and highest notes in the chord.
      * @details Useful for summarizing the chord's spectral span.
+     * @param freqA4 Reference frequency for A4 (default: 440.0 Hz).
      * @return Mean of extremes frequency as a float.
      */
-    float getMeanOfExtremesFrequency() const;
+    float getMeanOfExtremesFrequency(const float freqA4 = 440.0f) const;
 
     /**
      * @brief Calculates the standard deviation of the frequencies of all notes in the chord.
      * @details Useful for measuring the spectral spread or compactness of the chord.
+     * @param freqA4 Reference frequency for A4 (default: 440.0 Hz).
      * @return Frequency standard deviation as a float.
      */
-    float getFrequencyStd() const;
+    float getFrequencyStd(const float freqA4 = 440.0f) const;
 
     /**
      * @brief Calculates the arithmetic mean of the MIDI numbers of all notes in the chord.

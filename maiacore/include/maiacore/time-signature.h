@@ -4,9 +4,11 @@
 
 /**
  * @brief Enumeration for metric types in time signatures.
- * SIMPLE: e.g., 2/4, 3/4, 4/4; COMPOUND: e.g., 6/8, 9/8; COMPLEX: irregular or mixed meters.
+ * SIMPLE: numerator ∈ {2, 3, 4} (binary subdivision);
+ * COMPOUND: numerator is multiple of 3 and > 3 (ternary subdivision);
+ * IRREGULAR: asymmetric meters (e.g., 5/4, 7/8, 11/8).
  */
-enum class METRIC { SIMPLE, COMPOUND, COMPLEX };
+enum class METRIC { SIMPLE, COMPOUND, IRREGULAR };
 
 /**
  * @brief Represents a musical time signature (meter) for a measure.
@@ -49,14 +51,16 @@ class TimeSignature {
     void setLowerValue(int lowerValue);
 
     /**
-     * @brief Returns the metric type of the time signature (simple, compound, or complex).
-     * @details Simple: 2/4, 3/4, 4/4, etc.; Compound: 6/8, 9/8, etc.; Complex: irregular or mixed meters.
+     * @brief Returns the metric type of the time signature (simple, compound, or irregular).
+     * @details Simple: 2/4, 3/4, 4/4, 2/8, 3/8, 4/8, etc.;
+     *          Compound: 6/8, 9/8, 12/8, 6/4, 9/4, 15/16, etc.;
+     *          Irregular: 5/4, 7/8, 11/8, 13/8, etc.
      * @return METRIC enum value.
      */
     METRIC getMetric() const;
 
     /**
-     * @brief Returns the metric type as a string ("SIMPLE", "COMPOUND", "COMPLEX").
+     * @brief Returns the metric type as a string ("SIMPLE", "COMPOUND", "IRREGULAR").
      * @return String representation of the metric type.
      */
     const std::string getMetricAsString() const;
