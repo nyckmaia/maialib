@@ -16,7 +16,7 @@ temp.xml
 .claude/
 CLAUDE.md
 TODO.txt
-
+test_*.xml
 # Prerequisites
 *.d
 
