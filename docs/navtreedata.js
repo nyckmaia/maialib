@@ -25,38 +25,66 @@
 var NAVTREE =
 [
   [ "maiacore", "index.html", [
-    [ "Maialib - Music Analysis Library", "index.html", [
-      [ "Advantages", "index.html#autotoc_md0", null ],
-      [ "Get Python Package", "index.html#autotoc_md1", null ],
-      [ "Get Started", "index.html#autotoc_md2", null ],
-      [ "Frequent Asked Questions", "index.html#autotoc_md3", [
-        [ "1) Where can I find the XML file of a specific musical score?", "index.html#autotoc_md4", null ],
-        [ "2) What can I do if I don't have a <tt>*.xml</tt> file of my target music?", "index.html#autotoc_md5", null ]
+    [ "🎵 Maialib - Music Analysis Library for Everyone", "index.html", [
+      [ "📑 Table of Contents", "index.html#autotoc_md2", null ],
+      [ "✨ Why Maialib?", "index.html#autotoc_md4", [
+        [ "Built for Musicians Who Code (or Want to Learn)", "index.html#autotoc_md5", null ],
+        [ "Perfect For:", "index.html#autotoc_md6", null ],
+        [ "Key Features", "index.html#autotoc_md7", null ],
+        [ "Academic Background", "index.html#autotoc_md8", null ]
       ] ],
-      [ "Documentation (in development)", "index.html#autotoc_md6", [
-        [ "Level 1: Python Tutorial", "index.html#autotoc_md7", null ],
-        [ "Level 2: Developer Documentation", "index.html#autotoc_md8", null ]
+      [ "🔧 Installation", "index.html#autotoc_md10", [
+        [ "Prerequisites", "index.html#autotoc_md11", null ],
+        [ "Install in 30 Seconds", "index.html#autotoc_md12", null ],
+        [ "Verify Installation", "index.html#autotoc_md13", null ]
       ] ],
-      [ "VS Code Users", "index.html#autotoc_md9", null ],
-      [ "Would you like to improve any maialib function?", "index.html#autotoc_md11", [
-        [ "Are you a C++ developer?", "index.html#autotoc_md12", [
-          [ "Requirements to build from C++ sources:", "index.html#autotoc_md13", null ]
-        ] ],
-        [ "Are you a Python developer?", "index.html#autotoc_md14", [
-          [ "Python Dev-only dependencies", "index.html#autotoc_md15", null ]
-        ] ],
-        [ "Tested Environments", "index.html#autotoc_md16", null ],
-        [ "Quick Start", "index.html#autotoc_md17", [
-          [ "Build Python module from C++ source", "index.html#autotoc_md18", null ]
-        ] ],
-        [ "Known issues to build from source", "index.html#autotoc_md19", [
-          [ "All Platforms", "index.html#autotoc_md20", null ],
-          [ "Windows-Only", "index.html#autotoc_md21", null ]
-        ] ],
-        [ "Contact", "index.html#autotoc_md22", null ],
-        [ "Contributing", "index.html#autotoc_md23", null ],
-        [ "License", "index.html#autotoc_md24", null ]
-      ] ]
+      [ "🚀 Quick Start", "index.html#autotoc_md15", [
+        [ "Your First Musical Analysis in 5 Minutes", "index.html#autotoc_md16", null ],
+        [ "Visualize Your Score", "index.html#autotoc_md17", null ]
+      ] ],
+      [ "💡 Examples Gallery", "index.html#autotoc_md19", [
+        [ "Example 1: Get all music chords as a table", "index.html#autotoc_md20", null ],
+        [ "Example 2: Analyze Melodic Intervals", "index.html#autotoc_md21", null ],
+        [ "Example 3: Find Melodic Patterns", "index.html#autotoc_md22", null ],
+        [ "Example 4: Statistical Harmonic Analysis", "index.html#autotoc_md23", null ],
+        [ "Example 5: Dissonance Analysis", "index.html#autotoc_md24", null ]
+      ] ],
+      [ "🎹 What Can You Analyze?", "index.html#autotoc_md26", [
+        [ "🎼 Score Analysis", "index.html#autotoc_md27", null ],
+        [ "🎵 Melodic Analysis", "index.html#autotoc_md28", null ],
+        [ "🎶 Harmonic Analysis", "index.html#autotoc_md29", null ],
+        [ "🎹 Rhythmic Analysis", "index.html#autotoc_md30", null ],
+        [ "🎨 Visualization", "index.html#autotoc_md31", null ],
+        [ "⚙️ Score Manipulation", "index.html#autotoc_md32", null ],
+        [ "📊 Statistical Tools", "index.html#autotoc_md33", null ]
+      ] ],
+      [ "📚 Documentation", "index.html#autotoc_md35", [
+        [ "For Musicians & Researchers", "index.html#autotoc_md36", null ],
+        [ "For Developers", "index.html#autotoc_md37", null ]
+      ] ],
+      [ "🎼 Included Example Scores", "index.html#autotoc_md39", null ],
+      [ "❓ FAQ", "index.html#autotoc_md41", [
+        [ "What is MusicXML?", "index.html#autotoc_md42", null ],
+        [ "Where can I find MusicXML files?", "index.html#autotoc_md43", null ],
+        [ "What if I don't have a MusicXML file?", "index.html#autotoc_md44", null ],
+        [ "Do I need programming experience?", "index.html#autotoc_md45", null ],
+        [ "Can I use Maialib for commercial projects?", "index.html#autotoc_md46", null ],
+        [ "How do I cite Maialib in my research?", "index.html#autotoc_md47", null ],
+        [ "Does Maialib work with MIDI files?", "index.html#autotoc_md48", null ],
+        [ "How is this different from notation software like MuseScore or Finale?", "index.html#autotoc_md49", null ],
+        [ "What Python version do I need?", "index.html#autotoc_md50", null ],
+        [ "Can I contribute to Maialib?", "index.html#autotoc_md51", null ],
+        [ "Is there a community?", "index.html#autotoc_md52", null ]
+      ] ],
+      [ "🤝 Community & Support", "index.html#autotoc_md54", [
+        [ "Get Help", "index.html#autotoc_md55", null ],
+        [ "Share Your Work", "index.html#autotoc_md56", null ]
+      ] ],
+      [ "🌟 Contributing", "index.html#autotoc_md58", null ],
+      [ "📖 Citation", "index.html#autotoc_md60", null ],
+      [ "</blockquote>", "index.html#autotoc_md61", null ],
+      [ "⚖️ License", "index.html#autotoc_md62", null ],
+      [ "📖 Glossary", "index.html#autotoc_md64", null ]
     ] ],
     [ "Classes", "annotated.html", [
       [ "Class List", "annotated.html", "annotated_dup" ],

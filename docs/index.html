@@ -5,7 +5,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=11"/>
 <meta name="generator" content="Doxygen 1.9.3"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>maiacore: Maialib - Music Analysis Library</title>
+<title>maiacore: 🎵 Maialib - Music Analysis Library for Everyone</title>
 <link href="tabs.css" rel="stylesheet" type="text/css"/>
 <script type="text/javascript" src="jquery.js"></script>
 <script type="text/javascript" src="dynsections.js"></script>
@@ -26,7 +26,7 @@
  <tbody>
  <tr id="projectrow">
   <td id="projectalign">
-   <div id="projectname">maiacore<span id="projectnumber">&#160;1.9.3</span>
+   <div id="projectname">maiacore<span id="projectnumber">&#160;1.10.1</span>
    </div>
    <div id="projectbrief">Music analisys library</div>
   </td>
@@ -84,177 +84,695 @@ $(document).ready(function(){initNavTree('index.html',''); initResizable(); });
 </div>
 
 <div><div class="header">
-  <div class="headertitle"><div class="title">Maialib - Music Analysis Library </div></div>
+  <div class="headertitle"><div class="title">🎵 Maialib - Music Analysis Library for Everyone </div></div>
 </div><!--header-->
 <div class="contents">
-<div class="textblock"><p ><a class="anchor" id="mainpage"></a> <img src="https://github.com/nyckmaia/maialib/actions/workflows/wheels.yml/badge.svg" alt="Maialib CI/CD" style="pointer-events: none;" class="inline"/></p>
-<p >This library is a multiplatform set of musical tools that enable musical score analysis and composition in an easy and fast way. <br  />
- The project <b>maiacore</b> was written in <code>C++17</code>, but it also has a <code>Python</code> wrapper that allows a greater number of people (i.e. musicians not trained in IT) to also have in their hands the same power and musical tools available in <code>maialib</code>.<br  />
-<br  />
- <b>IMPORTANT: The maialib Python package includes all maiacore classes and functions and some additional other pure python functions. This website covers the maiacore-only classes and functions documentation, which are also present inside the maialib python package.<br  />
-We hope to add documentation of functions written in Python to this site in the future, so that we can have complete documentation of maialib.</b></p>
-<h1><a class="anchor" id="autotoc_md0"></a>
-Advantages</h1>
-<ul>
-<li>Easy to use to by musicians and musical researchers</li>
-<li>High computer perfomance and fast calculations</li>
-<li>Read and write musical scores (MusicXML file format)</li>
-</ul>
-<h1><a class="anchor" id="autotoc_md1"></a>
-Get Python Package</h1>
-<div class="fragment"><div class="line">pip install maialib</div>
-</div><!-- fragment --><p >Or, if you have an older <code>maialib</code> version installed on your system, please get the latest version running: <code>pip install maialib --upgrade</code></p>
-<h1><a class="anchor" id="autotoc_md2"></a>
-Get Started</h1>
-<p >You can easily import your sheet music (<code>*.xml</code> file) to Python environment using:</p>
+<div class="textblock"><p ><a class="anchor" id="md_README"></a> <img src="https://github.com/nyckmaia/maialib/actions/workflows/wheels.yml/badge.svg" alt="Maialib CI/CD" style="pointer-events: none;" class="inline"/> <a href="https://badge.fury.io/py/maialib"><img src="https://badge.fury.io/py/maialib.svg" alt="PyPI version" style="pointer-events: none;" class="inline"/></a> <a href="https://pypi.org/project/maialib/"><img src="https://img.shields.io/pypi/pyversions/maialib.svg" alt="Python Versions" style="pointer-events: none;" class="inline"/></a> <a href="https://www.gnu.org/licenses/gpl-3.0"><img src="https://img.shields.io/badge/License-GPLv3-blue.svg" alt="License: GPL v3" style="pointer-events: none;" class="inline"/></a> <a href="https://pepy.tech/project/maialib"><img src="https://static.pepy.tech/badge/maialib" alt="Downloads" class="inline"/></a></p>
+<p ><b>Analyze and create musical scores using Python - designed for musicians, researchers, and composers.</b></p>
+<p >Whether you're a music student analyzing Bach chorales, a composer generating algorithmic pieces, or a researcher studying harmonic patterns across centuries of music, Maialib makes working with musical scores as easy as a few lines of code.</p>
 <div class="fragment"><div class="line"><span class="keyword">import</span> maialib <span class="keyword">as</span> ml</div>
 <div class="line"> </div>
-<div class="line">myScore = ml.Score(<span class="stringliteral">&#39;./Beethoven/Symphony_9th.xml&#39;</span>)</div>
-</div><!-- fragment --><p >Now you can explore some <code>maialib</code> features like:</p>
+<div class="line"><span class="comment"># Create a middle C note</span></div>
+<div class="line">note = ml.Note(<span class="stringliteral">&quot;C#4&quot;</span>)</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Print information about this note</span></div>
+<div class="line">print(<span class="stringliteral">&quot;Note Information:&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Pitch: {note.getPitch()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Pitch class: {note.getPitchClass()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Pitch Step: {note.getPitchStep()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Octave: {note.getOctave()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Alter symbol: {note.getAlterSymbol()}&quot;</span> )</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Type (long name): {note.getLongType()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Duration (unit: quarter notes): {note.getQuarterDuration()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  MIDI number: {note.getMidiNumber()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Frequency: {note.getFrequency():.2f} Hz&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Is note on: {note.isNoteOn()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Is note off: {note.isNoteOff()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Ehnarmonic Notes: {note.getEnharmonicNotes()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;  Harmonic Spectrum (first 3 partials): {note.getHarmonicSpectrum(numPartials=3, partialsDecayExpRate=0.5)}&quot;</span>)</div>
+</div><!-- fragment --><p ><b>Output</b></p>
+<div class="fragment"><div class="line">Note Information:</div>
+<div class="line">  Pitch: C#4</div>
+<div class="line">  Pitch class: C#</div>
+<div class="line">  Pitch Step: C</div>
+<div class="line">  Octave: 4</div>
+<div class="line">  Alter symbol: #</div>
+<div class="line">  Type (long name): quarter</div>
+<div class="line">  Duration (unit: quarter notes): 1.0</div>
+<div class="line">  MIDI number: 61</div>
+<div class="line">  Frequency: 277.18 Hz</div>
+<div class="line">  Is note on: True</div>
+<div class="line">  Is note off: False</div>
+<div class="line">  Ehnarmonic Notes: [&lt;Note Db4&gt;, &lt;Note Bx3&gt;]</div>
+<div class="line">  Harmonic Spectrum (first 3 partials): ([277.1826171875, 554.365234375, 831.5478515625], [1.0, 0.5, 0.25])</div>
+</div><!-- fragment --><p ><b>No music software required. No complex APIs. Just simple, powerful Python.</b></p>
+<hr  />
+<h1><a class="anchor" id="autotoc_md2"></a>
+📑 Table of Contents</h1>
 <ul>
-<li>Find musical patterns</li>
-<li>Write your own scores from your custom algorithms</li>
-<li>Analyse scores in a musical statistical data perspective</li>
-<li>And much more!</li>
-</ul>
-<h1><a class="anchor" id="autotoc_md3"></a>
-Frequent Asked Questions</h1>
-<h2><a class="anchor" id="autotoc_md4"></a>
-1) Where can I find the XML file of a specific musical score?</h2>
-<p >To import musical scores the file extensions must be: <code>*.xml</code>, <code>*.mxl</code> or <code>*.musicxml</code> <br  />
- You can easily export your music files to these file formats above from score editors, like:</p>
-<ul>
-<li>MuseScore (free!)</li>
-<li>Sibelius</li>
-<li>Finale</li>
-<li>Others</li>
-</ul>
-<p >Many <code>MusicXML</code> files are avaliable for free in the Internet for download.</p>
-<h2><a class="anchor" id="autotoc_md5"></a>
-2) What can I do if I don't have a &lt;tt&gt;*.xml&lt;/tt&gt; file of my target music?</h2>
-<ul>
-<li>First, make sure, and look at different websites and online repositories trying to find the <code>*.xml</code> (or <code>*.musicxml</code> or <code>*.mxl</code>) file.</li>
-<li>After that, you can try these 4 options below:<ul>
-<li>Find on the internet the desired MIDI file and import it in a score editor (like MuseScore, Sibelius, Finale, etc.) and then export the <code>MusicXML</code> file from it</li>
-<li>Scan the sheet music paper and get a PDF version of it, and after that, use a OMR software to try to convert the PDF file into a <code>*.xml</code> file:<ul>
-<li><a href="https://musescore.com/import">MuseScore Import - Experimental</a></li>
-<li><a href="https://acestudio.ai/pdf-to-musicxml/">ACE Studio PDF to MusicXML Converter</a></li>
-<li><a href="https://www.avid.com/photoscore-and-notateme-lite">Sibelius PhotoScore</a></li>
-<li><a href="https://scan-score.com/en/">ScanScore</a></li>
-<li><a href="https://www.musitek.com/">SmartScore 64 NE</a></li>
-<li><a href="https://melogenai.com/">Melogen AI</a></li>
-<li><a href="https://www.myriad-online.com/en/products/pdftomusic.htm">PDFtoMusic</a></li>
-</ul>
-</li>
-<li>Pay for other people to type manually note-by-note the PDF into a musical software (link MuseScore, Sibelius, Finale, etc.)</li>
-<li>Type manually note-by-note the music paper into a musical software (link MuseScore, Sibelius, Finale, etc.)</li>
-</ul>
-</li>
-</ul>
-<h1><a class="anchor" id="autotoc_md6"></a>
-Documentation (in development)</h1>
-<p >This project have 2 documentation levels. One for each user type:</p>
-<ul>
-<li><b>Level 1 - User documentation:</b> for musicians, musical researchers and non-professional IT people (help me to do that!)</li>
-<li><b>Level 2 - Developer documentation:</b> A deeper information for professional C++ programmers (Doxygen)</li>
-</ul>
-<h2><a class="anchor" id="autotoc_md7"></a>
-Level 1: Python Tutorial</h2>
-<p >You can explore <code>maialib</code> features looking at <code>python-tutorial</code> folder (<a href="https://github.com/nyckmaia/maialib/tree/main/python-tutorial">link here</a>). <br  />
- There you will learn how to use and mix <code>maialib</code> classes and functions to reach your musical goals If you are starting out, please check these 3 basic <code>maialib</code> Python tutorials:</p>
-<ul>
-<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_notes_chords.ipynb">Create Notes and Chords</a></li>
-<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_score.ipynb">Create a Score</a></li>
-<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/dataframe.ipynb">Using Dataframes</a></li>
-</ul>
-<h2><a class="anchor" id="autotoc_md8"></a>
-Level 2: Developer Documentation</h2>
-<p ><a href="https://maialib.com/">Maialib Documentation WebSite</a></p>
-<h1><a class="anchor" id="autotoc_md9"></a>
-VS Code Users</h1>
-<ul>
-<li>You can write your Python scripts using <code>*.py</code> or <code>*.ipynb</code> file extensions.</li>
-<li>If you decide to use <code>*.ipynb</code> extension, make sure to install <code>nbformat</code> Python package to enable visualize maialib graphs on VS Code editor. To do that: <code>pip install nbformat --upgrade</code></li>
+<li>Why Maialib?</li>
+<li>Installation</li>
+<li>Quick Start</li>
+<li>Examples Gallery</li>
+<li>What Can You Analyze?</li>
+<li>Documentation</li>
+<li>Included Example Scores</li>
+<li>FAQ</li>
+<li>Community &amp; Support</li>
+<li>Contributing</li>
+<li>Citation</li>
+<li>EFB8%8F-license "License"</li>
 </ul>
 <hr  />
-<h1><a class="anchor" id="autotoc_md11"></a>
-Would you like to improve any maialib function?</h1>
+<h1><a class="anchor" id="autotoc_md4"></a>
+✨ Why Maialib?</h1>
+<h2><a class="anchor" id="autotoc_md5"></a>
+Built for Musicians Who Code (or Want to Learn)</h2>
+<ul>
+<li><b>🎹 Musician-Friendly</b>: Designed with music theory terminology, not just technical jargon</li>
+<li><b>⚡ Lightning Fast</b>: C++17 core engine with Python interface - get professional performance without complexity</li>
+<li><b>📊 Data Science Ready</b>: Export to pandas DataFrames for statistical analysis</li>
+<li><b>🎨 Visualization Built-in</b>: Generate piano rolls, pitch envelopes, and dissonance curves</li>
+<li><b>📝 MusicXML Native</b>: Read and write standard notation files from MuseScore, Finale, Sibelius</li>
+<li><b>🔬 Research-Grade</b>: Used in musicology research and composition studies</li>
+<li><b>🎓 Academic Foundation</b>: Developed as part of doctoral research at UNICAMP (State University of Campinas)</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md6"></a>
+Perfect For:</h2>
+<p >✅ <b>Music Students</b> - Analyze scores for theory assignments and research projects <br  />
+ ✅ <b>Composers</b> - Generate algorithmic compositions and explore musical patterns<br  />
+ ✅ <b>Musicologists</b> - Perform computational analysis on large musical corpora<br  />
+ ✅ <b>Music Teachers</b> - Create customized teaching examples and exercises<br  />
+ ✅ <b>Arrangers</b> - Batch transpose scores for different instruments<br  />
+ ✅ <b>Performers</b> - Extract sections and practice specific passages<br  />
+ ✅ <b>Researchers</b> - Conduct quantitative musicology studies</p>
+<h2><a class="anchor" id="autotoc_md7"></a>
+Key Features</h2>
+<ul>
+<li><b>Full MusicXML Support</b>: Read and write <code>.xml</code>, <code>.mxl</code>, and <code>.musicxml</code> files</li>
+<li><b>High Performance</b>: C++17 core engine for fast computation on large musical corpora</li>
+<li><b>Built-in Visualizations</b>: Piano rolls, pitch envelopes, chord analysis, and dissonance curves</li>
+<li><b>Advanced <a class="el" href="class_chord.html" title="Represents a musical chord.">Chord</a> Analysis</b>: Identify qualities, analyze complexity, and calculate harmonic density</li>
+<li><b>Dissonance Models</b>: Psychoacoustic dissonance calculation using the Sethares model</li>
+<li><b>DataFrame Export</b>: Seamless integration with pandas for statistical analysis</li>
+<li><b>Beginner-Friendly</b>: Simple API designed for musicians without extensive programming experience</li>
+<li><b>Comprehensive Documentation</b>: Interactive tutorials, examples, and complete API reference</li>
+<li><b>Cross-Platform</b>: Works on Windows, Linux, and macOS with Python 3.8-3.14</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md8"></a>
+Academic Background</h2>
+<p >Maialib was developed as part of the doctoral thesis:</p>
+<p >**"maialib: A programming library for computer-aided music analysis and composition with applications on models of dissonance"**</p>
+<ul>
+<li><b>Author</b>: Nycholas Maia</li>
+<li><b>Institution</b>: UNICAMP (Universidade Estadual de Campinas)</li>
+<li><b>Defense Date</b>: November 25, 2022</li>
+<li><b>Research Focus</b>: Computational musicology, dissonance models, and algorithmic composition</li>
+</ul>
+<hr  />
+<h1><a class="anchor" id="autotoc_md10"></a>
+🔧 Installation</h1>
+<h2><a class="anchor" id="autotoc_md11"></a>
+Prerequisites</h2>
+<ul>
+<li><b>Python 3.8 or newer</b> (<a href="https://www.python.org/downloads/">Download here</a>)</li>
+<li>Basic command line familiarity (we'll guide you!)</li>
+</ul>
 <h2><a class="anchor" id="autotoc_md12"></a>
-Are you a C++ developer?</h2>
-<h3><a class="anchor" id="autotoc_md13"></a>
-Requirements to build from C++ sources:</h3>
-<ul>
-<li>C++17 compatible compiler</li>
-<li>CMake 3.26</li>
-<li>Python 3.8</li>
-<li>Make</li>
-<li>Doxygen (Optional: To build documentation)</li>
-<li>Buildcache (Optional: To accelerate the build process)</li>
-<li>CppCheck (Optional: C++ Static Analyzer)</li>
+Install in 30 Seconds</h2>
+<p >Open your terminal (or Command Prompt on Windows) and run:</p>
+<div class="fragment"><div class="line">pip install maialib</div>
+</div><!-- fragment --><p ><b>Upgrading from an older version?</b></p>
+<div class="fragment"><div class="line">pip install maialib --upgrade</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md13"></a>
+Verify Installation</h2>
+<div class="fragment"><div class="line"><span class="keyword">import</span> maialib <span class="keyword">as</span> ml</div>
+<div class="line">print(ml.__version__)</div>
+</div><!-- fragment --><p >If you see a version number, you're ready to go! 🎉</p>
+<p ><details>
+ <summary>🛠️ Troubleshooting Installation Issues</summary></details>
+</p>
+<p ><details>
+**"pip: command not found"**</details>
+</p>
+<p ><details>
+</p><ul>
+<li>Make sure Python is in your system PATH</li>
+<li>Try <code>python -m pip install maialib</code> or <code>python3 -m pip install maialib</code></li>
 </ul>
-<h2><a class="anchor" id="autotoc_md14"></a>
-Are you a Python developer?</h2>
-<h3><a class="anchor" id="autotoc_md15"></a>
-Python Dev-only dependencies</h3>
-<div class="fragment"><div class="line">pip install pathlib</div>
-<div class="line">pip install cpplint</div>
-<div class="line">pip install wheel</div>
-<div class="line">pip install mypy</div>
+<p></details>
+</p>
+<p ><details>
+**"ModuleNotFoundError: No module named 'maialib'"**</details>
+</p>
+<p ><details>
+</p><ul>
+<li>Verify installation with <code>pip list | grep maialib</code></li>
+<li>Make sure you're using the same Python environment</li>
+</ul>
+<p></details>
+</p>
+<p ><details>
+<b>Still having issues?</b></details>
+</p>
+<p ><details>
+</p><ul>
+<li><a href="https://github.com/nyckmaia/maialib/wiki/Installation">Check our Installation Guide</a></li>
+<li><a href="https://github.com/nyckmaia/maialib/discussions">Ask in GitHub Discussions</a></li>
+</ul>
+<p></details>
+</p>
+<p ><details>
+</details>
+</p>
+<hr  />
+<h1><a class="anchor" id="autotoc_md15"></a>
+🚀 Quick Start</h1>
+<h2><a class="anchor" id="autotoc_md16"></a>
+Your First Musical Analysis in 5 Minutes</h2>
+<p >Maialib includes example scores so you can start immediately - no need to find files!</p>
+<div class="fragment"><div class="line"><span class="keyword">import</span> maialib <span class="keyword">as</span> ml</div>
 <div class="line"> </div>
-<div class="line"># To generate Python stubs</div>
-<div class="line">pip install pybind11-stubgen</div>
-<div class="line"># Mac users: May be you have to add the coverage and pybind11-stubgen on your `PATH` - /etc/paths</div>
+<div class="line"><span class="comment"># Load one of the included Bach examples</span></div>
+<div class="line">sampleScore = ml.SampleScore.Bach_Cello_Suite_1</div>
+<div class="line">sampleScorePath = ml.getSampleScorePath(sampleScore)</div>
+<div class="line">score = ml.Score(sampleScorePath)</div>
 <div class="line"> </div>
-<div class="line">pybind11_mkdoc (github)</div>
-<div class="line">sudo apt install clang (pybind11_mkdoc dependency) - Linux/Mac Only</div>
-</div><!-- fragment --><h2><a class="anchor" id="autotoc_md16"></a>
-Tested Environments</h2>
-<table class="markdownTable">
-<tr class="markdownTableHead">
-<th class="markdownTableHeadNone">Operational System   </th><th class="markdownTableHeadNone">Compilers    </th></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Windows 10 x64   </td><td class="markdownTableBodyNone">Clang 18.0    </td></tr>
-<tr class="markdownTableRowEven">
-<td class="markdownTableBodyNone">Linux Ubuntu 20.04   </td><td class="markdownTableBodyNone">GCC 9.3    </td></tr>
-<tr class="markdownTableRowOdd">
-<td class="markdownTableBodyNone">Apple OSX 10.15   </td><td class="markdownTableBodyNone">XCode 11.5 (Command Line Tools)   </td></tr>
-</table>
-<h2><a class="anchor" id="autotoc_md17"></a>
-Quick Start</h2>
-<h3><a class="anchor" id="autotoc_md18"></a>
-Build Python module from C++ source</h3>
-<p >Open a terminal (or CMD in Windows), enter inside of the <code>maialib</code> folder. <br  />
- Type: <code>make</code> to build the Python module <br  />
- When the build process finishes, type: <code>make install</code> <br  />
- Done!</p>
-<h2><a class="anchor" id="autotoc_md19"></a>
-Known issues to build from source</h2>
-<h3><a class="anchor" id="autotoc_md20"></a>
-All Platforms</h3>
+<div class="line"><span class="comment"># Get basic score information</span></div>
+<div class="line">print(f<span class="stringliteral">&quot;Title: {score.getTitle()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;Composer: {score.getComposerName()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;Number of measures: {score.getNumMeasures()}&quot;</span>)</div>
+<div class="line">print(f<span class="stringliteral">&quot;Number of notes: {score.getNumNotes()}&quot;</span>)</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Extract all notes as a pandas DataFrame</span></div>
+<div class="line">df = score.toDataFrame()</div>
+<div class="line">print(<span class="stringliteral">&quot;\nFirst 5 notes:&quot;</span>)</div>
+<div class="line">print(df.head())</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Count notes by pitch class</span></div>
+<div class="line">pitch_distribution = df[<span class="stringliteral">&#39;Note&#39;</span>].value_counts()</div>
+<div class="line">print(<span class="stringliteral">&quot;\nPitch class distribution:&quot;</span>)</div>
+<div class="line">print(pitch_distribution)</div>
+</div><!-- fragment --><p ><b>Output:</b></p>
+<div class="fragment"><div class="line">Title: Cello Suite No. 1</div>
+<div class="line">Composer: Johann Sebastian Bach</div>
+<div class="line">Number of measures: 220</div>
+<div class="line">Number of notes: 2293</div>
+<div class="line"> </div>
+<div class="line">First 5 notes:</div>
+<div class="line">                 Part      Measure       Note</div>
+<div class="line">0  &lt;Part Violoncello&gt;  &lt;Measure 0&gt;  &lt;Note G2&gt;</div>
+<div class="line">1  &lt;Part Violoncello&gt;  &lt;Measure 0&gt;  &lt;Note D3&gt;</div>
+<div class="line">2  &lt;Part Violoncello&gt;  &lt;Measure 0&gt;  &lt;Note B3&gt;</div>
+<div class="line">3  &lt;Part Violoncello&gt;  &lt;Measure 0&gt;  &lt;Note A3&gt;</div>
+<div class="line">4  &lt;Part Violoncello&gt;  &lt;Measure 0&gt;  &lt;Note B3&gt;</div>
+<div class="line"> </div>
+<div class="line">Pitch class distribution:</div>
+<div class="line">Note</div>
+<div class="line">&lt;Note A3&gt;     241</div>
+<div class="line">&lt;Note G3&gt;     184</div>
+<div class="line">&lt;Note F#3&gt;    169</div>
+<div class="line">&lt;Note D3&gt;     156</div>
+<div class="line">&lt;Note B3&gt;     154</div>
+<div class="line">             ...</div>
+<div class="line">&lt;Note Eb2&gt;      1</div>
+<div class="line">&lt;Note Bb2&gt;      1</div>
+<div class="line">&lt;Note Ab3&gt;      1</div>
+<div class="line">&lt;Note Eb4&gt;      1</div>
+<div class="line">&lt;Note D4&gt;       1</div>
+<div class="line">Name: count, Length: 99, dtype: int64</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md17"></a>
+Visualize Your Score</h2>
+<div class="fragment"><div class="line"><span class="comment"># Load one of the included Bach examples</span></div>
+<div class="line">sampleScore = ml.SampleScore.Bach_Cello_Suite_1</div>
+<div class="line">sampleScorePath = ml.getSampleScorePath(sampleScore)</div>
+<div class="line">score = ml.Score(sampleScorePath)</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Generate a piano roll visualization</span></div>
+<div class="line">fig1, df1 = ml.plotPianoRoll(score, measureStart=1, measureEnd=16)</div>
+<div class="line">fig1.show()</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Plot pitch envelope over time</span></div>
+<div class="line">fig2, df2 = ml.plotScorePitchEnvelope(score, measureStart=1, measureEnd=16)</div>
+<div class="line">fig2.show()</div>
+</div><!-- fragment --><hr  />
+<h1><a class="anchor" id="autotoc_md19"></a>
+💡 Examples Gallery</h1>
+<h2><a class="anchor" id="autotoc_md20"></a>
+Example 1: Get all music chords as a table</h2>
+<div class="fragment"><div class="line"><span class="keyword">import</span> maialib <span class="keyword">as</span> ml</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Load one of the included Chopin examples</span></div>
+<div class="line">sampleScore = ml.SampleScore.Chopin_Fantasie_Impromptu</div>
+<div class="line">sampleScorePath = ml.getSampleScorePath(sampleScore)</div>
+<div class="line">score = ml.Score(sampleScorePath)</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Extract chord data as a pandas DataFrame</span></div>
+<div class="line">chords = score.getChordsDataFrame()</div>
+<div class="line">print(chords)</div>
+</div><!-- fragment --><p ><b>Output</b></p>
+<div class="fragment"><div class="line">      measure  floatMeasure      key                                   chord  \</div>
+<div class="line">0           1      1.000000  &lt;Key E&gt;                      &lt;Chord [G#2, G#3]&gt;</div>
+<div class="line">1           2      2.000000  &lt;Key E&gt;                      &lt;Chord [G#2, G#3]&gt;</div>
+<div class="line">2           3      3.000000  &lt;Key E&gt;                      &lt;Chord [C#2, C#3]&gt;</div>
+<div class="line">3           3      3.083333  &lt;Key E&gt;                           &lt;Chord [G#3]&gt;</div>
+<div class="line">4           3      3.166667  &lt;Key E&gt;                           &lt;Chord [G#3]&gt;</div>
+<div class="line">...       ...           ...      ...                                     ...</div>
+<div class="line">1746      101    101.812500  &lt;Key E&gt;                 &lt;Chord [G#1, G#2, C#4]&gt;</div>
+<div class="line">1747      101    101.875000  &lt;Key E&gt;                 &lt;Chord [G#1, G#2, G#4]&gt;</div>
+<div class="line">1748      101    101.937500  &lt;Key E&gt;                 &lt;Chord [G#1, G#2, F#3]&gt;</div>
+<div class="line">1749      102    102.000000  &lt;Key E&gt;  &lt;Chord [C#2, G#2, F#3, G#3, B#3, D#4]&gt;</div>
+<div class="line">1750      103    103.000000  &lt;Key E&gt;       &lt;Chord [C#2, G#2, E#3, G#3, C#4]&gt;</div>
+<div class="line"> </div>
+<div class="line">      isHomophonic</div>
+<div class="line">0             True</div>
+<div class="line">1             True</div>
+<div class="line">2             True</div>
+<div class="line">3             True</div>
+<div class="line">4            False</div>
+<div class="line">...            ...</div>
+<div class="line">1746         False</div>
+<div class="line">1747         False</div>
+<div class="line">1748         False</div>
+<div class="line">1749          True</div>
+<div class="line">1750          True</div>
+<div class="line"> </div>
+<div class="line">[1751 rows x 5 columns]</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md21"></a>
+Example 2: Analyze Melodic Intervals</h2>
+<div class="fragment"><div class="line"><span class="comment"># Load Beethoven&#39;s Symphony No. 5 score</span></div>
+<div class="line">score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Beethoven_Symphony_5th))</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Analyze melodic intervals in the first measure of the first violin part</span></div>
+<div class="line">firstMeasure = score.getPart(<span class="stringliteral">&#39;Violins 1&#39;</span>).getMeasure(0) <span class="comment"># First violin part</span></div>
+<div class="line">firstMeasureNumNotes = firstMeasure.getNumNotes()</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Collect notes in the first measure</span></div>
+<div class="line">notes = []</div>
+<div class="line"><span class="keywordflow">for</span> i <span class="keywordflow">in</span> range(firstMeasureNumNotes):</div>
+<div class="line">    note = firstMeasure.getNote(i)</div>
+<div class="line">    notes.append(note)</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Calculate and print melodic intervals</span></div>
+<div class="line">print(<span class="stringliteral">&quot;Melodic intervals in opening:&quot;</span>)</div>
+<div class="line"><span class="keywordflow">for</span> i <span class="keywordflow">in</span> range(firstMeasureNumNotes - 1):</div>
+<div class="line">    <span class="keywordflow">if</span> notes[i].isNoteOff() <span class="keywordflow">or</span> notes[i+1].isNoteOff():</div>
+<div class="line">        <span class="keywordflow">continue</span></div>
+<div class="line">    interval = ml.Interval(notes[i], notes[i+1])</div>
+<div class="line">    print(f<span class="stringliteral">&quot;{notes[i].getPitch()} → {notes[i+1].getPitch()}: {interval.getName()} ({interval.getNumSemitones()} semitones)&quot;</span>)</div>
+</div><!-- fragment --><p ><b>Output</b></p>
+<div class="fragment"><div class="line">Melodic intervals in opening:</div>
+<div class="line">G4 → G4: P1 (0 semitones)</div>
+<div class="line">G4 → G4: P1 (0 semitones)</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md22"></a>
+Example 3: Find Melodic Patterns</h2>
+<div class="fragment"><div class="line"><span class="comment"># Load your Beethoven 5th Symphony score (or any other sheet music)</span></div>
+<div class="line">score = ml.Score(<span class="stringliteral">&#39;Beethoven_5th_symphony.xml&#39;</span>)</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Define a pattern to search for (e.g., descending scale fragment)</span></div>
+<div class="line">pattern = [</div>
+<div class="line">    ml.Note(<span class="stringliteral">&quot;G4&quot;</span>),</div>
+<div class="line">    ml.Note(<span class="stringliteral">&quot;F4&quot;</span>),</div>
+<div class="line">    ml.Note(<span class="stringliteral">&quot;E4&quot;</span>),</div>
+<div class="line">    ml.Note(<span class="stringliteral">&quot;D4&quot;</span>)</div>
+<div class="line">]</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Find all occurrences</span></div>
+<div class="line">df_patterns = score.findMelodyPatternDataFrame(</div>
+<div class="line">    melodyPattern=pattern,</div>
+<div class="line">    totalIntervalsSimilarityThreshold=0.8,</div>
+<div class="line">    totalRhythmSimilarityThreshold=0.5</div>
+<div class="line">)</div>
+<div class="line"> </div>
+<div class="line">print(f<span class="stringliteral">&quot;Found {len(df_patterns)} occurrences of the pattern&quot;</span>)</div>
+<div class="line">print(df_patterns[[<span class="stringliteral">&#39;partName&#39;</span>, <span class="stringliteral">&#39;measureId&#39;</span>, <span class="stringliteral">&#39;transposeInterval&#39;</span>, <span class="stringliteral">&#39;totalSimilarity&#39;</span>]])</div>
+</div><!-- fragment --><p ><b>Output</b></p>
+<div class="fragment"><div class="line">Found 6 occurrences of the pattern</div>
+<div class="line">    partName  measureId transposeInterval  totalSimilarity</div>
+<div class="line">0  Violins 1        406            m3 asc              1.0</div>
+<div class="line">1  Violins 1        409            m7 asc              1.0</div>
+<div class="line">2  Violins 2        406            m3 asc              1.0</div>
+<div class="line">3  Violins 2        409            m7 asc              1.0</div>
+<div class="line">4     Violas        166           M2 desc              1.0</div>
+<div class="line">5     Violas        460           M6 desc              1.0</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md23"></a>
+Example 4: Statistical Harmonic Analysis</h2>
+<div class="fragment"><div class="line"><span class="keyword">import</span> pandas <span class="keyword">as</span> pd</div>
+<div class="line"><span class="keyword">import</span> maialib <span class="keyword">as</span> ml</div>
+<div class="line"> </div>
+<div class="line">score = ml.Score(<span class="stringliteral">&#39;Beethoven_Symphony_5.xml&#39;</span>)</div>
+<div class="line"> </div>
+<div class="line">chords = score.getChords()</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Analyze chord quality distribution</span></div>
+<div class="line">chord_qualities = []</div>
+<div class="line"><span class="keywordflow">for</span> _, _, _, chord, _ <span class="keywordflow">in</span> chords:</div>
+<div class="line">    <span class="keywordflow">if</span> chord.isMajorChord():</div>
+<div class="line">        chord_qualities.append(<span class="stringliteral">&#39;Major&#39;</span>)</div>
+<div class="line">    <span class="keywordflow">elif</span> chord.isMinorChord():</div>
+<div class="line">        chord_qualities.append(<span class="stringliteral">&#39;Minor&#39;</span>)</div>
+<div class="line">    <span class="keywordflow">elif</span> chord.isDiminishedChord():</div>
+<div class="line">        chord_qualities.append(<span class="stringliteral">&#39;Diminished&#39;</span>)</div>
+<div class="line">    <span class="keywordflow">elif</span> chord.isAugmentedChord():</div>
+<div class="line">        chord_qualities.append(<span class="stringliteral">&#39;Augmented&#39;</span>)</div>
+<div class="line">    <span class="keywordflow">else</span>:</div>
+<div class="line">        chord_qualities.append(<span class="stringliteral">&#39;Other&#39;</span>)</div>
+<div class="line"> </div>
+<div class="line"><span class="comment"># Create distribution</span></div>
+<div class="line">df = pd.DataFrame({<span class="stringliteral">&#39;Quality&#39;</span>: chord_qualities})</div>
+<div class="line">distribution = df[<span class="stringliteral">&#39;Quality&#39;</span>].value_counts(normalize=<span class="keyword">True</span>) * 100</div>
+<div class="line"> </div>
+<div class="line">print(<span class="stringliteral">&quot;Chord quality distribution:&quot;</span>)</div>
+<div class="line">print(distribution)</div>
+</div><!-- fragment --><p ><b>Output</b></p>
+<div class="fragment"><div class="line">Chord quality distribution:</div>
+<div class="line">Quality</div>
+<div class="line">Other         40.218878</div>
+<div class="line">Major         30.711354</div>
+<div class="line">Minor         22.229822</div>
+<div class="line">Diminished     6.703146</div>
+<div class="line">Augmented      0.136799</div>
+<div class="line">Name: proportion, dtype: float64</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md24"></a>
+Example 5: Dissonance Analysis</h2>
+<div class="fragment"><div class="line"><span class="comment"># Calculate psychoacoustic dissonance using Sethares model</span></div>
+<div class="line">score = ml.Score(<span class="stringliteral">&#39;my_score.xml&#39;</span>)</div>
+<div class="line">chords = score.getChords()</div>
+<div class="line"> </div>
+<div class="line">dissonance_values = []</div>
+<div class="line"><span class="keywordflow">for</span> _, _, _, chord, _ <span class="keywordflow">in</span> chords:</div>
+<div class="line">    <span class="comment"># Calculate Sethares dissonance value</span></div>
+<div class="line">    chordDissonance = chord.getSetharesDissonance(numPartialsPerNote=6)</div>
+<div class="line">    dissonance_values.append(chordDissonance)</div>
+<div class="line"> </div>
+<div class="line">print(dissonance_values)</div>
+</div><!-- fragment --><p ><b>Output</b></p>
+<div class="fragment"><div class="line">[1.1458631753921509, 1.1458631753921509, 1.1458631753921509, 1.233114242553711, 0.9513687491416931,...]</div>
+</div><!-- fragment --><hr  />
+<h1><a class="anchor" id="autotoc_md26"></a>
+🎹 What Can You Analyze?</h1>
+<p >Maialib provides comprehensive tools for musical analysis:</p>
+<h2><a class="anchor" id="autotoc_md27"></a>
+🎼 Score Analysis</h2>
 <ul>
-<li>Multiple Python versions installed, like: <code>Official Python</code>, <code>Microsoft Python</code>, <code>MSYS2 Python</code> and others can direct the build system to choose a wrong version to build and install the library. <br  />
- To check all Python versions installed on your system, open the <code>Terminal</code> (or <code>CMD</code> on Windows) and type: - Linux or Mac: - <code>which python</code> - <code>which python3</code> - Windows: - <code>where.exe python</code> - <code>where.exe python3</code></li>
-<li>If <code>maialib</code> Python stubs and autocomplete are not working good on VS Code. Run: "Pylance: Clear Persisted Indices"</li>
+<li>Load MusicXML files (<code>.xml</code>, <code>.mxl</code>, <code>.musicxml</code>)</li>
+<li>Extract parts, measures, notes, and chords</li>
+<li>Access key signatures, time signatures, and tempo markings</li>
+<li>Export to pandas DataFrames for data science workflows</li>
 </ul>
-<h3><a class="anchor" id="autotoc_md21"></a>
-Windows-Only</h3>
+<h2><a class="anchor" id="autotoc_md28"></a>
+🎵 Melodic Analysis</h2>
 <ul>
-<li>Disable your antivirus or create a exception (CMake permissions)</li>
+<li>Find melodic patterns and motifs</li>
+<li>Calculate intervallic contours</li>
+<li>Analyze pitch distributions and ranges</li>
+<li>Compute melodic similarity metrics</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md22"></a>
-Contact</h2>
-<p >Nycholas Maia - <a href="#" onclick="location.href='mai'+'lto:'+'nyc'+'km'+'aia'+'@g'+'mai'+'l.'+'com'; return false;">nyckm<span class="obfuscator">.nosp@m.</span>aia@<span class="obfuscator">.nosp@m.</span>gmail<span class="obfuscator">.nosp@m.</span>.com</a></p>
-<h2><a class="anchor" id="autotoc_md23"></a>
-Contributing</h2>
+<h2><a class="anchor" id="autotoc_md29"></a>
+🎶 Harmonic Analysis</h2>
 <ul>
-<li>Fork this project</li>
-<li>Make your custumizations and improvements</li>
-<li>Please, send me a pull request</li>
+<li>Extract vertical chord structures</li>
+<li>Identify chord qualities (major, minor, diminished, augmented)</li>
+<li>Analyze harmonic complexity and density</li>
+<li>Calculate psychoacoustic dissonance (Sethares model)</li>
+<li>Track chord progressions</li>
 </ul>
-<h2><a class="anchor" id="autotoc_md24"></a>
-License</h2>
-<p >Maialib is licensed under <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPLv3 License</a> </p>
-</div></div><!-- PageDoc -->
+<h2><a class="anchor" id="autotoc_md30"></a>
+🎹 Rhythmic Analysis</h2>
+<ul>
+<li>Extract rhythmic patterns</li>
+<li>Analyze duration distributions</li>
+<li>Calculate rhythmic similarity</li>
+<li>Study metric structures</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md31"></a>
+🎨 Visualization</h2>
+<ul>
+<li>Piano rolls with customizable colors</li>
+<li>Pitch envelope graphs</li>
+<li><a class="el" href="class_chord.html" title="Represents a musical chord.">Chord</a> analysis heatmaps</li>
+<li>Dissonance curves</li>
+<li>Statistical distribution plots</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md32"></a>
+⚙️ Score Manipulation</h2>
+<ul>
+<li>Transpose to any key</li>
+<li>Extract specific sections</li>
+<li>Modify notes, chords, and measures</li>
+<li>Export modified scores to MusicXML</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md33"></a>
+📊 Statistical Tools</h2>
+<ul>
+<li>Convert scores to DataFrames</li>
+<li>Aggregate data across multiple scores</li>
+<li>Perform corpus-wide analysis</li>
+<li>Export data for R, MATLAB, or other tools</li>
+</ul>
+<hr  />
+<h1><a class="anchor" id="autotoc_md35"></a>
+📚 Documentation</h1>
+<h2><a class="anchor" id="autotoc_md36"></a>
+For Musicians &amp; Researchers</h2>
+<p ><b>🎓 Interactive Tutorials</b> - Learn by doing with Jupyter notebooks:</p>
+<ul>
+<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_notes_chords.ipynb">Create Notes and Chords</a> - Build musical objects from scratch</li>
+<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/create_score.ipynb">Create a Score</a> - Generate scores programmatically</li>
+<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/dataframe.ipynb">Using DataFrames</a> - Export and analyze with pandas</li>
+<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/get_chords.ipynb">Get Chords</a> - Extract harmonic structures</li>
+<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/intervals.ipynb">Intervals</a> - Work with melodic and harmonic intervals</li>
+<li><a href="https://github.com/nyckmaia/maialib/blob/main/python-tutorial/plots.ipynb">Plotting Functions</a> - Visualize your analysis</li>
+</ul>
+<p ><b>📖 Full Tutorial Collection</b>: <a href="https://github.com/nyckmaia/maialib/tree/main/python-tutorial">Browse all tutorials</a></p>
+<p ><b>🌐 API Reference</b>: <a href="https://maialib.com/">Complete documentation</a></p>
+<h2><a class="anchor" id="autotoc_md37"></a>
+For Developers</h2>
+<p ><b>🛠️ Build from Source</b>: See BUILDING.md for C++ compilation instructions</p>
+<p ><b>💻 C++ API Documentation</b>: <a href="https://maialib.com/">Developer docs</a></p>
+<p ><b>🤝 Contributing</b>: See CONTRIBUTING.md for contribution guidelines</p>
+<hr  />
+<h1><a class="anchor" id="autotoc_md39"></a>
+🎼 Included Example Scores</h1>
+<p >Maialib includes 7 classical works so you can start exploring immediately:</p>
+<ul>
+<li><b>Bach</b> - Cello Suite No. 1 (<code>Bach_Cello_Suite_1.mxl</code>)</li>
+<li><b>Bach</b> - Prelude No. 1 in C Major, BWV 846 (<code>Bach_Prelude_1_BWV_846.xml</code>)</li>
+<li><b>Beethoven</b> - String Quartet Op. 133 (<code>Beethoven_quartet_133.xml</code>)</li>
+<li><b>Beethoven</b> - Symphony No. 5, Movement 1 (<code>Beethoven_Symphony_5_mov_1.xml</code>)</li>
+<li><b>Chopin</b> - Fantaisie-Impromptu Op. 66 (<code>Chopin_Fantasie_Impromptu.mxl</code>)</li>
+<li><b>Dvořák</b> - Symphony No. 9 "New World", Movement 4 (<code>Dvorak_Symphony_9_mov_4.xml</code>)</li>
+<li><b>Mahler</b> - Symphony No. 1 "Titan", Movement 1 (<code>Mahler_Symphony_1_mov_1.mxl</code>)</li>
+<li><b>Mozart</b> - Requiem, Introitus (<code>Mozart_Requiem_Introitus.mxl</code>)</li>
+<li><b>Strauss</b> - The Blue Danube Waltz (<code>Strauss_Blue_Danube.mxl</code>)</li>
+</ul>
+<p ><b>Try them now:</b></p>
+<div class="fragment"><div class="line"><span class="keyword">import</span> maialib <span class="keyword">as</span> ml</div>
+<div class="line">sampleScorePath = ml.getSampleScorePath(ml.SampleScore.Beethoven_Symphony_5th)</div>
+<div class="line">score = ml.Score(sampleScorePath)</div>
+</div><!-- fragment --><hr  />
+<h1><a class="anchor" id="autotoc_md41"></a>
+❓ FAQ</h1>
+<h2><a class="anchor" id="autotoc_md42"></a>
+What is MusicXML?</h2>
+<p >MusicXML is the standard file format for sheet music, like <code>.docx</code> for documents or <code>.pdf</code> for portable documents. It contains all musical information: notes, rhythms, dynamics, articulations, and layout. Most notation software (MuseScore, Finale, Sibelius) can export to MusicXML.</p>
+<h2><a class="anchor" id="autotoc_md43"></a>
+Where can I find MusicXML files?</h2>
+<p >Many sources offer free MusicXML downloads:</p>
+<ul>
+<li><a href="https://musescore.com">MuseScore.com</a> - Largest free sheet music library</li>
+<li><a href="https://imslp.org">IMSLP</a> - Public domain classical music</li>
+<li><a href="https://www.musicxml.com/music-in-musicxml/">MusicXML.com</a> - Sample files</li>
+<li>Export from your own notation software</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md44"></a>
+What if I don't have a MusicXML file?</h2>
+<p >You have several options:</p>
+<ol type="1">
+<li><b>Convert from MIDI</b>: Import MIDI files into MuseScore (free) and export as MusicXML</li>
+<li><b>Scan PDF scores</b>: Use OMR (Optical Music Recognition) software:<ul>
+<li><a href="https://musescore.com/import">MuseScore Import</a> - Experimental, free</li>
+<li><a href="https://acestudio.ai/pdf-to-musicxml/">ACE Studio PDF to MusicXML</a> - Free converter</li>
+<li><a href="https://www.avid.com/photoscore-and-notateme-lite">Sibelius PhotoScore</a> - Professional option</li>
+</ul>
+</li>
+<li><b>Use included examples</b>: Maialib comes with 7 classical works ready to analyze!</li>
+</ol>
+<h2><a class="anchor" id="autotoc_md45"></a>
+Do I need programming experience?</h2>
+<p ><b>Beginner-friendly:</b> If you've never programmed before, start with our <a href="https://github.com/nyckmaia/maialib/tree/main/python-tutorial">interactive tutorials</a>. Basic Python knowledge helps, but you can learn as you go. Most common tasks require just 3-5 lines of code.</p>
+<p ><b>Intermediate users:</b> If you know Python basics, you'll be productive immediately.</p>
+<p ><b>Advanced users:</b> Full C++ source code available for custom extensions.</p>
+<h2><a class="anchor" id="autotoc_md46"></a>
+Can I use Maialib for commercial projects?</h2>
+<p >Yes! Maialib is licensed under GPL-3.0, which allows commercial use. However:</p>
+<ul>
+<li>✅ You can use Maialib in commercial research, analysis, or composition</li>
+<li>✅ You can sell music created or analyzed with Maialib</li>
+<li>⚠️ If you distribute software that uses Maialib, you must also license it under GPL-3.0</li>
+<li>📖 See EFB8%8F-license "license details" below</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md47"></a>
+How do I cite Maialib in my research?</h2>
+<div class="fragment"><div class="line">@software{maialib2024,</div>
+<div class="line">  author = {Maia, Nycholas},</div>
+<div class="line">  title = {Maialib: Music Analysis Library},</div>
+<div class="line">  year = {2024},</div>
+<div class="line">  url = {https://github.com/nyckmaia/maialib},</div>
+<div class="line">  version = {1.0}</div>
+<div class="line">}</div>
+</div><!-- fragment --><p >Text citation: "Analysis performed using Maialib (Maia, 2024), a Python library for computational musicology."</p>
+<h2><a class="anchor" id="autotoc_md48"></a>
+Does Maialib work with MIDI files?</h2>
+<p >Not directly. Maialib is designed for MusicXML, which contains more musical information than MIDI (articulations, dynamics, score layout). However, you can:</p>
+<ol type="1">
+<li>Convert MIDI → MusicXML using MuseScore</li>
+<li>Load the MusicXML file into Maialib</li>
+<li>Export back to MIDI if needed</li>
+</ol>
+<h2><a class="anchor" id="autotoc_md49"></a>
+How is this different from notation software like MuseScore or Finale?</h2>
+<p ><b>Notation Software</b> (MuseScore, Finale, Sibelius):</p>
+<ul>
+<li>Visual editing of scores</li>
+<li>Playback and engraving</li>
+<li>Manual analysis</li>
+</ul>
+<p ><b>Maialib</b>:</p>
+<ul>
+<li>Programmatic analysis at scale</li>
+<li>Statistical and computational musicology</li>
+<li>Batch processing hundreds of scores</li>
+<li>Algorithmic composition</li>
+<li>Integration with data science tools</li>
+</ul>
+<p ><b>Use both together!</b> Edit scores in MuseScore, analyze them with Maialib.</p>
+<h2><a class="anchor" id="autotoc_md50"></a>
+What Python version do I need?</h2>
+<p >Maialib supports <b>Python 3.8 through 3.14</b>. Check your version:</p>
+<div class="fragment"><div class="line">python --version</div>
+</div><!-- fragment --><h2><a class="anchor" id="autotoc_md51"></a>
+Can I contribute to Maialib?</h2>
+<p >Absolutely! We welcome:</p>
+<ul>
+<li>🐛 Bug reports and fixes</li>
+<li>✨ Feature requests and implementations</li>
+<li>📚 Documentation improvements</li>
+<li>🌍 Translation help</li>
+<li>🎵 Example scores and tutorials</li>
+</ul>
+<p >See CONTRIBUTING.md to get started.</p>
+<h2><a class="anchor" id="autotoc_md52"></a>
+Is there a community?</h2>
+<p >Yes! Connect with other Maialib users:</p>
+<ul>
+<li>💬 <a href="https://github.com/nyckmaia/maialib/discussions">GitHub Discussions</a> - Ask questions, share projects</li>
+<li>🐛 <a href="https://github.com/nyckmaia/maialib/issues">Issue Tracker</a> - Report bugs, request features</li>
+<li>📧 <a href="#" onclick="location.href='mai'+'lto:'+'nyc'+'km'+'aia'+'@g'+'mai'+'l.'+'com'; return false;">Email maintainer</a> - Direct contact</li>
+</ul>
+<hr  />
+<h1><a class="anchor" id="autotoc_md54"></a>
+🤝 Community &amp; Support</h1>
+<h2><a class="anchor" id="autotoc_md55"></a>
+Get Help</h2>
+<ul>
+<li>💬 <b><a href="https://github.com/nyckmaia/maialib/discussions">GitHub Discussions</a></b> - Ask questions, share your projects</li>
+<li>🐛 <b><a href="https://github.com/nyckmaia/maialib/issues">Issue Tracker</a></b> - Report bugs or request features</li>
+<li>📖 <b><a href="https://maialib.com">Documentation</a></b> - Complete API reference</li>
+<li>📧 **<a href="#" onclick="location.href='mai'+'lto:'+'nyc'+'km'+'aia'+'@g'+'mai'+'l.'+'com'; return false;">Email</a>** - Contact the maintainer</li>
+</ul>
+<h2><a class="anchor" id="autotoc_md56"></a>
+Share Your Work</h2>
+<p >Built something cool with Maialib? We'd love to hear about it!</p>
+<ul>
+<li>Share in <a href="https://github.com/nyckmaia/maialib/discussions/categories/show-and-tell">GitHub Discussions</a></li>
+<li>Tag <code>#maialib</code> on social media</li>
+<li>Submit your project to our showcase</li>
+</ul>
+<hr  />
+<h1><a class="anchor" id="autotoc_md58"></a>
+🌟 Contributing</h1>
+<p >We welcome contributions from musicians, programmers, and researchers!</p>
+<p ><b>Ways to contribute:</b></p>
+<ul>
+<li>🐛 Report bugs or suggest features in <a href="https://github.com/nyckmaia/maialib/issues">Issues</a></li>
+<li>📝 Improve documentation or tutorials</li>
+<li>🎵 Share example scores or analysis notebooks</li>
+<li>💻 Submit code improvements via Pull Requests</li>
+</ul>
+<p ><b>Getting started:</b></p>
+<ol type="1">
+<li>Fork the repository</li>
+<li>Make your improvements</li>
+<li>Submit a Pull Request</li>
+</ol>
+<p >See CONTRIBUTING.md for detailed guidelines.</p>
+<hr  />
+<h1><a class="anchor" id="autotoc_md60"></a>
+📖 Citation</h1>
+<p >If you use Maialib in your research, please cite:</p>
+<div class="fragment"><div class="line">@software{maialib2022,</div>
+<div class="line">  author = {Maia, Nycholas},</div>
+<div class="line">  title = {Maialib: Music Analysis Library for Computational Musicology},</div>
+<div class="line">  year = {2022},</div>
+<div class="line">  publisher = {GitHub},</div>
+<div class="line">  url = {https://github.com/nyckmaia/maialib},</div>
+<div class="line">  version = {1.10.0}</div>
+<div class="line">}</div>
+</div><!-- fragment --><p ><b>Text format:</b></p>
+<blockquote class="doxtable">
+<p >&zwj;Maia, N. (2022). <em>Maialib: Music Analysis Library for Computational Musicology</em> (Version 1.10.0) [Computer software]. <a href="https://github.com/nyckmaia/maialib">https://github.com/nyckmaia/maialib</a> </p>
+</blockquote>
+<h1><a class="anchor" id="autotoc_md61"></a>
+&lt;/blockquote&gt;</h1>
+<h1><a class="anchor" id="autotoc_md62"></a>
+⚖️ License</h1>
+<p >Maialib is licensed under the <b><a href="https://www.gnu.org/licenses/gpl-3.0.html">GNU General Public License v3.0</a></b>.</p>
+<p ><b>What this means in plain language:</b></p>
+<p >✅ <b>You CAN:</b></p>
+<ul>
+<li>Use Maialib for personal projects, research, and commercial work</li>
+<li>Modify the source code</li>
+<li>Distribute modified versions</li>
+<li>Use it in academic publications</li>
+</ul>
+<p >⚠️ <b>You MUST:</b></p>
+<ul>
+<li>Keep the same GPL-3.0 license if you distribute modified versions</li>
+<li>Provide source code if you distribute software that includes Maialib</li>
+<li>Give credit to the original authors</li>
+</ul>
+<p >📚 <b>For academic use:</b> Simply cite Maialib in your publications (see Citation)</p>
+<p >🎵 <b>For creative work:</b> Music you create or analyze with Maialib is yours - the license only applies to the software itself.</p>
+<p ><b>Questions about licensing?</b> <a href="#" onclick="location.href='mai'+'lto:'+'nyc'+'km'+'aia'+'@g'+'mai'+'l.'+'com'; return false;">Contact us</a></p>
+<hr  />
+<h1><a class="anchor" id="autotoc_md64"></a>
+📖 Glossary</h1>
+<p ><details>
+ <summary>Click to expand - Terms for non-programmers</summary></details>
+</p>
+<p ><details>
+</p><ul>
+<li><b>API</b>: Application Programming Interface - the set of functions and commands available in Maialib</li>
+<li><b>DataFrame</b>: A table-like data structure (like Excel spreadsheets) used for organizing and analyzing data</li>
+<li><b>MusicXML</b>: Standard file format for musical notation, readable by most music software</li>
+<li><b>MIDI</b>: Musical Instrument Digital Interface - a simpler music format focusing on performance data</li>
+<li><b>Python Package</b>: Pre-built software you install with one command (<code>pip install</code>)</li>
+<li><b>pip</b>: Python's package installer - the tool used to install Maialib</li>
+<li><b>Transpose</b>: Shift all notes up or down by a specific interval</li>
+<li><b><a class="el" href="class_chord.html" title="Represents a musical chord.">Chord</a> Quality</b>: The type of chord (major, minor, diminished, augmented, etc.)</li>
+<li><b>Pitch Class</b>: The note name without octave (C, D, E, etc.)</li>
+<li><b>Harmonic Analysis</b>: Studying chords and their relationships in music</li>
+<li><b>Melodic Contour</b>: The shape of a melody (ascending, descending, etc.)</li>
+<li><b>Dissonance</b>: Musical tension or roughness between simultaneous notes</li>
+</ul>
+<p></details>
+</p>
+<p ><details>
+</details>
+</p>
+<hr  />
+<div align="center"></div><div align="center"><b>Made with ❤️ for musicians and researchers</b></div><div align="center"><a href="https://github.com/nyckmaia/maialib">⭐ Star us on GitHub</a> | <a href="https://github.com/nyckmaia/maialib/issues">🐛 Report Issues</a> | <a href="https://github.com/nyckmaia/maialib/discussions">💬 Join Discussions</a></div><div align="center"></div> </div></div><!-- PageDoc -->
 </div><!-- contents -->
 </div><!-- doc-content -->
 <!-- start footer part -->
