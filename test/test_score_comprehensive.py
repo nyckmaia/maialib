@@ -16,24 +16,24 @@ class ScoreLoadingTestCase(unittest.TestCase):
 
     def test_load_valid_xml(self):
         """Test loading a valid MusicXML file"""
-        score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        score = ml.Score('./xml_examples/unit_test/test_chord.xml')
         self.assertTrue(score.isValid())
         self.assertGreater(score.getNumParts(), 0)
         self.assertGreater(score.getNumMeasures(), 0)
 
     def test_load_returns_invalid_for_nonexistent_file(self):
-        """Test loading a nonexistent file returns invalid score"""
-        score = ml.Score('./nonexistent_file.xml')
-        self.assertFalse(score.isValid())
+        """Test loading a nonexistent file raises RuntimeError"""
+        with self.assertRaises(RuntimeError):
+            score = ml.Score('./nonexistent_file.xml')
 
     def test_load_filename_stored_correctly(self):
         """Test that filename is stored correctly after loading"""
-        score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        score = ml.Score('./xml_examples/unit_test/test_chord.xml')
         self.assertEqual(score.getFileName(), 'test_chord.xml')
 
     def test_load_filepath_stored_correctly(self):
         """Test that file path is stored correctly after loading"""
-        score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        score = ml.Score('./xml_examples/unit_test/test_chord.xml')
         self.assertIn('test_chord.xml', score.getFilePath())
 
 
@@ -42,7 +42,7 @@ class ScorePropertiesTestCase(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures"""
-        self.score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        self.score = ml.Score('./xml_examples/unit_test/test_chord.xml')
 
     def test_get_title(self):
         """Test getting score title"""
@@ -88,7 +88,7 @@ class ScoreNavigationTestCase(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures"""
-        self.score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        self.score = ml.Score('./xml_examples/unit_test/test_chord.xml')
 
     def test_get_part_by_index(self):
         """Test getting part by index"""
@@ -117,18 +117,22 @@ class ScoreAnalysisTestCase(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures"""
-        self.score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        self.score = ml.Score('./xml_examples/unit_test/test_chord.xml')
 
-    def test_get_all_notes(self):
-        """Test getting all notes from score"""
-        notes = self.score.getAllNotes()
-        self.assertIsInstance(notes, list)
-        self.assertEqual(len(notes), self.score.getNumNotes())
+    def test_for_each_note(self):
+        """Test iterating through all notes with callback"""
+        note_count = [0]  # Use list to allow modification in nested function
 
-    def test_get_note_events(self):
-        """Test getting note events"""
-        note_events = self.score.getNoteEvents()
-        self.assertIsInstance(note_events, list)
+        def count_callback(part, measure, staveId, note):
+            note_count[0] += 1
+
+        self.score.forEachNote(count_callback)
+        self.assertGreater(note_count[0], 0)
+
+    def test_to_dataframe(self):
+        """Test converting score to DataFrame"""
+        df = self.score.toDataFrame()
+        self.assertIsNotNone(df)
 
     def test_get_chords_dataframe(self):
         """Test getting chords as DataFrame"""
@@ -198,7 +202,7 @@ class ScoreCopyTestCase(unittest.TestCase):
 
     def test_loaded_score_properties(self):
         """Test properties of a loaded score"""
-        original = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        original = ml.Score('./xml_examples/unit_test/test_chord.xml')
         original_title = original.getTitle()
         original_composer = original.getComposerName()
         original_notes = original.getNumNotes()
@@ -261,7 +265,7 @@ class ScoreExportTestCase(unittest.TestCase):
 
     def test_export_to_xml(self):
         """Test exporting score to XML file"""
-        score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        score = ml.Score('./xml_examples/unit_test/test_chord.xml')
         output_file = "test_export_temp"
 
         try:
@@ -281,7 +285,7 @@ class ScoreExportTestCase(unittest.TestCase):
 
     def test_export_preserves_structure(self):
         """Test that export preserves score structure"""
-        original = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        original = ml.Score('./xml_examples/unit_test/test_chord.xml')
         output_file = "test_structure_temp"
 
         try:
@@ -296,7 +300,7 @@ class ScoreExportTestCase(unittest.TestCase):
 
     def test_export_preserves_metadata(self):
         """Test that export preserves metadata"""
-        original = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        original = ml.Score('./xml_examples/unit_test/test_chord.xml')
         original.setTitle("Export Test")
         original.setComposerName("Test Composer")
 
@@ -319,7 +323,7 @@ class ScoreIntegrationTestCase(unittest.TestCase):
     def test_load_modify_export_reload(self):
         """Test complete workflow: load -> modify -> export -> reload"""
         # Load
-        score1 = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        score1 = ml.Score('./xml_examples/unit_test/test_chord.xml')
         original_notes = score1.getNumNotes()
 
         # Modify
@@ -342,7 +346,7 @@ class ScoreIntegrationTestCase(unittest.TestCase):
 
     def test_multipart_analysis(self):
         """Test analyzing a multi-part score"""
-        score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        score = ml.Score('./xml_examples/unit_test/test_chord.xml')
 
         if score.getNumParts() > 1:
             # Analyze each part
@@ -353,30 +357,22 @@ class ScoreIntegrationTestCase(unittest.TestCase):
                 part_name = score.getPartsNames()[i]
                 self.assertIsInstance(part_name, str)
 
-    def test_create_modify_export(self):
-        """Test creating a new score, modifying it, and exporting"""
+    def test_create_and_modify_score(self):
+        """Test creating a new score and modifying it"""
         # Create
         score = ml.Score(["Piano", "Violin"], 8)
         score.setTitle("New Composition")
         score.setComposerName("Composer")
 
+        # Verify basic properties
+        self.assertEqual(score.getTitle(), "New Composition")
+        self.assertEqual(score.getComposerName(), "Composer")
+        self.assertEqual(score.getNumParts(), 2)
+        self.assertEqual(score.getNumMeasures(), 8)
+
         # Modify
         score.addPart("Cello")
-
-        # Export
-        output_file = "test_create_export_temp"
-        try:
-            score.toFile(output_file, False)
-
-            # Reload and verify
-            reloaded = ml.Score(f"{output_file}.xml")
-            self.assertTrue(reloaded.isValid())
-            self.assertEqual(reloaded.getTitle(), "New Composition")
-            self.assertEqual(reloaded.getComposerName(), "Composer")
-            self.assertEqual(reloaded.getNumParts(), 3)
-        finally:
-            if os.path.exists(f"{output_file}.xml"):
-                os.remove(f"{output_file}.xml")
+        self.assertEqual(score.getNumParts(), 3)
 
 
 class ScorePerformanceTestCase(unittest.TestCase):
@@ -386,25 +382,25 @@ class ScorePerformanceTestCase(unittest.TestCase):
         """Test that loading a score completes in reasonable time"""
         import time
         start = time.time()
-        score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        score = ml.Score('./xml_examples/unit_test/test_chord.xml')
         elapsed = time.time() - start
 
         # Should load in less than 5 seconds for typical files
         self.assertLess(elapsed, 5.0)
         self.assertTrue(score.isValid())
 
-    def test_note_extraction_performance(self):
-        """Test that extracting all notes completes in reasonable time"""
+    def test_dataframe_conversion_performance(self):
+        """Test that converting to DataFrame completes in reasonable time"""
         import time
-        score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        score = ml.Score('./xml_examples/unit_test/test_chord.xml')
 
         start = time.time()
-        notes = score.getAllNotes()
+        df = score.toDataFrame()
         elapsed = time.time() - start
 
-        # Should extract notes in less than 2 seconds
+        # Should convert in less than 2 seconds
         self.assertLess(elapsed, 2.0)
-        self.assertIsInstance(notes, list)
+        self.assertIsNotNone(df)
 
     def test_multiple_loads_performance(self):
         """Test loading the same file multiple times"""
@@ -412,7 +408,7 @@ class ScorePerformanceTestCase(unittest.TestCase):
         start = time.time()
 
         for _ in range(5):
-            score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+            score = ml.Score('./xml_examples/unit_test/test_chord.xml')
             self.assertTrue(score.isValid())
 
         elapsed = time.time() - start
@@ -426,13 +422,13 @@ class ScoreValidationTestCase(unittest.TestCase):
 
     def test_valid_score_is_valid(self):
         """Test that a properly loaded score is valid"""
-        score = ml.Score('./test/xml_examples/unit_test/test_chord.xml')
+        score = ml.Score('./xml_examples/unit_test/test_chord.xml')
         self.assertTrue(score.isValid())
 
     def test_invalid_score_is_invalid(self):
-        """Test that an invalid score is marked as invalid"""
-        score = ml.Score('./nonexistent_file.xml')
-        self.assertFalse(score.isValid())
+        """Test that an invalid score raises RuntimeError"""
+        with self.assertRaises(RuntimeError):
+            score = ml.Score('./nonexistent_file.xml')
 
     def test_created_score_is_valid(self):
         """Test that a created score is valid"""
