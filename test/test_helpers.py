@@ -62,76 +62,76 @@ class midiNote2freq(unittest.TestCase):
 
 
 class Freq2midiNote(unittest.TestCase):
-    def OctavesValues(self):
+    def test_octaves_values(self):
         indexes = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
-        for i in enumerate(indexes):
+        for i in indexes:
             result = ml.Helper.freq2midiNote((pow(2, i)) * 110.0)
-            self.assertEqual(result.first, 45 + (12 * i))
-            self.assertEqual(result.second, 0)
+            self.assertEqual(result[0], 45 + (12 * i))
+            self.assertEqual(result[1], 0)
 
-    def centsValues(self):
+    def test_cents_values(self):
         # base frequency = 29.135, base midiNote = 22
         result01 = ml.Helper.freq2midiNote(30.1)
-        self.assertEqual(result01.first, 23)
-        self.assertEqual(result01.second, -44)
+        self.assertEqual(result01[0], 23)
+        self.assertEqual(result01[1], -44)
 
         # base frequency = 195.998, base midiNote = 55
         result02 = ml.Helper.freq2midiNote(202.0)
-        self.assertEqual(result02.first, 56)
-        self.assertEqual(result02.second, -48)
+        self.assertEqual(result02[0], 56)
+        self.assertEqual(result02[1], -48)
 
         # base frequency = 466.164, base midiNote = 70
         result03 = ml.Helper.freq2midiNote(481.0)
-        self.assertEqual(result03.first, 71)
-        self.assertEqual(result03.second, -46)
+        self.assertEqual(result03[0], 71)
+        self.assertEqual(result03[1], -46)
 
         # base frequency = 1661.219, base midiNote = 92
         result04 = ml.Helper.freq2midiNote(1712.0)
-        self.assertEqual(result04.first, 93)
-        self.assertEqual(result04.second, -48)
+        self.assertEqual(result04[0], 93)
+        self.assertEqual(result04[1], -48)
 
         # base frequency = 3135.963, base midiNote = 103
         result05 = ml.Helper.freq2midiNote(3270.0)
-        self.assertEqual(result05.first, 104)
-        self.assertEqual(result05.second, -28)
+        self.assertEqual(result05[0], 104)
+        self.assertEqual(result05[1], -28)
 
         # base frequency =3951.056, base midiNote = 107
         result06 = ml.Helper.freq2midiNote(4080.0)
-        self.assertEqual(result06.first, 108)
-        self.assertEqual(result06.second, -44)
+        self.assertEqual(result06[0], 108)
+        self.assertEqual(result06[1], -44)
 
         # b) Testing for frequencies with values slighter smaller than the base frequency.
         # the output note must be the base MidiNote -1. So cents are positive and smaller than 50.
 
         # base frequency = 29.135, base midiNote = 22
         result07 = ml.Helper.freq2midiNote(28.0)
-        self.assertEqual(result07.first, 21)
-        self.assertEqual(result07.second, 31)
+        self.assertEqual(result07[0], 21)
+        self.assertEqual(result07[1], 31)
 
         # base frequency = 195.998, base midiNote = 55
         result08 = ml.Helper.freq2midiNote(189.0)
-        self.assertEqual(result08.first, 54)
-        self.assertEqual(result08.second, 37)
+        self.assertEqual(result08[0], 54)
+        self.assertEqual(result08[1], 37)
 
         # base frequency = 466.164, base midiNote = 70
         result09 = ml.Helper.freq2midiNote(450.0)
-        self.assertEqual(result09.first, 69)
-        self.assertEqual(result09.second, 39)
+        self.assertEqual(result09[0], 69)
+        self.assertEqual(result09[1], 39)
 
         # base frequency = 1661.219, base midiNote = 92
         result10 = ml.Helper.freq2midiNote(1605.0)
-        self.assertEqual(result10.first, 91)
-        self.assertEqual(result10.second, 40)
+        self.assertEqual(result10[0], 91)
+        self.assertEqual(result10[1], 40)
 
         # base frequency = 3135.963, base midiNote = 103
         result11 = ml.Helper.freq2midiNote(3035.0)
-        self.assertEqual(result11.first, 102)
-        self.assertEqual(result11.second, 43)
+        self.assertEqual(result11[0], 102)
+        self.assertEqual(result11[1], 43)
 
         # base frequency =3951.056, base midiNote = 107
         result12 = ml.Helper.freq2midiNote(3828.0)
-        self.assertEqual(result12.first, 106)
-        self.assertEqual(result12.second, 45)
+        self.assertEqual(result12[0], 106)
+        self.assertEqual(result12[1], 45)
 
 
 class midiNote2pitch(unittest.TestCase):
