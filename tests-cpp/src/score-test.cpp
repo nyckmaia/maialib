@@ -573,3 +573,158 @@ TEST(ScoreComplex, LoadAndExportRoundTrip) {
   EXPECT_EQ(score2.getNumMeasures(), originalMeasures);
   EXPECT_EQ(score2.getNumParts(), originalParts);
 }
+
+// ====================
+// Copy Constructor and Assignment Operator Tests
+// ====================
+
+TEST(ScoreCopySemantics, CopyConstructorBasicProperties) {
+  // Create original score with properties
+  Score original({"Piano", "Violin"}, 8);
+  original.setTitle("Test Symphony");
+  original.setComposerName("Test Composer");
+
+  // Copy using copy constructor
+  Score copy(original);
+
+  // Verify all basic properties are copied
+  EXPECT_EQ(copy.getTitle(), "Test Symphony");
+  EXPECT_EQ(copy.getComposerName(), "Test Composer");
+  EXPECT_EQ(copy.getNumParts(), 2);
+  EXPECT_EQ(copy.getNumMeasures(), 8);
+
+  // Verify part names are copied
+  std::vector<std::string> copyPartNames = copy.getPartsNames();
+  EXPECT_EQ(copyPartNames.size(), 2);
+  EXPECT_EQ(copyPartNames[0], "Piano");
+  EXPECT_EQ(copyPartNames[1], "Violin");
+}
+
+TEST(ScoreCopySemantics, CopyConstructorFromLoadedXML) {
+  // Load a score from XML
+  Score original("./test/xml_examples/unit_test/test_chord.xml");
+  EXPECT_TRUE(original.isValid());
+
+  std::string originalTitle = original.getTitle();
+  std::string originalComposer = original.getComposerName();
+  std::string originalFileName = original.getFileName();
+  std::string originalFilePath = original.getFilePath();
+  int originalNotes = original.getNumNotes();
+  int originalMeasures = original.getNumMeasures();
+  int originalParts = original.getNumParts();
+
+  // Copy using copy constructor
+  Score copy(original);
+
+  // Verify all properties are copied
+  EXPECT_EQ(copy.getTitle(), originalTitle);
+  EXPECT_EQ(copy.getComposerName(), originalComposer);
+  EXPECT_EQ(copy.getFileName(), originalFileName);
+  EXPECT_EQ(copy.getFilePath(), originalFilePath);
+  EXPECT_EQ(copy.getNumNotes(), originalNotes);
+  EXPECT_EQ(copy.getNumMeasures(), originalMeasures);
+  EXPECT_EQ(copy.getNumParts(), originalParts);
+  EXPECT_TRUE(copy.isValid());
+}
+
+TEST(ScoreCopySemantics, CopyConstructorIndependence) {
+  // Create original score
+  Score original({"Piano"}, 4);
+  original.setTitle("Original Title");
+
+  // Copy using copy constructor
+  Score copy(original);
+
+  // Modify original
+  original.setTitle("Modified Title");
+  original.addPart("Violin");
+
+  // Verify copy is independent (title should remain unchanged)
+  EXPECT_EQ(copy.getTitle(), "Original Title");
+  EXPECT_EQ(copy.getNumParts(), 1);
+
+  // Verify original was modified
+  EXPECT_EQ(original.getTitle(), "Modified Title");
+  EXPECT_EQ(original.getNumParts(), 2);
+}
+
+TEST(ScoreCopySemantics, AssignmentOperatorBasicProperties) {
+  // Create original score
+  Score original({"Flute", "Clarinet"}, 6);
+  original.setTitle("Wind Ensemble");
+  original.setComposerName("Composer A");
+
+  // Create another score and assign
+  Score assigned({"Cello"}, 3);
+  assigned.setTitle("String Piece");
+
+  assigned = original;
+
+  // Verify all properties are assigned
+  EXPECT_EQ(assigned.getTitle(), "Wind Ensemble");
+  EXPECT_EQ(assigned.getComposerName(), "Composer A");
+  EXPECT_EQ(assigned.getNumParts(), 2);
+  EXPECT_EQ(assigned.getNumMeasures(), 6);
+
+  // Verify part names
+  std::vector<std::string> assignedPartNames = assigned.getPartsNames();
+  EXPECT_EQ(assignedPartNames.size(), 2);
+  EXPECT_EQ(assignedPartNames[0], "Flute");
+  EXPECT_EQ(assignedPartNames[1], "Clarinet");
+}
+
+TEST(ScoreCopySemantics, AssignmentOperatorFromLoadedXML) {
+  // Load a score from XML
+  Score original("./test/xml_examples/unit_test/test_chord.xml");
+  EXPECT_TRUE(original.isValid());
+
+  std::string originalTitle = original.getTitle();
+  std::string originalFileName = original.getFileName();
+  int originalNotes = original.getNumNotes();
+
+  // Create another score and assign
+  Score assigned({"Piano"}, 1);
+  assigned = original;
+
+  // Verify all properties are assigned
+  EXPECT_EQ(assigned.getTitle(), originalTitle);
+  EXPECT_EQ(assigned.getFileName(), originalFileName);
+  EXPECT_EQ(assigned.getNumNotes(), originalNotes);
+  EXPECT_TRUE(assigned.isValid());
+}
+
+TEST(ScoreCopySemantics, AssignmentOperatorIndependence) {
+  // Create original score
+  Score original({"Trumpet"}, 5);
+  original.setTitle("Brass Fanfare");
+
+  // Create another score and assign
+  Score assigned({"Tuba"}, 2);
+  assigned = original;
+
+  // Modify original
+  original.setTitle("Modified Fanfare");
+  original.addPart("Trombone");
+
+  // Verify assigned score is independent
+  EXPECT_EQ(assigned.getTitle(), "Brass Fanfare");
+  EXPECT_EQ(assigned.getNumParts(), 1);
+
+  // Verify original was modified
+  EXPECT_EQ(original.getTitle(), "Modified Fanfare");
+  EXPECT_EQ(original.getNumParts(), 2);
+}
+
+TEST(ScoreCopySemantics, AssignmentOperatorSelfAssignment) {
+  // Create a score
+  Score score({"Piano"}, 4);
+  score.setTitle("Self Test");
+
+  // Self-assignment should be safe
+  score = score;
+
+  // Verify score is unchanged
+  EXPECT_EQ(score.getTitle(), "Self Test");
+  EXPECT_EQ(score.getNumParts(), 1);
+  EXPECT_EQ(score.getNumMeasures(), 4);
+}

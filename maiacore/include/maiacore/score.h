@@ -505,6 +505,8 @@ class Score {
     Score(const Score& other) {
         _title = other._title;
         _composerName = other._composerName;
+        _filePath = other._filePath;
+        _fileName = other._fileName;
         _part = other._part;
         _numParts = other._numParts;
         _numMeasures = other._numMeasures;
@@ -513,6 +515,17 @@ class Score {
         _haveTypeTag = other._haveTypeTag;
         _isLoadedXML = other._isLoadedXML;
         _lcmDivisionsPerQuarterNote = other._lcmDivisionsPerQuarterNote;
+        _stackedChords = other._stackedChords;
+        _haveAnacrusisMeasure = other._haveAnacrusisMeasure;
+
+        // Deep copy of XML document
+        _doc.reset(other._doc);
+
+        // Invalidate caches - they will be rebuilt when needed
+        _isNoteEventsCached = false;
+        _isNoteEventsPerPartCached = false;
+        _cachedNoteEvents.clear();
+        _cachedNoteEventsPerPart.clear();
     }
 
     /**
@@ -522,9 +535,11 @@ class Score {
      */
     Score& operator=(const Score& other) {
         if (this == &other) return *this;
-        
+
         _title = other._title;
         _composerName = other._composerName;
+        _filePath = other._filePath;
+        _fileName = other._fileName;
         _part = other._part;
         _numParts = other._numParts;
         _numMeasures = other._numMeasures;
@@ -533,8 +548,18 @@ class Score {
         _haveTypeTag = other._haveTypeTag;
         _isLoadedXML = other._isLoadedXML;
         _lcmDivisionsPerQuarterNote = other._lcmDivisionsPerQuarterNote;
+        _stackedChords = other._stackedChords;
         _haveAnacrusisMeasure = other._haveAnacrusisMeasure;
-        
+
+        // Deep copy of XML document
+        _doc.reset(other._doc);
+
+        // Invalidate caches - they will be rebuilt when needed
+        _isNoteEventsCached = false;
+        _isNoteEventsPerPartCached = false;
+        _cachedNoteEvents.clear();
+        _cachedNoteEventsPerPart.clear();
+
         return *this;
     }
 
