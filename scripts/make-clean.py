@@ -6,16 +6,17 @@ from terminal_colors import *
 
 numArgs = len(sys.argv)
 
-if (numArgs != 2):
+if numArgs != 2:
     print(
-        f"{color.FAIL}[ERROR] You MUST pass 1 argument: 'all', 'static', 'shared', 'module' or 'dist'!{color.ENDC}")
+        f"{color.FAIL}[ERROR] You MUST pass 1 argument: 'all', 'static', 'shared', 'module' or 'dist'!{color.ENDC}"
+    )
 
 cleanOption = sys.argv[1]
 
 # ===== VALIDATE INPUT ARGUMENTS ===== #
 
 
-if (cleanOption == "all"):
+if cleanOption == "all":
     print(f"{color.OKGREEN}Deleting 'build' and 'dist' folders...{color.ENDC}", end="")
 
     rmtree("./build", True)
@@ -36,7 +37,7 @@ if (cleanOption == "all"):
         os.remove(".coverage")
 
     # Delete *.pyi files
-    files = glob.glob('./maialib/**/*.pyi', recursive=True)
+    files = glob.glob("./maialib/**/*.pyi", recursive=True)
 
     for f in files:
         try:
@@ -47,7 +48,7 @@ if (cleanOption == "all"):
     print(f"{color.OKGREEN}Done!{color.ENDC}")
     sys.exit()
 
-if (cleanOption == "dist"):
+if cleanOption == "dist":
     print(f"{color.OKGREEN}Deleting 'dist' folder...{color.ENDC}", end="")
     rmtree("./dist", True)
     rmtree("./stubs", True)

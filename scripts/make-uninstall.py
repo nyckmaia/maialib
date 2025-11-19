@@ -3,16 +3,19 @@ import platform
 from shutil import rmtree
 from terminal_colors import *
 
+
 def isInstalled():
     try:
         import maialib
+
         return True
     except:
         return False
 
+
 isMaialibInstalled = isInstalled()
 
-if (isMaialibInstalled == True):
+if isMaialibInstalled == True:
     print(f"{color.OKGREEN}Uninstalling Maialib Python Module...{color.ENDC}")
 
     # Get the Operational System

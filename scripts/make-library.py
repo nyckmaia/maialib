@@ -6,9 +6,8 @@ from terminal_colors import *
 
 numArgs = len(sys.argv)
 
-if (numArgs != 3):
-    print(
-        f"{color.FAIL}[ERROR] You MUST pass 2 arguments: 'libType' and 'buildType'!{color.ENDC}")
+if numArgs != 3:
+    print(f"{color.FAIL}[ERROR] You MUST pass 2 arguments: 'libType' and 'buildType'!{color.ENDC}")
 
 # Get input command line arguments
 libType = sys.argv[1]
@@ -29,7 +28,7 @@ path.mkdir(parents=True, exist_ok=True)
 CppCompiler = "clang++" if myOS == "Windows" else "g++"
 
 # Base CMake command to build the python module
-cmakeCommand = f"cmake -G \"Unix Makefiles\" -B {path} -S . -DPYBIND_LIB=OFF -DCMAKE_BUILD_TYPE={buildType} -DCMAKE_CXX_COMPILER={CppCompiler} -DSQLITECPP_RUN_CPPLINT=OFF"
+cmakeCommand = f'cmake -G "Unix Makefiles" -B {path} -S . -DPYBIND_LIB=OFF -DCMAKE_BUILD_TYPE={buildType} -DCMAKE_CXX_COMPILER={CppCompiler} -DSQLITECPP_RUN_CPPLINT=OFF'
 if myOS == "Windows":
     cmakeCommand += ' -DCMAKE_MAKE_PROGRAM="C:/msys64/clang64/bin/mingw32-make.exe"'
 

@@ -2,15 +2,15 @@ import unittest
 import maialib as ml
 
 
-def isFloatEq(x, y, epslon=1E-3):
+def isFloatEq(x, y, epslon=1e-3):
     return abs(x - y) < epslon
+
 
 # ===== TEST MAIALIB FUNCTIONS ===== #
 
 
 class midiNote2freq(unittest.TestCase):
     def testMidiValuesTable(self):
-
         # Special Cases
         self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(-1), 0.00), True)
         self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(0), 8.175), True)
@@ -46,32 +46,19 @@ class midiNote2freq(unittest.TestCase):
         self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(72), 523.251), True)
 
         # Piano Higher Octave: From C7 to C8
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(96), 2093.005), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(97), 2217.461), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(98), 2349.318), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(99), 2489.016), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(100), 2637.020), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(101), 2793.826), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(102), 2959.955), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(103), 3135.963), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(104), 3322.438), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(105), 3520.000), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(106), 3729.310), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(107), 3951.066), True)
-        self.assertEqual(
-            isFloatEq(ml.Helper.midiNote2freq(108), 4186.009), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(96), 2093.005), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(97), 2217.461), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(98), 2349.318), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(99), 2489.016), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(100), 2637.020), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(101), 2793.826), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(102), 2959.955), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(103), 3135.963), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(104), 3322.438), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(105), 3520.000), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(106), 3729.310), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(107), 3951.066), True)
+        self.assertEqual(isFloatEq(ml.Helper.midiNote2freq(108), 4186.009), True)
 
 
 class Freq2midiNote(unittest.TestCase):
@@ -151,10 +138,10 @@ class midiNote2pitch(unittest.TestCase):
     def testNegativeValue_restCase(self):
         # Any negative number - rest
         self.assertEqual(ml.Helper.midiNote2pitch(-1, "bb"), "rest")
-        self.assertEqual(ml.Helper.midiNote2pitch(-1, "b"),  "rest")
-        self.assertEqual(ml.Helper.midiNote2pitch(-1),       "rest")
-        self.assertEqual(ml.Helper.midiNote2pitch(-1, "#"),  "rest")
-        self.assertEqual(ml.Helper.midiNote2pitch(-1, "x"),  "rest")
+        self.assertEqual(ml.Helper.midiNote2pitch(-1, "b"), "rest")
+        self.assertEqual(ml.Helper.midiNote2pitch(-1), "rest")
+        self.assertEqual(ml.Helper.midiNote2pitch(-1, "#"), "rest")
+        self.assertEqual(ml.Helper.midiNote2pitch(-1, "x"), "rest")
 
     def testTwelveTonesOctave4(self):
         # Just to remeber how to redirect C++ Stderr
@@ -169,34 +156,34 @@ class midiNote2pitch(unittest.TestCase):
 
         # Flat
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(60, "b"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(60, "b"), "")
 
         # Natural
         self.assertEqual(ml.Helper.midiNote2pitch(60), "C4")
 
         # Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(60, "#"),  "B#3")
+        self.assertEqual(ml.Helper.midiNote2pitch(60, "#"), "B#3")
 
         # Double Sharp
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(60, "x"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(60, "x"), "")
 
         # ===== MIDI Note 61 - C#4 ===== #
         # Double Flat
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(61, "bb"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(61, "bb"), "")
 
         # Flat
-        self.assertEqual(ml.Helper.midiNote2pitch(61, "b"),  "Db4")
+        self.assertEqual(ml.Helper.midiNote2pitch(61, "b"), "Db4")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(61),       "C#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(61), "C#4")
 
         # Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(61, "#"),  "C#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(61, "#"), "C#4")
 
         # Double Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(61, "x"),  "Bx3")
+        self.assertEqual(ml.Helper.midiNote2pitch(61, "x"), "Bx3")
 
         # ===== MIDI Note 62 - D4 ===== #
         # Double Flat
@@ -204,34 +191,34 @@ class midiNote2pitch(unittest.TestCase):
 
         # Flat
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(62, "b"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(62, "b"), "")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(62),       "D4")
+        self.assertEqual(ml.Helper.midiNote2pitch(62), "D4")
 
         # Sharp
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(62, "#"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(62, "#"), "")
 
         # Double Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(62, "x"),  "Cx4")
+        self.assertEqual(ml.Helper.midiNote2pitch(62, "x"), "Cx4")
 
         # ===== MIDI Note 63 - D#4 ===== #
         # Double Flat
         self.assertEqual(ml.Helper.midiNote2pitch(63, "bb"), "Fbb4")
 
         # Flat
-        self.assertEqual(ml.Helper.midiNote2pitch(63, "b"),  "Eb4")
+        self.assertEqual(ml.Helper.midiNote2pitch(63, "b"), "Eb4")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(63),       "D#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(63), "D#4")
 
         # Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(63, "#"),  "D#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(63, "#"), "D#4")
 
         # Double Sharp
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(63, "x"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(63, "x"), "")
 
         # ===== MIDI Note 64 - E4 ===== #
         # Double Flat
@@ -239,17 +226,17 @@ class midiNote2pitch(unittest.TestCase):
             self.assertRaises(ml.Helper.midiNote2pitch(64, "bb"), "")
 
         # Flat
-        self.assertEqual(ml.Helper.midiNote2pitch(64, "b"),  "Fb4")
+        self.assertEqual(ml.Helper.midiNote2pitch(64, "b"), "Fb4")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(64),       "E4")
+        self.assertEqual(ml.Helper.midiNote2pitch(64), "E4")
 
         # Sharp
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(64, "#"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(64, "#"), "")
 
         # Double Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(64, "x"),  "Dx4")
+        self.assertEqual(ml.Helper.midiNote2pitch(64, "x"), "Dx4")
 
         # ===== MIDI Note 65 - F4 ===== #
         # Double Flat
@@ -257,17 +244,17 @@ class midiNote2pitch(unittest.TestCase):
 
         # Flat
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(65, "b"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(65, "b"), "")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(65),       "F4")
+        self.assertEqual(ml.Helper.midiNote2pitch(65), "F4")
 
         # Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(65, "#"),  "E#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(65, "#"), "E#4")
 
         # Double Sharp
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(65, "x"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(65, "x"), "")
 
         # ===== MIDI Note 66 - F#4 ===== #
         # Double Flat
@@ -275,16 +262,16 @@ class midiNote2pitch(unittest.TestCase):
             self.assertRaises(ml.Helper.midiNote2pitch(66, "bb"), "")
 
         # Flat
-        self.assertEqual(ml.Helper.midiNote2pitch(66, "b"),  "Gb4")
+        self.assertEqual(ml.Helper.midiNote2pitch(66, "b"), "Gb4")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(66),       "F#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(66), "F#4")
 
         # Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(66, "#"),  "F#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(66, "#"), "F#4")
 
         # Double Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(66, "x"),  "Ex4")
+        self.assertEqual(ml.Helper.midiNote2pitch(66, "x"), "Ex4")
 
         # ===== MIDI Note 67 - G4 ===== #
         # Double Flat
@@ -292,17 +279,17 @@ class midiNote2pitch(unittest.TestCase):
 
         # Flat
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(67, "b"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(67, "b"), "")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(67),       "G4")
+        self.assertEqual(ml.Helper.midiNote2pitch(67), "G4")
 
         # Sharp
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(67, "#"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(67, "#"), "")
 
         # Double Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(67, "x"),  "Fx4")
+        self.assertEqual(ml.Helper.midiNote2pitch(67, "x"), "Fx4")
 
         # ===== MIDI Note 68 - G#4 ===== #
         # Double Flat
@@ -310,17 +297,17 @@ class midiNote2pitch(unittest.TestCase):
             self.assertRaises(ml.Helper.midiNote2pitch(68, "bb"), "")
 
         # Flat
-        self.assertEqual(ml.Helper.midiNote2pitch(68, "b"),  "Ab4")
+        self.assertEqual(ml.Helper.midiNote2pitch(68, "b"), "Ab4")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(68),       "G#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(68), "G#4")
 
         # Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(68, "#"),  "G#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(68, "#"), "G#4")
 
         # Double Sharp
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(68, "x"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(68, "x"), "")
 
         # ===== MIDI Note 69 - A4 ===== #
         # Double Flat
@@ -328,34 +315,34 @@ class midiNote2pitch(unittest.TestCase):
 
         # Flat
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(69, "b"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(69, "b"), "")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(69),       "A4")
+        self.assertEqual(ml.Helper.midiNote2pitch(69), "A4")
 
         # Sharp
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(69, "#"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(69, "#"), "")
 
         # Double Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(69, "x"),  "Gx4")
+        self.assertEqual(ml.Helper.midiNote2pitch(69, "x"), "Gx4")
 
         # ===== MIDI Note 70 - A#4 ===== #
         # Double Flat
         self.assertEqual(ml.Helper.midiNote2pitch(70, "bb"), "Cbb5")
 
         # Flat
-        self.assertEqual(ml.Helper.midiNote2pitch(70, "b"),  "Bb4")
+        self.assertEqual(ml.Helper.midiNote2pitch(70, "b"), "Bb4")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(70),       "A#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(70), "A#4")
 
         # Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(70, "#"),  "A#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(70, "#"), "A#4")
 
         # Double Sharp
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(70, "x"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(70, "x"), "")
 
         # ===== MIDI Note 71 - B4 ===== #
         # Double Flat
@@ -363,17 +350,17 @@ class midiNote2pitch(unittest.TestCase):
             self.assertRaises(ml.Helper.midiNote2pitch(71, "bb"), "")
 
         # Flat
-        self.assertEqual(ml.Helper.midiNote2pitch(71, "b"),  "Cb5")
+        self.assertEqual(ml.Helper.midiNote2pitch(71, "b"), "Cb5")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(71),       "B4")
+        self.assertEqual(ml.Helper.midiNote2pitch(71), "B4")
 
         # Sharp
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(71, "#"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(71, "#"), "")
 
         # Double Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(71, "x"),  "Ax4")
+        self.assertEqual(ml.Helper.midiNote2pitch(71, "x"), "Ax4")
 
         # ===== MIDI Note 72 - C5 ===== #
         # Double Flat
@@ -381,18 +368,18 @@ class midiNote2pitch(unittest.TestCase):
 
         # Flat
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(72, "b"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(72, "b"), "")
 
         # Natural
-        self.assertEqual(ml.Helper.midiNote2pitch(72),       "C5")
+        self.assertEqual(ml.Helper.midiNote2pitch(72), "C5")
 
         # Sharp
-        self.assertEqual(ml.Helper.midiNote2pitch(72, "#"),  "B#4")
+        self.assertEqual(ml.Helper.midiNote2pitch(72, "#"), "B#4")
 
         # Double Sharp
         with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(72, "x"),  "")
+            self.assertRaises(ml.Helper.midiNote2pitch(72, "x"), "")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

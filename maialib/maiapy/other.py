@@ -5,8 +5,14 @@ import subprocess
 import maialib.maiacore as mc
 import importlib.resources as pkg_resources
 
-__all__ = ["getSampleScorePath", "SampleScore",
-           "setScoreEditorApp", "getScoreEditorApp", "openScore", "getXmlSamplesDirPath"]
+__all__ = [
+    "getSampleScorePath",
+    "SampleScore",
+    "setScoreEditorApp",
+    "getScoreEditorApp",
+    "openScore",
+    "getXmlSamplesDirPath",
+]
 
 _scoreEditorApp = ""
 
@@ -32,7 +38,7 @@ def setScoreEditorApp(executableFullPath: str) -> None:
     if os.path.isfile(executableFullPath):
         _scoreEditorApp = executableFullPath
     else:
-        raise ValueError('Invalid executable full path')
+        raise ValueError("Invalid executable full path")
 
 
 def getScoreEditorApp() -> str:
@@ -46,7 +52,8 @@ def openScore(score: mc.Score) -> None:
 
     if not _scoreEditorApp:
         raise RuntimeError(
-            "Please, set your installed music score editor using the 'setScoreEditorApp' function")
+            "Please, set your installed music score editor using the 'setScoreEditorApp' function"
+        )
 
     print(f"Opening Score Editor App: {_scoreEditorApp}")
     ret = subprocess.Popen([_scoreEditorApp, "temp.xml"])
@@ -100,16 +107,18 @@ def getSampleScorePath(sampleEnum: SampleScore) -> str:
         SampleScore.Dvorak_Symphony_9_mov_4: "Dvorak_Symphony_9_mov_4.mxl",
         SampleScore.Mahler_Symphony_8_Finale: "Mahler_Symphony_8_Finale.mxl",
         SampleScore.Mozart_Requiem_Introitus: "Mozart_Requiem_Introitus.mxl",
-        SampleScore.Strauss_Also_Sprach_Zarathustra: "Strauss_Also_Sprach_Zarathustra.mxl"
+        SampleScore.Strauss_Also_Sprach_Zarathustra: "Strauss_Also_Sprach_Zarathustra.mxl",
     }[sampleEnum]
 
     # xmlDir = pkg_resources.files("maialib").joinpath("xml-scores-examples")
     xmlDir = ""
     if sys.version_info >= (3, 9):
         from importlib import resources
+
         xmlDir = resources.files("maialib").joinpath("xml-scores-examples")
     else:
         from importlib_resources import files
+
         xmlDir = files("maialib").joinpath("xml-scores-examples")
 
     fileFullPath = os.path.join(xmlDir, xmlFileName)

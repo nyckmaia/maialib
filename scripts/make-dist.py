@@ -10,7 +10,7 @@ print(f"{color.OKGREEN}Generating 'dist' folder...{color.ENDC}", end="")
 
 # Get the Operational System
 myOS = platform.system()
-buildDir = f'build/{myOS}/module/'
+buildDir = f"build/{myOS}/module/"
 distDir = "dist"
 
 # Clear the 'dist' folder
@@ -20,11 +20,11 @@ binaryModuleList = []
 
 # Get the module file and set the install directory
 if myOS == "Windows":
-    binaryModuleList = glob(f'{buildDir}/*.pyd')
+    binaryModuleList = glob(f"{buildDir}/*.pyd")
 elif myOS == "Linux":
-    binaryModuleList = glob(f'{buildDir}/*.so')
+    binaryModuleList = glob(f"{buildDir}/*.so")
 elif myOS == "Darwin":
-    binaryModuleList = glob(f'{buildDir}/*.so')
+    binaryModuleList = glob(f"{buildDir}/*.so")
 else:
     print(f"{color.FAIL}[ERROR] Unknown OS!{color.ENDC}")
 
@@ -35,36 +35,36 @@ readmeFilePath = "README.md"
 licenseFilePath = "LICENSE.txt"
 
 # Create the dist directory, if it not exists
-Path(f'{distDir}/maialib/maiapy/').mkdir(parents=True, exist_ok=True)
-Path(f'{distDir}/maialib/maiacore/').mkdir(parents=True, exist_ok=True)
-Path(f'{distDir}/maialib/xml-scores-examples/').mkdir(parents=True, exist_ok=True)
+Path(f"{distDir}/maialib/maiapy/").mkdir(parents=True, exist_ok=True)
+Path(f"{distDir}/maialib/maiacore/").mkdir(parents=True, exist_ok=True)
+Path(f"{distDir}/maialib/xml-scores-examples/").mkdir(parents=True, exist_ok=True)
 
 copy2(readmeFilePath, distDir)
-copy2(modulePath, f'{distDir}/maialib/maiacore/')
+copy2(modulePath, f"{distDir}/maialib/maiacore/")
 copy2(setupFilePath, distDir)
 copy2(licenseFilePath, distDir)
 
 # Copy all maialib files to the 'dist' folder
 maialibAllFiles = "maialib/*.py"
 for filename in glob(maialibAllFiles):
-    copy2(filename, f'{distDir}/maialib/')
+    copy2(filename, f"{distDir}/maialib/")
 
 # Copy all maiacore files to the 'dist' folder
 maiacoreAllFiles = "maialib/maiacore/*.py"
 for filename in glob(maiacoreAllFiles):
-    copy2(filename, f'{distDir}/maialib/maiacore/')
+    copy2(filename, f"{distDir}/maialib/maiacore/")
 
 # Copy all maiapy files to the 'dist' folder
 maiaPyAllFiles = "maialib/maiapy/*.py"
 for filename in glob(maiaPyAllFiles):
-    copy2(filename, f'{distDir}/maialib/maiapy/')
+    copy2(filename, f"{distDir}/maialib/maiapy/")
 
 # Copy all XML and MXL sample files to the 'dist' folder
 xmlSampleFiles = "maialib/xml-scores-examples/*.xml"
 for filename in glob(xmlSampleFiles):
-    copy2(filename, f'{distDir}/maialib/xml-scores-examples/')
+    copy2(filename, f"{distDir}/maialib/xml-scores-examples/")
 mxlSampleFiles = "maialib/xml-scores-examples/*.mxl"
 for filename in glob(mxlSampleFiles):
-    copy2(filename, f'{distDir}/maialib/xml-scores-examples/')
+    copy2(filename, f"{distDir}/maialib/xml-scores-examples/")
 
 print(f"{color.OKGREEN}Done!{color.ENDC}")

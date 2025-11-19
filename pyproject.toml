@@ -7,3 +7,119 @@ build-verbosity = 1
 
 [tool.cibuildwheel.windows]
 build-verbosity = 0
+
+# ====================
+# Ruff Configuration
+# ====================
+
+[tool.ruff]
+# Ruff configuration - replaces both black and isort
+line-length = 100
+target-version = "py38"
+
+# Exclude directories
+exclude = [
+    ".eggs",
+    ".git",
+    ".hg",
+    ".mypy_cache",
+    ".tox",
+    ".venv",
+    "build",
+    "dist",
+    "__pycache__",
+    "maiacore",  # C++ extension module (built)
+    "stubs",     # Generated type stubs
+]
+
+# Format configuration (Ruff's formatter replaces black)
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+line-ending = "auto"
+
+# Linting configuration
+[tool.ruff.lint]
+# Enable specific rule sets
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort (import sorting)
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "SIM", # flake8-simplify
+]
+
+# Ignore specific rules
+ignore = [
+    "E501",  # Line too long (handled by formatter)
+    "F403",  # Unable to detect undefined names (star imports are intentional in __init__.py)
+    "F405",  # Name may be undefined (from star imports)
+]
+
+# Import sorting configuration (replaces isort)
+[tool.ruff.lint.isort]
+known-first-party = ["maialib", "maiacore", "maiapy"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+
+# ====================
+# Pytest Configuration
+# ====================
+
+[tool.pytest.ini_options]
+testpaths = ["test"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = [
+    "--verbose",
+    "--color=yes",
+    "--strict-markers",
+]
+
+# ====================
+# Coverage Configuration
+# ====================
+
+[tool.coverage.run]
+source = ["maialib"]
+omit = [
+    "*/tests/*",
+    "*/test/*",
+    "*/maiacore/*",  # C++ extension, measured separately
+    "*/stubs/*",     # Type stubs
+]
+
+[tool.coverage.report]
+precision = 2
+show_missing = true
+skip_covered = false
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]
+
+# ====================
+# MyPy Configuration
+# ====================
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = false  # Gradual typing
+check_untyped_defs = true
+exclude = [
+    "build/",
+    "dist/",
+    "maiacore/",
+    "stubs/",
+]

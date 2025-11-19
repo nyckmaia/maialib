@@ -20,13 +20,18 @@ all: dev
 .PHONY: coverage
 .PHONY: build-cpp-tests
 .PHONY: cpp-tests
-.PHONY: py-tests 
+.PHONY: py-tests
 .PHONY: tests
 .PHONY: dist
 .PHONY: install
 .PHONY: uninstall
 .PHONY: doc
 .PHONY: logo
+.PHONY: format-cpp
+.PHONY: format-python
+.PHONY: format
+.PHONY: lint-python
+.PHONY: lint-python-fix
 
 SCRIPTS_DIR = ./scripts
 
@@ -80,9 +85,6 @@ module-release:
 
 module:
 	@make module-release
-	
-validate:
-	@python $(SCRIPTS_DIR)/make-validate.py
 
 build-cpp-tests:
 	@make static-debug
@@ -115,3 +117,39 @@ uninstall:
 
 doc:
 	@doxygen
+
+# ====================
+# Code Formatting
+# ====================
+
+format-cpp:
+	@echo "Formatting C++ code with clang-format..."
+	@find maiacore/include/maiacore -name "*.h" -exec clang-format -i {} +
+	@find maiacore/src/maiacore -name "*.cpp" -o -name "*.h" -exec clang-format -i {} +
+	@find tests-cpp/src -name "*.cpp" -o -name "*.h" -exec clang-format -i {} +
+	@echo "C++ formatting complete."
+
+format-python:
+	@echo "Formatting Python code with Ruff..."
+	@ruff format maialib/ test/ scripts/
+	@echo "Python formatting complete."
+
+format: format-cpp format-python
+	@echo "All code formatted successfully."
+
+# ====================
+# Linting
+# ====================
+
+lint-python:
+	@echo "Linting Python code with Ruff..."
+	@ruff check maialib/ test/ scripts/
+	@echo "Python linting complete."
+
+lint-python-fix:
+	@echo "Linting and auto-fixing Python code with Ruff..."
+	@ruff check --fix maialib/ test/ scripts/
+	@echo "Python linting and fixes complete."
+
+validate: lint-python
+	@python $(SCRIPTS_DIR)/make-validate.py

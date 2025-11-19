@@ -214,6 +214,7 @@ make validate  # Runs cpplint and cppcheck
 - Use type hints where appropriate
 - Write docstrings for all public functions
 - Keep functions focused and small
+- Use Ruff for formatting and linting
 
 **Example:**
 ```python
@@ -241,6 +242,46 @@ def calculate_melodic_similarity(
     """
     # Implementation...
 ```
+
+### Code Formatting
+
+**Before submitting a pull request, format your code:**
+
+#### Automatic Formatting
+
+```bash
+make format          # Format all C++ and Python code
+make format-cpp      # Format only C++ code
+make format-python   # Format only Python code
+```
+
+#### Code Linting
+
+```bash
+make validate        # Run cpplint (C++) and Ruff linting (Python)
+make lint-python     # Run Ruff linter on Python code
+make lint-python-fix # Auto-fix Python linting issues
+```
+
+#### Pre-commit Hooks (Optional but Recommended)
+
+Install pre-commit hooks to automatically format code before each commit:
+
+```bash
+pip install pre-commit
+pre-commit install
+```
+
+The hooks will:
+- Format C++ code with clang-format
+- Format Python code with Ruff
+- Fix common issues (trailing whitespace, line endings)
+- Validate YAML files
+
+**Configuration:**
+- C++: `.clang-format` (Google style, 100 chars, 4 spaces)
+- Python: `pyproject.toml` (Ruff configuration)
+- Pre-commit: `.pre-commit-config.yaml`
 
 ### Testing Requirements
 

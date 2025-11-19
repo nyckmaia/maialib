@@ -57,20 +57,17 @@ class GetCloseStackChord(unittest.TestCase):
         # Exact the same chords
         chord01_test = ml.Chord(["C4", "E4", "G4", "B4"])
         chord01_answ = ml.Chord(["C4", "E4", "G4", "B4"])
-        self.assertEqual(chord01_test.getCloseStackChord(
-        ).getNotes(), chord01_answ.getNotes())
+        self.assertEqual(chord01_test.getCloseStackChord().getNotes(), chord01_answ.getNotes())
 
         # Different note sequency
         chord02_test = ml.Chord(["Eb4", "C4", "B4", "G4"])
         chord02_answ = ml.Chord(["C4", "Eb4", "G4", "B4"])
-        self.assertEqual(chord02_test.getCloseStackChord(
-        ).getNotes(), chord02_answ.getNotes())
+        self.assertEqual(chord02_test.getCloseStackChord().getNotes(), chord02_answ.getNotes())
 
         # Both different note sequency and octave
         chord03_test = ml.Chord(["Eb3", "C5", "B2", "G9"])
         chord03_answ = ml.Chord(["C4", "Eb4", "G4", "B4"])
-        self.assertEqual(chord03_test.getCloseStackChord(
-        ).getNotes(), chord03_answ.getNotes())
+        self.assertEqual(chord03_test.getCloseStackChord().getNotes(), chord03_answ.getNotes())
 
     def testComplexChords(self):
         # # Inverted major-seven-nine (5th ommited) chord
@@ -92,50 +89,42 @@ class GetCloseStackChord(unittest.TestCase):
         chord04_test = ml.Chord(["C4", "C#4", "D4", "D#4"])
         # [C4, Eb4, <G4>, Bx4, D5] => Cm(7aug)9
         chord04_answ = ml.Chord(["C4", "Eb4", "Bx4", "D5"])
-        self.assertEqual(chord04_test.getCloseStackChord(
-        ).getNotes(), chord04_answ.getNotes())
+        self.assertEqual(chord04_test.getCloseStackChord().getNotes(), chord04_answ.getNotes())
 
         # Five notes diatonic cluster
         chord05a_test = ml.Chord(["C4", "E4", "G4", "B4", "D5"])
         chord05a_answ = ml.Chord(["C4", "E4", "G4", "B4", "D5"])
-        self.assertEqual(chord05a_test.getCloseStackChord(
-        ).getNotes(), chord05a_answ.getNotes())
+        self.assertEqual(chord05a_test.getCloseStackChord().getNotes(), chord05a_answ.getNotes())
 
         # Five notes diatonic cluster
         chord05b_test = ml.Chord(["C4", "Ebb7", "Fx5", "Ax3", "E4"])
         chord05b_answ = ml.Chord(["Ax4", "C5", "E5", "G5", "D6"])
-        self.assertEqual(chord05b_test.getCloseStackChord(
-        ).getNotes(), chord05b_answ.getNotes())
+        self.assertEqual(chord05b_test.getCloseStackChord().getNotes(), chord05b_answ.getNotes())
 
         # Five notes diatonic cluster
         chord05c_test = ml.Chord(["C4", "G4", "A4", "E4", "B5"])
         chord05c_answ = ml.Chord(["A4", "C5", "E5", "G5", "B5"])
-        self.assertEqual(chord05c_test.getCloseStackChord(
-        ).getNotes(), chord05c_answ.getNotes())
+        self.assertEqual(chord05c_test.getCloseStackChord().getNotes(), chord05c_answ.getNotes())
 
         # Five notes diatonic cluster
         chord05d_test = ml.Chord(["D3", "C4", "E4", "G7", "B5"])
         chord05d_answ = ml.Chord(["C4", "E4", "G4", "B4", "D5"])
-        self.assertEqual(chord05d_test.getCloseStackChord(
-        ).getNotes(), chord05d_answ.getNotes())
+        self.assertEqual(chord05d_test.getCloseStackChord().getNotes(), chord05d_answ.getNotes())
 
         # Five notes diatonic cluster
         chord05e_test = ml.Chord(["C4", "Ab8", "Eb3", "G4", "B5"])
         chord05e_answ = ml.Chord(["Ab4", "C5", "Eb5", "G5", "B5"])
-        self.assertEqual(chord05e_test.getCloseStackChord(
-        ).getNotes(), chord05e_answ.getNotes())
+        self.assertEqual(chord05e_test.getCloseStackChord().getNotes(), chord05e_answ.getNotes())
 
         # Six notes diatonic cluster
         chord06_test = ml.Chord(["C4", "E4", "G4", "B4", "D5", "F5"])
         chord06_answ = ml.Chord(["C4", "E4", "G4", "B4", "D5", "F5"])
-        self.assertEqual(chord06_test.getCloseStackChord(
-        ).getNotes(), chord06_answ.getNotes())
+        self.assertEqual(chord06_test.getCloseStackChord().getNotes(), chord06_answ.getNotes())
 
         # Six notes diatonic cluster
         chord06b_test = ml.Chord(["C4", "D4", "E4", "F4", "G4", "B4"])
         chord06b_answ = ml.Chord(["C4", "E4", "G4", "B4", "D5", "F5"])
-        self.assertEqual(chord06b_test.getCloseStackChord(
-        ).getNotes(), chord06b_answ.getNotes())
+        self.assertEqual(chord06b_test.getCloseStackChord().getNotes(), chord06b_answ.getNotes())
 
 
 class ChordOperator(unittest.TestCase):
@@ -148,5 +137,5 @@ class ChordOperator(unittest.TestCase):
         self.assertEqual(myChord3.size(), myChord1.size() + myChord2.size())
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

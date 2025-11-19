@@ -13,9 +13,18 @@ if myOS == "Windows":
     exit(0)
 
 # Maiacore raw covarage files folder
-path01 = Path.cwd() / "build" / myOS / \
-    "static" / "Debug" / "CMakeFiles" / \
-    "maiacore.dir" / "maiacore" / "src" / "maiacore"
+path01 = (
+    Path.cwd()
+    / "build"
+    / myOS
+    / "static"
+    / "Debug"
+    / "CMakeFiles"
+    / "maiacore.dir"
+    / "maiacore"
+    / "src"
+    / "maiacore"
+)
 path01.mkdir(parents=True, exist_ok=True)
 
 # Maiacore raw covarage files folder
@@ -32,6 +41,5 @@ outputDir = "code-coverage"
 excludedDirs = "'/usr/*' '*/external/*' '*/v1/*' '/Library/*'"
 
 os.system(f"lcov -c -d {path01} -o {covInfoFullPath}")
-os.system(
-    f"lcov --remove {covInfoFullPath} -o {covInfoFileFilteredFullPath} {excludedDirs}")
+os.system(f"lcov --remove {covInfoFullPath} -o {covInfoFileFilteredFullPath} {excludedDirs}")
 os.system(f"genhtml -o {outputDir} {covInfoFileFilteredFullPath}")
