@@ -13,16 +13,43 @@ Whether you're a music student analyzing Bach chorales, a composer generating al
 ```python
 import maialib as ml
 
-# Load a musical score
-score = ml.Score('Bach_Cello_Suite_1.mxl')
+# Create a middle C note
+note = ml.Note("C#4")
 
-# Extract all chords
-chords = score.getChords()
+# Print information about this note
+print("Note Information:")
+print(f"  Pitch: {note.getPitch()}")
+print(f"  Pitch class: {note.getPitchClass()}")
+print(f"  Pitch Step: {note.getPitchStep()}")
+print(f"  Octave: {note.getOctave()}")
+print(f"  Alter symbol: {note.getAlterSymbol()}" )
+print(f"  Type (long name): {note.getLongType()}")
+print(f"  Duration (unit: quarter notes): {note.getQuarterDuration()}")
+print(f"  MIDI number: {note.getMidiNumber()}")
+print(f"  Frequency: {note.getFrequency():.2f} Hz")
+print(f"  Is note on: {note.isNoteOn()}")
+print(f"  Is note off: {note.isNoteOff()}")
+print(f"  Ehnarmonic Notes: {note.getEnharmonicNotes()}")
+print(f"  Harmonic Spectrum (first 3 partials): {note.getHarmonicSpectrum(numPartials=3, partialsDecayExpRate=0.5)}")
+```
 
-# Analyze harmonic complexity
-for chord in chords:
-    complexity = chord.getCloseStackHarmonicComplexity()
-    print(f"Measure {chord.getMeasure()}: {chord.getName()} - Complexity: {complexity:.2f}")
+**Output**
+
+```
+Note Information:
+  Pitch: C#4
+  Pitch class: C#
+  Pitch Step: C
+  Octave: 4
+  Alter symbol: #
+  Type (long name): quarter
+  Duration (unit: quarter notes): 1.0
+  MIDI number: 61
+  Frequency: 277.18 Hz
+  Is note on: True
+  Is note off: False
+  Ehnarmonic Notes: [<Note Db4>, <Note Bx3>]
+  Harmonic Spectrum (first 3 partials): ([277.1826171875, 554.365234375, 831.5478515625], [1.0, 0.5, 0.25])
 ```
 
 **No music software required. No complex APIs. Just simple, powerful Python.**
