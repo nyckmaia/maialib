@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [v1.10.0] - 2025-11-18
+
+### Improve
+
+- Add a complete C++ unit-test coverage (maiacore library)
+- Improve C++ classes documentation
+- Improve Python tutorials
+- Improve README.md
+
+## Fix
+
+- Minor bug fixes
+
+---
+
 ## [v1.9.6] - 2025-11-06
 
 ### Improve
