@@ -29,7 +29,7 @@ print(f"  MIDI number: {note.getMidiNumber()}")
 print(f"  Frequency: {note.getFrequency():.2f} Hz")
 print(f"  Is note on: {note.isNoteOn()}")
 print(f"  Is note off: {note.isNoteOff()}")
-print(f"  Ehnarmonic Notes: {note.getEnharmonicNotes()}")
+print(f"  Enharmonic Notes: {note.getEnharmonicNotes()}")
 print(f"  Harmonic Spectrum (first 3 partials): {note.getHarmonicSpectrum(numPartials=3, partialsDecayExpRate=0.5)}")
 ```
 

@@ -43,7 +43,8 @@ def _score2DataFrame(score: mc.Score, kwargs) -> Tuple[pd.DataFrame, str, str]:
     # 2) Validate 'partNames'
     # 2.1) Type cheking
     if "partNames" in kwargs and not isinstance(kwargs["partNames"], list):
-        print("ERROR: 'partNames' is a optional kwargs argument and MUST BE a strings array")
+        print(
+            "ERROR: 'partNames' is a optional kwargs argument and MUST BE a strings array")
         print(score.getPartsNames())
         return
 
@@ -86,7 +87,8 @@ def _score2DataFrame(score: mc.Score, kwargs) -> Tuple[pd.DataFrame, str, str]:
     if "measureEnd" in kwargs:
         measureEnd = kwargs["measureEnd"]
         if measureEnd > score.getNumMeasures():
-            print(f"ERROR: 'measureEnd' must be lesser than than {score.getNumMeasures() + 1}'")
+            print(
+                f"ERROR: 'measureEnd' must be lesser than than {score.getNumMeasures() + 1}'")
             return
 
     if measureEnd < measureStart:
@@ -148,7 +150,8 @@ def _score2DataFrame(score: mc.Score, kwargs) -> Tuple[pd.DataFrame, str, str]:
 
                     aux = currentTimePosition + internalStaveCurrentTime
                     noteStart = aux / measureQuarterTimeAmount
-                    noteFinish = (aux + noteDuration) / measureQuarterTimeAmount
+                    noteFinish = (aux + noteDuration) / \
+                        measureQuarterTimeAmount
 
                     # This plotly timeline function requires the use of these 3 names below: 'Tasks', 'Start' and 'Finish'
                     noteData = {
@@ -242,8 +245,21 @@ def plotPartsActivity(
     fig.data[0].x = df.delta.tolist()
 
     # Update plot layout
-    fig.update_xaxes(type="linear", autorange=True, showgrid=True, gridwidth=1, title="Measures")
-    fig.update_yaxes(autorange="reversed", showgrid=True, gridwidth=1, ticksuffix="  ")
+    if "measureStart" not in kwargs:
+        kwargs["measureStart"] = 1
+    if "measureEnd" not in kwargs:
+        kwargs["measureEnd"] = score.getNumMeasures() + 1
+
+    # Update plot layout
+    fig.update_xaxes(type="linear",
+                     showgrid=True,
+                     gridwidth=1,
+                     title="Measures",
+                     range=[kwargs["measureStart"], kwargs["measureEnd"]]
+                     )
+
+    fig.update_yaxes(autorange="reversed", showgrid=True,
+                     gridwidth=1, ticksuffix="  ")
     fig.update_layout(
         title_x=0.5,
         yaxis_title=None,
@@ -253,7 +269,8 @@ def plotPartsActivity(
         coloraxis_colorbar=dict(
             title="Pitch",
             tickvals=[12, 24, 36, 48, 60, 72, 84, 96, 108, 120],
-            ticktext=["C0", "C1", "C2", "C3", "C4", "C5", "C6", "C7", "C8", "C9"],
+            ticktext=["C0", "C1", "C2", "C3", "C4",
+                      "C5", "C6", "C7", "C8", "C9"],
         ),
     )
 
@@ -325,10 +342,15 @@ def plotPianoRoll(
     for d in fig.data:
         d.x = df.delta.tolist()
 
+    if "measureStart" not in kwargs:
+        kwargs["measureStart"] = 1
+    if "measureEnd" not in kwargs:
+        kwargs["measureEnd"] = score.getNumMeasures() + 1
+
     # Update plot layout
     fig.update_xaxes(
         type="linear",
-        range=[1, None],  # Fixando limite inferior do eixo X em 1
+        range=[kwargs["measureStart"], kwargs["measureEnd"]],
         showgrid=True,
         gridwidth=1,
         title="Measures",
@@ -340,9 +362,10 @@ def plotPianoRoll(
         gridwidth=1,
         title="Pitch",
         tickvals=[12, 24, 36, 48, 60, 72, 84, 96, 108, 120],
-        ticktext=["C0 ", "C1 ", "C2 ", "C3 ", "C4 ", "C5 ", "C6 ", "C7 ", "C8 ", "C9 "],
+        ticktext=["C0 ", "C1 ", "C2 ", "C3 ", "C4 ",
+                  "C5 ", "C6 ", "C7 ", "C8 ", "C9 "],
     )
-    fig.update_layout(title_x=0.5, font={"size": 18})
+    fig.update_layout(title_x=0.5, font={"size": 16})
 
     fig.add_shape(
         # Rectangle with reference to the plot
@@ -368,7 +391,8 @@ def _removeNoteOffLines(df: pd.DataFrame) -> pd.DataFrame:
     df["low"] = df["low"].map(lambda x: None if x == 0 else x)
     df["high"] = df["high"].map(lambda x: None if x == 0 else x)
     df["mean"] = df["mean"].map(lambda x: None if x == 0 else x)
-    df["meanOfExtremes"] = df["meanOfExtremes"].map(lambda x: None if x == 0 else x)
+    df["meanOfExtremes"] = df["meanOfExtremes"].map(
+        lambda x: None if x == 0 else x)
 
     return df
 
@@ -413,7 +437,7 @@ def _scoreEnvelopeDataFrame(df: pd.DataFrame) -> pd.DataFrame:
 def _envelopeDataFrameInterpolation(df: pd.DataFrame, interpolatePoints: int) -> pd.DataFrame:
     def split(a, n):
         k, m = divmod(len(a), n)
-        return (a[i * k + min(i, m) : (i + 1) * k + min(i + 1, m)] for i in range(n))
+        return (a[i * k + min(i, m): (i + 1) * k + min(i + 1, m)] for i in range(n))
 
     totalMeasures = int(df.floatMeasure.max())
 
@@ -426,7 +450,8 @@ def _envelopeDataFrameInterpolation(df: pd.DataFrame, interpolatePoints: int) ->
 
     data = []
     for sub in ranges:
-        sub_df = df[(df.floatMeasure >= float(sub.start)) & (df.floatMeasure < float(sub.stop))]
+        sub_df = df[(df.floatMeasure >= float(sub.start))
+                    & (df.floatMeasure < float(sub.stop))]
         floatMeasure = (sub.start + sub.stop) / 2
         low = round(sub_df.low.mean())
         meanOfExtremes = round(sub_df["meanOfExtremes"].mean())
@@ -454,7 +479,7 @@ def _envelopeDataFrameInterpolation(df: pd.DataFrame, interpolatePoints: int) ->
 def _chordNumNotesDataFrameInterpolation(df: pd.DataFrame, interpolatePoints: int) -> pd.DataFrame:
     def split(a, n):
         k, m = divmod(len(a), n)
-        return (a[i * k + min(i, m) : (i + 1) * k + min(i + 1, m)] for i in range(n))
+        return (a[i * k + min(i, m): (i + 1) * k + min(i + 1, m)] for i in range(n))
 
     firstMeasureNumber = df.measure.min(skipna=True)
     lastMeasureNumber = df.measure.max(skipna=True)
@@ -464,7 +489,8 @@ def _chordNumNotesDataFrameInterpolation(df: pd.DataFrame, interpolatePoints: in
             "ERROR: The score number of measures must be greater then the interpolate points value"
         )
 
-    ranges = list(split(range(firstMeasureNumber, lastMeasureNumber + 1), interpolatePoints))
+    ranges = list(
+        split(range(firstMeasureNumber, lastMeasureNumber + 1), interpolatePoints))
     data = []
     for sub in ranges:
         sub_df = df.query(f"(measure >= {sub.start}) & (measure < {sub.stop})")
@@ -608,8 +634,10 @@ def plotScorePitchEnvelope(
     fig.update_layout(
         title=f"<b>Pitchs Envelope<br>{workTitle} - {author}</b>", title_x=0.5, font={"size": 18}
     )
-    fig.update_xaxes(type="linear", autorange=True, showgrid=True, gridwidth=1, title="Measures")
-    fig.update_yaxes(autorange=True, showgrid=True, gridwidth=1, ticksuffix="  ")
+    fig.update_xaxes(type="linear", autorange=True,
+                     showgrid=True, gridwidth=1, title="Measures")
+    fig.update_yaxes(autorange=True, showgrid=True,
+                     gridwidth=1, ticksuffix="  ")
     fig.update_layout(
         title_x=0.5,
         yaxis_title=None,
@@ -619,10 +647,12 @@ def plotScorePitchEnvelope(
         yaxis=dict(
             title="Pitch",
             tickvals=[12, 24, 36, 48, 60, 72, 84, 96, 108, 120],
-            ticktext=["C0 ", "C1 ", "C2 ", "C3 ", "C4 ", "C5 ", "C6 ", "C7 ", "C8 ", "C9 "],
+            ticktext=["C0 ", "C1 ", "C2 ", "C3 ", "C4 ",
+                      "C5 ", "C6 ", "C7 ", "C8 ", "C9 "],
         ),
     )
-    fig.update_layout(hovermode="x unified", template="plotly_white", yaxis_showticksuffix="all")
+    fig.update_layout(hovermode="x unified",
+                      template="plotly_white", yaxis_showticksuffix="all")
 
     fig.update_layout(
         legend=dict(
@@ -692,7 +722,8 @@ def plotChordsNumberOfNotes(
     if "measureEnd" in kwargs:
         measureEnd = kwargs["measureEnd"]
         if measureEnd > score.getNumMeasures():
-            print(f"ERROR: 'measureEnd' must be lesser than than {score.getNumMeasures() + 1}'")
+            print(
+                f"ERROR: 'measureEnd' must be lesser than than {score.getNumMeasures() + 1}'")
             return
 
     if measureEnd < measureStart:
@@ -715,7 +746,8 @@ def plotChordsNumberOfNotes(
     meanNumNotes = df["numNotes"].sum() / df.shape[0]
 
     # ===== CREATE PLOT TRACES ===== #
-    fig = px.line(df, x="floatMeasure", y="numNotes", title="Chords number of notes")
+    fig = px.line(df, x="floatMeasure", y="numNotes",
+                  title="Chords number of notes")
     fig.add_hline(
         y=meanOfExtremesNumNotes,
         line_width=1,
@@ -738,7 +770,8 @@ def plotChordsNumberOfNotes(
     )
 
     # ===== PLOT LAYOUT ===== #
-    fig.update_xaxes(type="linear", autorange=True, showgrid=True, gridwidth=1, title="Measures")
+    fig.update_xaxes(type="linear", autorange=True,
+                     showgrid=True, gridwidth=1, title="Measures")
     fig.update_yaxes(
         autorange=True,
         showgrid=True,
