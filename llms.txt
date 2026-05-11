@@ -1,0 +1,25 @@
+# maialib
+
+> Maialib is a Python music-analysis library backed by a C++17 core (maiacore) exposed via pybind11. It loads MusicXML scores (.xml/.mxl/.musicxml — not MIDI) and provides analysis of chords, melodic patterns, rhythm, harmony, and dissonance. Researchers use it via `import maialib as ml`.
+
+## Primary sources
+
+- [AGENTS.md](https://raw.githubusercontent.com/nyckmaia/maialib/main/AGENTS.md): Top-level AI-assistant guide with quick-start and pitfalls.
+- [AI_API_CHEATSHEET.md](https://raw.githubusercontent.com/nyckmaia/maialib/main/AI_API_CHEATSHEET.md): Full Python API on a single page, paste-friendly.
+- [README.md](https://raw.githubusercontent.com/nyckmaia/maialib/main/README.md): Human-facing project README.
+- [llms-full.txt](https://raw.githubusercontent.com/nyckmaia/maialib/main/llms-full.txt): All AI-facing docs concatenated for single-fetch context.
+
+## Type stubs
+
+- [maialib/maiacore/maiacore.pyi](https://raw.githubusercontent.com/nyckmaia/maialib/main/maialib/maiacore/maiacore.pyi): Authoritative type stubs for the C++ bindings.
+- [maialib/maiapy/plots.pyi](https://raw.githubusercontent.com/nyckmaia/maialib/main/maialib/maiapy/plots.pyi): Plotting utilities (piano roll, pitch envelope, chord analysis).
+- [maialib/maiapy/sethares_dissonance.pyi](https://raw.githubusercontent.com/nyckmaia/maialib/main/maialib/maiapy/sethares_dissonance.pyi): Sethares dissonance curves.
+
+## Tutorials
+
+- [python-tutorial/](https://github.com/nyckmaia/maialib/tree/main/python-tutorial): Jupyter notebooks organized by level (00_getting_started → 05_analysis).
+
+## Optional
+
+- [RECIPES.md](https://raw.githubusercontent.com/nyckmaia/maialib/main/RECIPES.md): Task-oriented examples (added in Phase 2).
+- [PROMPTS.md](https://raw.githubusercontent.com/nyckmaia/maialib/main/PROMPTS.md): Copy-paste prompt templates (added in Phase 2, bilingual EN/PT-BR).
