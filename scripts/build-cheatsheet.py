@@ -193,7 +193,10 @@ def main() -> None:
     parts.append(manual)
     parts.append("")
 
-    OUT.write_text("\n".join(parts), encoding="utf-8")
+    text = "\n".join(parts)
+    if not text.endswith("\n"):
+        text += "\n"
+    OUT.write_text(text, encoding="utf-8")
     print(f"Wrote {OUT.relative_to(REPO)}")
 
 

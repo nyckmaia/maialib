@@ -31,6 +31,11 @@ genStubsCommand = (
 )
 os.system(genStubsCommand)
 
+print(f"{color.OKGREEN}Building AI_API_CHEATSHEET.md from stubs...{color.ENDC}")
+os.system(f"python {Path.cwd() / 'scripts' / 'build-cheatsheet.py'}")
+
+print(f"{color.OKGREEN}Building llms-full.txt...{color.ENDC}")
+os.system(f"python {Path.cwd() / 'scripts' / 'build-llms-full.py'}")
 
 print(f"{color.OKGREEN}Copy stubs to dist folder...{color.ENDC}")
 

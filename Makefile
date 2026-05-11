@@ -32,6 +32,9 @@ all: dev
 .PHONY: format
 .PHONY: lint-python
 .PHONY: lint-python-fix
+.PHONY: build-cheatsheet
+.PHONY: build-llms-full
+.PHONY: build-ai-docs
 
 SCRIPTS_DIR = ./scripts
 
@@ -153,3 +156,16 @@ lint-python-fix:
 
 validate: lint-python
 	@python $(SCRIPTS_DIR)/make-validate.py
+
+# ====================
+# AI-friendly docs
+# ====================
+
+build-cheatsheet:
+	@python $(SCRIPTS_DIR)/build-cheatsheet.py
+
+build-llms-full:
+	@python $(SCRIPTS_DIR)/build-llms-full.py
+
+build-ai-docs: build-cheatsheet build-llms-full
+	@echo "AI-friendly docs regenerated."

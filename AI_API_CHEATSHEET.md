@@ -584,4 +584,3 @@ print(matches)
 - **Samples ship bundled** — use `ml.SampleScore` + `ml.getSampleScorePath()`.
 - **No async** — everything is synchronous.
 <!-- END MANUAL -->
-

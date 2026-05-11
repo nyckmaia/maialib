@@ -47,7 +47,10 @@ def main() -> None:
         chunks.append(p.read_text(encoding="utf-8"))
         chunks.append("")
 
-    OUT.write_text("\n".join(chunks), encoding="utf-8")
+    text = "\n".join(chunks)
+    if not text.endswith("\n"):
+        text += "\n"
+    OUT.write_text(text, encoding="utf-8")
     print(f"Wrote {OUT.relative_to(REPO)} ({OUT.stat().st_size} bytes)")
 
 
