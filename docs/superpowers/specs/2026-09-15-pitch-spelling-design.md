@@ -49,7 +49,7 @@ code, and prepares the representation (`alterValue` as `float`) for quarter tone
 | `Note::setPitch` does not clear `_alterSymbol` when the new pitch has no accidental. | `note.cpp:1668-1670` |
 | `Helper::isEnharmonic` compares `pitch2number` values, which treat E–F and B–C as whole steps: `isEnharmonic("E#4", "F4") == false`. It is called by `Helper::noteSimilarity`. | `helper.cpp:2517-2528`, `:1988` |
 | `Helper::pitch2number` has no caller other than `isEnharmonic`; it is bound twice in Python. `Helper::number2pitch` has no caller and no binding. | `py_helper.cpp:58, :114`; `helper.cpp:2414` |
-| `MIDI_000..MIDI_132` are referenced only by the `pitch2midiNote` switch; none are bound to Python. | `constants.h:240-372` |
+| `MIDI_000..MIDI_132` are referenced by the `pitch2midiNote` switch and by the `midiNote2octave.midiValues` test (72 uses in `tests-cpp/src/helpers-test.cpp:263-344`, to be rewritten as integer literals); none are bound to Python. | `constants.h:240-372` |
 | `Interval::whiteKeyDistance` looks notes up in `c_pianoWhiteKeys` (`C0..C10`); a note outside that array silently yields a wrong distance, affecting `isAscendant`, `isDescendant`, `getDiatonicInterval`. It is the array's only use. | `interval.cpp:46-62`, `constants.h:106` |
 | `Chord::computeEnharmonicUnitsGroups` builds three variants per note via `getEnharmonicNote(false/true)`; it requires parseable outputs. | `chord.cpp:445-464` |
 | MIDI convention: octave = MIDI / 12 − 1 (C4 = 60, C0 = 12, C-1 = 0). | `helper.cpp:1096-1104` |
@@ -176,7 +176,7 @@ Verified against the existing switch: 0 mismatches over 385 cases.
 | `getEnharmonicPitch` switch body (385 cases) | Replaced by §6.4 |
 | `Helper::pitch2number` + both Python bindings | Only caller (`isEnharmonic`) no longer uses it; not enharmonic-safe |
 | `Helper::number2pitch` | No callers, no binding |
-| `MUSIC_XML::MIDI::NUMBER::MIDI_000..MIDI_132` (`MIDI_REST` stays) | Only used by the removed switch |
+| `MUSIC_XML::MIDI::NUMBER::MIDI_000..MIDI_132` (`MIDI_REST` stays) | Only used by the removed switch and by `midiNote2octave.midiValues`, which is rewritten with integer literals |
 | `c_pianoWhiteKeys` | Only used by the replaced `whiteKeyDistance` |
 
 ## 8. Python Bindings
@@ -324,7 +324,7 @@ implements the `all` and `dist` options, so `module`, `static` and `shared` are 
 | D5 | Bind `splitPitch` to Python as a tuple | User rule: every public maiacore method has a pybind11 wrapper |
 | D6 | `pitch2midiNote("rest")` returns -1 | Symmetric with `midiNote2pitch(-1) == "rest"` |
 | D7 | Remove `pitch2number` and `number2pitch` | User rule: remove unused code; no callers after `isEnharmonic` uses MIDI |
-| D8 | Remove `MIDI_000..MIDI_132` and `c_pianoWhiteKeys` | Unused after the change; not exposed to Python |
+| D8 | Remove `MIDI_000..MIDI_132` and `c_pianoWhiteKeys` | Unused after the change (the one test using the MIDI constants is rewritten with integer literals); not exposed to Python |
 | D9 | Enharmonic range fallback (alternative → default → self) | `Chord` analysis needs parseable variants |
 | D10 | Keep duplicate entries in enharmonic lists | Preserves `Chord` three-variant expectation |
 | D11 | Arithmetic `whiteKeyDistance` | The array silently breaks outside `C0..C10` |
