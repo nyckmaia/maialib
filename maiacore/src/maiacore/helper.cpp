@@ -1051,7 +1051,7 @@ int Helper::pitch2midiNote(const std::string& pitch) {
         case hash("C10"):
             return MUSIC_XML::MIDI::NUMBER::MIDI_132;
         case hash("Db10"):
-            return MUSIC_XML::MIDI::NUMBER::MIDI_132;
+            return 133;
         case hash("B#9"):
             return MUSIC_XML::MIDI::NUMBER::MIDI_132;
 

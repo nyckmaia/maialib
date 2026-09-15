@@ -3,6 +3,7 @@
 #include "maiacore/helper.h"
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
+#include "pitch-spelling-legacy-data.h"
 
 using namespace testing;
 
@@ -342,4 +343,10 @@ EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_068), 4);
 EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_069), 4);
 EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_070), 4);
 EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_071), 4);
+}
+
+TEST(PitchSpellingLegacy, MidiTableMatches) {
+for (const auto& entry : kLegacyMidiTable) {
+    EXPECT_EQ(Helper::pitch2midiNote(entry.pitch), entry.midiNumber) << "pitch: " << entry.pitch;
+}
 }

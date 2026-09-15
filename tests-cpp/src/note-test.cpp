@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include "pitch-spelling-legacy-data.h"
+
 using namespace testing;
 
 // ===================================================================================================
@@ -836,4 +838,16 @@ TEST(NoteType, GetTypeStrings) {
   EXPECT_FALSE(type.empty());
   EXPECT_FALSE(longType.empty());
   EXPECT_FALSE(shortType.empty());
+}
+
+// ===================================================================================================
+// PITCH SPELLING (SP1)
+// ===================================================================================================
+
+TEST(PitchSpellingLegacy, EnharmonicTableMatches) {
+  for (const auto& entry : kLegacyEnharmonicTable) {
+    const Note note(entry.pitch);
+    EXPECT_EQ(note.getEnharmonicPitch(false), entry.defaultPitch) << "pitch: " << entry.pitch;
+    EXPECT_EQ(note.getEnharmonicPitch(true), entry.alternativePitch) << "pitch: " << entry.pitch;
+  }
 }
