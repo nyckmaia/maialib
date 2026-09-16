@@ -1397,13 +1397,15 @@ bool Chord::isInRootPosition() {
         stackInThirds();
     }
 
-    // Both containers are checked, even though every _originalNotes mutator (clear(),
-    // removeNote(), ...) now calls invalidateStackCache(), which clears '_closeStack' and resets
-    // '_isStackedInThirds' together -- so neither clause should be reachable on its own through
-    // the public mutator API today. Kept as defense in depth: a Note obtained by reference
-    // (operator[], getNote()) can still be mutated in place without going through any mutator,
-    // which would desync '_originalNotes' from the cached '_closeStack' without
-    // invalidateStackCache() ever running (see chord.h's operator[] docs for that caveat).
+    // Both containers are checked directly because both are read directly below: '_closeStack[0]'
+    // on the next line of this guard's caller, and 'tempNotes[0]' (a copy of '_originalNotes') a
+    // few lines down. Every _originalNotes mutator (clear(), removeNote(), ...) now calls
+    // invalidateStackCache(), which keeps the two in sync -- clearing '_closeStack' and resetting
+    // '_isStackedInThirds' together -- so as things stand neither clause should be independently
+    // reachable through the public mutator API. Checking both explicitly, rather than checking
+    // one and relying on the other to match it, keeps this function correct on its own even if
+    // that invariant is ever violated elsewhere, instead of depending on a property this function
+    // has no way to verify.
     if (_closeStack.empty() || _originalNotes.empty()) {
         return false;
     }
