@@ -379,6 +379,11 @@ TEST(PartAppend, AppendNoteOverflowingLastMeasureThrows) {
 
     std::variant<Note, Chord> noteVariant = Note("C4", RhythmFigure::BREVE);
     EXPECT_THROW(part.append(noteVariant, -1, 0), std::runtime_error);
+
+    // The guard must fire before any write lands: the Part must not be left holding an orphan
+    // tie-start note with no tie-stop partner (the guard used to run after '_measure[m].addNote'
+    // already committed the first half of the split note).
+    EXPECT_EQ(part.getNumNotes(), 0);
 }
 
 TEST(PartAppend, AppendChordOverflowingLastMeasureThrows) {
@@ -388,6 +393,9 @@ TEST(PartAppend, AppendChordOverflowingLastMeasureThrows) {
     Chord chord(std::vector<std::string>{"C4", "E4", "G4"}, RhythmFigure::BREVE);
     std::variant<Note, Chord> chordVariant = chord;
     EXPECT_THROW(part.append(chordVariant, -1, 0), std::runtime_error);
+
+    // Same all-or-nothing guarantee for the chord path: no orphan tie-start notes left behind.
+    EXPECT_EQ(part.getNumNotes(), 0);
 }
 
 TEST(PartAppend, AppendNoteThatFitsAcrossMultipleMeasuresDoesNotThrow) {

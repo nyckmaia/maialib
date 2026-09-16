@@ -337,6 +337,20 @@ void Part::appendNote(const Note& note, const int position, const int staveId) {
 
         // CASE 01: split the note and use ties
         if (diff < 0) {
+            // The remainder would need to be tied into the next measure. Check that it exists
+            // *before* writing anything, so a failure here leaves the Part untouched instead of
+            // holding an orphan tie-start note with no tie-stop partner. Auto-appending a blank
+            // measure was considered and deliberately deferred: it is a feature decision (what
+            // time signature/key/clef would it inherit, should getNumMeasures() silently change
+            // under the caller), not something a bugfix belongs deciding, and Part has no
+            // visibility into Score::addMeasure() to do it properly anyway.
+            if (m == numMeasures - 1) {
+                LOG_ERROR(
+                    "Unable to append the note: it doesn't fit in the last measure and there "
+                    "is no following measure to hold the tied remainder. Add another measure "
+                    "before appending a note that overflows the last one.");
+            }
+
             Note first = note;
             first.setDuration({emptySpace, divisionsPerQuarterNote});
             first.setTieStart();
@@ -346,20 +360,6 @@ void Part::appendNote(const Note& note, const int position, const int staveId) {
             second.setTieStop();
 
             _measure[m].addNote(first, staveId, position);
-
-            // se tiver um compasso livre:
-            // Se for o ultimo compasso...
-            if (m == numMeasures - 1) {
-                // Add a blank measure at the end
-                // Score::addMeasure() -> tem q herdar public, e os metodos
-                // tem q ser protected
-                // https://stackoverflow.com/questions/357307/how-to-call-a-parent-class-function-from-derived-class-function
-                LOG_ERROR(
-                    "Unable to append the note: it doesn't fit in the last measure and there "
-                    "is no following measure to hold the tied remainder. Add another measure "
-                    "before appending a note that overflows the last one.");
-            }
-
             _measure[m + 1].addNote(second, staveId, position);
 
             return;
@@ -399,6 +399,16 @@ void Part::appendChord(const Chord& chord, const int position, const int staveId
 
         // CASE 01: split the chord notes and use ties
         if (diff < 0) {
+            // See the matching comment in appendNote() for why there is no auto-append here.
+            // Checked before any write lands, so a failure leaves the Part untouched instead of
+            // holding orphan tie-start notes with no tie-stop partners.
+            if (m == numMeasures - 1) {
+                LOG_ERROR(
+                    "Unable to append the chord: it doesn't fit in the last measure and there "
+                    "is no following measure to hold the tied remainder. Add another measure "
+                    "before appending a chord that overflows the last one.");
+            }
+
             std::vector<Note> first(chordSize);
             std::vector<Note> second(chordSize);
 
@@ -412,13 +422,6 @@ void Part::appendChord(const Chord& chord, const int position, const int staveId
                 first[n].setTieStart();
 
                 _measure[m].addNote(first[n], staveId, position);
-            }
-
-            if (m == numMeasures - 1) {
-                LOG_ERROR(
-                    "Unable to append the chord: it doesn't fit in the last measure and there "
-                    "is no following measure to hold the tied remainder. Add another measure "
-                    "before appending a chord that overflows the last one.");
             }
 
             for (int n = 0; n < chordSize; n++) {
