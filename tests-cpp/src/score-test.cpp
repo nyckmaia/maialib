@@ -519,6 +519,21 @@ TEST(ScoreNoteCount, GetNumNotesFromLoadedXML) {
 }
 
 // ====================
+// Instrument Fragmentation Tests
+// ====================
+
+TEST(InstrumentFragmentation, ThrowsControlledErrorWhenSectionHasNoNotes) {
+    // A Score built programmatically (not loaded from an XML file) has an empty pugixml
+    // document, so the XPath query 'instrumentFragmentation' uses to collect notes returns
+    // zero results ('maxNotes == 0'). Before the out-of-bounds guard, 'get_sign[maxNotes - 1]'
+    // read past the start of an empty vector. After the guard, the function proceeds safely
+    // and fails deterministically on the later (pre-existing) "beatNumber is empty" check
+    // instead of corrupting memory.
+    Score score({"Piano"}, 1);
+    EXPECT_THROW(score.instrumentFragmentation(), std::runtime_error);
+}
+
+// ====================
 // Complex Score Tests
 // ====================
 

@@ -2424,7 +2424,9 @@ nlohmann::json Score::instrumentFragmentation(nlohmann::json config) {
             }
         }
 
-        if (get_sign[maxNotes - 1] == -1) {  // exception for the last element
+        // Guard: 'maxNotes' can be 0 when an instrument/section has zero notes, and
+        // 'get_sign'/'activations_vec' would then be empty vectors.
+        if (maxNotes > 0 && get_sign[maxNotes - 1] == -1) {  // exception for the last element
             activations_vec[maxNotes - 1] = 1;
         }
 
