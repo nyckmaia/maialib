@@ -125,19 +125,8 @@ doc:
 # Code Formatting
 # ====================
 
-# NOTE: the \( \) grouping is required. find's -o binds looser than the implicit
-# -a, so `-name "*.cpp" -o -name "*.h" -exec ...` attaches -exec to the *.h branch
-# alone and silently leaves every .cpp file unformatted, with a zero exit status.
-# Grouping and ! are both POSIX find, so these lines behave identically under GNU
-# find (Linux, Git Bash on Windows) and BSD find (macOS). Keep each find on a
-# single line: recipe line continuations are not portable across make flavors.
-# pitch-spelling-legacy-data.h is generated, column-aligned data: left unformatted.
 format-cpp:
-	@echo "Formatting C++ code with clang-format..."
-	@find maiacore/include/maiacore -name "*.h" -exec clang-format -i {} +
-	@find maiacore/src/maiacore \( -name "*.cpp" -o -name "*.h" \) -exec clang-format -i {} +
-	@find tests-cpp/src \( -name "*.cpp" -o -name "*.h" \) ! -name "pitch-spelling-legacy-data.h" -exec clang-format -i {} +
-	@echo "C++ formatting complete."
+	@python $(SCRIPTS_DIR)/make-format.py
 
 format-python:
 	@echo "Formatting Python code with Ruff..."
