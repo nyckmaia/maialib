@@ -35,7 +35,7 @@ All notable changes to this project will be documented in this file.
 - Improve Python tutorials
 - Improve README.md
 
-## Fix
+### Fix
 
 - Minor bug fixes
 
@@ -56,7 +56,7 @@ All notable changes to this project will be documented in this file.
 - Note and Chord class: Add partialsDecayExpRate optional parameter to control the partials decay exponential rate (default: 0.88).
 - Improve Doxygen documentation
 
-## Fix
+### Fix
 
 - Fix Beethoven 5th Symphony notes trill
 
@@ -64,7 +64,7 @@ All notable changes to this project will be documented in this file.
 
 ## [v1.9.3] - 2025-07-02
 
-## Fix
+### Fix
 
 - Rename Python wrapper ScoreCollection.findMelodyPattern to .findMelodyPatternDataFrame
 - Update Doxygen documentation
@@ -77,7 +77,7 @@ All notable changes to this project will be documented in this file.
 
 - Multiple classes doxygen documentation
 
-## Fix
+### Fix
 
 - Interval::_Diminished_ word spelling is correct now
 
