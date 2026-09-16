@@ -411,3 +411,27 @@ for (const std::string pitch :
     EXPECT_THROW(Helper::pitch2midiNote(pitch), std::runtime_error) << "pitch: " << pitch;
 }
 }
+
+TEST(PitchSpelling, MidiNote2PitchFullRange) {
+std::string pitchClass;
+std::string pitchStep;
+std::string alterSymbol;
+int octave = 0;
+float alterValue = 0.0f;
+
+for (const auto& entry : kFullRangeMidiTable) {
+    Helper::splitPitch(entry.pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
+    EXPECT_EQ(Helper::midiNote2pitch(entry.midiNumber, alterSymbol), entry.pitch)
+        << "pitch: " << entry.pitch;
+}
+}
+
+TEST(PitchSpelling, MidiNote2PitchRange) {
+EXPECT_EQ(Helper::midiNote2pitch(157, "x"), "Bx11");
+EXPECT_EQ(Helper::midiNote2pitch(5), "F-1");
+EXPECT_THROW(Helper::midiNote2pitch(158), std::runtime_error);
+EXPECT_THROW(Helper::midiNote2pitch(0, "#"), std::runtime_error);
+EXPECT_EQ(Helper::midiNote2pitches(0), std::vector<std::string>({"C-1", "Dbb-1"}));
+EXPECT_EQ(Helper::transposePitch("B11", 1), "B#11");
+EXPECT_THROW(Helper::transposePitch("B11", 2), std::runtime_error);
+}

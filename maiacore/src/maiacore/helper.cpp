@@ -150,6 +150,12 @@ const std::string Helper::midiNote2pitch(const int midiNote, const std::string& 
         octave++;
     }
 
+    if (octave < c_minPitchOctave || octave > c_maxPitchOctave) {
+        LOG_ERROR("The MIDI Note '" + std::to_string(midiNote) + "' cannot be written using '" +
+                  accType + "' accident type within octaves " + std::to_string(c_minPitchOctave) +
+                  ".." + std::to_string(c_maxPitchOctave));
+    }
+
     return firstOctavePitchClass + std::to_string(octave);
 }
 

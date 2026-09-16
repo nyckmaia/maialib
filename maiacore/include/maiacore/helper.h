@@ -126,9 +126,12 @@ class Helper {
 
     /**
      * @brief Converts a MIDI note number to a pitch string, with optional accidental type.
-     * @param midiNote MIDI note number.
-     * @param accType Accidental type (e.g., "#", "b").
-     * @return Pitch string.
+     * @param midiNote MIDI note number (negative values return "rest").
+     * @param accType Accidental type: "" (natural for white keys, "#" for black keys), "#", "b",
+     *        "x" or "bb".
+     * @return Pitch string within octaves -1..11 (e.g., 5 -> "F-1"; 157 with "x" -> "Bx11").
+     * @throws std::runtime_error If accType is unknown, if the MIDI note cannot be written with
+     *         accType, or if the resulting octave falls outside -1..11.
      */
     static const std::string midiNote2pitch(const int midiNote, const std::string& accType = {});
 
