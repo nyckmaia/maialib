@@ -10,7 +10,13 @@ if(WIN32)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-project(maiacore LANGUAGES CXX)
+# Lê a versão do arquivo VERSION
+# NOTE: must happen before project() — ${PROJECT_SOURCE_DIR} does not exist yet,
+# so this uses ${CMAKE_CURRENT_SOURCE_DIR} instead (both point at the repo root here).
+file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" MAIALIB_VERSION)
+string(STRIP "${MAIALIB_VERSION}" MAIALIB_VERSION)
+
+project(maiacore VERSION ${MAIALIB_VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -50,9 +56,6 @@ else()
     message(FATAL_ERROR "Unable to detect the OS")
 endif()
 
-# Lê a versão do arquivo VERSION
-file(READ "${PROJECT_SOURCE_DIR}/VERSION" MAIALIB_VERSION)
-string(STRIP "${MAIALIB_VERSION}" MAIALIB_VERSION)
 # Passa a versão como uma definição para o compilador
 # NOTE: unquoted on purpose. py_maiacore.cpp applies MACRO_STRINGIFY() to this
 # macro, which already turns the raw token into a quoted string literal. If we

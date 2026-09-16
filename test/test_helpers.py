@@ -416,6 +416,7 @@ class Version(unittest.TestCase):
     def testVersionHasNoQuoteCharacters(self):
         self.assertNotIn('"', ml.__version__)
         self.assertNotIn('"', ml.maiacore.__version__)
+        self.assertNotIn('"', ml.Helper.getLibraryVersion())
 
     def testVersionMatchesVersionFile(self):
         versionFilePath = Path(__file__).resolve().parent.parent / "VERSION"
@@ -423,6 +424,11 @@ class Version(unittest.TestCase):
 
         self.assertEqual(ml.__version__, expectedVersion)
         self.assertEqual(ml.maiacore.__version__, expectedVersion)
+        self.assertEqual(ml.Helper.getLibraryVersion(), expectedVersion)
+
+    def testGetLibraryVersionMatchesPythonVersion(self):
+        self.assertEqual(ml.Helper.getLibraryVersion(), ml.__version__)
+        self.assertEqual(ml.Helper.getLibraryVersion(), ml.maiacore.__version__)
 
 
 if __name__ == "__main__":

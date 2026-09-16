@@ -16,6 +16,25 @@ void HelperClass(const py::module& m) {
     py::class_<Helper> cls(m, "Helper");
 
     //--------------------- //
+    cls.def_static("getLibraryVersion", &Helper::getLibraryVersion,
+                   R"pbdoc(
+        Return the maiacore library version.
+
+        Reads the version baked into the compiled library from the ``MAIALIB_VERSION_INFO``
+        macro (set by CMake from the repo-root ``VERSION`` file). Returns ``"dev"`` when the
+        macro is undefined.
+
+        Returns
+        -------
+        str
+            Library version string (e.g. ``"1.10.3"``), or ``"dev"`` if unavailable.
+
+        Examples
+        --------
+        >>> ml.Helper.getLibraryVersion()
+        '1.10.3'
+    )pbdoc");
+    //--------------------- //
     cls.def_static("freq2midiNote", &Helper::freq2midiNote, py::arg("freq"),
                    py::arg("modelo") = nullptr);
     //--------------------- //

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Improve
 
+- Add `Helper.getLibraryVersion()` (C++ and Python) so the compiled `maiacore` library itself can report the version from the root `VERSION` file, matching `maialib.__version__` and `maialib.maiacore.__version__`
 - Accept every pitch spelling with `bb`, `b`, `#` and `x` accidentals in octaves -1 to 11 (e.g. `Cbb0`, `Bx9`, `C-1`, `Bx11`)
 - Compute MIDI numbers and enharmonic spellings arithmetically instead of hard-coded tables
 - `Note(midiNumber)` accepts the whole spelled range: the old `midiNumber > 127` guard is replaced by the octave range check in `Helper.midiNote2pitch()`

@@ -185,6 +185,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `freq2pitch(freq: float, accType: str = '') -> tuple[str, int]`
 - `frequencies2cents(freq_A: float, freq_B: float) -> int`
 - `getDurationDifferenceBetweenRhythms(referenceRhythm: list[Note], otherRhythm: list[Note]) -> list[float]`
+- `getLibraryVersion() -> str`
 - `getPercentiles(arg0: typing.Any, arg1: list[float]) -> typing.Any`
 - `getSemitonesDifferenceBetweenMelodies(referenceMelody: list[Note], otherMelody: list[Note]) -> list[float]`
 - `isEnharmonic(pitch_A: str, pitch_B: str) -> bool`

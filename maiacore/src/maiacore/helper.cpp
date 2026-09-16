@@ -16,6 +16,17 @@
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
 
+#define STRINGIFY(x) #x
+#define MACRO_STRINGIFY(x) STRINGIFY(x)
+
+std::string Helper::getLibraryVersion() {
+#ifdef MAIALIB_VERSION_INFO
+    return MACRO_STRINGIFY(MAIALIB_VERSION_INFO);
+#else
+    return "dev";
+#endif
+}
+
 std::vector<std::string> Helper::splitString(const std::string& s, char delimiter) {
     std::vector<std::string> tokens;
     std::string token;

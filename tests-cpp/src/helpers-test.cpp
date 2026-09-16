@@ -1,5 +1,7 @@
 #include <gtest/gtest.h>
 
+#include <regex>
+
 #include "maiacore/helper.h"
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
@@ -509,4 +511,12 @@ for (const auto& entry : kFullRangeEnharmonicTable) {
     EXPECT_TRUE(Helper::isEnharmonic(entry.pitch, entry.alternativePitch))
         << "pitch: " << entry.pitch;
 }
+}
+
+TEST(Helper, GetLibraryVersion) {
+const std::string version = Helper::getLibraryVersion();
+EXPECT_FALSE(version.empty());
+EXPECT_EQ(version.find('"'), std::string::npos);
+EXPECT_TRUE(std::regex_match(version, std::regex("^[0-9]+\\.[0-9]+\\.[0-9]+$")))
+    << "version: " << version;
 }

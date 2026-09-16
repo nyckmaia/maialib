@@ -19,6 +19,15 @@ class Interval;
 class Helper {
    public:
     /**
+     * @brief Returns the maiacore library version.
+     * @details Reads the version baked into the compiled library from the `MAIALIB_VERSION_INFO`
+     *          macro (set by CMake from the repo-root `VERSION` file). Returns `"dev"` when the
+     *          macro is undefined, e.g. a translation unit built outside the project's CMake setup.
+     * @return Library version string (e.g. "1.10.3"), or "dev" if unavailable.
+     */
+    static std::string getLibraryVersion();
+
+    /**
      * @brief Splits a string into tokens using a specified delimiter.
      * @param s The input string.
      * @param delimiter The character used to split the string.
