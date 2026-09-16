@@ -13,6 +13,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fix
 
+- `maialib.__version__` and `maialib.maiacore.__version__` no longer carry literal quote characters; the value still comes from the root `VERSION` file
 - `Helper.pitch2midiNote("Db10")` returned 132 instead of 133
 - `Note.setPitch()` kept the previous accidental symbol and rejected multi-digit octaves
 - `Helper.isEnharmonic()` did not detect E#/F, B#/C and Cb/B (this also affected `Helper.noteSimilarity()`)

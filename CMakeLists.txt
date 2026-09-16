@@ -54,7 +54,13 @@ endif()
 file(READ "${PROJECT_SOURCE_DIR}/VERSION" MAIALIB_VERSION)
 string(STRIP "${MAIALIB_VERSION}" MAIALIB_VERSION)
 # Passa a versão como uma definição para o compilador
-add_definitions(-DMAIALIB_VERSION_INFO="${MAIALIB_VERSION}")
+# NOTE: unquoted on purpose. py_maiacore.cpp applies MACRO_STRINGIFY() to this
+# macro, which already turns the raw token into a quoted string literal. If we
+# quote the value here too, MACRO_STRINGIFY() stringifies the quotes themselves,
+# so __version__ ends up carrying literal quote characters (e.g. "\"1.10.3\""
+# instead of "1.10.3"). This mirrors the unquoted value setup.py passes via
+# -DMAIALIB_VERSION_INFO for the pip build path.
+add_definitions(-DMAIALIB_VERSION_INFO=${MAIALIB_VERSION})
 
 # Set otimization flags
 if (MSVC)

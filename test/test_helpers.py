@@ -1,4 +1,6 @@
 import unittest
+from pathlib import Path
+
 import maialib as ml
 
 
@@ -408,6 +410,19 @@ class PitchSpelling(unittest.TestCase):
 
     def testPitch2numberWasRemoved(self):
         self.assertFalse(hasattr(ml.Helper, "pitch2number"))
+
+
+class Version(unittest.TestCase):
+    def testVersionHasNoQuoteCharacters(self):
+        self.assertNotIn('"', ml.__version__)
+        self.assertNotIn('"', ml.maiacore.__version__)
+
+    def testVersionMatchesVersionFile(self):
+        versionFilePath = Path(__file__).resolve().parent.parent / "VERSION"
+        expectedVersion = versionFilePath.read_text().strip()
+
+        self.assertEqual(ml.__version__, expectedVersion)
+        self.assertEqual(ml.maiacore.__version__, expectedVersion)
 
 
 if __name__ == "__main__":
