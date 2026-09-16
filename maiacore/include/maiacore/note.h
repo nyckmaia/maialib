@@ -52,13 +52,16 @@ class Note {
 
     /**
      * @brief Constructs a Note from a pitch string and rhythm figure.
-     * @param pitch Pitch string (e.g., "C4", "G#3").
+     * @param pitch Pitch string (e.g., "C4", "G#3", "Dbb-1", "Bx11"). Accidentals: "bb", "b",
+     *        "#", "x"; octaves -1..11 (a missing octave defaults to 4); the MIDI number must be
+     *        >= 0. An empty string or a string containing "rest" creates a rest.
      * @param rhythmFigure Rhythm figure (default: QUARTER).
      * @param isNoteOn True if sounding note, false for rest.
      * @param inChord True if part of a chord.
      * @param transposeDiatonic Diatonic transposition interval.
      * @param transposeChromatic Chromatic transposition interval.
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
+     * @throws std::runtime_error If the pitch string is invalid (see Helper::splitPitch()).
      */
     explicit Note(const std::string& pitch, const RhythmFigure rhythmFigure = RhythmFigure::QUARTER,
                   bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0,
@@ -66,8 +69,8 @@ class Note {
 
     /**
      * @brief Constructs a Note from a MIDI number, accidental type, and rhythm figure.
-     * @param midiNumber MIDI note number.
-     * @param accType Accidental type (e.g., "#", "b").
+     * @param midiNumber MIDI note number, spelled within octaves -1..11 (e.g., 5 -> "F-1").
+     * @param accType Accidental type: "", "#", "b", "x" or "bb" (see Helper::midiNote2pitch()).
      * @param rhythmFigure Rhythm figure (default: QUARTER).
      * @param isNoteOn True if sounding note, false for rest.
      * @param inChord True if part of a chord.
@@ -126,8 +129,12 @@ class Note {
     void setIsNoteOn(bool isNoteOn);
 
     /**
-     * @brief Sets the pitch (e.g., "C4", "G#3") for the note.
-     * @param pitch Pitch string.
+     * @brief Sets the pitch (e.g., "C4", "G#3", "Bb-1", "C10") for the note.
+     * @details Replaces the pitch class, octave, accidental symbol and MIDI number. Accepts the
+     *          same spellings as the pitch-string constructor.
+     * @param pitch Pitch string. An empty string or a string containing "rest" turns the note
+     *        into a rest.
+     * @throws std::runtime_error If the pitch string is invalid (see Helper::splitPitch()).
      */
     void setPitch(const std::string& pitch);
 

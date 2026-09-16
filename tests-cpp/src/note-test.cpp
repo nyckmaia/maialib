@@ -851,3 +851,38 @@ TEST(PitchSpellingLegacy, EnharmonicTableMatches) {
     EXPECT_EQ(note.getEnharmonicPitch(true), entry.alternativePitch) << "pitch: " << entry.pitch;
   }
 }
+
+TEST(PitchSpelling, NoteAcceptsFullRange) {
+  for (const auto& entry : kFullRangeMidiTable) {
+    const Note note(entry.pitch);
+    EXPECT_EQ(note.getMidiNumber(), entry.midiNumber) << "pitch: " << entry.pitch;
+    EXPECT_EQ(note.getPitch(), entry.pitch) << "pitch: " << entry.pitch;
+  }
+}
+
+TEST(PitchSpelling, NoteEdgeCases) {
+  EXPECT_EQ(Note("C-1").getMidiNumber(), 0);
+  EXPECT_EQ(Note("C-1").getOctave(), -1);
+  EXPECT_EQ(Note("Cbb10").getMidiNumber(), 130);
+  EXPECT_EQ(Note(5).getPitch(), "F-1");
+  EXPECT_EQ(Note(157, "x").getPitch(), "Bx11");
+  EXPECT_THROW({ Note note("Cb-1"); }, std::runtime_error);
+  EXPECT_THROW({ Note note("C12"); }, std::runtime_error);
+  EXPECT_THROW({ Note note("C#123"); }, std::runtime_error);
+}
+
+TEST(PitchSpelling, SetPitchResetsAccidentalAndParsesOctaves) {
+  Note note("C#4");
+  note.setPitch("D4");
+  EXPECT_EQ(note.getAlterSymbol(), "");
+  EXPECT_EQ(note.getMidiNumber(), 62);
+
+  note.setPitch("C10");
+  EXPECT_EQ(note.getPitch(), "C10");
+  EXPECT_EQ(note.getMidiNumber(), 132);
+
+  note.setPitch("Bb-1");
+  EXPECT_EQ(note.getOctave(), -1);
+  EXPECT_EQ(note.getMidiNumber(), 10);
+  EXPECT_EQ(note.getAlterSymbol(), "b");
+}

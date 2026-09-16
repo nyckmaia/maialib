@@ -37,59 +37,11 @@ Note::Note(const std::string& pitch, const RhythmFigure rhythmFigure, bool isNot
         return;
     }
 
-    const size_t pitchSize = pitch.size();
-
-    // Error checking:
-    if (pitchSize > 4) {
-        LOG_ERROR("The pitch '" + pitch + "' have a invalid length: " + std::to_string(pitchSize));
-    }
-
-    const std::string diatonicPitch = pitch.substr(0, 1);
-    bool foundPitch = std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(),
-                                diatonicPitch) != c_C_diatonicScale.end();
-
-    // Error checking:
-    if (!foundPitch && !pitch.empty()) {
-        LOG_ERROR("Unknown diatonc pitch: " + diatonicPitch);
-    }
-
-    // Verify if the input data is a full pitch or just a pitchClass. Ex.: "A4"
-    // or "A"
-    const bool isFullPitch = (isdigit(pitch.back())) ? true : false;
-
     std::string pitchClass;
-    int octave = 4;  // default octave
-
-    if (isFullPitch) {
-        // Extract octave (support multi-digit: 0-11)
-        size_t octaveStartPos = pitchSize - 1;
-        // Find where the octave digits start (scan backwards)
-        while (octaveStartPos > 0 && isdigit(pitch[octaveStartPos - 1])) {
-            octaveStartPos--;
-        }
-        pitchClass = pitch.substr(0, octaveStartPos);
-        std::string octaveStr = pitch.substr(octaveStartPos);
-        octave = std::stoi(octaveStr);
-    } else {
-        pitchClass = pitch;
-    }
-
-    if (octave > 11 || octave < 0) {
-        LOG_ERROR("Invalid octave value: " + std::to_string(octave));
-    }
-
-    const size_t pitchClassSize = pitchClass.size();
-
-    // Store the alter symbol: # / b / x / bb
-    if (pitchClassSize > 1) {
-        _alterSymbol = pitchClass.substr(1, pitchClassSize);
-    }
-
-    bool foundAlterSymbol =
-        std::find(c_alterSymbol.begin(), c_alterSymbol.end(), _alterSymbol) != c_alterSymbol.end();
-    if (!foundAlterSymbol && !_alterSymbol.empty()) {
-        LOG_ERROR("Unknown alter symbol: " + _alterSymbol);
-    }
+    std::string pitchStep;
+    int octave = 0;
+    float alterValue = 0.0f;
+    Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, _alterSymbol);
 
     _writtenPitchClass = pitchClass;
     _writtenOctave = octave;
@@ -112,9 +64,7 @@ Note::Note(const int midiNumber, const std::string& accType, const RhythmFigure 
            const int divisionsPerQuarterNote)
     : Note(Helper::midiNote2pitch(midiNumber, accType), duration, isNoteOn, inChord,
            transposeDiatonic, transposeChromatic, divisionsPerQuarterNote) {
-    if (midiNumber > 127) {
-        LOG_ERROR("Invalid MIDI number");
-    }
+    // Range validation (octaves -1..11) is already enforced by Helper::midiNote2pitch().
 }
 
 Note::~Note() {}
@@ -1639,41 +1589,11 @@ void Note::setPitch(const std::string& pitch) {
         return;
     }
 
-    const size_t pitchSize = pitch.size();
-
-    // Error checking:
-    if (pitchSize > 4) {
-        LOG_ERROR("Invalid pitchClass length: " + std::to_string(pitchSize));
-    }
-
-    const std::string diatonicPitch = pitch.substr(0, 1);
-    bool foundPitch = std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(),
-                                diatonicPitch) != c_C_diatonicScale.end();
-
-    // Error checking:
-    if (!foundPitch && !pitch.empty()) {
-        LOG_ERROR("Unknown diatonc pitch: " + diatonicPitch);
-    }
-
-    // Verify if the input data is a full pitch or just a pitchClass. Ex.: "A4"
-    // or "A"
-    const bool isFullPitch = (isdigit(pitch.back())) ? true : false;
-
-    const std::string pitchClass = (isFullPitch) ? pitch.substr(0, pitchSize - 1) : pitch;
-    const int octave = (isFullPitch) ? static_cast<int>(pitch.back()) - 48 : 4;
-
-    const size_t pitchClassSize = pitchClass.size();
-
-    // Store the alter symbol: # / b / x / bb
-    if (pitchClassSize > 1) {
-        _alterSymbol = pitchClass.substr(1, pitchClassSize);
-    }
-
-    bool foundAlterSymbol =
-        std::find(c_alterSymbol.begin(), c_alterSymbol.end(), _alterSymbol) != c_alterSymbol.end();
-    if (!foundAlterSymbol && !_alterSymbol.empty()) {
-        LOG_ERROR("Unknown alter symbol: " + _alterSymbol);
-    }
+    std::string pitchClass;
+    std::string pitchStep;
+    int octave = 0;
+    float alterValue = 0.0f;
+    Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, _alterSymbol);
 
     _writtenPitchClass = pitchClass;
     _writtenOctave = octave;
