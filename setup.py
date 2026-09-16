@@ -208,7 +208,24 @@ setup(
     #   - nbformat>=4.2.0: exact floor plotly itself enforces at runtime for notebook/mime
     #     rendering (fig.show() in a notebook), raising "ValueError: Mime type rendering
     #     requires nbformat>=4.2.0 but it is not installed" below that version.
-    install_requires=["pandas>=2.0.0", "plotly>=6.1.1", "kaleido>=0.2.1", "nbformat>=4.2.0"],
+    #   - numpy>=1.23.2: maiapy/sethares_dissonance.py does `import numpy as np` directly
+    #     (np.argsort, np.exp, np.linspace, np.concatenate, etc.) and previously relied on
+    #     numpy arriving transitively through pandas -- undeclared, but real. None of those
+    #     calls need anything past numpy's oldest stable API, so this floor isn't grounded in
+    #     our own code the way the others are: it's honestly just pandas>=2.0.0's own numpy
+    #     requirement for the newest Python this still needs to support without a conflict.
+    #     Pandas 2.0.0 itself pins numpy>=1.20.3 (Python <3.10), >=1.21.0 (3.10), >=1.23.2
+    #     (>=3.11); since install_requires here can't be conditioned per-Python like pandas'
+    #     own metadata is, 1.23.2 is the one value that satisfies pandas' floor on every Python
+    #     version this project claims to support (3.8-3.14) -- picking anything lower would
+    #     just be papering over a constraint pandas already enforces on newer interpreters.
+    install_requires=[
+        "pandas>=2.0.0",
+        "numpy>=1.23.2",
+        "plotly>=6.1.1",
+        "kaleido>=0.2.1",
+        "nbformat>=4.2.0",
+    ],
     python_requires=">=3.8.0",
     zip_safe=False,
     ext_modules=[CMakeExtension(name="maiacore")],

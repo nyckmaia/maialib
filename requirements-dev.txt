@@ -16,8 +16,6 @@
 # date above) whenever the pinned set is deliberately refreshed.
 
 # Runtime dependencies (see setup.py's install_requires for the floors these must satisfy).
-# numpy is pinned too: maialib/maiapy/sethares_dissonance.py imports it directly even though
-# it is only a transitive dependency of pandas/plotly in setup.py, not a declared one.
 pandas==3.0.5
 numpy==2.5.3
 plotly==7.1.0
