@@ -507,7 +507,7 @@ EXPECT_EQ(alterSymbol, "");
 TEST(PitchSpelling, AcceptedEdgeCases) {
 EXPECT_EQ(Helper::pitch2midiNote("Cbb0"), 10);
 EXPECT_EQ(Helper::pitch2midiNote("Cb0"), 11);
-EXPECT_EQ(Helper::pitch2midiNote("Bx9"), 131);
+EXPECT_EQ(Helper::pitch2midiNote("Bx9"), 133);
 EXPECT_EQ(Helper::pitch2midiNote("Db10"), 133);
 EXPECT_EQ(Helper::pitch2midiNote("C-1"), 0);
 EXPECT_EQ(Helper::pitch2midiNote("Bx11"), 157);
@@ -1859,7 +1859,7 @@ class PitchSpelling(unittest.TestCase):
     def testPitch2midiNoteEdgeCases(self):
         self.assertEqual(ml.Helper.pitch2midiNote("Cbb0"), 10)
         self.assertEqual(ml.Helper.pitch2midiNote("Cb0"), 11)
-        self.assertEqual(ml.Helper.pitch2midiNote("Bx9"), 131)
+        self.assertEqual(ml.Helper.pitch2midiNote("Bx9"), 133)
         self.assertEqual(ml.Helper.pitch2midiNote("Db10"), 133)
         self.assertEqual(ml.Helper.pitch2midiNote("C-1"), 0)
         self.assertEqual(ml.Helper.pitch2midiNote("Bx11"), 157)
@@ -1892,7 +1892,7 @@ In `test/test_note.py`, insert before `if __name__ == "__main__":`:
 class NotePitchSpellingRange(unittest.TestCase):
     def testFullRangeEdges(self):
         self.assertEqual(ml.Note("Cbb0").getMidiNumber(), 10)
-        self.assertEqual(ml.Note("Bx9").getMidiNumber(), 131)
+        self.assertEqual(ml.Note("Bx9").getMidiNumber(), 133)
         self.assertEqual(ml.Note("C-1").getMidiNumber(), 0)
         self.assertEqual(ml.Note(5).getPitch(), "F-1")
         with self.assertRaises(RuntimeError):

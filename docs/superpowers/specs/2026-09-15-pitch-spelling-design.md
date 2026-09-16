@@ -196,7 +196,7 @@ Verified against the existing switch: 0 mismatches over 385 cases.
 
 | Input | Before | After |
 |---|---|---|
-| `Note("Cbb0")`, `Note("Cb0")`, `Note("Bx9")` | throws | MIDI 10, 11, 131 |
+| `Note("Cbb0")`, `Note("Cb0")`, `Note("Bx9")` | throws | MIDI 10, 11, 133 |
 | Spellings in octaves -1, 10, 11 (e.g. `Note("C-1")`, `Note("E10")`, `Note("Bx11")`) | throws (except `C10`, `B#9`, `Db10`) | accepted (MIDI 0, 136, 157) |
 | `Note(5)` | throws | `F-1` |
 | `pitch2midiNote("Db10")` | 132 | 133 |
@@ -239,7 +239,7 @@ For all 453 valid spellings:
 
 ### 10.3 Edge Cases (C++)
 
-- Accepted: `Cbb0`=10, `Cb0`=11, `Bx9`=131, `Db10`=133, `C-1`=0, `Bx11`=157, `C04`=60, `"rest"`=-1.
+- Accepted: `Cbb0`=10, `Cb0`=11, `Bx9`=133, `Db10`=133, `C-1`=0, `Bx11`=157, `C04`=60, `"rest"`=-1.
 - Rejected: `Cb-1`, `Cbb-1`, `C12`, `C#123`, `H4`, `C#4x`, `C-`, `C1x4`.
 - `setPitch`: `C#4` → `D4` clears the accidental; `setPitch("C10")` works.
 - `isEnharmonic`: `E#4/F4`, `B#3/C4`, `Cb4/B3` true; `C4/D4` false; `rest/rest` true.
