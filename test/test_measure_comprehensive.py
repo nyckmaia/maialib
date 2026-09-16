@@ -183,6 +183,29 @@ class MeasureNotesTestCase(unittest.TestCase):
         note = self.measure.getNote(0)
         self.assertIsNotNone(note)
 
+    def test_get_note_negative_index_raises(self):
+        """Test that a negative note index raises instead of crashing"""
+        self.measure.addNote("A4")
+        with self.assertRaises(IndexError):
+            self.measure.getNote(-1)
+
+    def test_get_note_out_of_range_raises(self):
+        """Test that an out-of-range note index raises instead of crashing"""
+        self.measure.addNote("A4")
+        with self.assertRaises(IndexError):
+            self.measure.getNote(1)
+
+    def test_get_note_empty_stave_raises(self):
+        """Test that indexing into an empty stave raises instead of underflowing"""
+        with self.assertRaises(IndexError):
+            self.measure.getNote(0)
+
+    def test_get_note_invalid_stave_id_raises(self):
+        """Test that an out-of-range staveId raises instead of crashing"""
+        self.measure.addNote("A4")
+        with self.assertRaises(IndexError):
+            self.measure.getNote(0, staveId=1)
+
     def test_remove_note(self):
         """Test removing a note"""
         self.measure.addNote("F4")

@@ -577,6 +577,47 @@ TEST(MeasureNoteRetrieval, GetNoteOff) {
     EXPECT_FALSE(measure.getNoteOff(1, 0).isNoteOn());
 }
 
+TEST(MeasureNoteRetrieval, GetNoteThrowsOnNegativeIndex) {
+    Measure measure;
+    measure.addNote(Note("C4"), 0);
+
+    EXPECT_THROW(measure.getNote(-1, 0), std::out_of_range);
+}
+
+TEST(MeasureNoteRetrieval, GetNoteThrowsOnIndexEqualToSize) {
+    Measure measure;
+    measure.addNote(Note("C4"), 0);
+
+    EXPECT_THROW(measure.getNote(1, 0), std::out_of_range);
+}
+
+TEST(MeasureNoteRetrieval, GetNoteThrowsOnEmptyStave) {
+    Measure measure;
+
+    // The stave has zero notes: 'stave.size() - 1' must not underflow.
+    EXPECT_THROW(measure.getNote(0, 0), std::out_of_range);
+}
+
+TEST(MeasureNoteRetrieval, GetNoteThrowsOnNegativeStaveId) {
+    Measure measure;
+    measure.addNote(Note("C4"), 0);
+
+    EXPECT_THROW(measure.getNote(0, -1), std::out_of_range);
+}
+
+TEST(MeasureNoteRetrieval, GetNoteThrowsOnStaveIdOutOfRange) {
+    Measure measure;
+    measure.addNote(Note("C4"), 0);
+
+    EXPECT_THROW(measure.getNote(0, 1), std::out_of_range);
+}
+
+TEST(MeasureNoteRetrieval, GetNoteConstOverloadThrowsOnEmptyStave) {
+    const Measure measure;
+
+    EXPECT_THROW(measure.getNote(0, 0), std::out_of_range);
+}
+
 // ====================
 // Note Removal Tests
 // ====================

@@ -255,9 +255,15 @@ bool Measure::divisionsPerQuarterNoteChanged() const { return _isDivisionsPerQua
 bool Measure::isMajorKeyMode() const { return _key.isMajorMode(); }
 
 const Note& Measure::getNote(const int noteId, const int staveId) const {
+    const int staveCount = static_cast<int>(_note.size());
+
+    if (staveId < 0 || staveId >= staveCount) {
+        throw std::out_of_range("Out of Range error");
+    }
+
     const auto& stave = _note[staveId];
 
-    if (noteId > (static_cast<int>(stave.size() - 1))) {
+    if (noteId < 0 || noteId >= static_cast<int>(stave.size())) {
         throw std::out_of_range("Out of Range error");
     }
 
@@ -265,9 +271,15 @@ const Note& Measure::getNote(const int noteId, const int staveId) const {
 }
 
 Note& Measure::getNote(const int noteId, const int staveId) {
+    const int staveCount = static_cast<int>(_note.size());
+
+    if (staveId < 0 || staveId >= staveCount) {
+        throw std::out_of_range("Out of Range error");
+    }
+
     auto& stave = _note[staveId];
 
-    if (noteId > (static_cast<int>(stave.size() - 1))) {
+    if (noteId < 0 || noteId >= static_cast<int>(stave.size())) {
         throw std::out_of_range("Out of Range error");
     }
 
