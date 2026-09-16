@@ -509,13 +509,26 @@ class Note {
 
     /**
      * @brief Returns an enharmonic equivalent pitch string.
-     * @param alternativeEnhamonicPitch If true, returns an alternative enharmonic.
-     * @return Enharmonic pitch string.
+     * @details Candidates are the other spellings (accidentals "bb", "b", natural, "#", "x") of
+     *          the same MIDI number within octaves -1..11.
+     *          - White keys: a natural returns its flat-side spelling by default (C4 -> Dbb4) and
+     *            its sharp-side spelling as the alternative (B#3); a flat-side or sharp-side
+     *            spelling returns the natural by default and the remaining spelling as the
+     *            alternative.
+     *          - Black keys: "#" and "b" swap (C#4 <-> Db4) and the double accidental is the
+     *            alternative; "x" and "bb" return the single accidental in the same direction
+     *            by default and the opposite single accidental as the alternative.
+     *          Range fallback: a missing alternative returns the default, and a missing default
+     *          returns the note's own pitch (e.g., "Bx11" -> "Bx11").
+     * @param alternativeEnhamonicPitch If true, returns the alternative enharmonic.
+     * @return Enharmonic pitch string, or "rest" for a rest.
      */
     std::string getEnharmonicPitch(const bool alternativeEnhamonicPitch = false) const;
 
     /**
      * @brief Returns all enharmonic pitch strings for the note.
+     * @details Built from getEnharmonicPitch(false) and getEnharmonicPitch(true), so the vector
+     *          may contain duplicates (e.g., "G#4" -> {"G#4", "Ab4", "Ab4"}).
      * @param includeCurrentPitch If true, includes the current pitch.
      * @return Vector of enharmonic pitch strings.
      */

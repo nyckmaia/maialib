@@ -886,3 +886,33 @@ TEST(PitchSpelling, SetPitchResetsAccidentalAndParsesOctaves) {
   EXPECT_EQ(note.getMidiNumber(), 10);
   EXPECT_EQ(note.getAlterSymbol(), "b");
 }
+
+TEST(PitchSpelling, FullRangeEnharmonicTable) {
+  for (const auto& entry : kFullRangeEnharmonicTable) {
+    const Note note(entry.pitch);
+    EXPECT_EQ(note.getEnharmonicPitch(false), entry.defaultPitch) << "pitch: " << entry.pitch;
+    EXPECT_EQ(note.getEnharmonicPitch(true), entry.alternativePitch) << "pitch: " << entry.pitch;
+  }
+}
+
+TEST(PitchSpelling, EnharmonicOutputsAreValidNotes) {
+  for (const auto& entry : kFullRangeMidiTable) {
+    const Note note(entry.pitch);
+    for (const bool alternative : {false, true}) {
+      const std::string enharmonic = note.getEnharmonicPitch(alternative);
+      EXPECT_EQ(Note(enharmonic).getMidiNumber(), entry.midiNumber)
+          << "pitch: " << entry.pitch << " enharmonic: " << enharmonic;
+    }
+  }
+}
+
+TEST(PitchSpelling, EnharmonicRangeFallback) {
+  EXPECT_EQ(Note("Bx11").getEnharmonicPitch(false), "Bx11");
+  EXPECT_EQ(Note("Bx11").getEnharmonicPitch(true), "Bx11");
+  EXPECT_EQ(Note("B11").getEnharmonicPitch(false), "B11");
+  EXPECT_EQ(Note("B11").getEnharmonicPitch(true), "Ax11");
+  EXPECT_EQ(Note("C-1").getEnharmonicPitch(false), "Dbb-1");
+  EXPECT_EQ(Note("C-1").getEnharmonicPitch(true), "Dbb-1");
+  EXPECT_EQ(Note("G#4").getEnharmonicPitches(true),
+            std::vector<std::string>({"G#4", "Ab4", "Ab4"}));
+}
