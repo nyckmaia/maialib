@@ -43,6 +43,11 @@ void Chord::info() {
     LOG_INFO("Size:" << size());
 
     const int chordSize = size();
+
+    if (chordSize == 0) {
+        LOG_ERROR("The chord is empty");
+    }
+
     std::string noteNames = "[";
 
     for (int i = 0; i < chordSize - 1; i++) {
@@ -61,6 +66,10 @@ void Chord::info() {
 
     LOG_INFO("=====> CHORD STACK <=====");
     LOG_INFO("Open Stack Size:" << chordStackSize);
+
+    if (chordStackSize == 0) {
+        LOG_ERROR("The chord stack is empty");
+    }
 
     std::string stackNames = "[";
 
@@ -178,6 +187,10 @@ void Chord::setDuration(const float quarterDuration, const int divisionsPerQuart
 // }
 
 void Chord::toInversion(int inversionNumber) {
+    if (_originalNotes.empty()) {
+        LOG_ERROR("The chord is empty");
+    }
+
     for (int i = 0; i < inversionNumber; i++) {
         _originalNotes[0].transpose(12);  // isto apenas altera a nota uma oitava acima
 
@@ -309,9 +322,21 @@ int Chord::getDurationTicks() const {
     return minValue;
 }
 
-Note& Chord::getNote(int noteIndex) { return _originalNotes[noteIndex]; }
+Note& Chord::getNote(int noteIndex) {
+    if (noteIndex < 0 || noteIndex >= size()) {
+        LOG_ERROR("Invalid note index: " + std::to_string(noteIndex));
+    }
 
-const Note& Chord::getNote(const int noteIndex) const { return _originalNotes[noteIndex]; }
+    return _originalNotes[noteIndex];
+}
+
+const Note& Chord::getNote(const int noteIndex) const {
+    if (noteIndex < 0 || noteIndex >= size()) {
+        LOG_ERROR("Invalid note index: " + std::to_string(noteIndex));
+    }
+
+    return _originalNotes[noteIndex];
+}
 
 void Chord::print() const {
     const int chordSize = _originalNotes.size();
@@ -939,6 +964,11 @@ std::vector<Interval> Chord::getOpenStackIntervals(const bool firstNoteAsReferen
     }
 
     const int numIntervals = stackSize() - 1;
+
+    if (numIntervals <= 0) {
+        return {};
+    }
+
     std::vector<Interval> intervals(numIntervals);
 
     // ===== GET INTERVALS USING THE FIRST NOTE AS REFERENCE ===== //
@@ -963,6 +993,11 @@ std::vector<Interval> Chord::getCloseStackIntervals(const bool fromRoot) {
     }
 
     const int numIntervals = stackSize() - 1;
+
+    if (numIntervals <= 0) {
+        return {};
+    }
+
     std::vector<Interval> intervals(numIntervals);
 
     // ===== GET INTERVALS FROM ROOT ===== //
@@ -1287,6 +1322,10 @@ bool Chord::isTonal(std::function<bool(const Chord& chord)> model) {
 bool Chord::isInRootPosition() {
     if (!_isStackedInThirds) {
         stackInThirds();
+    }
+
+    if (_closeStack.empty()) {
+        return false;
     }
 
     std::vector<Note> tempNotes = _originalNotes;
@@ -2359,7 +2398,13 @@ Chord Chord::getCloseChord(const bool enharmonyNotes) {
 void Chord::sortNotes() { std::sort(_originalNotes.begin(), _originalNotes.end()); }
 
 std::vector<int> Chord::toCents() const {
-    const int numIntervals = _originalNotes.size() - 1;
+    const int numNotes = static_cast<int>(_originalNotes.size());
+
+    if (numNotes <= 0) {
+        return {};
+    }
+
+    const int numIntervals = numNotes - 1;
     std::vector<int> centsVec(numIntervals, 0);
     for (int i = 0; i < numIntervals; i++) {
         const Interval interval(_originalNotes[i], _originalNotes[i + 1]);

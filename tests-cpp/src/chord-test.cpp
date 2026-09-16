@@ -189,3 +189,68 @@ TEST(transpose, throwsWhenPastTopOfSupportedRange) {
     Chord myChord(pitches);
     EXPECT_THROW(myChord.transpose(2), std::runtime_error);
 }
+
+// ====================
+// Out-of-bounds guard tests
+// ====================
+
+TEST(getNote, throwsOnNegativeIndex) {
+    Chord myChord({"C4", "E4", "G4"});
+    EXPECT_THROW(myChord.getNote(-1), std::runtime_error);
+}
+
+TEST(getNote, throwsOnIndexEqualToSize) {
+    Chord myChord({"C4", "E4", "G4"});
+    EXPECT_THROW(myChord.getNote(3), std::runtime_error);
+}
+
+TEST(getNote, throwsOnEmptyChord) {
+    Chord myChord;
+    EXPECT_THROW(myChord.getNote(0), std::runtime_error);
+}
+
+TEST(getNote, constOverloadThrowsOnEmptyChord) {
+    const Chord myChord;
+    EXPECT_THROW(myChord.getNote(0), std::runtime_error);
+}
+
+TEST(getNote, validIndexDoesNotThrow) {
+    Chord myChord({"C4", "E4", "G4"});
+    EXPECT_NO_THROW(myChord.getNote(0));
+    EXPECT_EQ(myChord.getNote(0).getPitch(), "C4");
+}
+
+TEST(info, throwsOnEmptyChord) {
+    Chord myChord;
+    EXPECT_THROW(myChord.info(), std::runtime_error);
+}
+
+TEST(toInversion, throwsOnEmptyChord) {
+    Chord myChord;
+    EXPECT_THROW(myChord.toInversion(1), std::runtime_error);
+}
+
+TEST(isInRootPosition, emptyChordReturnsFalse) {
+    Chord myChord;
+    EXPECT_FALSE(myChord.isInRootPosition());
+}
+
+TEST(getOpenStackIntervals, emptyChordReturnsEmptyVector) {
+    Chord myChord;
+    EXPECT_TRUE(myChord.getOpenStackIntervals().empty());
+}
+
+TEST(getCloseStackIntervals, emptyChordReturnsEmptyVector) {
+    Chord myChord;
+    EXPECT_TRUE(myChord.getCloseStackIntervals().empty());
+}
+
+TEST(toCents, emptyChordReturnsEmptyVector) {
+    Chord myChord;
+    EXPECT_TRUE(myChord.toCents().empty());
+}
+
+TEST(toCents, singleNoteChordReturnsEmptyVector) {
+    Chord myChord({"C4"});
+    EXPECT_TRUE(myChord.toCents().empty());
+}

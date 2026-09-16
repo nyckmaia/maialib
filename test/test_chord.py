@@ -138,5 +138,63 @@ class ChordOperator(unittest.TestCase):
         self.assertEqual(myChord3.size(), myChord1.size() + myChord2.size())
 
 
+class GetNote(unittest.TestCase):
+    def testValidIndex(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        self.assertEqual(myChord.getNote(0).getPitch(), "C4")
+
+    def testNegativeIndexRaises(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        with self.assertRaises(RuntimeError):
+            myChord.getNote(-1)
+
+    def testIndexEqualToSizeRaises(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        with self.assertRaises(RuntimeError):
+            myChord.getNote(3)
+
+    def testEmptyChordRaises(self):
+        myChord = ml.Chord()
+        with self.assertRaises(RuntimeError):
+            myChord.getNote(0)
+
+
+class Info(unittest.TestCase):
+    def testEmptyChordRaises(self):
+        myChord = ml.Chord()
+        with self.assertRaises(RuntimeError):
+            myChord.info()
+
+
+class ToInversion(unittest.TestCase):
+    def testEmptyChordRaises(self):
+        myChord = ml.Chord()
+        with self.assertRaises(RuntimeError):
+            myChord.toInversion(1)
+
+
+class IsInRootPosition(unittest.TestCase):
+    def testEmptyChordReturnsFalse(self):
+        myChord = ml.Chord()
+        self.assertEqual(myChord.isInRootPosition(), False)
+
+
+class GetOpenAndCloseStackIntervals(unittest.TestCase):
+    def testEmptyChordReturnsEmptyList(self):
+        myChord = ml.Chord()
+        self.assertEqual(myChord.getOpenStackIntervals(), [])
+        self.assertEqual(myChord.getCloseStackIntervals(), [])
+
+
+class ToCents(unittest.TestCase):
+    def testEmptyChordReturnsEmptyList(self):
+        myChord = ml.Chord()
+        self.assertEqual(myChord.toCents(), [])
+
+    def testSingleNoteChordReturnsEmptyList(self):
+        myChord = ml.Chord(["C4"])
+        self.assertEqual(myChord.toCents(), [])
+
+
 if __name__ == "__main__":
     unittest.main()
