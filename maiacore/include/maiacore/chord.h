@@ -1491,9 +1491,15 @@ class Chord {
      * @return Mutable reference to the Note at the specified index position.
      * @throws std::out_of_range if index >= size().
      * @details Allows modification of notes while preserving their positional order.
-     *          Changes to individual notes do not automatically update cached harmonic
-     *          analysis results—those are recomputed on demand. Use for transposition,
-     *          dynamic modification, articulation changes, or other note-level edits.
+     * @warning Changes made through the returned reference do NOT invalidate any previously
+     *          computed harmonic analysis. Chord tracks a separate cache of stacked-in-thirds
+     *          results (getName(), isTonal(), isInRootPosition(), getCloseStackIntervals(), the
+     *          have*() family, ...) that every mutator method (addNote(), removeNote(),
+     *          transpose(), clear(), ...) invalidates on your behalf — but a Note obtained
+     *          through this operator is mutated directly, bypassing every mutator, so the cache
+     *          is NOT recomputed on demand and will keep returning results for the notes as they
+     *          were before this edit. Call a mutator (or reconstruct the Chord) after editing a
+     *          Note this way if you need the cache to reflect the change.
      */
     Note& operator[](size_t index) { return _originalNotes.at(index); }
 
