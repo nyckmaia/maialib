@@ -36,6 +36,7 @@ Chord::~Chord() {}
 void Chord::clear() {
     _originalNotes.clear();
     _openStack.clear();
+    invalidateStackCache();
 }
 
 void Chord::info() {
@@ -108,8 +109,8 @@ void Chord::addNote(const Note& note) {
         // _stack.back().setType(noteType);
     }
 
-    // Reset the chord stacked flag
-    _isStackedInThirds = false;
+    // Invalidate any previously-computed stacked-in-thirds representation
+    invalidateStackCache();
 }
 
 void Chord::addNote(const std::string& pitch) { addNote(Note(pitch)); }
@@ -117,8 +118,8 @@ void Chord::addNote(const std::string& pitch) { addNote(Note(pitch)); }
 void Chord::removeTopNote() {
     _originalNotes.pop_back();
 
-    // Reset the chord stacked flag
-    _isStackedInThirds = false;
+    // Invalidate any previously-computed stacked-in-thirds representation
+    invalidateStackCache();
 }
 
 void Chord::insertNote(Note& note, int noteIndex) {
@@ -127,15 +128,15 @@ void Chord::insertNote(Note& note, int noteIndex) {
 
     _openStack.push_back(note);
 
-    // Reset the chord stacked flag
-    _isStackedInThirds = false;
+    // Invalidate any previously-computed stacked-in-thirds representation
+    invalidateStackCache();
 }
 
 void Chord::removeNote(int noteIndex) {
     _originalNotes.erase(_originalNotes.begin() + noteIndex);
 
-    // Reset the chord stacked flag
-    _isStackedInThirds = false;
+    // Invalidate any previously-computed stacked-in-thirds representation
+    invalidateStackCache();
 }
 
 void Chord::setDuration(const Duration& duration) {
@@ -198,6 +199,12 @@ void Chord::toInversion(int inversionNumber) {
         _originalNotes.push_back(x);
         _originalNotes.erase(_originalNotes.begin());
     }
+
+    // The pitch content and order of '_originalNotes' both changed (when inversionNumber > 0):
+    // any previously-computed stacked-in-thirds representation no longer matches.
+    if (inversionNumber > 0) {
+        invalidateStackCache();
+    }
 }
 
 void Chord::transpose(const int semitonesNumber) {
@@ -222,6 +229,10 @@ void Chord::transpose(const int semitonesNumber) {
 
         _originalNotes[i].setPitch(newPitch);
     }
+
+    // The pitch content of '_originalNotes' changed: any previously-computed stacked-in-thirds
+    // representation (computed from the pre-transpose pitches) no longer matches.
+    invalidateStackCache();
 
     transposeStackOnly(semitonesNumber);
 }
@@ -251,7 +262,7 @@ void Chord::transposeStackOnly(const int semitonesNumber) {
 }
 
 void Chord::removeDuplicateNotes() {
-    sortNotes();
+    sortNotes();  // also invalidates the stack cache; the erase() below only shrinks further
     _originalNotes.erase(std::unique(_originalNotes.begin(), _originalNotes.end()),
                          _originalNotes.end());
 }
@@ -368,6 +379,15 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
     // Copy the orginal chord to a stack vector
     _openStack.clear();
     _openStack = _originalNotes;
+
+    // '_stackedHeaps' is a member, populated by push_back() further down (STEP 5). It must start
+    // empty on every run: without this, a chord re-stacked after a mutation (addNote, removeNote,
+    // ...) keeps appending onto the previous run's heaps, so computeBestOpenStackHeap() can select
+    // a heap sized for the OLD note count -- an out-of-bounds read once _closeStack/_openStack no
+    // longer agree with the current chord size. Every mutator also clears this via
+    // invalidateStackCache() before stackInThirds() is ever re-entered; this is the belt-and-braces
+    // half, so stackInThirds() is correct on its own even if some future mutator forgets to.
+    _stackedHeaps.clear();
 
     // ===== STEP 1.1: GET THE BASS NOTE ===== //
     // Sort chord notes using the MIDI note value
@@ -708,13 +728,23 @@ std::vector<NoteDataHeap> Chord::filterTertianHeapsOnly(
 }
 
 std::vector<Note> Chord::computeBestOpenStackHeap(std::vector<HeapData>& stackedHeaps) {
-    // 'stackedHeaps' (built in stackInThirds()'s STEP 5) can be empty: each note has at most 3
-    // enharmonic spellings (itself + 2 alternates, see Note::getEnharmonicPitch), all drawn from
-    // only 7 possible pitch letters (A-G). For a chord with exactly 8 distinct pitch classes, no
-    // respelling can give all 8 notes distinct letters (pigeonhole), so
-    // removeHeapsWithDuplicatedPitchSteps() rejects every candidate heap and STEP 5's loop never
-    // populates 'stackedHeaps' at all. (Chords with more than 8 distinct pitch classes already
-    // throw earlier, in computeEnharmonicHeaps()'s "Invalid chord size" case.)
+    // 'stackedHeaps' (built in stackInThirds()'s STEP 5) can be empty. Each note has at most 3
+    // enharmonic spellings (itself + 2 alternates, see Note::getEnharmonicPitch), drawn from only
+    // 7 possible pitch letters (A-G), and removeHeapsWithDuplicatedPitchSteps() rejects any
+    // respelling where two notes land on the same letter -- so this is reachable whenever no
+    // respelling can give every note a distinct letter *and* have the resulting heap satisfy the
+    // stacked-in-thirds interval pattern (STEP 5 only keeps a heap whose first interval, after
+    // respelling, is an exact third).
+    //
+    // This is NOT limited to large chords: pitch classes are de-duplicated by spelling string
+    // (see hash(note.getPitchClass()) a few dozen lines up), not by enharmonic-equivalent pitch,
+    // so e.g. C, C#, Db and B# are four distinct pitch classes that all draw their letters from
+    // just {B, C, D}. A 3-note chord as ordinary as {C4, C#4, Db4} already reaches this guard --
+    // there is no simple "N distinct pitch classes" threshold; whether a valid heap exists depends
+    // on the specific notes involved, not just how many there are. (A chord with more than 8
+    // distinct pitch classes does throw earlier and unconditionally, in computeEnharmonicHeaps()'s
+    // "Invalid chord size" case -- that part of the size argument holds -- but plenty of chords
+    // well under 8 notes reach this exact guard too.)
     if (stackedHeaps.empty()) {
         LOG_ERROR("Unable to find a valid stacked-in-thirds heap for this chord");
     }
@@ -810,6 +840,14 @@ void Chord::computeCloseStack(const std::vector<Note>& openStack) {
         const int oct = closeStackOctavesMap->at(*note.getPitchStep().c_str());
         note.setOctave(oct);
     }
+}
+
+void Chord::invalidateStackCache() {
+    _isStackedInThirds = false;
+    _closeStack.clear();
+    _stackedHeaps.clear();
+    _closeStackintervals.clear();
+    _bassNote = Note();
 }
 
 std::vector<Interval> Chord::getIntervalsFromOriginalSortedNotes() const {
@@ -2410,7 +2448,14 @@ Chord Chord::getCloseChord(const bool enharmonyNotes) {
     return closeChord;
 }
 
-void Chord::sortNotes() { std::sort(_originalNotes.begin(), _originalNotes.end()); }
+void Chord::sortNotes() {
+    std::sort(_originalNotes.begin(), _originalNotes.end());
+
+    // Reordering '_originalNotes' invalidates any previously-computed stacked-in-thirds
+    // representation: internal stacking code (e.g. computeBestOpenStackHeap()) relies on
+    // '_originalNotes' and the open/close stacks corresponding by position.
+    invalidateStackCache();
+}
 
 std::vector<int> Chord::toCents() const {
     const int numNotes = static_cast<int>(_originalNotes.size());
@@ -2774,6 +2819,16 @@ bool operator<(const HeapData& a, const HeapData& b) { return std::get<1>(a) < s
 
 std::ostream& operator<<(std::ostream& os, const Chord& chord) {
     const int chordSize = chord.size();
+
+    // A stream operator must not throw: gtest calls operator<< to format values in failure
+    // messages, so a throwing operator<< can turn a clean test failure into a process abort.
+    // getNote(-1) on an empty chord now throws (it used to read out of bounds instead), so the
+    // empty case is handled here explicitly, matching __repr__'s "[]" for an empty chord.
+    if (chordSize == 0) {
+        os << "[]";
+        return os;
+    }
+
     os << "[";
     for (int i = 0; i < chordSize - 1; i++) {
         os << chord.getNote(i).getPitch() << ",";

@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include <sstream>
+
 #include "maiacore/note.h"
 using namespace testing;
 
@@ -193,16 +195,33 @@ TEST(transpose, throwsWhenPastTopOfSupportedRange) {
 TEST(stackInThirds, throwsOnEightDistinctPitchClassChord) {
     // A 10th out-of-bounds site the original audit missed: Chord::computeBestOpenStackHeap()
     // reads stackedHeaps[0] unconditionally. Every note has at most 3 enharmonic spellings
-    // (itself + 2 alternates), all drawn from only 7 possible pitch letters (A-G). A chord with
-    // exactly 8 distinct pitch classes can therefore never be respelled with 8 mutually distinct
-    // letters (pigeonhole), so removeHeapsWithDuplicatedPitchSteps() rejects every candidate and
-    // 'stackedHeaps' stays empty -- this is a mathematical certainty, not a maybe, for any
-    // 8-distinct-pitch-class chord. (More than 8 distinct pitch classes throws earlier, in
-    // computeEnharmonicHeaps()'s "Invalid chord size" case, so 8 is the only size that reaches
-    // this particular guard.)
+    // (itself + 2 alternates), all drawn from only 7 possible pitch letters (A-G), and
+    // removeHeapsWithDuplicatedPitchSteps() rejects any respelling where two notes land on the
+    // same letter. A chord with more than 8 distinct pitch classes already throws earlier and
+    // unconditionally, in computeEnharmonicHeaps()'s "Invalid chord size" case (its switch only
+    // has cases 2..8). This 8-distinct-pitch-class chord (one per natural letter, plus Db5 to
+    // force an 8th distinct pitch class) is one concrete case that reaches this guard --
+    // see 'throwsOnThreeNoteClusterChord' below for a much smaller one: there is no simple
+    // "N distinct pitch classes" threshold (an earlier version of this comment claimed one; it
+    // was wrong -- see that test for why).
     const std::vector<std::string> pitches = {"C4", "D4", "E4", "F4", "G4", "A4", "B4", "Db5"};
     Chord myChord(pitches);
     EXPECT_EQ(myChord.size(), 8);
+    EXPECT_THROW(myChord.getName(), std::runtime_error);
+}
+
+TEST(stackInThirds, throwsOnThreeNoteClusterChord) {
+    // The guard above is reachable at far fewer than 8 notes: pitch classes are de-duplicated by
+    // spelling string (chord.cpp hashes getPitchClass()), not by enharmonic-equivalent pitch, so
+    // C, C#, Db and B# are four separate pitch classes that all draw their possible letters from
+    // just {B, C, D}. Even a 3-note chord this closely clustered can fail to find any respelling
+    // that both (a) gives every note a distinct letter and (b) forms a valid stacked-in-thirds
+    // heap (STEP 5 additionally requires the first interval, after respelling, to be an exact
+    // third) -- so "8 distinct pitch classes" was never a real threshold, just one sufficient
+    // case found first.
+    const std::vector<std::string> pitches = {"C4", "C#4", "Db4"};
+    Chord myChord(pitches);
+    EXPECT_EQ(myChord.size(), 3);
     EXPECT_THROW(myChord.getName(), std::runtime_error);
 }
 
@@ -299,4 +318,104 @@ TEST(toCents, emptyChordReturnsEmptyVector) {
 TEST(toCents, singleNoteChordReturnsEmptyVector) {
     Chord myChord({"C4"});
     EXPECT_TRUE(myChord.toCents().empty());
+}
+
+// ====================
+// Stack cache invalidation tests (build -> query -> mutate -> query again)
+//
+// Re-review found stackInThirds() never clears the member '_stackedHeaps': a chord re-stacked
+// after a mutation kept appending to the previous run's heaps instead of starting fresh, so
+// computeBestOpenStackHeap() could pick a heap sized for the OLD note count. That both let a
+// grown chord bypass the "no valid heap" guard (leaving _closeStack undersized relative to the
+// new _openStack -- a live out-of-bounds read through getCloseStackIntervals/isTonal) and, on
+// the shrink side, indexed _originalNotes past its new, smaller size. Fixed with a private
+// invalidateStackCache() helper called from every mutator, plus clearing '_stackedHeaps' inside
+// stackInThirds() itself. These tests pin the sequence, not just the end state.
+// ====================
+
+TEST(chordMutation, getNameAfterAddNoteReflectsNewChord) {
+    // The reviewer's exact repro sequence, which aborted the process before this fix.
+    Chord myChord({"C4", "E4", "G4"});
+    EXPECT_EQ(myChord.getName(), "C");
+
+    myChord.addNote("B4");
+    EXPECT_EQ(myChord.getName(), "C7M");
+}
+
+TEST(chordMutation, getNameAfterRemoveNoteReflectsNewChord) {
+    Chord myChord({"C4", "E4", "G4", "B4"});
+    EXPECT_EQ(myChord.getName(), "C7M");
+
+    myChord.removeNote(3);  // remove B4
+    EXPECT_EQ(myChord.getName(), "C");
+}
+
+TEST(chordMutation, growingPastValidHeapAfterStackingStillThrows) {
+    // Reviewer's Probe group F: a chord stacked once (populating _stackedHeaps for 3 notes),
+    // then grown to 8 distinct pitch classes, used to keep the stale 3-note heap and skip the
+    // "no valid heap" guard entirely -- unlike an identical freshly-built 8-note chord, which
+    // correctly threw.
+    Chord myChord({"C4", "E4", "G4"});
+    myChord.getName();  // populate the stack cache at size 3
+
+    myChord.addNote("D4");
+    myChord.addNote("F4");
+    myChord.addNote("A4");
+    myChord.addNote("B4");
+    myChord.addNote("Db5");
+
+    EXPECT_EQ(myChord.size(), 8);
+    EXPECT_THROW(myChord.getName(), std::runtime_error);
+}
+
+TEST(chordMutation, shrinkingAfterStackingDoesNotReadStaleHeap) {
+    // Reviewer's Probe group E: a chord stacked once, then shrunk via removeNote(), used to
+    // index _originalNotes with a heap size from before the shrink -- past the end of the
+    // (now smaller) vector -- degrading into "THREW: string too long" (std::length_error from
+    // garbage) instead of a correct, deterministic answer.
+    Chord myChord({"C4", "E4", "G4", "B4", "D5"});  // C major ninth
+    myChord.getName();  // populate the stack cache at size 5
+
+    myChord.removeNote(4);  // remove D5
+    myChord.removeNote(3);  // remove B4
+    EXPECT_EQ(myChord.size(), 3);
+
+    EXPECT_EQ(myChord.getName(), "C");
+}
+
+TEST(chordMutation, getCloseStackIntervalsAfterGrowingMatchesNewSize) {
+    // The specific live out-of-bounds read the re-review demonstrated: getCloseStackIntervals()
+    // bounds its loop by stackSize() (i.e. _openStack.size()) but indexes _closeStack. Before
+    // this fix, a stale, undersized _closeStack (left behind by the _stackedHeaps bug) made this
+    // read past the end of _closeStack once the chord had grown.
+    Chord myChord({"C4", "E4", "G4"});
+    myChord.getName();  // populate the stack cache at size 3
+
+    myChord.addNote("B4");
+    myChord.addNote("D5");
+
+    const auto intervals = myChord.getCloseStackIntervals();
+    EXPECT_EQ(static_cast<int>(intervals.size()), myChord.stackSize() - 1);
+}
+
+// ====================
+// operator<< tests
+// ====================
+
+TEST(chordStreamOperator, emptyChordDoesNotThrow) {
+    // getNote(-1) on an empty chord now throws instead of reading out of bounds; operator<< must
+    // not let that propagate, since gtest itself calls operator<< to format values in failure
+    // messages, and a throwing stream operator can turn a clean test failure into a process
+    // abort. Mirrors __repr__'s "[]" for an empty chord.
+    Chord myChord;
+    std::ostringstream out;
+    EXPECT_NO_THROW(out << myChord);
+    EXPECT_EQ(out.str(), "[]");
+}
+
+TEST(chordStreamOperator, nonEmptyChordPrintsPitches) {
+    Chord myChord({"C4", "E4", "G4"});
+    std::ostringstream out;
+    out << myChord;
+    EXPECT_EQ(out.str(), "[C4,E4,G4]");
 }

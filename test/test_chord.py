@@ -39,10 +39,23 @@ class GetName(unittest.TestCase):
         self.assertEqual(myChord.getName(), "Am7/G")
 
     def testEightDistinctPitchClassesRaises(self):
-        # A 10th out-of-bounds site the original audit missed: with exactly 8 distinct pitch
-        # classes, no enharmonic respelling can give all 8 notes distinct letters (only 7 exist,
-        # A-G), so the internal "stacked in thirds" computation finds no valid heap at all.
+        # A 10th out-of-bounds site the original audit missed: no enharmonic respelling of this
+        # chord's 8 distinct pitch classes can give every note a distinct letter (only 7 exist,
+        # A-G) and form a valid stacked-in-thirds heap, so the internal computation finds none at
+        # all. More than 8 distinct pitch classes throws earlier and unconditionally elsewhere;
+        # see testThreeNoteClusterRaises below for why "8 distinct pitch classes" is not itself a
+        # real threshold, just one sufficient case.
         myChord = ml.Chord(["C4", "D4", "E4", "F4", "G4", "A4", "B4", "Db5"])
+        with self.assertRaises(RuntimeError):
+            myChord.getName()
+
+    def testThreeNoteClusterRaises(self):
+        # Pitch classes are de-duplicated by spelling string, not by enharmonic-equivalent pitch:
+        # C, C#, Db and B# are four different pitch classes that all draw their possible letters
+        # from just {B, C, D}. This 3-note chord already can't find a respelling that gives every
+        # note a distinct letter and forms a valid stacked-in-thirds heap -- there is no simple
+        # "N distinct pitch classes" threshold for when this guard fires.
+        myChord = ml.Chord(["C4", "C#4", "Db4"])
         with self.assertRaises(RuntimeError):
             myChord.getName()
 
@@ -222,6 +235,67 @@ class ToCents(unittest.TestCase):
     def testSingleNoteChordReturnsEmptyList(self):
         myChord = ml.Chord(["C4"])
         self.assertEqual(myChord.toCents(), [])
+
+
+class ChordMutationCacheInvalidation(unittest.TestCase):
+    """Build -> query (populate the stack cache) -> mutate -> query again.
+
+    Re-review found stackInThirds() never cleared the internal '_stackedHeaps' cache, so a
+    mutated chord could reuse a stale, wrong-sized heap instead of recomputing -- silently
+    wrong answers on the grow side, an out-of-bounds read on the shrink side. Fixed with a
+    private invalidation helper called from every mutator. These pin the sequence.
+    """
+
+    def testGetNameAfterAddNoteReflectsNewChord(self):
+        # The reviewer's exact repro sequence, which aborted the process before this fix.
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        self.assertEqual(myChord.getName(), "C")
+
+        myChord.addNote("B4")
+        self.assertEqual(myChord.getName(), "C7M")
+
+    def testGetNameAfterRemoveNoteReflectsNewChord(self):
+        myChord = ml.Chord(["C4", "E4", "G4", "B4"])
+        self.assertEqual(myChord.getName(), "C7M")
+
+        myChord.removeNote(3)
+        self.assertEqual(myChord.getName(), "C")
+
+    def testGrowingPastValidHeapAfterStackingStillThrows(self):
+        # A chord stacked once, then grown to 8 distinct pitch classes, used to keep the stale
+        # 3-note heap and skip the "no valid heap" guard entirely.
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        myChord.getName()
+
+        myChord.addNote("D4")
+        myChord.addNote("F4")
+        myChord.addNote("A4")
+        myChord.addNote("B4")
+        myChord.addNote("Db5")
+
+        self.assertEqual(myChord.size(), 8)
+        with self.assertRaises(RuntimeError):
+            myChord.getName()
+
+    def testShrinkingAfterStackingDoesNotReadStaleHeap(self):
+        myChord = ml.Chord(["C4", "E4", "G4", "B4", "D5"])
+        myChord.getName()
+
+        myChord.removeNote(4)
+        myChord.removeNote(3)
+        self.assertEqual(myChord.size(), 3)
+
+        self.assertEqual(myChord.getName(), "C")
+
+    def testGetCloseStackIntervalsAfterGrowingMatchesNewSize(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        myChord.getName()
+
+        myChord.addNote("B4")
+        myChord.addNote("D5")
+
+        intervals = myChord.getCloseStackIntervals()
+        self.assertEqual(len(intervals), myChord.stackSize() - 1)
 
 
 if __name__ == "__main__":

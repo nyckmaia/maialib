@@ -171,6 +171,20 @@ class Chord {
     void computeCloseStack(const std::vector<Note>& openStack);
 
     /**
+     * @brief Invalidate every cached/derived representation of the chord.
+     *
+     * Every mutator that changes '_originalNotes' (pitch content, membership or order) must call
+     * this instead of resetting '_isStackedInThirds' by hand, so the cache is invalidated
+     * consistently. Without it, stale '_closeStack'/'_stackedHeaps' entries computed for a
+     * previous note set can survive a mutation and be read against the new (larger, smaller or
+     * reordered) '_originalNotes'/'_openStack', which is an out-of-bounds read, not just a stale
+     * answer. Does not touch '_openStack': it is kept in sync by each mutator directly (or fully
+     * rebuilt by stackInThirds() itself), so clearing it here would only erase data the caller
+     * may still read via a const method (e.g. printStack()) before the next stack computation.
+     */
+    void invalidateStackCache();
+
+    /**
      * @brief Computes the standard deviation of a vector of values.
      * @tparam T Numeric type.
      * @param v The vector of values.
