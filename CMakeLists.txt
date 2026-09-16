@@ -10,11 +10,23 @@ if(WIN32)
     set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 endif()
 
-# Lê a versão do arquivo VERSION
-# NOTE: must happen before project() — ${PROJECT_SOURCE_DIR} does not exist yet,
+# Read the library version from the repo-root VERSION file (hand-edited on release).
+# NOTE: must happen before project() - ${PROJECT_SOURCE_DIR} does not exist yet,
 # so this uses ${CMAKE_CURRENT_SOURCE_DIR} instead (both point at the repo root here).
 file(READ "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" MAIALIB_VERSION)
 string(STRIP "${MAIALIB_VERSION}" MAIALIB_VERSION)
+
+# project(... VERSION ...) below accepts only a strict numeric form,
+# major[.minor[.patch[.tweak]]], so a value such as "1.11.0-rc1" aborts the
+# configure step. Check it here to fail with a message that names the file.
+# NOTE: the four optional groups spell out "up to four components" on purpose -
+# CMake's regex engine has no brace quantifier, so "{0,3}" would never match.
+if(NOT MAIALIB_VERSION MATCHES "^[0-9]+(\\.[0-9]+)?(\\.[0-9]+)?(\\.[0-9]+)?$")
+    message(FATAL_ERROR
+            "Invalid version '${MAIALIB_VERSION}' in ${CMAKE_CURRENT_SOURCE_DIR}/VERSION: "
+            "expected a numeric version such as 1.10.3 - "
+            "major[.minor[.patch[.tweak]]], with no suffix.")
+endif()
 
 project(maiacore VERSION ${MAIALIB_VERSION} LANGUAGES CXX)
 
@@ -56,7 +68,7 @@ else()
     message(FATAL_ERROR "Unable to detect the OS")
 endif()
 
-# Passa a versão como uma definição para o compilador
+# Pass the version to the compiler as a preprocessor definition
 # NOTE: unquoted on purpose. py_maiacore.cpp applies MACRO_STRINGIFY() to this
 # macro, which already turns the raw token into a quoted string literal. If we
 # quote the value here too, MACRO_STRINGIFY() stringifies the quotes themselves,
