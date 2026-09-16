@@ -116,8 +116,11 @@ class Helper {
 
     /**
      * @brief Converts a pitch string (e.g., "C4") to a MIDI note number.
-     * @param pitch Pitch string.
-     * @return MIDI note number.
+     * @details Computed as `12 * (octave + 1) + stepSemitone + alterValue`, so every spelling
+     *          accepted by splitPitch() is supported (e.g. "C-1" = 0, "C4" = 60, "Bx11" = 157).
+     * @param pitch Pitch string. An empty string or any string containing "rest" is a rest.
+     * @return MIDI note number, or -1 (MUSIC_XML::MIDI::NUMBER::MIDI_REST) for a rest.
+     * @throws std::runtime_error If the pitch string is invalid (see splitPitch()).
      */
     static int pitch2midiNote(const std::string& pitch);
 
@@ -277,13 +280,19 @@ class Helper {
     static bool isEnharmonic(const std::string& pitch_A, const std::string& pitch_B);
 
     /**
-     * @brief Splits a pitch string into its components: pitch class, step, octave, accidental value, and symbol.
-     * @param pitch Input pitch string.
+     * @brief Parses a pitch string into its components (the single pitch-string parser).
+     * @details Accepted grammar: `step accidental? octave?`, where `step` is A-G, `accidental`
+     *          is one of "bb", "b", "#", "x", and `octave` is an integer in [-1, 11]
+     *          ("C-1" is MIDI 0). A missing octave defaults to 4. An empty string or any string
+     *          containing "rest" yields the rest components ("rest", "rest", 0, 0.0, "").
+     * @param pitch Input pitch string (e.g., "C4", "F#11", "Dbb-1", "Eb").
      * @param pitchClass Output: pitch class (e.g., "C#", "Bb").
-     * @param pitchStep Output: step (e.g., "C", "D").
+     * @param pitchStep Output: diatonic step (e.g., "C", "D").
      * @param octave Output: octave number.
-     * @param alterValue Output: accidental value as float.
-     * @param alterSymbol Output: accidental symbol (e.g., "#", "b").
+     * @param alterValue Output: accidental value in semitones (e.g., -2.0 for "bb").
+     * @param alterSymbol Output: accidental symbol (e.g., "#", "b", or "" for natural).
+     * @throws std::runtime_error If the step, accidental or octave is invalid, or if the pitch
+     *         is below MIDI note 0 (e.g., "Cb-1").
      */
     static void splitPitch(const std::string& pitch, std::string& pitchClass,
                            std::string& pitchStep, int& octave, float& alterValue,

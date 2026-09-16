@@ -261,92 +261,153 @@ TEST(midiNote2octave, midiValues) {
 EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_REST), -2);
 
 // Octave -1
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_000), -1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_001), -1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_002), -1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_003), -1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_004), -1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_005), -1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_006), -1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_007), -1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_008), -1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_009), -1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_010), -1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_011), -1);
+EXPECT_EQ(Helper::midiNote2octave(0), -1);
+EXPECT_EQ(Helper::midiNote2octave(1), -1);
+EXPECT_EQ(Helper::midiNote2octave(2), -1);
+EXPECT_EQ(Helper::midiNote2octave(3), -1);
+EXPECT_EQ(Helper::midiNote2octave(4), -1);
+EXPECT_EQ(Helper::midiNote2octave(5), -1);
+EXPECT_EQ(Helper::midiNote2octave(6), -1);
+EXPECT_EQ(Helper::midiNote2octave(7), -1);
+EXPECT_EQ(Helper::midiNote2octave(8), -1);
+EXPECT_EQ(Helper::midiNote2octave(9), -1);
+EXPECT_EQ(Helper::midiNote2octave(10), -1);
+EXPECT_EQ(Helper::midiNote2octave(11), -1);
 
 // Octave 0
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_012), 0);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_013), 0);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_014), 0);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_015), 0);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_016), 0);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_017), 0);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_018), 0);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_019), 0);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_020), 0);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_021), 0);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_022), 0);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_023), 0);
+EXPECT_EQ(Helper::midiNote2octave(12), 0);
+EXPECT_EQ(Helper::midiNote2octave(13), 0);
+EXPECT_EQ(Helper::midiNote2octave(14), 0);
+EXPECT_EQ(Helper::midiNote2octave(15), 0);
+EXPECT_EQ(Helper::midiNote2octave(16), 0);
+EXPECT_EQ(Helper::midiNote2octave(17), 0);
+EXPECT_EQ(Helper::midiNote2octave(18), 0);
+EXPECT_EQ(Helper::midiNote2octave(19), 0);
+EXPECT_EQ(Helper::midiNote2octave(20), 0);
+EXPECT_EQ(Helper::midiNote2octave(21), 0);
+EXPECT_EQ(Helper::midiNote2octave(22), 0);
+EXPECT_EQ(Helper::midiNote2octave(23), 0);
 
 // Octave 1
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_024), 1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_025), 1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_026), 1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_027), 1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_028), 1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_029), 1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_030), 1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_031), 1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_032), 1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_033), 1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_034), 1);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_035), 1);
+EXPECT_EQ(Helper::midiNote2octave(24), 1);
+EXPECT_EQ(Helper::midiNote2octave(25), 1);
+EXPECT_EQ(Helper::midiNote2octave(26), 1);
+EXPECT_EQ(Helper::midiNote2octave(27), 1);
+EXPECT_EQ(Helper::midiNote2octave(28), 1);
+EXPECT_EQ(Helper::midiNote2octave(29), 1);
+EXPECT_EQ(Helper::midiNote2octave(30), 1);
+EXPECT_EQ(Helper::midiNote2octave(31), 1);
+EXPECT_EQ(Helper::midiNote2octave(32), 1);
+EXPECT_EQ(Helper::midiNote2octave(33), 1);
+EXPECT_EQ(Helper::midiNote2octave(34), 1);
+EXPECT_EQ(Helper::midiNote2octave(35), 1);
 
 // Octave 2
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_036), 2);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_037), 2);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_038), 2);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_039), 2);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_040), 2);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_041), 2);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_042), 2);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_043), 2);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_044), 2);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_045), 2);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_046), 2);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_047), 2);
+EXPECT_EQ(Helper::midiNote2octave(36), 2);
+EXPECT_EQ(Helper::midiNote2octave(37), 2);
+EXPECT_EQ(Helper::midiNote2octave(38), 2);
+EXPECT_EQ(Helper::midiNote2octave(39), 2);
+EXPECT_EQ(Helper::midiNote2octave(40), 2);
+EXPECT_EQ(Helper::midiNote2octave(41), 2);
+EXPECT_EQ(Helper::midiNote2octave(42), 2);
+EXPECT_EQ(Helper::midiNote2octave(43), 2);
+EXPECT_EQ(Helper::midiNote2octave(44), 2);
+EXPECT_EQ(Helper::midiNote2octave(45), 2);
+EXPECT_EQ(Helper::midiNote2octave(46), 2);
+EXPECT_EQ(Helper::midiNote2octave(47), 2);
 
 // Octave 3
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_048), 3);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_049), 3);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_050), 3);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_051), 3);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_052), 3);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_053), 3);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_054), 3);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_055), 3);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_056), 3);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_057), 3);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_058), 3);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_059), 3);
+EXPECT_EQ(Helper::midiNote2octave(48), 3);
+EXPECT_EQ(Helper::midiNote2octave(49), 3);
+EXPECT_EQ(Helper::midiNote2octave(50), 3);
+EXPECT_EQ(Helper::midiNote2octave(51), 3);
+EXPECT_EQ(Helper::midiNote2octave(52), 3);
+EXPECT_EQ(Helper::midiNote2octave(53), 3);
+EXPECT_EQ(Helper::midiNote2octave(54), 3);
+EXPECT_EQ(Helper::midiNote2octave(55), 3);
+EXPECT_EQ(Helper::midiNote2octave(56), 3);
+EXPECT_EQ(Helper::midiNote2octave(57), 3);
+EXPECT_EQ(Helper::midiNote2octave(58), 3);
+EXPECT_EQ(Helper::midiNote2octave(59), 3);
 
 // Octave 4
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_060), 4);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_061), 4);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_062), 4);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_063), 4);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_064), 4);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_065), 4);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_066), 4);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_067), 4);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_068), 4);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_069), 4);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_070), 4);
-EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_071), 4);
+EXPECT_EQ(Helper::midiNote2octave(60), 4);
+EXPECT_EQ(Helper::midiNote2octave(61), 4);
+EXPECT_EQ(Helper::midiNote2octave(62), 4);
+EXPECT_EQ(Helper::midiNote2octave(63), 4);
+EXPECT_EQ(Helper::midiNote2octave(64), 4);
+EXPECT_EQ(Helper::midiNote2octave(65), 4);
+EXPECT_EQ(Helper::midiNote2octave(66), 4);
+EXPECT_EQ(Helper::midiNote2octave(67), 4);
+EXPECT_EQ(Helper::midiNote2octave(68), 4);
+EXPECT_EQ(Helper::midiNote2octave(69), 4);
+EXPECT_EQ(Helper::midiNote2octave(70), 4);
+EXPECT_EQ(Helper::midiNote2octave(71), 4);
 }
 
 TEST(PitchSpellingLegacy, MidiTableMatches) {
 for (const auto& entry : kLegacyMidiTable) {
     EXPECT_EQ(Helper::pitch2midiNote(entry.pitch), entry.midiNumber) << "pitch: " << entry.pitch;
+}
+}
+
+TEST(PitchSpelling, FullRangeMidiTable) {
+for (const auto& entry : kFullRangeMidiTable) {
+    EXPECT_EQ(Helper::pitch2midiNote(entry.pitch), entry.midiNumber) << "pitch: " << entry.pitch;
+}
+}
+
+TEST(PitchSpelling, SplitPitchComponents) {
+std::string pitchClass;
+std::string pitchStep;
+std::string alterSymbol;
+int octave = 0;
+float alterValue = 0.0f;
+
+Helper::splitPitch("Dbb-1", pitchClass, pitchStep, octave, alterValue, alterSymbol);
+EXPECT_EQ(pitchClass, "Dbb");
+EXPECT_EQ(pitchStep, "D");
+EXPECT_EQ(octave, -1);
+EXPECT_FLOAT_EQ(alterValue, -2.0f);
+EXPECT_EQ(alterSymbol, "bb");
+
+Helper::splitPitch("F#11", pitchClass, pitchStep, octave, alterValue, alterSymbol);
+EXPECT_EQ(pitchClass, "F#");
+EXPECT_EQ(pitchStep, "F");
+EXPECT_EQ(octave, 11);
+EXPECT_FLOAT_EQ(alterValue, 1.0f);
+EXPECT_EQ(alterSymbol, "#");
+
+Helper::splitPitch("E", pitchClass, pitchStep, octave, alterValue, alterSymbol);
+EXPECT_EQ(pitchClass, "E");
+EXPECT_EQ(pitchStep, "E");
+EXPECT_EQ(octave, 4);
+EXPECT_FLOAT_EQ(alterValue, 0.0f);
+EXPECT_EQ(alterSymbol, "");
+
+Helper::splitPitch("rest", pitchClass, pitchStep, octave, alterValue, alterSymbol);
+EXPECT_EQ(pitchClass, "rest");
+EXPECT_EQ(pitchStep, "rest");
+EXPECT_EQ(octave, 0);
+EXPECT_FLOAT_EQ(alterValue, 0.0f);
+EXPECT_EQ(alterSymbol, "");
+}
+
+TEST(PitchSpelling, AcceptedEdgeCases) {
+EXPECT_EQ(Helper::pitch2midiNote("Cbb0"), 10);
+EXPECT_EQ(Helper::pitch2midiNote("Cb0"), 11);
+EXPECT_EQ(Helper::pitch2midiNote("Bx9"), 133);
+EXPECT_EQ(Helper::pitch2midiNote("Db10"), 133);
+EXPECT_EQ(Helper::pitch2midiNote("C-1"), 0);
+EXPECT_EQ(Helper::pitch2midiNote("Bx11"), 157);
+EXPECT_EQ(Helper::pitch2midiNote("C04"), 60);
+EXPECT_EQ(Helper::pitch2midiNote("rest"), -1);
+EXPECT_EQ(Helper::pitch2midiNote(""), -1);
+}
+
+TEST(PitchSpelling, RejectedEdgeCases) {
+for (const std::string pitch :
+     {"Cb-1", "Cbb-1", "C12", "C#123", "H4", "C#4x", "C-", "C--1", "C-2", "C1x4"}) {
+    EXPECT_THROW(Helper::pitch2midiNote(pitch), std::runtime_error) << "pitch: " << pitch;
 }
 }
