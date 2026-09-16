@@ -1048,7 +1048,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `getDurationDifferenceBetweenRhythms(referenceRhythm: list[Note], otherRhythm: list[Note]) -> list[float]`
 - `getPercentiles(arg0: typing.Any, arg1: list[float]) -> typing.Any`
 - `getSemitonesDifferenceBetweenMelodies(referenceMelody: list[Note], otherMelody: list[Note]) -> list[float]`
-- `isEnharmonic(arg0: str, arg1: str) -> bool`
+- `isEnharmonic(pitch_A: str, pitch_B: str) -> bool`
 - `midiNote2freq(midiNoteValue: int, freqA4: float = 440.0) -> float`
 - `midiNote2octave(midiNote: int) -> int`
 - `midiNote2pitch(midiNote: int, accType: str = '') -> str`
@@ -1059,10 +1059,10 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `notes2Intervals(pitches: list[str], firstNoteAsReference: bool = False) -> list[Interval]`  *(overloaded)*
 - `pitch2freq(pitch: str) -> float`
 - `pitch2midiNote(pitch: str) -> int`
-- `pitch2number(pitch: str) -> float`  *(overloaded)*
 - `pitchRatio(pitch_A: str, pitch_B: str) -> float`
 - `rhythmFigure2Ticks(rhythmFigure: RhythmFigure, divisionsPerQuarterNote: int = 265) -> int`
 - `rhythmFigure2noteType(rhythmFigure: RhythmFigure) -> str`
+- `splitPitch(pitch: str) -> tuple[str, str, int, float, str]`
 - `ticks2noteType(durationTicks: int, divisionsPerQuarterNote: int = 256, actualNotes: int = 1, normalNotes: int = 1) -> tuple[str, int]`
 - `transposePitch(pitch: str, semitones: int, accType: str = '#') -> str`
 

@@ -31,7 +31,7 @@ void NoteClass(const py::module& m) {
         pitch : str
             Pitch string such as ``"C4"``, ``"G#3"``, ``"Dbb-1"`` or ``"Bx11"``. Accidentals:
             ``bb``, ``b``, ``#``, ``x``. Octaves: -1 to 11 (default 4). The MIDI number must be
-            >= 0. An empty string or ``"rest"`` creates a rest.
+            >= 0. An empty string or any string containing ``"rest"`` creates a rest.
         rhythmFigure : RhythmFigure, default RhythmFigure.QUARTER
             Rhythm figure.
         isNoteOn : bool, default True
@@ -116,7 +116,8 @@ void NoteClass(const py::module& m) {
         ----------
         pitch : str
             Pitch string with the same rules as the pitch-string constructor (e.g. ``"Bb-1"``,
-            ``"C10"``). An empty string or ``"rest"`` turns the note into a rest.
+            ``"C10"``). An empty string or any string containing ``"rest"`` turns the note into
+            a rest.
 
         Raises
         ------

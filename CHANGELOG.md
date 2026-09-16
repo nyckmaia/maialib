@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file.
 
+## [Unreleased]
+
+### Improve
+
+- Accept every pitch spelling with `bb`, `b`, `#` and `x` accidentals in octaves -1 to 11 (e.g. `Cbb0`, `Bx9`, `C-1`, `Bx11`)
+- Compute MIDI numbers and enharmonic spellings arithmetically instead of hard-coded tables
+- `Note(midiNumber)` accepts the whole spelled range: the old `midiNumber > 127` guard is replaced by the octave range check in `Helper.midiNote2pitch()`
+- Add `Helper.splitPitch()` to Python and document the pitch-spelling bindings
+
+### Fix
+
+- `Helper.pitch2midiNote("Db10")` returned 132 instead of 133
+- `Note.setPitch()` kept the previous accidental symbol and rejected multi-digit octaves
+- `Helper.isEnharmonic()` did not detect E#/F, B#/C and Cb/B (this also affected `Helper.noteSimilarity()`)
+- `Interval` direction and diatonic interval were wrong for notes outside C0–C10
+- `Helper.midiNote2pitch()` could return spellings outside the supported octaves
+
+### Removed
+
+- **Breaking:** `Helper.pitch2number()` (C++ and Python) and `Helper::number2pitch()` (C++)
+- Unused C++ constants `MUSIC_XML::MIDI::NUMBER::MIDI_000` … `MIDI_132` and `c_pianoWhiteKeys`
+
+---
+
 ## [v1.10.0] - 2025-11-18
 
 ### Improve
