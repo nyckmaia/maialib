@@ -268,11 +268,11 @@ std::pair<std::string, bool> Interval::analyse() const {
         case 6:
             switch (numSemitones % 12) {
                 case 1:
-                    return {"+d3", false}; // Special case: [A4, Cbb5]
+                    return {"+d3", false};  // Special case: [A4, Cbb5]
                 case 2:
-                    return {"d3", false}; // Special case: [A4, Cb5]
+                    return {"d3", false};  // Special case: [A4, Cb5]
                 case 3:
-                    return {"m3", true}; // Special case: [B#4, D#5]
+                    return {"m3", true};  // Special case: [B#4, D#5]
                 case 4:
                     return {"+++d6", false};
                 case 5:

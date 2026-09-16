@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "maiacore/time-signature.h"
+
+#include <gtest/gtest.h>
 
 // ============================================================================
 // Constructor Tests
@@ -64,9 +64,8 @@ TEST(TimeSignatureGetters, GetBothValues) {
 }
 
 TEST(TimeSignatureGetters, VariousTimeSignatures) {
-    std::vector<std::pair<int, int>> signatures = {
-        {2, 4}, {3, 4}, {4, 4}, {5, 4}, {6, 8}, {9, 8}, {12, 8}, {3, 8}, {7, 8}
-    };
+    std::vector<std::pair<int, int>> signatures = {{2, 4}, {3, 4},  {4, 4}, {5, 4}, {6, 8},
+                                                   {9, 8}, {12, 8}, {3, 8}, {7, 8}};
 
     for (const auto& sig : signatures) {
         TimeSignature ts(sig.first, sig.second);
@@ -379,10 +378,8 @@ TEST(TimeSignatureIntegration, AllStandardSignatures) {
     // Test with known reliable classifications
     std::vector<std::tuple<int, int, METRIC>> standard_sigs = {
         {2, 4, METRIC::SIMPLE},    {3, 4, METRIC::SIMPLE},    {4, 4, METRIC::SIMPLE},
-        {2, 2, METRIC::SIMPLE},    {6, 8, METRIC::COMPOUND},
-        {9, 8, METRIC::COMPOUND},  {12, 8, METRIC::COMPOUND}, {5, 4, METRIC::IRREGULAR},
-        {7, 8, METRIC::IRREGULAR}
-    };
+        {2, 2, METRIC::SIMPLE},    {6, 8, METRIC::COMPOUND},  {9, 8, METRIC::COMPOUND},
+        {12, 8, METRIC::COMPOUND}, {5, 4, METRIC::IRREGULAR}, {7, 8, METRIC::IRREGULAR}};
 
     for (const auto& sig : standard_sigs) {
         TimeSignature ts(std::get<0>(sig), std::get<1>(sig));

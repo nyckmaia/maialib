@@ -268,8 +268,7 @@ void NoteClass(const py::module& m) {
         Note
             Enharmonic note.
     )pbdoc");
-    cls.def("getEnharmonicNotes", &Note::getEnharmonicNotes,
-            py::arg("includeCurrentPitch") = false,
+    cls.def("getEnharmonicNotes", &Note::getEnharmonicNotes, py::arg("includeCurrentPitch") = false,
             R"pbdoc(
         Return Notes for the default and alternative enharmonic spellings.
 
@@ -296,10 +295,8 @@ void NoteClass(const py::module& m) {
     )pbdoc");
     cls.def("getScaleDegree", &Note::getScaleDegree, py::arg("key"));
     cls.def("getFrequency", &Note::getFrequency, py::arg("freqA4") = 440.0f);
-    cls.def("getHarmonicSpectrum", &Note::getHarmonicSpectrum, 
-            py::arg("numPartials") = 6,
-            py::arg("amplCallback") = nullptr,
-            py::arg("partialsDecayExpRate") = 0.88f,
+    cls.def("getHarmonicSpectrum", &Note::getHarmonicSpectrum, py::arg("numPartials") = 6,
+            py::arg("amplCallback") = nullptr, py::arg("partialsDecayExpRate") = 0.88f,
             py::arg("freqA4") = 440.0f);
 
     cls.def("transpose", &Note::transpose, py::arg("semitones"),

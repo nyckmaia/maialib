@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "maiacore/clef.h"
+
+#include <gtest/gtest.h>
 
 // ============================================================================
 // Constructor Tests
@@ -154,13 +154,13 @@ TEST(ClefLine, SetLineForPercussionClef) {
 
 TEST(ClefLine, SetLineIgnoredForGClef) {
     Clef clef(ClefSign::G);
-    clef.setLine(5);  // Should be ignored
+    clef.setLine(5);               // Should be ignored
     EXPECT_EQ(clef.getLine(), 2);  // Unchanged
 }
 
 TEST(ClefLine, SetLineIgnoredForFClef) {
     Clef clef(ClefSign::F);
-    clef.setLine(3);  // Should be ignored
+    clef.setLine(3);               // Should be ignored
     EXPECT_EQ(clef.getLine(), 4);  // Unchanged
 }
 
@@ -184,7 +184,7 @@ TEST(ClefLine, SetLineDoesNotTriggerChangedForG) {
     Clef clef(ClefSign::G);
     EXPECT_FALSE(clef.isClefChanged());
 
-    clef.setLine(5);  // Ignored
+    clef.setLine(5);                     // Ignored
     EXPECT_FALSE(clef.isClefChanged());  // Still false
 }
 
@@ -192,7 +192,7 @@ TEST(ClefLine, SetLineDoesNotTriggerChangedForF) {
     Clef clef(ClefSign::F);
     EXPECT_FALSE(clef.isClefChanged());
 
-    clef.setLine(3);  // Ignored
+    clef.setLine(3);                     // Ignored
     EXPECT_FALSE(clef.isClefChanged());  // Still false
 }
 

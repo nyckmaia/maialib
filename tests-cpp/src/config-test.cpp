@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "maiacore/config.h"
+
+#include <gtest/gtest.h>
 
 // ============================================================================
 // Initial State Tests
@@ -159,13 +159,9 @@ TEST(ConfigTuningSystem, CycleThroughAllSystems) {
 
 TEST(ConfigTuningSystem, SetAndVerifyAllSystems) {
     // Test all tuning systems can be set and retrieved
-    TuningSystem systems[] = {
-        TuningSystem::EQUAL_TEMPERAMENT,
-        TuningSystem::JUST_INTONATION,
-        TuningSystem::PYTHAGOREAN_TUNING,
-        TuningSystem::MEANTONE_TEMPERAMENT,
-        TuningSystem::WELL_TEMPERAMENT
-    };
+    TuningSystem systems[] = {TuningSystem::EQUAL_TEMPERAMENT, TuningSystem::JUST_INTONATION,
+                              TuningSystem::PYTHAGOREAN_TUNING, TuningSystem::MEANTONE_TEMPERAMENT,
+                              TuningSystem::WELL_TEMPERAMENT};
 
     for (const auto& system : systems) {
         setTuningSystem(system);

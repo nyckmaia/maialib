@@ -150,14 +150,16 @@ void ScoreClass(const py::module& m) {
         [](Score& score, const std::vector<std::vector<Note>>& melodyPatterns,
            float totalIntervalsSimilarityThreshold, float totalRhythmSimilarityThreshold,
            const std::function<std::vector<float>(const std::vector<Note>&,
-                                                  const std::vector<Note>&)> intervalsSimilarityCallback,
+                                                  const std::vector<Note>&)>
+               intervalsSimilarityCallback,
            const std::function<std::vector<float>(const std::vector<Note>&,
-                                                  const std::vector<Note>&)> rhythmSimilarityCallback,
+                                                  const std::vector<Note>&)>
+               rhythmSimilarityCallback,
            const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
            const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
            const std::function<float(float, float)> totalSimilarityCallback) {
-
-            const auto& results = score.findMelodyPattern(melodyPatterns, totalIntervalsSimilarityThreshold,
+            const auto& results =
+                score.findMelodyPattern(melodyPatterns, totalIntervalsSimilarityThreshold,
                                         totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
                                         rhythmSimilarityCallback, totalIntervalSimilarityCallback,
                                         totalRhythmSimilarityCallback, totalSimilarityCallback);
@@ -167,7 +169,7 @@ void ScoreClass(const py::module& m) {
             py::object Pandas = py::module_::import("pandas");
             py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
             std::vector<py::object> dataframes;
-            
+
             // Definindo as colunas do DataFrame
             std::vector<std::string> columns = {"partName",
                                                 "measureId",
@@ -192,35 +194,38 @@ void ScoreClass(const py::module& m) {
             if (!dataframes.empty()) {
                 // std::cout << "Concatenando DataFrames..." << std::endl;
                 py::object result_df = Pandas.attr("concat")(dataframes, "ignore_index"_a = true);
-                result_df.attr("sort_values")("by"_a = "measureId", "ascending"_a = true, "inplace"_a = true);
+                result_df.attr("sort_values")("by"_a = "measureId", "ascending"_a = true,
+                                              "inplace"_a = true);
                 return result_df;
             } else {
-                throw std::runtime_error("Nenhum DataFrame foi concatenado devido a erro de memória ou outro problema.");
+                throw std::runtime_error(
+                    "Nenhum DataFrame foi concatenado devido a erro de memória ou outro problema.");
             }
         },
-        py::arg("melodyPatterns"),
-        py::arg("intervalSimilarityThreshold") = 0.5f,
+        py::arg("melodyPatterns"), py::arg("intervalSimilarityThreshold") = 0.5f,
         py::arg("rhythmSimilarityThreshold") = 0.5f,
         py::arg("intervalsSimilarityCallback") = nullptr,
         py::arg("rhythmSimilarityCallback") = nullptr,
         py::arg("totalIntervalSimilarityCallback") = nullptr,
         py::arg("totalRhythmSimilarityCallback") = nullptr,
-        py::arg("totalSimilarityCallback") = nullptr
-    );
+        py::arg("totalSimilarityCallback") = nullptr);
 
     // cls.def(
     // "findAnyMelodyPatternDataFrame",
     // [](Score& score, const int patternNumNotes,
     //    float totalIntervalsSimilarityThreshold, float totalRhythmSimilarityThreshold,
     //    const std::function<std::vector<float>(const std::vector<Note>&,
-    //                                           const std::vector<Note>&)> intervalsSimilarityCallback,
+    //                                           const std::vector<Note>&)>
+    //                                           intervalsSimilarityCallback,
     //    const std::function<std::vector<float>(const std::vector<Note>&,
-    //                                           const std::vector<Note>&)> rhythmSimilarityCallback,
+    //                                           const std::vector<Note>&)>
+    //                                           rhythmSimilarityCallback,
     //    const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
     //    const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
     //    const std::function<float(float, float)> totalSimilarityCallback) {
 
-    //     const auto& results = score.findAnyMelodyPattern(patternNumNotes, totalIntervalsSimilarityThreshold,
+    //     const auto& results = score.findAnyMelodyPattern(patternNumNotes,
+    //     totalIntervalsSimilarityThreshold,
     //                                 totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
     //                                 rhythmSimilarityCallback, totalIntervalSimilarityCallback,
     //                                 totalRhythmSimilarityCallback, totalSimilarityCallback);
@@ -246,7 +251,7 @@ void ScoreClass(const py::module& m) {
 
     //     for (size_t idx = 0; idx < results.size(); ++idx) {
     //         py::object df = FromRecords(results[idx], "columns"_a = columns);
-            
+
     //         // Verifica se o DataFrame possui dados antes de adicioná-lo
     //         if (df.attr("empty").cast<bool>()) {
     //             continue;  // Pula DataFrames vazios
@@ -264,7 +269,8 @@ void ScoreClass(const py::module& m) {
     //         py::object result_df = Pandas.attr("concat")(dataframes, "ignore_index"_a = true);
 
     //         // Ordena o DataFrame pelo campo "measureId" antes de aplicar filtros
-    //         // result_df.attr("sort_values")("by"_a = "measureId", "ascending"_a = true, "inplace"_a = true);
+    //         // result_df.attr("sort_values")("by"_a = "measureId", "ascending"_a = true,
+    //         "inplace"_a = true);
 
     //         py::list sort_cols;
     //         sort_cols.append("patternIdx");
@@ -287,7 +293,8 @@ void ScoreClass(const py::module& m) {
     //             result_df.attr("segmentWrittenPitch").attr("apply")(
     //                 py::cpp_function([](const py::object& pitchList) {
     //                     auto list = pitchList.cast<std::vector<std::string>>();
-    //                     return std::any_of(list.begin(), list.end(), [](const std::string& s) { return s != "rest"; });
+    //                     return std::any_of(list.begin(), list.end(), [](const std::string& s) {
+    //                     return s != "rest"; });
     //                 })
     //             )
     //         ];
@@ -297,7 +304,8 @@ void ScoreClass(const py::module& m) {
 
     //         return filtered_df;
     //     } else {
-    //         throw std::runtime_error("Nenhum DataFrame foi concatenado devido a erro de memória ou outro problema.");
+    //         throw std::runtime_error("Nenhum DataFrame foi concatenado devido a erro de memória
+    //         ou outro problema.");
     //     }
     // },
     //     py::arg("patternNumNotes") = 5,

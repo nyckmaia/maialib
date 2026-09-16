@@ -17,14 +17,12 @@ void ChordClass(const py::module& m) {
     py::class_<Chord> cls(m, "Chord");
     cls.def(py::init<>(),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def(py::init<const std::vector<Note>&, const RhythmFigure>(), 
-                py::arg("notes"),
-                py::arg("rhythmFigure") = RhythmFigure::QUARTER,
-                py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def(py::init<const std::vector<std::string>&, const RhythmFigure>(), 
-                py::arg("pitches"),
-                py::arg("rhythmFigure") = RhythmFigure::QUARTER,
-                py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def(py::init<const std::vector<Note>&, const RhythmFigure>(), py::arg("notes"),
+            py::arg("rhythmFigure") = RhythmFigure::QUARTER,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    cls.def(py::init<const std::vector<std::string>&, const RhythmFigure>(), py::arg("pitches"),
+            py::arg("rhythmFigure") = RhythmFigure::QUARTER,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("clear", &Chord::clear);
 
@@ -332,7 +330,8 @@ void ChordClass(const py::module& m) {
             py::arg("enharmonyNotes") = false);
 
     cls.def("getMeanFrequency", &Chord::getMeanFrequency, py::arg("freqA4") = 440.0f);
-    cls.def("getMeanOfExtremesFrequency", &Chord::getMeanOfExtremesFrequency, py::arg("freqA4") = 440.0f);
+    cls.def("getMeanOfExtremesFrequency", &Chord::getMeanOfExtremesFrequency,
+            py::arg("freqA4") = 440.0f);
     cls.def("getFrequencyStd", &Chord::getFrequencyStd, py::arg("freqA4") = 440.0f);
 
     cls.def("getMeanMidiValue", &Chord::getMeanMidiValue);
@@ -342,23 +341,19 @@ void ChordClass(const py::module& m) {
     cls.def("getMeanPitch", &Chord::getMeanPitch, py::arg("accType") = "");
     cls.def("getMeanOfExtremesPitch", &Chord::getMeanOfExtremesPitch, py::arg("accType") = "");
 
-    cls.def("getHarmonicSpectrum", &Chord::getHarmonicSpectrum, 
-        py::arg("numPartialsPerNote") = 6,
-        py::arg("amplCallback") = nullptr,
-        py::arg("partialsDecayExpRate") = 0.88f);
+    cls.def("getHarmonicSpectrum", &Chord::getHarmonicSpectrum, py::arg("numPartialsPerNote") = 6,
+            py::arg("amplCallback") = nullptr, py::arg("partialsDecayExpRate") = 0.88f);
 
     cls.def("getSetharesDissonance", &Chord::getSetharesDissonance,
-            py::arg("numPartialsPerNote") = 6, 
-            py::arg("useMinModel") = true,
-            py::arg("amplCallback") = nullptr,
-            py::arg("partialsDecayExpRate") = 0.88f,
+            py::arg("numPartialsPerNote") = 6, py::arg("useMinModel") = true,
+            py::arg("amplCallback") = nullptr, py::arg("partialsDecayExpRate") = 0.88f,
             py::arg("dissCallback") = nullptr);
 
     cls.def(
         "getSetharesDyadsDataFrame",
         [](const Chord& chord, const int numPartialsPerNote, const bool useMinModel,
            const std::function<std::vector<float>(std::vector<float>)> amplCallback,
-            const float partialsDecayExpRate) {
+           const float partialsDecayExpRate) {
             const SetharesDissonanceTable table = chord.getSetharesDyadsDissonanceValue(
                 numPartialsPerNote, useMinModel, amplCallback, partialsDecayExpRate);
 
@@ -409,10 +404,8 @@ void ChordClass(const py::module& m) {
 
             return df;
         },
-        py::arg("numPartialsPerNote") = 6, 
-        py::arg("useMinModel") = true,
-        py::arg("amplCallback") = nullptr,
-        py::arg("partialsDecayExpRate") = 0.88f,
+        py::arg("numPartialsPerNote") = 6, py::arg("useMinModel") = true,
+        py::arg("amplCallback") = nullptr, py::arg("partialsDecayExpRate") = 0.88f,
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def(py::self == py::self);

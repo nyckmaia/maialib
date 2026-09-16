@@ -1,15 +1,15 @@
 #include "maiacore/score.h"
 
+#include <algorithm>
 #include <filesystem>  // Para std::filesystem::absolute
+#include <future>
 #include <iostream>
 #include <limits>  // std::numeric_limits
-#include <set>
-#include <tuple>
-#include <thread>
-#include <future>
-#include <vector>
 #include <mutex>
-#include <algorithm>
+#include <set>
+#include <thread>
+#include <tuple>
+#include <vector>
 
 // #include "cherno/instrumentor.h"
 #include "maiacore/clef.h"
@@ -143,7 +143,7 @@ void Score::loadXMLFile(const std::string& filePath) {
         LOG_ERROR("Invalid file path: too short");
         return;
     }
-    
+
     const std::string fileExtension = filePath.substr(filePath.size() - 3, filePath.size());
 
     std::vector<std::string> result2 = Helper::splitString(filePath, '/');
@@ -363,7 +363,8 @@ void Score::loadXMLFile(const std::string& filePath) {
         auto firstMeasureNode = _doc.select_node(firstMeasure.c_str());
 
         if (firstMeasureNode.node()) {
-            const pugi::xpath_node staves = firstMeasureNode.node().select_node("attributes/staves");
+            const pugi::xpath_node staves =
+                firstMeasureNode.node().select_node("attributes/staves");
             if (staves.node() && !staves.node().empty()) {
                 const int numStaves = atoi(staves.node().first_child().value());
                 _part[p].setNumStaves(numStaves);
@@ -456,7 +457,8 @@ void Score::loadXMLFile(const std::string& filePath) {
             const pugi::xpath_node measureDivisionsPerQuarterNote =
                 measureNode.node().select_node("attributes/divisions");
 
-            if (measureDivisionsPerQuarterNote.node() && !measureDivisionsPerQuarterNote.node().empty()) {
+            if (measureDivisionsPerQuarterNote.node() &&
+                !measureDivisionsPerQuarterNote.node().empty()) {
                 _part[p].getMeasure(m).setIsDivisionsPerQuarterNoteChanged(true);
                 const int divisions = measureDivisionsPerQuarterNote.node().text().as_int();
                 _part[p].getMeasure(m).setDivisionsPerQuarterNote(divisions);
@@ -475,8 +477,10 @@ void Score::loadXMLFile(const std::string& filePath) {
                 const std::string keyModeStr = measureKeyFifths.node().child_value("mode");
 
                 // if (keyModeStr.empty()) {
-                //     LOG_WARN("[XML MISSING TAG][" + _part[p].getName() + "][" + std::to_string(m) +
-                //              "] The key signature mode is empty. Auto-configing to 'major' mode");
+                //     LOG_WARN("[XML MISSING TAG][" + _part[p].getName() + "][" + std::to_string(m)
+                //     +
+                //              "] The key signature mode is empty. Auto-configing to 'major'
+                //              mode");
                 // }
 
                 const bool isMajorKey =
@@ -627,7 +631,10 @@ void Score::loadXMLFile(const std::string& filePath) {
                         if (instrumentChild) {
                             const auto idAttr = instrumentChild.attribute("id");
                             if (idAttr) {
-                                unpitchedIndex = atoi(Helper::splitString(idAttr.as_string(), '-')[1].substr(1).c_str());
+                                unpitchedIndex =
+                                    atoi(Helper::splitString(idAttr.as_string(), '-')[1]
+                                             .substr(1)
+                                             .c_str());
                             }
                         }
                     }
@@ -1714,10 +1721,11 @@ std::vector<Score::NoteEvent> Score::collectNoteEvents() const {
         return _cachedNoteEvents;
     }
 
-    _cachedNoteEvents.clear(); // Garante que esteja vazio antes de preencher
+    _cachedNoteEvents.clear();  // Garante que esteja vazio antes de preencher
     for (int partIdx = 0; partIdx < getNumParts(); partIdx++) {
         const int NUM_NOTES_PER_MEASURE = 16;
-        _cachedNoteEvents.reserve(_cachedNoteEvents.size() + _part[partIdx].getNumMeasures() * NUM_NOTES_PER_MEASURE);
+        _cachedNoteEvents.reserve(_cachedNoteEvents.size() +
+                                  _part[partIdx].getNumMeasures() * NUM_NOTES_PER_MEASURE);
 
         const Part& currentPart = _part[partIdx];
         const std::string& currentPartName = currentPart.getName();
@@ -1735,13 +1743,14 @@ std::vector<Score::NoteEvent> Score::collectNoteEvents() const {
                         continue;
                     }
                     const std::string& currentKeyName = currentMeasure.getKey().getName();
-                    _cachedNoteEvents.push_back({currentPartName, measureIdx, staveIdx, noteIdx, currentKeyName, &currentNote});
+                    _cachedNoteEvents.push_back({currentPartName, measureIdx, staveIdx, noteIdx,
+                                                 currentKeyName, &currentNote});
                 }
             }
         }
     }
 
-    _isNoteEventsCached = true; // Marca o cache como preenchido
+    _isNoteEventsCached = true;  // Marca o cache como preenchido
     return _cachedNoteEvents;
 }
 
@@ -1751,7 +1760,7 @@ std::vector<std::vector<Score::NoteEvent>> Score::collectNoteEventsPerPart() con
         return _cachedNoteEventsPerPart;
     }
 
-    _cachedNoteEventsPerPart.clear(); // Garante que esteja vazio antes de preencher
+    _cachedNoteEventsPerPart.clear();  // Garante que esteja vazio antes de preencher
     _cachedNoteEventsPerPart.reserve(getNumParts());
     const int NUM_NOTES_PER_MEASURE = 16;
     for (int partIdx = 0; partIdx < getNumParts(); partIdx++) {
@@ -1774,14 +1783,15 @@ std::vector<std::vector<Score::NoteEvent>> Score::collectNoteEventsPerPart() con
                         continue;
                     }
                     const std::string& currentKeyName = currentMeasure.getKey().getName();
-                    cachedNoteEvents.push_back({currentPartName, measureIdx, staveIdx, noteIdx, currentKeyName, &currentNote});
+                    cachedNoteEvents.push_back({currentPartName, measureIdx, staveIdx, noteIdx,
+                                                currentKeyName, &currentNote});
                 }
             }
         }
         _cachedNoteEventsPerPart.push_back(cachedNoteEvents);
     }
 
-    _isNoteEventsPerPartCached = true; // Marca o cache como preenchido
+    _isNoteEventsPerPartCached = true;  // Marca o cache como preenchido
     return _cachedNoteEventsPerPart;
 }
 
@@ -1809,7 +1819,7 @@ Score::MelodyPatternTable Score::findMelodyPattern(
         return resultTable;
     }
 
-    const auto& noteEvents = collectNoteEvents(); // Obtém o cache de eventos de nota
+    const auto& noteEvents = collectNoteEvents();  // Obtém o cache de eventos de nota
     resultTable.reserve(noteEvents.size() - melodyPattern.size());
 
     // ===== STEP 1: COLETAR TODAS AS NOTAS DA PARTITURA ===== //
@@ -1835,8 +1845,8 @@ Score::MelodyPatternTable Score::findMelodyPattern(
                     }
                     const std::string& currentKeyName = currentMeasure.getKey().getName();
                     // Armazena o evento da nota em memória
-                    noteEvents.push_back(
-                        {currentPartName, measureIdx, staveIdx, noteIdx, currentKeyName, &currentNote});
+                    noteEvents.push_back({currentPartName, measureIdx, staveIdx, noteIdx,
+                                          currentKeyName, &currentNote});
                 }
             }
         }
@@ -1850,7 +1860,6 @@ Score::MelodyPatternTable Score::findMelodyPattern(
                 const Note& note = *noteEvents[i + offset].notePtr;
                 segment.push_back(note);
             }
-
 
             // ==== COMPUTE THE TRANSPOSE SEMITONES ===== //
             const Note* patternFirstNoteOn = nullptr;
@@ -1883,10 +1892,13 @@ Score::MelodyPatternTable Score::findMelodyPattern(
 
             std::string intervalName;
             if (melodyContainANoteOn && segmentContainANoteOn) {
-                const std::string& patternFirstSoundingPitch = patternFirstNoteOn->getSoundingPitch();
-                const std::string& segmentFirstSoundingPitch = segmentFirstNoteOn->getSoundingPitch();
+                const std::string& patternFirstSoundingPitch =
+                    patternFirstNoteOn->getSoundingPitch();
+                const std::string& segmentFirstSoundingPitch =
+                    segmentFirstNoteOn->getSoundingPitch();
 
-                const Interval transposeInterval(patternFirstSoundingPitch, segmentFirstSoundingPitch);
+                const Interval transposeInterval(patternFirstSoundingPitch,
+                                                 segmentFirstSoundingPitch);
                 intervalName = transposeInterval.getName() + " " + transposeInterval.getDirection();
             }
 
@@ -1938,9 +1950,9 @@ Score::MelodyPatternTable Score::findMelodyPattern(
             MelodyPatternRow row(currentPartName,
                                  noteEvents[i].measureIdx,  // Número do compasso
                                  noteEvents[i].staveIdx,    // ID da clave
-                                 noteEvents[i].keyName,         // Tonalidade do compasso
-                                 intervalName, // Intervalo de transposição
-                                 segmentPitchList, // Lista de pitchs do segmento
+                                 noteEvents[i].keyName,     // Tonalidade do compasso
+                                 intervalName,              // Intervalo de transposição
+                                 segmentPitchList,          // Lista de pitchs do segmento
                                  semitonesDiff,  // Lista de diferenças intervalares em semitons
                                  durationDiff,   // Lista de similaridade rítmica
                                  totalIntervalSimilarity,  // Similaridade intervalar total
@@ -1956,16 +1968,16 @@ Score::MelodyPatternTable Score::findMelodyPattern(
 }
 
 std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
-        const std::vector<std::vector<Note>>& melodyPatterns, const float totalIntervalsSimilarityThreshold,
-        const float totalRhythmSimilarityThreshold,
-        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
-            intervalsSimilarityCallback,
-        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
-            rhythmSimilarityCallback,
-        const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
-        const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
-        const std::function<float(float, float)> totalSimilarityCallback) const {
-    const auto& noteEvents = collectNoteEvents(); // Obtém o cache de eventos de nota uma única vez
+    const std::vector<std::vector<Note>>& melodyPatterns,
+    const float totalIntervalsSimilarityThreshold, const float totalRhythmSimilarityThreshold,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+        intervalsSimilarityCallback,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+        rhythmSimilarityCallback,
+    const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
+    const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
+    const std::function<float(float, float)> totalSimilarityCallback) const {
+    const auto& noteEvents = collectNoteEvents();  // Obtém o cache de eventos de nota uma única vez
     std::vector<Score::MelodyPatternTable> results(melodyPatterns.size());
 
     // Mutex para proteger o acesso ao vetor `results`
@@ -1976,16 +1988,10 @@ std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
         std::cout << "Processando padrão de melodia: " << idx << std::endl;
 
         // Realiza a operação intensiva em C++ e armazena o resultado
-        auto result = findMelodyPattern(
-            melodyPatterns[idx],
-            totalIntervalsSimilarityThreshold,
-            totalRhythmSimilarityThreshold,
-            intervalsSimilarityCallback,
-            rhythmSimilarityCallback,
-            totalIntervalSimilarityCallback,
-            totalRhythmSimilarityCallback,
-            totalSimilarityCallback
-        );
+        auto result = findMelodyPattern(melodyPatterns[idx], totalIntervalsSimilarityThreshold,
+                                        totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
+                                        rhythmSimilarityCallback, totalIntervalSimilarityCallback,
+                                        totalRhythmSimilarityCallback, totalSimilarityCallback);
 
         // Protege o acesso a `results` antes de armazenar o resultado
         std::lock_guard<std::mutex> lock(results_mutex);
@@ -1993,7 +1999,8 @@ std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
     };
 
     // Limita o número de threads de acordo com o número de núcleos da CPU
-    size_t num_threads = std::min(melodyPatterns.size(), static_cast<size_t>(std::thread::hardware_concurrency()));
+    size_t num_threads =
+        std::min(melodyPatterns.size(), static_cast<size_t>(std::thread::hardware_concurrency()));
     std::vector<std::thread> threads;
 
     // Executa cada padrão de melodia em um thread separado até o limite definido
@@ -2077,23 +2084,21 @@ void Score::removeDuplicatePatterns(std::vector<std::vector<Note>>* patterns) co
 }
 
 std::vector<Score::MelodyPatternTable> Score::findAnyMelodyPattern(
-        const int patternNumNotes,
-        const float totalIntervalsSimilarityThreshold,
-        const float totalRhythmSimilarityThreshold,
-        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
-            intervalsSimilarityCallback,
-        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
-            rhythmSimilarityCallback,
-        const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
-        const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
-        const std::function<float(float, float)> totalSimilarityCallback) const {
-    
+    const int patternNumNotes, const float totalIntervalsSimilarityThreshold,
+    const float totalRhythmSimilarityThreshold,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+        intervalsSimilarityCallback,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+        rhythmSimilarityCallback,
+    const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
+    const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
+    const std::function<float(float, float)> totalSimilarityCallback) const {
     const auto& noteEventsPerPart = collectNoteEventsPerPart();
     std::vector<std::vector<Note>> patterns;
     const int maxNumPatterns = getNumNotes() / patternNumNotes;
     // std::cout << "Max melody blocks to find: " << maxNumPatterns << std::endl;
-    patterns.reserve(maxNumPatterns); // Impreciso
-    
+    patterns.reserve(maxNumPatterns);  // Impreciso
+
     // std::cout << "Creating melody patterns vector..." << std::endl;
     for (const auto& noteEventList : noteEventsPerPart) {
         int patternMaxIterationIdx = noteEventList.size() - patternNumNotes;
@@ -2111,9 +2116,10 @@ std::vector<Score::MelodyPatternTable> Score::findAnyMelodyPattern(
     removeDuplicatePatterns(&patterns);
 
     // std::cout << "Searching patterns..." << std::endl;
-    return findMelodyPattern(patterns, totalIntervalsSimilarityThreshold, 
-    totalRhythmSimilarityThreshold, intervalsSimilarityCallback, rhythmSimilarityCallback, 
-    totalIntervalSimilarityCallback, totalRhythmSimilarityCallback, totalSimilarityCallback);
+    return findMelodyPattern(patterns, totalIntervalsSimilarityThreshold,
+                             totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
+                             rhythmSimilarityCallback, totalIntervalSimilarityCallback,
+                             totalRhythmSimilarityCallback, totalSimilarityCallback);
 }
 
 bool Score::haveAnacrusisMeasure() const { return _haveAnacrusisMeasure; }

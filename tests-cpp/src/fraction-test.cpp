@@ -1,8 +1,8 @@
+#include "maiacore/fraction.h"
+
 #include <gtest/gtest.h>
 
 #include <sstream>
-
-#include "maiacore/fraction.h"
 
 // ============================================================================
 // Constructor Tests

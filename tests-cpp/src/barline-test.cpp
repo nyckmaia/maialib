@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "maiacore/barline.h"
+
+#include <gtest/gtest.h>
 
 // ============================================================================
 // Constructor Tests
@@ -266,7 +266,7 @@ TEST(BarlineXML, ToXMLWithBarStyleOnly) {
     EXPECT_TRUE(xml.find("<bar-style>regular</bar-style>") != std::string::npos);
     EXPECT_TRUE(xml.find("</barline>") != std::string::npos);
     EXPECT_TRUE(xml.find("location=") == std::string::npos);  // No location
-    EXPECT_TRUE(xml.find("<repeat") == std::string::npos);  // No repeat
+    EXPECT_TRUE(xml.find("<repeat") == std::string::npos);    // No repeat
 }
 
 TEST(BarlineXML, ToXMLWithLocation) {

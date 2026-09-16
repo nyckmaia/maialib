@@ -1,6 +1,7 @@
+#include "maiacore/utils.h"
+
 #include <gtest/gtest.h>
 
-#include "maiacore/utils.h"
 #include <cmath>
 #include <limits>
 
@@ -17,7 +18,7 @@ TEST(UtilsHash, HashSingleChar) {
     unsigned int h_a = hash("a");
     unsigned int h_b = hash("b");
 
-    EXPECT_NE(h_a, h_b);  // Different characters should hash differently
+    EXPECT_NE(h_a, h_b);   // Different characters should hash differently
     EXPECT_NE(h_a, 5381);  // Should not equal base value
 }
 
@@ -54,7 +55,8 @@ TEST(UtilsHash, HashCaseSensitive) {
 }
 
 TEST(UtilsHash, HashLongString) {
-    const char* long_str = "This is a very long string to test the hash function with multiple characters";
+    const char* long_str =
+        "This is a very long string to test the hash function with multiple characters";
     unsigned int result = hash(long_str);
 
     EXPECT_NE(result, 5381);  // Should not equal base value
@@ -210,7 +212,7 @@ TEST(UtilsIsFloatEqual, BoundaryValues) {
 
 TEST(UtilsIgnore, IgnoreInt) {
     int value = 42;
-    ignore(value);  // Should compile and do nothing
+    ignore(value);         // Should compile and do nothing
     EXPECT_EQ(value, 42);  // Value unchanged
 }
 

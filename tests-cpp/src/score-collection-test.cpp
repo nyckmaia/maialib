@@ -137,10 +137,8 @@ TEST(ScoreCollectionScores, AddScoreByFilePath) {
 
 TEST(ScoreCollectionScores, AddScoreByFilePathList) {
     ScoreCollection collection(std::vector<std::string>{});
-    std::vector<std::string> files = {
-        "./test/xml_examples/Bach/prelude_1_BWV_846.xml",
-        "./test/xml_examples/Bach/cello_suite_1_violin.xml"
-    };
+    std::vector<std::string> files = {"./test/xml_examples/Bach/prelude_1_BWV_846.xml",
+                                      "./test/xml_examples/Bach/cello_suite_1_violin.xml"};
 
     collection.addScore(files);
     EXPECT_EQ(collection.getNumScores(), 2);
@@ -237,8 +235,8 @@ TEST(ScoreCollectionScores, RemoveScoreInvalidIndex) {
     ScoreCollection collection(std::vector<std::string>{});
     collection.addScore("./test/xml_examples/Bach/prelude_1_BWV_846.xml");
 
-    EXPECT_THROW(collection.removeScore(10), std::runtime_error); // Flat 
-    EXPECT_EQ(collection.getNumScores(), 1);  // Unchanged
+    EXPECT_THROW(collection.removeScore(10), std::runtime_error);  // Flat
+    EXPECT_EQ(collection.getNumScores(), 1);                       // Unchanged
 }
 
 // ============================================================================
@@ -347,11 +345,7 @@ TEST(ScoreCollectionPatternFinding, FindMelodyPatternBasic) {
     collection.addScore("./test/xml_examples/Bach/prelude_1_BWV_846.xml");
 
     // Create a simple 3-note pattern
-    std::vector<Note> pattern = {
-        Note("C4"),
-        Note("D4"),
-        Note("E4")
-    };
+    std::vector<Note> pattern = {Note("C4"), Note("D4"), Note("E4")};
 
     auto results = collection.findMelodyPattern(pattern, 0.5f, 0.5f);
 
@@ -363,11 +357,7 @@ TEST(ScoreCollectionPatternFinding, FindMelodyPatternBasic) {
 TEST(ScoreCollectionPatternFinding, FindMelodyPatternMultipleScores) {
     ScoreCollection collection(BACH_DIR);
 
-    std::vector<Note> pattern = {
-        Note("C4"),
-        Note("E4"),
-        Note("G4")
-    };
+    std::vector<Note> pattern = {Note("C4"), Note("E4"), Note("G4")};
 
     auto results = collection.findMelodyPattern(pattern, 0.3f, 0.3f);
 
@@ -379,10 +369,7 @@ TEST(ScoreCollectionPatternFinding, FindMelodyPatternHighThresholds) {
     ScoreCollection collection(std::vector<std::string>{});
     collection.addScore("./test/xml_examples/Bach/prelude_1_BWV_846.xml");
 
-    std::vector<Note> pattern = {
-        Note("C4"),
-        Note("D4")
-    };
+    std::vector<Note> pattern = {Note("C4"), Note("D4")};
 
     // Very high thresholds - likely few/no matches
     auto results = collection.findMelodyPattern(pattern, 0.99f, 0.99f);
@@ -409,10 +396,7 @@ TEST(ScoreCollectionMultiPattern, FindMultipleMelodyPatterns) {
     collection.addScore("./test/xml_examples/Bach/prelude_1_BWV_846.xml");
 
     std::vector<std::vector<Note>> patterns = {
-        {Note("C4"), Note("D4")},
-        {Note("E4"), Note("F4")},
-        {Note("G4"), Note("A4")}
-    };
+        {Note("C4"), Note("D4")}, {Note("E4"), Note("F4")}, {Note("G4"), Note("A4")}};
 
     auto results = collection.findMelodyPattern(patterns, 0.5f, 0.5f);
 
@@ -425,10 +409,8 @@ TEST(ScoreCollectionMultiPattern, MultiplePatternsSingleScore) {
     ScoreCollection collection(std::vector<std::string>{});
     collection.addScore("./test/xml_examples/Bach/cello_suite_1_violin.xml");
 
-    std::vector<std::vector<Note>> patterns = {
-        {Note("C4"), Note("D4"), Note("E4")},
-        {Note("G4"), Note("B4"), Note("A4")}
-    };
+    std::vector<std::vector<Note>> patterns = {{Note("C4"), Note("D4"), Note("E4")},
+                                               {Note("G4"), Note("B4"), Note("A4")}};
 
     auto results = collection.findMelodyPattern(patterns, 0.3f, 0.3f);
 
@@ -438,10 +420,7 @@ TEST(ScoreCollectionMultiPattern, MultiplePatternsSingleScore) {
 TEST(ScoreCollectionMultiPattern, MultiplePatternsMultipleScores) {
     ScoreCollection collection(BACH_DIR);
 
-    std::vector<std::vector<Note>> patterns = {
-        {Note("C4"), Note("D4")},
-        {Note("E4"), Note("F4")}
-    };
+    std::vector<std::vector<Note>> patterns = {{Note("C4"), Note("D4")}, {Note("E4"), Note("F4")}};
 
     auto results = collection.findMelodyPattern(patterns, 0.4f, 0.4f);
 

@@ -198,15 +198,11 @@ void HelperClass(const py::module& m) {
     cls.def_static(
         "notes2Intervals",
         py::overload_cast<const std::vector<std::string>&, const bool>(&Helper::notes2Intervals),
-        py::arg("pitches"),
-        py::arg("firstNoteAsReference") = false
-    );
+        py::arg("pitches"), py::arg("firstNoteAsReference") = false);
     cls.def_static(
         "notes2Intervals",
         py::overload_cast<const std::vector<Note>&, const bool>(&Helper::notes2Intervals),
-        py::arg("notes"),
-        py::arg("firstNoteAsReference") = false
-    );
+        py::arg("notes"), py::arg("firstNoteAsReference") = false);
     //--------------------- //
     cls.def_static("midiNote2octave", &Helper::midiNote2octave, py::arg("midiNote"));
     //--------------------- //

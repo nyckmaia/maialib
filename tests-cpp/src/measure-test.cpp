@@ -1,11 +1,12 @@
 #include <gtest/gtest.h>
-#include <maiacore/measure.h>
-#include <maiacore/note.h>
+#include <maiacore/barline.h>
 #include <maiacore/chord.h>
 #include <maiacore/clef.h>
 #include <maiacore/key.h>
+#include <maiacore/measure.h>
+#include <maiacore/note.h>
 #include <maiacore/time-signature.h>
-#include <maiacore/barline.h>
+
 #include <string>
 #include <vector>
 
@@ -14,25 +15,25 @@
 // ====================
 
 TEST(MeasureConstructor, DefaultConstructor) {
-  Measure measure;
+    Measure measure;
 
-  EXPECT_EQ(measure.getNumNotes(), 0);
-  EXPECT_EQ(measure.getNumStaves(), 1);
-  EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 256);
+    EXPECT_EQ(measure.getNumNotes(), 0);
+    EXPECT_EQ(measure.getNumStaves(), 1);
+    EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 256);
 }
 
 TEST(MeasureConstructor, ConstructorWithCustomStaves) {
-  Measure measure(2);
+    Measure measure(2);
 
-  EXPECT_EQ(measure.getNumStaves(), 2);
-  EXPECT_EQ(measure.getNumNotes(), 0);
+    EXPECT_EQ(measure.getNumStaves(), 2);
+    EXPECT_EQ(measure.getNumNotes(), 0);
 }
 
 TEST(MeasureConstructor, ConstructorWithCustomDivisions) {
-  Measure measure(1, 512);
+    Measure measure(1, 512);
 
-  EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 512);
-  EXPECT_EQ(measure.getNumStaves(), 1);
+    EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 512);
+    EXPECT_EQ(measure.getNumStaves(), 1);
 }
 
 // ====================
@@ -40,27 +41,27 @@ TEST(MeasureConstructor, ConstructorWithCustomDivisions) {
 // ====================
 
 TEST(MeasureNumber, GetAndSetNumber) {
-  Measure measure;
+    Measure measure;
 
-  measure.setNumber(1);
-  EXPECT_EQ(measure.getNumber(), 1);
+    measure.setNumber(1);
+    EXPECT_EQ(measure.getNumber(), 1);
 
-  measure.setNumber(42);
-  EXPECT_EQ(measure.getNumber(), 42);
+    measure.setNumber(42);
+    EXPECT_EQ(measure.getNumber(), 42);
 }
 
 TEST(MeasureNumber, DefaultNumber) {
-  Measure measure;
+    Measure measure;
 
-  // Default measure number should be 0
-  EXPECT_EQ(measure.getNumber(), 0);
+    // Default measure number should be 0
+    EXPECT_EQ(measure.getNumber(), 0);
 }
 
 TEST(MeasureNumber, SetNumberZero) {
-  Measure measure;
+    Measure measure;
 
-  measure.setNumber(0);
-  EXPECT_EQ(measure.getNumber(), 0);
+    measure.setNumber(0);
+    EXPECT_EQ(measure.getNumber(), 0);
 }
 
 // ====================
@@ -68,69 +69,69 @@ TEST(MeasureNumber, SetNumberZero) {
 // ====================
 
 TEST(MeasureTimeSignature, GetTimeSignature) {
-  Measure measure;
+    Measure measure;
 
-  const TimeSignature& ts = measure.getTimeSignature();
-  // Default time signature is 4/4
-  EXPECT_EQ(ts.getUpperValue(), 4);
-  EXPECT_EQ(ts.getLowerValue(), 4);
+    const TimeSignature& ts = measure.getTimeSignature();
+    // Default time signature is 4/4
+    EXPECT_EQ(ts.getUpperValue(), 4);
+    EXPECT_EQ(ts.getLowerValue(), 4);
 }
 
 TEST(MeasureTimeSignature, GetTimeSignatureConst) {
-  Measure measure;
+    Measure measure;
 
-  const Measure& constMeasure = measure;
-  const TimeSignature& ts = constMeasure.getTimeSignature();
+    const Measure& constMeasure = measure;
+    const TimeSignature& ts = constMeasure.getTimeSignature();
 
-  EXPECT_EQ(ts.getUpperValue(), 4);
-  EXPECT_EQ(ts.getLowerValue(), 4);
+    EXPECT_EQ(ts.getUpperValue(), 4);
+    EXPECT_EQ(ts.getLowerValue(), 4);
 }
 
 TEST(MeasureTimeSignature, SetTimeSignature) {
-  Measure measure;
+    Measure measure;
 
-  measure.setTimeSignature(3, 4);  // 3/4 time
+    measure.setTimeSignature(3, 4);  // 3/4 time
 
-  EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 3);
-  EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 4);
+    EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 3);
+    EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 4);
 }
 
 TEST(MeasureTimeSignature, CommonTimeSignatures) {
-  Measure measure;
+    Measure measure;
 
-  // 6/8 time
-  measure.setTimeSignature(6, 8);
-  EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 6);
-  EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 8);
+    // 6/8 time
+    measure.setTimeSignature(6, 8);
+    EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 6);
+    EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 8);
 
-  // 2/4 time
-  measure.setTimeSignature(2, 4);
-  EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 2);
-  EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 4);
+    // 2/4 time
+    measure.setTimeSignature(2, 4);
+    EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 2);
+    EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 4);
 }
 
 TEST(MeasureTimeSignature, UncommonTimeSignatures) {
-  Measure measure;
+    Measure measure;
 
-  // 7/8 time
-  measure.setTimeSignature(7, 8);
-  EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 7);
-  EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 8);
+    // 7/8 time
+    measure.setTimeSignature(7, 8);
+    EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 7);
+    EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 8);
 
-  // 5/4 time
-  measure.setTimeSignature(5, 4);
-  EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 5);
-  EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 4);
+    // 5/4 time
+    measure.setTimeSignature(5, 4);
+    EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 5);
+    EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 4);
 }
 
 TEST(MeasureTimeSignature, TimeSignatureChangedFlag) {
-  Measure measure;
+    Measure measure;
 
-  measure.setIsTimeSignatureChanged(true);
-  EXPECT_TRUE(measure.timeSignatureChanged());
+    measure.setIsTimeSignatureChanged(true);
+    EXPECT_TRUE(measure.timeSignatureChanged());
 
-  measure.setIsTimeSignatureChanged(false);
-  EXPECT_FALSE(measure.timeSignatureChanged());
+    measure.setIsTimeSignatureChanged(false);
+    EXPECT_FALSE(measure.timeSignatureChanged());
 }
 
 // ====================
@@ -138,91 +139,91 @@ TEST(MeasureTimeSignature, TimeSignatureChangedFlag) {
 // ====================
 
 TEST(MeasureKeySignature, GetKey) {
-  Measure measure;
+    Measure measure;
 
-  Key key = measure.getKey();
-  // Default key is C major (0 fifths)
-  EXPECT_EQ(key.getFifthCircle(), 0);
+    Key key = measure.getKey();
+    // Default key is C major (0 fifths)
+    EXPECT_EQ(key.getFifthCircle(), 0);
 }
 
 TEST(MeasureKeySignature, SetKeySignature) {
-  Measure measure;
+    Measure measure;
 
-  measure.setKeySignature(1, true);  // G major (1 sharp)
+    measure.setKeySignature(1, true);  // G major (1 sharp)
 
-  EXPECT_EQ(measure.getKey().getFifthCircle(), 1);
+    EXPECT_EQ(measure.getKey().getFifthCircle(), 1);
 }
 
 TEST(MeasureKeySignature, SharpKeys) {
-  Measure measure;
+    Measure measure;
 
-  // D major (2 sharps)
-  measure.setKeySignature(2, true);
-  EXPECT_EQ(measure.getKey().getFifthCircle(), 2);
+    // D major (2 sharps)
+    measure.setKeySignature(2, true);
+    EXPECT_EQ(measure.getKey().getFifthCircle(), 2);
 
-  // A major (3 sharps)
-  measure.setKeySignature(3, true);
-  EXPECT_EQ(measure.getKey().getFifthCircle(), 3);
+    // A major (3 sharps)
+    measure.setKeySignature(3, true);
+    EXPECT_EQ(measure.getKey().getFifthCircle(), 3);
 }
 
 TEST(MeasureKeySignature, FlatKeys) {
-  Measure measure;
+    Measure measure;
 
-  // F major (1 flat)
-  measure.setKeySignature(-1, true);
-  EXPECT_EQ(measure.getKey().getFifthCircle(), -1);
+    // F major (1 flat)
+    measure.setKeySignature(-1, true);
+    EXPECT_EQ(measure.getKey().getFifthCircle(), -1);
 
-  // Bb major (2 flats)
-  measure.setKeySignature(-2, true);
-  EXPECT_EQ(measure.getKey().getFifthCircle(), -2);
+    // Bb major (2 flats)
+    measure.setKeySignature(-2, true);
+    EXPECT_EQ(measure.getKey().getFifthCircle(), -2);
 }
 
 TEST(MeasureKeySignature, MinorKeys) {
-  Measure measure;
+    Measure measure;
 
-  // A minor (0 accidentals)
-  measure.setKeySignature(0, false);
-  EXPECT_EQ(measure.getKey().getFifthCircle(), 0);
-  EXPECT_FALSE(measure.getKey().isMajorMode());  // 0 = minor
+    // A minor (0 accidentals)
+    measure.setKeySignature(0, false);
+    EXPECT_EQ(measure.getKey().getFifthCircle(), 0);
+    EXPECT_FALSE(measure.getKey().isMajorMode());  // 0 = minor
 
-  // E minor (1 sharp)
-  measure.setKeySignature(1, false);
-  EXPECT_EQ(measure.getKey().getFifthCircle(), 1);
+    // E minor (1 sharp)
+    measure.setKeySignature(1, false);
+    EXPECT_EQ(measure.getKey().getFifthCircle(), 1);
 }
 
 TEST(MeasureKeySignature, GetFifthCircle) {
-  Measure measure;
+    Measure measure;
 
-  measure.setKeySignature(4, true);
-  EXPECT_EQ(measure.getFifthCircle(), 4);
+    measure.setKeySignature(4, true);
+    EXPECT_EQ(measure.getFifthCircle(), 4);
 }
 
 TEST(MeasureKeySignature, GetKeyName) {
-  Measure measure;
+    Measure measure;
 
-  measure.setKeySignature(1, true);
-  std::string keyName = measure.getKeyName();
-  EXPECT_GT(keyName.length(), 0);
+    measure.setKeySignature(1, true);
+    std::string keyName = measure.getKeyName();
+    EXPECT_GT(keyName.length(), 0);
 }
 
 TEST(MeasureKeySignature, KeySignatureChangedFlag) {
-  Measure measure;
+    Measure measure;
 
-  measure.setIsKeySignatureChanged(true);
-  EXPECT_TRUE(measure.keySignatureChanged());
+    measure.setIsKeySignatureChanged(true);
+    EXPECT_TRUE(measure.keySignatureChanged());
 
-  measure.setIsKeySignatureChanged(false);
-  EXPECT_FALSE(measure.keySignatureChanged());
+    measure.setIsKeySignatureChanged(false);
+    EXPECT_FALSE(measure.keySignatureChanged());
 }
 
 TEST(MeasureKeySignature, SetKeyMode) {
-  Measure measure;
+    Measure measure;
 
-  measure.setKeyMode(true);
-  EXPECT_TRUE(measure.isMajorKeyMode());
+    measure.setKeyMode(true);
+    EXPECT_TRUE(measure.isMajorKeyMode());
 
-  measure.setKeyMode(false);
-  EXPECT_FALSE(measure.isMajorKeyMode());
+    measure.setKeyMode(false);
+    EXPECT_FALSE(measure.isMajorKeyMode());
 }
 
 // ====================
@@ -230,34 +231,34 @@ TEST(MeasureKeySignature, SetKeyMode) {
 // ====================
 
 TEST(MeasureMetronome, SetAndGetMetronome) {
-  Measure measure;
+    Measure measure;
 
-  measure.setMetronome(120);
-  auto metronome = measure.getMetronome();
-  EXPECT_EQ(metronome.second, 120);
+    measure.setMetronome(120);
+    auto metronome = measure.getMetronome();
+    EXPECT_EQ(metronome.second, 120);
 }
 
 TEST(MeasureMetronome, CommonTempos) {
-  Measure measure;
+    Measure measure;
 
-  measure.setMetronome(60);   // Largo
-  EXPECT_EQ(measure.getMetronome().second, 60);
+    measure.setMetronome(60);  // Largo
+    EXPECT_EQ(measure.getMetronome().second, 60);
 
-  measure.setMetronome(120);  // Allegro
-  EXPECT_EQ(measure.getMetronome().second, 120);
+    measure.setMetronome(120);  // Allegro
+    EXPECT_EQ(measure.getMetronome().second, 120);
 
-  measure.setMetronome(180);  // Presto
-  EXPECT_EQ(measure.getMetronome().second, 180);
+    measure.setMetronome(180);  // Presto
+    EXPECT_EQ(measure.getMetronome().second, 180);
 }
 
 TEST(MeasureMetronome, MetronomeChangedFlag) {
-  Measure measure;
+    Measure measure;
 
-  measure.setIsMetronomeChanged(true);
-  EXPECT_TRUE(measure.metronomeChanged());
+    measure.setIsMetronomeChanged(true);
+    EXPECT_TRUE(measure.metronomeChanged());
 
-  measure.setIsMetronomeChanged(false);
-  EXPECT_FALSE(measure.metronomeChanged());
+    measure.setIsMetronomeChanged(false);
+    EXPECT_FALSE(measure.metronomeChanged());
 }
 
 // ====================
@@ -265,44 +266,44 @@ TEST(MeasureMetronome, MetronomeChangedFlag) {
 // ====================
 
 TEST(MeasureStave, GetNumStaves) {
-  Measure measure(3);
+    Measure measure(3);
 
-  EXPECT_EQ(measure.getNumStaves(), 3);
+    EXPECT_EQ(measure.getNumStaves(), 3);
 }
 
 TEST(MeasureStave, SetNumStaves) {
-  Measure measure(1);
+    Measure measure(1);
 
-  measure.setNumStaves(2);
-  EXPECT_EQ(measure.getNumStaves(), 2);
+    measure.setNumStaves(2);
+    EXPECT_EQ(measure.getNumStaves(), 2);
 
-  measure.setNumStaves(4);
-  EXPECT_EQ(measure.getNumStaves(), 4);
+    measure.setNumStaves(4);
+    EXPECT_EQ(measure.getNumStaves(), 4);
 }
 
 TEST(MeasureStave, IncreaseStaves) {
-  Measure measure(1);
+    Measure measure(1);
 
-  measure.setNumStaves(3);
-  EXPECT_EQ(measure.getNumStaves(), 3);
+    measure.setNumStaves(3);
+    EXPECT_EQ(measure.getNumStaves(), 3);
 }
 
 TEST(MeasureStave, DecreaseStaves) {
-  Measure measure(3);
+    Measure measure(3);
 
-  measure.setNumStaves(1);
-  EXPECT_EQ(measure.getNumStaves(), 1);
+    measure.setNumStaves(1);
+    EXPECT_EQ(measure.getNumStaves(), 1);
 }
 
 TEST(MeasureStave, MultipleStavesWithNotes) {
-  Measure measure(2);
+    Measure measure(2);
 
-  measure.addNote(Note("C4"), 0);  // Stave 0
-  measure.addNote(Note("C3"), 1);  // Stave 1
+    measure.addNote(Note("C4"), 0);  // Stave 0
+    measure.addNote(Note("C3"), 1);  // Stave 1
 
-  EXPECT_EQ(measure.getNumNotes(0), 1);
-  EXPECT_EQ(measure.getNumNotes(1), 1);
-  EXPECT_EQ(measure.getNumNotes(), 2);
+    EXPECT_EQ(measure.getNumNotes(0), 1);
+    EXPECT_EQ(measure.getNumNotes(1), 1);
+    EXPECT_EQ(measure.getNumNotes(), 2);
 }
 
 // ====================
@@ -310,36 +311,36 @@ TEST(MeasureStave, MultipleStavesWithNotes) {
 // ====================
 
 TEST(MeasureDivisions, GetDivisionsPerQuarterNote) {
-  Measure measure(1, 512);
+    Measure measure(1, 512);
 
-  EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 512);
+    EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 512);
 }
 
 TEST(MeasureDivisions, SetDivisionsPerQuarterNote) {
-  Measure measure;
+    Measure measure;
 
-  measure.setDivisionsPerQuarterNote(384);
-  EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 384);
+    measure.setDivisionsPerQuarterNote(384);
+    EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 384);
 }
 
 TEST(MeasureDivisions, CommonDivisionValues) {
-  Measure measure;
+    Measure measure;
 
-  measure.setDivisionsPerQuarterNote(256);  // Default
-  EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 256);
+    measure.setDivisionsPerQuarterNote(256);  // Default
+    EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 256);
 
-  measure.setDivisionsPerQuarterNote(480);  // MIDI standard
-  EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 480);
+    measure.setDivisionsPerQuarterNote(480);  // MIDI standard
+    EXPECT_EQ(measure.getDivisionsPerQuarterNote(), 480);
 }
 
 TEST(MeasureDivisions, DivisionsChangedFlag) {
-  Measure measure;
+    Measure measure;
 
-  measure.setIsDivisionsPerQuarterNoteChanged(true);
-  EXPECT_TRUE(measure.divisionsPerQuarterNoteChanged());
+    measure.setIsDivisionsPerQuarterNoteChanged(true);
+    EXPECT_TRUE(measure.divisionsPerQuarterNoteChanged());
 
-  measure.setIsDivisionsPerQuarterNoteChanged(false);
-  EXPECT_FALSE(measure.divisionsPerQuarterNoteChanged());
+    measure.setIsDivisionsPerQuarterNoteChanged(false);
+    EXPECT_FALSE(measure.divisionsPerQuarterNoteChanged());
 }
 
 // ====================
@@ -347,57 +348,57 @@ TEST(MeasureDivisions, DivisionsChangedFlag) {
 // ====================
 
 TEST(MeasureClef, GetClef) {
-  Measure measure;
+    Measure measure;
 
-  const Clef& clef = measure.getClef(0);
-  // Default clef is treble
-  EXPECT_EQ(clef.getSign(), ClefSign::G);
+    const Clef& clef = measure.getClef(0);
+    // Default clef is treble
+    EXPECT_EQ(clef.getSign(), ClefSign::G);
 }
 
 TEST(MeasureClef, GetClefConst) {
-  Measure measure;
+    Measure measure;
 
-  const Measure& constMeasure = measure;
-  const Clef& clef = constMeasure.getClef(0);
+    const Measure& constMeasure = measure;
+    const Clef& clef = constMeasure.getClef(0);
 
-  EXPECT_EQ(clef.getSign(), ClefSign::G);
+    EXPECT_EQ(clef.getSign(), ClefSign::G);
 }
 
 TEST(MeasureClef, ModifyClef) {
-  Measure measure;
+    Measure measure;
 
-  Clef& clef = measure.getClef(0);
-  clef.setSign(ClefSign::F);
-  clef.setLine(4);
+    Clef& clef = measure.getClef(0);
+    clef.setSign(ClefSign::F);
+    clef.setLine(4);
 
-  EXPECT_EQ(measure.getClef(0).getSign(), ClefSign::F);
-  EXPECT_EQ(measure.getClef(0).getLine(), 4);
+    EXPECT_EQ(measure.getClef(0).getSign(), ClefSign::F);
+    EXPECT_EQ(measure.getClef(0).getLine(), 4);
 }
 
 TEST(MeasureClef, MultipleClefs) {
-  Measure measure(2);
+    Measure measure(2);
 
-  Clef& clef0 = measure.getClef(0);
-  clef0.setSign(ClefSign::G);
-  clef0.setLine(2);
+    Clef& clef0 = measure.getClef(0);
+    clef0.setSign(ClefSign::G);
+    clef0.setLine(2);
 
-  Clef& clef1 = measure.getClef(1);
-  clef1.setSign(ClefSign::F);
-  clef1.setLine(4);
+    Clef& clef1 = measure.getClef(1);
+    clef1.setSign(ClefSign::F);
+    clef1.setLine(4);
 
-  EXPECT_EQ(measure.getClef(0).getSign(), ClefSign::G);
-  EXPECT_EQ(measure.getClef(1).getSign(), ClefSign::F);
+    EXPECT_EQ(measure.getClef(0).getSign(), ClefSign::G);
+    EXPECT_EQ(measure.getClef(1).getSign(), ClefSign::F);
 }
 
 TEST(MeasureClef, AltoClef) {
-  Measure measure;
+    Measure measure;
 
-  Clef& clef = measure.getClef(0);
-  clef.setSign(ClefSign::C);
-  clef.setLine(3);
+    Clef& clef = measure.getClef(0);
+    clef.setSign(ClefSign::C);
+    clef.setLine(3);
 
-  EXPECT_EQ(measure.getClef(0).getSign(), ClefSign::C);
-  EXPECT_EQ(measure.getClef(0).getLine(), 3);
+    EXPECT_EQ(measure.getClef(0).getSign(), ClefSign::C);
+    EXPECT_EQ(measure.getClef(0).getLine(), 3);
 }
 
 // ====================
@@ -405,93 +406,93 @@ TEST(MeasureClef, AltoClef) {
 // ====================
 
 TEST(MeasureNoteAddition, AddSingleNote) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  EXPECT_EQ(measure.getNumNotes(), 1);
+    measure.addNote(Note("C4"), 0);
+    EXPECT_EQ(measure.getNumNotes(), 1);
 }
 
 TEST(MeasureNoteAddition, AddMultipleNotes) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  measure.addNote(Note("E4"), 0);
-  measure.addNote(Note("G4"), 0);
+    measure.addNote(Note("C4"), 0);
+    measure.addNote(Note("E4"), 0);
+    measure.addNote(Note("G4"), 0);
 
-  EXPECT_EQ(measure.getNumNotes(), 3);
+    EXPECT_EQ(measure.getNumNotes(), 3);
 }
 
 TEST(MeasureNoteAddition, AddNoteWithPosition) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0, 0);
-  measure.addNote(Note("D4"), 0, 1);  // Insert at position 1
+    measure.addNote(Note("C4"), 0, 0);
+    measure.addNote(Note("D4"), 0, 1);  // Insert at position 1
 
-  EXPECT_EQ(measure.getNumNotes(), 2);
+    EXPECT_EQ(measure.getNumNotes(), 2);
 }
 
 TEST(MeasureNoteAddition, AddNoteWithDuration) {
-  Measure measure;
+    Measure measure;
 
-  Note note("C4");
-  note.setDuration(256);  // Quarter note
-  measure.addNote(note, 0);
+    Note note("C4");
+    note.setDuration(256);  // Quarter note
+    measure.addNote(note, 0);
 
-  EXPECT_EQ(measure.getNumNotes(), 1);
-  // Duration is set, we just verify note was added
+    EXPECT_EQ(measure.getNumNotes(), 1);
+    // Duration is set, we just verify note was added
 }
 
 TEST(MeasureNoteAddition, AddRest) {
-  Measure measure;
+    Measure measure;
 
-  Note rest(-1);  // Rest
-  rest.setDuration(256);
-  measure.addNote(rest, 0);
+    Note rest(-1);  // Rest
+    rest.setDuration(256);
+    measure.addNote(rest, 0);
 
-  EXPECT_EQ(measure.getNumNotes(), 1);
-  EXPECT_FALSE(measure.getNote(0, 0).isNoteOn());
+    EXPECT_EQ(measure.getNumNotes(), 1);
+    EXPECT_FALSE(measure.getNote(0, 0).isNoteOn());
 }
 
 TEST(MeasureNoteAddition, AddNotesToDifferentStaves) {
-  Measure measure(2);
+    Measure measure(2);
 
-  measure.addNote(Note("C5"), 0);  // Stave 0
-  measure.addNote(Note("C3"), 1);  // Stave 1
+    measure.addNote(Note("C5"), 0);  // Stave 0
+    measure.addNote(Note("C3"), 1);  // Stave 1
 
-  EXPECT_EQ(measure.getNumNotes(0), 1);
-  EXPECT_EQ(measure.getNumNotes(1), 1);
+    EXPECT_EQ(measure.getNumNotes(0), 1);
+    EXPECT_EQ(measure.getNumNotes(1), 1);
 }
 
 TEST(MeasureNoteAddition, AddNoteByPitchString) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote("C4", 0);
-  measure.addNote("E4", 0);
+    measure.addNote("C4", 0);
+    measure.addNote("E4", 0);
 
-  EXPECT_EQ(measure.getNumNotes(), 2);
-  EXPECT_EQ(measure.getNote(0, 0).getPitch(), "C4");
-  EXPECT_EQ(measure.getNote(1, 0).getPitch(), "E4");
+    EXPECT_EQ(measure.getNumNotes(), 2);
+    EXPECT_EQ(measure.getNote(0, 0).getPitch(), "C4");
+    EXPECT_EQ(measure.getNote(1, 0).getPitch(), "E4");
 }
 
 TEST(MeasureNoteAddition, AddMultipleNotesByVector) {
-  Measure measure;
+    Measure measure;
 
-  std::vector<Note> notes;
-  notes.push_back(Note("C4"));
-  notes.push_back(Note("E4"));
-  notes.push_back(Note("G4"));
+    std::vector<Note> notes;
+    notes.push_back(Note("C4"));
+    notes.push_back(Note("E4"));
+    notes.push_back(Note("G4"));
 
-  measure.addNote(notes, 0);
-  EXPECT_EQ(measure.getNumNotes(), 3);
+    measure.addNote(notes, 0);
+    EXPECT_EQ(measure.getNumNotes(), 3);
 }
 
 TEST(MeasureNoteAddition, AddMultiplePitchStringsByVector) {
-  Measure measure;
+    Measure measure;
 
-  std::vector<std::string> pitches = {"C4", "E4", "G4"};
-  measure.addNote(pitches, 0);
+    std::vector<std::string> pitches = {"C4", "E4", "G4"};
+    measure.addNote(pitches, 0);
 
-  EXPECT_EQ(measure.getNumNotes(), 3);
+    EXPECT_EQ(measure.getNumNotes(), 3);
 }
 
 // ====================
@@ -499,81 +500,81 @@ TEST(MeasureNoteAddition, AddMultiplePitchStringsByVector) {
 // ====================
 
 TEST(MeasureNoteRetrieval, GetNote) {
-  Measure measure;
+    Measure measure;
 
-  Note note("C4");
-  measure.addNote(note, 0);
+    Note note("C4");
+    measure.addNote(note, 0);
 
-  Note& retrieved = measure.getNote(0, 0);
-  EXPECT_EQ(retrieved.getPitch(), "C4");
+    Note& retrieved = measure.getNote(0, 0);
+    EXPECT_EQ(retrieved.getPitch(), "C4");
 }
 
 TEST(MeasureNoteRetrieval, GetNoteConst) {
-  Measure measure;
-  measure.addNote(Note("E4"), 0);
+    Measure measure;
+    measure.addNote(Note("E4"), 0);
 
-  const Measure& constMeasure = measure;
-  const Note& note = constMeasure.getNote(0, 0);
+    const Measure& constMeasure = measure;
+    const Note& note = constMeasure.getNote(0, 0);
 
-  EXPECT_EQ(note.getPitch(), "E4");
+    EXPECT_EQ(note.getPitch(), "E4");
 }
 
 TEST(MeasureNoteRetrieval, GetMultipleNotes) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  measure.addNote(Note("E4"), 0);
-  measure.addNote(Note("G4"), 0);
+    measure.addNote(Note("C4"), 0);
+    measure.addNote(Note("E4"), 0);
+    measure.addNote(Note("G4"), 0);
 
-  EXPECT_EQ(measure.getNote(0, 0).getPitch(), "C4");
-  EXPECT_EQ(measure.getNote(1, 0).getPitch(), "E4");
-  EXPECT_EQ(measure.getNote(2, 0).getPitch(), "G4");
+    EXPECT_EQ(measure.getNote(0, 0).getPitch(), "C4");
+    EXPECT_EQ(measure.getNote(1, 0).getPitch(), "E4");
+    EXPECT_EQ(measure.getNote(2, 0).getPitch(), "G4");
 }
 
 TEST(MeasureNoteRetrieval, GetNotesFromDifferentStaves) {
-  Measure measure(2);
+    Measure measure(2);
 
-  measure.addNote(Note("C5"), 0);
-  measure.addNote(Note("C3"), 1);
+    measure.addNote(Note("C5"), 0);
+    measure.addNote(Note("C3"), 1);
 
-  EXPECT_EQ(measure.getNote(0, 0).getPitch(), "C5");
-  EXPECT_EQ(measure.getNote(0, 1).getPitch(), "C3");
+    EXPECT_EQ(measure.getNote(0, 0).getPitch(), "C5");
+    EXPECT_EQ(measure.getNote(0, 1).getPitch(), "C3");
 }
 
 TEST(MeasureNoteRetrieval, ModifyRetrievedNote) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  Note& note = measure.getNote(0, 0);
-  note.setDuration(512);
+    measure.addNote(Note("C4"), 0);
+    Note& note = measure.getNote(0, 0);
+    note.setDuration(512);
 
-  // Duration was modified, we just verify modification capability
-  EXPECT_GT(measure.getNote(0, 0).getDurationTicks(), 0);
+    // Duration was modified, we just verify modification capability
+    EXPECT_GT(measure.getNote(0, 0).getDurationTicks(), 0);
 }
 
 TEST(MeasureNoteRetrieval, GetNoteOn) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  measure.addNote(Note(-1), 0);  // Rest
-  measure.addNote(Note("E4"), 0);
+    measure.addNote(Note("C4"), 0);
+    measure.addNote(Note(-1), 0);  // Rest
+    measure.addNote(Note("E4"), 0);
 
-  // First note on (index 0 in all notes is also index 0 in notes on)
-  EXPECT_EQ(measure.getNoteOn(0, 0).getPitch(), "C4");
-  // Second note on (index 2 in all notes is index 1 in notes on)
-  EXPECT_EQ(measure.getNoteOn(1, 0).getPitch(), "E4");
+    // First note on (index 0 in all notes is also index 0 in notes on)
+    EXPECT_EQ(measure.getNoteOn(0, 0).getPitch(), "C4");
+    // Second note on (index 2 in all notes is index 1 in notes on)
+    EXPECT_EQ(measure.getNoteOn(1, 0).getPitch(), "E4");
 }
 
 TEST(MeasureNoteRetrieval, GetNoteOff) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  measure.addNote(Note(-1), 0);  // Rest
-  measure.addNote(Note(-1), 0);  // Rest
+    measure.addNote(Note("C4"), 0);
+    measure.addNote(Note(-1), 0);  // Rest
+    measure.addNote(Note(-1), 0);  // Rest
 
-  EXPECT_EQ(measure.getNumNotesOff(), 2);
-  EXPECT_FALSE(measure.getNoteOff(0, 0).isNoteOn());
-  EXPECT_FALSE(measure.getNoteOff(1, 0).isNoteOn());
+    EXPECT_EQ(measure.getNumNotesOff(), 2);
+    EXPECT_FALSE(measure.getNoteOff(0, 0).isNoteOn());
+    EXPECT_FALSE(measure.getNoteOff(1, 0).isNoteOn());
 }
 
 // ====================
@@ -581,48 +582,48 @@ TEST(MeasureNoteRetrieval, GetNoteOff) {
 // ====================
 
 TEST(MeasureNoteRemoval, RemoveSingleNote) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  measure.addNote(Note("E4"), 0);
-  int initialCount = measure.getNumNotes();
+    measure.addNote(Note("C4"), 0);
+    measure.addNote(Note("E4"), 0);
+    int initialCount = measure.getNumNotes();
 
-  measure.removeNote(0, 0);
-  // Note removal should reduce count (implementation-dependent behavior)
-  EXPECT_LE(measure.getNumNotes(), initialCount);
+    measure.removeNote(0, 0);
+    // Note removal should reduce count (implementation-dependent behavior)
+    EXPECT_LE(measure.getNumNotes(), initialCount);
 }
 
 TEST(MeasureNoteRemoval, RemoveAllNotes) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  measure.addNote(Note("E4"), 0);
-  measure.addNote(Note("G4"), 0);
+    measure.addNote(Note("C4"), 0);
+    measure.addNote(Note("E4"), 0);
+    measure.addNote(Note("G4"), 0);
 
-  measure.clear();
-  EXPECT_EQ(measure.getNumNotes(), 0);
+    measure.clear();
+    EXPECT_EQ(measure.getNumNotes(), 0);
 }
 
 TEST(MeasureNoteRemoval, RemoveNotesFromSpecificStave) {
-  Measure measure(2);
+    Measure measure(2);
 
-  measure.addNote(Note("C5"), 0);
-  measure.addNote(Note("C3"), 1);
-  int stave0Before = measure.getNumNotes(0);
-  int stave1Before = measure.getNumNotes(1);
+    measure.addNote(Note("C5"), 0);
+    measure.addNote(Note("C3"), 1);
+    int stave0Before = measure.getNumNotes(0);
+    int stave1Before = measure.getNumNotes(1);
 
-  measure.removeNote(0, 0);
+    measure.removeNote(0, 0);
 
-  // After removing note from stave 0, stave 1 should be unchanged
-  EXPECT_LE(measure.getNumNotes(0), stave0Before);
-  EXPECT_EQ(measure.getNumNotes(1), stave1Before);
+    // After removing note from stave 0, stave 1 should be unchanged
+    EXPECT_LE(measure.getNumNotes(0), stave0Before);
+    EXPECT_EQ(measure.getNumNotes(1), stave1Before);
 }
 
 TEST(MeasureNoteRemoval, ClearEmptyMeasure) {
-  Measure measure;
+    Measure measure;
 
-  measure.clear();  // Should not crash
-  EXPECT_EQ(measure.getNumNotes(), 0);
+    measure.clear();  // Should not crash
+    EXPECT_EQ(measure.getNumNotes(), 0);
 }
 
 // ====================
@@ -630,83 +631,83 @@ TEST(MeasureNoteRemoval, ClearEmptyMeasure) {
 // ====================
 
 TEST(MeasureNoteCounting, GetNumNotesEmpty) {
-  Measure measure;
+    Measure measure;
 
-  EXPECT_EQ(measure.getNumNotes(), 0);
+    EXPECT_EQ(measure.getNumNotes(), 0);
 }
 
 TEST(MeasureNoteCounting, GetNumNotesAfterAdding) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  measure.addNote(Note("E4"), 0);
+    measure.addNote(Note("C4"), 0);
+    measure.addNote(Note("E4"), 0);
 
-  EXPECT_EQ(measure.getNumNotes(), 2);
+    EXPECT_EQ(measure.getNumNotes(), 2);
 }
 
 TEST(MeasureNoteCounting, GetNumNotesSpecificStave) {
-  Measure measure(2);
+    Measure measure(2);
 
-  measure.addNote(Note("C5"), 0);
-  measure.addNote(Note("E5"), 0);
-  measure.addNote(Note("C3"), 1);
+    measure.addNote(Note("C5"), 0);
+    measure.addNote(Note("E5"), 0);
+    measure.addNote(Note("C3"), 1);
 
-  EXPECT_EQ(measure.getNumNotes(0), 2);
-  EXPECT_EQ(measure.getNumNotes(1), 1);
-  EXPECT_EQ(measure.getNumNotes(), 3);
+    EXPECT_EQ(measure.getNumNotes(0), 2);
+    EXPECT_EQ(measure.getNumNotes(1), 1);
+    EXPECT_EQ(measure.getNumNotes(), 3);
 }
 
 TEST(MeasureNoteCounting, GetNumNotesOn) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  measure.addNote(Note("E4"), 0);
-  measure.addNote(Note(-1), 0);  // Rest
+    measure.addNote(Note("C4"), 0);
+    measure.addNote(Note("E4"), 0);
+    measure.addNote(Note(-1), 0);  // Rest
 
-  EXPECT_EQ(measure.getNumNotesOn(), 2);
+    EXPECT_EQ(measure.getNumNotesOn(), 2);
 }
 
 TEST(MeasureNoteCounting, GetNumNotesOff) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  measure.addNote(Note(-1), 0);  // Rest
-  measure.addNote(Note(-1), 0);  // Rest
+    measure.addNote(Note("C4"), 0);
+    measure.addNote(Note(-1), 0);  // Rest
+    measure.addNote(Note(-1), 0);  // Rest
 
-  EXPECT_EQ(measure.getNumNotesOff(), 2);
+    EXPECT_EQ(measure.getNumNotesOff(), 2);
 }
 
 TEST(MeasureNoteCounting, GetNumNotesOnSpecificStave) {
-  Measure measure(2);
+    Measure measure(2);
 
-  measure.addNote(Note("C5"), 0);
-  measure.addNote(Note(-1), 0);  // Rest on stave 0
-  measure.addNote(Note("C3"), 1);
+    measure.addNote(Note("C5"), 0);
+    measure.addNote(Note(-1), 0);  // Rest on stave 0
+    measure.addNote(Note("C3"), 1);
 
-  EXPECT_EQ(measure.getNumNotesOn(0), 1);
-  EXPECT_EQ(measure.getNumNotesOn(1), 1);
+    EXPECT_EQ(measure.getNumNotesOn(0), 1);
+    EXPECT_EQ(measure.getNumNotesOn(1), 1);
 }
 
 TEST(MeasureNoteCounting, GetNumNotesOffSpecificStave) {
-  Measure measure(2);
+    Measure measure(2);
 
-  measure.addNote(Note(-1), 0);  // Rest on stave 0
-  measure.addNote(Note(-1), 0);  // Rest on stave 0
-  measure.addNote(Note("C3"), 1);
+    measure.addNote(Note(-1), 0);  // Rest on stave 0
+    measure.addNote(Note(-1), 0);  // Rest on stave 0
+    measure.addNote(Note("C3"), 1);
 
-  EXPECT_EQ(measure.getNumNotesOff(0), 2);
-  EXPECT_EQ(measure.getNumNotesOff(1), 0);
+    EXPECT_EQ(measure.getNumNotesOff(0), 2);
+    EXPECT_EQ(measure.getNumNotesOff(1), 0);
 }
 
 TEST(MeasureNoteCounting, AllNotesAreRests) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note(-1), 0);
-  measure.addNote(Note(-1), 0);
+    measure.addNote(Note(-1), 0);
+    measure.addNote(Note(-1), 0);
 
-  EXPECT_EQ(measure.getNumNotesOn(), 0);
-  EXPECT_EQ(measure.getNumNotesOff(), 2);
-  EXPECT_EQ(measure.getNumNotes(), 2);
+    EXPECT_EQ(measure.getNumNotesOn(), 0);
+    EXPECT_EQ(measure.getNumNotesOff(), 2);
+    EXPECT_EQ(measure.getNumNotes(), 2);
 }
 
 // ====================
@@ -714,77 +715,77 @@ TEST(MeasureNoteCounting, AllNotesAreRests) {
 // ====================
 
 TEST(MeasureDuration, GetDurationTicksEmpty) {
-  Measure measure;
+    Measure measure;
 
-  // Empty measure duration is based on time signature
-  EXPECT_GT(measure.getDurationTicks(), 0);
+    // Empty measure duration is based on time signature
+    EXPECT_GT(measure.getDurationTicks(), 0);
 }
 
 TEST(MeasureDuration, GetQuarterDuration) {
-  Measure measure;
+    Measure measure;
 
-  measure.setTimeSignature(4, 4);
-  // 4/4 time = 4 quarter notes
-  EXPECT_EQ(measure.getQuarterDuration(), 4.0f);
+    measure.setTimeSignature(4, 4);
+    // 4/4 time = 4 quarter notes
+    EXPECT_EQ(measure.getQuarterDuration(), 4.0f);
 }
 
 TEST(MeasureDuration, GetFilledDurationTicksSingleNote) {
-  Measure measure;
+    Measure measure;
 
-  Note note("C4");
-  note.setDuration(256);
-  measure.addNote(note, 0);
+    Note note("C4");
+    note.setDuration(256);
+    measure.addNote(note, 0);
 
-  EXPECT_GT(measure.getFilledDurationTicks(0), 0);
+    EXPECT_GT(measure.getFilledDurationTicks(0), 0);
 }
 
 TEST(MeasureDuration, GetFreeDurationTicks) {
-  Measure measure;
+    Measure measure;
 
-  measure.setTimeSignature(4, 4);
-  Note note("C4");
-  note.setDuration(256);  // Quarter note
-  measure.addNote(note, 0);
+    measure.setTimeSignature(4, 4);
+    Note note("C4");
+    note.setDuration(256);  // Quarter note
+    measure.addNote(note, 0);
 
-  // Free duration should be less than total duration
-  EXPECT_LT(measure.getFreeDurationTicks(0), measure.getDurationTicks());
+    // Free duration should be less than total duration
+    EXPECT_LT(measure.getFreeDurationTicks(0), measure.getDurationTicks());
 }
 
 TEST(MeasureDuration, GetFilledQuarterDuration) {
-  Measure measure;
+    Measure measure;
 
-  Note note("C4");
-  note.setDuration(256);
-  measure.addNote(note, 0);
+    Note note("C4");
+    note.setDuration(256);
+    measure.addNote(note, 0);
 
-  EXPECT_GT(measure.getFilledQuarterDuration(0), 0.0f);
+    EXPECT_GT(measure.getFilledQuarterDuration(0), 0.0f);
 }
 
 TEST(MeasureDuration, GetFreeQuarterDuration) {
-  Measure measure;
+    Measure measure;
 
-  measure.setTimeSignature(4, 4);
-  Note note("C4");
-  note.setDuration(256);  // Quarter note
-  measure.addNote(note, 0);
+    measure.setTimeSignature(4, 4);
+    Note note("C4");
+    note.setDuration(256);  // Quarter note
+    measure.addNote(note, 0);
 
-  EXPECT_LT(measure.getFreeQuarterDuration(0), measure.getQuarterDuration());
+    EXPECT_LT(measure.getFreeQuarterDuration(0), measure.getQuarterDuration());
 }
 
 TEST(MeasureDuration, ThreeFourTimeSignatureDuration) {
-  Measure measure;
+    Measure measure;
 
-  measure.setTimeSignature(3, 4);
-  // 3/4 time = 3 quarter notes
-  EXPECT_EQ(measure.getQuarterDuration(), 3.0f);
+    measure.setTimeSignature(3, 4);
+    // 3/4 time = 3 quarter notes
+    EXPECT_EQ(measure.getQuarterDuration(), 3.0f);
 }
 
 TEST(MeasureDuration, SixEightTimeSignatureDuration) {
-  Measure measure;
+    Measure measure;
 
-  measure.setTimeSignature(6, 8);
-  // 6/8 time = 3 quarter notes (6 eighth notes = 3 quarters)
-  EXPECT_EQ(measure.getQuarterDuration(), 3.0f);
+    measure.setTimeSignature(6, 8);
+    // 6/8 time = 3 quarter notes (6 eighth notes = 3 quarters)
+    EXPECT_EQ(measure.getQuarterDuration(), 3.0f);
 }
 
 // ====================
@@ -792,67 +793,66 @@ TEST(MeasureDuration, SixEightTimeSignatureDuration) {
 // ====================
 
 TEST(MeasureBarline, GetBarlineRight) {
-  Measure measure;
+    Measure measure;
 
-  const Barline& barline = measure.getBarlineRight();
-  EXPECT_EQ(barline.getLocation(), "right");
+    const Barline& barline = measure.getBarlineRight();
+    EXPECT_EQ(barline.getLocation(), "right");
 }
 
 TEST(MeasureBarline, GetBarlineLeft) {
-  Measure measure;
+    Measure measure;
 
-  const Barline& barline = measure.getBarlineLeft();
-  EXPECT_EQ(barline.getLocation(), "left");
+    const Barline& barline = measure.getBarlineLeft();
+    EXPECT_EQ(barline.getLocation(), "left");
 }
 
 TEST(MeasureBarline, ModifyBarlineRight) {
-  Measure measure;
+    Measure measure;
 
-  Barline& barline = measure.getBarlineRight();
-  barline.setBarStyle("light-heavy");
+    Barline& barline = measure.getBarlineRight();
+    barline.setBarStyle("light-heavy");
 
-  EXPECT_EQ(measure.getBarlineRight().getBarStyle(), "light-heavy");
+    EXPECT_EQ(measure.getBarlineRight().getBarStyle(), "light-heavy");
 }
 
 TEST(MeasureBarline, SetRepeatEnd) {
-  Measure measure;
+    Measure measure;
 
-  measure.setRepeatEnd();
+    measure.setRepeatEnd();
 
-  EXPECT_EQ(measure.getBarlineRight().getDirection(), "backward");
+    EXPECT_EQ(measure.getBarlineRight().getDirection(), "backward");
 }
 
 TEST(MeasureBarline, SetRepeatStart) {
-  Measure measure;
+    Measure measure;
 
-  measure.setRepeatStart();
+    measure.setRepeatStart();
 
-  EXPECT_EQ(measure.getBarlineLeft().getDirection(), "forward");
+    EXPECT_EQ(measure.getBarlineLeft().getDirection(), "forward");
 }
 
 TEST(MeasureBarline, RemoveRepeatEnd) {
-  Measure measure;
+    Measure measure;
 
-  measure.setRepeatEnd();
-  measure.removeRepeatEnd();
+    measure.setRepeatEnd();
+    measure.removeRepeatEnd();
 
-  EXPECT_EQ(measure.getBarlineRight().getDirection(), "");
+    EXPECT_EQ(measure.getBarlineRight().getDirection(), "");
 }
 
 TEST(MeasureBarline, RemoveRepeatStart) {
-  Measure measure;
+    Measure measure;
 
-  measure.setRepeatStart();
-  measure.removeRepeatStart();
+    measure.setRepeatStart();
+    measure.removeRepeatStart();
 
-  EXPECT_EQ(measure.getBarlineLeft().getDirection(), "");
+    EXPECT_EQ(measure.getBarlineLeft().getDirection(), "");
 }
 
 TEST(MeasureBarline, SetEnding) {
-  Measure measure;
+    Measure measure;
 
-  Barline& barline = measure.getBarlineRight();
-
+    Barline& barline = measure.getBarlineRight();
 }
 
 // ====================
@@ -860,47 +860,47 @@ TEST(MeasureBarline, SetEnding) {
 // ====================
 
 TEST(MeasureState, IsEmpty) {
-  Measure measure;
+    Measure measure;
 
-  EXPECT_TRUE(measure.isEmpty());
+    EXPECT_TRUE(measure.isEmpty());
 
-  measure.addNote(Note("C4"), 0);
-  EXPECT_FALSE(measure.isEmpty());
+    measure.addNote(Note("C4"), 0);
+    EXPECT_FALSE(measure.isEmpty());
 }
 
 TEST(MeasureState, IsEmptyAfterClear) {
-  Measure measure;
+    Measure measure;
 
-  measure.addNote(Note("C4"), 0);
-  measure.clear();
+    measure.addNote(Note("C4"), 0);
+    measure.clear();
 
-  EXPECT_TRUE(measure.isEmpty());
+    EXPECT_TRUE(measure.isEmpty());
 }
 
 TEST(MeasureState, ClearPreservesProperties) {
-  Measure measure;
+    Measure measure;
 
-  measure.setNumber(5);
-  measure.setTimeSignature(3, 4);
-  measure.setMetronome(120);
+    measure.setNumber(5);
+    measure.setTimeSignature(3, 4);
+    measure.setMetronome(120);
 
-  measure.addNote(Note("C4"), 0);
-  measure.clear();
+    measure.addNote(Note("C4"), 0);
+    measure.clear();
 
-  // Some properties should be preserved after clear
-  EXPECT_EQ(measure.getNumber(), 5);
-  EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 3);
-  // Note: metronome may or may not be preserved depending on implementation
+    // Some properties should be preserved after clear
+    EXPECT_EQ(measure.getNumber(), 5);
+    EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 3);
+    // Note: metronome may or may not be preserved depending on implementation
 }
 
 TEST(MeasureState, InfoMethod) {
-  Measure measure;
+    Measure measure;
 
-  measure.setNumber(1);
-  measure.addNote(Note("C4"), 0);
+    measure.setNumber(1);
+    measure.addNote(Note("C4"), 0);
 
-  // Should not crash
-  measure.info();
+    // Should not crash
+    measure.info();
 }
 
 // ====================
@@ -908,43 +908,43 @@ TEST(MeasureState, InfoMethod) {
 // ====================
 
 TEST(MeasureSerialization, ToXML) {
-  Measure measure;
+    Measure measure;
 
-  measure.setNumber(1);
-  measure.addNote(Note("C4"), 0);
+    measure.setNumber(1);
+    measure.addNote(Note("C4"), 0);
 
-  std::string xml = measure.toXML(1, 2);
+    std::string xml = measure.toXML(1, 2);
 
-  // Just verify XML was generated
-  EXPECT_GT(xml.length(), 0);
+    // Just verify XML was generated
+    EXPECT_GT(xml.length(), 0);
 }
 
 TEST(MeasureSerialization, ToXMLEmpty) {
-  Measure measure;
+    Measure measure;
 
-  measure.setNumber(1);
+    measure.setNumber(1);
 
-  std::string xml = measure.toXML(1, 2);
+    std::string xml = measure.toXML(1, 2);
 
-  // Just verify XML was generated for empty measure
-  EXPECT_GT(xml.length(), 0);
+    // Just verify XML was generated for empty measure
+    EXPECT_GT(xml.length(), 0);
 }
 
 TEST(MeasureSerialization, ToXMLWithComplexContent) {
-  Measure measure;
+    Measure measure;
 
-  measure.setNumber(1);
-  measure.setTimeSignature(3, 4);
-  measure.setKeySignature(1, true);
-  measure.setMetronome(120);
-  measure.addNote(Note("C4"), 0);
-  std::vector<std::string> chordNotes = {"E4", "G4"};
-  measure.addNote(chordNotes, 0);
+    measure.setNumber(1);
+    measure.setTimeSignature(3, 4);
+    measure.setKeySignature(1, true);
+    measure.setMetronome(120);
+    measure.addNote(Note("C4"), 0);
+    std::vector<std::string> chordNotes = {"E4", "G4"};
+    measure.addNote(chordNotes, 0);
 
-  std::string xml = measure.toXML(1, 2);
+    std::string xml = measure.toXML(1, 2);
 
-  // Just verify XML was generated with complex content
-  EXPECT_GT(xml.length(), 0);
+    // Just verify XML was generated with complex content
+    EXPECT_GT(xml.length(), 0);
 }
 
 // ====================
@@ -952,101 +952,101 @@ TEST(MeasureSerialization, ToXMLWithComplexContent) {
 // ====================
 
 TEST(MeasureComplex, FullMeasureWith4QuarterNotes) {
-  Measure measure;
+    Measure measure;
 
-  measure.setNumber(1);
-  measure.setTimeSignature(4, 4);
+    measure.setNumber(1);
+    measure.setTimeSignature(4, 4);
 
-  for (int i = 0; i < 4; i++) {
-    Note note("C4");
-    note.setDuration(256);  // Quarter note
-    measure.addNote(note, 0);
-  }
+    for (int i = 0; i < 4; i++) {
+        Note note("C4");
+        note.setDuration(256);  // Quarter note
+        measure.addNote(note, 0);
+    }
 
-  EXPECT_EQ(measure.getNumNotes(), 4);
+    EXPECT_EQ(measure.getNumNotes(), 4);
 }
 
 TEST(MeasureComplex, PianoGrandStaffMeasure) {
-  Measure measure(2);
+    Measure measure(2);
 
-  measure.setNumber(1);
+    measure.setNumber(1);
 
-  // Treble clef (right hand)
-  Clef& trebleClef = measure.getClef(0);
-  trebleClef.setSign(ClefSign::G);
-  trebleClef.setLine(2);
-  measure.addNote(Note("C5"), 0);
-  measure.addNote(Note("E5"), 0);
+    // Treble clef (right hand)
+    Clef& trebleClef = measure.getClef(0);
+    trebleClef.setSign(ClefSign::G);
+    trebleClef.setLine(2);
+    measure.addNote(Note("C5"), 0);
+    measure.addNote(Note("E5"), 0);
 
-  // Bass clef (left hand)
-  Clef& bassClef = measure.getClef(1);
-  bassClef.setSign(ClefSign::F);
-  bassClef.setLine(4);
-  measure.addNote(Note("C3"), 1);
-  measure.addNote(Note("G3"), 1);
+    // Bass clef (left hand)
+    Clef& bassClef = measure.getClef(1);
+    bassClef.setSign(ClefSign::F);
+    bassClef.setLine(4);
+    measure.addNote(Note("C3"), 1);
+    measure.addNote(Note("G3"), 1);
 
-  EXPECT_EQ(measure.getNumStaves(), 2);
-  EXPECT_EQ(measure.getNumNotes(), 4);
-  EXPECT_EQ(measure.getNumNotes(0), 2);
-  EXPECT_EQ(measure.getNumNotes(1), 2);
+    EXPECT_EQ(measure.getNumStaves(), 2);
+    EXPECT_EQ(measure.getNumNotes(), 4);
+    EXPECT_EQ(measure.getNumNotes(0), 2);
+    EXPECT_EQ(measure.getNumNotes(1), 2);
 }
 
 TEST(MeasureComplex, MeasureWithRepeats) {
-  Measure measure;
+    Measure measure;
 
-  measure.setNumber(1);
-  measure.addNote(Note("C4"), 0);
+    measure.setNumber(1);
+    measure.addNote(Note("C4"), 0);
 
-  measure.setRepeatEnd();
+    measure.setRepeatEnd();
 
-  EXPECT_EQ(measure.getBarlineRight().getDirection(), "backward");
-  EXPECT_EQ(measure.getNumNotes(), 1);
+    EXPECT_EQ(measure.getBarlineRight().getDirection(), "backward");
+    EXPECT_EQ(measure.getNumNotes(), 1);
 }
 
 TEST(MeasureComplex, ThreeFourTimeSignature) {
-  Measure measure;
+    Measure measure;
 
-  measure.setTimeSignature(3, 4);
+    measure.setTimeSignature(3, 4);
 
-  Note note1("C4");
-  note1.setDuration(256);
-  measure.addNote(note1, 0);
+    Note note1("C4");
+    note1.setDuration(256);
+    measure.addNote(note1, 0);
 
-  Note note2("D4");
-  note2.setDuration(256);
-  measure.addNote(note2, 0);
+    Note note2("D4");
+    note2.setDuration(256);
+    measure.addNote(note2, 0);
 
-  Note note3("E4");
-  note3.setDuration(256);
-  measure.addNote(note3, 0);
+    Note note3("E4");
+    note3.setDuration(256);
+    measure.addNote(note3, 0);
 
-  EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 3);
-  EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 4);
-  EXPECT_EQ(measure.getNumNotes(), 3);
+    EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 3);
+    EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 4);
+    EXPECT_EQ(measure.getNumNotes(), 3);
 }
 
 TEST(MeasureComplex, MeasureWithAllProperties) {
-  Measure measure;
+    Measure measure;
 
-  measure.setNumber(42);
-  measure.setTimeSignature(6, 8);
-  measure.setKeySignature(2, true);
-  measure.setMetronome(120);
+    measure.setNumber(42);
+    measure.setTimeSignature(6, 8);
+    measure.setKeySignature(2, true);
+    measure.setMetronome(120);
 
-  Note note("D4");
-  note.setDuration(256);
-  measure.addNote(note, 0);
+    Note note("D4");
+    note.setDuration(256);
+    measure.addNote(note, 0);
 
-  Barline& barline = measure.getBarlineRight();
-  barline.setBarStyle("light-heavy");
+    Barline& barline = measure.getBarlineRight();
+    barline.setBarStyle("light-heavy");
 
-  EXPECT_EQ(measure.getNumber(), 42);
-  EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 6);
-  EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 8);
-  EXPECT_EQ(measure.getFifthCircle(), 2);
-  EXPECT_EQ(measure.getMetronome().second, 120);
-  EXPECT_EQ(measure.getNumNotes(), 1);
-  EXPECT_EQ(measure.getBarlineRight().getBarStyle(), "light-heavy");
+    EXPECT_EQ(measure.getNumber(), 42);
+    EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 6);
+    EXPECT_EQ(measure.getTimeSignature().getLowerValue(), 8);
+    EXPECT_EQ(measure.getFifthCircle(), 2);
+    EXPECT_EQ(measure.getMetronome().second, 120);
+    EXPECT_EQ(measure.getNumNotes(), 1);
+    EXPECT_EQ(measure.getBarlineRight().getBarStyle(), "light-heavy");
 }
 
 // ====================
@@ -1054,32 +1054,32 @@ TEST(MeasureComplex, MeasureWithAllProperties) {
 // ====================
 
 TEST(MeasureEdgeCases, VeryLargeNumber) {
-  Measure measure;
+    Measure measure;
 
-  measure.setNumber(9999);
-  EXPECT_EQ(measure.getNumber(), 9999);
+    measure.setNumber(9999);
+    EXPECT_EQ(measure.getNumber(), 9999);
 }
 
 TEST(MeasureEdgeCases, ManyStaves) {
-  Measure measure(16);
+    Measure measure(16);
 
-  EXPECT_EQ(measure.getNumStaves(), 16);
+    EXPECT_EQ(measure.getNumStaves(), 16);
 
-  for (int i = 0; i < 16; i++) {
-    measure.addNote(Note("C4"), i);
-  }
+    for (int i = 0; i < 16; i++) {
+        measure.addNote(Note("C4"), i);
+    }
 
-  EXPECT_EQ(measure.getNumNotes(), 16);
+    EXPECT_EQ(measure.getNumNotes(), 16);
 }
 
 TEST(MeasureEdgeCases, VeryShortDurations) {
-  Measure measure;
+    Measure measure;
 
-  Note note("C4");
-  note.setDuration(1);  // Extremely short duration
-  measure.addNote(note, 0);
+    Note note("C4");
+    note.setDuration(1);  // Extremely short duration
+    measure.addNote(note, 0);
 
-  EXPECT_GT(measure.getFilledDurationTicks(0), 0);
+    EXPECT_GT(measure.getFilledDurationTicks(0), 0);
 }
 
 // ====================
@@ -1087,47 +1087,48 @@ TEST(MeasureEdgeCases, VeryShortDurations) {
 // ====================
 
 TEST(MeasureIntegration, CopyMeasureContents) {
-  Measure measure1;
+    Measure measure1;
 
-  measure1.setNumber(1);
-  measure1.setTimeSignature(4, 4);
-  measure1.addNote(Note("C4"), 0);
-  measure1.addNote(Note("E4"), 0);
+    measure1.setNumber(1);
+    measure1.setTimeSignature(4, 4);
+    measure1.addNote(Note("C4"), 0);
+    measure1.addNote(Note("E4"), 0);
 
-  Measure measure2;
-  measure2.setNumber(2);
-  measure2.setTimeSignature(measure1.getTimeSignature().getUpperValue(),
-                            measure1.getTimeSignature().getLowerValue());
+    Measure measure2;
+    measure2.setNumber(2);
+    measure2.setTimeSignature(measure1.getTimeSignature().getUpperValue(),
+                              measure1.getTimeSignature().getLowerValue());
 
-  // Copy notes (simplified - in reality you'd iterate properly)
-  measure2.addNote(Note("C4"), 0);
-  measure2.addNote(Note("E4"), 0);
+    // Copy notes (simplified - in reality you'd iterate properly)
+    measure2.addNote(Note("C4"), 0);
+    measure2.addNote(Note("E4"), 0);
 
-  EXPECT_EQ(measure2.getNumNotes(), measure1.getNumNotes());
-  EXPECT_EQ(measure2.getTimeSignature().getUpperValue(), measure1.getTimeSignature().getUpperValue());
+    EXPECT_EQ(measure2.getNumNotes(), measure1.getNumNotes());
+    EXPECT_EQ(measure2.getTimeSignature().getUpperValue(),
+              measure1.getTimeSignature().getUpperValue());
 }
 
 TEST(MeasureIntegration, MeasureInContext) {
-  // This simulates how Measure is typically used within a Part
-  Measure measure;
+    // This simulates how Measure is typically used within a Part
+    Measure measure;
 
-  measure.setNumber(1);
-  measure.setTimeSignature(4, 4);
-  measure.setKeySignature(0, true);
-  measure.setMetronome(120);
+    measure.setNumber(1);
+    measure.setTimeSignature(4, 4);
+    measure.setKeySignature(0, true);
+    measure.setMetronome(120);
 
-  Clef& trebleClef = measure.getClef(0);
-  trebleClef.setSign(ClefSign::G);
-  trebleClef.setLine(2);
+    Clef& trebleClef = measure.getClef(0);
+    trebleClef.setSign(ClefSign::G);
+    trebleClef.setLine(2);
 
-  // Add a simple C major scale
-  std::vector<std::string> scale = {"C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"};
-  for (size_t i = 0; i < scale.size(); i++) {
-    Note note(scale[i]);
-    note.setDuration(128);  // Eighth note
-    measure.addNote(note, 0);
-  }
+    // Add a simple C major scale
+    std::vector<std::string> scale = {"C4", "D4", "E4", "F4", "G4", "A4", "B4", "C5"};
+    for (size_t i = 0; i < scale.size(); i++) {
+        Note note(scale[i]);
+        note.setDuration(128);  // Eighth note
+        measure.addNote(note, 0);
+    }
 
-  EXPECT_EQ(measure.getNumNotes(), 8);
-  EXPECT_EQ(measure.getClef(0).getSign(), ClefSign::G);
+    EXPECT_EQ(measure.getNumNotes(), 8);
+    EXPECT_EQ(measure.getClef(0).getSign(), ClefSign::G);
 }

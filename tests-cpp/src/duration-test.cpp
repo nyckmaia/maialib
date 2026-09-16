@@ -1,7 +1,8 @@
+#include "maiacore/duration.h"
+
 #include <gtest/gtest.h>
 
 #include "maiacore/constants.h"
-#include "maiacore/duration.h"
 
 // ============================================================================
 // Constructor Tests
@@ -478,14 +479,14 @@ TEST(DurationComplexRhythm, MixedDurations) {
 
 TEST(DurationComplexRhythm, AllBasicDurations) {
     std::vector<float> durations = {
-        8.0f,   // Breve
-        4.0f,   // Whole
-        2.0f,   // Half
-        1.0f,   // Quarter
-        0.5f,   // Eighth
-        0.25f,  // 16th
-        0.125f, // 32nd
-        0.0625f // 64th
+        8.0f,    // Breve
+        4.0f,    // Whole
+        2.0f,    // Half
+        1.0f,    // Quarter
+        0.5f,    // Eighth
+        0.25f,   // 16th
+        0.125f,  // 32nd
+        0.0625f  // 64th
     };
 
     for (float dur_val : durations) {
@@ -591,18 +592,13 @@ TEST(DurationIntegration, FractionConsistency) {
     std::string frac_str = dur.getFractionDurationAsString();
 
     EXPECT_EQ(frac.toString(), frac_str);
-    EXPECT_EQ(frac_str, "3/2");  // 3/2 quarter notes
+    EXPECT_EQ(frac_str, "3/2");                   // 3/2 quarter notes
     EXPECT_FLOAT_EQ(frac.getFloatValue(), 1.5f);  // 1.5 quarter notes
 }
 
 TEST(DurationIntegration, TicksAndQuarterConsistency) {
     std::vector<std::pair<float, int>> test_cases = {
-        {1.0f, 256},
-        {2.0f, 512},
-        {0.5f, 128},
-        {4.0f, 1024},
-        {0.25f, 64}
-    };
+        {1.0f, 256}, {2.0f, 512}, {0.5f, 128}, {4.0f, 1024}, {0.25f, 64}};
 
     for (const auto& test : test_cases) {
         Duration dur(test.first, 256);

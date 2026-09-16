@@ -7,22 +7,24 @@
 #include <utility>  // std::pair
 
 #include "maiacore/constants.h"
+#include "maiacore/duration.h"
 #include "maiacore/helper.h"
 #include "maiacore/interval.h"
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
-#include "maiacore/duration.h"
 
 Chord::Chord() : _isStackedInThirds(false) {}
 
-Chord::Chord(const std::vector<Note>& notes, const RhythmFigure rhythmFigure) : _isStackedInThirds(false) {
+Chord::Chord(const std::vector<Note>& notes, const RhythmFigure rhythmFigure)
+    : _isStackedInThirds(false) {
     for (const auto& n : notes) {
         const Note& note = Note(n.getPitch(), rhythmFigure);
         addNote(note);
     }
 }
 
-Chord::Chord(const std::vector<std::string>& pitches, const RhythmFigure rhythmFigure) : _isStackedInThirds(false) {
+Chord::Chord(const std::vector<std::string>& pitches, const RhythmFigure rhythmFigure)
+    : _isStackedInThirds(false) {
     for (const auto& p : pitches) {
         const Note& note = Note(p, rhythmFigure);
         addNote(note);
@@ -1134,7 +1136,6 @@ bool Chord::isDyad() {
     return (stackSize() == 2) ? true : false;
 }
 
-
 bool Chord::isSus() {
     if (!_isStackedInThirds) {
         stackInThirds();
@@ -1144,7 +1145,7 @@ bool Chord::isSus() {
         return false;
     }
 
-    // ===== EXEMPLE ===== // 
+    // ===== EXEMPLE ===== //
     // stackChord = [C4, Ebb4, G4]
     // Can be interpreted as => [G4, C5, D5] = Gsus4
     const Note root(_closeStack[2].getMidiNumber());
@@ -1189,7 +1190,10 @@ bool Chord::isDiminishedChord() {
         stackInThirds();
     }
 
-    return (stackSize() >= 3 && haveMinorThird() && haveDiminishedFifth() && !haveMinorSeventh() && !haveDiminishedSeventh()) ? true : false;
+    return (stackSize() >= 3 && haveMinorThird() && haveDiminishedFifth() && !haveMinorSeventh() &&
+            !haveDiminishedSeventh())
+               ? true
+               : false;
 }
 
 bool Chord::isHalfDiminishedChord() {
@@ -1265,7 +1269,7 @@ bool Chord::isTonal(std::function<bool(const Chord& chord)> model) {
     }
 
     // Special Case
-    if (isSus()) { 
+    if (isSus()) {
         return true;
     }
 
@@ -2523,7 +2527,8 @@ std::pair<std::vector<float>, std::vector<float>> Chord::getHarmonicSpectrum(
     std::map<float, float> freqAmplMap;
 
     for (const auto& note : _originalNotes) {
-        const auto freqsAmplsPair = note.getHarmonicSpectrum(numPartialsPerNote, amplCallback, partialsDecayExpRate);
+        const auto freqsAmplsPair =
+            note.getHarmonicSpectrum(numPartialsPerNote, amplCallback, partialsDecayExpRate);
 
         for (size_t i = 0; i < freqsAmplsPair.first.size(); ++i) {
             auto freq = freqsAmplsPair.first[i];
@@ -2560,7 +2565,8 @@ SetharesDissonanceTable Chord::getSetharesDyadsDissonanceValue(
     of the two amplitudes, since this matches the beat frequency amplitude.
     */
 
-    const auto& freqAmplPair = getHarmonicSpectrum(numPartialsPerNote, amplCallback, partialsDecayExpRate);
+    const auto& freqAmplPair =
+        getHarmonicSpectrum(numPartialsPerNote, amplCallback, partialsDecayExpRate);
 
     const std::vector<float>& fvec = freqAmplPair.first;
     const std::vector<float>& amp = freqAmplPair.second;
@@ -2638,8 +2644,8 @@ float Chord::getSetharesDissonance(
     const std::function<std::vector<float>(std::vector<float>)> amplCallback,
     const float partialsDecayExpRate,
     const std::function<float(std::vector<float>)> dissCallback) const {
-    const SetharesDissonanceTable table =
-        getSetharesDyadsDissonanceValue(numPartialsPerNote, useMinModel, amplCallback, partialsDecayExpRate);
+    const SetharesDissonanceTable table = getSetharesDyadsDissonanceValue(
+        numPartialsPerNote, useMinModel, amplCallback, partialsDecayExpRate);
 
     const int tableSize = table.size();
     const int dissColIdx = 12;

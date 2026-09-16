@@ -19,8 +19,8 @@ std::string spellMidiNumber(const int midiNumber, const int alter) {
 
     const int base = midiNumber - alter;
     const int pitchClassIdx = ((base % 12) + 12) % 12;
-    const auto stepIt = std::find(c_diatonicStepSemitones.begin(), c_diatonicStepSemitones.end(),
-                                  pitchClassIdx);
+    const auto stepIt =
+        std::find(c_diatonicStepSemitones.begin(), c_diatonicStepSemitones.end(), pitchClassIdx);
     if (stepIt == c_diatonicStepSemitones.end()) {
         return {};
     }
@@ -458,10 +458,8 @@ float Note::getFrequency(const float freqA4) const {
 }
 
 std::pair<std::vector<float>, std::vector<float>> Note::getHarmonicSpectrum(
-    const int numPartials,
-    const std::function<std::vector<float>(std::vector<float>)> amplCallback,
-    const float partialsDecayExpRate,
-    const float freqA4) const {
+    const int numPartials, const std::function<std::vector<float>(std::vector<float>)> amplCallback,
+    const float partialsDecayExpRate, const float freqA4) const {
     if (numPartials <= 0) {
         LOG_ERROR("The 'numPartials' must be a positive value");
     }
@@ -897,10 +895,9 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
 
 int Note::getMidiNumber() const { return _midiNumber; }
 
-
 bool Note::operator<(const Note& otherNote) const {
-        return (_midiNumber < otherNote.getMidiNumber());
-    }
+    return (_midiNumber < otherNote.getMidiNumber());
+}
 
 bool Note::operator>(const Note& otherNote) const {
     return (_midiNumber > otherNote.getMidiNumber());

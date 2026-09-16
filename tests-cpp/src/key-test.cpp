@@ -1,6 +1,6 @@
-#include <gtest/gtest.h>
-
 #include "maiacore/key.h"
+
+#include <gtest/gtest.h>
 
 // ============================================================================
 // Constructor Tests
@@ -343,10 +343,8 @@ TEST(KeyRelative, FSharpMajorRelativeIsDSharpMinor) {
 
 TEST(KeyRelative, AllMajorKeysHaveRelativeMinor) {
     std::vector<std::pair<std::string, std::string>> major_minor_pairs = {
-        {"C", "Am"},    {"G", "Em"},    {"D", "Bm"},   {"A", "F#m"},
-        {"E", "C#m"},   {"B", "G#m"},   {"F#", "D#m"}, {"F", "Dm"},
-        {"Bb", "Gm"},   {"Eb", "Cm"},   {"Ab", "Fm"},  {"Db", "Bbm"}
-    };
+        {"C", "Am"},   {"G", "Em"}, {"D", "Bm"},  {"A", "F#m"}, {"E", "C#m"}, {"B", "G#m"},
+        {"F#", "D#m"}, {"F", "Dm"}, {"Bb", "Gm"}, {"Eb", "Cm"}, {"Ab", "Fm"}, {"Db", "Bbm"}};
 
     for (const auto& pair : major_minor_pairs) {
         Key major_key(pair.first);
@@ -356,10 +354,8 @@ TEST(KeyRelative, AllMajorKeysHaveRelativeMinor) {
 
 TEST(KeyRelative, AllMinorKeysHaveRelativeMajor) {
     std::vector<std::pair<std::string, std::string>> minor_major_pairs = {
-        {"Am", "C"},    {"Em", "G"},    {"Bm", "D"},   {"F#m", "A"},
-        {"C#m", "E"},   {"G#m", "B"},   {"D#m", "F#"}, {"Dm", "F"},
-        {"Gm", "Bb"},   {"Cm", "Eb"},   {"Fm", "Ab"},  {"Bbm", "Db"}
-    };
+        {"Am", "C"},   {"Em", "G"}, {"Bm", "D"},  {"F#m", "A"}, {"C#m", "E"}, {"G#m", "B"},
+        {"D#m", "F#"}, {"Dm", "F"}, {"Gm", "Bb"}, {"Cm", "Eb"}, {"Fm", "Ab"}, {"Bbm", "Db"}};
 
     for (const auto& pair : minor_major_pairs) {
         Key minor_key(pair.first);
@@ -372,10 +368,8 @@ TEST(KeyRelative, AllMinorKeysHaveRelativeMajor) {
 // ============================================================================
 
 TEST(KeyNameParsing, AllMajorKeysParsedCorrectly) {
-    std::vector<std::string> major_keys = {
-        "C", "G", "D", "A", "E", "B", "F#", "C#",
-        "F", "Bb", "Eb", "Ab", "Db", "Gb"
-    };
+    std::vector<std::string> major_keys = {"C",  "G", "D",  "A",  "E",  "B",  "F#",
+                                           "C#", "F", "Bb", "Eb", "Ab", "Db", "Gb"};
 
     for (const auto& key_name : major_keys) {
         Key key(key_name);
@@ -385,10 +379,8 @@ TEST(KeyNameParsing, AllMajorKeysParsedCorrectly) {
 }
 
 TEST(KeyNameParsing, AllMinorKeysParsedCorrectly) {
-    std::vector<std::string> minor_keys = {
-        "Am", "Em", "Bm", "F#m", "C#m", "G#m", "D#m",
-        "Dm", "Gm", "Cm", "Fm", "Bbm"
-    };
+    std::vector<std::string> minor_keys = {"Am",  "Em", "Bm", "F#m", "C#m", "G#m",
+                                           "D#m", "Dm", "Gm", "Cm",  "Fm",  "Bbm"};
 
     for (const auto& key_name : minor_keys) {
         Key key(key_name);
@@ -424,8 +416,8 @@ TEST(KeyEdgeCases, SwitchBetweenMajorAndMinor) {
 }
 
 TEST(KeyEdgeCases, EnharmonicEquivalentFSharpGFlat) {
-    Key f_sharp(6, true);   // F# major (6 sharps)
-    Key g_flat(-6, true);   // Gb major (6 flats)
+    Key f_sharp(6, true);  // F# major (6 sharps)
+    Key g_flat(-6, true);  // Gb major (6 flats)
 
     EXPECT_EQ(f_sharp.getName(), "F#");
     EXPECT_EQ(g_flat.getName(), "Gb");
@@ -507,9 +499,8 @@ TEST(KeyIntegration, AllCircleOfFifthsMinor) {
 
 TEST(KeyIntegration, FifthCircleConsistency) {
     std::vector<std::pair<int, std::string>> fifth_to_major = {
-        {-6, "Gb"}, {-5, "Db"}, {-4, "Ab"}, {-3, "Eb"}, {-2, "Bb"}, {-1, "F"},
-        {0, "C"},   {1, "G"},   {2, "D"},   {3, "A"},   {4, "E"},   {5, "B"}, {6, "F#"}
-    };
+        {-6, "Gb"}, {-5, "Db"}, {-4, "Ab"}, {-3, "Eb"}, {-2, "Bb"}, {-1, "F"}, {0, "C"},
+        {1, "G"},   {2, "D"},   {3, "A"},   {4, "E"},   {5, "B"},   {6, "F#"}};
 
     for (const auto& pair : fifth_to_major) {
         Key key(pair.first, true);

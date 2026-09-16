@@ -210,7 +210,7 @@ std::vector<Interval> Helper::notes2Intervals(const std::vector<Note>& notes,
 }
 
 std::vector<Interval> Helper::notes2Intervals(const std::vector<std::string>& pitches,
-    const bool firstNoteAsReference) {
+                                              const bool firstNoteAsReference) {
     const int notesSize = pitches.size();
     std::vector<Note> notes;
     notes.reserve(notesSize);
@@ -1385,8 +1385,8 @@ void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::
 
     // ===== STEP ===== //
     const std::string step = pitch.substr(0, 1);
-    const bool isValidStep = std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(),
-                                       step) != c_C_diatonicScale.end();
+    const bool isValidStep = std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), step) !=
+                             c_C_diatonicScale.end();
     if (!isValidStep) {
         LOG_ERROR("Unknown diatonic pitch: " + step);
     }
