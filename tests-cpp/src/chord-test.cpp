@@ -296,7 +296,8 @@ TEST(isInRootPosition, clearInvalidatesCacheReflectedByNextMutation) {
     Chord myChord({"C4", "E4", "G4"});
     myChord.getName();  // populate the stack cache for the 3-note chord
     myChord.clear();
-    EXPECT_EQ(myChord.getName(), "");  // pins clear()'s own invalidation, before any other mutator runs
+    EXPECT_EQ(myChord.getName(),
+              "");  // pins clear()'s own invalidation, before any other mutator runs
     EXPECT_FALSE(myChord.isInRootPosition());  // empty chord; guard kept as defense in depth
 
     // Secondary check: confirms the chord behaves correctly after further mutation. Since
@@ -420,7 +421,7 @@ TEST(chordMutation, shrinkingAfterStackingDoesNotReadStaleHeap) {
     // (now smaller) vector -- degrading into "THREW: string too long" (std::length_error from
     // garbage) instead of a correct, deterministic answer.
     Chord myChord({"C4", "E4", "G4", "B4", "D5"});  // C major ninth
-    myChord.getName();  // populate the stack cache at size 5
+    myChord.getName();                              // populate the stack cache at size 5
 
     myChord.removeNote(4);  // remove D5
     myChord.removeNote(3);  // remove B4
