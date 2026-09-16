@@ -522,15 +522,39 @@ TEST(ScoreNoteCount, GetNumNotesFromLoadedXML) {
 // Instrument Fragmentation Tests
 // ====================
 
-TEST(InstrumentFragmentation, ThrowsControlledErrorWhenSectionHasNoNotes) {
-    // A Score built programmatically (not loaded from an XML file) has an empty pugixml
-    // document, so the XPath query 'instrumentFragmentation' uses to collect notes returns
-    // zero results ('maxNotes == 0'). Before the out-of-bounds guard, 'get_sign[maxNotes - 1]'
-    // read past the start of an empty vector. After the guard, the function proceeds safely
-    // and fails deterministically on the later (pre-existing) "beatNumber is empty" check
-    // instead of corrupting memory.
-    Score score({"Piano"}, 1);
-    EXPECT_THROW(score.instrumentFragmentation(), std::runtime_error);
+TEST(InstrumentFragmentation, SucceedsWhenSectionHasNoNotesButAttributesArePresent) {
+    // Regression test for the OOB guard at score.cpp ('maxNotes > 0 && get_sign[maxNotes - 1]').
+    // 'maxNotes' -- the number of notes the section's XPath query matches -- can legitimately be
+    // 0, and 'get_sign'/'activations_vec' are then empty vectors.
+    //
+    // A prior version of this test used a purely programmatic Score (no XML loaded). That also
+    // has 'maxNotes == 0', but its pugixml document is entirely empty, so the function throws
+    // moments later on the unrelated, pre-existing "beatNumber is empty" check regardless of
+    // whether the guard is present -- giving the test no regression value: it would pass against
+    // the unfixed code too, since 'get_sign[maxNotes - 1]' with 'maxNotes == 0' is undefined
+    // behavior (not a guaranteed trap), and control can appear to "fall through" to that same
+    // later throw either way.
+    //
+    // 'zero_notes_measure.xml' is hand-authored to separate the two cases: a single measure
+    // with a complete <attributes> block (divisions/time/clef) but zero <note> children. maiacore
+    // itself would never write such a measure -- Measure::toXML() always emits a whole-measure
+    // rest <note> for an empty measure -- so this had to be crafted by hand to reach
+    // 'maxNotes == 0' while still letting 'beatNumber'/'divisions'/'beatType' (which read
+    // part[1]/measure[1] unconditionally) resolve successfully. That lets execution run all the
+    // way to a normal return, so this test actually distinguishes guarded from unguarded code:
+    // fixed code returns cleanly; unguarded code reads 'get_sign[-1]' -- index -1 into a
+    // default-constructed, zero-size std::vector<int>, whose data() is null on every standard
+    // library this project targets, i.e. a near-guaranteed segfault, not a maybe -- right here.
+    Score score("./test/xml_examples/unit_test/zero_notes_measure.xml");
+    ASSERT_TRUE(score.isValid());
+    ASSERT_EQ(score.getNumNotes(), 0);
+
+    nlohmann::json result;
+    EXPECT_NO_THROW(result = score.instrumentFragmentation());
+
+    ASSERT_TRUE(result.contains("element"));
+    ASSERT_EQ(result["element"].size(), 1);
+    EXPECT_EQ(result["element"][0]["Number of Activations"], 0);
 }
 
 // ====================
