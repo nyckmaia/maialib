@@ -75,22 +75,6 @@ class Helper {
     static int noteType2ticks(std::string noteType, const int divisionsPerQuarterNote = 256);
 
     /**
-     * @brief Converts a pitch string (e.g., "C4") to a floating-point number representation.
-     * @param pitch Pitch string.
-     * @return Numeric representation of the pitch.
-     */
-    static float pitch2number(const std::string& pitch);
-
-    /**
-     * @brief Converts a floating-point pitch number to a pitch string, with optional accidental type.
-     * @param number Numeric pitch representation.
-     * @param accType Accidental type (e.g., "#", "b").
-     * @return Pitch string.
-     */
-    static const std::string number2pitch(const float number,
-                                          const std::string& accType = MUSIC_XML::ACCIDENT::SHARP);
-
-    /**
      * @brief Converts a frequency in Hz to the closest MIDI note and cents deviation.
      * @param freq Frequency in Hz.
      * @param modelo Optional custom mapping function.
@@ -276,9 +260,12 @@ class Helper {
 
     /**
      * @brief Checks if two pitch strings are enharmonically equivalent.
+     * @details Compares the MIDI note numbers of both pitches, so "E#4" and "F4", or "B#3" and
+     *          "C4", are enharmonic. Two rests are considered enharmonic.
      * @param pitch_A First pitch string.
      * @param pitch_B Second pitch string.
-     * @return True if pitches are enharmonic.
+     * @return True if both pitches have the same MIDI note number.
+     * @throws std::runtime_error If a pitch string is invalid (see splitPitch()).
      */
     static bool isEnharmonic(const std::string& pitch_A, const std::string& pitch_B);
 

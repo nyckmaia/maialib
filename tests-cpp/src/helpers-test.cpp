@@ -435,3 +435,20 @@ EXPECT_EQ(Helper::midiNote2pitches(0), std::vector<std::string>({"C-1", "Dbb-1"}
 EXPECT_EQ(Helper::transposePitch("B11", 1), "B#11");
 EXPECT_THROW(Helper::transposePitch("B11", 2), std::runtime_error);
 }
+
+TEST(PitchSpelling, IsEnharmonic) {
+EXPECT_TRUE(Helper::isEnharmonic("E#4", "F4"));
+EXPECT_TRUE(Helper::isEnharmonic("B#3", "C4"));
+EXPECT_TRUE(Helper::isEnharmonic("Cb4", "B3"));
+EXPECT_TRUE(Helper::isEnharmonic("C#4", "Db4"));
+EXPECT_TRUE(Helper::isEnharmonic("rest", "rest"));
+EXPECT_FALSE(Helper::isEnharmonic("C4", "D4"));
+EXPECT_FALSE(Helper::isEnharmonic("C4", "C5"));
+
+for (const auto& entry : kFullRangeEnharmonicTable) {
+    EXPECT_TRUE(Helper::isEnharmonic(entry.pitch, entry.defaultPitch))
+        << "pitch: " << entry.pitch;
+    EXPECT_TRUE(Helper::isEnharmonic(entry.pitch, entry.alternativePitch))
+        << "pitch: " << entry.pitch;
+}
+}

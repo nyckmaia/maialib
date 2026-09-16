@@ -55,8 +55,6 @@ void HelperClass(const py::module& m) {
                    py::arg("normalNotes") = 1,
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def_static("pitch2number", &Helper::pitch2number, py::arg("pitch"),
-                   py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
     cls.def_static("isEnharmonic", &Helper::isEnharmonic,
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
@@ -111,8 +109,6 @@ void HelperClass(const py::module& m) {
         },
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
-    cls.def_static("pitch2number", &Helper::pitch2number, py::arg("pitch"),
-                   py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def_static("frequencies2cents", &Helper::frequencies2cents, py::arg("freq_A"),
                    py::arg("freq_B"));
