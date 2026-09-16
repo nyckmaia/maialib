@@ -190,6 +190,22 @@ TEST(transpose, throwsWhenPastTopOfSupportedRange) {
     EXPECT_THROW(myChord.transpose(2), std::runtime_error);
 }
 
+TEST(stackInThirds, throwsOnEightDistinctPitchClassChord) {
+    // A 10th out-of-bounds site the original audit missed: Chord::computeBestOpenStackHeap()
+    // reads stackedHeaps[0] unconditionally. Every note has at most 3 enharmonic spellings
+    // (itself + 2 alternates), all drawn from only 7 possible pitch letters (A-G). A chord with
+    // exactly 8 distinct pitch classes can therefore never be respelled with 8 mutually distinct
+    // letters (pigeonhole), so removeHeapsWithDuplicatedPitchSteps() rejects every candidate and
+    // 'stackedHeaps' stays empty -- this is a mathematical certainty, not a maybe, for any
+    // 8-distinct-pitch-class chord. (More than 8 distinct pitch classes throws earlier, in
+    // computeEnharmonicHeaps()'s "Invalid chord size" case, so 8 is the only size that reaches
+    // this particular guard.)
+    const std::vector<std::string> pitches = {"C4", "D4", "E4", "F4", "G4", "A4", "B4", "Db5"};
+    Chord myChord(pitches);
+    EXPECT_EQ(myChord.size(), 8);
+    EXPECT_THROW(myChord.getName(), std::runtime_error);
+}
+
 // ====================
 // Out-of-bounds guard tests
 // ====================
@@ -218,6 +234,11 @@ TEST(getNote, validIndexDoesNotThrow) {
     Chord myChord({"C4", "E4", "G4"});
     EXPECT_NO_THROW(myChord.getNote(0));
     EXPECT_EQ(myChord.getNote(0).getPitch(), "C4");
+
+    // Pin the upper valid boundary too: a one-off-wrong guard (e.g. '>= size() - 1') would
+    // still pass every other test here, since none of them exercised the last valid index.
+    EXPECT_NO_THROW(myChord.getNote(2));
+    EXPECT_EQ(myChord.getNote(2).getPitch(), "G4");
 }
 
 TEST(info, throwsOnEmptyChord) {
@@ -232,6 +253,31 @@ TEST(toInversion, throwsOnEmptyChord) {
 
 TEST(isInRootPosition, emptyChordReturnsFalse) {
     Chord myChord;
+    EXPECT_FALSE(myChord.isInRootPosition());
+}
+
+TEST(isInRootPosition, staleCloseStackAfterClearReturnsFalse) {
+    // clear() (chord.cpp:36-39) empties '_originalNotes'/'_openStack' but leaves
+    // '_closeStack' and '_isStackedInThirds' untouched. A guard that only checks
+    // '_closeStack.empty()' would miss this: '_closeStack' is still the stale 3-note stack
+    // from before clear(), so it would pass the guard and then read 'tempNotes[0]' out of
+    // bounds ('tempNotes' is freshly built from the now-empty '_originalNotes').
+    Chord myChord({"C4", "E4", "G4"});
+    myChord.getName();  // populate _closeStack
+    myChord.clear();
+    EXPECT_FALSE(myChord.isInRootPosition());
+}
+
+TEST(isInRootPosition, staleCloseStackAfterRemoveNoteToEmptyReturnsFalse) {
+    // removeNote() resets '_isStackedInThirds' to false, so isInRootPosition() re-enters
+    // stackInThirds(), which early-returns on an empty chord (chord.cpp:362-365) without
+    // touching '_closeStack' -- so it is still the stale, non-empty stack from before the
+    // notes were removed.
+    Chord myChord({"C4", "E4", "G4"});
+    myChord.getName();  // populate _closeStack
+    myChord.removeNote(0);
+    myChord.removeNote(0);
+    myChord.removeNote(0);
     EXPECT_FALSE(myChord.isInRootPosition());
 }
 

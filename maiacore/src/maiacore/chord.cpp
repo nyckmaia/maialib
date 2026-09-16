@@ -708,6 +708,17 @@ std::vector<NoteDataHeap> Chord::filterTertianHeapsOnly(
 }
 
 std::vector<Note> Chord::computeBestOpenStackHeap(std::vector<HeapData>& stackedHeaps) {
+    // 'stackedHeaps' (built in stackInThirds()'s STEP 5) can be empty: each note has at most 3
+    // enharmonic spellings (itself + 2 alternates, see Note::getEnharmonicPitch), all drawn from
+    // only 7 possible pitch letters (A-G). For a chord with exactly 8 distinct pitch classes, no
+    // respelling can give all 8 notes distinct letters (pigeonhole), so
+    // removeHeapsWithDuplicatedPitchSteps() rejects every candidate heap and STEP 5's loop never
+    // populates 'stackedHeaps' at all. (Chords with more than 8 distinct pitch classes already
+    // throw earlier, in computeEnharmonicHeaps()'s "Invalid chord size" case.)
+    if (stackedHeaps.empty()) {
+        LOG_ERROR("Unable to find a valid stacked-in-thirds heap for this chord");
+    }
+
     const float bestStackMatchValue = std::get<1>(stackedHeaps[0]);
     const int heapSize = std::get<0>(stackedHeaps[0]).size();
 
@@ -1324,7 +1335,11 @@ bool Chord::isInRootPosition() {
         stackInThirds();
     }
 
-    if (_closeStack.empty()) {
+    // Both containers must be checked: clear() empties '_originalNotes'/'_openStack' but leaves
+    // '_closeStack' and '_isStackedInThirds' untouched, and stackInThirds() early-returns on an
+    // empty chord without clearing '_closeStack' either. So '_closeStack' alone can be non-empty
+    // (stale, from before the chord was emptied) while '_originalNotes' is empty, or vice versa.
+    if (_closeStack.empty() || _originalNotes.empty()) {
         return false;
     }
 

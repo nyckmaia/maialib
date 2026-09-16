@@ -38,6 +38,14 @@ class GetName(unittest.TestCase):
         myChord = ml.Chord(["A5", "C5", "E7", "G3"])
         self.assertEqual(myChord.getName(), "Am7/G")
 
+    def testEightDistinctPitchClassesRaises(self):
+        # A 10th out-of-bounds site the original audit missed: with exactly 8 distinct pitch
+        # classes, no enharmonic respelling can give all 8 notes distinct letters (only 7 exist,
+        # A-G), so the internal "stacked in thirds" computation finds no valid heap at all.
+        myChord = ml.Chord(["C4", "D4", "E4", "F4", "G4", "A4", "B4", "Db5"])
+        with self.assertRaises(RuntimeError):
+            myChord.getName()
+
 
 class IsTonal(unittest.TestCase):
     def testTonalMajorChord01(self):
@@ -176,6 +184,26 @@ class ToInversion(unittest.TestCase):
 class IsInRootPosition(unittest.TestCase):
     def testEmptyChordReturnsFalse(self):
         myChord = ml.Chord()
+        self.assertEqual(myChord.isInRootPosition(), False)
+
+    def testStaleCloseStackAfterClearReturnsFalse(self):
+        # clear() empties _originalNotes/_openStack but leaves _closeStack (and the
+        # "already stacked" flag) untouched, so a guard that only checks _closeStack
+        # would still read out of bounds here.
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        myChord.getName()  # populate _closeStack
+        myChord.clear()
+        self.assertEqual(myChord.isInRootPosition(), False)
+
+    def testStaleCloseStackAfterRemoveNoteToEmptyReturnsFalse(self):
+        # removeNote() resets the "already stacked" flag, so isInRootPosition() re-runs
+        # stackInThirds(), which early-returns on an empty chord without clearing the
+        # (still non-empty, stale) _closeStack from before the notes were removed.
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        myChord.getName()  # populate _closeStack
+        myChord.removeNote(0)
+        myChord.removeNote(0)
+        myChord.removeNote(0)
         self.assertEqual(myChord.isInRootPosition(), False)
 
 
