@@ -370,6 +370,36 @@ TEST(PartAppend, AppendMixedNotesAndChords) {
     EXPECT_EQ(part.getNumNotes(), 4);  // 1 + 2 + 1
 }
 
+TEST(PartAppend, AppendNoteOverflowingLastMeasureThrows) {
+    // Single 4/4 measure: capacity is 4 quarter notes. A BREVE (8 quarter notes) doesn't fit,
+    // so the note gets split and tied; the tied remainder would need '_measure[m + 1]', but
+    // there is no measure after the last one.
+    Part part("Piano");
+    part.addMeasure(1);
+
+    std::variant<Note, Chord> noteVariant = Note("C4", RhythmFigure::BREVE);
+    EXPECT_THROW(part.append(noteVariant, -1, 0), std::runtime_error);
+}
+
+TEST(PartAppend, AppendChordOverflowingLastMeasureThrows) {
+    Part part("Piano");
+    part.addMeasure(1);
+
+    Chord chord(std::vector<std::string>{"C4", "E4", "G4"}, RhythmFigure::BREVE);
+    std::variant<Note, Chord> chordVariant = chord;
+    EXPECT_THROW(part.append(chordVariant, -1, 0), std::runtime_error);
+}
+
+TEST(PartAppend, AppendNoteThatFitsAcrossMultipleMeasuresDoesNotThrow) {
+    // Same oversized note, but now there IS a following measure to hold the tied remainder.
+    Part part("Piano");
+    part.addMeasure(2);
+
+    std::variant<Note, Chord> noteVariant = Note("C4", RhythmFigure::BREVE);
+    EXPECT_NO_THROW(part.append(noteVariant, -1, 0));
+    EXPECT_EQ(part.getNumNotes(), 2);  // split into a tied pair across both measures
+}
+
 // ====================
 // Serialization Tests
 // ====================

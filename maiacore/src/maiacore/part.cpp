@@ -354,6 +354,10 @@ void Part::appendNote(const Note& note, const int position, const int staveId) {
                 // Score::addMeasure() -> tem q herdar public, e os metodos
                 // tem q ser protected
                 // https://stackoverflow.com/questions/357307/how-to-call-a-parent-class-function-from-derived-class-function
+                LOG_ERROR(
+                    "Unable to append the note: it doesn't fit in the last measure and there "
+                    "is no following measure to hold the tied remainder. Add another measure "
+                    "before appending a note that overflows the last one.");
             }
 
             _measure[m + 1].addNote(second, staveId, position);
@@ -408,6 +412,13 @@ void Part::appendChord(const Chord& chord, const int position, const int staveId
                 first[n].setTieStart();
 
                 _measure[m].addNote(first[n], staveId, position);
+            }
+
+            if (m == numMeasures - 1) {
+                LOG_ERROR(
+                    "Unable to append the chord: it doesn't fit in the last measure and there "
+                    "is no following measure to hold the tied remainder. Add another measure "
+                    "before appending a chord that overflows the last one.");
             }
 
             for (int n = 0; n < chordSize; n++) {

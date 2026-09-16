@@ -295,5 +295,37 @@ class PartIntegrationTestCase(unittest.TestCase):
             self.assertGreater(part.getNumMeasures(), 0)
 
 
+class PartAppendOverflowTestCase(unittest.TestCase):
+    """Tests for Part.append() when a note/chord overflows the last measure"""
+
+    def test_append_note_overflowing_last_measure_raises(self):
+        """A note bigger than the only (last) measure has no next measure to tie into"""
+        part = ml.Part("Piano")
+        part.addMeasure(1)
+
+        note = ml.Note("C4", ml.RhythmFigure.BREVE)
+        with self.assertRaises(RuntimeError):
+            part.append(note)
+
+    def test_append_chord_overflowing_last_measure_raises(self):
+        """A chord bigger than the only (last) measure has no next measure to tie into"""
+        part = ml.Part("Piano")
+        part.addMeasure(1)
+
+        chord = ml.Chord(["C4", "E4", "G4"], ml.RhythmFigure.BREVE)
+        with self.assertRaises(RuntimeError):
+            part.append(chord)
+
+    def test_append_note_overflowing_with_next_measure_available(self):
+        """Same oversized note, but a following measure exists to hold the tied remainder"""
+        part = ml.Part("Piano")
+        part.addMeasure(2)
+
+        note = ml.Note("C4", ml.RhythmFigure.BREVE)
+        part.append(note)
+
+        self.assertEqual(part.getNumNotes(), 2)
+
+
 if __name__ == "__main__":
     unittest.main()
