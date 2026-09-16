@@ -116,6 +116,10 @@ void Chord::addNote(const Note& note) {
 void Chord::addNote(const std::string& pitch) { addNote(Note(pitch)); }
 
 void Chord::removeTopNote() {
+    if (_originalNotes.empty()) {
+        LOG_ERROR("The chord is empty");
+    }
+
     _originalNotes.pop_back();
 
     // Invalidate any previously-computed stacked-in-thirds representation
@@ -123,6 +127,10 @@ void Chord::removeTopNote() {
 }
 
 void Chord::insertNote(Note& note, int noteIndex) {
+    if (noteIndex < 0 || noteIndex > size()) {
+        LOG_ERROR("Invalid note index: " + std::to_string(noteIndex));
+    }
+
     note.setIsInChord(true);
     _originalNotes.insert(_originalNotes.begin() + noteIndex, note);
 
@@ -133,6 +141,10 @@ void Chord::insertNote(Note& note, int noteIndex) {
 }
 
 void Chord::removeNote(int noteIndex) {
+    if (noteIndex < 0 || noteIndex >= size()) {
+        LOG_ERROR("Invalid note index: " + std::to_string(noteIndex));
+    }
+
     _originalNotes.erase(_originalNotes.begin() + noteIndex);
 
     // Invalidate any previously-computed stacked-in-thirds representation
@@ -140,19 +152,31 @@ void Chord::removeNote(int noteIndex) {
 }
 
 void Chord::setDuration(const Duration& duration) {
-    const int chordSize = _originalNotes.size();
-
+    // '_originalNotes' and '_openStack' are bounded separately: stackInThirds() dedups
+    // '_openStack' down to one note per unique pitch class, so it can be strictly smaller than
+    // '_originalNotes' (e.g. after Chord({"C4", "C5"}).getName()). Indexing both by
+    // '_originalNotes.size()' used to write past the end of '_openStack' once that happened.
+    const int chordSize = static_cast<int>(_originalNotes.size());
     for (int i = 0; i < chordSize; i++) {
         _originalNotes[i].setDuration(duration);
+    }
+
+    const int openStackSize = static_cast<int>(_openStack.size());
+    for (int i = 0; i < openStackSize; i++) {
         _openStack[i].setDuration(duration);
     }
 }
 
 void Chord::setDuration(const float quarterDuration, const int divisionsPerQuarterNote) {
-    const int chordSize = _originalNotes.size();
-
+    // See the comment in the Duration& overload above: '_openStack' can be smaller than
+    // '_originalNotes' after stacking, so the two are bounded separately.
+    const int chordSize = static_cast<int>(_originalNotes.size());
     for (int i = 0; i < chordSize; i++) {
         _originalNotes[i].setDuration(quarterDuration, divisionsPerQuarterNote);
+    }
+
+    const int openStackSize = static_cast<int>(_openStack.size());
+    for (int i = 0; i < openStackSize; i++) {
         _openStack[i].setDuration(quarterDuration, divisionsPerQuarterNote);
     }
 }
@@ -1373,10 +1397,13 @@ bool Chord::isInRootPosition() {
         stackInThirds();
     }
 
-    // Both containers must be checked: clear() empties '_originalNotes'/'_openStack' but leaves
-    // '_closeStack' and '_isStackedInThirds' untouched, and stackInThirds() early-returns on an
-    // empty chord without clearing '_closeStack' either. So '_closeStack' alone can be non-empty
-    // (stale, from before the chord was emptied) while '_originalNotes' is empty, or vice versa.
+    // Both containers are checked, even though every _originalNotes mutator (clear(),
+    // removeNote(), ...) now calls invalidateStackCache(), which clears '_closeStack' and resets
+    // '_isStackedInThirds' together -- so neither clause should be reachable on its own through
+    // the public mutator API today. Kept as defense in depth: a Note obtained by reference
+    // (operator[], getNote()) can still be mutated in place without going through any mutator,
+    // which would desync '_originalNotes' from the cached '_closeStack' without
+    // invalidateStackCache() ever running (see chord.h's operator[] docs for that caveat).
     if (_closeStack.empty() || _originalNotes.empty()) {
         return false;
     }

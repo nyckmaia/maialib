@@ -179,6 +179,17 @@ class GetNote(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             myChord.getNote(0)
 
+    def testReturnsACopyNotAReference(self):
+        # getNote() must return a copy: py_chord.cpp used to register a second, dead
+        # `reference_internal` overload with an identical signature (final review, item 3). A
+        # reference-returning binding would let mutating the returned Note desync the chord's
+        # cached stacked-in-thirds analysis without going through any mutator (see chord.h's
+        # operator[] docs). Pinning copy semantics here guards against that binding coming back.
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        note = myChord.getNote(0)
+        note.setPitch("F#4")
+        self.assertEqual(myChord.getNote(0).getPitch(), "C4")
+
 
 class Info(unittest.TestCase):
     def testEmptyChordRaises(self):
@@ -199,25 +210,38 @@ class IsInRootPosition(unittest.TestCase):
         myChord = ml.Chord()
         self.assertEqual(myChord.isInRootPosition(), False)
 
-    def testStaleCloseStackAfterClearReturnsFalse(self):
-        # clear() empties _originalNotes/_openStack but leaves _closeStack (and the
-        # "already stacked" flag) untouched, so a guard that only checks _closeStack
-        # would still read out of bounds here.
+    def testClearInvalidatesCacheReflectedByNextMutation(self):
+        # Renamed and rewritten: this used to be worded around the round-1 bug where clear()
+        # left _closeStack stale. Since chord.cpp's invalidateStackCache() fix, clear() clears
+        # it too, so that stale state is no longer reachable through the public API, and a bare
+        # isInRootPosition()==False check here would only duplicate testEmptyChordReturnsFalse.
+        # This now pins the invariant that actually matters: after clear(), a fresh build must
+        # reflect the NEW notes, not anything left over from before the clear().
         myChord = ml.Chord(["C4", "E4", "G4"])
-        myChord.getName()  # populate _closeStack
+        myChord.getName()  # populate the stack cache for the 3-note chord
         myChord.clear()
-        self.assertEqual(myChord.isInRootPosition(), False)
+        self.assertEqual(myChord.isInRootPosition(), False)  # empty chord; defense in depth
 
-    def testStaleCloseStackAfterRemoveNoteToEmptyReturnsFalse(self):
-        # removeNote() resets the "already stacked" flag, so isInRootPosition() re-runs
-        # stackInThirds(), which early-returns on an empty chord without clearing the
-        # (still non-empty, stale) _closeStack from before the notes were removed.
+        myChord.addNote("D4")
+        myChord.addNote("F4")
+        myChord.addNote("A4")
+        self.assertEqual(myChord.getName(), "Dm")  # reflects the new chord, not the pre-clear cache
+
+    def testRemoveNoteToEmptyInvalidatesCacheReflectedByNextMutation(self):
+        # Renamed and rewritten for the same reason as the test above, via removeNote() instead
+        # of clear(): it now also invalidates the cache, so the old stale-_closeStack scenario
+        # this test used to set up is no longer reachable.
         myChord = ml.Chord(["C4", "E4", "G4"])
-        myChord.getName()  # populate _closeStack
+        myChord.getName()  # populate the stack cache for the 3-note chord
         myChord.removeNote(0)
         myChord.removeNote(0)
         myChord.removeNote(0)
-        self.assertEqual(myChord.isInRootPosition(), False)
+        self.assertEqual(myChord.isInRootPosition(), False)  # empty chord; defense in depth
+
+        myChord.addNote("D4")
+        myChord.addNote("F4")
+        myChord.addNote("A4")
+        self.assertEqual(myChord.getName(), "Dm")  # reflects the new chord, not the stale cache
 
 
 class GetOpenAndCloseStackIntervals(unittest.TestCase):
@@ -296,6 +320,70 @@ class ChordMutationCacheInvalidation(unittest.TestCase):
 
         intervals = myChord.getCloseStackIntervals()
         self.assertEqual(len(intervals), myChord.stackSize() - 1)
+
+
+class SetDuration(unittest.TestCase):
+    """Final review found a real, Python-reachable out-of-bounds WRITE: setDuration() indexed
+    both _originalNotes and _openStack by _originalNotes.size(), but _openStack can be
+    strictly smaller after stackInThirds() dedups by pitch class."""
+
+    def testFloatOverloadSafeAfterPitchClassDedupShrinksOpenStack(self):
+        # Exact 3-line repro from the final review. (The Duration& overload is not reachable
+        # from Python at all -- Duration has no Python binding -- so only this overload, the
+        # one actually reachable from Python, needs a Python-side test; the Duration& overload
+        # is covered in chord-test.cpp.)
+        myChord = ml.Chord(["C4", "C5"])
+        myChord.getName()
+        myChord.setDuration(1.0, 256)
+
+        self.assertEqual(myChord.size(), 2)
+        self.assertEqual(myChord.stackSize(), 1)
+
+
+class RemoveTopNote(unittest.TestCase):
+    def testEmptyChordRaises(self):
+        myChord = ml.Chord()
+        with self.assertRaises(RuntimeError):
+            myChord.removeTopNote()
+
+    def testValidCallDoesNotRaise(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        myChord.removeTopNote()
+        self.assertEqual(myChord.size(), 2)
+
+
+class InsertNote(unittest.TestCase):
+    def testNegativeIndexRaises(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        with self.assertRaises(RuntimeError):
+            myChord.insertNote(ml.Note("D4"), -1)
+
+    def testIndexPastSizeRaises(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        with self.assertRaises(RuntimeError):
+            myChord.insertNote(ml.Note("D4"), 4)
+
+    def testIndexEqualToSizeAppendsWithoutRaising(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        myChord.insertNote(ml.Note("B4"), 3)
+        self.assertEqual(myChord.size(), 4)
+
+
+class RemoveNote(unittest.TestCase):
+    def testNegativeIndexRaises(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        with self.assertRaises(RuntimeError):
+            myChord.removeNote(-1)
+
+    def testIndexEqualToSizeRaises(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        with self.assertRaises(RuntimeError):
+            myChord.removeNote(3)
+
+    def testEmptyChordRaises(self):
+        myChord = ml.Chord()
+        with self.assertRaises(RuntimeError):
+            myChord.removeNote(0)
 
 
 if __name__ == "__main__":

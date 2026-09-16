@@ -275,29 +275,41 @@ TEST(isInRootPosition, emptyChordReturnsFalse) {
     EXPECT_FALSE(myChord.isInRootPosition());
 }
 
-TEST(isInRootPosition, staleCloseStackAfterClearReturnsFalse) {
-    // clear() (chord.cpp:36-39) empties '_originalNotes'/'_openStack' but leaves
-    // '_closeStack' and '_isStackedInThirds' untouched. A guard that only checks
-    // '_closeStack.empty()' would miss this: '_closeStack' is still the stale 3-note stack
-    // from before clear(), so it would pass the guard and then read 'tempNotes[0]' out of
-    // bounds ('tempNotes' is freshly built from the now-empty '_originalNotes').
+TEST(isInRootPosition, clearInvalidatesCacheReflectedByNextMutation) {
+    // Renamed and rewritten: this used to be named/worded around the round-1 bug where clear()
+    // left '_closeStack' stale (chord.cpp:36-39, before 4158b63). Since 4158b63, clear() calls
+    // invalidateStackCache(), so that stale state is no longer reachable through the public
+    // mutator API, and a bare 'EXPECT_FALSE(isInRootPosition())' here would only duplicate
+    // 'emptyChordReturnsFalse' above. This now pins the invariant that actually matters: after
+    // clear(), a fresh build must reflect the NEW notes, not anything left over from before the
+    // clear() (which would be a symptom of invalidateStackCache() regressing).
     Chord myChord({"C4", "E4", "G4"});
-    myChord.getName();  // populate _closeStack
+    myChord.getName();  // populate the stack cache for the 3-note chord
     myChord.clear();
-    EXPECT_FALSE(myChord.isInRootPosition());
+    EXPECT_FALSE(myChord.isInRootPosition());  // empty chord; guard kept as defense in depth
+
+    myChord.addNote("D4");
+    myChord.addNote("F4");
+    myChord.addNote("A4");
+    EXPECT_EQ(myChord.getName(), "Dm");  // must reflect the new chord, not the pre-clear cache
 }
 
-TEST(isInRootPosition, staleCloseStackAfterRemoveNoteToEmptyReturnsFalse) {
-    // removeNote() resets '_isStackedInThirds' to false, so isInRootPosition() re-enters
-    // stackInThirds(), which early-returns on an empty chord (chord.cpp:362-365) without
-    // touching '_closeStack' -- so it is still the stale, non-empty stack from before the
-    // notes were removed.
+TEST(isInRootPosition, removeNoteToEmptyInvalidatesCacheReflectedByNextMutation) {
+    // Renamed and rewritten for the same reason as the test above, via removeNote() instead of
+    // clear(): removeNote() now calls invalidateStackCache() (4158b63), so the old "stale
+    // _closeStack survives stackInThirds()'s empty-chord early return" scenario this test used
+    // to set up is no longer reachable.
     Chord myChord({"C4", "E4", "G4"});
-    myChord.getName();  // populate _closeStack
+    myChord.getName();  // populate the stack cache for the 3-note chord
     myChord.removeNote(0);
     myChord.removeNote(0);
     myChord.removeNote(0);
-    EXPECT_FALSE(myChord.isInRootPosition());
+    EXPECT_FALSE(myChord.isInRootPosition());  // empty chord; guard kept as defense in depth
+
+    myChord.addNote("D4");
+    myChord.addNote("F4");
+    myChord.addNote("A4");
+    EXPECT_EQ(myChord.getName(), "Dm");  // must reflect the new chord, not the pre-removal cache
 }
 
 TEST(getOpenStackIntervals, emptyChordReturnsEmptyVector) {
@@ -418,4 +430,105 @@ TEST(chordStreamOperator, nonEmptyChordPrintsPitches) {
     std::ostringstream out;
     out << myChord;
     EXPECT_EQ(out.str(), "[C4,E4,G4]");
+}
+
+// ====================
+// setDuration out-of-bounds write tests
+//
+// Final review found a real, Python-reachable out-of-bounds WRITE (more severe than the reads
+// this branch had fixed so far): setDuration() indexed both '_originalNotes' and '_openStack'
+// by '_originalNotes.size()', but stackInThirds() dedups '_openStack' down to one note per
+// unique pitch class, so it can be strictly smaller. Fixed by bounding each container's loop by
+// its own size instead of assuming they match.
+// ====================
+
+TEST(setDuration, floatOverloadSafeAfterPitchClassDedupShrinksOpenStack) {
+    // Exact repro from the final review: Chord(["C4","C5"]); getName(); setDuration(...).
+    // A typed intermediate vector (not a bare 2-element braced-init-list) sidesteps a
+    // pre-existing Chord(vector<Note>) / Chord(vector<string>) overload-resolution ambiguity
+    // Clang hits for exactly-2-element lists here; the 3+-element lists used everywhere else in
+    // this file don't trigger it. Same pattern already used by the 'transpose' test above.
+    const std::vector<std::string> pitches = {"C4", "C5"};
+    Chord myChord(pitches);  // 2 notes, same pitch class
+    myChord.getName();       // stacks: _openStack dedups to 1 note; _originalNotes stays 2
+    ASSERT_EQ(myChord.size(), 2);
+    ASSERT_EQ(myChord.stackSize(), 1);
+
+    EXPECT_NO_THROW(myChord.setDuration(1.0f, 256));
+
+    // Duration applied to every original note; the chord is still well-formed afterward (no
+    // corrupted state from writing past _openStack's smaller size).
+    EXPECT_EQ(myChord.getNote(0).getDurationTicks(), myChord.getNote(1).getDurationTicks());
+    EXPECT_EQ(myChord.size(), 2);
+    EXPECT_NO_THROW(myChord.getName());
+}
+
+TEST(setDuration, durationOverloadSafeAfterPitchClassDedupShrinksOpenStack) {
+    const std::vector<std::string> pitches = {"C4", "C5"};
+    Chord myChord(pitches);
+    myChord.getName();
+    ASSERT_EQ(myChord.stackSize(), 1);
+
+    const Duration halfNote(2.0f, 256);
+    EXPECT_NO_THROW(myChord.setDuration(halfNote));
+
+    EXPECT_EQ(myChord.getNote(0).getDurationTicks(), myChord.getNote(1).getDurationTicks());
+    EXPECT_EQ(myChord.size(), 2);
+}
+
+// ====================
+// removeTopNote / insertNote / removeNote bounds guard tests
+//
+// Final review found these three had no bounds checks at all, despite sitting inside the very
+// functions round 2 (4158b63) edited to add cache invalidation: removeTopNote() popped an empty
+// vector (UB), insertNote() inserted at an unchecked index (UB for noteIndex < 0 or > size()),
+// removeNote() erased at an unchecked index (UB for noteIndex < 0 or >= size()). All three are
+// Python-bound. Guarded with LOG_ERROR, matching this file's own convention (e.g. getNote).
+// ====================
+
+TEST(removeTopNote, throwsOnEmptyChord) {
+    Chord myChord;
+    EXPECT_THROW(myChord.removeTopNote(), std::runtime_error);
+}
+
+TEST(removeTopNote, validCallDoesNotThrow) {
+    Chord myChord({"C4", "E4", "G4"});
+    EXPECT_NO_THROW(myChord.removeTopNote());
+    EXPECT_EQ(myChord.size(), 2);
+}
+
+TEST(insertNote, throwsOnNegativeIndex) {
+    Chord myChord({"C4", "E4", "G4"});
+    Note note("D4");
+    EXPECT_THROW(myChord.insertNote(note, -1), std::runtime_error);
+}
+
+TEST(insertNote, throwsOnIndexPastSize) {
+    Chord myChord({"C4", "E4", "G4"});
+    Note note("D4");
+    EXPECT_THROW(myChord.insertNote(note, 4), std::runtime_error);
+}
+
+TEST(insertNote, indexEqualToSizeAppendsWithoutThrowing) {
+    // noteIndex == size() is the valid "append at the end" case (matches std::vector::insert
+    // semantics), must not throw.
+    Chord myChord({"C4", "E4", "G4"});
+    Note note("B4");
+    EXPECT_NO_THROW(myChord.insertNote(note, 3));
+    EXPECT_EQ(myChord.size(), 4);
+}
+
+TEST(removeNote, throwsOnNegativeIndex) {
+    Chord myChord({"C4", "E4", "G4"});
+    EXPECT_THROW(myChord.removeNote(-1), std::runtime_error);
+}
+
+TEST(removeNote, throwsOnIndexEqualToSize) {
+    Chord myChord({"C4", "E4", "G4"});
+    EXPECT_THROW(myChord.removeNote(3), std::runtime_error);
+}
+
+TEST(removeNote, throwsOnEmptyChord) {
+    Chord myChord;
+    EXPECT_THROW(myChord.removeNote(0), std::runtime_error);
 }

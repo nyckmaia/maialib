@@ -30,11 +30,47 @@ void ChordClass(const py::module& m) {
     cls.def("addNote", py::overload_cast<const std::string&>(&Chord::addNote), py::arg("pitch"));
 
     cls.def("removeTopNote", &Chord::removeTopNote,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Remove the last note (in original order) from the chord.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord is empty.
+    )pbdoc");
     cls.def("insertNote", &Chord::insertNote, py::arg("insertNote"), py::arg("positionNote") = 0,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Insert a note at a given position (original order).
+
+        Parameters
+        ----------
+        insertNote : Note
+            The note to insert.
+        positionNote : int, optional
+            Index to insert at, in ``0 .. size()`` (``size()`` appends at the end; default: 0).
+
+        Raises
+        ------
+        RuntimeError
+            If ``positionNote`` is negative or greater than ``size()``.
+    )pbdoc");
     cls.def("removeNote", &Chord::removeNote, py::arg("noteIndex"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Remove the note at a given index (original order).
+
+        Parameters
+        ----------
+        noteIndex : int
+            Index of the note to remove, in ``0 .. size() - 1``.
+
+        Raises
+        ------
+        RuntimeError
+            If ``noteIndex`` is negative or out of range (e.g. on an empty chord).
+    )pbdoc");
     cls.def("setDuration", py::overload_cast<const Duration&>(&Chord::setDuration),
             py::arg("duration"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
@@ -194,8 +230,14 @@ void ChordClass(const py::module& m) {
         RuntimeError
             If ``noteIndex`` is negative or out of range (e.g. on an empty chord).
     )pbdoc");
-    cls.def("getNote", py::overload_cast<int>(&Chord::getNote), py::arg("noteIndex"),
-            py::return_value_policy::reference_internal);
+    // Do not add a second `getNote` registration with `return_value_policy::reference_internal`
+    // (one existed here and was dead code: pybind11 always resolved to the copy-returning
+    // registration above, since both had the identical C++ signature `int -> Note&` and
+    // overloads are tried in registration order). A reference-returning binding would hand
+    // Python a live `Note&` into `_originalNotes`; mutating it (e.g. `chord.getNote(0).setPitch(
+    // "F#4")`) would desync the chord's cached stacked-in-thirds analysis without going through
+    // any mutator, silently reopening the staleness class invalidateStackCache() closes. Keep
+    // `getNote` copy-returning.
 
     cls.def("getRoot", &Chord::getRoot,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
