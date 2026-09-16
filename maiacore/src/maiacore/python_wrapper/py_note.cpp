@@ -22,14 +22,69 @@ void NoteClass(const py::module& m) {
             py::arg("pitch"), py::arg("rhythmFigure") = RhythmFigure::QUARTER,
             py::arg("isNoteOn") = true, py::arg("inChord") = false,
             py::arg("transposeDiatonic") = 0, py::arg("transposeChromatic") = 0,
-            py::arg("divisionsPerQuarterNote") = 256);
+            py::arg("divisionsPerQuarterNote") = 256,
+            R"pbdoc(
+        Create a note from a pitch string.
+
+        Parameters
+        ----------
+        pitch : str
+            Pitch string such as ``"C4"``, ``"G#3"``, ``"Dbb-1"`` or ``"Bx11"``. Accidentals:
+            ``bb``, ``b``, ``#``, ``x``. Octaves: -1 to 11 (default 4). The MIDI number must be
+            >= 0. An empty string or ``"rest"`` creates a rest.
+        rhythmFigure : RhythmFigure, default RhythmFigure.QUARTER
+            Rhythm figure.
+        isNoteOn : bool, default True
+            False creates a rest.
+        inChord : bool, default False
+            Whether the note belongs to a chord.
+        transposeDiatonic : int, default 0
+            Diatonic transposition interval (transposing instruments).
+        transposeChromatic : int, default 0
+            Chromatic transposition interval (transposing instruments).
+        divisionsPerQuarterNote : int, default 256
+            Divisions per quarter note.
+
+        Raises
+        ------
+        RuntimeError
+            If the pitch string is invalid.
+    )pbdoc");
 
     cls.def(py::init<const int, const std::string&, const RhythmFigure, bool, bool, const int,
                      const int, const int>(),
             py::arg("midiNumber"), py::arg("accType") = "",
             py::arg("rhythmFigure") = RhythmFigure::QUARTER, py::arg("isNoteOn") = true,
             py::arg("inChord") = false, py::arg("transposeDiatonic") = 0,
-            py::arg("transposeChromatic") = 0, py::arg("divisionsPerQuarterNote") = 256);
+            py::arg("transposeChromatic") = 0, py::arg("divisionsPerQuarterNote") = 256,
+            R"pbdoc(
+        Create a note from a MIDI note number.
+
+        Parameters
+        ----------
+        midiNumber : int
+            MIDI note number, spelled within octaves -1 to 11 (e.g. 5 -> ``"F-1"``). -1 creates
+            a rest.
+        accType : str, default ""
+            ``""``, ``"#"``, ``"b"``, ``"x"`` or ``"bb"`` (see ``Helper.midiNote2pitch``).
+        rhythmFigure : RhythmFigure, default RhythmFigure.QUARTER
+            Rhythm figure.
+        isNoteOn : bool, default True
+            False creates a rest.
+        inChord : bool, default False
+            Whether the note belongs to a chord.
+        transposeDiatonic : int, default 0
+            Diatonic transposition interval.
+        transposeChromatic : int, default 0
+            Chromatic transposition interval.
+        divisionsPerQuarterNote : int, default 256
+            Divisions per quarter note.
+
+        Raises
+        ------
+        RuntimeError
+            If the MIDI number cannot be spelled with ``accType`` within octaves -1 to 11.
+    )pbdoc");
 
     // ====== Methods SETTERS for class Note ===== //
     cls.def("setPitchClass", &Note::setPitchClass, py::arg("pitchClass"),
@@ -51,7 +106,23 @@ void NoteClass(const py::module& m) {
 
     //     cls.def("setDurationTicks", &Note::setDurationTicks, py::arg("durationTicks"));
     cls.def("setIsNoteOn", &Note::setIsNoteOn, py::arg("isNoteOn"));
-    cls.def("setPitch", &Note::setPitch, py::arg("pitch"));
+    cls.def("setPitch", &Note::setPitch, py::arg("pitch"),
+            R"pbdoc(
+        Set the pitch of the note.
+
+        Replaces the pitch class, octave, accidental symbol and MIDI number.
+
+        Parameters
+        ----------
+        pitch : str
+            Pitch string with the same rules as the pitch-string constructor (e.g. ``"Bb-1"``,
+            ``"C10"``). An empty string or ``"rest"`` turns the note into a rest.
+
+        Raises
+        ------
+        RuntimeError
+            If the pitch string is invalid.
+    )pbdoc");
     cls.def("setIsInChord", &Note::setIsInChord, py::arg("inChord"));
     cls.def("setTransposingInterval", &Note::setTransposingInterval, py::arg("diatonicInterval"),
             py::arg("chromaticInterval"));
@@ -137,17 +208,91 @@ void NoteClass(const py::module& m) {
     cls.def("isGraceNote", &Note::isGraceNote);
 
     cls.def("getEnharmonicPitch", &Note::getEnharmonicPitch,
-            py::arg("alternativeEnhamonicPitch") = false);
+            py::arg("alternativeEnhamonicPitch") = false,
+            R"pbdoc(
+        Return an enharmonic spelling of the note.
+
+        White keys: a natural returns its flat-side spelling (``C4`` -> ``Dbb4``) and the
+        sharp-side spelling as the alternative (``B#3``); other spellings return the natural and,
+        as the alternative, the remaining spelling. Black keys: ``#`` and ``b`` swap
+        (``C#4`` <-> ``Db4``) with the double accidental as the alternative; ``x``/``bb`` return
+        the single accidental in the same direction and, as the alternative, the opposite one.
+        Spellings outside octaves -1 to 11 do not exist: a missing alternative returns the
+        default and a missing default returns the note's own pitch.
+
+        Parameters
+        ----------
+        alternativeEnhamonicPitch : bool, default False
+            Return the alternative spelling instead of the default one.
+
+        Returns
+        -------
+        str
+            Enharmonic pitch string, or ``"rest"`` for a rest.
+
+        Examples
+        --------
+        >>> ml.Note("C#4").getEnharmonicPitch()
+        'Db4'
+    )pbdoc");
     cls.def("getEnharmonicPitches", &Note::getEnharmonicPitches,
-            py::arg("includeCurrentPitch") = false);
+            py::arg("includeCurrentPitch") = false,
+            R"pbdoc(
+        Return the default and alternative enharmonic spellings.
+
+        Parameters
+        ----------
+        includeCurrentPitch : bool, default False
+            Prepend the note's own pitch.
+
+        Returns
+        -------
+        list of str
+            ``[default, alternative]`` (optionally preceded by the current pitch). Entries may
+            repeat, e.g. ``["G#4", "Ab4", "Ab4"]``.
+    )pbdoc");
 
     cls.def("getEnharmonicNote", &Note::getEnharmonicNote,
-            py::arg("alternativeEnhamonicPitch") = false);
+            py::arg("alternativeEnhamonicPitch") = false,
+            R"pbdoc(
+        Return a new Note with an enharmonic spelling (see ``getEnharmonicPitch``).
+
+        Parameters
+        ----------
+        alternativeEnhamonicPitch : bool, default False
+            Use the alternative spelling instead of the default one.
+
+        Returns
+        -------
+        Note
+            Enharmonic note.
+    )pbdoc");
     cls.def("getEnharmonicNotes", &Note::getEnharmonicNotes,
-            py::arg("includeCurrentPitch") = false);
+            py::arg("includeCurrentPitch") = false,
+            R"pbdoc(
+        Return Notes for the default and alternative enharmonic spellings.
+
+        Parameters
+        ----------
+        includeCurrentPitch : bool, default False
+            Prepend a copy of the current note.
+
+        Returns
+        -------
+        list of Note
+            Enharmonic notes (entries may repeat, see ``getEnharmonicPitches``).
+    )pbdoc");
 
     cls.def("toEnharmonicPitch", &Note::toEnharmonicPitch,
-            py::arg("alternativeEnhamonicPitch") = false);
+            py::arg("alternativeEnhamonicPitch") = false,
+            R"pbdoc(
+        Respell the note in place with an enharmonic spelling (see ``getEnharmonicPitch``).
+
+        Parameters
+        ----------
+        alternativeEnhamonicPitch : bool, default False
+            Use the alternative spelling instead of the default one.
+    )pbdoc");
     cls.def("getScaleDegree", &Note::getScaleDegree, py::arg("key"));
     cls.def("getFrequency", &Note::getFrequency, py::arg("freqA4") = 440.0f);
     cls.def("getHarmonicSpectrum", &Note::getHarmonicSpectrum, 

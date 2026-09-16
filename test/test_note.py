@@ -158,5 +158,26 @@ class NoteSetPitch(unittest.TestCase):
         self.assertEqual(noteDoubleSharp.getOctave(), 4)
 
 
+class NotePitchSpellingRange(unittest.TestCase):
+    def testFullRangeEdges(self):
+        self.assertEqual(ml.Note("Cbb0").getMidiNumber(), 10)
+        self.assertEqual(ml.Note("Bx9").getMidiNumber(), 133)
+        self.assertEqual(ml.Note("C-1").getMidiNumber(), 0)
+        self.assertEqual(ml.Note(5).getPitch(), "F-1")
+        with self.assertRaises(RuntimeError):
+            ml.Note("Cb-1")
+
+    def testSetPitchResetsAccidental(self):
+        note = ml.Note("C#4")
+        note.setPitch("D4")
+        self.assertEqual(note.getAlterSymbol(), "")
+        self.assertEqual(note.getMidiNumber(), 62)
+
+    def testEnharmonicRangeFallback(self):
+        self.assertEqual(ml.Note("Bx11").getEnharmonicPitch(), "Bx11")
+        self.assertEqual(ml.Note("B11").getEnharmonicPitch(True), "Ax11")
+        self.assertEqual(ml.Note("C-1").getEnharmonicPitches(True), ["C-1", "Dbb-1", "Dbb-1"])
+
+
 if __name__ == "__main__":
     unittest.main()

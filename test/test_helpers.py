@@ -381,5 +381,34 @@ class midiNote2pitch(unittest.TestCase):
             self.assertRaises(ml.Helper.midiNote2pitch(72, "x"), "")
 
 
+class PitchSpelling(unittest.TestCase):
+    def testPitch2midiNoteEdgeCases(self):
+        self.assertEqual(ml.Helper.pitch2midiNote("Cbb0"), 10)
+        self.assertEqual(ml.Helper.pitch2midiNote("Cb0"), 11)
+        self.assertEqual(ml.Helper.pitch2midiNote("Bx9"), 133)
+        self.assertEqual(ml.Helper.pitch2midiNote("Db10"), 133)
+        self.assertEqual(ml.Helper.pitch2midiNote("C-1"), 0)
+        self.assertEqual(ml.Helper.pitch2midiNote("Bx11"), 157)
+        self.assertEqual(ml.Helper.pitch2midiNote("rest"), -1)
+
+    def testPitch2midiNoteRejectsInvalidPitches(self):
+        for pitch in ["Cb-1", "Cbb-1", "C12", "H4", "C1x4"]:
+            with self.subTest(pitch=pitch), self.assertRaises(RuntimeError):
+                ml.Helper.pitch2midiNote(pitch)
+
+    def testIsEnharmonic(self):
+        self.assertTrue(ml.Helper.isEnharmonic("E#4", "F4"))
+        self.assertTrue(ml.Helper.isEnharmonic(pitch_A="B#3", pitch_B="C4"))
+        self.assertFalse(ml.Helper.isEnharmonic("C4", "D4"))
+
+    def testSplitPitch(self):
+        self.assertEqual(ml.Helper.splitPitch("Dbb-1"), ("Dbb", "D", -1, -2.0, "bb"))
+        self.assertEqual(ml.Helper.splitPitch("E"), ("E", "E", 4, 0.0, ""))
+        self.assertEqual(ml.Helper.splitPitch(pitch="rest"), ("rest", "rest", 0, 0.0, ""))
+
+    def testPitch2numberWasRemoved(self):
+        self.assertFalse(hasattr(ml.Helper, "pitch2number"))
+
+
 if __name__ == "__main__":
     unittest.main()
