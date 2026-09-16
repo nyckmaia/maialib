@@ -280,18 +280,32 @@ TEST(isInRootPosition, clearInvalidatesCacheReflectedByNextMutation) {
     // left '_closeStack' stale (chord.cpp:36-39, before 4158b63). Since 4158b63, clear() calls
     // invalidateStackCache(), so that stale state is no longer reachable through the public
     // mutator API, and a bare 'EXPECT_FALSE(isInRootPosition())' here would only duplicate
-    // 'emptyChordReturnsFalse' above. This now pins the invariant that actually matters: after
-    // clear(), a fresh build must reflect the NEW notes, not anything left over from before the
-    // clear() (which would be a symptom of invalidateStackCache() regressing).
+    // 'emptyChordReturnsFalse' above.
+    //
+    // Re-review found that first rewrite still didn't discriminate: addNote() calls
+    // invalidateStackCache() unconditionally (chord.cpp), so the three addNote() calls further
+    // down would mask a broken clear() regardless of what clear() itself did. The assertion that
+    // actually pins clear()'s own invalidation is the one immediately below, BEFORE any further
+    // mutation runs. With the fix, clear() leaves '_isStackedInThirds' false and '_closeStack'
+    // empty, so getName() re-enters stackInThirds(), early-returns on the now-empty
+    // '_originalNotes', finds no minor/major third, and returns "". Without the fix,
+    // '_isStackedInThirds' would stay true, getName() would skip re-stacking entirely, and it
+    // would return the STALE pre-clear() name "C" instead. Confirmed by deletion: removing
+    // clear()'s invalidateStackCache() call made this exact assertion fail (returned "C" instead
+    // of ""), and restoring it made it pass again -- see the implementation report for both runs.
     Chord myChord({"C4", "E4", "G4"});
     myChord.getName();  // populate the stack cache for the 3-note chord
     myChord.clear();
+    EXPECT_EQ(myChord.getName(), "");  // pins clear()'s own invalidation, before any other mutator runs
     EXPECT_FALSE(myChord.isInRootPosition());  // empty chord; guard kept as defense in depth
 
+    // Secondary check: confirms the chord behaves correctly after further mutation. Since
+    // addNote() invalidates unconditionally on its own, this does NOT by itself prove clear()
+    // invalidated anything -- the assertion above does that.
     myChord.addNote("D4");
     myChord.addNote("F4");
     myChord.addNote("A4");
-    EXPECT_EQ(myChord.getName(), "Dm");  // must reflect the new chord, not the pre-clear cache
+    EXPECT_EQ(myChord.getName(), "Dm");  // must reflect the new chord, not any pre-clear cache
 }
 
 TEST(isInRootPosition, removeNoteToEmptyInvalidatesCacheReflectedByNextMutation) {
@@ -299,6 +313,26 @@ TEST(isInRootPosition, removeNoteToEmptyInvalidatesCacheReflectedByNextMutation)
     // clear(): removeNote() now calls invalidateStackCache() (4158b63), so the old "stale
     // _closeStack survives stackInThirds()'s empty-chord early return" scenario this test used
     // to set up is no longer reachable.
+    //
+    // Unlike clear()'s test above, this one deliberately does NOT add a getName() == "" check
+    // immediately after removeNote() -- that would crash, not fail: clear() explicitly clears
+    // '_openStack' itself (chord.cpp), but removeNote() does not (only invalidateStackCache()
+    // runs, which deliberately excludes '_openStack' -- see its own doc comment). After
+    // removeNote()-to-empty, '_openStack' is therefore stale (still the pre-removal size) while
+    // '_closeStack' is correctly emptied; isTonal()'s loop, bounded by the stale
+    // stackSize()/_openStack, then reads the now-empty '_closeStack' out of bounds. This is a
+    // real, currently-reachable, pre-existing bug (found incidentally while fixing this test,
+    // reported rather than fixed here: it is the '_originalNotes'/'_openStack' dual-
+    // representation drift this branch is explicitly not chartered to redesign). Confirmed by
+    // running this exact sequence with clear()'s invalidation both removed and restored: the
+    // crash reproduces identically either way, proving it is unrelated to clear() and would
+    // exist even with every fix on this branch applied.
+    //
+    // removeNote()'s invalidation is independently and safely pinned by
+    // chordMutation.getNameAfterRemoveNoteReflectsNewChord, which shrinks a chord from 4 notes to
+    // 3 (not to empty) and queries getName() directly afterward with no intervening mutator to
+    // mask a regression -- that path rebuilds '_openStack' via stackInThirds()'s normal (not
+    // empty-chord-early-return) path, so it does not hit this crash.
     Chord myChord({"C4", "E4", "G4"});
     myChord.getName();  // populate the stack cache for the 3-note chord
     myChord.removeNote(0);
@@ -309,7 +343,7 @@ TEST(isInRootPosition, removeNoteToEmptyInvalidatesCacheReflectedByNextMutation)
     myChord.addNote("D4");
     myChord.addNote("F4");
     myChord.addNote("A4");
-    EXPECT_EQ(myChord.getName(), "Dm");  // must reflect the new chord, not the pre-removal cache
+    EXPECT_EQ(myChord.getName(), "Dm");  // must reflect the new chord, not the stale cache
 }
 
 TEST(getOpenStackIntervals, emptyChordReturnsEmptyVector) {

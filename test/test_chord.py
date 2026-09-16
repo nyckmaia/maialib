@@ -215,22 +215,53 @@ class IsInRootPosition(unittest.TestCase):
         # left _closeStack stale. Since chord.cpp's invalidateStackCache() fix, clear() clears
         # it too, so that stale state is no longer reachable through the public API, and a bare
         # isInRootPosition()==False check here would only duplicate testEmptyChordReturnsFalse.
-        # This now pins the invariant that actually matters: after clear(), a fresh build must
-        # reflect the NEW notes, not anything left over from before the clear().
+        #
+        # Re-review found that first rewrite still didn't discriminate: addNote() calls
+        # invalidateStackCache() unconditionally, so the three addNote() calls further down
+        # would mask a broken clear() regardless of what clear() itself did. The assertion that
+        # actually pins clear()'s own invalidation is the one immediately below, BEFORE any
+        # further mutation runs: with the fix, getName() re-stacks on the now-empty chord and
+        # returns "" (no minor/major third); without it, getName() would skip re-stacking and
+        # return the STALE pre-clear() name "C" instead. Confirmed by deletion on the C++ side
+        # (see chord-test.cpp / the implementation report) that this assertion actually fails
+        # without clear()'s invalidateStackCache() call and passes with it restored.
         myChord = ml.Chord(["C4", "E4", "G4"])
         myChord.getName()  # populate the stack cache for the 3-note chord
         myChord.clear()
+        self.assertEqual(myChord.getName(), "")  # pins clear()'s own invalidation, before addNote() runs
         self.assertEqual(myChord.isInRootPosition(), False)  # empty chord; defense in depth
 
+        # Secondary check: confirms the chord behaves correctly after further mutation. Since
+        # addNote() invalidates unconditionally on its own, this does NOT by itself prove clear()
+        # invalidated anything -- the assertion above does that.
         myChord.addNote("D4")
         myChord.addNote("F4")
         myChord.addNote("A4")
-        self.assertEqual(myChord.getName(), "Dm")  # reflects the new chord, not the pre-clear cache
+        self.assertEqual(myChord.getName(), "Dm")  # reflects the new chord, not any pre-clear cache
 
     def testRemoveNoteToEmptyInvalidatesCacheReflectedByNextMutation(self):
         # Renamed and rewritten for the same reason as the test above, via removeNote() instead
         # of clear(): it now also invalidates the cache, so the old stale-_closeStack scenario
         # this test used to set up is no longer reachable.
+        #
+        # Unlike clear()'s test above, this one deliberately does NOT add a getName() == ""
+        # check immediately after removeNote() -- that crashes the interpreter process, not just
+        # fails: clear() explicitly clears _openStack itself, but removeNote() does not (only
+        # invalidateStackCache() runs, which deliberately excludes _openStack). After
+        # removeNote()-to-empty, _openStack is therefore stale (still the pre-removal size)
+        # while _closeStack is correctly emptied; isTonal()'s loop, bounded by the stale
+        # stackSize()/_openStack, then reads the now-empty _closeStack out of bounds. This is a
+        # real, currently-reachable, pre-existing bug found incidentally while fixing this test
+        # (reported, not fixed here -- it is the _originalNotes/_openStack dual-representation
+        # drift this branch is explicitly not chartered to redesign). Confirmed on the C++ side
+        # (see chord-test.cpp) that the crash reproduces identically whether or not clear()'s own
+        # invalidation is present, proving it is unrelated to clear() and exists even with every
+        # fix on this branch applied.
+        #
+        # removeNote()'s invalidation is independently and safely pinned by
+        # ChordMutationCacheInvalidation.testGetNameAfterRemoveNoteReflectsNewChord, which
+        # shrinks a chord from 4 notes to 3 (not to empty) and queries getName() directly
+        # afterward -- that path does not hit this crash.
         myChord = ml.Chord(["C4", "E4", "G4"])
         myChord.getName()  # populate the stack cache for the 3-note chord
         myChord.removeNote(0)
