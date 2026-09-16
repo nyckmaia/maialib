@@ -87,6 +87,9 @@ cd maialib
 pip install pathlib cpplint wheel mypy pybind11-stubgen
 ```
 
+For an environment pinned to this project's known-good, reproducible test versions, use
+`pip install -r requirements-dev.txt` instead — see [BUILDING.md](BUILDING.md#python-development-dependencies).
+
 **Build from source:**
 ```bash
 make

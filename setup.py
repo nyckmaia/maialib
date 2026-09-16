@@ -191,7 +191,24 @@ setup(
         "Natural Language :: English",
         "Topic :: Software Development :: Libraries"
     ],
-    install_requires=["pandas>=2.0.0", "plotly", "kaleido", "nbformat"],
+    # Floors below are chosen from what maialib/maiapy/ actually calls, not just "latest and
+    # greatest". No upper caps: pinning ceilings here would cause resolution conflicts for
+    # anything that depends on maialib. See requirements-dev.txt for a fully pinned,
+    # known-good set used to reproduce test results.
+    #   - plotly>=6.1.1: plotChordDyadsSetharesDissonanceHeatmap() (maiapy/sethares_dissonance.py)
+    #     calls px.imshow(..., text_auto=...), added in plotly 5.5.0; but kaleido (below) is
+    #     itself uncapped and will resolve to its >=1.0 architecture, which plotly's own runtime
+    #     compatibility check only supports from plotly>=6.1.1 onward (older plotly raises/warns
+    #     on fig.write_image()/to_image() against kaleido>=1.0). The tutorials call
+    #     fig.write_image() (e.g. python-tutorial/doutorado-scripts.ipynb), so this path is
+    #     genuinely exercised, not theoretical.
+    #   - kaleido>=0.2.1: 0.2.1 is the last pre-1.0 ("legacy" Chrome-bundled) release plotly's
+    #     own compatibility warning names as still-supported; flooring here avoids older, buggier
+    #     0.1.x/0.2.0 releases without forcing the newer architecture as a hard minimum.
+    #   - nbformat>=4.2.0: exact floor plotly itself enforces at runtime for notebook/mime
+    #     rendering (fig.show() in a notebook), raising "ValueError: Mime type rendering
+    #     requires nbformat>=4.2.0 but it is not installed" below that version.
+    install_requires=["pandas>=2.0.0", "plotly>=6.1.1", "kaleido>=0.2.1", "nbformat>=4.2.0"],
     python_requires=">=3.8.0",
     zip_safe=False,
     ext_modules=[CMakeExtension(name="maiacore")],

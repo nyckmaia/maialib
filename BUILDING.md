@@ -34,6 +34,19 @@ pip install mypy
 pip install pybind11-stubgen
 ```
 
+For a reproducible environment that matches the exact versions this project's test workflow is
+known to work with (runtime deps plus `setuptools`, `wheel`, `pybind11-stubgen`, `mypy`,
+`cpplint`, `ruff`), install from the pinned [`requirements-dev.txt`](requirements-dev.txt)
+instead:
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+`setup.py`'s `install_requires` only sets version floors (no upper caps, to avoid resolution
+conflicts downstream); `requirements-dev.txt` exact-pins everything so `make tests` behaves the
+same from one machine or month to the next.
+
 **Linux/macOS only:**
 ```bash
 # For pybind11_mkdoc (documentation generation)

@@ -1,0 +1,33 @@
+# Pinned, known-good Python dependency set for reproducible test/dev runs.
+#
+# setup.py's install_requires intentionally keeps floors only (no upper caps), since capping
+# a library there would cause resolution conflicts for anything that depends on maialib. This
+# file is the opposite: an exact-pinned snapshot for *this* repository's own test/dev workflow,
+# so `make tests` (and CI) behave the same today as they did when this file was verified,
+# instead of silently picking up a new upstream release that happens to break something.
+#
+# Usage:
+#   python -m venv .venv
+#   # Windows: .venv\Scripts\activate ; Linux/macOS: source .venv/bin/activate
+#   pip install -r requirements-dev.txt
+#   make dev   # only inside a brand-new clean venv, per the project's testing workflow
+#
+# Verified 2026-09-16 in a clean Python 3.12.5 venv. Re-verify and update this file (with the
+# date above) whenever the pinned set is deliberately refreshed.
+
+# Runtime dependencies (see setup.py's install_requires for the floors these must satisfy).
+# numpy is pinned too: maialib/maiapy/sethares_dissonance.py imports it directly even though
+# it is only a transitive dependency of pandas/plotly in setup.py, not a declared one.
+pandas==3.0.5
+numpy==2.5.3
+plotly==7.1.0
+kaleido==1.4.0
+nbformat==5.11.1
+
+# Build / dev tooling
+setuptools==84.0.0
+wheel==0.48.0
+pybind11-stubgen==2.5.5
+mypy==2.3.1
+cpplint==2.0.2
+ruff==0.16.8
