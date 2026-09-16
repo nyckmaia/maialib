@@ -920,7 +920,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `getMidiIntervals(firstNoteAsReference: bool = False) -> list[int]`
 - `getMidiValueStd() -> float`
 - `getName() -> str`
-- `getNote(noteIndex: int) -> Note`  *(overloaded)*
+- `getNote(noteIndex: int) -> Note`
 - `getNotes() -> list[Note]`
 - `getOpenStackChord(enharmonyNotes: bool = False) -> Chord`
 - `getOpenStackIntervals(firstNoteAsReference: bool = False) -> list[Interval]`
