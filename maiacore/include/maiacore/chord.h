@@ -251,19 +251,26 @@ class Chord {
 
     /**
      * @brief Remove the top (last) note from the chord.
+     * @throws std::runtime_error if the chord is empty.
      */
     void removeTopNote();
 
     /**
      * @brief Insert a note at a specific position in the chord.
      * @param insertNote The note to insert.
-     * @param positionNote The index at which to insert the note.
+     * @param positionNote The index at which to insert the note, in `0 .. size()` inclusive.
+     *        `positionNote == size()` is valid and appends the note at the end, matching
+     *        `std::vector::insert()`'s own valid range.
+     * @throws std::runtime_error if `positionNote` is negative or greater than `size()`.
      */
     void insertNote(Note& insertNote, int positionNote = 0);
 
     /**
      * @brief Remove a note at a specific index from the chord.
-     * @param noteIndex Index of the note to remove.
+     * @param noteIndex Index of the note to remove, in `0 .. size() - 1`. Unlike `insertNote()`,
+     *        `noteIndex == size()` is out of range here: there is no note to remove there.
+     * @throws std::runtime_error if `noteIndex` is negative or `>= size()` (e.g. on an empty
+     *         chord).
      */
     void removeNote(int noteIndex);
 
