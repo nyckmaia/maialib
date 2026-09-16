@@ -186,3 +186,11 @@ EXPECT_EQ(myChord02.isInRootPosition(), true);
 Chord myChord03({"F4", "C4", "Bb4"});
 EXPECT_EQ(myChord03.isInRootPosition(), false);
 }
+
+TEST(transpose, throwsWhenPastTopOfSupportedRange) {
+// B11 is MIDI 155 (natural); the highest spellable MIDI is 157 (Bx11), and no natural
+// spelling exists at MIDI 157, so transposing this chord by 2 semitones must throw
+const std::vector<std::string> pitches = {"C4", "B11"};
+Chord myChord(pitches);
+EXPECT_THROW(myChord.transpose(2), std::runtime_error);
+}

@@ -310,6 +310,8 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnhamonicPitch) const
     Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
 
     const int midiNumber = Helper::pitch2midiNote(pitch);
+    // SP2: alterValue is integral today because splitPitch rejects quarter-tone symbols;
+    // widening c_alterSymbol must replace this truncation.
     const int ownAlter = static_cast<int>(alterValue);
 
     // Other spellings of the same MIDI number, indexed by 'alter + 2' (empty if unavailable)

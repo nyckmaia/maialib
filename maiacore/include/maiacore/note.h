@@ -77,6 +77,8 @@ class Note {
      * @param transposeDiatonic Diatonic transposition interval.
      * @param transposeChromatic Chromatic transposition interval.
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
+     * @throws std::runtime_error If the MIDI number cannot be spelled with accType within
+     *         octaves -1..11.
      */
     explicit Note(const int midiNumber, const std::string& accType = "",
                   const RhythmFigure rhythmFigure = RhythmFigure::QUARTER, bool isNoteOn = true,

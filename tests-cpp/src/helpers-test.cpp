@@ -407,8 +407,41 @@ EXPECT_EQ(Helper::pitch2midiNote(""), -1);
 
 TEST(PitchSpelling, RejectedEdgeCases) {
 for (const std::string pitch :
-     {"Cb-1", "Cbb-1", "C12", "C#123", "H4", "C#4x", "C-", "C--1", "C-2", "C1x4"}) {
+     {"Cb-1", "Cbb-1", "C12", "C#123", "H4", "C#4x", "C-", "C--1", "C-2", "C1x4", "C1234"}) {
     EXPECT_THROW(Helper::pitch2midiNote(pitch), std::runtime_error) << "pitch: " << pitch;
+}
+
+// Pin the exact Helper::splitPitch error message for one representative pitch per failure mode
+try {
+    Helper::pitch2midiNote("H4");
+    FAIL() << "Expected std::runtime_error for pitch: H4";
+} catch (const std::runtime_error& e) {
+    EXPECT_NE(std::string::npos, std::string(e.what()).find("Unknown diatonic pitch"))
+        << "message: " << e.what();
+}
+
+try {
+    Helper::pitch2midiNote("C12");
+    FAIL() << "Expected std::runtime_error for pitch: C12";
+} catch (const std::runtime_error& e) {
+    EXPECT_NE(std::string::npos, std::string(e.what()).find("Invalid octave value"))
+        << "message: " << e.what();
+}
+
+try {
+    Helper::pitch2midiNote("C-");
+    FAIL() << "Expected std::runtime_error for pitch: C-";
+} catch (const std::runtime_error& e) {
+    EXPECT_NE(std::string::npos, std::string(e.what()).find("Unknown alter symbol"))
+        << "message: " << e.what();
+}
+
+try {
+    Helper::pitch2midiNote("Cb-1");
+    FAIL() << "Expected std::runtime_error for pitch: Cb-1";
+} catch (const std::runtime_error& e) {
+    EXPECT_NE(std::string::npos, std::string(e.what()).find("is below MIDI note 0"))
+        << "message: " << e.what();
 }
 }
 
