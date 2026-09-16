@@ -199,6 +199,7 @@ Verified against the existing switch: 0 mismatches over 385 cases.
 | `Note("Cbb0")`, `Note("Cb0")`, `Note("Bx9")` | throws | MIDI 10, 11, 133 |
 | Spellings in octaves -1, 10, 11 (e.g. `Note("C-1")`, `Note("E10")`, `Note("Bx11")`) | throws (except `C10`, `B#9`, `Db10`) | accepted (MIDI 0, 136, 157) |
 | `Note(5)` | throws | `F-1` |
+| `Note(157, "x")` | throws (`Note(int)` rejected MIDI > 127) | `Bx11`; the removed guard is replaced by `midiNote2pitch`'s octave range check |
 | `pitch2midiNote("Db10")` | 132 | 133 |
 | `pitch2midiNote("C-1")` | -1 (treated as rest) | 0 |
 | `pitch2midiNote("rest")` | throws | -1 |
