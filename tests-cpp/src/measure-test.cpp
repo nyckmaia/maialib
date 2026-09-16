@@ -577,6 +577,50 @@ TEST(MeasureNoteRetrieval, GetNoteOff) {
     EXPECT_FALSE(measure.getNoteOff(1, 0).isNoteOn());
 }
 
+TEST(MeasureNoteRetrieval, GetNoteOnThrowsOnNegativeStaveId) {
+    Measure measure;
+    measure.addNote(Note("C4"), 0);
+
+    EXPECT_THROW(measure.getNoteOn(0, -1), std::out_of_range);
+}
+
+TEST(MeasureNoteRetrieval, GetNoteOnThrowsOnStaveIdOutOfRange) {
+    Measure measure;
+    measure.addNote(Note("C4"), 0);
+
+    EXPECT_THROW(measure.getNoteOn(0, 1), std::out_of_range);
+}
+
+TEST(MeasureNoteRetrieval, GetNoteOnConstOverloadThrowsOnNegativeStaveId) {
+    Measure measure;
+    measure.addNote(Note("C4"), 0);
+    const Measure& constMeasure = measure;
+
+    EXPECT_THROW(constMeasure.getNoteOn(0, -1), std::out_of_range);
+}
+
+TEST(MeasureNoteRetrieval, GetNoteOffThrowsOnNegativeStaveId) {
+    Measure measure;
+    measure.addNote(Note(-1), 0);  // Rest
+
+    EXPECT_THROW(measure.getNoteOff(0, -1), std::out_of_range);
+}
+
+TEST(MeasureNoteRetrieval, GetNoteOffThrowsOnStaveIdOutOfRange) {
+    Measure measure;
+    measure.addNote(Note(-1), 0);  // Rest
+
+    EXPECT_THROW(measure.getNoteOff(0, 1), std::out_of_range);
+}
+
+TEST(MeasureNoteRetrieval, GetNoteOffConstOverloadThrowsOnNegativeStaveId) {
+    Measure measure;
+    measure.addNote(Note(-1), 0);  // Rest
+    const Measure& constMeasure = measure;
+
+    EXPECT_THROW(constMeasure.getNoteOff(0, -1), std::out_of_range);
+}
+
 TEST(MeasureNoteRetrieval, GetNoteThrowsOnNegativeIndex) {
     Measure measure;
     measure.addNote(Note("C4"), 0);
@@ -738,6 +782,27 @@ TEST(MeasureNoteCounting, GetNumNotesOffSpecificStave) {
 
     EXPECT_EQ(measure.getNumNotesOff(0), 2);
     EXPECT_EQ(measure.getNumNotesOff(1), 0);
+}
+
+TEST(MeasureNoteCounting, GetNumNotesThrowsOnNegativeStaveId) {
+    Measure measure;
+    measure.addNote(Note("C4"), 0);
+
+    EXPECT_THROW(measure.getNumNotes(-1), std::out_of_range);
+}
+
+TEST(MeasureNoteCounting, GetNumNotesOnThrowsOnNegativeStaveId) {
+    Measure measure;
+    measure.addNote(Note("C4"), 0);
+
+    EXPECT_THROW(measure.getNumNotesOn(-1), std::out_of_range);
+}
+
+TEST(MeasureNoteCounting, GetNumNotesOffThrowsOnNegativeStaveId) {
+    Measure measure;
+    measure.addNote(Note(-1), 0);  // Rest
+
+    EXPECT_THROW(measure.getNumNotesOff(-1), std::out_of_range);
 }
 
 TEST(MeasureNoteCounting, AllNotesAreRests) {

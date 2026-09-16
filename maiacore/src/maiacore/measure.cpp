@@ -287,6 +287,10 @@ Note& Measure::getNote(const int noteId, const int staveId) {
 }
 
 const Note& Measure::getNoteOn(const int noteOnId, const int staveId) const {
+    if (staveId < 0 || staveId >= static_cast<int>(_note.size())) {
+        throw std::out_of_range("Out of Range error");
+    }
+
     auto& stave = _note[staveId];
 
     const int numNotes = getNumNotes(staveId);
@@ -316,6 +320,10 @@ const Note& Measure::getNoteOn(const int noteOnId, const int staveId) const {
 }
 
 Note& Measure::getNoteOn(const int noteOnId, const int staveId) {
+    if (staveId < 0 || staveId >= static_cast<int>(_note.size())) {
+        throw std::out_of_range("Out of Range error");
+    }
+
     auto& stave = _note[staveId];
 
     const int numNotes = getNumNotes(staveId);
@@ -350,6 +358,10 @@ Note& Measure::getNoteOn(const int noteOnId, const int staveId) {
 }
 
 const Note& Measure::getNoteOff(const int noteOffId, const int staveId) const {
+    if (staveId < 0 || staveId >= static_cast<int>(_note.size())) {
+        throw std::out_of_range("Out of Range error");
+    }
+
     auto& stave = _note[staveId];
 
     const int numNotes = getNumNotes(staveId);
@@ -379,6 +391,10 @@ const Note& Measure::getNoteOff(const int noteOffId, const int staveId) const {
 }
 
 Note& Measure::getNoteOff(const int noteOffId, const int staveId) {
+    if (staveId < 0 || staveId >= static_cast<int>(_note.size())) {
+        throw std::out_of_range("Out of Range error");
+    }
+
     auto& stave = _note[staveId];
 
     const int numNotes = getNumNotes(staveId);
@@ -429,7 +445,7 @@ int Measure::getNumNotesOn() const {
 int Measure::getNumNotesOn(const int staveId) const {
     const int staveSize = static_cast<int>(_note.size());
 
-    if (staveId > staveSize - 1) {
+    if (staveId < 0 || staveId > staveSize - 1) {
         throw std::out_of_range("Out of Range error");
     }
 
@@ -462,7 +478,7 @@ int Measure::getNumNotesOff() const {
 int Measure::getNumNotesOff(const int staveId) const {
     const int staveSize = static_cast<int>(_note.size());
 
-    if (staveId > staveSize - 1) {
+    if (staveId < 0 || staveId > staveSize - 1) {
         throw std::out_of_range("Out of Range error");
     }
 
@@ -491,7 +507,7 @@ int Measure::getNumNotes() const {
 int Measure::getNumNotes(const int staveId) const {
     const int staveSize = static_cast<int>(_note.size());
 
-    if (staveId > staveSize - 1) {
+    if (staveId < 0 || staveId > staveSize - 1) {
         throw std::out_of_range("Out of Range error");
     }
 

@@ -233,6 +233,36 @@ class MeasureNotesTestCase(unittest.TestCase):
         self.assertIsInstance(num_off, int)
         self.assertGreaterEqual(num_off, 0)
 
+    def test_get_note_on_negative_stave_id_raises(self):
+        """Test that a negative staveId to getNoteOn raises instead of crashing"""
+        self.measure.addNote("C4")
+        with self.assertRaises(IndexError):
+            self.measure.getNoteOn(0, -1)
+
+    def test_get_note_off_negative_stave_id_raises(self):
+        """Test that a negative staveId to getNoteOff raises instead of crashing"""
+        self.measure.addNote(ml.Note("C4", isNoteOn=False))  # Rest
+        with self.assertRaises(IndexError):
+            self.measure.getNoteOff(0, -1)
+
+    def test_get_num_notes_negative_stave_id_raises(self):
+        """Test that a negative staveId to getNumNotes raises instead of crashing"""
+        self.measure.addNote("C4")
+        with self.assertRaises(IndexError):
+            self.measure.getNumNotes(-1)
+
+    def test_get_num_notes_on_negative_stave_id_raises(self):
+        """Test that a negative staveId to getNumNotesOn raises instead of crashing"""
+        self.measure.addNote("C4")
+        with self.assertRaises(IndexError):
+            self.measure.getNumNotesOn(-1)
+
+    def test_get_num_notes_off_negative_stave_id_raises(self):
+        """Test that a negative staveId to getNumNotesOff raises instead of crashing"""
+        self.measure.addNote(ml.Note("C4", isNoteOn=False))  # Rest
+        with self.assertRaises(IndexError):
+            self.measure.getNumNotesOff(-1)
+
 
 class MeasureDurationTestCase(unittest.TestCase):
     """Tests for Measure duration calculations"""
