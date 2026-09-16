@@ -106,7 +106,27 @@ void MeasureClass(const py::module& m) {
     cls.def("isMajorKeyMode", &Measure::isMajorKeyMode);
 
     cls.def("getNote", py::overload_cast<const int, const int>(&Measure::getNote),
-            py::arg("noteId"), py::arg("staveId") = 0);
+            py::arg("noteId"), py::arg("staveId") = 0,
+            R"pbdoc(
+        Get the note at a given index on a given stave.
+
+        Parameters
+        ----------
+        noteId : int
+            Index of the note within the stave, in ``0 .. getNumNotes(staveId) - 1``.
+        staveId : int, optional
+            Stave index (default: 0).
+
+        Returns
+        -------
+        Note
+            The note at ``noteId`` on ``staveId``.
+
+        Raises
+        ------
+        IndexError
+            If ``staveId`` or ``noteId`` is negative or out of range (e.g. on an empty stave).
+    )pbdoc");
     cls.def("getNote", py::overload_cast<const int, const int>(&Measure::getNote, py::const_),
             py::arg("noteId"), py::arg("staveId") = 0, py::return_value_policy::reference_internal);
 

@@ -52,7 +52,21 @@ void ChordClass(const py::module& m) {
     //     cls.def("setDurationTicks", &Chord::setDurationTicks, py::arg("durationTicks"),
     //             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("toInversion", &Chord::toInversion, py::arg("inversionNumber"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Invert the chord by moving the lowest note up an octave, repeated ``inversionNumber``
+        times.
+
+        Parameters
+        ----------
+        inversionNumber : int
+            Number of inversions to perform.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord is empty.
+    )pbdoc");
     cls.def("transpose", &Chord::transpose, py::arg("semiTonesNumber"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("transposeStackOnly", &Chord::transposeStackOnly, py::arg("semiTonesNumber"),
@@ -161,14 +175,50 @@ void ChordClass(const py::module& m) {
     cls.def("getDuration", &Chord::getDuration);
 
     cls.def("getDurationTicks", &Chord::getDurationTicks);
-    cls.def("getNote", py::overload_cast<int>(&Chord::getNote), py::arg("noteIndex"));
+    cls.def("getNote", py::overload_cast<int>(&Chord::getNote), py::arg("noteIndex"),
+            R"pbdoc(
+        Get the note at a given index.
+
+        Parameters
+        ----------
+        noteIndex : int
+            Index of the note, in ``0 .. size() - 1``.
+
+        Returns
+        -------
+        Note
+            The note at ``noteIndex``.
+
+        Raises
+        ------
+        RuntimeError
+            If ``noteIndex`` is negative or out of range (e.g. on an empty chord).
+    )pbdoc");
     cls.def("getNote", py::overload_cast<int>(&Chord::getNote), py::arg("noteIndex"),
             py::return_value_policy::reference_internal);
 
     cls.def("getRoot", &Chord::getRoot,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getName", &Chord::getName,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Get the chord's tonal name (e.g. ``"Cm7"``, ``"G7"``), computing the stacked-in-thirds
+        representation first if needed.
+
+        Returns
+        -------
+        str
+            The chord name, or an empty string if the chord isn't tonal.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord has exactly 8 distinct pitch classes: no enharmonic respelling can give
+            all 8 notes distinct letters (only 7 exist, A-G), so no stacked-in-thirds
+            representation can be computed. This applies to every method that triggers the
+            stacked-in-thirds computation (e.g. ``isDyad``, ``stackSize``, the ``have*`` family),
+            not only ``getName``.
+    )pbdoc");
     cls.def("getBassNote", &Chord::getBassNote);
     cls.def("getNotes", &Chord::getNotes);
 
@@ -290,22 +340,57 @@ void ChordClass(const py::module& m) {
 
     cls.def("isSorted", &Chord::isSorted);
     cls.def("isTonal", &Chord::isTonal, py::arg("model") = nullptr);
-    cls.def("isInRootPosition", &Chord::isInRootPosition);
+    cls.def("isInRootPosition", &Chord::isInRootPosition,
+            R"pbdoc(
+        Check whether the chord's close-stacked root matches its lowest sounding note.
+
+        Returns
+        -------
+        bool
+            ``True`` if the chord is in root position, ``False`` otherwise -- including for an
+            empty chord, which cannot be in root position.
+    )pbdoc");
 
     cls.def("getMidiIntervals", &Chord::getMidiIntervals, py::arg("firstNoteAsReference") = false);
     cls.def("getIntervals", &Chord::getIntervals, py::arg("firstNoteAsReference") = false);
     cls.def("getIntervalsFromOriginalSortedNotes", &Chord::getIntervalsFromOriginalSortedNotes);
 
     cls.def("getOpenStackIntervals", &Chord::getOpenStackIntervals,
-            py::arg("firstNoteAsReference") = false);
+            py::arg("firstNoteAsReference") = false,
+            R"pbdoc(
+        Get the intervals between consecutive notes of the open (stacked-in-thirds) chord.
+
+        Returns
+        -------
+        list[Interval]
+            One interval per adjacent pair in the open stack, or an empty list if the chord has
+            fewer than 2 notes in its open stack (including an empty chord).
+    )pbdoc");
     cls.def("getCloseStackIntervals", &Chord::getCloseStackIntervals,
-            py::arg("firstNoteAsReference") = false);
+            py::arg("firstNoteAsReference") = false,
+            R"pbdoc(
+        Get the intervals between consecutive notes of the close (stacked-in-thirds) chord.
+
+        Returns
+        -------
+        list[Interval]
+            One interval per adjacent pair in the close stack, or an empty list if the chord has
+            fewer than 2 notes in its close stack (including an empty chord).
+    )pbdoc");
     cls.def("getQuarterDuration", &Chord::getQuarterDuration);
 
     cls.def("size", &Chord::size);
     cls.def("stackSize", &Chord::stackSize);
     cls.def("info", &Chord::info,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Print the chord's name, size, note list and stacked-in-thirds data to stdout.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord (or its stacked-in-thirds representation) is empty.
+    )pbdoc");
 
     cls.def("print", &Chord::print,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
@@ -323,7 +408,16 @@ void ChordClass(const py::module& m) {
 
     cls.def("sortNotes", &Chord::sortNotes);
 
-    cls.def("toCents", &Chord::toCents);
+    cls.def("toCents", &Chord::toCents,
+            R"pbdoc(
+        Get the interval, in cents, between each pair of consecutive notes.
+
+        Returns
+        -------
+        list[int]
+            One value per adjacent note pair, or an empty list if the chord has fewer than 2
+            notes (including an empty chord).
+    )pbdoc");
 
     cls.def("getDegree", &Chord::getDegree, py::arg("key"), py::arg("enharmonyNotes") = false);
     cls.def("getRomanDegree", &Chord::getRomanDegree, py::arg("key"),

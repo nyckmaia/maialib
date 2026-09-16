@@ -64,12 +64,58 @@ void PartClass(const py::module& m) {
     cls.def(
         "append",
         py::overload_cast<const std::variant<Note, Chord>&, const int, const int>(&Part::append),
-        py::arg("obj"), py::arg("position") = -1, py::arg("staveId") = 0);
+        py::arg("obj"), py::arg("position") = -1, py::arg("staveId") = 0,
+        R"pbdoc(
+        Append a Note or Chord to the part at a given position and staff.
+
+        If ``obj`` doesn't fit in the current measure's remaining space, it is split into a tied
+        pair: the first part fills the rest of the current measure and the second part is placed
+        at the start of the next measure.
+
+        Parameters
+        ----------
+        obj : Note or Chord
+            The note or chord to append.
+        position : int, optional
+            Position in the measure (default: -1, meaning append to the end).
+        staveId : int, optional
+            Stave index (default: 0).
+
+        Raises
+        ------
+        RuntimeError
+            If ``obj`` overflows the last measure of the part (there is no following measure to
+            hold the tied remainder). The part is left unchanged when this happens -- no partial
+            write occurs. Add another measure (``addMeasure()``) before appending an object that
+            overflows the current last measure.
+    )pbdoc");
 
     cls.def("append",
             py::overload_cast<const std::vector<std::variant<Note, Chord>>&, const int, const int>(
                 &Part::append),
-            py::arg("objs"), py::arg("position") = -1, py::arg("staveId") = 0);
+            py::arg("objs"), py::arg("position") = -1, py::arg("staveId") = 0,
+            R"pbdoc(
+        Append multiple Note/Chord objects to the part at a given position and staff.
+
+        Calls ``append()`` once per element of ``objs``; see its docstring for the splitting and
+        failure behavior applied to each element.
+
+        Parameters
+        ----------
+        objs : list[Note or Chord]
+            The notes/chords to append, in order.
+        position : int, optional
+            Position in the measure (default: -1, meaning append to the end).
+        staveId : int, optional
+            Stave index (default: 0).
+
+        Raises
+        ------
+        RuntimeError
+            If any element overflows the last measure of the part. Elements appended before the
+            failing one remain in the part -- this is not an all-or-nothing operation across the
+            list, only within each individual append.
+    )pbdoc");
 
     cls.def("toXML", &Part::toXML, py::arg("instrumentId") = 1, py::arg("identSize") = 2);
     cls.def("toJSON", &Part::toJSON);
