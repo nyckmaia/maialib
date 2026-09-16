@@ -1,7 +1,8 @@
-import sys
-import os
-from shutil import rmtree
 import glob
+import os
+import sys
+from shutil import rmtree
+
 from terminal_colors import *
 
 numArgs = len(sys.argv)

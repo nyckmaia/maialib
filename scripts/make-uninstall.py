@@ -1,6 +1,7 @@
 import os
 import platform
 from shutil import rmtree
+
 from terminal_colors import *
 
 
@@ -22,7 +23,7 @@ if isMaialibInstalled == True:
     myOS = platform.system()
 
     # Uninstall directory in the Python 'site-packages' folder
-    os.system(f"pip uninstall --yes maialib")
+    os.system("pip uninstall --yes maialib")
 
     distDir = "dist"
 

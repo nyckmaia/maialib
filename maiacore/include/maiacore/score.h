@@ -17,29 +17,31 @@
 
 /**
  * @brief Represents a complete musical score, including metadata, parts, measures, and notes.
- * 
- * The Score class provides methods for creating, loading, editing, analyzing, and exporting musical scores.
- * It supports MusicXML import/export, part and measure management, note access, metadata handling, and advanced
- * musicological analysis such as melodic pattern search and chord extraction.
+ *
+ * The Score class provides methods for creating, loading, editing, analyzing, and exporting musical
+ * scores. It supports MusicXML import/export, part and measure management, note access, metadata
+ * handling, and advanced musicological analysis such as melodic pattern search and chord
+ * extraction.
  */
 class Score {
    private:
-    std::string _title; ///< Title of the score.
-    std::string _composerName; ///< Composer's name.
-    std::vector<Part> _part; ///< List of parts (instruments/voices).
-    std::string _filePath; ///< Path to the loaded MusicXML file.
-    std::string _fileName; ///< Name of the loaded MusicXML file.
+    std::string _title;         ///< Title of the score.
+    std::string _composerName;  ///< Composer's name.
+    std::vector<Part> _part;    ///< List of parts (instruments/voices).
+    std::string _filePath;      ///< Path to the loaded MusicXML file.
+    std::string _fileName;      ///< Name of the loaded MusicXML file.
 
-    pugi::xml_document _doc; ///< Internal XML document representation.
-    int _numParts; ///< Number of parts in the score.
-    int _numMeasures; ///< Number of measures in the score.
-    int _numNotes; ///< Number of notes in the score.
-    bool _isValidXML; ///< True if the XML was loaded and parsed successfully.
-    bool _haveTypeTag; ///< True if the MusicXML contains <type> tags for notes.
-    bool _isLoadedXML; ///< True if the score was loaded from a file.
-    std::vector<Chord> _stackedChords; ///< Cached vertical chords.
-    int _lcmDivisionsPerQuarterNote; ///< Least common multiple of all 'divisions' tags in the XML file.
-    bool _haveAnacrusisMeasure; ///< True if the score contains an anacrusis (pickup) measure.
+    pugi::xml_document _doc;            ///< Internal XML document representation.
+    int _numParts;                      ///< Number of parts in the score.
+    int _numMeasures;                   ///< Number of measures in the score.
+    int _numNotes;                      ///< Number of notes in the score.
+    bool _isValidXML;                   ///< True if the XML was loaded and parsed successfully.
+    bool _haveTypeTag;                  ///< True if the MusicXML contains <type> tags for notes.
+    bool _isLoadedXML;                  ///< True if the score was loaded from a file.
+    std::vector<Chord> _stackedChords;  ///< Cached vertical chords.
+    int _lcmDivisionsPerQuarterNote;  ///< Least common multiple of all 'divisions' tags in the XML
+                                      ///< file.
+    bool _haveAnacrusisMeasure;       ///< True if the score contains an anacrusis (pickup) measure.
 
     /**
      * @brief Internal structure to represent a note event in the score.
@@ -53,16 +55,18 @@ class Score {
         const Note* notePtr;
     };
 
-    mutable std::vector<NoteEvent> _cachedNoteEvents; ///< Cache for note events.
-    mutable bool _isNoteEventsCached = false; ///< True if note events cache is filled.
+    mutable std::vector<NoteEvent> _cachedNoteEvents;  ///< Cache for note events.
+    mutable bool _isNoteEventsCached = false;          ///< True if note events cache is filled.
     /**
      * @brief Collects all note events in the score for fast access and analysis.
      * @return Vector of NoteEvent structures.
      */
     std::vector<NoteEvent> collectNoteEvents() const;
 
-    mutable std::vector<std::vector<NoteEvent>> _cachedNoteEventsPerPart; ///< Cache for note events per part.
-    mutable bool _isNoteEventsPerPartCached = false; ///< True if per-part note events cache is filled.
+    mutable std::vector<std::vector<NoteEvent>>
+        _cachedNoteEventsPerPart;  ///< Cache for note events per part.
+    mutable bool _isNoteEventsPerPartCached =
+        false;  ///< True if per-part note events cache is filled.
     /**
      * @brief Collects note events grouped by part.
      * @return Vector of vectors of NoteEvent, one vector per part.
@@ -71,7 +75,8 @@ class Score {
 
     /**
      * @brief Removes duplicate melodic patterns from a vector of patterns.
-     * @details Compares patterns by MIDI pitch and duration differences, keeping only unique patterns.
+     * @details Compares patterns by MIDI pitch and duration differences, keeping only unique
+     * patterns.
      * @param patterns Pointer to the vector of note patterns to be filtered.
      */
     void removeDuplicatePatterns(std::vector<std::vector<Note>>* patterns) const;
@@ -94,7 +99,8 @@ class Score {
 
     /**
      * @brief Loads a MusicXML file (*.xml, *.musicxml, *.mxl) into the Score object.
-     * @details Parses the XML, extracts metadata, parts, measures, and notes, and fills internal structures.
+     * @details Parses the XML, extracts metadata, parts, measures, and notes, and fills internal
+     * structures.
      * @param filePath Path to the MusicXML file (absolute or relative).
      */
     void loadXMLFile(const std::string& filePath);
@@ -110,14 +116,16 @@ class Score {
 
    public:
     /**
-     * @brief Constructs a new blank Score object with specified part names and initial measure count.
+     * @brief Constructs a new blank Score object with specified part names and initial measure
+     * count.
      * @param partsName List of instrument/part names.
      * @param numMeasures Initial number of measures (default: 20).
      */
     explicit Score(const std::initializer_list<std::string>& partsName, const int numMeasures = 20);
 
     /**
-     * @brief Constructs a new blank Score object with specified part names and initial measure count.
+     * @brief Constructs a new blank Score object with specified part names and initial measure
+     * count.
      * @param partsName Vector of instrument/part names.
      * @param numMeasures Initial number of measures (default: 20).
      */
@@ -242,7 +250,8 @@ class Score {
      * @param isMajorMode True for major, false for minor.
      * @param measureId Measure index (default: 0).
      */
-    void setKeySignature(const int fifthCicle, const bool isMajorMode = true, const int measureId = 0);
+    void setKeySignature(const int fifthCicle, const bool isMajorMode = true,
+                         const int measureId = 0);
 
     /**
      * @brief Sets the key signature using the key name (e.g., "C", "Gm").
@@ -266,7 +275,8 @@ class Score {
      * @param duration Rhythm figure associated with the BPM (default: QUARTER).
      * @param measureStart Starting measure (default: 0).
      */
-    void setMetronomeMark(int bpm, const RhythmFigure duration = RhythmFigure::QUARTER, int measureStart = 0);
+    void setMetronomeMark(int bpm, const RhythmFigure duration = RhythmFigure::QUARTER,
+                          int measureStart = 0);
 
     /**
      * @brief Exports the score to MusicXML format.
@@ -293,7 +303,8 @@ class Score {
 
     /**
      * @brief Prints summary information about the score to the log.
-     * @details Includes title, composer, key, time signature, note count, measure count, and part names.
+     * @details Includes title, composer, key, time signature, note count, measure count, and part
+     * names.
      */
     void info() const;
 
@@ -435,29 +446,34 @@ class Score {
 
     /**
      * @brief Analyzes instrumental fragmentation patterns across the score timeline.
-     * @param config JSON configuration object specifying analysis parameters (parts, measures, etc).
+     * @param config JSON configuration object specifying analysis parameters (parts, measures,
+     * etc).
      * @return JSON structure with activation, fragmentation, and execution metrics per instrument.
      * @details Performs temporal analysis of instrumental activity distribution, quantifying how
      *          melodic lines are fragmented across different instruments over time. This analysis
-     *          is essential for orchestration studies, texture evolution tracking, and compositional
-     *          strategy research.
+     *          is essential for orchestration studies, texture evolution tracking, and
+     * compositional strategy research.
      *
      *          **Fragmentation Metrics Computed**:
-     *          1. **Activation Lines**: Temporal intervals where each instrument is active (sounding notes)
+     *          1. **Activation Lines**: Temporal intervals where each instrument is active
+     * (sounding notes)
      *          2. **Fragmentation Patterns**: Transitions of melodic material between instruments
      *             (e.g., melody alternating between violin and flute—klangfarbenmelodie analysis)
      *          3. **Execution Density**: Proportion of time each instrument participates in texture
      *
      *          **Analysis Categories**:
      *          - **Continuous Execution**: Sustained melodic lines without rests (legato passages)
-     *          - **Fragmented Execution**: Interrupted melodic lines with rests (staccato, pointillism)
-     *          - **Hand-off Patterns**: Melodic continuation across instrument changes (orchestral dialogue)
+     *          - **Fragmented Execution**: Interrupted melodic lines with rests (staccato,
+     * pointillism)
+     *          - **Hand-off Patterns**: Melodic continuation across instrument changes (orchestral
+     * dialogue)
      *          - **Tutti vs. Solo Distributions**: Ensemble density fluctuations
      *
      *          **Configuration Parameters** (config JSON):
      *          - `partNames` (list): Restrict analysis to specific instrumental parts
      *          - `measureStart`, `measureEnd` (int): Define temporal analysis window
-     *          - `timeResolution` (float): Granularity for temporal slicing (e.g., 0.25 = sixteenth note)
+     *          - `timeResolution` (float): Granularity for temporal slicing (e.g., 0.25 = sixteenth
+     * note)
      *
      *          **Return JSON Structure**:
      *          \code{.json}
@@ -482,7 +498,8 @@ class Score {
      *          - Orchestration analysis (instrument usage patterns in Mahler, Ravel, Stravinsky)
      *          - Klangfarbenmelodie detection (Schoenberg, Webern timbral melody techniques)
      *          - Texture evolution studies (gradual thickening/thinning of orchestral fabric)
-     *          - Compositional fingerprinting (characteristic orchestration strategies per composer)
+     *          - Compositional fingerprinting (characteristic orchestration strategies per
+     * composer)
      *          - Performance part difficulty assessment (rest distribution, endurance requirements)
      *
      * @note This function is computationally intensive for large orchestral scores.
@@ -567,10 +584,12 @@ class Score {
 
     /**
      * @brief Table row type for melodic pattern search results.
-     * @details Contains part name, measure, stave, key, transposition, interval/rhythm differences, and similarity scores.
+     * @details Contains part name, measure, stave, key, transposition, interval/rhythm differences,
+     * and similarity scores.
      */
-    typedef std::tuple<std::string, int, int, std::string, std::string, std::vector<std::string>, std::vector<float>, std::vector<float>,
-                       float, float, float> MelodyPatternRow;
+    typedef std::tuple<std::string, int, int, std::string, std::string, std::vector<std::string>,
+                       std::vector<float>, std::vector<float>, float, float, float>
+        MelodyPatternRow;
     /**
      * @brief Table type for melodic pattern search results.
      */
@@ -587,10 +606,10 @@ class Score {
      * @param totalRhythmSimilarityCallback Function to aggregate rhythm similarity.
      * @param totalSimilarityCallback Function to combine total similarities.
      * @return Table of results with detailed information about found patterns.
-     * @details Performs comprehensive melodic pattern matching across all parts and measures of the score,
-     *          supporting flexible similarity metrics for both intervallic contour and rhythmic structure.
-     *          This function enables motivic analysis, thematic transformation studies, and computational
-     *          detection of melodic recurrence.
+     * @details Performs comprehensive melodic pattern matching across all parts and measures of the
+     * score, supporting flexible similarity metrics for both intervallic contour and rhythmic
+     * structure. This function enables motivic analysis, thematic transformation studies, and
+     * computational detection of melodic recurrence.
      *
      *          **Pattern Matching Process**:
      *          1. Sliding window search across all melodic sequences in the score
@@ -624,8 +643,8 @@ class Score {
      *          - Plagiarism detection (melodic borrowing, paraphrase identification)
      *          - Style analysis (characteristic melodic gestures across composers/periods)
      *
-     * @note Computational complexity is O(n × m) where n = total notes in score, m = pattern length.
-     *       For large scores, consider restricting search to specific parts or measure ranges.
+     * @note Computational complexity is O(n × m) where n = total notes in score, m = pattern
+     * length. For large scores, consider restricting search to specific parts or measure ranges.
      */
     MelodyPatternTable findMelodyPattern(
         const std::vector<Note>& melodyPattern, const float totalIntervalsSimilarityThreshold = 0.5,
@@ -641,7 +660,8 @@ class Score {
         const std::function<float(float, float)> totalSimilarityCallback = nullptr) const;
 
     /**
-     * @brief Searches for multiple melodic patterns in the score, returning a table for each pattern.
+     * @brief Searches for multiple melodic patterns in the score, returning a table for each
+     * pattern.
      * @details Allows parallel analysis of several patterns, useful for comparative research.
      * @param melodyPatterns Vector of melodic patterns.
      * @param totalIntervalsSimilarityThreshold Minimum interval similarity threshold.
@@ -654,7 +674,8 @@ class Score {
      * @return Vector of result tables, one for each pattern.
      */
     std::vector<MelodyPatternTable> findMelodyPattern(
-        const std::vector<std::vector<Note>>& melodyPatterns, const float totalIntervalsSimilarityThreshold = 0.5,
+        const std::vector<std::vector<Note>>& melodyPatterns,
+        const float totalIntervalsSimilarityThreshold = 0.5,
         const float totalRhythmSimilarityThreshold = 0.5,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
             intervalsSimilarityCallback = nullptr,
@@ -679,8 +700,8 @@ class Score {
      * @param totalSimilarityCallback Function to combine total similarities.
      * @return Vector of result tables for each found pattern.
      */
-    std::vector<MelodyPatternTable> findAnyMelodyPattern(const int patternNumNotes = 5,
-        const float totalIntervalsSimilarityThreshold = 1.0f,
+    std::vector<MelodyPatternTable> findAnyMelodyPattern(
+        const int patternNumNotes = 5, const float totalIntervalsSimilarityThreshold = 1.0f,
         const float totalRhythmSimilarityThreshold = 1.0f,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
             intervalsSimilarityCallback = nullptr,
@@ -691,13 +712,14 @@ class Score {
         const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback =
             nullptr,
         const std::function<float(float, float)> totalSimilarityCallback = nullptr) const;
-    
+
     /**
-     * @brief Extracts vertical chord structures from the score with configurable analysis parameters.
+     * @brief Extracts vertical chord structures from the score with configurable analysis
+     * parameters.
      * @param config Optional JSON configuration object controlling chord extraction criteria.
      * @return Vector of tuples: {measure number, beat position, Key, Chord, homophony flag}.
-     * @details Performs vertical harmonic analysis by extracting simultaneities (vertical chord slices)
-     *          from the polyphonic texture, with extensive filtering and processing options for
+     * @details Performs vertical harmonic analysis by extracting simultaneities (vertical chord
+     * slices) from the polyphonic texture, with extensive filtering and processing options for
      *          texture analysis, harmonic progression studies, and style-specific chord detection.
      *
      *          **Configuration Parameters** (all optional):

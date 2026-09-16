@@ -1,10 +1,11 @@
-from setuptools import setup, find_packages
 from pathlib import Path
 
-with open("README.md", "r", encoding="utf-8") as fh:
+from setuptools import find_packages, setup
+
+with open("README.md", encoding="utf-8") as fh:
     long_description = fh.read()
 
-with open("LICENSE.txt", "r", encoding="utf-8") as fh:
+with open("LICENSE.txt", encoding="utf-8") as fh:
     license_txt = fh.read()
 
 # Lê a versão do arquivo VERSION

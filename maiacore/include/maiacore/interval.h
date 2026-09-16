@@ -6,15 +6,17 @@
 #include "maiacore/note.h"
 
 /**
- * @brief Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic analysis.
+ * @brief Represents a musical interval between two notes, supporting tonal, diatonic, and chromatic
+ * analysis.
  *
- * The Interval class provides methods for constructing, analyzing, and classifying musical intervals.
- * It supports both pitch string and Note object input, and offers detailed intervallic queries for music analysis and computational musicology.
+ * The Interval class provides methods for constructing, analyzing, and classifying musical
+ * intervals. It supports both pitch string and Note object input, and offers detailed intervallic
+ * queries for music analysis and computational musicology.
  */
 class Interval {
    private:
-    std::vector<Note> _note; ///< The two notes defining the interval.
-    int _numSemitones;       ///< Number of semitones between the notes.
+    std::vector<Note> _note;  ///< The two notes defining the interval.
+    int _numSemitones;        ///< Number of semitones between the notes.
 
     /**
      * @brief Analyzes the interval and returns its name and tonal status.
@@ -121,7 +123,8 @@ class Interval {
     bool isDescendant() const;
 
     /**
-     * @brief Returns the direction of the interval as a string ("asc", "desc", or empty for unison).
+     * @brief Returns the direction of the interval as a string ("asc", "desc", or empty for
+     * unison).
      * @return Direction string.
      */
     std::string getDirection() const;

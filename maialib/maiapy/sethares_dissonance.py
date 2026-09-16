@@ -1,10 +1,12 @@
+from typing import Callable, List, Optional, Tuple
+
 import numpy as np
 import pandas as pd
 import plotly
 import plotly.express as px
 import plotly.graph_objects as go
+
 from maialib import maiacore as mc
-from typing import List, Tuple, Callable, Optional
 
 __all__ = [
     "plotSetharesDissonanceCurve",
@@ -206,7 +208,7 @@ def plotSetharesDissonanceCurve(
         xaxis_type="log",
         xaxis=dict(
             tickvals=[n / d for n, d in filtered_intervals],
-            ticktext=["{}/{}".format(n, d) for n, d in filtered_intervals],
+            ticktext=[f"{n}/{d}" for n, d in filtered_intervals],
         ),
         yaxis=dict(showticklabels=True),
         plot_bgcolor="white",

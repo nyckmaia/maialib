@@ -7,15 +7,17 @@
 
 /// @cond IGNORE_DOXYGEN
 /**
- * @brief Represents a mathematical fraction (rational number) with integer numerator and denominator.
+ * @brief Represents a mathematical fraction (rational number) with integer numerator and
+ * denominator.
  *
- * The Fraction class provides methods for arithmetic operations, simplification, conversion to string and float,
- * and parsing from string. It is useful for representing durations, ratios, and other rational values in music analysis.
+ * The Fraction class provides methods for arithmetic operations, simplification, conversion to
+ * string and float, and parsing from string. It is useful for representing durations, ratios, and
+ * other rational values in music analysis.
  */
 class Fraction {
    private:
-    int _numerador;   ///< Numerator of the fraction.
-    int _denominador; ///< Denominator of the fraction.
+    int _numerador;    ///< Numerator of the fraction.
+    int _denominador;  ///< Denominator of the fraction.
 
     /**
      * @brief Simplifies the fraction to its lowest terms and ensures the denominator is positive.

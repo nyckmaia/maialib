@@ -5,6 +5,7 @@ covering initialization, properties, measures, staves, and manipulation.
 """
 
 import unittest
+
 import maialib as ml
 
 
@@ -157,7 +158,7 @@ class PartNotesTestCase(unittest.TestCase):
 
     def setUp(self):
         """Set up test fixtures"""
-        score = ml.Score('./xml_examples/unit_test/test_chord.xml')
+        score = ml.Score("./xml_examples/unit_test/test_chord.xml")
         if score.getNumParts() > 0:
             self.part = score.getPart(0)
         else:
@@ -258,7 +259,7 @@ class PartEdgeCasesTestCase(unittest.TestCase):
 
     def test_part_with_special_chars_name(self):
         """Test part with special characters in name"""
-        special_name = "Piano #1 - \"Grand\""
+        special_name = 'Piano #1 - "Grand"'
         part = ml.Part(special_name)
         self.assertEqual(part.getName(), special_name)
 
@@ -286,7 +287,7 @@ class PartIntegrationTestCase(unittest.TestCase):
 
     def test_load_part_from_score(self):
         """Test loading a part from a score"""
-        score = ml.Score('./xml_examples/unit_test/test_chord.xml')
+        score = ml.Score("./xml_examples/unit_test/test_chord.xml")
         if score.getNumParts() > 0:
             part = score.getPart(0)
             self.assertIsNotNone(part)
@@ -294,5 +295,5 @@ class PartIntegrationTestCase(unittest.TestCase):
             self.assertGreater(part.getNumMeasures(), 0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

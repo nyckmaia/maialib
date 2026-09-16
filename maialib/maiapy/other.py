@@ -1,9 +1,10 @@
+import importlib.resources as pkg_resources
 import os
+import subprocess
 import sys
 from enum import Enum
-import subprocess
+
 import maialib.maiacore as mc
-import importlib.resources as pkg_resources
 
 __all__ = [
     "getSampleScorePath",

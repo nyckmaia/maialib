@@ -1,7 +1,8 @@
 import os
-import sys
 import platform
+import sys
 from pathlib import Path
+
 from terminal_colors import *
 
 numArgs = len(sys.argv)

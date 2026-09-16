@@ -10,39 +10,41 @@
 #include "maiacore/time-signature.h"
 
 /**
- * @brief Represents a musical note, including pitch, duration, articulation, and MusicXML-related attributes.
+ * @brief Represents a musical note, including pitch, duration, articulation, and MusicXML-related
+ * attributes.
  *
- * The Note class provides methods for manipulating and querying musical notes, including pitch and octave handling,
- * duration and rhythm, articulations, ties, beams, transposition, enharmonic equivalents, and MusicXML serialization.
- * Designed for music analysis, computational musicology, and MusicXML processing.
+ * The Note class provides methods for manipulating and querying musical notes, including pitch and
+ * octave handling, duration and rhythm, articulations, ties, beams, transposition, enharmonic
+ * equivalents, and MusicXML serialization. Designed for music analysis, computational musicology,
+ * and MusicXML processing.
  */
 class Note {
    private:
-    std::string _writtenPitchClass; ///< Written pitch class (e.g., "C#", "Bb").
-    int _writtenOctave; ///< Written octave number.
+    std::string _writtenPitchClass;  ///< Written pitch class (e.g., "C#", "Bb").
+    int _writtenOctave;              ///< Written octave number.
 
-    std::string _soundingPitchClass; ///< Sounding pitch class (after transposition).
-    int _soundingOctave; ///< Sounding octave number (after transposition).
+    std::string _soundingPitchClass;  ///< Sounding pitch class (after transposition).
+    int _soundingOctave;              ///< Sounding octave number (after transposition).
 
-    bool _isNoteOn; ///< True if this is a sounding note, false if rest.
-    bool _inChord; ///< True if this note is part of a chord.
-    int _midiNumber; ///< MIDI note number.
-    int _transposeDiatonic; ///< Diatonic transposition interval.
-    int _transposeChromatic; ///< Chromatic transposition interval.
-    int _voice; ///< Voice number.
-    int _staff; ///< Staff number.
-    bool _isGraceNote; ///< True if this is a grace note.
-    std::string _stem; ///< Stem direction ("up", "down", etc.).
-    bool _isTuplet; ///< True if this note is part of a tuplet.
-    bool _isPitched; ///< True if this note is pitched, false for unpitched.
-    int _unpitchedIndex; ///< Index for unpitched percussion notes.
-    Duration _duration; ///< Duration object for this note.
+    bool _isNoteOn;           ///< True if this is a sounding note, false if rest.
+    bool _inChord;            ///< True if this note is part of a chord.
+    int _midiNumber;          ///< MIDI note number.
+    int _transposeDiatonic;   ///< Diatonic transposition interval.
+    int _transposeChromatic;  ///< Chromatic transposition interval.
+    int _voice;               ///< Voice number.
+    int _staff;               ///< Staff number.
+    bool _isGraceNote;        ///< True if this is a grace note.
+    std::string _stem;        ///< Stem direction ("up", "down", etc.).
+    bool _isTuplet;           ///< True if this note is part of a tuplet.
+    bool _isPitched;          ///< True if this note is pitched, false for unpitched.
+    int _unpitchedIndex;      ///< Index for unpitched percussion notes.
+    Duration _duration;       ///< Duration object for this note.
 
-    std::pair<std::string, std::string> _slur; ///< Slur type and orientation.
-    std::string _alterSymbol; ///< Accidental symbol (e.g., "#", "b").
-    std::vector<std::string> _tie; ///< Tie types ("start", "stop").
-    std::vector<std::string> _articulation; ///< Articulation marks.
-    std::vector<std::string> _beam; ///< Beam types.
+    std::pair<std::string, std::string> _slur;  ///< Slur type and orientation.
+    std::string _alterSymbol;                   ///< Accidental symbol (e.g., "#", "b").
+    std::vector<std::string> _tie;              ///< Tie types ("start", "stop").
+    std::vector<std::string> _articulation;     ///< Articulation marks.
+    std::vector<std::string> _beam;             ///< Beam types.
 
    public:
     /**
@@ -581,8 +583,7 @@ class Note {
     std::pair<std::vector<float>, std::vector<float>> getHarmonicSpectrum(
         const int numPartials = 6,
         const std::function<std::vector<float>(std::vector<float>)> amplCallback = nullptr,
-        const float partialsDecayExpRate = 0.88f,
-        const float freqA4 = 440.0f) const;
+        const float partialsDecayExpRate = 0.88f, const float freqA4 = 440.0f) const;
 
     /**
      * @brief Transposes the note by a number of semitones and optional accidental type.

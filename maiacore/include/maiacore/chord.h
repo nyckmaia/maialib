@@ -1,9 +1,9 @@
 #pragma once
+#include <algorithm>  // std::transform
 #include <functional>
 #include <numeric>  // std::accumulate
 #include <tuple>    // std::tuple
 #include <vector>
-#include <algorithm> // std::transform
 
 #include "maiacore/interval.h"
 #include "maiacore/key.h"
@@ -20,7 +20,7 @@ struct NoteData {
     NoteData(const Note& _originalNotes, const bool _wasEnhar, const int _enharDiat)
         : note(_originalNotes),
           wasEnharmonized(_wasEnhar),
-          enharmonicDiatonicDistance(_enharDiat){};
+          enharmonicDiatonicDistance(_enharDiat) {};
 
     friend bool operator<(const NoteData& lhs, const NoteData& rhs) {
         return lhs.note.getMidiNumber() < rhs.note.getMidiNumber();
@@ -63,9 +63,9 @@ typedef std::vector<SetharesDissonanceTableRow> SetharesDissonanceTable;
 
 /**
  * @brief Represents a musical chord
- * @details The Chord class encapsulates a collection of musical notes, allowing for operations such as stacking
- * in thirds, transposing, and computing harmonic properties. It supports both open and closed stack representations,
- * as well as enharmonic transformations of notes.
+ * @details The Chord class encapsulates a collection of musical notes, allowing for operations such
+ * as stacking in thirds, transposing, and computing harmonic properties. It supports both open and
+ * closed stack representations, as well as enharmonic transformations of notes.
  */
 class Chord {
    private:
@@ -202,14 +202,16 @@ class Chord {
      * @param notes Vector of Note objects to initialize the chord.
      * @param rhythmFigure The rhythm figure to assign to each note (default: QUARTER).
      */
-    explicit Chord(const std::vector<Note>& notes, const RhythmFigure rhythmFigure = RhythmFigure::QUARTER);
+    explicit Chord(const std::vector<Note>& notes,
+                   const RhythmFigure rhythmFigure = RhythmFigure::QUARTER);
 
     /**
      * @brief Construct a Chord from a vector of pitch strings.
      * @param pitches Vector of pitch strings (e.g., "C4", "E4", "G4").
      * @param rhythmFigure The rhythm figure to assign to each note (default: QUARTER).
      */
-    explicit Chord(const std::vector<std::string>& pitches, const RhythmFigure rhythmFigure = RhythmFigure::QUARTER);
+    explicit Chord(const std::vector<std::string>& pitches,
+                   const RhythmFigure rhythmFigure = RhythmFigure::QUARTER);
 
     /**
      * @brief Destroy the Chord object and release resources.
@@ -265,7 +267,8 @@ class Chord {
     void setDuration(const float quarterDuration, const int divisionsPerQuarterNote = 256);
 
     /**
-     * @brief Invert the chord by moving the lowest note up by one octave, repeated inversionNumber times.
+     * @brief Invert the chord by moving the lowest note up by one octave, repeated inversionNumber
+     * times.
      * @param inversionNumber Number of inversions to perform.
      */
     void toInversion(int inversionNumber);
@@ -385,8 +388,8 @@ class Chord {
      * @param higherBoundMIDI Highest MIDI note (default: -1, auto-detect).
      * @return Density as float.
      * @details Calculates the spatial distribution of notes within a specified MIDI pitch range,
-     *          quantifying how densely packed the harmonic content is across the frequency spectrum.
-     *          The density metric reflects:
+     *          quantifying how densely packed the harmonic content is across the frequency
+     * spectrum. The density metric reflects:
      *          - Average interval spacing between adjacent notes in ascending pitch order
      *          - Registral compression (cluster chords) vs. expansion (open voicings)
      *          - Spectral distribution of harmonic energy
@@ -463,7 +466,8 @@ class Chord {
     bool haveDiminishedUnisson(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a perfect unison interval (e.g., two notes with the same pitch).
+     * @brief Checks if the chord contains a perfect unison interval (e.g., two notes with the same
+     * pitch).
      * @details Indicates the presence of doubled notes in the chord.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a perfect unison is present.
@@ -480,7 +484,8 @@ class Chord {
 
     /**
      * @brief Checks if the chord contains a minor second interval (e.g., C and Db).
-     * @details Identifies the presence of the smallest diatonic interval, often associated with dissonance.
+     * @details Identifies the presence of the smallest diatonic interval, often associated with
+     * dissonance.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a minor second is present.
      */
@@ -591,7 +596,8 @@ class Chord {
     bool haveMajorSeventh(const bool useEnharmony = false);
 
     /**
-     * @brief Checks if the chord contains a diminished octave interval (e.g., C and Cb an octave apart).
+     * @brief Checks if the chord contains a diminished octave interval (e.g., C and Cb an octave
+     * apart).
      * @details Rare, but may occur in complex or microtonal harmonies.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a diminished octave is present.
@@ -607,7 +613,8 @@ class Chord {
     bool havePerfectOctave(const bool useEnharmony = false);
 
     /**
-     * @brief Checks if the chord contains an augmented octave interval (e.g., C and C# an octave apart).
+     * @brief Checks if the chord contains an augmented octave interval (e.g., C and C# an octave
+     * apart).
      * @details Rare, but may occur in complex or microtonal harmonies.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if an augmented octave is present.
@@ -631,7 +638,8 @@ class Chord {
     bool haveMajorNinth(const bool useEnharmony = false);
 
     /**
-     * @brief Checks if the chord contains a perfect eleventh interval (e.g., C and F two octaves apart).
+     * @brief Checks if the chord contains a perfect eleventh interval (e.g., C and F two octaves
+     * apart).
      * @details Useful for identifying 11th chords and complex extensions.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a perfect eleventh is present.
@@ -639,7 +647,8 @@ class Chord {
     bool havePerfectEleventh(const bool useEnharmony = false);
 
     /**
-     * @brief Checks if the chord contains a sharp eleventh interval (e.g., C and F# two octaves apart).
+     * @brief Checks if the chord contains a sharp eleventh interval (e.g., C and F# two octaves
+     * apart).
      * @details Useful for identifying altered dominants and Lydian harmonies.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a sharp eleventh is present.
@@ -647,7 +656,8 @@ class Chord {
     bool haveSharpEleventh(const bool useEnharmony = false);
 
     /**
-     * @brief Checks if the chord contains a minor thirteenth interval (e.g., C and Ab two octaves plus a sixth apart).
+     * @brief Checks if the chord contains a minor thirteenth interval (e.g., C and Ab two octaves
+     * plus a sixth apart).
      * @details Useful for identifying 13th chords and complex extensions.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a minor thirteenth is present.
@@ -655,7 +665,8 @@ class Chord {
     bool haveMinorThirdteenth(const bool useEnharmony = false);
 
     /**
-     * @brief Checks if the chord contains a major thirteenth interval (e.g., C and A two octaves plus a sixth apart).
+     * @brief Checks if the chord contains a major thirteenth interval (e.g., C and A two octaves
+     * plus a sixth apart).
      * @details Useful for identifying 13th chords and complex extensions.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a major thirteenth is present.
@@ -666,8 +677,9 @@ class Chord {
 
     /**
      * @brief Checks if the chord contains any second interval (major or minor) between its notes.
-     * @details Returns true if there is at least one interval of a second (major or minor) between any two notes in the chord, regardless of octave.
-     * This is useful for identifying stepwise relationships within the chord's structure.
+     * @details Returns true if there is at least one interval of a second (major or minor) between
+     * any two notes in the chord, regardless of octave. This is useful for identifying stepwise
+     * relationships within the chord's structure.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a second interval is present, false otherwise.
      */
@@ -675,26 +687,31 @@ class Chord {
 
     /**
      * @brief Checks if the chord contains any third interval (major or minor) between its notes.
-     * @details Returns true if there is at least one interval of a third (major or minor) between any two notes in the chord, regardless of octave.
-     * This is useful for identifying tertian (third-based) relationships within the chord.
+     * @details Returns true if there is at least one interval of a third (major or minor) between
+     * any two notes in the chord, regardless of octave. This is useful for identifying tertian
+     * (third-based) relationships within the chord.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a third interval is present, false otherwise.
      */
     bool haveThird(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains any fourth interval (perfect, augmented, or diminished) between its notes.
-     * @details Returns true if there is at least one interval of a fourth (of any quality) between any two notes in the chord, regardless of octave.
-     * Useful for identifying quartal harmonies or sus chords.
+     * @brief Checks if the chord contains any fourth interval (perfect, augmented, or diminished)
+     * between its notes.
+     * @details Returns true if there is at least one interval of a fourth (of any quality) between
+     * any two notes in the chord, regardless of octave. Useful for identifying quartal harmonies or
+     * sus chords.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a fourth interval is present, false otherwise.
      */
     bool haveFourth(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains any fifth interval (perfect, augmented, or diminished) between its notes.
-     * @details Returns true if there is at least one interval of a fifth (of any quality) between any two notes in the chord, regardless of octave.
-     * Useful for identifying quintal harmonies or power chords.
+     * @brief Checks if the chord contains any fifth interval (perfect, augmented, or diminished)
+     * between its notes.
+     * @details Returns true if there is at least one interval of a fifth (of any quality) between
+     * any two notes in the chord, regardless of octave. Useful for identifying quintal harmonies or
+     * power chords.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a fifth interval is present, false otherwise.
      */
@@ -702,26 +719,30 @@ class Chord {
 
     /**
      * @brief Checks if the chord contains any sixth interval (major or minor) between its notes.
-     * @details Returns true if there is at least one interval of a sixth (major or minor) between any two notes in the chord, regardless of octave.
-     * Useful for identifying extended tertian harmonies.
+     * @details Returns true if there is at least one interval of a sixth (major or minor) between
+     * any two notes in the chord, regardless of octave. Useful for identifying extended tertian
+     * harmonies.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a sixth interval is present, false otherwise.
      */
     bool haveSixth(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains any seventh interval (major, minor, or diminished) between its notes.
-     * @details Returns true if there is at least one interval of a seventh (of any quality) between any two notes in the chord, regardless of octave.
-     * Useful for identifying seventh chords and complex harmonies.
+     * @brief Checks if the chord contains any seventh interval (major, minor, or diminished)
+     * between its notes.
+     * @details Returns true if there is at least one interval of a seventh (of any quality) between
+     * any two notes in the chord, regardless of octave. Useful for identifying seventh chords and
+     * complex harmonies.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a seventh interval is present, false otherwise.
      */
     bool haveSeventh(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains any octave interval (perfect, augmented, or diminished) between its notes.
-     * @details Returns true if there is at least one interval of an octave (of any quality) between any two notes in the chord.
-     * Useful for identifying doubled notes or octave relationships.
+     * @brief Checks if the chord contains any octave interval (perfect, augmented, or diminished)
+     * between its notes.
+     * @details Returns true if there is at least one interval of an octave (of any quality) between
+     * any two notes in the chord. Useful for identifying doubled notes or octave relationships.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if an octave interval is present, false otherwise.
      */
@@ -729,26 +750,30 @@ class Chord {
 
     /**
      * @brief Checks if the chord contains any ninth interval (major or minor) between its notes.
-     * @details Returns true if there is at least one interval of a ninth (major or minor) between any two notes in the chord.
-     * Useful for identifying extended harmonies such as 9th chords.
+     * @details Returns true if there is at least one interval of a ninth (major or minor) between
+     * any two notes in the chord. Useful for identifying extended harmonies such as 9th chords.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a ninth interval is present, false otherwise.
      */
     bool haveNinth(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains any eleventh interval (perfect or sharp) between its notes.
-     * @details Returns true if there is at least one interval of an eleventh (perfect or sharp) between any two notes in the chord.
-     * Useful for identifying 11th chords and complex extensions.
+     * @brief Checks if the chord contains any eleventh interval (perfect or sharp) between its
+     * notes.
+     * @details Returns true if there is at least one interval of an eleventh (perfect or sharp)
+     * between any two notes in the chord. Useful for identifying 11th chords and complex
+     * extensions.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if an eleventh interval is present, false otherwise.
      */
     bool haveEleventh(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains any thirteenth interval (major or minor) between its notes.
-     * @details Returns true if there is at least one interval of a thirteenth (major or minor) between any two notes in the chord.
-     * Useful for identifying 13th chords and complex extensions.
+     * @brief Checks if the chord contains any thirteenth interval (major or minor) between its
+     * notes.
+     * @details Returns true if there is at least one interval of a thirteenth (major or minor)
+     * between any two notes in the chord. Useful for identifying 13th chords and complex
+     * extensions.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a thirteenth interval is present, false otherwise.
      */
@@ -757,170 +782,190 @@ class Chord {
     // ===== ABSTRACTION 3 ===== //
 
     /**
-     * @brief Checks if the chord contains a minor second interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a minor second interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting clusters or dissonant relationships in any register.
+     * @brief Checks if the chord contains a minor second interval between any two notes, ignoring
+     * octave differences.
+     * @details Returns true if any pair of notes forms a minor second interval, regardless of their
+     * octave placement. This method abstracts away octave information and considers only pitch
+     * class relationships. Useful for detecting clusters or dissonant relationships in any
+     * register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a minor second (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveMinorSecond(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a major second interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a major second interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting stepwise motion or clusters in any register.
+     * @brief Checks if the chord contains a major second interval between any two notes, ignoring
+     * octave differences.
+     * @details Returns true if any pair of notes forms a major second interval, regardless of their
+     * octave placement. This method abstracts away octave information and considers only pitch
+     * class relationships. Useful for detecting stepwise motion or clusters in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a major second (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveMajorSecond(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a minor third interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a minor third interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting tertian relationships in any register.
+     * @brief Checks if the chord contains a minor third interval between any two notes, ignoring
+     * octave differences.
+     * @details Returns true if any pair of notes forms a minor third interval, regardless of their
+     * octave placement. This method abstracts away octave information and considers only pitch
+     * class relationships. Useful for detecting tertian relationships in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a minor third (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveMinorThird(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a major third interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a major third interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting tertian relationships in any register.
+     * @brief Checks if the chord contains a major third interval between any two notes, ignoring
+     * octave differences.
+     * @details Returns true if any pair of notes forms a major third interval, regardless of their
+     * octave placement. This method abstracts away octave information and considers only pitch
+     * class relationships. Useful for detecting tertian relationships in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a major third (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveMajorThird(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a perfect fourth interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a perfect fourth interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting quartal harmonies in any register.
+     * @brief Checks if the chord contains a perfect fourth interval between any two notes, ignoring
+     * octave differences.
+     * @details Returns true if any pair of notes forms a perfect fourth interval, regardless of
+     * their octave placement. This method abstracts away octave information and considers only
+     * pitch class relationships. Useful for detecting quartal harmonies in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a perfect fourth (any octave) is present, false otherwise.
      */
     bool haveAnyOctavePerfectFourth(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains an augmented fourth interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms an augmented fourth (tritone) interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting tritones in any register.
+     * @brief Checks if the chord contains an augmented fourth interval between any two notes,
+     * ignoring octave differences.
+     * @details Returns true if any pair of notes forms an augmented fourth (tritone) interval,
+     * regardless of their octave placement. This method abstracts away octave information and
+     * considers only pitch class relationships. Useful for detecting tritones in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if an augmented fourth (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveAugmentedFourth(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a diminished fifth interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a diminished fifth (tritone) interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting tritones in any register.
+     * @brief Checks if the chord contains a diminished fifth interval between any two notes,
+     * ignoring octave differences.
+     * @details Returns true if any pair of notes forms a diminished fifth (tritone) interval,
+     * regardless of their octave placement. This method abstracts away octave information and
+     * considers only pitch class relationships. Useful for detecting tritones in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a diminished fifth (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveDiminishedFifth(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a perfect fifth interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a perfect fifth interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting quintal harmonies in any register.
+     * @brief Checks if the chord contains a perfect fifth interval between any two notes, ignoring
+     * octave differences.
+     * @details Returns true if any pair of notes forms a perfect fifth interval, regardless of
+     * their octave placement. This method abstracts away octave information and considers only
+     * pitch class relationships. Useful for detecting quintal harmonies in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a perfect fifth (any octave) is present, false otherwise.
      */
     bool haveAnyOctavePerfectFifth(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains an augmented fifth interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms an augmented fifth interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting altered harmonies in any register.
+     * @brief Checks if the chord contains an augmented fifth interval between any two notes,
+     * ignoring octave differences.
+     * @details Returns true if any pair of notes forms an augmented fifth interval, regardless of
+     * their octave placement. This method abstracts away octave information and considers only
+     * pitch class relationships. Useful for detecting altered harmonies in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if an augmented fifth (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveAugmentedFifth(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a minor sixth interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a minor sixth interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting extended tertian harmonies in any register.
+     * @brief Checks if the chord contains a minor sixth interval between any two notes, ignoring
+     * octave differences.
+     * @details Returns true if any pair of notes forms a minor sixth interval, regardless of their
+     * octave placement. This method abstracts away octave information and considers only pitch
+     * class relationships. Useful for detecting extended tertian harmonies in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a minor sixth (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveMinorSixth(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a major sixth interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a major sixth interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting extended tertian harmonies in any register.
+     * @brief Checks if the chord contains a major sixth interval between any two notes, ignoring
+     * octave differences.
+     * @details Returns true if any pair of notes forms a major sixth interval, regardless of their
+     * octave placement. This method abstracts away octave information and considers only pitch
+     * class relationships. Useful for detecting extended tertian harmonies in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a major sixth (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveMajorSixth(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a diminished seventh interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a diminished seventh interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting diminished harmonies in any register.
+     * @brief Checks if the chord contains a diminished seventh interval between any two notes,
+     * ignoring octave differences.
+     * @details Returns true if any pair of notes forms a diminished seventh interval, regardless of
+     * their octave placement. This method abstracts away octave information and considers only
+     * pitch class relationships. Useful for detecting diminished harmonies in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a diminished seventh (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveDiminishedSeventh(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a minor seventh interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a minor seventh interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting seventh chords in any register.
+     * @brief Checks if the chord contains a minor seventh interval between any two notes, ignoring
+     * octave differences.
+     * @details Returns true if any pair of notes forms a minor seventh interval, regardless of
+     * their octave placement. This method abstracts away octave information and considers only
+     * pitch class relationships. Useful for detecting seventh chords in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a minor seventh (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveMinorSeventh(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a major seventh interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a major seventh interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting major seventh chords in any register.
+     * @brief Checks if the chord contains a major seventh interval between any two notes, ignoring
+     * octave differences.
+     * @details Returns true if any pair of notes forms a major seventh interval, regardless of
+     * their octave placement. This method abstracts away octave information and considers only
+     * pitch class relationships. Useful for detecting major seventh chords in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a major seventh (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveMajorSeventh(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a diminished octave interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a diminished octave interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting rare or microtonal relationships in any register.
+     * @brief Checks if the chord contains a diminished octave interval between any two notes,
+     * ignoring octave differences.
+     * @details Returns true if any pair of notes forms a diminished octave interval, regardless of
+     * their octave placement. This method abstracts away octave information and considers only
+     * pitch class relationships. Useful for detecting rare or microtonal relationships in any
+     * register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a diminished octave (any octave) is present, false otherwise.
      */
     bool haveAnyOctaveDiminishedOctave(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains a perfect octave interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms a perfect octave interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting doubled notes in any register.
+     * @brief Checks if the chord contains a perfect octave interval between any two notes, ignoring
+     * octave differences.
+     * @details Returns true if any pair of notes forms a perfect octave interval, regardless of
+     * their octave placement. This method abstracts away octave information and considers only
+     * pitch class relationships. Useful for detecting doubled notes in any register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if a perfect octave (any octave) is present, false otherwise.
      */
     bool haveAnyOctavePerfectOctave(const bool useEnharmony = false) const;
 
     /**
-     * @brief Checks if the chord contains an augmented octave interval between any two notes, ignoring octave differences.
-     * @details Returns true if any pair of notes forms an augmented octave interval, regardless of their octave placement.
-     * This method abstracts away octave information and considers only pitch class relationships.
-     * Useful for detecting rare or microtonal relationships in any register.
+     * @brief Checks if the chord contains an augmented octave interval between any two notes,
+     * ignoring octave differences.
+     * @details Returns true if any pair of notes forms an augmented octave interval, regardless of
+     * their octave placement. This method abstracts away octave information and considers only
+     * pitch class relationships. Useful for detecting rare or microtonal relationships in any
+     * register.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if an augmented octave (any octave) is present, false otherwise.
      */
@@ -930,7 +975,8 @@ class Chord {
 
     /**
      * @brief Checks if the chord contains a generic second interval (major or minor, any octave).
-     * @details Useful for identifying stepwise relationships between any two notes, regardless of octave.
+     * @details Useful for identifying stepwise relationships between any two notes, regardless of
+     * octave.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if any second interval is present.
      */
@@ -938,23 +984,28 @@ class Chord {
 
     /**
      * @brief Checks if the chord contains a generic third interval (major or minor, any octave).
-     * @details Useful for identifying tertian relationships between any two notes, regardless of octave.
+     * @details Useful for identifying tertian relationships between any two notes, regardless of
+     * octave.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if any third interval is present.
      */
     bool haveAnyOctaveThird() const;
 
     /**
-     * @brief Checks if the chord contains a generic fourth interval (perfect, augmented, or diminished, any octave).
-     * @details Useful for identifying quartal relationships between any two notes, regardless of octave.
+     * @brief Checks if the chord contains a generic fourth interval (perfect, augmented, or
+     * diminished, any octave).
+     * @details Useful for identifying quartal relationships between any two notes, regardless of
+     * octave.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if any fourth interval is present.
      */
     bool haveAnyOctaveFourth() const;
 
     /**
-     * @brief Checks if the chord contains a generic fifth interval (perfect, augmented, or diminished, any octave).
-     * @details Useful for identifying quintal relationships between any two notes, regardless of octave.
+     * @brief Checks if the chord contains a generic fifth interval (perfect, augmented, or
+     * diminished, any octave).
+     * @details Useful for identifying quintal relationships between any two notes, regardless of
+     * octave.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if any fifth interval is present.
      */
@@ -969,7 +1020,8 @@ class Chord {
     bool haveAnyOctaveSixth() const;
 
     /**
-     * @brief Checks if the chord contains a generic seventh interval (major, minor, or diminished, any octave).
+     * @brief Checks if the chord contains a generic seventh interval (major, minor, or diminished,
+     * any octave).
      * @details Useful for identifying seventh chords or complex harmonies.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if any seventh interval is present.
@@ -977,7 +1029,8 @@ class Chord {
     bool haveAnyOctaveSeventh() const;
 
     /**
-     * @brief Checks if the chord contains a generic octave interval (perfect, augmented, or diminished, any octave).
+     * @brief Checks if the chord contains a generic octave interval (perfect, augmented, or
+     * diminished, any octave).
      * @details Useful for identifying doubled notes or octave relationships.
      * @param useEnharmony If true, considers enharmonic equivalents.
      * @return True if any octave interval is present.
@@ -993,7 +1046,8 @@ class Chord {
 
     /**
      * @brief Determines if the chord is a suspended chord (sus2 or sus4).
-     * @details Suspended chords replace the third with a second or fourth, creating a characteristic open sound.
+     * @details Suspended chords replace the third with a second or fourth, creating a
+     * characteristic open sound.
      * @return True if the chord is a sus chord.
      */
     bool isSus();
@@ -1028,14 +1082,16 @@ class Chord {
 
     /**
      * @brief Determines if the chord is a half-diminished seventh chord.
-     * @details Half-diminished chords contain a root, minor third, diminished fifth, and minor seventh.
+     * @details Half-diminished chords contain a root, minor third, diminished fifth, and minor
+     * seventh.
      * @return True if the chord is half-diminished.
      */
     bool isHalfDiminishedChord();
 
     /**
      * @brief Determines if the chord is a fully diminished seventh chord.
-     * @details Fully diminished chords contain a root, minor third, diminished fifth, and diminished seventh.
+     * @details Fully diminished chords contain a root, minor third, diminished fifth, and
+     * diminished seventh.
      * @return True if the chord is fully diminished.
      */
     bool isWholeDiminishedChord();
@@ -1048,15 +1104,18 @@ class Chord {
     bool isDominantSeventhChord();
 
     /**
-     * @brief Returns a string describing the chord quality (e.g., "major", "minor", "diminished", "augmented", "sus", etc).
-     * @details The quality is determined by the chord's interval structure and is useful for harmonic analysis.
+     * @brief Returns a string describing the chord quality (e.g., "major", "minor", "diminished",
+     * "augmented", "sus", etc).
+     * @details The quality is determined by the chord's interval structure and is useful for
+     * harmonic analysis.
      * @return String representing the chord quality.
      */
     std::string getQuality();
 
     /**
      * @brief Checks if the notes in the chord are sorted in ascending order by MIDI number.
-     * @details Useful for ensuring consistent interval calculations and for algorithms that require sorted input.
+     * @details Useful for ensuring consistent interval calculations and for algorithms that require
+     * sorted input.
      * @return True if the notes are sorted from lowest to highest pitch.
      */
     bool isSorted() const;
@@ -1071,8 +1130,8 @@ class Chord {
      *          **Default Model (model = nullptr)**:
      *          Analyzes all intervals in the closed stack and verifies they belong to the tonal
      *          interval inventory:
-     *          - Consonances: perfect unison/octave (P1/P8), perfect fifth (P5), perfect fourth (P4),
-     *            major/minor thirds (M3/m3), major/minor sixths (M6/m6)
+     *          - Consonances: perfect unison/octave (P1/P8), perfect fifth (P5), perfect fourth
+     * (P4), major/minor thirds (M3/m3), major/minor sixths (M6/m6)
      *          - Diatonic dissonances: major/minor seconds (M2/m2), major/minor sevenths (M7/m7)
      *
      *          Returns false if ANY interval is:
@@ -1106,8 +1165,9 @@ class Chord {
 
     /**
      * @brief Returns the intervals between notes in the chord as MIDI semitone values.
-     * @details If firstNoteAsReference is true, intervals are calculated from the first note to each subsequent note.
-     *          Otherwise, intervals are calculated between each pair of adjacent notes.
+     * @details If firstNoteAsReference is true, intervals are calculated from the first note to
+     * each subsequent note. Otherwise, intervals are calculated between each pair of adjacent
+     * notes.
      * @param firstNoteAsReference If true, use the first note as the reference for all intervals.
      * @return Vector of intervals in semitones.
      */
@@ -1115,8 +1175,9 @@ class Chord {
 
     /**
      * @brief Returns the intervals between notes in the chord as Interval objects.
-     * @details If firstNoteAsReference is true, intervals are calculated from the first note to each subsequent note.
-     *          Otherwise, intervals are calculated between each pair of adjacent notes.
+     * @details If firstNoteAsReference is true, intervals are calculated from the first note to
+     * each subsequent note. Otherwise, intervals are calculated between each pair of adjacent
+     * notes.
      * @param firstNoteAsReference If true, use the first note as the reference for all intervals.
      * @return Vector of Interval objects.
      */
@@ -1131,8 +1192,9 @@ class Chord {
 
     /**
      * @brief Returns the intervals between notes in the open stack as Interval objects.
-     * @details If firstNoteAsReference is true, intervals are calculated from the first note to each subsequent note.
-     *          Otherwise, intervals are calculated between each pair of adjacent notes.
+     * @details If firstNoteAsReference is true, intervals are calculated from the first note to
+     * each subsequent note. Otherwise, intervals are calculated between each pair of adjacent
+     * notes.
      * @param firstNoteAsReference If true, use the first note as the reference for all intervals.
      * @return Vector of Interval objects.
      */
@@ -1140,8 +1202,9 @@ class Chord {
 
     /**
      * @brief Returns the intervals between notes in the closed stack as Interval objects.
-     * @details If firstNoteAsReference is true, intervals are calculated from the first note to each subsequent note.
-     *          Otherwise, intervals are calculated between each pair of adjacent notes.
+     * @details If firstNoteAsReference is true, intervals are calculated from the first note to
+     * each subsequent note. Otherwise, intervals are calculated between each pair of adjacent
+     * notes.
      * @param firstNoteAsReference If true, use the first note as the reference for all intervals.
      * @return Vector of Interval objects.
      */
@@ -1195,7 +1258,8 @@ class Chord {
     Chord getOpenStackChord(const bool enharmonyNotes = false);
 
     /**
-     * @brief Returns a Chord object representing the closed stack (stacked in thirds, closed position).
+     * @brief Returns a Chord object representing the closed stack (stacked in thirds, closed
+     * position).
      * @details Optionally considers enharmonic equivalents for stacking.
      * @param enharmonyNotes If true, considers enharmonic equivalents.
      * @return Chord object in closed stack form.
@@ -1203,7 +1267,8 @@ class Chord {
     Chord getCloseStackChord(const bool enharmonyNotes = false);
 
     /**
-     * @brief Returns a Chord object representing the closed chord, with octaves adjusted to match the original.
+     * @brief Returns a Chord object representing the closed chord, with octaves adjusted to match
+     * the original.
      * @details Optionally considers enharmonic equivalents for stacking.
      * @param enharmonyNotes If true, considers enharmonic equivalents.
      * @return Chord object in closed form with original octaves.
@@ -1212,20 +1277,24 @@ class Chord {
 
     /**
      * @brief Sorts the notes in the chord in ascending order by MIDI number.
-     * @details Useful for ensuring consistent interval calculations and for algorithms that require sorted input.
+     * @details Useful for ensuring consistent interval calculations and for algorithms that require
+     * sorted input.
      */
     void sortNotes();
 
     /**
-     * @brief Returns a vector with the intervals (in cents) between each pair of adjacent notes in the chord.
-     * @details Useful for microtonal and tuning analysis, as well as for comparing intervallic content.
+     * @brief Returns a vector with the intervals (in cents) between each pair of adjacent notes in
+     * the chord.
+     * @details Useful for microtonal and tuning analysis, as well as for comparing intervallic
+     * content.
      * @return Vector of integer values representing the interval in cents between each note pair.
      */
     std::vector<int> toCents() const;
 
     /**
      * @brief Returns the scale degree of the chord's root in a given key.
-     * @details The degree is calculated relative to the provided Key object, considering enharmonic spelling if requested.
+     * @details The degree is calculated relative to the provided Key object, considering enharmonic
+     * spelling if requested.
      * @param key The Key object representing the tonal center.
      * @param enharmonyNotes If true, considers enharmonic equivalents for the root.
      * @return Integer representing the scale degree (1 = tonic, 2 = supertonic, etc).
@@ -1234,7 +1303,8 @@ class Chord {
 
     /**
      * @brief Returns the Roman numeral degree of the chord's root in a given key.
-     * @details The degree is calculated relative to the provided Key object, considering enharmonic spelling if requested.
+     * @details The degree is calculated relative to the provided Key object, considering enharmonic
+     * spelling if requested.
      * @param key The Key object representing the tonal center.
      * @param enharmonyNotes If true, considers enharmonic equivalents for the root.
      * @return String with the Roman numeral (e.g., "I", "ii", "V").
@@ -1295,7 +1365,8 @@ class Chord {
     std::string getMeanPitch(const std::string& accType = {}) const;
 
     /**
-     * @brief Returns the pitch name corresponding to the mean of the lowest and highest MIDI values in the chord.
+     * @brief Returns the pitch name corresponding to the mean of the lowest and highest MIDI values
+     * in the chord.
      * @details The accidental type can be specified (e.g., sharp, flat, natural).
      * @param accType Optional: specify accidental type for pitch spelling.
      * @return String with the pitch name (e.g., "C4", "F#3").
@@ -1303,7 +1374,8 @@ class Chord {
     std::string getMeanOfExtremesPitch(const std::string& accType = {}) const;
 
     /**
-     * @brief Computes the combined harmonic spectrum of the chord by summing the spectra of all notes.
+     * @brief Computes the combined harmonic spectrum of the chord by summing the spectra of all
+     * notes.
      * @details Useful for timbral and psychoacoustic analysis.
      * @param numPartialsPerNote Number of partials to include for each note.
      * @param amplCallback Optional: function to modify amplitude vector.
@@ -1322,8 +1394,8 @@ class Chord {
      * @param amplCallback Optional: function to modify amplitude vector.
      * @param partialsDecayExpRate Optional Partials decay exponential rate (default: 0.88).
      * @return Table with detailed dissonance information for each dyad.
-     * @details Computes psychoacoustic sensory dissonance using the Sethares spectral dissonance model,
-     *          which quantifies roughness perception arising from critical band interactions between
+     * @details Computes psychoacoustic sensory dissonance using the Sethares spectral dissonance
+     * model, which quantifies roughness perception arising from critical band interactions between
      *          harmonic partials. The model calculates dissonance for all unique dyads (note pairs)
      *          in the chord by analyzing beating patterns and frequency proximity effects.
      *
@@ -1357,9 +1429,9 @@ class Chord {
      *          - Historical tuning system comparisons (just intonation vs. equal temperament)
      *          - Consonance/dissonance trajectory analysis in harmonic progressions
      *
-     * @note This model reflects sensory (psychoacoustic) dissonance, NOT tonal/functional dissonance.
-     *       A dominant seventh chord (functionally dissonant in tonal theory) may have low Sethares
-     *       dissonance due to its harmonic series alignment.
+     * @note This model reflects sensory (psychoacoustic) dissonance, NOT tonal/functional
+     * dissonance. A dominant seventh chord (functionally dissonant in tonal theory) may have low
+     * Sethares dissonance due to its harmonic series alignment.
      *
      * @warning Computational complexity is O(n² × p²) where n = number of notes, p = numPartials.
      *          Use sparingly in real-time applications for large chords.
@@ -1371,7 +1443,8 @@ class Chord {
 
     /**
      * @brief Calculates the total Sethares dissonance for the chord.
-     * @details Aggregates the dissonance values for all dyads, optionally using a custom aggregation function.
+     * @details Aggregates the dissonance values for all dyads, optionally using a custom
+     * aggregation function.
      * @param numPartialsPerNote Number of partials per note.
      * @param useMinModel If true, uses the minimum amplitude model; otherwise, uses the product.
      * @param amplCallback Optional: function to modify amplitude vector.

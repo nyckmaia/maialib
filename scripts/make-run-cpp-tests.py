@@ -1,6 +1,7 @@
 import os
 import platform
 from pathlib import Path
+
 from terminal_colors import *
 
 print(f"{color.OKGREEN}Running C++ Unit Tests...{color.ENDC}")
@@ -11,5 +12,5 @@ myOS = platform.system()
 # Create a 'build' folder (if not exists)
 path = Path.cwd() / "build" / myOS / "cpp-tests"
 
-runCommand = "{}/cpp-tests".format(path)
+runCommand = f"{path}/cpp-tests"
 os.system(runCommand)

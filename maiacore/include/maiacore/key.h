@@ -2,11 +2,12 @@
 #include <string>
 
 /**
- * @brief Represents a musical key signature (tonality), including circle of fifths and mode (major/minor).
+ * @brief Represents a musical key signature (tonality), including circle of fifths and mode
+ * (major/minor).
  *
- * The Key class provides methods for setting and querying the key signature, including conversion between
- * fifth circle values, key names, and relative keys. It is designed for music analysis, computational musicology,
- * and MusicXML processing.
+ * The Key class provides methods for setting and querying the key signature, including conversion
+ * between fifth circle values, key names, and relative keys. It is designed for music analysis,
+ * computational musicology, and MusicXML processing.
  */
 class Key {
    public:
@@ -60,6 +61,6 @@ class Key {
     std::string getRelativeKeyName() const;
 
    private:
-    int _fifthCircle; ///< Number of accidentals in the circle of fifths.
-    bool _isMajorMode; ///< True for major, false for minor.
+    int _fifthCircle;   ///< Number of accidentals in the circle of fifths.
+    bool _isMajorMode;  ///< True for major, false for minor.
 };

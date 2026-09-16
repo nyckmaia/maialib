@@ -1,4 +1,5 @@
 import os
+
 from terminal_colors import *
 
 print(f"{color.OKGREEN}Validating C++ Code...{color.ENDC}")

@@ -8,15 +8,17 @@
 /**
  * @brief Represents the duration of a musical note, supporting multiple temporal representations.
  *
- * The Duration class provides methods for converting between quarter note values, ticks, rhythm figures,
- * tuplets, and fractional durations. It is designed for music analysis, computational musicology, and
- * MusicXML processing, allowing precise control over note durations in various formats.
+ * The Duration class provides methods for converting between quarter note values, ticks, rhythm
+ * figures, tuplets, and fractional durations. It is designed for music analysis, computational
+ * musicology, and MusicXML processing, allowing precise control over note durations in various
+ * formats.
  */
 class Duration {
    public:
     /**
      * @brief Constructs a Duration from a quarter note value.
-     * @param quarterDuration Duration in quarter notes (e.g., 1.0 for a quarter note, 0.5 for an eighth).
+     * @param quarterDuration Duration in quarter notes (e.g., 1.0 for a quarter note, 0.5 for an
+     * eighth).
      * @param divisionsPerQuarterNote Number of ticks per quarter note (default: 256).
      */
     Duration(float quarterDuration, int divisionsPerQuarterNote = 256);
@@ -120,12 +122,12 @@ class Duration {
     std::string getTimeModificationNormalType() const;
 
    private:
-    int _numDots; ///< Number of augmentation dots.
-    int _ticks; ///< Duration in ticks.
-    float _quarterDuration; ///< Duration in quarter notes.
-    int _divisionsPerQuarterNote; ///< Number of ticks per quarter note.
-    int _actualNotes; ///< Tuplet numerator.
-    int _normalNotes; ///< Tuplet denominator.
-    RhythmFigure _rhythmFigure; ///< Rhythm figure (e.g., QUARTER, EIGHTH).
-    Fraction _fractionDuration; ///< Fractional representation of duration.
+    int _numDots;                  ///< Number of augmentation dots.
+    int _ticks;                    ///< Duration in ticks.
+    float _quarterDuration;        ///< Duration in quarter notes.
+    int _divisionsPerQuarterNote;  ///< Number of ticks per quarter note.
+    int _actualNotes;              ///< Tuplet numerator.
+    int _normalNotes;              ///< Tuplet denominator.
+    RhythmFigure _rhythmFigure;    ///< Rhythm figure (e.g., QUARTER, EIGHTH).
+    Fraction _fractionDuration;    ///< Fractional representation of duration.
 };

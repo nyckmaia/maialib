@@ -15,29 +15,31 @@ class Barline;
 class Fraction;
 
 /**
- * @brief Represents a musical measure (bar) within a score, containing notes, staves, key/time signatures, and barlines.
+ * @brief Represents a musical measure (bar) within a score, containing notes, staves, key/time
+ * signatures, and barlines.
  *
- * The Measure class provides methods for managing notes, staves, key and time signatures, metronome marks, and barlines.
- * It supports MusicXML serialization and is designed for music analysis, computational musicology, and MusicXML processing.
+ * The Measure class provides methods for managing notes, staves, key and time signatures, metronome
+ * marks, and barlines. It supports MusicXML serialization and is designed for music analysis,
+ * computational musicology, and MusicXML processing.
  */
 class Measure {
    private:
-    int _number; ///< Measure number (index in the score).
-    Key _key; ///< Key signature for the measure.
-    std::string _metronomeFigure; ///< Metronome rhythm figure (e.g., "quarter").
-    int _metronomeValue; ///< Metronome value (BPM).
-    bool _isKeySignatureChanged; ///< True if key signature changes in this measure.
-    bool _isTimeSignatureChanged; ///< True if time signature changes in this measure.
-    bool _isMetronomeChanged; ///< True if metronome mark changes in this measure.
-    bool _isDivisionsPerQuarterNoteChanged; ///< True if rhythmic division changes in this measure.
-    int _numStaves; ///< Number of staves in the measure.
-    int _divisionsPerQuarterNote; ///< Divisions per quarter note for rhythmic precision.
-    TimeSignature _timeSignature; ///< Time signature for the measure.
+    int _number;                             ///< Measure number (index in the score).
+    Key _key;                                ///< Key signature for the measure.
+    std::string _metronomeFigure;            ///< Metronome rhythm figure (e.g., "quarter").
+    int _metronomeValue;                     ///< Metronome value (BPM).
+    bool _isKeySignatureChanged;             ///< True if key signature changes in this measure.
+    bool _isTimeSignatureChanged;            ///< True if time signature changes in this measure.
+    bool _isMetronomeChanged;                ///< True if metronome mark changes in this measure.
+    bool _isDivisionsPerQuarterNoteChanged;  ///< True if rhythmic division changes in this measure.
+    int _numStaves;                          ///< Number of staves in the measure.
+    int _divisionsPerQuarterNote;            ///< Divisions per quarter note for rhythmic precision.
+    TimeSignature _timeSignature;            ///< Time signature for the measure.
 
-    std::vector<std::vector<Note>> _note; ///< Notes for each staff in the measure.
-    std::vector<Clef> _clef; ///< Clefs for each staff.
-    Barline _barlineLeft; ///< Left barline.
-    Barline _barlineRight; ///< Right barline.
+    std::vector<std::vector<Note>> _note;  ///< Notes for each staff in the measure.
+    std::vector<Clef> _clef;               ///< Clefs for each staff.
+    Barline _barlineLeft;                  ///< Left barline.
+    Barline _barlineRight;                 ///< Right barline.
 
    public:
     /**

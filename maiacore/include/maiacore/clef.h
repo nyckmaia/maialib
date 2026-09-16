@@ -12,15 +12,15 @@ enum class ClefSign { G, F, C, PERCUSSION };
  * @brief Represents a musical clef for a staff, including sign, line, and change status.
  *
  * The Clef class provides methods for setting and querying the clef sign (G, F, C, percussion),
- * the staff line on which the clef appears, and whether the clef has changed in the current measure.
- * It supports MusicXML serialization and is designed for music analysis, computational musicology,
- * and MusicXML processing.
+ * the staff line on which the clef appears, and whether the clef has changed in the current
+ * measure. It supports MusicXML serialization and is designed for music analysis, computational
+ * musicology, and MusicXML processing.
  */
 class Clef {
    private:
-    ClefSign _sign; ///< Clef sign (G, F, C, percussion).
-    int _line; ///< Staff line for the clef.
-    bool _isClefChanged; ///< True if the clef changes in the current measure.
+    ClefSign _sign;       ///< Clef sign (G, F, C, percussion).
+    int _line;            ///< Staff line for the clef.
+    bool _isClefChanged;  ///< True if the clef changes in the current measure.
 
     /**
      * @brief Sets the clef changed status.

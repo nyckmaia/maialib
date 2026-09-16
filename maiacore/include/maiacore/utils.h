@@ -54,9 +54,10 @@ constexpr int factorial(const int n) { return (n == 0) || (n == 1) ? 1 : n * fac
  * @param epsilon Tolerance threshold for considering values equal (default: 0.005).
  * @return True if the absolute difference |A - B| is strictly less than epsilon.
  * @details Uses absolute difference comparison suitable for music analysis where small deviations
- *          from rounding errors (e.g., frequency calculations, rhythmic quantization, spectral analysis)
- *          should be treated as equivalent. The default epsilon of 0.005 accommodates typical
- *          floating-point precision errors in quarter-note duration and frequency ratio computations.
+ *          from rounding errors (e.g., frequency calculations, rhythmic quantization, spectral
+ * analysis) should be treated as equivalent. The default epsilon of 0.005 accommodates typical
+ *          floating-point precision errors in quarter-note duration and frequency ratio
+ * computations.
  * @note The comparison is symmetric: isFloatEqual(A, B) == isFloatEqual(B, A).
  *       However, transitivity is not guaranteed: if isFloatEqual(A, B) and isFloatEqual(B, C),
  *       it does not necessarily follow that isFloatEqual(A, C).

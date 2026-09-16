@@ -5,6 +5,7 @@ covering creation, properties, quality, direction, and specific interval types.
 """
 
 import unittest
+
 import maialib as ml
 
 
@@ -374,5 +375,5 @@ class IntervalEdgeCasesTestCase(unittest.TestCase):
         self.assertTrue(interval2.isAugmentedFourth(useEnharmony=True))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

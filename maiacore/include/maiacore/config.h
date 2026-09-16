@@ -12,14 +12,15 @@
 /**
  * @brief Enumeration of supported tuning systems for pitch-to-frequency conversion.
  * @details Different tuning systems alter the frequency ratios between pitches, directly impacting
- *          psychoacoustic dissonance calculations, spectral content analysis, and harmonic perception
- *          studies. Selection of tuning system is critical for:
+ *          psychoacoustic dissonance calculations, spectral content analysis, and harmonic
+ * perception studies. Selection of tuning system is critical for:
  *          - Historical musicology (Renaissance, Baroque, Classical period works)
  *          - Microtonal composition and analysis
  *          - Cross-cultural music research (non-Western tuning practices)
  *          - Acoustical modeling of period instruments
  *
- *          The active tuning system affects Note::getFrequency() and all derived spectral operations.
+ *          The active tuning system affects Note::getFrequency() and all derived spectral
+ * operations.
  */
 enum class TuningSystem {
     /**
@@ -33,8 +34,8 @@ enum class TuningSystem {
 
     /**
      * @brief Just intonation using pure integer frequency ratios.
-     * @details Intervals are derived from simple integer ratios (3:2 perfect fifth, 5:4 major third,
-     *          4:3 perfect fourth, etc.), producing maximum consonance for tonal harmony but limiting
+     * @details Intervals are derived from simple integer ratios (3:2 perfect fifth, 5:4 major
+     * third, 4:3 perfect fourth, etc.), producing maximum consonance for tonal harmony but limiting
      *          modulation due to comma accumulation. Historically used in vocal music, a cappella
      *          ensembles, and theoretical tuning studies. Particularly relevant for Renaissance
      *          polyphony and harmonic overtone analysis.
@@ -43,31 +44,31 @@ enum class TuningSystem {
 
     /**
      * @brief Pythagorean tuning based on stacked perfect fifths (3:2 ratio).
-     * @details Generates the diatonic scale by iterating pure 3:2 fifths, producing bright major thirds
-     *          (81:64 ≈ 408 cents, sharper than equal temperament's 400 cents) and narrow minor thirds.
-     *          Favors melodic purity and linear counterpoint over harmonic consonance. Dominant tuning
-     *          system in Medieval and early Renaissance music. The Pythagorean comma (≈24 cents) limits
-     *          enharmonic equivalence.
+     * @details Generates the diatonic scale by iterating pure 3:2 fifths, producing bright major
+     * thirds (81:64 ≈ 408 cents, sharper than equal temperament's 400 cents) and narrow minor
+     * thirds. Favors melodic purity and linear counterpoint over harmonic consonance. Dominant
+     * tuning system in Medieval and early Renaissance music. The Pythagorean comma (≈24 cents)
+     * limits enharmonic equivalence.
      */
     PYTHAGOREAN_TUNING,
 
     /**
      * @brief Quarter-comma meantone temperament, standard Renaissance/Baroque tuning.
-     * @details Tempers perfect fifths narrow by 1/4 syntonic comma to achieve pure major thirds (5:4 ratio).
-     *          Produces excellent triadic consonance in commonly used keys (up to 2-3 sharps/flats) but
-     *          increasingly dissonant intervals ("wolf tones") in remote keys. Widely used from 1500-1700
-     *          for keyboard instruments, fretted strings, and fixed-pitch ensembles. Essential for authentic
-     *          performance practice of Baroque repertoire.
+     * @details Tempers perfect fifths narrow by 1/4 syntonic comma to achieve pure major thirds
+     * (5:4 ratio). Produces excellent triadic consonance in commonly used keys (up to 2-3
+     * sharps/flats) but increasingly dissonant intervals ("wolf tones") in remote keys. Widely used
+     * from 1500-1700 for keyboard instruments, fretted strings, and fixed-pitch ensembles.
+     * Essential for authentic performance practice of Baroque repertoire.
      */
     MEANTONE_TEMPERAMENT,
 
     /**
      * @brief Well temperament (Werckmeister, Kirnberger, Vallotti variants).
-     * @details Irregular temperament system with variable key colors—different keys possess distinct
-     *          harmonic characters due to asymmetric interval distribution. Allows modulation to all
-     *          24 major/minor keys while preserving tonal affect differences. Widely used in Baroque
-     *          and early Classical periods (1680-1810). Bach's "Well-Tempered Clavier" exploits these
-     *          tonal color variations. Implementation typically follows Werckmeister III tuning.
+     * @details Irregular temperament system with variable key colors—different keys possess
+     * distinct harmonic characters due to asymmetric interval distribution. Allows modulation to
+     * all 24 major/minor keys while preserving tonal affect differences. Widely used in Baroque and
+     * early Classical periods (1680-1810). Bach's "Well-Tempered Clavier" exploits these tonal
+     * color variations. Implementation typically follows Werckmeister III tuning.
      */
     WELL_TEMPERAMENT
 };

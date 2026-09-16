@@ -1,25 +1,27 @@
 #pragma once
 
+#include <functional>
 #include <string>
 #include <vector>
-#include <functional>
 
 #include "maiacore/score.h"
 
 /**
  * @brief Represents a collection of musical scores, supporting batch analysis and management.
  *
- * The ScoreCollection class provides methods for loading, managing, and analyzing multiple Score objects.
- * It is designed for large-scale musicological research, corpus studies, and batch processing of MusicXML files.
+ * The ScoreCollection class provides methods for loading, managing, and analyzing multiple Score
+ * objects. It is designed for large-scale musicological research, corpus studies, and batch
+ * processing of MusicXML files.
  */
 class ScoreCollection {
    private:
-    std::vector<std::string> _directoriesPaths; ///< List of directories containing score files.
-    std::vector<Score> _scores; ///< Vector of loaded Score objects.
+    std::vector<std::string> _directoriesPaths;  ///< List of directories containing score files.
+    std::vector<Score> _scores;                  ///< Vector of loaded Score objects.
 
     /**
      * @brief Loads all MusicXML files from the specified directories into the collection.
-     * @details Scans each directory for .xml, .mxl, and .musicxml files and loads them as Score objects.
+     * @details Scans each directory for .xml, .mxl, and .musicxml files and loads them as Score
+     * objects.
      */
     void loadCollectionFiles();
 
@@ -27,16 +29,20 @@ class ScoreCollection {
      * @brief Row type for extended melodic pattern search results (single pattern).
      * @details Includes file metadata and all fields from Score::MelodyPatternRow.
      */
-    typedef std::tuple<std::string, std::string, std::string, std::string, int, int, std::string, std::string, std::vector<std::string>, 
-                   std::vector<float>, std::vector<float>, float, float, float> ExtendedMelodyPatternRow;
+    typedef std::tuple<std::string, std::string, std::string, std::string, int, int, std::string,
+                       std::string, std::vector<std::string>, std::vector<float>,
+                       std::vector<float>, float, float, float>
+        ExtendedMelodyPatternRow;
     typedef std::vector<ExtendedMelodyPatternRow> ExtendedMelodyPatternTable;
 
     /**
      * @brief Row type for extended multi-pattern melodic search results.
      * @details Includes pattern index, file metadata, and all fields from Score::MelodyPatternRow.
      */
-    typedef std::tuple<int, std::string, std::string, std::string, std::string, int, int, std::string, std::string, std::vector<std::string>, 
-                   std::vector<float>, std::vector<float>, float, float, float> ExtendedMultiMelodyPatternRow;
+    typedef std::tuple<int, std::string, std::string, std::string, std::string, int, int,
+                       std::string, std::string, std::vector<std::string>, std::vector<float>,
+                       std::vector<float>, float, float, float>
+        ExtendedMultiMelodyPatternRow;
     typedef std::vector<ExtendedMultiMelodyPatternRow> ExtendedMultiMelodyPatternTable;
 
    public:
@@ -149,17 +155,24 @@ class ScoreCollection {
      * @return ExtendedMelodyPatternTable with results from all scores.
      */
     ExtendedMelodyPatternTable findMelodyPattern(
-        const std::vector<Note>& melodyPattern, const float totalIntervalsSimilarityThreshold = 0.5f,
+        const std::vector<Note>& melodyPattern,
+        const float totalIntervalsSimilarityThreshold = 0.5f,
         const float totalRhythmSimilarityThreshold = 0.5f,
-        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& intervalsSimilarityCallback = nullptr,
-        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& rhythmSimilarityCallback = nullptr,
-        const std::function<float(const std::vector<float>&)>& totalIntervalSimilarityCallback = nullptr,
-        const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback = nullptr,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>&
+            intervalsSimilarityCallback = nullptr,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>&
+            rhythmSimilarityCallback = nullptr,
+        const std::function<float(const std::vector<float>&)>& totalIntervalSimilarityCallback =
+            nullptr,
+        const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback =
+            nullptr,
         const std::function<float(float, float)>& totalSimilarityCallback = nullptr) const;
 
     /**
-     * @brief Searches for multiple melodic patterns in all scores, returning extended results for each pattern.
-     * @details Each result row includes pattern index, file metadata, and all fields from Score::MelodyPatternRow.
+     * @brief Searches for multiple melodic patterns in all scores, returning extended results for
+     * each pattern.
+     * @details Each result row includes pattern index, file metadata, and all fields from
+     * Score::MelodyPatternRow.
      * @param melodyPatterns Vector of melodic patterns (each a vector of Note).
      * @param totalIntervalsSimilarityThreshold Minimum interval similarity threshold.
      * @param totalRhythmSimilarityThreshold Minimum rhythm similarity threshold.
@@ -171,12 +184,17 @@ class ScoreCollection {
      * @return Vector of ExtendedMultiMelodyPatternTable, one for each pattern.
      */
     std::vector<ExtendedMultiMelodyPatternTable> findMelodyPattern(
-        const std::vector<std::vector<Note>>& melodyPatterns, const float totalIntervalsSimilarityThreshold = 0.5f,
+        const std::vector<std::vector<Note>>& melodyPatterns,
+        const float totalIntervalsSimilarityThreshold = 0.5f,
         const float totalRhythmSimilarityThreshold = 0.5f,
-        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& intervalsSimilarityCallback = nullptr,
-        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>& rhythmSimilarityCallback = nullptr,
-        const std::function<float(const std::vector<float>&)>& totalIntervalSimilarityCallback = nullptr,
-        const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback = nullptr,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>&
+            intervalsSimilarityCallback = nullptr,
+        const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>&
+            rhythmSimilarityCallback = nullptr,
+        const std::function<float(const std::vector<float>&)>& totalIntervalSimilarityCallback =
+            nullptr,
+        const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback =
+            nullptr,
         const std::function<float(float, float)>& totalSimilarityCallback = nullptr) const;
 
     /**

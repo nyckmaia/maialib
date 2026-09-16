@@ -13,9 +13,9 @@ enum class METRIC { SIMPLE, COMPOUND, IRREGULAR };
 /**
  * @brief Represents a musical time signature (meter) for a measure.
  *
- * The TimeSignature class provides methods for setting and querying the upper and lower values of the time signature,
- * as well as determining the metric type (simple, compound, or complex). It is designed for music analysis,
- * computational musicology, and MusicXML processing.
+ * The TimeSignature class provides methods for setting and querying the upper and lower values of
+ * the time signature, as well as determining the metric type (simple, compound, or complex). It is
+ * designed for music analysis, computational musicology, and MusicXML processing.
  */
 class TimeSignature {
    public:

@@ -9,22 +9,24 @@ class Measure;
 class Note;
 
 /**
- * @brief Represents a musical part (instrument or voice) in a score, containing measures, staves, and notes.
+ * @brief Represents a musical part (instrument or voice) in a score, containing measures, staves,
+ * and notes.
  *
- * The Part class provides methods for managing measures, staves, notes, and chords, as well as for querying and modifying
- * part-level metadata. It supports MusicXML serialization and is designed for music analysis and computational musicology.
+ * The Part class provides methods for managing measures, staves, notes, and chords, as well as for
+ * querying and modifying part-level metadata. It supports MusicXML serialization and is designed
+ * for music analysis and computational musicology.
  */
 class Part {
    private:
-    int _partIndex; ///< Index of the part in the score.
-    int _numStaves; ///< Number of staves in the part.
-    int _divisionsPerQuarterNote; ///< Divisions per quarter note for rhythmic precision.
-    bool _isPitched; ///< True if the part is pitched (not percussion).
-    int _staffLines; ///< Number of staff lines (default: 5).
-    std::string _partName; ///< Full name of the part.
-    std::string _shortName; ///< Short name/abbreviation of the part.
-    std::vector<Measure> _measure; ///< Vector of measures in the part.
-    std::vector<int> _midiUnpitched; ///< MIDI numbers for unpitched percussion instruments.
+    int _partIndex;                   ///< Index of the part in the score.
+    int _numStaves;                   ///< Number of staves in the part.
+    int _divisionsPerQuarterNote;     ///< Divisions per quarter note for rhythmic precision.
+    bool _isPitched;                  ///< True if the part is pitched (not percussion).
+    int _staffLines;                  ///< Number of staff lines (default: 5).
+    std::string _partName;            ///< Full name of the part.
+    std::string _shortName;           ///< Short name/abbreviation of the part.
+    std::vector<Measure> _measure;    ///< Vector of measures in the part.
+    std::vector<int> _midiUnpitched;  ///< MIDI numbers for unpitched percussion instruments.
 
     /**
      * @brief Appends a single note to the part at a given position and staff.
@@ -62,7 +64,8 @@ class Part {
 
    public:
     /**
-     * @brief Constructs a Part with a given name, number of staves, pitch type, and rhythmic division.
+     * @brief Constructs a Part with a given name, number of staves, pitch type, and rhythmic
+     * division.
      * @param partName Name of the part (instrument or voice).
      * @param numStaves Number of staves (default: 1).
      * @param isPitched True if pitched (default: true).
@@ -230,14 +233,16 @@ class Part {
     int getNumNotes(const int staveId = -1);
 
     /**
-     * @brief Returns the number of sounding notes (note on) in the part (optionally for a specific staff).
+     * @brief Returns the number of sounding notes (note on) in the part (optionally for a specific
+     * staff).
      * @param staveId Staff index (-1 for all staves).
      * @return Number of sounding notes.
      */
     int getNumNotesOn(const int staveId = -1);
 
     /**
-     * @brief Returns the number of rest notes (note off) in the part (optionally for a specific staff).
+     * @brief Returns the number of rest notes (note off) in the part (optionally for a specific
+     * staff).
      * @param staveId Staff index (-1 for all staves).
      * @return Number of rest notes.
      */

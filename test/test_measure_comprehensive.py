@@ -5,6 +5,7 @@ covering initialization, properties, notes, time/key signatures, and manipulatio
 """
 
 import unittest
+
 import maialib as ml
 
 
@@ -361,7 +362,7 @@ class MeasureIntegrationTestCase(unittest.TestCase):
 
     def test_load_measure_from_score(self):
         """Test loading a measure from a score"""
-        score = ml.Score('./xml_examples/unit_test/test_chord.xml')
+        score = ml.Score("./xml_examples/unit_test/test_chord.xml")
         if score.getNumParts() > 0:
             part = score.getPart(0)
             if part.getNumMeasures() > 0:
@@ -371,5 +372,5 @@ class MeasureIntegrationTestCase(unittest.TestCase):
                 self.assertGreaterEqual(measure.getNumStaves(), 1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()

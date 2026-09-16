@@ -1,8 +1,8 @@
 import platform
 import subprocess
 import sys
-from shutil import copytree
 from pathlib import Path
+from shutil import copytree
 
 from terminal_colors import *
 
@@ -12,9 +12,7 @@ def run_step(command: str, step_name: str) -> None:
     clear message if the command fails."""
     result = subprocess.run(command, shell=True)
     if result.returncode != 0:
-        print(
-            f"{color.FAIL}Step failed: {step_name} (exit code {result.returncode}){color.ENDC}"
-        )
+        print(f"{color.FAIL}Step failed: {step_name} (exit code {result.returncode}){color.ENDC}")
         sys.exit(result.returncode)
 
 
@@ -55,9 +53,7 @@ copytree("./stubs/maialib/", "./maialib/", dirs_exist_ok=True)
 # earlier (e.g. right after stub generation into './stubs') reads stale/empty stubs
 # from './maialib/' and silently wipes out the generated docs.
 print(f"{color.OKGREEN}Building AI_API_CHEATSHEET.md from stubs...{color.ENDC}")
-run_step(
-    f"python {Path.cwd() / 'scripts' / 'build-cheatsheet.py'}", "build AI_API_CHEATSHEET.md"
-)
+run_step(f"python {Path.cwd() / 'scripts' / 'build-cheatsheet.py'}", "build AI_API_CHEATSHEET.md")
 
 print(f"{color.OKGREEN}Building llms-full.txt...{color.ENDC}")
 run_step(f"python {Path.cwd() / 'scripts' / 'build-llms-full.py'}", "build llms-full.txt")

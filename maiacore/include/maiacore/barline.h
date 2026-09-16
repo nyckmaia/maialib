@@ -5,9 +5,10 @@
 /**
  * @brief Represents a barline in a musical score, including style, direction, and location.
  *
- * The Barline class provides methods for setting and querying the barline style (e.g., single, double, repeat),
- * direction (forward, backward), and location (left, right, middle). It supports MusicXML serialization and is
- * designed for music analysis, computational musicology, and MusicXML processing.
+ * The Barline class provides methods for setting and querying the barline style (e.g., single,
+ * double, repeat), direction (forward, backward), and location (left, right, middle). It supports
+ * MusicXML serialization and is designed for music analysis, computational musicology, and MusicXML
+ * processing.
  */
 class Barline {
    private:

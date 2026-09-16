@@ -1,6 +1,7 @@
 import os
 import platform
 from pathlib import Path
+
 from terminal_colors import *
 
 print(f"{color.OKGREEN}Generating C++ Maiacore Code Coverage...{color.ENDC}")

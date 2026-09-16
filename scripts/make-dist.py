@@ -1,8 +1,7 @@
-from glob import glob
 import platform
-from shutil import copy2
-from shutil import rmtree
+from glob import glob
 from pathlib import Path
+from shutil import copy2, rmtree
 
 from terminal_colors import *
 
@@ -21,9 +20,7 @@ binaryModuleList = []
 # Get the module file and set the install directory
 if myOS == "Windows":
     binaryModuleList = glob(f"{buildDir}/*.pyd")
-elif myOS == "Linux":
-    binaryModuleList = glob(f"{buildDir}/*.so")
-elif myOS == "Darwin":
+elif myOS == "Linux" or myOS == "Darwin":
     binaryModuleList = glob(f"{buildDir}/*.so")
 else:
     print(f"{color.FAIL}[ERROR] Unknown OS!{color.ENDC}")
