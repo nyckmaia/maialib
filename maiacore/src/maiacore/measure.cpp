@@ -557,7 +557,11 @@ const std::string Measure::toXML(const int instrumentId, const int identSize) co
         const auto& currentStave = _note[s];
         const int numNotes = static_cast<int>(currentStave.size());
         for (int n = 0; n < numNotes; n++) {
-            if (s == 0 && haveAnyNoteOn &&
+            // The n > 0 guard is required: the first note has no predecessor, so
+            // there is no voice change to detect. Without it the comparison reads
+            // currentStave[-1], out-of-bounds undefined behavior that crashed the
+            // process at random and could emit a spurious <backup> element.
+            if (s == 0 && haveAnyNoteOn && n > 0 &&
                 currentStave[n].getVoice() != currentStave[n - 1].getVoice()) {
                 xml.append(Helper::generateIdentation(3, identSize) + "<backup>\n");
                 xml.append(Helper::generateIdentation(4, identSize) + "<duration>" +
