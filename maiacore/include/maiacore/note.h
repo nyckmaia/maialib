@@ -522,10 +522,10 @@ class Note {
      *            by default and the opposite single accidental as the alternative.
      *          Range fallback: a missing alternative returns the default, and a missing default
      *          returns the note's own pitch (e.g., "Bx11" -> "Bx11").
-     * @param alternativeEnhamonicPitch If true, returns the alternative enharmonic.
+     * @param alternativeEnharmonicPitch If true, returns the alternative enharmonic.
      * @return Enharmonic pitch string, or "rest" for a rest.
      */
-    std::string getEnharmonicPitch(const bool alternativeEnhamonicPitch = false) const;
+    std::string getEnharmonicPitch(const bool alternativeEnharmonicPitch = false) const;
 
     /**
      * @brief Returns all enharmonic pitch strings for the note.
@@ -538,10 +538,10 @@ class Note {
 
     /**
      * @brief Returns an enharmonic equivalent Note object.
-     * @param alternativeEnhamonicPitch If true, returns an alternative enharmonic.
+     * @param alternativeEnharmonicPitch If true, returns an alternative enharmonic.
      * @return Enharmonic Note object.
      */
-    Note getEnharmonicNote(const bool alternativeEnhamonicPitch = false) const;
+    Note getEnharmonicNote(const bool alternativeEnharmonicPitch = false) const;
 
     /**
      * @brief Returns all enharmonic Note objects for the note.
@@ -559,9 +559,9 @@ class Note {
 
     /**
      * @brief Converts the note to its enharmonic equivalent.
-     * @param alternativeEnhamonicPitch If true, uses alternative enharmonic.
+     * @param alternativeEnharmonicPitch If true, uses alternative enharmonic.
      */
-    void toEnharmonicPitch(const bool alternativeEnhamonicPitch = false);
+    void toEnharmonicPitch(const bool alternativeEnharmonicPitch = false);
 
     /**
      * @brief Returns the frequency of the note in Hz.

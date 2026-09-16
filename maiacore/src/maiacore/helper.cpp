@@ -16,20 +16,6 @@
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
 
-namespace {
-// Returns the MIDI note number of a spelling already validated by Helper::splitPitch
-int spellingToMidiNumber(const std::string& pitchStep, const float alterValue, const int octave) {
-    const auto stepIt = std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), pitchStep);
-    if (stepIt == c_C_diatonicScale.end()) {
-        LOG_ERROR("Unknown diatonic pitch step: " + pitchStep);
-    }
-    const auto stepIdx = static_cast<size_t>(std::distance(c_C_diatonicScale.begin(), stepIt));
-    // SP2: alterValue is integral today because splitPitch rejects quarter-tone symbols;
-    // widening c_alterSymbol must replace this truncation.
-    return 12 * (octave + 1) + c_diatonicStepSemitones[stepIdx] + static_cast<int>(alterValue);
-}
-}  // namespace
-
 std::vector<std::string> Helper::splitString(const std::string& s, char delimiter) {
     std::vector<std::string> tokens;
     std::string token;
@@ -237,7 +223,19 @@ int Helper::pitch2midiNote(const std::string& pitch) {
     float alterValue = 0.0f;
     splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
 
-    return spellingToMidiNumber(pitchStep, alterValue, octave);
+    return spelling2midiNote(pitchStep, alterValue, octave);
+}
+
+int Helper::spelling2midiNote(const std::string& pitchStep, const float alterValue,
+                              const int octave) {
+    const auto stepIt = std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), pitchStep);
+    if (stepIt == c_C_diatonicScale.end()) {
+        LOG_ERROR("Unknown diatonic pitch step: " + pitchStep);
+    }
+    const auto stepIdx = static_cast<size_t>(std::distance(c_C_diatonicScale.begin(), stepIt));
+    // SP2: alterValue is integral today because splitPitch rejects quarter-tone symbols;
+    // widening c_alterSymbol must replace this truncation.
+    return 12 * (octave + 1) + c_diatonicStepSemitones[stepIdx] + static_cast<int>(alterValue);
 }
 
 std::pair<int, int> Helper::freq2midiNote(const float freq, std::function<int(float)> modelo) {
@@ -1412,7 +1410,7 @@ void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::
     }
 
     const float value = alterSymbol2Value(symbol);
-    if (spellingToMidiNumber(step, value, parsedOctave) < 0) {
+    if (spelling2midiNote(step, value, parsedOctave) < 0) {
         LOG_ERROR("The pitch '" + pitch + "' is below MIDI note 0");
     }
 

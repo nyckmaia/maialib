@@ -209,7 +209,7 @@ void NoteClass(const py::module& m) {
     cls.def("isGraceNote", &Note::isGraceNote);
 
     cls.def("getEnharmonicPitch", &Note::getEnharmonicPitch,
-            py::arg("alternativeEnhamonicPitch") = false,
+            py::arg("alternativeEnharmonicPitch") = false,
             R"pbdoc(
         Return an enharmonic spelling of the note.
 
@@ -223,7 +223,7 @@ void NoteClass(const py::module& m) {
 
         Parameters
         ----------
-        alternativeEnhamonicPitch : bool, default False
+        alternativeEnharmonicPitch : bool, default False
             Return the alternative spelling instead of the default one.
 
         Returns
@@ -254,13 +254,13 @@ void NoteClass(const py::module& m) {
     )pbdoc");
 
     cls.def("getEnharmonicNote", &Note::getEnharmonicNote,
-            py::arg("alternativeEnhamonicPitch") = false,
+            py::arg("alternativeEnharmonicPitch") = false,
             R"pbdoc(
         Return a new Note with an enharmonic spelling (see ``getEnharmonicPitch``).
 
         Parameters
         ----------
-        alternativeEnhamonicPitch : bool, default False
+        alternativeEnharmonicPitch : bool, default False
             Use the alternative spelling instead of the default one.
 
         Returns
@@ -285,13 +285,13 @@ void NoteClass(const py::module& m) {
     )pbdoc");
 
     cls.def("toEnharmonicPitch", &Note::toEnharmonicPitch,
-            py::arg("alternativeEnhamonicPitch") = false,
+            py::arg("alternativeEnharmonicPitch") = false,
             R"pbdoc(
         Respell the note in place with an enharmonic spelling (see ``getEnharmonicPitch``).
 
         Parameters
         ----------
-        alternativeEnhamonicPitch : bool, default False
+        alternativeEnharmonicPitch : bool, default False
             Use the alternative spelling instead of the default one.
     )pbdoc");
     cls.def("getScaleDegree", &Note::getScaleDegree, py::arg("key"));

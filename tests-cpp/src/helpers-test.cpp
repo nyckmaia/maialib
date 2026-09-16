@@ -393,6 +393,31 @@ EXPECT_FLOAT_EQ(alterValue, 0.0f);
 EXPECT_EQ(alterSymbol, "");
 }
 
+TEST(PitchSpelling, Spelling2MidiNote) {
+EXPECT_EQ(Helper::spelling2midiNote("C", 0.0f, -1), 0);
+EXPECT_EQ(Helper::spelling2midiNote("C", 0.0f, 4), 60);
+EXPECT_EQ(Helper::spelling2midiNote("B", 2.0f, 11), 157);
+EXPECT_EQ(Helper::spelling2midiNote("D", -1.0f, 10), 133);
+
+// Must agree with Helper::pitch2midiNote() for the already-parsed components of the same pitch
+std::string pitchClass;
+std::string pitchStep;
+std::string alterSymbol;
+int octave = 0;
+float alterValue = 0.0f;
+Helper::splitPitch("F#11", pitchClass, pitchStep, octave, alterValue, alterSymbol);
+EXPECT_EQ(Helper::spelling2midiNote(pitchStep, alterValue, octave),
+          Helper::pitch2midiNote("F#11"));
+
+try {
+    Helper::spelling2midiNote("H", 0.0f, 4);
+    FAIL() << "Expected std::runtime_error for pitchStep: H";
+} catch (const std::runtime_error& e) {
+    EXPECT_NE(std::string::npos, std::string(e.what()).find("Unknown diatonic pitch step"))
+        << "message: " << e.what();
+}
+}
+
 TEST(PitchSpelling, AcceptedEdgeCases) {
 EXPECT_EQ(Helper::pitch2midiNote("Cbb0"), 10);
 EXPECT_EQ(Helper::pitch2midiNote("Cb0"), 11);

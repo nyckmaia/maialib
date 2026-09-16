@@ -109,6 +109,21 @@ class Helper {
     static int pitch2midiNote(const std::string& pitch);
 
     /**
+     * @brief Computes the MIDI note number from already-parsed pitch spelling components.
+     * @details Single implementation of `12 * (octave + 1) + stepSemitone + alterValue`, used by
+     *          pitch2midiNote() and splitPitch() so the formula is evaluated in one place. Intended
+     *          for callers (e.g. Note) that already parsed a pitch string with splitPitch() and want
+     *          to avoid rebuilding and re-parsing a pitch string just to get its MIDI number.
+     * @param pitchStep Diatonic step, one of "A".."G" (see splitPitch()).
+     * @param alterValue Accidental value in semitones (e.g., -2.0 for "bb").
+     * @param octave Octave number.
+     * @return MIDI note number.
+     * @throws std::runtime_error If pitchStep is not a valid diatonic step.
+     */
+    static int spelling2midiNote(const std::string& pitchStep, const float alterValue,
+                                 const int octave);
+
+    /**
      * @brief Converts a MIDI note number to a pitch string, with optional accidental type.
      * @param midiNote MIDI note number (negative values return "rest").
      * @param accType Accidental type: "" (natural for white keys, "#" for black keys), "#", "b",

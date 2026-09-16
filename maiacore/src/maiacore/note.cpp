@@ -73,7 +73,7 @@ Note::Note(const std::string& pitch, const RhythmFigure rhythmFigure, bool isNot
 
     _writtenPitchClass = pitchClass;
     _writtenOctave = octave;
-    _midiNumber = Helper::pitch2midiNote(pitchClass + std::to_string(octave));
+    _midiNumber = Helper::spelling2midiNote(pitchStep, alterValue, octave);
     _inChord = inChord;
     _soundingPitchClass = pitchClass;
     _soundingOctave = octave;
@@ -296,7 +296,7 @@ bool Note::isTransposed() const {
     return (_transposeDiatonic == 0 && _transposeChromatic == 0) ? false : true;
 }
 
-std::string Note::getEnharmonicPitch(const bool alternativeEnhamonicPitch) const {
+std::string Note::getEnharmonicPitch(const bool alternativeEnharmonicPitch) const {
     if (isNoteOff()) {
         return MUSIC_XML::PITCH::REST;
     }
@@ -379,7 +379,7 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnhamonicPitch) const
         alternativePitch = defaultPitch;
     }
 
-    return alternativeEnhamonicPitch ? alternativePitch : defaultPitch;
+    return alternativeEnharmonicPitch ? alternativePitch : defaultPitch;
 }
 
 std::vector<std::string> Note::getEnharmonicPitches(const bool includeCurrentPitch) const {
@@ -391,12 +391,12 @@ std::vector<std::string> Note::getEnharmonicPitches(const bool includeCurrentPit
     return std::vector<std::string>({getEnharmonicPitch(false), getEnharmonicPitch(true)});
 }
 
-void Note::toEnharmonicPitch(const bool alternativeEnhamonicPitch) {
-    setPitch(getEnharmonicPitch(alternativeEnhamonicPitch));
+void Note::toEnharmonicPitch(const bool alternativeEnharmonicPitch) {
+    setPitch(getEnharmonicPitch(alternativeEnharmonicPitch));
 }
 
-Note Note::getEnharmonicNote(const bool alternativeEnhamonicPitch) const {
-    return Note(getEnharmonicPitch(alternativeEnhamonicPitch));
+Note Note::getEnharmonicNote(const bool alternativeEnharmonicPitch) const {
+    return Note(getEnharmonicPitch(alternativeEnharmonicPitch));
 }
 
 std::vector<Note> Note::getEnharmonicNotes(const bool includeCurrentPitch) const {
@@ -518,7 +518,7 @@ void Note::setPitch(const std::string& pitch) {
 
     _writtenPitchClass = pitchClass;
     _writtenOctave = octave;
-    _midiNumber = Helper::pitch2midiNote(pitchClass + std::to_string(octave));
+    _midiNumber = Helper::spelling2midiNote(pitchStep, alterValue, octave);
     //    _inChord = inChord;
     _soundingPitchClass = pitchClass;
     _soundingOctave = octave;

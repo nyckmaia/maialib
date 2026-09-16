@@ -201,6 +201,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `pitchRatio(pitch_A: str, pitch_B: str) -> float`
 - `rhythmFigure2Ticks(rhythmFigure: RhythmFigure, divisionsPerQuarterNote: int = 265) -> int`
 - `rhythmFigure2noteType(rhythmFigure: RhythmFigure) -> str`
+- `spelling2midiNote(pitchStep: str, alterValue: float, octave: int) -> int`
 - `splitPitch(pitch: str) -> tuple[str, str, int, float, str]`
 - `ticks2noteType(durationTicks: int, divisionsPerQuarterNote: int = 256, actualNotes: int = 1, normalNotes: int = 1) -> tuple[str, int]`
 - `transposePitch(pitch: str, semitones: int, accType: str = '#') -> str`
@@ -369,9 +370,9 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `getDivisionsPerQuarterNote() -> int`
 - `getDuration() -> Duration`
 - `getDurationTicks() -> int`
-- `getEnharmonicNote(alternativeEnhamonicPitch: bool = False) -> Note`
+- `getEnharmonicNote(alternativeEnharmonicPitch: bool = False) -> Note`
 - `getEnharmonicNotes(includeCurrentPitch: bool = False) -> list[Note]`
-- `getEnharmonicPitch(alternativeEnhamonicPitch: bool = False) -> str`
+- `getEnharmonicPitch(alternativeEnharmonicPitch: bool = False) -> str`
 - `getEnharmonicPitches(includeCurrentPitch: bool = False) -> list[str]`
 - `getFrequency(freqA4: float = 440.0) -> float`
 - `getHarmonicSpectrum(numPartials: int = 6, amplCallback: typing.Callable[[list[float]], list[float]] = None, partialsDecayExpRate: float = 0.8799999952316284, freqA4: float = 440.0) -> tuple[list[float], list[float]]`
@@ -430,7 +431,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `setTupleValues(actualNotes: int, normalNotes: int, normalType: str = 'eighth') -> None`
 - `setUnpitchedIndex(arg0: int) -> None`
 - `setVoice(voice: int) -> None`
-- `toEnharmonicPitch(alternativeEnhamonicPitch: bool = False) -> None`
+- `toEnharmonicPitch(alternativeEnharmonicPitch: bool = False) -> None`
 - `toXML(instrumentId: int = 1, identSize: int = 2) -> str`
 - `transpose(semitones: int, accType: str = '') -> None`
 

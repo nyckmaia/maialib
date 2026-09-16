@@ -50,6 +50,42 @@ void HelperClass(const py::module& m) {
     )pbdoc",
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
+    cls.def_static("spelling2midiNote", &Helper::spelling2midiNote, py::arg("pitchStep"),
+                   py::arg("alterValue"), py::arg("octave"),
+                   R"pbdoc(
+        Compute the MIDI note number from already-parsed pitch spelling components.
+
+        Single implementation of ``12 * (octave + 1) + stepSemitone + alterValue``, also used
+        internally by ``pitch2midiNote`` and ``splitPitch``. Intended for callers that already
+        parsed a pitch string with ``splitPitch`` and want to avoid rebuilding and re-parsing a
+        pitch string just to get its MIDI number.
+
+        Parameters
+        ----------
+        pitchStep : str
+            Diatonic step, one of ``"A"`` to ``"G"`` (see ``splitPitch``).
+        alterValue : float
+            Accidental value in semitones (e.g. -2.0 for ``"bb"``).
+        octave : int
+            Octave number.
+
+        Returns
+        -------
+        int
+            MIDI note number.
+
+        Raises
+        ------
+        RuntimeError
+            If pitchStep is not a valid diatonic step.
+
+        Examples
+        --------
+        >>> ml.Helper.spelling2midiNote("B", 2.0, 11)
+        157
+    )pbdoc",
+                   py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    //--------------------- //
     cls.def_static(
         "splitPitch",
         [](const std::string& pitch) {
