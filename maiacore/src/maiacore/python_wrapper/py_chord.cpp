@@ -213,11 +213,13 @@ void ChordClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the chord has exactly 8 distinct pitch classes: no enharmonic respelling can give
-            all 8 notes distinct letters (only 7 exist, A-G), so no stacked-in-thirds
-            representation can be computed. This applies to every method that triggers the
-            stacked-in-thirds computation (e.g. ``isDyad``, ``stackSize``, the ``have*`` family),
-            not only ``getName``.
+            If no enharmonic respelling of this chord's notes can produce a valid
+            stacked-in-thirds representation. This is not limited to large chords: pitch classes
+            are distinguished by spelling (``"C"``, ``"C#"`` and ``"Db"`` are three different
+            pitch classes), so even a 3-note chord like ``["C4", "C#4", "Db4"]`` can raise this.
+            This applies to every method that triggers the stacked-in-thirds computation (e.g.
+            ``isDyad``, ``stackSize``, ``isInRootPosition``, ``getOpenStackIntervals``,
+            ``getCloseStackIntervals``, the ``have*`` family), not only ``getName``.
     )pbdoc");
     cls.def("getBassNote", &Chord::getBassNote);
     cls.def("getNotes", &Chord::getNotes);
@@ -349,6 +351,13 @@ void ChordClass(const py::module& m) {
         bool
             ``True`` if the chord is in root position, ``False`` otherwise -- including for an
             empty chord, which cannot be in root position.
+
+        Raises
+        ------
+        RuntimeError
+            If no enharmonic respelling of this chord's notes can produce a valid
+            stacked-in-thirds representation (see ``getName``'s docstring for when this applies --
+            it is not limited to large chords).
     )pbdoc");
 
     cls.def("getMidiIntervals", &Chord::getMidiIntervals, py::arg("firstNoteAsReference") = false);
@@ -365,6 +374,13 @@ void ChordClass(const py::module& m) {
         list[Interval]
             One interval per adjacent pair in the open stack, or an empty list if the chord has
             fewer than 2 notes in its open stack (including an empty chord).
+
+        Raises
+        ------
+        RuntimeError
+            If no enharmonic respelling of this chord's notes can produce a valid
+            stacked-in-thirds representation (see ``getName``'s docstring for when this applies --
+            it is not limited to large chords).
     )pbdoc");
     cls.def("getCloseStackIntervals", &Chord::getCloseStackIntervals,
             py::arg("firstNoteAsReference") = false,
@@ -376,6 +392,13 @@ void ChordClass(const py::module& m) {
         list[Interval]
             One interval per adjacent pair in the close stack, or an empty list if the chord has
             fewer than 2 notes in its close stack (including an empty chord).
+
+        Raises
+        ------
+        RuntimeError
+            If no enharmonic respelling of this chord's notes can produce a valid
+            stacked-in-thirds representation (see ``getName``'s docstring for when this applies --
+            it is not limited to large chords).
     )pbdoc");
     cls.def("getQuarterDuration", &Chord::getQuarterDuration);
 
