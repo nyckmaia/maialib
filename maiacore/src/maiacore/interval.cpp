@@ -44,21 +44,15 @@ void Interval::setNotes(const Note& note_A, const Note& note_B) {
 }
 
 int Interval::whiteKeyDistance() const {
-    const Note& firstNote = _note[0];
-    const Note& secondNote = _note[1];
+    // Diatonic index: step index (C=0 ... B=6) + 7 * octave, valid for every supported octave
+    const auto diatonicIndex = [](const Note& note) {
+        const auto stepIt =
+            std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), note.getPitchStep());
+        const int stepIdx = static_cast<int>(std::distance(c_C_diatonicScale.begin(), stepIt));
+        return stepIdx + 7 * note.getOctave();
+    };
 
-    const std::string firstNoteWhiteKey =
-        firstNote.getPitchStep() + std::to_string(firstNote.getOctave());
-    const std::string secondNoteWhiteKey =
-        secondNote.getPitchStep() + std::to_string(secondNote.getOctave());
-
-    const auto foundFirst =
-        std::find(c_pianoWhiteKeys.begin(), c_pianoWhiteKeys.end(), firstNoteWhiteKey);
-    const auto foundSecond =
-        std::find(c_pianoWhiteKeys.begin(), c_pianoWhiteKeys.end(), secondNoteWhiteKey);
-
-    const auto distance = std::distance(foundFirst, foundSecond);
-    return static_cast<int>(distance);
+    return diatonicIndex(_note[1]) - diatonicIndex(_note[0]);
 }
 
 std::pair<std::string, bool> Interval::analyse() const {

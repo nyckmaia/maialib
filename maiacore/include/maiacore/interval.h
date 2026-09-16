@@ -24,7 +24,9 @@ class Interval {
 
     /**
      * @brief Computes the distance between the two notes in terms of white keys (C-D-E-F-G-A-B).
-     * @return Integer representing the white key distance.
+     * @details Computed as (stepIndex + 7 * octave) of the second note minus that of the first
+     *          note, so it works for every supported octave (-1..11).
+     * @return Integer representing the white key distance (positive when ascending).
      */
     int whiteKeyDistance() const;
 

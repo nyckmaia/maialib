@@ -2149,3 +2149,23 @@ EXPECT_EQ(interval.getDiatonicInterval(true, true), 1);
 interval.setNotes("C4", "Cx2");
 EXPECT_EQ(interval.getDiatonicInterval(true, true), 1);
 }
+
+TEST(PitchSpellingInterval, DirectionOutsidePianoRange) {
+Interval interval;
+
+interval.setNotes("C-1", "D-1");
+EXPECT_TRUE(interval.isAscendant());
+EXPECT_EQ(interval.getDirection(), "asc");
+EXPECT_EQ(interval.getDiatonicInterval(false, false), 2);
+
+interval.setNotes("B10", "C11");
+EXPECT_TRUE(interval.isAscendant());
+EXPECT_EQ(interval.getDiatonicInterval(false, false), 2);
+
+interval.setNotes("C11", "C-1");
+EXPECT_TRUE(interval.isDescendant());
+EXPECT_EQ(interval.getDirection(), "desc");
+
+interval.setNotes("B9", "C10");
+EXPECT_TRUE(interval.isAscendant());
+}
