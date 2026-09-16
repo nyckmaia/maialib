@@ -7,7 +7,11 @@ from terminal_colors import *
 
 def isInstalled():
     try:
-        import maialib
+        # The import IS the probe. ruff reports it as unused and `ruff check
+        # --fix` (make lint-python-fix) would delete it, which would make this
+        # function always return True and turn `make uninstall` into a silent
+        # no-op that still prints "Maialib uninstalled!".
+        import maialib  # noqa: F401
 
         return True
     except:
