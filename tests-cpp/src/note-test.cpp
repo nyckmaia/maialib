@@ -924,9 +924,9 @@ TEST(PitchSpelling, EnharmonicRejectsQuarterTones) {
     }
 }
 
-// ===================================================================================================
+// =====================================================================================
 // NOTE COMPOSES PITCH (Task 6)
-// ===================================================================================================
+// =====================================================================================
 
 // Step 1: the defect this transplant closes. Before this task, setPitchClass() updated the
 // written pitch-class string and accidental symbol but never recomputed the MIDI number, so
@@ -1058,4 +1058,38 @@ TEST(NoteComposesPitch, GetAlterSymbolForwardsToSoundingPitchOnTransposedNote) {
     ASSERT_EQ(transposed.getMidiNumber(), 58);
     EXPECT_EQ(transposed.getAlterSymbol(), "b");
     EXPECT_NE(transposed.getAlterSymbol(), written.getAlterSymbol());
+}
+
+// Fix round 2 (controller ruling on the reviewer's Critical finding): getMidiNumber() used to
+// route through computeSoundingPitch()'s spelling lookup for a transposed note, letting that
+// lookup's pre-existing spelling defect corrupt the numeric MIDI answer too. All three values
+// below were measured against a d26aa67 worktree, not assumed -- and cross-checked with a
+// 1197-combination sweep ((pitch x transposeDiatonic x transposeChromatic), spanning naturals,
+// sharps, flats and double accidentals) that found zero divergence between this fixed HEAD and
+// d26aa67 on getMidiNumber(), getOctave() and getPitch(), everywhere. getPitch()'s pitch CLASS
+// letter+accidental is intentionally still wrong here (e.g. "Bb" where "B" is the correct
+// spelling for this MIDI number) -- that defect is genuinely pre-existing, reproduces
+// byte-for-byte at d26aa67, and belongs to Task 10's scale-lookup rewrite, not this one.
+TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForBFlatClarinet) {
+    // B-flat clarinet: written C#4 sounds a major second lower.
+    const Note n("C#4", RhythmFigure::QUARTER, true, false, -1, -2);
+    EXPECT_EQ(n.getMidiNumber(), 59);
+    EXPECT_EQ(n.getOctave(), 4);
+    EXPECT_EQ(n.getPitch(), "Bb3");  // wrong spelling, pre-existing, not this round's to fix
+}
+
+TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForHornInF) {
+    // Horn in F: written F#4 sounds a perfect fifth lower.
+    const Note n("F#4", RhythmFigure::QUARTER, true, false, -4, -7);
+    EXPECT_EQ(n.getMidiNumber(), 59);
+    EXPECT_EQ(n.getOctave(), 4);
+    EXPECT_EQ(n.getPitch(), "F3");  // wrong spelling, pre-existing, not this round's to fix
+}
+
+TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForPiccolo) {
+    // Piccolo: written C4 sounds an octave higher.
+    const Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
+    EXPECT_EQ(n.getMidiNumber(), 72);
+    EXPECT_EQ(n.getOctave(), 4);  // pre-existing octave-tracking defect, not this round's to fix
+    EXPECT_EQ(n.getPitch(), "C5");
 }

@@ -90,6 +90,42 @@ void NoteClass(const py::module& m) {
     cls.def("setPitchClass", &Note::setPitchClass, py::arg("pitchClass"),
             "Set the note pitch class");
     cls.def("setOctave", &Note::setOctave, py::arg("octave"));
+    cls.def("setStep", &Note::setStep, py::arg("step"),
+            R"pbdoc(
+        Set the diatonic step of the written pitch, keeping the current accidental and octave.
+
+        Delegates to the underlying pitch's step setter and inherits its policy: permissive on
+        a rest, resurrecting it into a note with the octave defaulted to 4.
+
+        Parameters
+        ----------
+        step : str
+            Diatonic step ("A" to "G").
+
+        Raises
+        ------
+        RuntimeError
+            If step is not one of "A" to "G".
+    )pbdoc");
+    cls.def("setAlter", &Note::setAlter, py::arg("alter"),
+            R"pbdoc(
+        Set the accidental value (in semitones) of the written pitch.
+
+        Delegates to the underlying pitch's alter setter and inherits its policy: refuses on a
+        rest (logs a warning, no mutation) since a bare alter value carries no octave to
+        resurrect one with.
+
+        Parameters
+        ----------
+        alter : float
+            Alter value; must be a multiple of 0.5 (a semitone or quarter-tone step), within
+            [-2, 2].
+
+        Raises
+        ------
+        RuntimeError
+            If alter is not a multiple of 0.5, or is outside [-2, 2].
+    )pbdoc");
     cls.def("setDuration", py::overload_cast<const Duration&>(&Note::setDuration),
             py::arg("duration"));
     cls.def("setDuration", py::overload_cast<const float, const int>(&Note::setDuration),

@@ -127,7 +127,17 @@ void Note::setOctave(const int octave) {
     _writtenPitch.setOctave(octave);
 }
 
-int Note::getOctave() const { return getSoundingOctave(); }
+int Note::getOctave() const {
+    // Fix round 2: NOT an alias for getSoundingOctave() any more (that method is now arithmetic
+    // -- see its own comment). This is "the octave" (documented as the sounding octave) and,
+    // pre-Task-6, its body was `return _soundingOctave;`, a field tracked by the same
+    // sharp/flat/double-sharp/double-flat scale-lookup computeSoundingPitch() below reproduces
+    // verbatim; d26aa67's getOctave() and getSoundingOctave() were never the same value for a
+    // buggy transposition (measured: swept 1197 (pitch, transposeDiatonic, transposeChromatic)
+    // combinations against d26aa67 -- getOctave() matched in every single one; only
+    // getMidiNumber(), and the octave DIGIT embedded in getSoundingPitch()'s string, regressed).
+    return computeSoundingPitch().getOctave().value_or(-2);
+}
 
 int Note::getTransposeDiatonic() const { return _transposeDiatonic; }
 
@@ -701,7 +711,17 @@ const std::string Note::getSoundingPitchClass() const {
     return computeSoundingPitch().getPitchClass();
 }
 
-const std::string Note::getSoundingPitch() const { return computeSoundingPitch().getPitch(); }
+const std::string Note::getSoundingPitch() const {
+    // Fix round 2: restored to the pre-Task-6 body exactly (was
+    // `computeSoundingPitch().getPitch()`, which glued the pitch CLASS to the SAME buggy
+    // scale-lookup octave getOctave() intentionally still reproduces -- see that method's
+    // comment). The pitch class here is still the pre-existing, unfixed lookup (Task 10's to
+    // fix, not this round's); only the octave digit is arithmetic again, matching d26aa67.
+    if (!isTransposed()) {
+        return getWrittenPitch();
+    }
+    return getSoundingPitchClass() + std::to_string(getSoundingOctave());
+}
 
 const std::string Note::getDiatonicWrittenPitchClass() const {
     if (_writtenPitch.isRest()) {
@@ -717,7 +737,15 @@ const std::string Note::getDiatonicSoundingPitchClass() const {
     return getSoundingPitchClass().substr(0, 1);
 }
 
-int Note::getSoundingOctave() const { return computeSoundingPitch().getOctave().value_or(-2); }
+int Note::getSoundingOctave() const {
+    // Fix round 2: arithmetic, derived from the (now again arithmetic) getMidiNumber() -- the
+    // pre-Task-6 body was `Helper::midiNote2octave(_midiNumber).value_or(-2)`; _midiNumber was
+    // itself always arithmetic, so this is that same formula through the new single source of
+    // truth. Deliberately NOT computeSoundingPitch().getOctave(): that tracks octave through the
+    // same pre-existing, unfixed scale-lookup defect getOctave() below still (correctly, by
+    // design) reproduces, and this method must not inherit it.
+    return Helper::midiNote2octave(getMidiNumber()).value_or(-2);
+}
 
 const std::string Note::getWrittenPitchClass() const { return _writtenPitch.getPitchClass(); }
 
@@ -880,10 +908,16 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
 }
 
 int Note::getMidiNumber() const {
+    // Fix round 2: arithmetic, decoupled from computeSoundingPitch()'s spelling lookup on
+    // purpose. That lookup (untouched, pre-existing) can pick the wrong pitch class for a
+    // transposed note; routing MIDI through the resulting (mis-spelled) Pitch string used to
+    // let that spelling defect corrupt the numeric answer too -- a Critical regression found in
+    // review. Written MIDI + the chromatic transpose interval is correct regardless of spelling
+    // and matches this method's pre-Task-6 behaviour exactly.
     if (_writtenPitch.isRest()) {
         return MUSIC_XML::MIDI::NUMBER::MIDI_REST;
     }
-    return computeSoundingPitch().getMidiNumber();
+    return _writtenPitch.getMidiNumber() + _transposeChromatic;
 }
 
 bool Note::operator<(const Note& otherNote) const {

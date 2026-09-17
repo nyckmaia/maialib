@@ -244,6 +244,25 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(transposed.getAlterSymbol(), "b")
         self.assertNotEqual(transposed.getAlterSymbol(), written.getAlterSymbol())
 
+    # Fix round 2 (I2), Python parity for T7's sibling on the C++ side: setStep()/setAlter()
+    # were new public methods added by Task 6 with no pybind11 wrapper. Now bound; mirror the
+    # C++ NoteComposesPitch.SetAlterOnRestRefusesAndWarns (T8) and
+    # .SetStepResurrectsRestToOctave4 (T9) tests.
+    def testSetAlterOnRestRefusesAndWarns(self):
+        note = ml.Note("rest")
+        note.setAlter(0.5)  # must not raise
+        self.assertTrue(note.isNoteOff())
+        self.assertEqual(note.getOctave(), -2)
+        self.assertEqual(note.getPitchClass(), "rest")
+
+    def testSetStepResurrectsRestToOctave4(self):
+        note = ml.Note("rest")
+        note.setStep("C")
+        self.assertTrue(note.isNoteOn())
+        self.assertFalse(note.isNoteOff())
+        self.assertEqual(note.getPitch(), "C4")
+        self.assertEqual(note.getOctave(), 4)
+
 
 if __name__ == "__main__":
     unittest.main()
