@@ -100,7 +100,7 @@ const std::array<std::string, 12> c_chromaticDoubleSharpScale = {
     "C", "Bx", "Cx", "D#", "Dx", "E#", "Ex", "Fx", "G#", "Gx", "A#", "Ax"};
 const std::array<std::string, 12> c_chromaticDoubleFlatScale = {
     "C", "Db", "Ebb", "Fbb", "Fb", "Gbb", "Gb", "Abb", "Ab", "Bbb", "Bb", "Cb"};
-const std::array<std::string, 4> c_alterSymbol = {"bb", "b", "#", "x"};
+const std::array<std::string, 8> c_alterSymbol = {"bb", "3b", "b", "1b", "1x", "#", "3x", "x"};
 
 // ===== PITCH SPELLING ===== //
 // Semitone offset of each diatonic step from C, aligned with c_C_diatonicScale (C D E F G A B)

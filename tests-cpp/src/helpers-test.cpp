@@ -395,6 +395,14 @@ TEST(PitchSpelling, SplitPitchComponents) {
     EXPECT_EQ(alterSymbol, "");
 }
 
+TEST(splitPitch, acceptsQuarterTones) {
+    std::string pc, step, sym; int oct; float alter;
+    Helper::splitPitch("C1x4", pc, step, oct, alter, sym);
+    EXPECT_EQ(sym, "1x");
+    EXPECT_FLOAT_EQ(alter, 0.5f);
+    EXPECT_EQ(oct, 4);
+}
+
 TEST(PitchSpelling, Spelling2MidiNote) {
     EXPECT_EQ(Helper::spelling2midiNote("C", 0.0f, -1), 0);
     EXPECT_EQ(Helper::spelling2midiNote("C", 0.0f, 4), 60);
@@ -434,7 +442,7 @@ TEST(PitchSpelling, AcceptedEdgeCases) {
 
 TEST(PitchSpelling, RejectedEdgeCases) {
     for (const std::string pitch :
-         {"Cb-1", "Cbb-1", "C12", "C#123", "H4", "C#4x", "C-", "C--1", "C-2", "C1x4", "C1234"}) {
+         {"Cb-1", "Cbb-1", "C12", "C#123", "H4", "C#4x", "C-", "C--1", "C-2", "C2x4", "C1234"}) {
         EXPECT_THROW(Helper::pitch2midiNote(pitch), std::runtime_error) << "pitch: " << pitch;
     }
 

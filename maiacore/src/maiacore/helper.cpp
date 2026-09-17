@@ -244,9 +244,7 @@ int Helper::spelling2midiNote(const std::string& pitchStep, const float alterVal
         LOG_ERROR("Unknown diatonic pitch step: " + pitchStep);
     }
     const auto stepIdx = static_cast<size_t>(std::distance(c_C_diatonicScale.begin(), stepIt));
-    // SP2: alterValue is integral today because splitPitch rejects quarter-tone symbols;
-    // widening c_alterSymbol must replace this truncation.
-    return 12 * (octave + 1) + c_diatonicStepSemitones[stepIdx] + static_cast<int>(alterValue);
+    return 12 * (octave + 1) + c_diatonicStepSemitones[stepIdx] + alterValue;
 }
 
 std::pair<int, int> Helper::freq2midiNote(const float freq, std::function<int(float)> modelo) {
