@@ -911,9 +911,10 @@ TEST(PitchSpelling, EnharmonicRangeFallback) {
 }
 
 // Quarter-tone alters are reachable here now that Helper::splitPitch accepts them, but
-// Note::getEnharmonicPitch() still indexes a 5-slot semitone-only spellings array (SP2:
-// marker). Until that is redesigned (a later task), it must refuse rather than silently
-// truncate to a wrong semitone spelling.
+// Note::getEnharmonicPitch() still indexes a 5-slot semitone-only spellings array. Real
+// quarter-tone enharmonic spelling remains out of scope (spellMidiNumber() only enumerates
+// the five integer-semitone accidentals), so this must refuse rather than silently truncate
+// to a wrong semitone spelling.
 TEST(PitchSpelling, EnharmonicRejectsQuarterTones) {
     for (const std::string pitch : {"C1x4", "C3x4", "D1b4", "D3b4"}) {
         EXPECT_THROW(Note(pitch).getEnharmonicPitch(false), std::runtime_error)
@@ -921,4 +922,105 @@ TEST(PitchSpelling, EnharmonicRejectsQuarterTones) {
         EXPECT_THROW(Note(pitch).getEnharmonicPitch(true), std::runtime_error)
             << "pitch: " << pitch;
     }
+}
+
+// ===================================================================================================
+// NOTE COMPOSES PITCH (Task 6)
+// ===================================================================================================
+
+// Step 1: the defect this transplant closes. Before this task, setPitchClass() updated the
+// written pitch-class string and accidental symbol but never recomputed the MIDI number, so
+// getMidiNumber() kept reporting the note's *previous* pitch. Now that Note holds a single
+// Pitch and getMidiNumber() derives from it on demand, this is correct with no special-casing.
+TEST(Note, setPitchClassUpdatesAccidentalAndMidi) {
+    Note n("C4");
+    n.setPitchClass("Eb");
+    EXPECT_EQ(n.getAlterSymbol(), "b");
+    EXPECT_EQ(n.getMidiNumber(), 63);
+}
+
+// T1: Note(pitch, isNoteOn=false) is a fully consistent rest -- every getter agrees, not just
+// isNoteOn(). The "C4" is deliberately discarded (see the constructor's rest guard).
+TEST(NoteComposesPitch, ConstructorIsNoteOnFalseIsAFullyConsistentRest) {
+    const Note n("C4", RhythmFigure::QUARTER, /*isNoteOn=*/false);
+    EXPECT_FALSE(n.isNoteOn());
+    EXPECT_TRUE(n.isNoteOff());
+    EXPECT_EQ(n.getPitchClass(), "rest");
+    EXPECT_EQ(n.getPitch(), "rest");
+    EXPECT_EQ(n.getMidiNumber(), -1);
+    EXPECT_EQ(n.getPitchStep(), "rest");
+    EXPECT_EQ(n.getOctave(), -2);
+}
+
+// T2: setIsNoteOn(false) used to only flip a bool, leaving the pitch string/MIDI fields stale
+// (getPitchClass() kept reporting "C#" and getMidiNumber() kept reporting 60). Deriving
+// isNoteOn() from _writtenPitch.isRest() and driving setIsNoteOn(false) through
+// _writtenPitch.setPitch("rest") closes that: every getter is consistent immediately.
+TEST(NoteComposesPitch, SetIsNoteOnFalseReportsRestEverywhere) {
+    Note n("C#4");
+    n.setIsNoteOn(false);
+    EXPECT_TRUE(n.isNoteOff());
+    EXPECT_FALSE(n.isNoteOn());
+    EXPECT_EQ(n.getPitchClass(), "rest");
+    EXPECT_EQ(n.getPitch(), "rest");
+    EXPECT_EQ(n.getMidiNumber(), -1);
+    EXPECT_EQ(n.getPitchStep(), "rest");
+    EXPECT_EQ(n.getOctave(), -2);
+}
+
+// T3: setIsNoteOn(true) on a rest carries no pitch to resurrect one with, so it must refuse
+// (LOG_WARN, no throw) rather than flip the flag under a still-empty pitch. Before this guard,
+// Note(""); n.setIsNoteOn(true); made getWrittenPitchStep()'s unconditional substr(0, 1) return
+// the literal string "r" (the first character of "rest").
+TEST(NoteComposesPitch, SetIsNoteOnTrueOnRestRefusesAndWarns) {
+    Note n("");
+    ASSERT_TRUE(n.isNoteOff());
+    n.setIsNoteOn(true);  // must not throw
+    EXPECT_TRUE(n.isNoteOff());
+    EXPECT_FALSE(n.isNoteOn());
+    EXPECT_EQ(n.getWrittenPitchStep(), "rest");
+    EXPECT_EQ(n.getPitchClass(), "rest");
+}
+
+// T4: getOctave()/getWrittenOctave() used to return 0 for a rest while getSoundingOctave()
+// returned -2 -- three different answers to "what octave is a rest". All three now derive from
+// Pitch's std::optional<int> octave and agree on the sentinel -2 (0 is a legitimate octave).
+TEST(NoteComposesPitch, AllOctaveGettersAgreeOnRestSentinel) {
+    const Note n("rest");
+    EXPECT_EQ(n.getOctave(), -2);
+    EXPECT_EQ(n.getWrittenOctave(), -2);
+    EXPECT_EQ(n.getSoundingOctave(), -2);
+}
+
+// T7: setOctave() used to write the caller's octave straight into a rest's fields
+// (Note("rest").setOctave(5) left getOctave() == 0). Delegating to Pitch::setOctave() inherits
+// its refuse-on-rest policy: a bare octave carries no pitch to resurrect one with.
+TEST(NoteComposesPitch, SetOctaveOnRestRefusesAndWarns) {
+    Note n("rest");
+    n.setOctave(5);  // must not throw
+    EXPECT_TRUE(n.isNoteOff());
+    EXPECT_EQ(n.getOctave(), -2);
+    EXPECT_EQ(n.getPitchClass(), "rest");
+}
+
+// T8: setAlter() is new on Note (delegating to Pitch::setAlter()) and inherits the same
+// refuse-on-rest policy as setOctave(): neither carries enough information to resurrect one.
+TEST(NoteComposesPitch, SetAlterOnRestRefusesAndWarns) {
+    Note n("rest");
+    n.setAlter(0.5f);  // must not throw
+    EXPECT_TRUE(n.isNoteOff());
+    EXPECT_EQ(n.getOctave(), -2);
+    EXPECT_EQ(n.getPitchClass(), "rest");
+}
+
+// T9: setStep() is new on Note (delegating to Pitch::setStep()) and is permissive on a rest,
+// unlike setOctave()/setAlter(): a diatonic step is enough to resurrect one, defaulting the
+// octave to 4.
+TEST(NoteComposesPitch, SetStepResurrectsRestToOctave4) {
+    Note n("rest");
+    n.setStep("C");
+    EXPECT_TRUE(n.isNoteOn());
+    EXPECT_FALSE(n.isNoteOff());
+    EXPECT_EQ(n.getPitch(), "C4");
+    EXPECT_EQ(n.getOctave(), 4);
 }

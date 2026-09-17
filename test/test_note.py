@@ -180,5 +180,51 @@ class NotePitchSpellingRange(unittest.TestCase):
         self.assertEqual(ml.Note("C-1").getEnharmonicPitches(True), ["C-1", "Dbb-1", "Dbb-1"])
 
 
+class NoteComposesPitch(unittest.TestCase):
+    # Step 1 bug fix, through the bindings: setPitchClass() used to leave getMidiNumber()
+    # reporting the note's previous pitch.
+    def testSetPitchClassUpdatesAccidentalAndMidi(self):
+        note = ml.Note("C4")
+        note.setPitchClass("Eb")
+        self.assertEqual(note.getAlterSymbol(), "b")
+        self.assertEqual(note.getMidiNumber(), 63)
+
+    # T5 (Python parity for T1): Note(pitch, isNoteOn=False) is a fully consistent rest.
+    def testConstructorIsNoteOnFalseIsAFullyConsistentRest(self):
+        note = ml.Note("C4", isNoteOn=False)
+        self.assertFalse(note.isNoteOn())
+        self.assertTrue(note.isNoteOff())
+        self.assertEqual(note.getPitchClass(), "rest")
+        self.assertEqual(note.getPitch(), "rest")
+        self.assertEqual(note.getMidiNumber(), -1)
+        self.assertEqual(note.getPitchStep(), "rest")
+        self.assertEqual(note.getOctave(), -2)
+
+    # T5 (Python parity for T2): setIsNoteOn(False) makes every getter report a rest, not just
+    # isNoteOn(). Before this task, getPitchClass()/getMidiNumber() kept reporting the note's
+    # previous sounding pitch ("C#"/60) after this call.
+    def testSetIsNoteOnFalseReportsRestEverywhere(self):
+        note = ml.Note("C#4")
+        note.setIsNoteOn(False)
+        self.assertTrue(note.isNoteOff())
+        self.assertFalse(note.isNoteOn())
+        self.assertEqual(note.getPitchClass(), "rest")
+        self.assertEqual(note.getPitch(), "rest")
+        self.assertEqual(note.getMidiNumber(), -1)
+        self.assertEqual(note.getPitchStep(), "rest")
+        self.assertEqual(note.getOctave(), -2)
+
+    # T5 (Python parity for T3): setIsNoteOn(True) on a rest refuses (warns, does not throw)
+    # instead of flipping the flag under a still-empty pitch.
+    def testSetIsNoteOnTrueOnRestRefusesAndWarns(self):
+        note = ml.Note("")
+        self.assertTrue(note.isNoteOff())
+        note.setIsNoteOn(True)  # must not raise
+        self.assertTrue(note.isNoteOff())
+        self.assertFalse(note.isNoteOn())
+        self.assertEqual(note.getWrittenPitchStep(), "rest")
+        self.assertEqual(note.getPitchClass(), "rest")
+
+
 if __name__ == "__main__":
     unittest.main()

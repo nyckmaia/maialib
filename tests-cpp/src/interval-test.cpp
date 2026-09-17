@@ -2169,3 +2169,18 @@ TEST(PitchSpellingInterval, DirectionOutsidePianoRange) {
     interval.setNotes("B9", "C10");
     EXPECT_TRUE(interval.isAscendant());
 }
+
+// ===================================================================================================
+// TASK 6 (T6): NOTE COMPOSES PITCH -- INTERVAL REST GUARDS STILL REJECT RESTS
+// ===================================================================================================
+
+TEST(IntervalRestGuard, ConstructorRejectsRestOnEitherSide) {
+    EXPECT_THROW(Interval("C4", "rest"), std::runtime_error);
+    EXPECT_THROW(Interval("rest", "C4"), std::runtime_error);
+}
+
+TEST(IntervalRestGuard, SetNotesRejectsRestOnEitherSide) {
+    Interval interval;
+    EXPECT_THROW(interval.setNotes("C4", "rest"), std::runtime_error);
+    EXPECT_THROW(interval.setNotes("rest", "C4"), std::runtime_error);
+}
