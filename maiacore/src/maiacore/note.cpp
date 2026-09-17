@@ -697,7 +697,9 @@ std::vector<std::string> Note::getBeam() const { return _beam; }
 
 std::vector<std::string> Note::getArticulation() const { return _articulation; }
 
-const std::string Note::getSoundingPitchClass() const { return computeSoundingPitch().getPitchClass(); }
+const std::string Note::getSoundingPitchClass() const {
+    return computeSoundingPitch().getPitchClass();
+}
 
 const std::string Note::getSoundingPitch() const { return computeSoundingPitch().getPitch(); }
 
