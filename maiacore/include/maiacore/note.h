@@ -7,6 +7,7 @@
 #include "maiacore/constants.h"
 #include "maiacore/duration.h"
 #include "maiacore/key.h"
+#include "maiacore/pitch.h"
 #include "maiacore/time-signature.h"
 
 /**
@@ -20,15 +21,10 @@
  */
 class Note {
    private:
-    std::string _writtenPitchClass;  ///< Written pitch class (e.g., "C#", "Bb").
-    int _writtenOctave;              ///< Written octave number.
+    Pitch _writtenPitch;  ///< Written pitch. A rest is represented by _writtenPitch.isRest();
+                          ///< there is no separate "is this a rest" flag (see isNoteOn()).
 
-    std::string _soundingPitchClass;  ///< Sounding pitch class (after transposition).
-    int _soundingOctave;              ///< Sounding octave number (after transposition).
-
-    bool _isNoteOn;           ///< True if this is a sounding note, false if rest.
     bool _inChord;            ///< True if this note is part of a chord.
-    int _midiNumber;          ///< MIDI note number.
     int _transposeDiatonic;   ///< Diatonic transposition interval.
     int _transposeChromatic;  ///< Chromatic transposition interval.
     int _voice;               ///< Voice number.
@@ -41,10 +37,24 @@ class Note {
     Duration _duration;       ///< Duration object for this note.
 
     std::pair<std::string, std::string> _slur;  ///< Slur type and orientation.
-    std::string _alterSymbol;                   ///< Accidental symbol (e.g., "#", "b").
     std::vector<std::string> _tie;              ///< Tie types ("start", "stop").
     std::vector<std::string> _articulation;     ///< Articulation marks.
     std::vector<std::string> _beam;             ///< Beam types.
+
+    /**
+     * @brief Computes the sounding Pitch: the written pitch transposed by
+     *        _transposeDiatonic/_transposeChromatic.
+     * @details A rest, or an untransposed note, returns _writtenPitch itself: nothing is cached,
+     *          every "sounding" getter (getSoundingPitch(), getOctave(), getMidiNumber(),
+     *          getAlterSymbol(), getPitchClass(), ...) calls this on demand. Also called (result
+     *          discarded) by setTransposingInterval() to preserve its historical eager-validation
+     *          timing: an unspellable written pitch class under a nonzero transpose throws
+     *          immediately from setTransposingInterval(), not from a later getter call.
+     * @return The sounding Pitch.
+     * @throws std::runtime_error If this note is transposed and its written pitch class is not
+     *         one of the sharp/flat/double-sharp/double-flat single-octave scales.
+     */
+    Pitch computeSoundingPitch() const;
 
    public:
     /**
@@ -105,6 +115,27 @@ class Note {
      * @param octave Octave number.
      */
     void setOctave(int octave);
+
+    /**
+     * @brief Sets the diatonic step of the written pitch, keeping the current accidental and
+     *        octave.
+     * @details Delegates to Pitch::setStep() and inherits its policy: permissive on a rest,
+     *          resurrecting it into a note with the octave defaulted to 4.
+     * @param step Diatonic step ("A".."G").
+     * @throws std::runtime_error If step is not one of "A".."G".
+     */
+    void setStep(const std::string& step);
+
+    /**
+     * @brief Sets the accidental value (in semitones) of the written pitch.
+     * @details Delegates to Pitch::setAlter() and inherits its policy: refuses on a rest
+     *          (LOG_WARN, no mutation) since a bare alter value carries no octave to resurrect
+     *          one with.
+     * @param alter Alter value; must be a multiple of 0.5 (a semitone or quarter-tone step),
+     *        within [-2, 2].
+     * @throws std::runtime_error If alter is not a multiple of 0.5, or is outside [-2, 2].
+     */
+    void setAlter(float alter);
 
     /**
      * @brief Sets the duration for the note.

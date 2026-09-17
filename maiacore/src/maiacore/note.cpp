@@ -42,13 +42,8 @@ Note::Note() : Note("A4") {}
 
 Note::Note(const std::string& pitch, const RhythmFigure rhythmFigure, bool isNoteOn, bool inChord,
            int transposeDiatonic, int transposeChromatic, const int divisionsPerQuarterNote)
-    : _writtenPitchClass(MUSIC_XML::PITCH::REST),
-      _writtenOctave(0),
-      _soundingPitchClass(MUSIC_XML::PITCH::REST),
-      _soundingOctave(0),
-      _isNoteOn(false),
+    : _writtenPitch(MUSIC_XML::PITCH::REST),
       _inChord(false),
-      _midiNumber(MUSIC_XML::MIDI::NUMBER::MIDI_REST),
       _transposeDiatonic(0),
       _transposeChromatic(0),
       _voice(1),
@@ -66,29 +61,14 @@ Note::Note(const std::string& pitch, const RhythmFigure rhythmFigure, bool isNot
         return;
     }
 
-    std::string pitchClass;
-    std::string pitchStep;
-    std::optional<int> octave;
-    float alterValue = 0.0f;
-    Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, _alterSymbol);
-
-    // The rest case already returned above, so splitPitch() cannot have taken its rest branch
-    // here: octave is always populated. Note itself is not yet composed of Pitch (a later
-    // task), so its octave fields stay plain int; value_or(0) matches splitPitch()'s own
-    // pre-optional rest default and is never actually exercised on this path.
-    _writtenPitchClass = pitchClass;
-    _writtenOctave = octave.value_or(0);
-    _midiNumber = Helper::spelling2midiNote(pitchStep, alterValue, octave.value_or(0));
+    // The rest case already returned above, so this cannot take Pitch::setPitch()'s own rest
+    // branch: _writtenPitch ends up a sounding note.
+    _writtenPitch.setPitch(pitch);
     _inChord = inChord;
-    _soundingPitchClass = pitchClass;
-    _soundingOctave = octave.value_or(0);
-    _transposeDiatonic = transposeDiatonic;
-    _transposeChromatic = transposeChromatic;
-    _isNoteOn = true;
     // _duration.divisionsPerQuarterNote = divisionsPerQuarterNote;
     // setDuration(duration, divisionsPerQuarterNote);
 
-    // Update the sounding Pitch/PitchClass and MIDI number
+    // Store the transposing interval (isNoteOn() is true here, so this always applies).
     setTransposingInterval(transposeDiatonic, transposeChromatic);
 }
 
@@ -103,7 +83,7 @@ Note::Note(const int midiNumber, const std::string& accType, const RhythmFigure 
 Note::~Note() {}
 
 void Note::info() const {
-    LOG_INFO("Is note on: " << std::boolalpha << _isNoteOn);
+    LOG_INFO("Is note on: " << std::boolalpha << isNoteOn());
     LOG_INFO("Pitch: " << getPitch());
     LOG_INFO("Note Type: " << _duration.getNoteType());
     LOG_INFO("Quarter Duration: " << getQuarterDuration());
@@ -124,17 +104,16 @@ void Note::setUnpitchedIndex(const int unpitchedIndex) { _unpitchedIndex = unpit
 int Note::getUnpitchedIndex() const { return _unpitchedIndex; }
 
 void Note::setPitchClass(const std::string& pitchClass) {
-    _writtenPitchClass = pitchClass;
-    _soundingPitchClass = _writtenPitchClass;
-
-    // Store the alter symbol: # / b
-    if (pitchClass.size() > 1) {
-        _alterSymbol = pitchClass.substr(1, pitchClass.size());
-    }
-
-    // Update sounding Pitch Class
-    setTransposingInterval(_transposeDiatonic, _transposeChromatic);
+    // Delegates to Pitch::setPitchClass() and inherits its policy: replaces step + alter,
+    // keeping the current octave (or defaulting it to 4 if this note was a rest). The MIDI
+    // number is no longer a stored field, so it is automatically correct on the next
+    // getMidiNumber() call -- closing the stale-MIDI defect this used to carry (Step 1's test).
+    _writtenPitch.setPitchClass(pitchClass);
 }
+
+void Note::setStep(const std::string& step) { _writtenPitch.setStep(step); }
+
+void Note::setAlter(const float alter) { _writtenPitch.setAlter(alter); }
 
 void Note::setIsPitched(const bool isPitched) { _isPitched = isPitched; }
 
@@ -143,23 +122,12 @@ bool Note::isPitched() const { return _isPitched; }
 std::string Note::getPitchClass() const { return getSoundingPitchClass(); }
 
 void Note::setOctave(const int octave) {
-    _writtenOctave = octave;
-
-    const int writtenMIDINumber = Helper::pitch2midiNote(getWrittenPitch());
-    _midiNumber = writtenMIDINumber + _transposeChromatic;
-
-    const std::string soundingPitch = Helper::midiNote2pitch(_midiNumber);
-
-    std::string pitchAcc, step, alterSymbol;
-    float alterValue = 0.0f;
-    std::optional<int> oct;
-
-    Helper::splitPitch(soundingPitch, pitchAcc, step, oct, alterValue, alterSymbol);
-
-    _soundingOctave = oct.value_or(0);
+    // Delegates to Pitch::setOctave() and inherits its policy: refuses on a rest (LOG_WARN, no
+    // mutation) instead of writing a fabricated octave onto one.
+    _writtenPitch.setOctave(octave);
 }
 
-int Note::getOctave() const { return _soundingOctave; }
+int Note::getOctave() const { return getSoundingOctave(); }
 
 int Note::getTransposeDiatonic() const { return _transposeDiatonic; }
 
@@ -287,13 +255,31 @@ float Note::getQuarterDuration() const { return _duration.getQuarterDuration(); 
 
 bool Note::isGraceNote() const { return _isGraceNote; }
 
-void Note::setIsNoteOn(bool isNoteOn) { _isNoteOn = isNoteOn; }
+void Note::setIsNoteOn(bool isNoteOn) {
+    if (isNoteOn) {
+        // Turning a rest into a sounding note needs a pitch, which this call does not carry.
+        // Boundary condition, not a caller error (spec 4.2 precedent: Pitch("rest").setAlter()):
+        // refuse with a warning and leave the rest exactly as it was; this must NOT throw.
+        if (_writtenPitch.isRest()) {
+            LOG_WARN(
+                "Cannot turn a rest into a sounding note without a pitch; ignoring "
+                "setIsNoteOn(true). Use setPitch()/setPitchClass()/setStep() instead.");
+        }
+        // Already sounding: no-op either way.
+        return;
+    }
 
-bool Note::isNoteOn() const { return _isNoteOn; }
+    // isNoteOn(false): make this note a rest. Same outcome as the constructor's
+    // isNoteOn=false branch; every getter (all of which now read _writtenPitch.isRest()) is
+    // consistent the moment this line runs.
+    _writtenPitch.setPitch(MUSIC_XML::PITCH::REST);
+}
 
-bool Note::isNoteOff() const { return !_isNoteOn; }
+bool Note::isNoteOn() const { return !_writtenPitch.isRest(); }
 
-std::string Note::getAlterSymbol() const { return _alterSymbol; }
+bool Note::isNoteOff() const { return _writtenPitch.isRest(); }
+
+std::string Note::getAlterSymbol() const { return computeSoundingPitch().getAlterSymbol(); }
 
 void Note::setIsInChord(bool inChord) { _inChord = inChord; }
 
@@ -306,22 +292,14 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnharmonicPitch) cons
         return MUSIC_XML::PITCH::REST;
     }
 
-    const std::string pitch = getPitch();
-    std::string pitchClass;
-    std::string pitchStep;
-    std::string alterSymbol;
-    std::optional<int> octave;
-    float alterValue = 0.0f;
-    Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
-
-    const int midiNumber = Helper::pitch2midiNote(pitch);
-    // SP2: alterValue is integral today because splitPitch rejects quarter-tone symbols;
-    // widening c_alterSymbol must replace this truncation.
+    const Pitch soundingPitch = computeSoundingPitch();
+    const std::string pitch = soundingPitch.getPitch();
+    const int midiNumber = soundingPitch.getMidiNumber();
+    const float alterValue = soundingPitch.getAlter();
+    // spellMidiNumber() below only enumerates the five integer-semitone accidentals
+    // ("bb","b","","#","x"); a quarter-tone alter has no spelling in that vocabulary.
     if (alterValue != std::floor(alterValue)) {
-        LOG_ERROR(
-            "Quarter-tone enharmonic spelling arrives in a later task, not yet supported "
-            "for pitch: " +
-            pitch);
+        LOG_ERROR("Quarter-tone enharmonic spelling is not supported for pitch: " + pitch);
     }
     const int ownAlter = static_cast<int>(alterValue);
 
@@ -465,7 +443,7 @@ int Note::getScaleDegree(const Key& key) const {
 }
 
 float Note::getFrequency(const float freqA4) const {
-    return Helper::midiNote2freq(_midiNumber, freqA4);
+    return Helper::midiNote2freq(getMidiNumber(), freqA4);
 }
 
 std::pair<std::vector<float>, std::vector<float>> Note::getHarmonicSpectrum(
@@ -506,36 +484,17 @@ void Note::transpose(const int semitones, const std::string& accType) {
 void Note::setPitch(const std::string& pitch) {
     // Rest case: This is necessary to prevent: empty pitchClass + alterSymbol
     if (pitch.empty() || (pitch.find(MUSIC_XML::PITCH::REST) != std::string::npos)) {
-        _writtenPitchClass = MUSIC_XML::PITCH::REST;
-        _writtenOctave = 0;
-        _soundingPitchClass = MUSIC_XML::PITCH::REST;
-        _soundingOctave = 0;
-        _isNoteOn = false;
+        _writtenPitch.setPitch(MUSIC_XML::PITCH::REST);
         _inChord = false;
-        _midiNumber = MUSIC_XML::MIDI::NUMBER::MIDI_REST;
         _transposeDiatonic = 0;
         _transposeChromatic = 0;
         _isGraceNote = false;
         return;
     }
 
-    std::string pitchClass;
-    std::string pitchStep;
-    std::optional<int> octave;
-    float alterValue = 0.0f;
-    Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, _alterSymbol);
-
-    // The rest case already returned above, so octave is always populated here; see the
-    // constructor's identical comment.
-    _writtenPitchClass = pitchClass;
-    _writtenOctave = octave.value_or(0);
-    _midiNumber = Helper::spelling2midiNote(pitchStep, alterValue, octave.value_or(0));
-    //    _inChord = inChord;
-    _soundingPitchClass = pitchClass;
-    _soundingOctave = octave.value_or(0);
-    //    _transposeDiatonic = transposeDiatonic;
-    //    _transposeChromatic = transposeChromatic;
-    _isNoteOn = true;
+    // The rest case already returned above, so this cannot take Pitch::setPitch()'s own rest
+    // branch; see the constructor's identical comment.
+    _writtenPitch.setPitch(pitch);
 
     // Update the sounding Pitch/PitchClass and MIDI number
     setTransposingInterval(_transposeDiatonic, _transposeChromatic);
@@ -551,14 +510,23 @@ void Note::setTransposingInterval(const int diatonicInterval, const int chromati
     _transposeDiatonic = diatonicInterval;
     _transposeChromatic = chromaticInterval;
 
-    // Update internal MIDI number member
-    _midiNumber += _transposeChromatic;
+    // Eagerly derive (and discard) the sounding pitch so an unspellable written pitch class
+    // under a nonzero transpose throws here, matching this method's historical timing, rather
+    // than from a later getter call. Nothing is cached: getSoundingPitch() and every other
+    // "sounding" getter recompute this on demand via computeSoundingPitch().
+    computeSoundingPitch();
+}
+
+Pitch Note::computeSoundingPitch() const {
+    if (_writtenPitch.isRest()) {
+        return _writtenPitch;
+    }
 
     // ===== TRANSPOSE PITCH (STRING) ===== //
 
     // Check if this is a transposing instrument
     if (!isTransposed()) {
-        return;
+        return _writtenPitch;
     }
 
     // Create musical scales
@@ -571,13 +539,15 @@ void Note::setTransposingInterval(const int diatonicInterval, const int chromati
     const std::array<std::string, 12> doubleFlatScale = {"Cb",  "Dbb", "Db",  "Ebb", "Eb",  "Fb",
                                                          "Gbb", "Gb",  "Abb", "Ab",  "Bbb", "Bb"};
 
+    const std::string writtenPitchClass = _writtenPitch.getPitchClass();
+
     // Try to find the written PitchClass in both scales
-    const auto sharpNote = find(sharpScale.begin(), sharpScale.end(), _writtenPitchClass);
-    const auto flatNote = find(flatScale.begin(), flatScale.end(), _writtenPitchClass);
+    const auto sharpNote = find(sharpScale.begin(), sharpScale.end(), writtenPitchClass);
+    const auto flatNote = find(flatScale.begin(), flatScale.end(), writtenPitchClass);
     const auto doubleShapNote =
-        find(doubleSharpScale.begin(), doubleSharpScale.end(), _writtenPitchClass);
+        find(doubleSharpScale.begin(), doubleSharpScale.end(), writtenPitchClass);
     const auto doubleFlatNote =
-        find(doubleFlatScale.begin(), doubleFlatScale.end(), _writtenPitchClass);
+        find(doubleFlatScale.begin(), doubleFlatScale.end(), writtenPitchClass);
 
     // Check if the current note is a double flat/sharp note
     const bool isInsideSharpScale = sharpNote != sharpScale.end();
@@ -630,29 +600,35 @@ void Note::setTransposingInterval(const int diatonicInterval, const int chromati
     // Scale index to be setted in the future
     int soundingPitchClassIdx = 0;
 
+    // Not a rest on this path (guarded above), so the written octave is always populated.
+    int soundingOctave = _writtenPitch.getOctave().value();
+
     // Get the single octave chromatic scale index for sounding pitchClass
     if (tempIdx >= 0 && tempIdx <= 12) {  // Transpose inside one octave
         soundingPitchClassIdx = tempIdx % 12;
     } else if (tempIdx > 12) {  // Transpose outside one octave
         soundingPitchClassIdx = tempIdx % 12;
-        _soundingOctave++;
+        soundingOctave++;
     } else {  // Transpose down octave
         soundingPitchClassIdx = tempIdx + 12;
-        _soundingOctave--;
+        soundingOctave--;
     }
 
-    // Get the correct sounding pitch
+    // Get the correct sounding pitch class
+    std::string soundingPitchClass;
     if (useSharpScale) {
-        _soundingPitchClass = sharpScale[soundingPitchClassIdx];
+        soundingPitchClass = sharpScale[soundingPitchClassIdx];
     } else if (useFlatScale) {
-        _soundingPitchClass = flatScale[soundingPitchClassIdx];
+        soundingPitchClass = flatScale[soundingPitchClassIdx];
     } else if (useDoubleSharpScale) {
-        _soundingPitchClass = doubleSharpScale[soundingPitchClassIdx];
+        soundingPitchClass = doubleSharpScale[soundingPitchClassIdx];
     } else if (useDoubleFlatScale) {
-        _soundingPitchClass = doubleFlatScale[soundingPitchClassIdx];
+        soundingPitchClass = doubleFlatScale[soundingPitchClassIdx];
     } else {
         LOG_ERROR("Unknown note type");
     }
+
+    return Pitch(soundingPitchClass + std::to_string(soundingOctave));
 }
 
 void Note::setVoice(const int voice) { _voice = voice; }
@@ -692,9 +668,9 @@ void Note::addTie(const std::string& tieType) { _tie.push_back(tieType); }
 
 void Note::removeTies() { _tie.clear(); }
 
-std::string Note::getWrittenPitchStep() const { return _writtenPitchClass.substr(0, 1); }
+std::string Note::getWrittenPitchStep() const { return _writtenPitch.getPitchStep(); }
 
-std::string Note::getSoundingPitchStep() const { return _soundingPitchClass.substr(0, 1); }
+std::string Note::getSoundingPitchStep() const { return computeSoundingPitch().getPitchStep(); }
 
 std::string Note::getPitchStep() const { return getSoundingPitchStep(); }
 
@@ -721,41 +697,31 @@ std::vector<std::string> Note::getBeam() const { return _beam; }
 
 std::vector<std::string> Note::getArticulation() const { return _articulation; }
 
-const std::string Note::getSoundingPitchClass() const { return _soundingPitchClass; }
+const std::string Note::getSoundingPitchClass() const { return computeSoundingPitch().getPitchClass(); }
 
-const std::string Note::getSoundingPitch() const {
-    // Check transposing instrument
-    if (!isTransposed()) {
-        return getWrittenPitch();
-    }
-
-    return getSoundingPitchClass() + std::to_string(getSoundingOctave());
-}
+const std::string Note::getSoundingPitch() const { return computeSoundingPitch().getPitch(); }
 
 const std::string Note::getDiatonicWrittenPitchClass() const {
-    return (_isNoteOn) ? getWrittenPitchClass().substr(0, 1) : MUSIC_XML::PITCH::REST;
+    if (_writtenPitch.isRest()) {
+        return MUSIC_XML::PITCH::REST;
+    }
+    return getWrittenPitchClass().substr(0, 1);
 }
 
 const std::string Note::getDiatonicSoundingPitchClass() const {
-    return (_isNoteOn) ? getSoundingPitchClass().substr(0, 1) : MUSIC_XML::PITCH::REST;
+    if (_writtenPitch.isRest()) {
+        return MUSIC_XML::PITCH::REST;
+    }
+    return getSoundingPitchClass().substr(0, 1);
 }
 
-int Note::getSoundingOctave() const {
-    // Note is not yet composed of Pitch (a later task), so this stays plain int; value_or(-2)
-    // reproduces midiNote2octave()'s pre-optional rest sentinel exactly.
-    return Helper::midiNote2octave(_midiNumber).value_or(-2);
-}
+int Note::getSoundingOctave() const { return computeSoundingPitch().getOctave().value_or(-2); }
 
-const std::string Note::getWrittenPitchClass() const {
-    return (_isNoteOn) ? _writtenPitchClass : MUSIC_XML::PITCH::REST;
-}
+const std::string Note::getWrittenPitchClass() const { return _writtenPitch.getPitchClass(); }
 
-const std::string Note::getWrittenPitch() const {
-    return (_isNoteOn) ? _writtenPitchClass + std::to_string(_writtenOctave)
-                       : MUSIC_XML::PITCH::REST;
-}
+const std::string Note::getWrittenPitch() const { return _writtenPitch.getPitch(); }
 
-int Note::getWrittenOctave() const { return _writtenOctave; }
+int Note::getWrittenOctave() const { return _writtenPitch.getOctave().value_or(-2); }
 
 std::string Note::getPitch() const { return getSoundingPitch(); }
 
@@ -772,22 +738,22 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
         xml.append(Helper::generateIdentation(4, identSize) + "<chord />\n");
     }
 
-    if (_isNoteOn) {
+    if (isNoteOn()) {
         if (_isPitched) {
             std::string pitch =
                 std::string(Helper::generateIdentation(4, identSize) + "<pitch>\n") +
-                Helper::generateIdentation(5, identSize) + "<step>" + _writtenPitchClass[0] +
-                "</step>\n";
+                Helper::generateIdentation(5, identSize) + "<step>" +
+                _writtenPitch.getPitchStep() + "</step>\n";
 
-            if (_writtenPitchClass.size() > 1) {
-                float alterValue = Helper::alterSymbol2Value(_alterSymbol);
-                int x = static_cast<int>(alterValue);
+            if (!_writtenPitch.getAlterSymbol().empty()) {
+                const float alterValue = _writtenPitch.getAlter();
+                const int x = static_cast<int>(alterValue);
                 pitch.append(Helper::generateIdentation(5, identSize) + "<alter>" +
                              std::to_string(x) + "</alter>\n");
             }
 
             pitch.append(Helper::generateIdentation(5, identSize) + "<octave>" +
-                         std::to_string(_writtenOctave) + "</octave>\n" +
+                         std::to_string(_writtenPitch.getOctave().value_or(0)) + "</octave>\n" +
                          Helper::generateIdentation(4, identSize) + "</pitch>\n");
 
             xml.append(pitch);
@@ -795,18 +761,19 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
             std::string unpitched =
                 std::string(Helper::generateIdentation(4, identSize) + "<unpitched>\n") +
                 Helper::generateIdentation(5, identSize) + "<display-step>" +
-                _writtenPitchClass[0] + "</display-step>\n";
+                _writtenPitch.getPitchStep() + "</display-step>\n";
 
-            if (_writtenPitchClass.size() > 1) {
-                float alterValue = Helper::alterSymbol2Value(_alterSymbol);
-                int x = static_cast<int>(alterValue);
+            if (!_writtenPitch.getAlterSymbol().empty()) {
+                const float alterValue = _writtenPitch.getAlter();
+                const int x = static_cast<int>(alterValue);
                 unpitched.append(Helper::generateIdentation(5, identSize) + "<alter>" +
                                  std::to_string(x) + "</alter>\n");
             }
 
             unpitched.append(Helper::generateIdentation(5, identSize) + "<display-octave>" +
-                             std::to_string(_writtenOctave) + "</display-octave>\n" +
-                             Helper::generateIdentation(4, identSize) + "</unpitched>\n");
+                             std::to_string(_writtenPitch.getOctave().value_or(0)) +
+                             "</display-octave>\n" + Helper::generateIdentation(4, identSize) +
+                             "</unpitched>\n");
 
             xml.append(unpitched);
         }
@@ -823,7 +790,7 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
         }
     }
 
-    if (_isNoteOn) {
+    if (isNoteOn()) {
         if (_unpitchedIndex == 0) {
             xml.append(Helper::generateIdentation(4, identSize) + "<instrument id=\"P" +
                        std::to_string(instrumentId + 1) + "-I" + std::to_string(1) + "\" />\n");
@@ -910,22 +877,27 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
     return xml;
 }
 
-int Note::getMidiNumber() const { return _midiNumber; }
+int Note::getMidiNumber() const {
+    if (_writtenPitch.isRest()) {
+        return MUSIC_XML::MIDI::NUMBER::MIDI_REST;
+    }
+    return computeSoundingPitch().getMidiNumber();
+}
 
 bool Note::operator<(const Note& otherNote) const {
-    return (_midiNumber < otherNote.getMidiNumber());
+    return (getMidiNumber() < otherNote.getMidiNumber());
 }
 
 bool Note::operator>(const Note& otherNote) const {
-    return (_midiNumber > otherNote.getMidiNumber());
+    return (getMidiNumber() > otherNote.getMidiNumber());
 }
 
 bool Note::operator<=(const Note& otherNote) const {
-    return (_midiNumber <= otherNote.getMidiNumber());
+    return (getMidiNumber() <= otherNote.getMidiNumber());
 }
 
 bool Note::operator>=(const Note& otherNote) const {
-    return (_midiNumber >= otherNote.getMidiNumber());
+    return (getMidiNumber() >= otherNote.getMidiNumber());
 }
 
 bool Note::operator==(const Note& otherNote) const { return getPitch() == otherNote.getPitch(); }
