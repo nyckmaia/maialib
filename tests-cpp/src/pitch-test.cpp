@@ -1,5 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
+
+#include "maiacore/config.h"
 #include "maiacore/helper.h"
 #include "maiacore/note.h"
 #include "maiacore/pitch.h"
@@ -214,4 +217,98 @@ TEST(Pitch, setMidiNumberNegativeIsRest) {
     Pitch p("C4");
     p.setMidiNumber(-1);
     EXPECT_TRUE(p.isRest());
+}
+
+// ===== TASK 3 — frequency, and the MIDI/frequency constructors ===== //
+
+// task-3-brief.md Step 1, verbatim. Resets the global tuning system first: config-test.cpp
+// (linked into the same binary) leaves it changed, and getFrequency() reads that global state.
+TEST(Pitch, frequencyOfA4) {
+    setTuningSystem(TuningSystem::EQUAL_TEMPERAMENT);
+    EXPECT_NEAR(Pitch("A4").getFrequency(), 440.0f, 0.01f);
+}
+
+// task-3-brief.md Step 1, verbatim. 444 Hz is close enough to A4 (440 Hz) that it rounds to
+// "A4" under both semitone and quarter-tone granularity; see fromFrequencyRoundsHalfUpOnFlatSide
+// and fromFrequencyQuarterToneFlatSide below for the tests that actually discriminate the
+// granularity and rounding-direction logic this one exercises only as a smoke test.
+TEST(Pitch, fromFrequencyRoundsToSemitoneByDefault) {
+    Pitch p(444.0f);  // between A4 and A1x4
+    EXPECT_EQ(p.getPitch(), "A4");
+}
+
+// task-3-brief.md Step 1, verbatim.
+TEST(Pitch, fromFrequencyRoundsToQuarterToneWhenEnabled) {
+    Pitch p(449.0f, "#", 440.0f, true);
+    EXPECT_EQ(p.getPitch(), "A1x4");
+}
+
+// task-3-brief.md Step 1, verbatim.
+TEST(Pitch, nonPositiveFrequencyIsARest) {
+    EXPECT_TRUE(Pitch(0.0f).isRest());
+    EXPECT_TRUE(Pitch(-5.0f).isRest());
+}
+
+// TASK 3 ADDITION — the flat-side discriminator the orchestrator's brief expansion asked for.
+// std::floor(x + 0.5f) (ties upward) and std::round(x) (ties away from zero) are mathematically
+// identical for every x >= 0, and any realistic, audible frequency yields a non-negative quarter-
+// tone step position -- so no audible-range test can tell the two rounding rules apart. The one
+// place they diverge is a step position that is itself negative, which only happens below the
+// C-1 floor (~8.18 Hz for A4 = 440). This frequency is chosen so the unrounded step position is
+// exactly -0.5, a tie between MIDI -1 (invalid -- there is no pitch below C-1) and MIDI 0 (C-1).
+// Ties-upward must resolve it to C-1; std::round(-0.5) would resolve it (away from zero) to -1,
+// producing a rest (Helper::midiNote2pitch(-1, ...) == "rest") instead of a real, if extreme,
+// pitch.
+TEST(Pitch, fromFrequencyRoundsHalfUpOnFlatSide) {
+    const float freq = 440.0f * std::pow(2.0f, (-0.5f - 69.0f) / 12.0f);
+    Pitch p(freq);
+    EXPECT_FALSE(p.isRest());
+    EXPECT_EQ(p.getPitch(), "C-1");
+    EXPECT_EQ(p.getMidiNumber(), 0);
+}
+
+// TASK 3 ADDITION — a flat-side quarter-tone spelling case. Every other frequency-rounding test
+// above requests (or defaults to) a sharp/natural spelling; this is the only one that exercises
+// accType == "b" landing on a genuine quarter-tone (residual 0.5) result, proving setFrequency()
+// honours the caller's accidental preference for the base semitone (here G#4/Ab4, one semitone
+// below A4) rather than always falling back to the natural/sharp default.
+TEST(Pitch, fromFrequencyQuarterToneFlatSide) {
+    const float freq = 440.0f * std::pow(2.0f, (68.5f - 69.0f) / 12.0f);
+    Pitch p(freq, "b", 440.0f, true);
+    EXPECT_EQ(p.getPitch(), "A1b4");
+    EXPECT_EQ(p.getMidiNumber(), 69);  // ties upward, matching the D1b4 precedent above
+}
+
+// TASK 3 ADDITION — THE TRAP in task-3-brief.md: Helper::freq2midiNote() rounds to an integer
+// MIDI number before reporting a deviation, which is exactly the bug class this sub-project
+// exists to remove. This proves getFrequency() reads the exact getQuarterToneSteps() position
+// instead: a quarter-tone pitch's frequency must differ from both of its neighboring semitones'
+// frequencies, not silently collapse onto one of them.
+TEST(Pitch, getFrequencyUsesExactQuarterToneSteps) {
+    setTuningSystem(TuningSystem::EQUAL_TEMPERAMENT);  // see frequencyOfA4's comment above
+    Pitch p("C1x4");  // quarter-tone steps 60.5 (see quarterToneStringRoundTrip above)
+    const float expected = 440.0f * std::pow(2.0f, (60.5f - 69.0f) / 12.0f);
+    EXPECT_NEAR(p.getFrequency(), expected, 0.01f);
+    EXPECT_NE(p.getFrequency(), Pitch("C4").getFrequency());   // midi 60
+    EXPECT_NE(p.getFrequency(), Pitch("C#4").getFrequency());  // midi 61, ties-up neighbor
+}
+
+// TASK 3 ADDITION — the non-EQUAL_TEMPERAMENT caller-error case task-3-brief.md's Step 3
+// requires. Resets the global tuning system back to EQUAL_TEMPERAMENT afterward (config.h's
+// getTuningSystem()/setTuningSystem() are process-global state) so no later test observes it
+// changed, regardless of whether EXPECT_THROW above passes or fails.
+TEST(Pitch, getFrequencyThrowsForNonEqualTemperament) {
+    setTuningSystem(TuningSystem::JUST_INTONATION);
+    EXPECT_THROW(Pitch("A4").getFrequency(), std::runtime_error);
+    setTuningSystem(TuningSystem::EQUAL_TEMPERAMENT);
+}
+
+// TASK 3 ADDITION — Pitch(int, accType) had no test: this proves accType is actually forwarded
+// to Helper::midiNote2pitch() (spelling MIDI 61 as "Db4"), not silently dropped in favour of the
+// default spelling ("C#4"), and that a negative midiNumber constructs a rest like
+// setMidiNumber() does.
+TEST(Pitch, midiNumberConstructorHonoursAccType) {
+    EXPECT_EQ(Pitch(61, "b").getPitch(), "Db4");
+    EXPECT_EQ(Pitch(61, "#").getPitch(), "C#4");
+    EXPECT_TRUE(Pitch(-1).isRest());
 }

@@ -4,11 +4,23 @@
 #include <cmath>
 #include <string>
 
+#include "maiacore/config.h"
 #include "maiacore/helper.h"
 #include "maiacore/log.h"
 
 Pitch::Pitch(const std::string& pitch) : _step("rest"), _alter(0.0f), _octave(std::nullopt) {
     setPitch(pitch);
+}
+
+Pitch::Pitch(int midiNumber, const std::string& accType)
+    : _step("rest"), _alter(0.0f), _octave(std::nullopt) {
+    setPitch(Helper::midiNote2pitch(midiNumber, accType));
+}
+
+Pitch::Pitch(float frequency, const std::string& accType, float freqA4,
+             bool enableQuarterToneRound)
+    : _step("rest"), _alter(0.0f), _octave(std::nullopt) {
+    setFrequency(frequency, accType, freqA4, enableQuarterToneRound);
 }
 
 std::string Pitch::getPitch() const {
@@ -55,6 +67,21 @@ float Pitch::getQuarterToneSteps() const {
 }
 
 bool Pitch::isRest() const { return _step == MUSIC_XML::PITCH::REST; }
+
+float Pitch::getFrequency(float freqA4) const {
+    if (isRest()) {
+        return 0.0f;
+    }
+
+    if (getTuningSystem() != TuningSystem::EQUAL_TEMPERAMENT) {
+        LOG_ERROR("Tuning system not implemented in SP2; only EQUAL_TEMPERAMENT is available");
+    }
+
+    // Uses the exact, unrounded quarter-tone step position (not getMidiNumber()) so a
+    // quarter-tone alter is never rounded away here -- see THE TRAP note in task-3-brief.md
+    // about Helper::freq2midiNote(), which is deliberately not used for this reason.
+    return freqA4 * std::pow(2.0f, (getQuarterToneSteps() - 69.0f) / 12.0f);
+}
 
 void Pitch::setStep(const std::string& step) {
     const bool isValidStep =
@@ -146,5 +173,49 @@ void Pitch::setPitchClass(const std::string& pitchClass) {
 }
 
 void Pitch::setMidiNumber(int midiNumber) { setPitch(Helper::midiNote2pitch(midiNumber)); }
+
+void Pitch::setFrequency(float frequency, const std::string& accType, float freqA4,
+                          bool enableQuarterToneRound) {
+    // A frequency <= 0 is a whole-state replacement into a rest (spec section 4.4.1), not a
+    // caller error: this never throws for that reason alone.
+    if (frequency <= 0.0f) {
+        setPitch(MUSIC_XML::PITCH::REST);
+        return;
+    }
+
+    // Exact inverse of getFrequency()'s formula, in quarter-tone-step space.
+    const float steps = 12.0f * std::log2(frequency / freqA4) + 69.0f;
+
+    // Ties round upward (spec section 4.5): std::floor(x + 0.5f), scaled to the rounding
+    // granularity, never std::round()/std::lround(). Those round half away from zero and would
+    // disagree with this rule for a negative step position (e.g. a frequency below C-1).
+    const float granularity = enableQuarterToneRound ? 0.5f : 1.0f;
+    const float roundedSteps = granularity * std::floor(steps / granularity + 0.5f);
+
+    // Split into an integer MIDI number plus a residual of 0 or 0.5.
+    const int baseMidi = static_cast<int>(std::floor(roundedSteps));
+    const float residual = roundedSteps - static_cast<float>(baseMidi);
+
+    // Spell the base MIDI number via the existing funnel. accType is only a preference for the
+    // base semitone: when it does not apply to this specific chromatic degree (e.g. "#" was
+    // requested but the rounded base MIDI is a natural, white-key note), fall back to the
+    // default spelling rather than treating that as a caller error.
+    std::string basePitch;
+    try {
+        basePitch = Helper::midiNote2pitch(baseMidi, accType);
+    } catch (const std::runtime_error&) {
+        basePitch = Helper::midiNote2pitch(baseMidi, {});
+    }
+
+    std::string pitchClass;
+    std::string pitchStep;
+    std::string alterSymbol;
+    int octave = 0;
+    float baseAlter = 0.0f;
+    Helper::splitPitch(basePitch, pitchClass, pitchStep, octave, baseAlter, alterSymbol);
+
+    const float finalAlter = baseAlter + residual;
+    setPitch(pitchStep + Helper::alterValue2symbol(finalAlter) + std::to_string(octave));
+}
 
 void Pitch::roundToSemitone() { _alter = std::floor(_alter + 0.5f); }

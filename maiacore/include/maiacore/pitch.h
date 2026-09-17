@@ -67,6 +67,36 @@ class Pitch {
     explicit Pitch(const std::string& pitch = "rest");
 
     /**
+     * @brief Constructs a Pitch from a MIDI note number, with an explicit accidental type.
+     * @details Delegates to Helper::midiNote2pitch(), so the requested accType must be a valid
+     *          spelling for that specific MIDI note (e.g. "#" is rejected for a MIDI note that is
+     *          a natural, white-key pitch). A negative midiNumber constructs a rest, matching
+     *          setMidiNumber().
+     * @param midiNumber MIDI note number (negative values construct a rest).
+     * @param accType Accidental type: "" (natural for white keys, "#" for black keys, the
+     *        default), "#", "b", "x" or "bb".
+     * @throws std::runtime_error If midiNumber cannot be spelled using accType, or if the
+     *         resulting octave falls outside -1..11.
+     */
+    explicit Pitch(int midiNumber, const std::string& accType = {});
+
+    /**
+     * @brief Constructs a Pitch from a frequency in Hz.
+     * @details Delegates to setFrequency(); see its documentation for the rounding, spelling and
+     *          rest rules applied.
+     * @param frequency Frequency in Hz. A value <= 0 constructs a rest.
+     * @param accType Preferred accidental type for the base semitone spelling: "" (natural for
+     *        white keys, "#" for black keys, the default), "#", "b", "x" or "bb". Falls back to
+     *        the default spelling when the rounded pitch's base semitone cannot use the requested
+     *        accidental type.
+     * @param freqA4 Reference frequency for A4, in Hz (default: 440.0).
+     * @param enableQuarterToneRound When false (default), rounds to the nearest semitone; when
+     *        true, rounds to the nearest quarter tone. Ties round upward.
+     */
+    explicit Pitch(float frequency, const std::string& accType = {}, float freqA4 = 440.0f,
+                   bool enableQuarterToneRound = false);
+
+    /**
      * @brief Returns the full pitch string (pitch class followed by octave).
      * @return Pitch string (e.g., "C1x4"), or "rest" for a rest.
      */
@@ -127,6 +157,21 @@ class Pitch {
      * @return True if this Pitch is a rest.
      */
     bool isRest() const;
+
+    /**
+     * @brief Returns this Pitch's frequency in Hz, under the currently active tuning system.
+     * @details A rest has no frequency and returns 0.0f. For a non-rest Pitch, only
+     *          TuningSystem::EQUAL_TEMPERAMENT (see config.h) is currently implemented; it
+     *          returns `freqA4 * 2^((getQuarterToneSteps() - 69) / 12)`, using the exact,
+     *          unrounded quarter-tone step position so a quarter-tone alter is never rounded away
+     *          in the process (contrast Helper::freq2midiNote(), which rounds to an integer MIDI
+     *          number first and is therefore never used here).
+     * @param freqA4 Reference frequency for A4, in Hz (default: 440.0).
+     * @return Frequency in Hz, or 0.0f for a rest.
+     * @throws std::runtime_error If the active tuning system is not
+     *         TuningSystem::EQUAL_TEMPERAMENT.
+     */
+    float getFrequency(float freqA4 = 440.0f) const;
 
     /**
      * @brief Sets the diatonic step.
@@ -190,6 +235,32 @@ class Pitch {
      * @throws std::runtime_error If midiNumber cannot be spelled within octaves -1..11.
      */
     void setMidiNumber(int midiNumber);
+
+    /**
+     * @brief Replaces this Pitch's full state from a frequency in Hz.
+     * @details A frequency <= 0 makes this Pitch a rest (spec section 4.4.1's whole-state
+     *          replacement, not a caller error, so this never throws for that reason). For a
+     *          positive frequency, the exact quarter-tone step position is computed as the
+     *          inverse of getFrequency()'s formula -- `12 * log2(frequency / freqA4) + 69` -- then
+     *          rounded to the nearest semitone (enableQuarterToneRound == false, the default) or
+     *          the nearest quarter tone (enableQuarterToneRound == true). Ties round upward (spec
+     *          section 4.5), via `std::floor(x + 0.5f)` scaled to the rounding granularity, never
+     *          std::round()/std::lround(): those round half away from zero and would disagree
+     *          with the ties-upward rule for a negative step position. The rounded position is
+     *          then split into an integer MIDI number and a residual of 0 or 0.5, spelled through
+     *          Helper::midiNote2pitch() (falling back to its default spelling when accType does
+     *          not apply to that specific chromatic degree) and Helper::alterValue2symbol(), and
+     *          handed to setPitch() -- no new spelling logic is introduced here.
+     * @param frequency Frequency in Hz. A value <= 0 makes this Pitch a rest.
+     * @param accType Preferred accidental type for the base semitone spelling: "" (natural for
+     *        white keys, "#" for black keys, the default), "#", "b", "x" or "bb".
+     * @param freqA4 Reference frequency for A4, in Hz (default: 440.0).
+     * @param enableQuarterToneRound When false (default), rounds to the nearest semitone; when
+     *        true, rounds to the nearest quarter tone.
+     * @throws std::runtime_error If the resulting pitch cannot be spelled within octaves -1..11.
+     */
+    void setFrequency(float frequency, const std::string& accType = {}, float freqA4 = 440.0f,
+                       bool enableQuarterToneRound = false);
 
     /**
      * @brief Rounds a quarter-tone alter to the nearest semitone, ties upward.
