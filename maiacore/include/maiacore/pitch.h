@@ -263,6 +263,10 @@ class Pitch {
      *            is clamped to that extreme and logs a warning (LOG_WARN) -- never a silent rest
      *            (indistinguishable from the one sanctioned rest case, frequency <= 0) and never
      *            a throw.
+     *          - A non-finite frequency (+infinity, or NaN; -infinity is already a rest, being
+     *            <= 0) is treated the same as a frequency above the highest representable pitch:
+     *            clamped to the ceiling and logged with LOG_WARN, never passed to a cast that
+     *            would be undefined behaviour for it.
      * @param frequency Frequency in Hz. A value <= 0 makes this Pitch a rest.
      * @param accType Preferred accidental type for the base semitone spelling: "" (natural for
      *        white keys, "#" for black keys, the default), "#", "b", "x" or "bb".

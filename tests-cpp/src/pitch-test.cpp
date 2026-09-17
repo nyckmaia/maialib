@@ -1,6 +1,8 @@
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <cmath>
+#include <limits>
 
 #include "maiacore/config.h"
 #include "maiacore/helper.h"
@@ -261,15 +263,13 @@ TEST(Pitch, nonPositiveFrequencyIsARest) {
     EXPECT_TRUE(Pitch(-5.0f).isRest());
 }
 
-// REVIEW ROUND 1 (task-3-review.md I3) — kept as a smoke test only, not a rounding-rule
-// discriminator: this exact boundary (steps == -0.5) resolves to "C-1" whether ties round upward
-// or away from zero (see pitch.cpp's setFrequency(), by the granularity variable, for why no
-// frequency-based test can discriminate the rule at all -- verified empirically, not assumed,
-// while fixing this round: a companion test engineered for the quarter-tone tie at steps == -0.25
-// was built, reverted against std::round(), and found to pass under *both* rules, so it was
-// removed rather than kept as a test that cannot fail). What this test still pins: the class's
-// own ties-upward MIDI semantics place this frequency at "C-1", not a rest.
-TEST(Pitch, fromFrequencyRoundsHalfUpOnFlatSide) {
+// REVIEW ROUND 2 (task-3-review.md N4) — renamed from fromFrequencyRoundsHalfUpOnFlatSide: that
+// name claimed a rounding-rule discrimination this test does not perform (round 1's I3 finding,
+// see pitch.cpp's setFrequency() for why no frequency-based test can). Not vacuous regardless --
+// it fails under round 1's own granularity-ternary-swap and finalAlter-hardcode reverts -- but
+// what it actually pins is narrower: this exact boundary (steps == -0.5) resolves to "C-1", not
+// a rest, whichever rounding rule produced it.
+TEST(Pitch, fromFrequencyAtFloorBoundaryIsNotARest) {
     const float freq = static_cast<float>(440.0 * std::pow(2.0, (-0.5 - 69.0) / 12.0));
     Pitch p(freq);
     EXPECT_FALSE(p.isRest());
@@ -330,6 +330,62 @@ TEST(Pitch, fromFrequencyFallsBackWhenAccTypeCannotExpressResidual) {
     Pitch p(freq, "x", 440.0f, true);
     EXPECT_EQ(p.getPitch(), "D1x4");
 }
+
+// REVIEW ROUND 2 (task-3-review.md N1) — the controller's confirmed reproducer: the C2 fallback
+// above used to call Helper::midiNote2pitch(baseMidi, {}) directly instead of through the shared
+// clamp-and-retry helper, so at a baseMidi only reachable with a specific accType (157, "Bx11")
+// the default spelling ALSO failed (octave 12 overflow), Helper::splitPitch("") took its
+// empty-string rest branch, and a valid positive frequency became a rest -- the exact C1 defect
+// reopened at the ceiling by the fix that closed it at the floor. Must now clamp to "B11" (the
+// same result fromFrequencyClampsAboveCeilingInsteadOfThrowing reaches from the natural-spelling
+// side), never a rest.
+TEST(Pitch, fromFrequencyClampsAboveCeilingWhenAccTypeAlsoOverflowsAlter) {
+    Pitch p(73038.0f, "x", 440.0f, true);
+    EXPECT_FALSE(p.isRest());
+    EXPECT_EQ(p.getPitch(), "B11");
+}
+
+// REVIEW ROUND 2 (task-3-review.md N2) — a non-finite frequency (+infinity, NaN; -infinity is
+// already caught by the frequency <= 0.0f rest check) must never reach
+// static_cast<int>(std::floor(...)) in setFrequency(): that cast is undefined behaviour for
+// non-finite input, measured (not assumed) to silently return INT_MIN on x86-64/MSVC -- masked
+// into a wrong-end-of-range "C-1" by the floor clamp -- and to saturate to INT_MAX on AArch64
+// (Apple Silicon; this library targets macOS), where the ceiling clamp would need on the order
+// of 2^31 iterations: a hang, not a wrong answer. Must clamp to the ceiling and never crash or
+// hang on any platform.
+TEST(Pitch, fromNonFiniteFrequencyClampsToCeilingInsteadOfUndefinedBehavior) {
+    Pitch fromInfinity(std::numeric_limits<float>::infinity());
+    EXPECT_FALSE(fromInfinity.isRest());
+    EXPECT_EQ(fromInfinity.getPitch(), "B11");
+
+    Pitch fromNan(std::numeric_limits<float>::quiet_NaN());
+    EXPECT_FALSE(fromNan.isRest());
+    EXPECT_EQ(fromNan.getPitch(), "B11");
+}
+
+// REVIEW ROUND 2 (task-3-review.md N3) — FLT_MAX is finite, so it survives the N2 guard above,
+// but an unbounded baseMidi computed from it must still clamp to the ceiling in O(1), not by
+// walking down from an astronomically large starting value (~1345 iterations, each a failed,
+// cpptrace-resolved spelling attempt, for this specific input). Correctness alone does not
+// discriminate this: disabling the O(1) pre-clamp still reaches the right pitch, just slowly
+// (measured at 9033 ms locally, against 11 ms with the fix -- confirmed on the real binary
+// while fixing this round). The elapsed-time assertion below is what makes this fail under that
+// regression instead of merely running for nine seconds unnoticed: 500 ms is roughly 45x the
+// fixed cost and roughly 1/18 of the regressed one, comfortable margin either way.
+TEST(Pitch, fromExtremeFiniteFrequencyClampsToCeilingWithoutWalkingFromScratch) {
+    const auto start = std::chrono::steady_clock::now();
+    Pitch p(std::numeric_limits<float>::max());
+    const auto elapsed = std::chrono::steady_clock::now() - start;
+    EXPECT_FALSE(p.isRest());
+    EXPECT_EQ(p.getPitch(), "B11");
+    EXPECT_LT(elapsed, std::chrono::milliseconds(500));
+}
+
+// REVIEW ROUND 2 (task-3-review.md, credited to the re-reviewer) — pins that IEEE 754 negative
+// zero is already, correctly, treated as <= 0.0f (a rest), same as positive zero
+// (nonPositiveFrequencyIsARest above): -0.0f == 0.0f under IEEE 754 comparison, so this needed
+// no code change, only a regression test recording that it was checked.
+TEST(Pitch, fromNegativeZeroFrequencyIsARest) { EXPECT_TRUE(Pitch(-0.0f).isRest()); }
 
 // REVIEW ROUND 1 (task-3-review.md I2) — a malformed accType is a caller error, matching
 // Pitch(int, accType) (which already throws for this via Helper::midiNote2pitch()'s own
