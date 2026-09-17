@@ -394,9 +394,17 @@ class PitchSpelling(unittest.TestCase):
         self.assertEqual(ml.Helper.pitch2midiNote("rest"), -1)
 
     def testPitch2midiNoteRejectsInvalidPitches(self):
-        for pitch in ["Cb-1", "Cbb-1", "C12", "H4", "C1x4"]:
+        for pitch in ["Cb-1", "Cbb-1", "C12", "H4"]:
             with self.subTest(pitch=pitch), self.assertRaises(RuntimeError):
                 ml.Helper.pitch2midiNote(pitch)
+
+    def testPitch2midiNoteAcceptsQuarterTones(self):
+        # Quarter-tone accidentals round to the nearest MIDI number with ties broken upward
+        # (spec section 4.5); values match the C++ PitchSpelling.QuarterToneRoundsTiesUpward test.
+        self.assertEqual(ml.Helper.pitch2midiNote("C1x4"), 61)
+        self.assertEqual(ml.Helper.pitch2midiNote("C3x4"), 62)
+        self.assertEqual(ml.Helper.pitch2midiNote("D1b4"), 62)
+        self.assertEqual(ml.Helper.pitch2midiNote("D3b4"), 61)
 
     def testIsEnharmonic(self):
         self.assertTrue(ml.Helper.isEnharmonic("E#4", "F4"))
