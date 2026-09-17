@@ -225,6 +225,25 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getWrittenPitchStep(), "rest")
         self.assertEqual(note.getPitchClass(), "rest")
 
+    # Fix round 1 (controller ruling on Task 6 concern 2), Python parity: getAlterSymbol()
+    # forwards to the sounding pitch, not the written one. B-flat clarinet: written "C4"
+    # (alter symbol "") transposed by (transposeDiatonic=-1, transposeChromatic=-2) sounds
+    # "Bb3" (alter symbol "b") -- the same construction and measured values pinned in
+    # note-test.cpp's NoteComposesPitch.GetAlterSymbolForwardsToSoundingPitchOnTransposedNote
+    # (see that test's comment for why the controller's suggested "written C#4" case was
+    # discarded: it triggers an unrelated, pre-existing bug in the transpose scale lookup).
+    def testGetAlterSymbolForwardsToSoundingPitchOnTransposedNote(self):
+        written = ml.Note("C4")
+        self.assertEqual(written.getAlterSymbol(), "")
+
+        transposed = ml.Note(
+            "C4", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
+        )
+        self.assertEqual(transposed.getSoundingPitch(), "Bb3")
+        self.assertEqual(transposed.getMidiNumber(), 58)
+        self.assertEqual(transposed.getAlterSymbol(), "b")
+        self.assertNotEqual(transposed.getAlterSymbol(), written.getAlterSymbol())
+
 
 if __name__ == "__main__":
     unittest.main()

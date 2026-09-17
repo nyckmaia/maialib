@@ -29,6 +29,7 @@ All notable changes to this project will be documented in this file.
 - Unused C++ constants `MUSIC_XML::MIDI::NUMBER::MIDI_000` … `MIDI_132` and `c_pianoWhiteKeys`
 - **Breaking:** Renamed the misspelled `alternativeEnhamonicPitch` keyword argument to `alternativeEnharmonicPitch` on `Note.getEnharmonicPitch()`, `Note.getEnharmonicNote()` and `Note.toEnharmonicPitch()` (C++ and Python) — callers passing it by keyword must update the spelling
 - **Breaking:** A rest has no octave: `Helper.splitPitch()` returns `None` (not `0`) for the octave of a rest, e.g. `ml.Helper.splitPitch("rest")` is now `("rest", "rest", None, 0.0, "")`; `Helper.midiNote2octave()` returns `None` (not `-2`) for a negative MIDI number. In C++, `Helper::splitPitch()`'s `octave` output parameter is now `std::optional<int>&` and `Helper::midiNote2octave()` now returns `std::optional<int>`, empty instead of `-2` for `MIDI_REST`
+- **Breaking:** `Note.getAlterSymbol()` now returns the sounding pitch's accidental symbol; previously it returned the written pitch's. Affects transposing instruments only — a written pitch's accidental symbol is unchanged for a non-transposing (or untransposed) `Note`
 
 ---
 

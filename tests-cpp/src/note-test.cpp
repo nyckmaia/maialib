@@ -1024,3 +1024,38 @@ TEST(NoteComposesPitch, SetStepResurrectsRestToOctave4) {
     EXPECT_EQ(n.getPitch(), "C4");
     EXPECT_EQ(n.getOctave(), 4);
 }
+
+// Fix round 1 (controller ruling on Task 6 concern 2): getAlterSymbol() forwarding to the
+// sounding pitch instead of the written one is a genuine behaviour change the brief introduced
+// (its "preserves today's semantics" claim was wrong: the pre-Task-6 body was
+// `return _alterSymbol;`, populated from the WRITTEN pitch only). Pin it with a transposing
+// instrument case where the two genuinely diverge.
+//
+// B-flat clarinet: written C sounds a major second lower (concert Bb). Measured via this exact
+// construction, not assumed -- and cross-checked against the pre-existing, already-passing
+// NoteSetPitch.WrittenAndSoundingPitchTypesAndOctave_TransposeInstrumentChangeOctave test, which
+// pins the same (pitch="C4", transposeDiatonic=-1, transposeChromatic=-2) construction producing
+// getSoundingPitch() == "Bb3":
+//   written "C4"  -> alter symbol ""  (natural)
+//   sounding "Bb3" -> alter symbol "b" (flat), MIDI 58
+//
+// The controller's suggested case -- written "C#4" under the same transpose -- was tried first
+// and discarded: it lands in a different branch of the pre-existing (untouched by Task 6)
+// sharp/flat scale-lookup in computeSoundingPitch(), where a written sharp-side pitch class
+// transposed downward is not found in either lookup scale (only in the sharp one), and produces
+// a musically wrong "Bb4" / MIDI 70 (a fourth higher, not a major second lower). That is a
+// latent, pre-existing bug unrelated to this getAlterSymbol() question, not something to build a
+// pinning test on top of.
+TEST(NoteComposesPitch, GetAlterSymbolForwardsToSoundingPitchOnTransposedNote) {
+    // Untransposed stand-in for "the written pitch's own accidental symbol": Note has no
+    // getWrittenAlterSymbol() getter, and for an untransposed note sounding == written.
+    const Note written("C4");
+    ASSERT_EQ(written.getAlterSymbol(), "");
+
+    const Note transposed("C4", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                           /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
+    ASSERT_EQ(transposed.getSoundingPitch(), "Bb3");
+    ASSERT_EQ(transposed.getMidiNumber(), 58);
+    EXPECT_EQ(transposed.getAlterSymbol(), "b");
+    EXPECT_NE(transposed.getAlterSymbol(), written.getAlterSymbol());
+}
