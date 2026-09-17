@@ -343,6 +343,96 @@ git commit -m "refactor: Note holds one canonical written Pitch"
 
 ---
 
+### Task 6b: A rest has no octave in `Note`
+
+**Files:**
+- Modify: `maiacore/include/maiacore/note.h` (declarations of `getOctave`, `getWrittenOctave`, `getSoundingOctave`; add `#include <optional>`)
+- Modify: `maiacore/src/maiacore/note.cpp` (the three definitions)
+- Modify: `maiacore/src/maiacore/python_wrapper/py_note.cpp` (bindings and numpydoc)
+- Modify: every call site the compiler names (expect `chord.cpp`, `measure.cpp`, `score.cpp`)
+- Modify: `CHANGELOG.md`
+- Test: `tests-cpp/src/note-test.cpp`, `test/test_note.py`
+
+**Interfaces:**
+- Consumes: `Pitch::getOctave() -> std::optional<int>` (Task 2); `Note` holding one canonical `Pitch` (Task 6).
+- Produces: `Note::getOctave()`, `Note::getWrittenOctave()`, `Note::getSoundingOctave()`, all `std::optional<int>`, empty for a rest.
+
+**Why this is its own task.** Task 6 transplants the fields and leaves the three octave getters agreeing on the `-2` sentinel, so that the riskiest task in the plan changes no public signature. This task removes the sentinel from the public API behind its own review gate. Spec §4.4 and the paragraph following it require that a rest's octave carry no magic number — a sentinel is sound only outside the value's domain, and `0` and `-1` are both legitimate octaves. Spec §12.1 reconciled the two free functions and the MusicXML reader but never named `Note`, which is public and Python-bound; this task closes that gap.
+
+- [ ] **Step 1: Write the failing test**
+
+```cpp
+TEST(Note, restHasNoOctaveAnywhere) {
+    const Note rest("");
+    EXPECT_FALSE(rest.getOctave().has_value());
+    EXPECT_FALSE(rest.getWrittenOctave().has_value());
+    EXPECT_FALSE(rest.getSoundingOctave().has_value());
+
+    const Note note("C#4");
+    EXPECT_EQ(note.getOctave().value(), 4);
+    EXPECT_EQ(note.getWrittenOctave().value(), 4);
+}
+```
+
+- [ ] **Step 2: Run to verify it fails**
+
+Run: `make cpp-tests`
+Expected: a compile error — `has_value()` called on `int`.
+
+- [ ] **Step 3: Widen the three declarations**
+
+In `note.h`, add `#include <optional>` and change all three to return `std::optional<int>`, updating each Doxygen block to state that an empty optional means a rest and that `isNoteOff()` is the authoritative test.
+
+- [ ] **Step 4: Propagate the optional in `note.cpp`**
+
+Task 6 left each of these ending in `.value_or(-2)`. Delete that call and return the optional unchanged, so the absence travels instead of a number:
+
+```cpp
+std::optional<int> Note::getWrittenOctave() const { return _writtenPitch.getOctave(); }
+```
+
+Apply the same removal to `getSoundingOctave()` and `getOctave()`. **No `value_or` may remain in any of the three.**
+
+- [ ] **Step 5: Rebuild and fix every call site the compiler names**
+
+Run: `make cpp-tests`. At each site, decide explicitly whether a rest belongs there. Where the surrounding code already rejects rests, `.value()` is correct; where it does not, handle the empty case rather than reaching for a default.
+
+- [ ] **Step 6: Update the bindings**
+
+In `py_note.cpp`, update the numpydoc `Returns` section of each of the three getters to `int | None`, stating that `None` means a rest. `<pybind11/stl.h>` is already included, so the conversion needs no extra code.
+
+- [ ] **Step 7: Python test**
+
+```python
+def test_rest_has_no_octave(self):
+    rest = ml.Note("", isNoteOn=False)
+    self.assertIsNone(rest.getOctave())
+    self.assertIsNone(rest.getWrittenOctave())
+    self.assertIsNone(rest.getSoundingOctave())
+    self.assertEqual(ml.Note("C#4").getOctave(), 4)
+```
+
+- [ ] **Step 8: Deliberate expectation changes**
+
+Any existing test asserting `-2` or `0` as a rest's octave on a `Note` is now stale and must be updated to assert absence — not "repaired" by reintroducing a sentinel. Record each one you changed in the commit body.
+
+- [ ] **Step 9: Verify**
+
+Run `make cpp-tests` and `make py-tests`. Then mutation-test the new tests: restore `.value_or(-2)` in one getter, rebuild, confirm `restHasNoOctaveAnywhere` fails, revert, confirm it passes. Only the experiment counts.
+
+- [ ] **Step 10: CHANGELOG and commit**
+
+Add a breaking-change entry under `[Unreleased]` stating that `Note`'s three octave getters return `int | None`, with `None` for a rest.
+
+```bash
+git add maiacore/include/maiacore/note.h maiacore/src/maiacore/note.cpp \
+        maiacore/src/maiacore/python_wrapper/py_note.cpp \
+        tests-cpp/src/note-test.cpp test/test_note.py CHANGELOG.md
+git commit -m "refactor: a rest has no octave in Note either"
+```
+
+---
+
 ### Task 7: MusicXML read
 
 **Files:** Modify `score.cpp:646-661`, `:1644-1651`, `helper.cpp:398-431` (`alterName2symbol`); Create the three fixtures; Test `tests-cpp/src/score-test.cpp`
