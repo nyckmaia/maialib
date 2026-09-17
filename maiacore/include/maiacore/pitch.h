@@ -11,8 +11,24 @@
  * semitones that may carry a quarter-tone fraction (a multiple of 0.5, within [-2, 2]), and an
  * octave number. It provides pitch-string round-tripping, MIDI conversion and quarter-tone-aware
  * rounding. This class is the foundation `Note` will be rebuilt on in a later task; it is
- * deliberately standalone and does not interact with `Note`. A rest is represented internally by
- * an empty octave (see getOctave()) and reports isRest() == true.
+ * deliberately standalone and does not interact with `Note`.
+ *
+ * @invariant `isRest() ⟺ _step == "rest" ⟺ !_octave.has_value() ⟹ _alter == 0.0f`, across every
+ *            reachable state. A rest is represented internally by an empty octave (see
+ *            getOctave()) and reports isRest() == true; isRest() is the authoritative test.
+ *
+ * @invariant setStep() is permissive on a rest: it resurrects the object into a note, defaulting
+ *            the octave to 4 (call setOctave() afterward for a different one). setAlter() and
+ *            setOctave() instead refuse on a rest, since neither carries enough information to
+ *            resurrect one on its own; setPitch(), setPitchClass() and setMidiNumber() remain the
+ *            general way to turn a rest into a note or a note into a rest.
+ *
+ * @invariant Every non-rest state satisfies `getMidiNumber() >= 0`. A field-level setter whose
+ *            argument is individually well-formed but would move an already-constructed Pitch
+ *            below MIDI note 0 treats that as a boundary condition, not a caller error: it logs a
+ *            warning and leaves the object unchanged, rather than throwing. Malformed input (an
+ *            unknown step, a non-multiple-of-0.5 or out-of-range alter, an out-of-range octave)
+ *            remains a caller error and still throws std::runtime_error.
  */
 class Pitch {
    private:
@@ -20,6 +36,26 @@ class Pitch {
     float _alter;                ///< Accidental value in semitones; may be a quarter-tone fraction
                                   ///< (a multiple of 0.5) within [-2, 2].
     std::optional<int> _octave;  ///< Octave number, or an empty optional for a rest.
+
+    /**
+     * @brief Computes the exact, unrounded pitch position in quarter-tone steps for an arbitrary
+     *        (step, alter, octave) triple, without reading or mutating this object's state.
+     * @details Single implementation, within this class, of
+     *          `12 * (octave + 1) + diatonicStepSemitones + alter`, so getQuarterToneSteps()
+     *          does not carry its own inline copy of that formula. This is deliberately *not*
+     *          used by getMidiNumber(): that method continues to delegate to
+     *          Helper::spelling2midiNote(), the codebase's single implementation of the
+     *          ties-upward rounding rule (see the CONTROLLER RULING in task-2-brief.md). Reusing
+     *          this unrounded helper for getMidiNumber() would require re-implementing that
+     *          rounding rule a second time in this file, which is the exact defect shape the
+     *          ruling exists to prevent.
+     * @param step Diatonic step ("A".."G").
+     * @param alter Accidental value in semitones.
+     * @param octave Octave number.
+     * @return Quarter-tone steps, unrounded.
+     * @throws std::runtime_error If step is not one of "A".."G".
+     */
+    static float computeQuarterToneSteps(const std::string& step, float alter, int octave);
 
    public:
     /**
@@ -94,7 +130,11 @@ class Pitch {
 
     /**
      * @brief Sets the diatonic step.
-     * @details If this Pitch was a rest, its octave is initialized to the default octave (4).
+     * @details Permissive on a rest: resurrects this Pitch into a note, defaulting the octave to
+     *          4 (call setOctave() afterward to use a different one). On a non-rest Pitch, a step
+     *          that would move it below MIDI note 0 is a boundary condition, not a caller error:
+     *          it is refused with a warning (LOG_WARN) and this Pitch is left unchanged, rather
+     *          than throwing.
      * @param step Diatonic step ("A".."G").
      * @throws std::runtime_error If step is not one of "A".."G".
      */
@@ -102,6 +142,11 @@ class Pitch {
 
     /**
      * @brief Sets the accidental value in semitones.
+     * @details Refuses (warns via LOG_WARN, no-op) when called on a rest, and refuses the same
+     *          way when the resulting pitch would fall below MIDI note 0 — both are boundary
+     *          conditions, not caller errors, so this Pitch is left unchanged rather than an
+     *          exception being thrown. A malformed alter (not a multiple of 0.5, or outside
+     *          [-2, 2]) remains a caller error and still throws.
      * @param alter Alter value; must be a multiple of 0.5 (a semitone or quarter-tone step),
      *        within [-2, 2].
      * @throws std::runtime_error If alter is not a multiple of 0.5, or is outside [-2, 2].
@@ -110,8 +155,13 @@ class Pitch {
 
     /**
      * @brief Sets the octave number.
+     * @details Refuses (warns via LOG_WARN, no-op) when called on a rest, and refuses the same
+     *          way when the resulting pitch would fall below MIDI note 0 — both are boundary
+     *          conditions, not caller errors, so this Pitch is left unchanged rather than an
+     *          exception being thrown. An out-of-range octave remains a caller error and still
+     *          throws.
      * @param octave Octave number, within [-1, 11].
-     * @throws std::runtime_error If called on a rest, or if octave is outside [-1, 11].
+     * @throws std::runtime_error If octave is outside [-1, 11].
      */
     void setOctave(int octave);
 
