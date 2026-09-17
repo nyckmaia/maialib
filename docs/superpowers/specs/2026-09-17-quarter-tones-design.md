@@ -134,6 +134,26 @@ The library currently gives **three different answers** for a rest's octave, and
 
 `isRest()` remains the cheap, total test, and is what callers should use before reaching for the octave at all.
 
+### 4.4.1 Crossing the rest boundary
+
+The getter contract above is not sufficient on its own. During implementation the three field-level setters each invented a *different* policy for mutating a rest — one refused, one silently resurrected the object, one silently corrupted it into a state this table says cannot exist — and that produced two reachable defects. The transition rules are therefore part of the contract:
+
+| Setter | On a rest | Rationale |
+|---|---|---|
+| `setPitch`, `setPitchClass`, `setMidiNumber` | **allowed** | each supplies a complete state, so no field is left unset |
+| `setStep` | **allowed**, octave defaults to **4** | matches `Helper::splitPitch`, which already defaults a missing octave to 4 |
+| `setAlter`, `setOctave` | **refused** | neither can produce a coherent note on its own from a rest |
+
+A refusal **leaves the object exactly as it was** and emits `LOG_WARN`. It does **not** throw: `LOG_WARN` (`log.h:20`) prints, whereas `LOG_ERROR` (`:21-25`) throws `std::runtime_error`. The same warn-and-ignore treatment applies to a mutation that would drop the pitch below MIDI 0 — for example `Pitch("C-1").setAlter(-1.0f)`. The consequence, accepted deliberately: a caller receives no programmatic signal that the setter did nothing, which is consistent with the leniency `setFrequency` already has in §4.3, where a frequency is always accepted.
+
+This leniency does **not** extend to `setAlter`'s range validation. A value that is not a multiple of 0.5, or outside [−2, +2], is a caller error rather than a boundary condition and continues to throw via `LOG_ERROR`.
+
+The resulting invariant is single and checkable, and `setStep` preserves it by filling the octave when it resurrects:
+
+```
+isRest() ⟺ _step == "rest" ⟺ !_octave.has_value() ⟹ _alter == 0.0f
+```
+
 ### 4.5 Rounding
 
 Ties round **upward**, pinned explicitly rather than left to the compiler's rounding mode. This applies to `setFrequency` and to `getMidiNumber()` when the alter is exactly ±0.5, so `C1x4` reports MIDI 61.
