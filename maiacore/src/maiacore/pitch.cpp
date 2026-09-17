@@ -79,8 +79,14 @@ float Pitch::getFrequency(float freqA4) const {
 
     // Uses the exact, unrounded quarter-tone step position (not getMidiNumber()) so a
     // quarter-tone alter is never rounded away here -- see THE TRAP note in task-3-brief.md
-    // about Helper::freq2midiNote(), which is deliberately not used for this reason.
-    return freqA4 * std::pow(2.0f, (getQuarterToneSteps() - 69.0f) / 12.0f);
+    // about Helper::freq2midiNote(), which is deliberately not used for this reason. Computed in
+    // double (review round 1, I3) and narrowed to float only in the return: keeps this symmetric
+    // with setFrequency()'s inverse, which needs the extra precision for its rounding to be
+    // reliably tie-exact across platforms (see setFrequency()'s comment).
+    const double frequency = static_cast<double>(freqA4) *
+                              std::pow(2.0, (static_cast<double>(getQuarterToneSteps()) - 69.0) /
+                                                12.0);
+    return static_cast<float>(frequency);
 }
 
 void Pitch::setStep(const std::string& step) {
@@ -183,28 +189,125 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
         return;
     }
 
-    // Exact inverse of getFrequency()'s formula, in quarter-tone-step space.
-    const float steps = 12.0f * std::log2(frequency / freqA4) + 69.0f;
+    // REVIEW ROUND 1 (task-3-review.md I1) — mirrors getFrequency()'s guard. A tuning system
+    // other than EQUAL_TEMPERAMENT is a caller error (throws), not a boundary condition: the
+    // setter must not silently apply the 12-TET inverse while the getter refuses to use it.
+    if (getTuningSystem() != TuningSystem::EQUAL_TEMPERAMENT) {
+        LOG_ERROR("Tuning system not implemented in SP2; only EQUAL_TEMPERAMENT is available");
+    }
 
-    // Ties round upward (spec section 4.5): std::floor(x + 0.5f), scaled to the rounding
+    // REVIEW ROUND 1 (task-3-review.md I2) — validate accType up front, against the same five
+    // values Helper::midiNote2pitch() itself accepts. A malformed accType is a caller error (this
+    // now matches Pitch(int, accType), which already throws for it via midiNote2pitch()'s own
+    // check) rather than something the accType-applicability fallback below should absorb along
+    // with unrelated failures.
+    if (!accType.empty() && accType != MUSIC_XML::ACCIDENT::SHARP &&
+        accType != MUSIC_XML::ACCIDENT::FLAT && accType != MUSIC_XML::ACCIDENT::DOUBLE_SHARP &&
+        accType != MUSIC_XML::ACCIDENT::DOUBLE_FLAT) {
+        LOG_ERROR("Unknown accident type: " + accType);
+    }
+
+    // Exact inverse of getFrequency()'s formula, in quarter-tone-step space. Computed in double
+    // (review round 1, I3): float32 leaves an exact tie in `steps` with zero margin against a
+    // single ULP of cross-platform libm disagreement in log2f/powf (this library targets MSVC,
+    // GCC and Apple's libm -- CLAUDE.md), which is enough to flip which side of the tie the
+    // ties-upward rule resolves to. Double buys roughly nine more decimal digits of headroom,
+    // and the result is narrowed to float only where the rest of this class already lives
+    // (`residual`, below).
+    const double steps =
+        12.0 * std::log2(static_cast<double>(frequency) / static_cast<double>(freqA4)) + 69.0;
+
+    // Ties round upward (spec section 4.5): std::floor(x + 0.5), scaled to the rounding
     // granularity, never std::round()/std::lround(). Those round half away from zero and would
     // disagree with this rule for a negative step position (e.g. a frequency below C-1).
-    const float granularity = enableQuarterToneRound ? 0.5f : 1.0f;
-    const float roundedSteps = granularity * std::floor(steps / granularity + 0.5f);
+    //
+    // REVIEW ROUND 1 (task-3-review.md I3) -- this specific line cannot be exercised by a
+    // frequency-based unit test at a genuine mathematical tie, and that is not a test-writing
+    // gap: `frequency` is float32 by this method's public signature, and no non-integer power of
+    // two (the ratio a tie in `steps` requires, since a tie needs frequency / freqA4 == 2^(k/12)
+    // for k ending in .5 or .25/.75) is exactly representable in finite binary floating point --
+    // it always involves an irrational factor (e.g. sqrt(2) for a semitone-granularity tie).
+    // Consequently the *recovered* `steps` for any frequency a test can pass in lands fractionally
+    // off an intended tie, in an unpredictable direction, which floor(x + 0.5) and std::round(x)
+    // agree on identically (they only diverge exactly AT a tie). This was verified empirically
+    // during round 1's fix, not assumed: a frequency engineered for the quarter-tone tie at
+    // steps == -0.25 passed under both this line and a std::round() revert. The rounding rule
+    // itself remains covered where it CAN be tested exactly -- directly against alter/step values
+    // with no transcendental round-trip -- by Pitch::roundToSemitoneTiesUpFlatSide and
+    // Pitch::midiNumberRoundsHalfUpOnFlatSide (pitch-test.cpp), which this line's formula matches
+    // exactly in shape. What frequency-based tests in this file DO verify at this boundary: that
+    // it resolves to a real pitch, never a silent rest, at and around the C-1 floor (see
+    // fromFrequencyRoundsHalfUpOnFlatSide, fromFrequencyClampsBelowFloorInsteadOfSilentRest and
+    // fromFrequencyRecoversExactQuarterToneAtFloor in pitch-test.cpp).
+    const double granularity = enableQuarterToneRound ? 0.5 : 1.0;
+    const double roundedSteps = granularity * std::floor(steps / granularity + 0.5);
 
     // Split into an integer MIDI number plus a residual of 0 or 0.5.
-    const int baseMidi = static_cast<int>(std::floor(roundedSteps));
-    const float residual = roundedSteps - static_cast<float>(baseMidi);
+    int baseMidi = static_cast<int>(std::floor(roundedSteps));
+    float residual = static_cast<float>(roundedSteps - baseMidi);
+
+    // A helper that spells a MIDI number without throwing, so the fallbacks below can probe
+    // spellability instead of relying on an exception that -- per Helper::midiNote2pitch()'s own
+    // negative-MIDI special case -- does not always come (see the C1 comment just below).
+    auto trySpell = [](int midi, const std::string& type) -> std::string {
+        try {
+            return Helper::midiNote2pitch(midi, type);
+        } catch (const std::runtime_error&) {
+            return {};
+        }
+    };
+
+    bool clamped = false;
+
+    // REVIEW ROUND 1 (task-3-review.md C1) — a negative baseMidi is checked directly, rather
+    // than relying on Helper::midiNote2pitch() to throw for it: it does not. It returns the
+    // *string* "rest" for a negative MIDI number, which previously flowed straight through
+    // splitPitch()'s substring rest-detection to a silent rest for a valid positive frequency,
+    // indistinguishable from the one rest case spec section 4.3 actually sanctions (freq <= 0).
+    //
+    // When the residual is +0.5, the exact same pitch position also has a valid spelling one
+    // semitone up with a flat-side residual instead (e.g. roundedSteps == -0.5 is unrepresentable
+    // as baseMidi -1 with a +0.5 residual, but is exactly "C1b-1" as baseMidi 0 with a -0.5
+    // residual -- and Pitch("C1b-1") is constructible: Helper::spelling2midiNote() rounds its
+    // -0.5 exact position up to MIDI 0). That is not a clamp -- it is the correct, lossless
+    // representation of an exact position -- so it is tried before any clamping.
+    if (baseMidi < 0 && residual == 0.5f && baseMidi + 1 >= 0) {
+        baseMidi += 1;
+        residual -= 1.0f;
+    }
+    if (baseMidi < 0) {
+        // Genuinely below the representable floor. The controller's ruling: a positive
+        // frequency never produces a rest and never throws for being out of range -- clamp to
+        // the lowest representable pitch (C-1) and warn instead.
+        baseMidi = 0;
+        residual = 0.0f;
+        clamped = true;
+    }
 
     // Spell the base MIDI number via the existing funnel. accType is only a preference for the
     // base semitone: when it does not apply to this specific chromatic degree (e.g. "#" was
     // requested but the rounded base MIDI is a natural, white-key note), fall back to the
     // default spelling rather than treating that as a caller error.
-    std::string basePitch;
-    try {
-        basePitch = Helper::midiNote2pitch(baseMidi, accType);
-    } catch (const std::runtime_error&) {
-        basePitch = Helper::midiNote2pitch(baseMidi, {});
+    std::string basePitch = trySpell(baseMidi, accType);
+    if (basePitch.empty()) {
+        basePitch = trySpell(baseMidi, {});
+    }
+
+    // REVIEW ROUND 1 (task-3-review.md M6, the ruling's ceiling mirror of C1) — reachable only
+    // for a handful of MIDI numbers right at the top of the octave range, where the octave
+    // transition a specific accType applies pushes the spelling past 11 for every accType tried
+    // above (e.g. baseMidi 156/157 need "#"/"x" specifically, and overflow to octave 12 with the
+    // default spelling). Clamp downward one semitone at a time, retrying the same accType-then-
+    // default spelling at each step, until one succeeds, and warn. Guaranteed to terminate: the
+    // default spelling is valid for every MIDI number at or below the top of octave 11.
+    while (basePitch.empty() && baseMidi > 0) {
+        --baseMidi;
+        residual = 0.0f;
+        clamped = true;
+        basePitch = trySpell(baseMidi, accType);
+        if (basePitch.empty()) {
+            basePitch = trySpell(baseMidi, {});
+        }
     }
 
     std::string pitchClass;
@@ -214,8 +317,32 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
     float baseAlter = 0.0f;
     Helper::splitPitch(basePitch, pitchClass, pitchStep, octave, baseAlter, alterSymbol);
 
-    const float finalAlter = baseAlter + residual;
-    setPitch(pitchStep + Helper::alterValue2symbol(finalAlter) + std::to_string(octave));
+    float finalAlter = baseAlter + residual;
+
+    // REVIEW ROUND 1 (task-3-review.md C2) — accType is a preference, not a demand. A base
+    // spelling with its own accidental (e.g. accType "x" => alter +2.0) combined with a +0.5
+    // quarter-tone residual can leave a value Helper::alterValue2symbol() cannot express (+-2.5,
+    // outside this class's own [-2, 2] invariant), which previously escaped as an uncaught throw.
+    // When that happens, fall back to the default spelling for the base semitone -- whose alter
+    // is always 0 or +1 (Helper::midiNote2pitch()'s default branch never produces a double
+    // accidental), so combined with a 0 or 0.5 residual it always lands in range -- and warn.
+    try {
+        alterSymbol = Helper::alterValue2symbol(finalAlter);
+    } catch (const std::runtime_error&) {
+        basePitch = trySpell(baseMidi, {});
+        Helper::splitPitch(basePitch, pitchClass, pitchStep, octave, baseAlter, alterSymbol);
+        finalAlter = baseAlter + residual;
+        alterSymbol = Helper::alterValue2symbol(finalAlter);
+        clamped = true;
+    }
+
+    if (clamped) {
+        LOG_WARN("Pitch::setFrequency: " + std::to_string(frequency) +
+                 " Hz could not be represented exactly as requested; using " + pitchStep +
+                 alterSymbol + std::to_string(octave) + " instead");
+    }
+
+    setPitch(pitchStep + alterSymbol + std::to_string(octave));
 }
 
 void Pitch::roundToSemitone() { _alter = std::floor(_alter + 0.5f); }

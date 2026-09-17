@@ -92,6 +92,8 @@ class Pitch {
      * @param freqA4 Reference frequency for A4, in Hz (default: 440.0).
      * @param enableQuarterToneRound When false (default), rounds to the nearest semitone; when
      *        true, rounds to the nearest quarter tone. Ties round upward.
+     * @throws std::runtime_error If accType is not one of the five accepted values, or if the
+     *         active tuning system is not TuningSystem::EQUAL_TEMPERAMENT.
      */
     explicit Pitch(float frequency, const std::string& accType = {}, float freqA4 = 440.0f,
                    bool enableQuarterToneRound = false);
@@ -244,20 +246,31 @@ class Pitch {
      *          inverse of getFrequency()'s formula -- `12 * log2(frequency / freqA4) + 69` -- then
      *          rounded to the nearest semitone (enableQuarterToneRound == false, the default) or
      *          the nearest quarter tone (enableQuarterToneRound == true). Ties round upward (spec
-     *          section 4.5), via `std::floor(x + 0.5f)` scaled to the rounding granularity, never
+     *          section 4.5), via `std::floor(x + 0.5)` scaled to the rounding granularity, never
      *          std::round()/std::lround(): those round half away from zero and would disagree
-     *          with the ties-upward rule for a negative step position. The rounded position is
-     *          then split into an integer MIDI number and a residual of 0 or 0.5, spelled through
-     *          Helper::midiNote2pitch() (falling back to its default spelling when accType does
-     *          not apply to that specific chromatic degree) and Helper::alterValue2symbol(), and
-     *          handed to setPitch() -- no new spelling logic is introduced here.
+     *          with the ties-upward rule for a negative step position.
+     *
+     *          The rounded position is split into an integer MIDI number and a residual of 0 or
+     *          0.5, spelled through Helper::midiNote2pitch() and Helper::alterValue2symbol(), and
+     *          handed to setPitch() -- no new spelling logic is introduced here. This method
+     *          *always* produces a note for a positive frequency; it never rejects one (spec
+     *          section 4.3):
+     *          - `accType` is a preference for the base semitone's spelling, not a demand: when
+     *            it does not apply to that specific chromatic degree, or when the base spelling
+     *            it produces cannot combine with the quarter-tone residual into a representable
+     *            alter, this falls back to the default spelling and logs a warning (LOG_WARN).
+     *          - A frequency below the lowest representable pitch (C-1), or above the highest,
+     *            is clamped to that extreme and logs a warning (LOG_WARN) -- never a silent rest
+     *            (indistinguishable from the one sanctioned rest case, frequency <= 0) and never
+     *            a throw.
      * @param frequency Frequency in Hz. A value <= 0 makes this Pitch a rest.
      * @param accType Preferred accidental type for the base semitone spelling: "" (natural for
      *        white keys, "#" for black keys, the default), "#", "b", "x" or "bb".
      * @param freqA4 Reference frequency for A4, in Hz (default: 440.0).
      * @param enableQuarterToneRound When false (default), rounds to the nearest semitone; when
      *        true, rounds to the nearest quarter tone.
-     * @throws std::runtime_error If the resulting pitch cannot be spelled within octaves -1..11.
+     * @throws std::runtime_error If accType is not one of the five accepted values, or if the
+     *         active tuning system is not TuningSystem::EQUAL_TEMPERAMENT.
      */
     void setFrequency(float frequency, const std::string& accType = {}, float freqA4 = 440.0f,
                        bool enableQuarterToneRound = false);

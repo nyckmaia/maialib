@@ -103,6 +103,18 @@ Neither MIDI nor frequency maps back to a spelling bijectively.
 - With `enableQuarterToneRound == true`: rounds to the nearest **quarter tone**.
 - A frequency of **0 or negative produces a rest**.
 
+#### Positive frequencies outside the representable range
+
+"Always yields a note" is unfulfillable below C-1 (≈8.18 Hz) or above B11, and the first implementation filled that silence with three behaviours this section never sanctioned: a silent rest below the floor, a throw when `accType="x"` could not express a quarter tone, and a throw above the ceiling.
+
+**A positive frequency outside the range clamps to the nearest representable pitch and emits `LOG_WARN`.** It never produces a rest and never throws. This follows §4.4.1's precedent for boundary conditions — adjust, warn, and never leave the caller unable to tell what happened. A silent rest is the worst of the three, because nothing distinguishes it from a deliberate `freq <= 0` rest.
+
+The failure this rule exists to prevent is concrete: `Pitch("C1b-1")` is a spelling the class can hold, at 7.943051 Hz, yet `setFrequency` of that exact frequency returned a rest — a representable pitch silently lost. The root cause is worth recording, because it defeats the obvious defence: `Helper::midiNote2pitch` **returns the string `"rest"`** for a negative MIDI number (`helper.cpp:66-68`) rather than throwing, so a `try`/`catch` around it never fires.
+
+**`accType` is a preference, not a demand.** When the requested accidental cannot express the resulting pitch — `"x"` plus a quarter-tone residual gives an alter of 2.5, beyond what `Helper::alterValue2symbol` can spell — the conversion falls back to the default spelling and warns, rather than throwing.
+
+**The tuning guard is symmetric.** `setFrequency` checks `getTuningSystem()` exactly as `getFrequency` does, and an unimplemented system throws via `LOG_ERROR` in both. That is a caller error, not a boundary condition, so it is the one case here that does not warn.
+
 ### 4.4 Rest semantics
 
 Because `setFrequency(0)` produces a rest, `Pitch` must be able to *be* a rest, and a rest has no step, alter or octave. The class invariant is therefore "either a rest, or three valid values", and every getter has a defined answer:

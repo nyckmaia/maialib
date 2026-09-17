@@ -228,12 +228,16 @@ TEST(Pitch, frequencyOfA4) {
     EXPECT_NEAR(Pitch("A4").getFrequency(), 440.0f, 0.01f);
 }
 
-// task-3-brief.md Step 1, verbatim. 444 Hz is close enough to A4 (440 Hz) that it rounds to
-// "A4" under both semitone and quarter-tone granularity; see fromFrequencyRoundsHalfUpOnFlatSide
-// and fromFrequencyQuarterToneFlatSide below for the tests that actually discriminate the
-// granularity and rounding-direction logic this one exercises only as a smoke test.
+// REVIEW ROUND 1 (task-3-review.md M5) — replaces the original 444 Hz version. The
+// orchestrator's own brief was wrong: 444 Hz's step position is 69.157, and the A4/A1x4 midpoint
+// is 69.25 (446.4 Hz), so 444 Hz rounds to "A4" under *both* granularities and could not tell
+// them apart. 69.4 actually straddles the boundary with real margin on both sides (0.1 from the
+// semitone tie at 69.5, 0.15 from the quarter-tone tie at 69.25): under the default (semitone)
+// granularity it rounds down to "A4"; enableQuarterToneRoundDefaultsToFalse below pins that this
+// really is the default by also checking the quarter-tone-enabled result at the same frequency.
 TEST(Pitch, fromFrequencyRoundsToSemitoneByDefault) {
-    Pitch p(444.0f);  // between A4 and A1x4
+    const float freq = 440.0f * std::pow(2.0f, 0.4f / 12.0f);
+    Pitch p(freq);
     EXPECT_EQ(p.getPitch(), "A4");
 }
 
@@ -243,28 +247,106 @@ TEST(Pitch, fromFrequencyRoundsToQuarterToneWhenEnabled) {
     EXPECT_EQ(p.getPitch(), "A1x4");
 }
 
+// REVIEW ROUND 1 (task-3-review.md M5) — no test pinned enableQuarterToneRound's *default*
+// value on its own terms; 449 Hz already proves the flag-true side ("A1x4", above). Reusing the
+// same frequency without the flag proves the default really is false ("A4"), independent of
+// fromFrequencyRoundsToSemitoneByDefault's own frequency.
+TEST(Pitch, enableQuarterToneRoundDefaultsToFalse) {
+    EXPECT_EQ(Pitch(449.0f).getPitch(), "A4");
+}
+
 // task-3-brief.md Step 1, verbatim.
 TEST(Pitch, nonPositiveFrequencyIsARest) {
     EXPECT_TRUE(Pitch(0.0f).isRest());
     EXPECT_TRUE(Pitch(-5.0f).isRest());
 }
 
-// TASK 3 ADDITION — the flat-side discriminator the orchestrator's brief expansion asked for.
-// std::floor(x + 0.5f) (ties upward) and std::round(x) (ties away from zero) are mathematically
-// identical for every x >= 0, and any realistic, audible frequency yields a non-negative quarter-
-// tone step position -- so no audible-range test can tell the two rounding rules apart. The one
-// place they diverge is a step position that is itself negative, which only happens below the
-// C-1 floor (~8.18 Hz for A4 = 440). This frequency is chosen so the unrounded step position is
-// exactly -0.5, a tie between MIDI -1 (invalid -- there is no pitch below C-1) and MIDI 0 (C-1).
-// Ties-upward must resolve it to C-1; std::round(-0.5) would resolve it (away from zero) to -1,
-// producing a rest (Helper::midiNote2pitch(-1, ...) == "rest") instead of a real, if extreme,
-// pitch.
+// REVIEW ROUND 1 (task-3-review.md I3) — kept as a smoke test only, not a rounding-rule
+// discriminator: this exact boundary (steps == -0.5) resolves to "C-1" whether ties round upward
+// or away from zero (see pitch.cpp's setFrequency(), by the granularity variable, for why no
+// frequency-based test can discriminate the rule at all -- verified empirically, not assumed,
+// while fixing this round: a companion test engineered for the quarter-tone tie at steps == -0.25
+// was built, reverted against std::round(), and found to pass under *both* rules, so it was
+// removed rather than kept as a test that cannot fail). What this test still pins: the class's
+// own ties-upward MIDI semantics place this frequency at "C-1", not a rest.
 TEST(Pitch, fromFrequencyRoundsHalfUpOnFlatSide) {
-    const float freq = 440.0f * std::pow(2.0f, (-0.5f - 69.0f) / 12.0f);
+    const float freq = static_cast<float>(440.0 * std::pow(2.0, (-0.5 - 69.0) / 12.0));
     Pitch p(freq);
     EXPECT_FALSE(p.isRest());
     EXPECT_EQ(p.getPitch(), "C-1");
     EXPECT_EQ(p.getMidiNumber(), 0);
+}
+
+// REVIEW ROUND 1 (task-3-review.md C1) — the general case, distinct from the exact-tie tests
+// above (which, as their own comments explain, resolve directly via ties-up without ever
+// reaching the clamp) and from the exact-rescue case below (whose residual is exactly 0.5). A
+// frequency clearly, not just marginally, below the representable floor -- 1 Hz, steps roughly
+// -36 -- must clamp to the lowest representable pitch (C-1) and warn, never a silent rest
+// indistinguishable from the one rest case spec section 4.3 sanctions (freq <= 0). This is the
+// only test that actually exercises the floor-clamp branch under the *correct* implementation.
+TEST(Pitch, fromFrequencyClampsBelowFloorInsteadOfSilentRest) {
+    Pitch p(1.0f);
+    EXPECT_FALSE(p.isRest());
+    EXPECT_EQ(p.getPitch(), "C-1");
+    EXPECT_EQ(p.getMidiNumber(), 0);
+}
+
+// REVIEW ROUND 1 (task-3-review.md C1) — the controller's specified sharpest reproducer.
+// Pitch("C1b-1") is constructible: its exact position (steps -0.5) still satisfies
+// Helper::spelling2midiNote(...) >= 0 via ties-upward rounding to MIDI 0. Round-tripping its own
+// frequency through setFrequency() with the quarter-tone flag enabled must recover it exactly --
+// not the silent rest the unchecked negative baseMidi used to produce (Helper::midiNote2pitch()
+// returns the *string* "rest" for a negative MIDI number rather than throwing, so the old
+// try/catch around it never fired).
+TEST(Pitch, fromFrequencyRecoversExactQuarterToneAtFloor) {
+    Pitch original("C1b-1");
+    const float freq = original.getFrequency();
+    Pitch recovered(freq, "", 440.0f, true);
+    EXPECT_FALSE(recovered.isRest());
+    EXPECT_EQ(recovered.getPitch(), "C1b-1");
+}
+
+// REVIEW ROUND 1 (task-3-review.md M6, the ruling's ceiling mirror of C1) — a frequency whose
+// rounded step position overflows every spelling's octave range must clamp to the highest
+// representable pitch and warn, never throw. "Bx11" (steps 157, the class's own documented
+// midiNote2pitch() example) is the sharpest case: its own default-accType round-trip overflows
+// to octave 12 ("C12") since only accType "x" specifically reaches octave 11 there, exercising
+// the clamp-and-retry loop two full steps down to "B11".
+TEST(Pitch, fromFrequencyClampsAboveCeilingInsteadOfThrowing) {
+    Pitch original("Bx11");
+    const float freq = original.getFrequency();
+    Pitch recovered(freq);  // default accType: natural spelling alone cannot reach "Bx11"
+    EXPECT_FALSE(recovered.isRest());
+    EXPECT_EQ(recovered.getPitch(), "B11");
+}
+
+// REVIEW ROUND 1 (task-3-review.md C2) — accType "x" (double sharp, alter +2.0) combined with a
+// +0.5 quarter-tone residual needs alter +2.5, which Helper::alterValue2symbol() cannot express
+// (outside this class's own [-2, 2] invariant) and which used to escape as an uncaught throw
+// from a call the old code's try/catch did not wrap. accType is a preference, not a demand: this
+// must fall back to the default spelling instead of throwing.
+TEST(Pitch, fromFrequencyFallsBackWhenAccTypeCannotExpressResidual) {
+    const float freq = static_cast<float>(440.0 * std::pow(2.0, (62.5 - 69.0) / 12.0));
+    Pitch p(freq, "x", 440.0f, true);
+    EXPECT_EQ(p.getPitch(), "D1x4");
+}
+
+// REVIEW ROUND 1 (task-3-review.md I2) — a malformed accType is a caller error, matching
+// Pitch(int, accType) (which already throws for this via Helper::midiNote2pitch()'s own
+// validation), not something the accType-applicability fallback should silently absorb.
+// Previously this constructed "C#4" without complaint.
+TEST(Pitch, setFrequencyRejectsMalformedAccType) {
+    EXPECT_THROW(Pitch(277.18f, "garbage"), std::runtime_error);
+}
+
+// REVIEW ROUND 1 (task-3-review.md I1) — setFrequency() must guard the tuning system exactly
+// like getFrequency() does (see getFrequencyThrowsForNonEqualTemperament below), not silently
+// apply the 12-TET inverse while the getter refuses to use a tuning system it does not
+// implement. Resets EQUAL_TEMPERAMENT afterward regardless of whether EXPECT_THROW passes.
+TEST(Pitch, setFrequencyThrowsForNonEqualTemperament) {
+    setTuningSystem(TuningSystem::MEANTONE_TEMPERAMENT);
+    EXPECT_THROW(Pitch(277.18f), std::runtime_error);
+    setTuningSystem(TuningSystem::EQUAL_TEMPERAMENT);
 }
 
 // TASK 3 ADDITION — a flat-side quarter-tone spelling case. Every other frequency-rounding test
