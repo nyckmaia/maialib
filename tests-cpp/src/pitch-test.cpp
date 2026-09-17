@@ -1,6 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <chrono>
 #include <cmath>
 #include <limits>
 
@@ -345,40 +344,67 @@ TEST(Pitch, fromFrequencyClampsAboveCeilingWhenAccTypeAlsoOverflowsAlter) {
     EXPECT_EQ(p.getPitch(), "B11");
 }
 
-// REVIEW ROUND 2 (task-3-review.md N2) — a non-finite frequency (+infinity, NaN; -infinity is
-// already caught by the frequency <= 0.0f rest check) must never reach
+// REVIEW ROUND 2 (task-3-review.md N2) — a non-finite frequency must never reach
 // static_cast<int>(std::floor(...)) in setFrequency(): that cast is undefined behaviour for
 // non-finite input, measured (not assumed) to silently return INT_MIN on x86-64/MSVC -- masked
 // into a wrong-end-of-range "C-1" by the floor clamp -- and to saturate to INT_MAX on AArch64
 // (Apple Silicon; this library targets macOS), where the ceiling clamp would need on the order
-// of 2^31 iterations: a hang, not a wrong answer. Must clamp to the ceiling and never crash or
-// hang on any platform.
-TEST(Pitch, fromNonFiniteFrequencyClampsToCeilingInsteadOfUndefinedBehavior) {
-    Pitch fromInfinity(std::numeric_limits<float>::infinity());
-    EXPECT_FALSE(fromInfinity.isRest());
-    EXPECT_EQ(fromInfinity.getPitch(), "B11");
-
-    Pitch fromNan(std::numeric_limits<float>::quiet_NaN());
-    EXPECT_FALSE(fromNan.isRest());
-    EXPECT_EQ(fromNan.getPitch(), "B11");
-}
-
-// REVIEW ROUND 2 (task-3-review.md N3) — FLT_MAX is finite, so it survives the N2 guard above,
-// but an unbounded baseMidi computed from it must still clamp to the ceiling in O(1), not by
-// walking down from an astronomically large starting value (~1345 iterations, each a failed,
-// cpptrace-resolved spelling attempt, for this specific input). Correctness alone does not
-// discriminate this: disabling the O(1) pre-clamp still reaches the right pitch, just slowly
-// (measured at 9033 ms locally, against 11 ms with the fix -- confirmed on the real binary
-// while fixing this round). The elapsed-time assertion below is what makes this fail under that
-// regression instead of merely running for nine seconds unnoticed: 500 ms is roughly 45x the
-// fixed cost and roughly 1/18 of the regressed one, comfortable margin either way.
-TEST(Pitch, fromExtremeFiniteFrequencyClampsToCeilingWithoutWalkingFromScratch) {
-    const auto start = std::chrono::steady_clock::now();
-    Pitch p(std::numeric_limits<float>::max());
-    const auto elapsed = std::chrono::steady_clock::now() - start;
+// of 2^31 iterations: a hang, not a wrong answer. +infinity genuinely lies above the
+// representable range and must clamp to the ceiling, never crashing or hanging on any platform.
+//
+// REVIEW ROUND 3 (task-3-review.md ruling 1) — NaN is a *different* case from +infinity, split
+// out below: NaN satisfies neither half of spec section 4.3's dichotomy ("<= 0" or "positive")
+// and is a caller error (LOG_ERROR), not a boundary condition. This test previously asserted NaN
+// also clamped to "B11"; that assertion moved to fromNanFrequencyThrows below when the ruling
+// changed NaN's behaviour.
+TEST(Pitch, fromInfinityFrequencyClampsToCeilingInsteadOfUndefinedBehavior) {
+    Pitch p(std::numeric_limits<float>::infinity());
     EXPECT_FALSE(p.isRest());
     EXPECT_EQ(p.getPitch(), "B11");
-    EXPECT_LT(elapsed, std::chrono::milliseconds(500));
+}
+
+// REVIEW ROUND 3 (task-3-review.md ruling 1) — NaN is unordered under IEEE 754 (every comparison
+// against it, including frequency <= 0.0f, is false), so it satisfies neither of spec section
+// 4.3's two cases ("<= 0" or "positive"). Fabricating a pitch from it -- as round 2 did, clamping
+// it to "B11" alongside +infinity -- would hand a caller a valid-looking result and a warning
+// buried in the log for what is actually a caller error (e.g. an FFT result divided by zero).
+// Must throw, on the same footing as a malformed accType or an unimplemented tuning system.
+TEST(Pitch, fromNanFrequencyThrows) {
+    const float nanFrequency = std::numeric_limits<float>::quiet_NaN();
+    EXPECT_THROW(Pitch p(nanFrequency), std::runtime_error);
+}
+
+// REVIEW ROUND 2 (task-3-review.md N3) — FLT_MAX is finite, so it survives the NaN/infinity
+// handling above, but an unbounded baseMidi computed from it must still clamp to the ceiling
+// without walking down from an astronomically large starting value (~1345 iterations, each a
+// failed, cpptrace-resolved spelling attempt, for this specific input -- measured at 9033 ms
+// locally, against 11 ms with the O(1) clamp).
+//
+// REVIEW ROUND 3 (task-3-review.md item 2) — this used to assert on elapsed wall-clock time
+// (correctness alone does not discriminate an O(1)-vs-O(n) regression: both eventually reach the
+// same right answer). Replaced with the strictly better alternative the re-review suggested:
+// clampToRepresentableMidi() is now a pure, directly-testable function
+// (clampToRepresentableMidiClampsAnyMidiToTheRepresentableRange below), and since setFrequency()
+// calls that exact function for its own clamp (not a parallel copy of the logic), testing it
+// pins the same regression with no clock, no shared-machine sensitivity, and no flaky margin.
+// This test now checks only correctness at the end-to-end level.
+TEST(Pitch, fromExtremeFiniteFrequencyClampsToCeiling) {
+    Pitch p(std::numeric_limits<float>::max());
+    EXPECT_FALSE(p.isRest());
+    EXPECT_EQ(p.getPitch(), "B11");
+}
+
+// REVIEW ROUND 3 (task-3-review.md item 2) — the deterministic replacement for the timing
+// assertion above: clampToRepresentableMidi() is the exact function setFrequency() calls for
+// both ends of its range clamp (there is no separate copy of this logic inside setFrequency()
+// any more), so asserting its return value directly proves the same clamp setFrequency() applies,
+// without going through the frequency-to-steps pipeline or timing anything.
+TEST(Pitch, clampToRepresentableMidiClampsAnyMidiToTheRepresentableRange) {
+    EXPECT_EQ(Pitch::clampToRepresentableMidi(1000000), 157);  // "Bx11", the documented ceiling
+    EXPECT_EQ(Pitch::clampToRepresentableMidi(157), 157);      // already at the ceiling
+    EXPECT_EQ(Pitch::clampToRepresentableMidi(156), 156);      // unchanged, in range
+    EXPECT_EQ(Pitch::clampToRepresentableMidi(0), 0);          // already at the floor
+    EXPECT_EQ(Pitch::clampToRepresentableMidi(-1000000), 0);   // "C-1", the floor
 }
 
 // REVIEW ROUND 2 (task-3-review.md, credited to the re-reviewer) — pins that IEEE 754 negative

@@ -92,11 +92,27 @@ class Pitch {
      * @param freqA4 Reference frequency for A4, in Hz (default: 440.0).
      * @param enableQuarterToneRound When false (default), rounds to the nearest semitone; when
      *        true, rounds to the nearest quarter tone. Ties round upward.
-     * @throws std::runtime_error If accType is not one of the five accepted values, or if the
-     *         active tuning system is not TuningSystem::EQUAL_TEMPERAMENT.
+     * @throws std::runtime_error If accType is not one of the five accepted values, if the
+     *         active tuning system is not TuningSystem::EQUAL_TEMPERAMENT, or if frequency is
+     *         NaN.
      */
     explicit Pitch(float frequency, const std::string& accType = {}, float freqA4 = 440.0f,
                    bool enableQuarterToneRound = false);
+
+    /**
+     * @brief Clamps an arbitrary MIDI number to the range this class can represent.
+     * @details A pure function -- it reads no instance state and has no side effects -- used by
+     *          setFrequency() for both ends of its range clamp (review round 3, task-3-review.md
+     *          item 2): extracted out of that method so the clamp bound (the highest MIDI number
+     *          this class can spell, "B" double-sharp at the top octave) can be tested directly
+     *          and deterministically, without going through setFrequency()'s frequency-to-steps
+     *          pipeline or timing anything.
+     * @param midi MIDI number to clamp, of any magnitude (including values well outside any
+     *        audible frequency's range).
+     * @return 0 (C-1, the lowest representable pitch) if midi is negative; the highest
+     *         representable MIDI number if midi exceeds it; midi unchanged otherwise.
+     */
+    static int clampToRepresentableMidi(int midi);
 
     /**
      * @brief Returns the full pitch string (pitch class followed by octave).
@@ -263,18 +279,33 @@ class Pitch {
      *            is clamped to that extreme and logs a warning (LOG_WARN) -- never a silent rest
      *            (indistinguishable from the one sanctioned rest case, frequency <= 0) and never
      *            a throw.
-     *          - A non-finite frequency (+infinity, or NaN; -infinity is already a rest, being
-     *            <= 0) is treated the same as a frequency above the highest representable pitch:
-     *            clamped to the ceiling and logged with LOG_WARN, never passed to a cast that
-     *            would be undefined behaviour for it.
+     *          - +infinity genuinely lies above the representable range, so it is treated the
+     *            same as a finite frequency above the highest representable pitch: clamped to
+     *            the ceiling and logged with LOG_WARN, never passed to a cast that would be
+     *            undefined behaviour for it. -infinity is already a rest, being <= 0.
+     *          - NaN satisfies neither half of spec section 4.3's dichotomy ("<= 0" or
+     *            "positive"), being unordered under IEEE 754: every comparison against it is
+     *            false. It is therefore a caller error, not a boundary condition -- the same
+     *            side of the line as a malformed accType or an unimplemented tuning system --
+     *            and throws via LOG_ERROR rather than fabricating a pitch from the absence of a
+     *            value.
+     *
+     *          @warning This distinction, and the undefined-behaviour cast it guards against for
+     *          +infinity, depend on `-ffast-math` (or an equivalent fast-math build flag) never
+     *          being enabled for this translation unit: fast-math permits the compiler to assume
+     *          no NaN or infinity value ever occurs and to remove the std::isfinite()/std::isnan()
+     *          checks this behaviour relies on. Absent from CMakeLists.txt and setup.py as of
+     *          this writing; must stay absent, or be re-verified against this method's non-finite
+     *          handling if ever introduced.
      * @param frequency Frequency in Hz. A value <= 0 makes this Pitch a rest.
      * @param accType Preferred accidental type for the base semitone spelling: "" (natural for
      *        white keys, "#" for black keys, the default), "#", "b", "x" or "bb".
      * @param freqA4 Reference frequency for A4, in Hz (default: 440.0).
      * @param enableQuarterToneRound When false (default), rounds to the nearest semitone; when
      *        true, rounds to the nearest quarter tone.
-     * @throws std::runtime_error If accType is not one of the five accepted values, or if the
-     *         active tuning system is not TuningSystem::EQUAL_TEMPERAMENT.
+     * @throws std::runtime_error If accType is not one of the five accepted values, if the
+     *         active tuning system is not TuningSystem::EQUAL_TEMPERAMENT, or if frequency is
+     *         NaN.
      */
     void setFrequency(float frequency, const std::string& accType = {}, float freqA4 = 440.0f,
                        bool enableQuarterToneRound = false);
