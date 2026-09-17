@@ -252,7 +252,16 @@ A quarter-tone spelling has **exactly one** enharmonic partner in the 24-tone gr
 
 ## 10. Transposition
 
-`Chord::transpose` (`chord.h:301`), `Chord::transposeStackOnly` (`:307`) and `Helper::transposePitch` (`helper.h:289`) widen from `int` to a fractional step, **validated as a multiple of 0.5**. `transpose(2)` behaves exactly as today; `transpose(0.5)` moves one quarter tone; `transpose(0.3)` throws rather than rounding. Existing integer call sites are unaffected in both C++ and Python.
+Four entry points widen from `int` to a fractional step, **validated as a multiple of 0.5**:
+
+| Function | Declared at |
+|---|---|
+| `Note::transpose(int semitones, const std::string& accType)` | `note.h:593` |
+| `Chord::transpose(const int semiTonesNumber)` | `chord.h:301` |
+| `Chord::transposeStackOnly(const int semiTonesNumber)` | `chord.h:307` |
+| `Helper::transposePitch(const std::string&, const int, const std::string&)` | `helper.h:289` |
+
+`Note::transpose` was missed when this section was first written and found while drafting the implementation plan; it delegates to `Helper::transposePitch` (`note.cpp:491`), so both must widen together or the fractional value is truncated on the way through. `transpose(2)` behaves exactly as today; `transpose(0.5)` moves one quarter tone; `transpose(0.3)` throws rather than rounding. Existing integer call sites are unaffected in both C++ and Python.
 
 **Documented consequence:** `Chord::transpose` re-stacks the chord, and §8 makes stacking reject quarter tones, so transposing a *chord* off the semitone grid throws. This is the rejection contract being consistent, not an accident — but a caller reading `transpose(float)` will reasonably assume 0.5 works for chords. It must be stated in the method's own documentation, not discovered through a bug report.
 
