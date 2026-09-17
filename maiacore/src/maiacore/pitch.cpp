@@ -210,13 +210,15 @@ void Pitch::setPitch(const std::string& pitch) {
     std::string pitchClass;
     std::string pitchStep;
     std::string alterSymbol;
-    int octave = 0;
+    std::optional<int> octave;
     float alterValue = 0.0f;
     Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
 
     _step = pitchStep;
     _alter = alterValue;
-    _octave = (pitchStep == MUSIC_XML::PITCH::REST) ? std::nullopt : std::optional<int>(octave);
+    // splitPitch() now leaves 'octave' empty for a rest and populated otherwise, so it maps
+    // directly onto Pitch's own invariant; no separate rest check needed here any more.
+    _octave = octave;
 }
 
 void Pitch::setPitchClass(const std::string& pitchClass) {
@@ -454,7 +456,7 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
     std::string pitchClass;
     std::string pitchStep;
     std::string alterSymbol;
-    int octave = 0;
+    std::optional<int> octave;
     float baseAlter = 0.0f;
     Helper::splitPitch(basePitch, pitchClass, pitchStep, octave, baseAlter, alterSymbol);
 
@@ -482,6 +484,8 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
     } catch (const std::runtime_error&) {
         basePitch = spellWithClamp({});
         Helper::splitPitch(basePitch, pitchClass, pitchStep, octave, baseAlter, alterSymbol);
+        // spellWithClamp() never hands splitPitch() an empty string (see the walk-down comments
+        // above), so 'octave' is always populated here and below.
         finalAlter = baseAlter + residual;
         alterSymbol = Helper::alterValue2symbol(finalAlter);
         clamped = true;
@@ -490,10 +494,10 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
     if (clamped) {
         LOG_WARN("Pitch::setFrequency: " + std::to_string(frequency) +
                  " Hz could not be represented exactly as requested; using " + pitchStep +
-                 alterSymbol + std::to_string(octave) + " instead");
+                 alterSymbol + std::to_string(octave.value()) + " instead");
     }
 
-    setPitch(pitchStep + alterSymbol + std::to_string(octave));
+    setPitch(pitchStep + alterSymbol + std::to_string(octave.value()));
 }
 
 void Pitch::roundToSemitone() { _alter = std::floor(_alter + 0.5f); }

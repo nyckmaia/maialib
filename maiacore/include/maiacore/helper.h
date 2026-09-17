@@ -3,6 +3,7 @@
 
 #include <math.h>
 
+#include <optional>
 #include <string>
 
 #include "maiacore/constants.h"
@@ -107,9 +108,9 @@ class Helper {
     /**
      * @brief Converts a MIDI note number to its octave number.
      * @param midiNote MIDI note number.
-     * @return Octave number.
+     * @return Octave number, or an empty optional if midiNote < 0 (a rest has no octave).
      */
-    static int midiNote2octave(const int midiNote);
+    static std::optional<int> midiNote2octave(const int midiNote);
 
     /**
      * @brief Converts a pitch string (e.g., "C4") to a MIDI note number.
@@ -306,18 +307,19 @@ class Helper {
      * @details Accepted grammar: `step accidental? octave?`, where `step` is A-G, `accidental`
      *          is one of "bb", "b", "#", "x", and `octave` is an integer in [-1, 11]
      *          ("C-1" is MIDI 0). A missing octave defaults to 4. An empty string or any string
-     *          containing "rest" yields the rest components ("rest", "rest", 0, 0.0, "").
+     *          containing "rest" yields the rest components ("rest", "rest", empty optional,
+     *          0.0, ""): a rest has no octave.
      * @param pitch Input pitch string (e.g., "C4", "F#11", "Dbb-1", "Eb").
      * @param pitchClass Output: pitch class (e.g., "C#", "Bb").
      * @param pitchStep Output: diatonic step (e.g., "C", "D").
-     * @param octave Output: octave number.
+     * @param octave Output: octave number, left empty for a rest.
      * @param alterValue Output: accidental value in semitones (e.g., -2.0 for "bb").
      * @param alterSymbol Output: accidental symbol (e.g., "#", "b", or "" for natural).
      * @throws std::runtime_error If the step, accidental or octave is invalid, or if the pitch
      *         is below MIDI note 0 (e.g., "Cb-1").
      */
     static void splitPitch(const std::string& pitch, std::string& pitchClass,
-                           std::string& pitchStep, int& octave, float& alterValue,
+                           std::string& pitchStep, std::optional<int>& octave, float& alterValue,
                            std::string& alterSymbol);
 
     /**

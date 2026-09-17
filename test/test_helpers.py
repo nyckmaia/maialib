@@ -406,7 +406,7 @@ class PitchSpelling(unittest.TestCase):
     def testSplitPitch(self):
         self.assertEqual(ml.Helper.splitPitch("Dbb-1"), ("Dbb", "D", -1, -2.0, "bb"))
         self.assertEqual(ml.Helper.splitPitch("E"), ("E", "E", 4, 0.0, ""))
-        self.assertEqual(ml.Helper.splitPitch(pitch="rest"), ("rest", "rest", 0, 0.0, ""))
+        self.assertEqual(ml.Helper.splitPitch(pitch="rest"), ("rest", "rest", None, 0.0, ""))
 
     def testPitch2numberWasRemoved(self):
         self.assertFalse(hasattr(ml.Helper, "pitch2number"))

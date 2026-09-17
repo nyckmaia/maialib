@@ -428,14 +428,14 @@ class Score {
      * @param pitch Output: pitch string.
      * @param pitchClass Output: pitch class string.
      * @param alterSymbol Output: accidental symbol.
-     * @param alterValue Output: accidental value.
+     * @param alterValue Output: accidental value in semitones (fractional for quarter tones).
      * @param octave Output: octave.
      * @param type Output: note type.
      * @param duration Output: note duration.
      */
     void getNoteNodeData(const pugi::xml_node& node, std::string& partName, int& measure,
                          std::string& pitch, std::string& pitchClass, std::string& alterSymbol,
-                         int& alterValue, int& octave, std::string& type, float& duration) const;
+                         float& alterValue, int& octave, std::string& type, float& duration) const;
 
     /**
      * @brief Sets repeat barlines for a range of measures.

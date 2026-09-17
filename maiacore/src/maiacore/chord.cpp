@@ -3,6 +3,7 @@
 #include <algorithm>  // std::rotate, std::count
 #include <iostream>
 #include <map>
+#include <optional>
 #include <set>      // std::set
 #include <utility>  // std::pair
 
@@ -237,7 +238,7 @@ void Chord::transpose(const int semitonesNumber) {
     }
 
     std::string pitchClass, pitchStep, alterSymbol;
-    int octave = 0;
+    std::optional<int> octave;
     float alterValue = 0.0f;
 
     // Transpose the original chord
@@ -267,7 +268,7 @@ void Chord::transposeStackOnly(const int semitonesNumber) {
     }
 
     std::string pitchClass, pitchStep, alterSymbol;
-    int octave = 0;
+    std::optional<int> octave;
     float alterValue = 0.0f;
 
     // Transpose the stack version

@@ -1626,7 +1626,7 @@ bool Score::getNote(const int part, const int measure, const int note, std::stri
 
 void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, int& measure,
                             std::string& pitch, std::string& pitchClass, std::string& alterSymbol,
-                            int& alterValue, int& octave, std::string& type,
+                            float& alterValue, int& octave, std::string& type,
                             float& duration) const {
     // PROFILE_FUNCTION();
     // ===== GET PART NAME ===== //
@@ -1646,7 +1646,7 @@ void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, i
         alterSymbol = Helper::alterName2symbol(pitchAccidental);
         // Catch a standard acidental:
     } else if (!pitchAlter.empty()) {
-        alterValue = atoi(pitchAlter.c_str());
+        alterValue = static_cast<float>(atof(pitchAlter.c_str()));
         alterSymbol = Helper::alterValue2symbol(alterValue);
     }
 

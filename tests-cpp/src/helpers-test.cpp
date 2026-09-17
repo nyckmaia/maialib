@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <optional>
 #include <regex>
 
 #include "maiacore/helper.h"
@@ -257,8 +258,8 @@ TEST(midiNote2pitch, twelveTonesOctave4) {
 // }
 
 TEST(midiNote2octave, midiValues) {
-    // Special case: rest
-    EXPECT_EQ(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_REST), -2);
+    // Special case: rest -- a rest has no octave (empty optional, not a -2 sentinel)
+    EXPECT_FALSE(Helper::midiNote2octave(MUSIC_XML::MIDI::NUMBER::MIDI_REST).has_value());
 
     // Octave -1
     EXPECT_EQ(Helper::midiNote2octave(0), -1);
@@ -363,7 +364,7 @@ TEST(PitchSpelling, SplitPitchComponents) {
     std::string pitchClass;
     std::string pitchStep;
     std::string alterSymbol;
-    int octave = 0;
+    std::optional<int> octave;
     float alterValue = 0.0f;
 
     Helper::splitPitch("Dbb-1", pitchClass, pitchStep, octave, alterValue, alterSymbol);
@@ -390,13 +391,15 @@ TEST(PitchSpelling, SplitPitchComponents) {
     Helper::splitPitch("rest", pitchClass, pitchStep, octave, alterValue, alterSymbol);
     EXPECT_EQ(pitchClass, "rest");
     EXPECT_EQ(pitchStep, "rest");
-    EXPECT_EQ(octave, 0);
+    // Deliberate expectation change (spec section 4.4/12.1): a rest has no octave any more --
+    // the old sentinel value 0 is replaced by an empty optional.
+    EXPECT_FALSE(octave.has_value());
     EXPECT_FLOAT_EQ(alterValue, 0.0f);
     EXPECT_EQ(alterSymbol, "");
 }
 
 TEST(splitPitch, acceptsQuarterTones) {
-    std::string pc, step, sym; int oct; float alter;
+    std::string pc, step, sym; std::optional<int> oct; float alter;
     Helper::splitPitch("C1x4", pc, step, oct, alter, sym);
     EXPECT_EQ(sym, "1x");
     EXPECT_FLOAT_EQ(alter, 0.5f);
@@ -424,10 +427,10 @@ TEST(PitchSpelling, Spelling2MidiNote) {
     std::string pitchClass;
     std::string pitchStep;
     std::string alterSymbol;
-    int octave = 0;
+    std::optional<int> octave;
     float alterValue = 0.0f;
     Helper::splitPitch("F#11", pitchClass, pitchStep, octave, alterValue, alterSymbol);
-    EXPECT_EQ(Helper::spelling2midiNote(pitchStep, alterValue, octave),
+    EXPECT_EQ(Helper::spelling2midiNote(pitchStep, alterValue, octave.value()),
               Helper::pitch2midiNote("F#11"));
 
     try {
@@ -495,7 +498,7 @@ TEST(PitchSpelling, MidiNote2PitchFullRange) {
     std::string pitchClass;
     std::string pitchStep;
     std::string alterSymbol;
-    int octave = 0;
+    std::optional<int> octave;
     float alterValue = 0.0f;
 
     for (const auto& entry : kFullRangeMidiTable) {

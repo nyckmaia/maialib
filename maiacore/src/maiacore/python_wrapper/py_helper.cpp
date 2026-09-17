@@ -3,6 +3,8 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <optional>
+
 #include "maiacore/helper.h"
 #include "maiacore/interval.h"
 #include "pybind11_json/pybind11_json.hpp"
@@ -111,7 +113,7 @@ void HelperClass(const py::module& m) {
             std::string pitchClass;
             std::string pitchStep;
             std::string alterSymbol;
-            int octave = 0;
+            std::optional<int> octave;
             float alterValue = 0.0f;
             Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
             return std::make_tuple(pitchClass, pitchStep, octave, alterValue, alterSymbol);
@@ -127,9 +129,9 @@ void HelperClass(const py::module& m) {
 
         Returns
         -------
-        tuple of (str, str, int, float, str)
-            ``(pitchClass, pitchStep, octave, alterValue, alterSymbol)``. A rest returns
-            ``("rest", "rest", 0, 0.0, "")``.
+        tuple of (str, str, int or None, float, str)
+            ``(pitchClass, pitchStep, octave, alterValue, alterSymbol)``. A rest has no octave
+            and returns ``("rest", "rest", None, 0.0, "")``.
 
         Raises
         ------
@@ -204,7 +206,27 @@ void HelperClass(const py::module& m) {
         py::overload_cast<const std::vector<Note>&, const bool>(&Helper::notes2Intervals),
         py::arg("notes"), py::arg("firstNoteAsReference") = false);
     //--------------------- //
-    cls.def_static("midiNote2octave", &Helper::midiNote2octave, py::arg("midiNote"));
+    cls.def_static("midiNote2octave", &Helper::midiNote2octave, py::arg("midiNote"),
+                   R"pbdoc(
+        Convert a MIDI note number to its octave number.
+
+        Parameters
+        ----------
+        midiNote : int
+            MIDI note number.
+
+        Returns
+        -------
+        int or None
+            Octave number, or ``None`` if ``midiNote < 0`` (a rest has no octave).
+
+        Examples
+        --------
+        >>> ml.Helper.midiNote2octave(60)
+        4
+        >>> ml.Helper.midiNote2octave(-1) is None
+        True
+    )pbdoc");
     //--------------------- //
     cls.def_static("noteType2ticks", &Helper::noteType2ticks, py::arg("noteType"),
                    py::arg("divisionsPerQuarterNote") = 256,

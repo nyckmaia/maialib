@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <optional>
 #include <string>
 
 #include "maiacore/helper.h"
@@ -67,16 +68,20 @@ Note::Note(const std::string& pitch, const RhythmFigure rhythmFigure, bool isNot
 
     std::string pitchClass;
     std::string pitchStep;
-    int octave = 0;
+    std::optional<int> octave;
     float alterValue = 0.0f;
     Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, _alterSymbol);
 
+    // The rest case already returned above, so splitPitch() cannot have taken its rest branch
+    // here: octave is always populated. Note itself is not yet composed of Pitch (a later
+    // task), so its octave fields stay plain int; value_or(0) matches splitPitch()'s own
+    // pre-optional rest default and is never actually exercised on this path.
     _writtenPitchClass = pitchClass;
-    _writtenOctave = octave;
-    _midiNumber = Helper::spelling2midiNote(pitchStep, alterValue, octave);
+    _writtenOctave = octave.value_or(0);
+    _midiNumber = Helper::spelling2midiNote(pitchStep, alterValue, octave.value_or(0));
     _inChord = inChord;
     _soundingPitchClass = pitchClass;
-    _soundingOctave = octave;
+    _soundingOctave = octave.value_or(0);
     _transposeDiatonic = transposeDiatonic;
     _transposeChromatic = transposeChromatic;
     _isNoteOn = true;
@@ -147,11 +152,11 @@ void Note::setOctave(const int octave) {
 
     std::string pitchAcc, step, alterSymbol;
     float alterValue = 0.0f;
-    int oct = 0;
+    std::optional<int> oct;
 
     Helper::splitPitch(soundingPitch, pitchAcc, step, oct, alterValue, alterSymbol);
 
-    _soundingOctave = oct;
+    _soundingOctave = oct.value_or(0);
 }
 
 int Note::getOctave() const { return _soundingOctave; }
@@ -305,7 +310,7 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnharmonicPitch) cons
     std::string pitchClass;
     std::string pitchStep;
     std::string alterSymbol;
-    int octave = 0;
+    std::optional<int> octave;
     float alterValue = 0.0f;
     Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
 
@@ -516,16 +521,18 @@ void Note::setPitch(const std::string& pitch) {
 
     std::string pitchClass;
     std::string pitchStep;
-    int octave = 0;
+    std::optional<int> octave;
     float alterValue = 0.0f;
     Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, _alterSymbol);
 
+    // The rest case already returned above, so octave is always populated here; see the
+    // constructor's identical comment.
     _writtenPitchClass = pitchClass;
-    _writtenOctave = octave;
-    _midiNumber = Helper::spelling2midiNote(pitchStep, alterValue, octave);
+    _writtenOctave = octave.value_or(0);
+    _midiNumber = Helper::spelling2midiNote(pitchStep, alterValue, octave.value_or(0));
     //    _inChord = inChord;
     _soundingPitchClass = pitchClass;
-    _soundingOctave = octave;
+    _soundingOctave = octave.value_or(0);
     //    _transposeDiatonic = transposeDiatonic;
     //    _transposeChromatic = transposeChromatic;
     _isNoteOn = true;
@@ -733,7 +740,11 @@ const std::string Note::getDiatonicSoundingPitchClass() const {
     return (_isNoteOn) ? getSoundingPitchClass().substr(0, 1) : MUSIC_XML::PITCH::REST;
 }
 
-int Note::getSoundingOctave() const { return Helper::midiNote2octave(_midiNumber); }
+int Note::getSoundingOctave() const {
+    // Note is not yet composed of Pitch (a later task), so this stays plain int; value_or(-2)
+    // reproduces midiNote2octave()'s pre-optional rest sentinel exactly.
+    return Helper::midiNote2octave(_midiNumber).value_or(-2);
+}
 
 const std::string Note::getWrittenPitchClass() const {
     return (_isNoteOn) ? _writtenPitchClass : MUSIC_XML::PITCH::REST;

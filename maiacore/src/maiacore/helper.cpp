@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <optional>
 #include <sstream>
 
 #include "cherno/instrumentor.h"
@@ -230,11 +231,13 @@ int Helper::pitch2midiNote(const std::string& pitch) {
     std::string pitchClass;
     std::string pitchStep;
     std::string alterSymbol;
-    int octave = 0;
+    std::optional<int> octave;
     float alterValue = 0.0f;
     splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
 
-    return spelling2midiNote(pitchStep, alterValue, octave);
+    // 'pitch' already failed the rest check above, so splitPitch() cannot have taken its rest
+    // branch here: octave is always populated.
+    return spelling2midiNote(pitchStep, alterValue, octave.value());
 }
 
 int Helper::spelling2midiNote(const std::string& pitchStep, const float alterValue,
@@ -281,10 +284,10 @@ float Helper::midiNote2freq(const int midiNote, const float freqA4) {
     return powf(2.0f, (static_cast<float>(midiNote) - 69.0f) / 12.0f) * freqA4;
 }
 
-int Helper::midiNote2octave(const int midiNote) {
+std::optional<int> Helper::midiNote2octave(const int midiNote) {
     if (midiNote < 0) {
-        return -2;
-    }  // rest octave
+        return std::nullopt;
+    }  // a rest has no octave
 
     const int octave = (midiNote / 12) - 1;
 
@@ -1196,9 +1199,14 @@ float Helper::pitch2freq(const std::string& pitch) {
 
     // Get splited data from pitch string:
     std::string pitchClass, pitchStep, accidental;
-    int octave;
+    std::optional<int> octave;
     float alter;
     splitPitch(pitch, pitchClass, pitchStep, octave, alter, accidental);
+
+    // The rest branch (pitchClass == "rest") never matches any case in the switch below and
+    // always falls to 'default', which errors out before 'octaveValue' is ever read; the
+    // fallback here only satisfies the type system.
+    const int octaveValue = octave.value_or(0);
 
     // Verify if there is a quarter accident in this note:
     float quarterRatio = 1.0f;
@@ -1221,109 +1229,109 @@ float Helper::pitch2freq(const std::string& pitch) {
     float freq = 0.0f;
     switch (hash(pitchClass.c_str())) {
         case hash("C"):
-            freq = 16.35f * pow(2, octave);
+            freq = 16.35f * pow(2, octaveValue);
             break;
         case hash("Dbb"):
-            freq = 16.40f * pow(2, octave);  // Aproximation of C
+            freq = 16.40f * pow(2, octaveValue);  // Aproximation of C
             break;
         case hash("Db"):
-            freq = 17.16f * pow(2, octave);
+            freq = 17.16f * pow(2, octaveValue);
             break;
         case hash("C#"):
-            freq = 17.40f * pow(2, octave);
+            freq = 17.40f * pow(2, octaveValue);
             break;
         case hash("Cx"):
-            freq = 18.30f * pow(2, octave);  // Aproximation of D
+            freq = 18.30f * pow(2, octaveValue);  // Aproximation of D
             break;
         case hash("D"):
-            freq = 18.35f * pow(2, octave);
+            freq = 18.35f * pow(2, octaveValue);
             break;
         case hash("Ebb"):
-            freq = 18.40f * pow(2, octave);  // Aproximation of D
+            freq = 18.40f * pow(2, octaveValue);  // Aproximation of D
             break;
         case hash("Eb"):
-            freq = 19.31f * pow(2, octave);
+            freq = 19.31f * pow(2, octaveValue);
             break;
         case hash("Fbb"):
-            freq = 19.40f * pow(2, octave);  // Aproximation of Eb
+            freq = 19.40f * pow(2, octaveValue);  // Aproximation of Eb
             break;
         case hash("D#"):
-            freq = 19.57f * pow(2, octave);
+            freq = 19.57f * pow(2, octaveValue);
             break;
         case hash("Dx"):
-            freq = 20.55f * pow(2, octave);  // Aproximation of E
+            freq = 20.55f * pow(2, octaveValue);  // Aproximation of E
             break;
         case hash("E"):
-            freq = 20.60f * pow(2, octave);
+            freq = 20.60f * pow(2, octaveValue);
             break;
         case hash("Fb"):
-            freq = 20.34f * pow(2, octave);
+            freq = 20.34f * pow(2, octaveValue);
             break;
         case hash("E#"):
-            freq = 22.02f * pow(2, octave);
+            freq = 22.02f * pow(2, octaveValue);
             break;
         case hash("F"):
-            freq = 21.83f * pow(2, octave);
+            freq = 21.83f * pow(2, octaveValue);
             break;
         case hash("Gbb"):
-            freq = 22.33f * pow(2, octave);  // Aproximation of F
+            freq = 22.33f * pow(2, octaveValue);  // Aproximation of F
             break;
         case hash("Gb"):
-            freq = 22.89f * pow(2, octave);
+            freq = 22.89f * pow(2, octaveValue);
             break;
         case hash("Ex"):
-            freq = 23.00f * pow(2, octave);  // Aproximation of F#
+            freq = 23.00f * pow(2, octaveValue);  // Aproximation of F#
             break;
         case hash("F#"):
-            freq = 23.20f * pow(2, octave);
+            freq = 23.20f * pow(2, octaveValue);
             break;
         case hash("Fx"):
-            freq = 24.00f * pow(2, octave);  // Aproximation of G
+            freq = 24.00f * pow(2, octaveValue);  // Aproximation of G
             break;
         case hash("G"):
-            freq = 24.50f * pow(2, octave);
+            freq = 24.50f * pow(2, octaveValue);
             break;
         case hash("Abb"):
-            freq = 25.00f * pow(2, octave);  // Aproximation of G
+            freq = 25.00f * pow(2, octaveValue);  // Aproximation of G
             break;
         case hash("Ab"):
-            freq = 25.75f * pow(2, octave);
+            freq = 25.75f * pow(2, octaveValue);
             break;
         case hash("G#"):
-            freq = 26.10f * pow(2, octave);
+            freq = 26.10f * pow(2, octaveValue);
             break;
         case hash("Gx"):
-            freq = 27.00f * pow(2, octave);  // Aproximation of A
+            freq = 27.00f * pow(2, octaveValue);  // Aproximation of A
             break;
         case hash("A"):
-            freq = 27.50f * pow(2, octave);
+            freq = 27.50f * pow(2, octaveValue);
             break;
         case hash("Bbb"):
-            freq = 28.00f * pow(2, octave);  // Aproximation of A
+            freq = 28.00f * pow(2, octaveValue);  // Aproximation of A
             break;
         case hash("Bb"):
-            freq = 28.43f * pow(2, octave);
+            freq = 28.43f * pow(2, octaveValue);
             break;
         case hash("Cbb"):
-            freq = 28.60f * pow(2, octave);  // Aproximation of Bb
+            freq = 28.60f * pow(2, octaveValue);  // Aproximation of Bb
             break;
         case hash("A#"):
-            freq = 28.97f * pow(2, octave);
+            freq = 28.97f * pow(2, octaveValue);
             break;
         case hash("Ax"):
-            freq = 29.10f * pow(2, octave);  // Aproximation of B
+            freq = 29.10f * pow(2, octaveValue);  // Aproximation of B
             break;
         case hash("B"):
-            freq = 30.36f * pow(2, octave);
+            freq = 30.36f * pow(2, octaveValue);
             break;
         case hash("Cb"):
-            freq = 30.52f * pow(2, octave);
+            freq = 30.52f * pow(2, octaveValue);
             break;
         case hash("B#"):
-            freq = 33.03f * pow(2, octave);
+            freq = 33.03f * pow(2, octaveValue);
             break;
         case hash("Bx"):
-            freq = 34.30f * pow(2, octave);  // Aproximation of C#
+            freq = 34.30f * pow(2, octaveValue);  // Aproximation of C#
             break;
         default:
             LOG_ERROR("Pitch not found!");
@@ -1375,12 +1383,13 @@ float Helper::pitchRatio(const std::string& pitch_A, const std::string& pitch_B)
 }
 
 void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::string& pitchStep,
-                        int& octave, float& alterValue, std::string& alterSymbol) {
+                        std::optional<int>& octave, float& alterValue,
+                        std::string& alterSymbol) {
     // Rest case: This is necessary to prevent: empty pitchClass + alterSymbol
     if (pitch.empty() || (pitch.find(MUSIC_XML::PITCH::REST) != std::string::npos)) {
         pitchClass = "rest";
         pitchStep = "rest";
-        octave = 0;
+        octave = std::nullopt;  // a rest has no octave
         alterValue = 0;
         alterSymbol = "";
         return;
