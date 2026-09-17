@@ -115,6 +115,20 @@ The failure this rule exists to prevent is concrete: `Pitch("C1b-1")` is a spell
 
 **The tuning guard is symmetric.** `setFrequency` checks `getTuningSystem()` exactly as `getFrequency` does, and an unimplemented system throws via `LOG_ERROR` in both. That is a caller error, not a boundary condition, so it is the one case here that does not warn.
 
+#### Non-finite frequencies
+
+This section's dichotomy — "≤ 0 produces a rest, positive always produces a note" — does not classify every `float`, because IEEE 754 has values that are neither. They divide as follows:
+
+| Input | Result | Why |
+|---|---|---|
+| `-infinity` | rest | it compares `<= 0`, so the rest rule already covers it |
+| `+infinity` | clamp to the ceiling, `LOG_WARN` | genuinely above the representable range, so the clamp rule applies |
+| `NaN` | **throws** via `LOG_ERROR` | neither, and not a boundary condition |
+
+NaN is a **caller error**, on the same side of the line as a malformed `accType` or an unimplemented tuning system. It is unordered under IEEE 754, so it satisfies neither branch of the dichotomy, and clamping it would fabricate a datum from the absence of one: a caller whose FFT divided by zero would receive a valid `"B11"` and a warning buried in a log. Throwing is the only outcome that tells them what happened.
+
+**Build constraint, stated here because no test can catch it:** these guards depend on fast-math never being enabled. `-ffast-math` and its equivalents license the compiler to assume no NaN or infinity ever occurs and to delete `std::isnan` and `std::isfinite` checks outright, which would silently restore the undefined behaviour this rule exists to prevent. The flag is absent from `CMakeLists.txt` and `setup.py`, and must stay absent.
+
 ### 4.4 Rest semantics
 
 Because `setFrequency(0)` produces a rest, `Pitch` must be able to *be* a rest, and a rest has no step, alter or octave. The class invariant is therefore "either a rest, or three valid values", and every getter has a defined answer:
