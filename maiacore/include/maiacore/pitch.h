@@ -100,17 +100,32 @@ class Pitch {
                    bool enableQuarterToneRound = false);
 
     /**
+     * @brief Returns the highest MIDI number this class can spell.
+     * @details A pure function -- it reads no instance state and has no side effects. "B" double-
+     *          sharp at the top octave (c_maxPitchOctave); e.g. "Bx11". Factored out of
+     *          clampToRepresentableMidi() (review round 4, task-3-review.md F1) so a caller that
+     *          only needs the ceiling *value* -- setFrequency()'s +infinity handling is the only
+     *          one today -- does not have to exercise the clamp *branch* to get it. Before this
+     *          split, the +infinity path obtained the ceiling via
+     *          `clampToRepresentableMidi(INT_MAX)`, which meant a single regression in that one
+     *          comparison could make both the ceiling clamp itself AND the +infinity path hang on
+     *          an unbounded walk, on every platform -- not the AArch64-specific concern round 2's
+     *          N2 guarded against, but a strictly worse, platform-independent version of it.
+     * @return The highest representable MIDI number (157 as of this writing: "Bx11").
+     */
+    static int maxRepresentableMidi();
+
+    /**
      * @brief Clamps an arbitrary MIDI number to the range this class can represent.
      * @details A pure function -- it reads no instance state and has no side effects -- used by
      *          setFrequency() for both ends of its range clamp (review round 3, task-3-review.md
-     *          item 2): extracted out of that method so the clamp bound (the highest MIDI number
-     *          this class can spell, "B" double-sharp at the top octave) can be tested directly
-     *          and deterministically, without going through setFrequency()'s frequency-to-steps
-     *          pipeline or timing anything.
+     *          item 2): extracted out of that method so the clamp bound (maxRepresentableMidi())
+     *          can be tested directly and deterministically, without going through
+     *          setFrequency()'s frequency-to-steps pipeline or timing anything.
      * @param midi MIDI number to clamp, of any magnitude (including values well outside any
      *        audible frequency's range).
-     * @return 0 (C-1, the lowest representable pitch) if midi is negative; the highest
-     *         representable MIDI number if midi exceeds it; midi unchanged otherwise.
+     * @return 0 (C-1, the lowest representable pitch) if midi is negative; maxRepresentableMidi()
+     *         if midi exceeds it; midi unchanged otherwise.
      */
     static int clampToRepresentableMidi(int midi);
 

@@ -2,12 +2,32 @@
 
 #include <algorithm>
 #include <cmath>
-#include <limits>
 #include <string>
 
 #include "maiacore/config.h"
 #include "maiacore/helper.h"
 #include "maiacore/log.h"
+
+// REVIEW ROUND 4 (task-3-review.md, "enforce the fast-math constraint in code") — this project
+// has no CI test step at all (wheels.yml runs no C++ or Python tests), so this compile-time
+// guard is the only automated signal that can exist for this hazard: Pitch::setFrequency() below
+// depends on std::isnan() and std::isfinite() to keep a non-finite frequency from reaching a
+// static_cast<int>(std::floor(...)) that is undefined behaviour for it. A fast-math build flag
+// (clang/GCC -ffast-math, or MSVC /fp:fast) permits the compiler to assume no NaN or infinity
+// value ever occurs, and is free to delete those checks outright -- silently, with no warning,
+// because from the compiler's declared-legal standpoint under that flag they are dead code.
+// __FAST_MATH__ and __FINITE_MATH_ONLY__ cover clang and GCC (the latter is always defined by
+// those compilers, 0 or 1, hence the value check rather than a bare defined()); _M_FP_FAST covers
+// MSVC, relevant for the wheels this project ships. If this fires, remove the fast-math flag for
+// this translation unit -- do not silence this #error instead.
+#if defined(__FAST_MATH__) || (defined(__FINITE_MATH_ONLY__) && __FINITE_MATH_ONLY__) || \
+    defined(_M_FP_FAST)
+#error \
+    "pitch.cpp was compiled with a fast-math flag (-ffast-math, -ffinite-math-only, or \
+/fp:fast). Pitch::setFrequency() relies on std::isnan()/std::isfinite() to keep a non-finite \
+frequency out of undefined behaviour; fast-math lets the compiler assume NaN and infinity \
+never occur and may delete those checks. Remove the fast-math flag for this file."
+#endif
 
 Pitch::Pitch(const std::string& pitch) : _step("rest"), _alter(0.0f), _octave(std::nullopt) {
     setPitch(pitch);
@@ -24,10 +44,14 @@ Pitch::Pitch(float frequency, const std::string& accType, float freqA4,
     setFrequency(frequency, accType, freqA4, enableQuarterToneRound);
 }
 
-int Pitch::clampToRepresentableMidi(int midi) {
+int Pitch::maxRepresentableMidi() {
     // The highest quarter-tone step position this class can ever hold: B, double-sharp, at the
     // top octave.
-    const int maxMidi = static_cast<int>(computeQuarterToneSteps("B", 2.0f, c_maxPitchOctave));
+    return static_cast<int>(computeQuarterToneSteps("B", 2.0f, c_maxPitchOctave));
+}
+
+int Pitch::clampToRepresentableMidi(int midi) {
+    const int maxMidi = maxRepresentableMidi();
     if (midi < 0) {
         return 0;
     }
@@ -206,6 +230,14 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
                           bool enableQuarterToneRound) {
     // A frequency <= 0 is a whole-state replacement into a rest (spec section 4.4.1), not a
     // caller error: this never throws for that reason alone.
+    //
+    // REVIEW ROUND 4 (task-3-review.md F3) — this must stay spelled as `<= 0.0f`, not rewritten
+    // to the logically-tempting `!(frequency > 0.0f)`. They are NOT equivalent for NaN: every
+    // comparison against NaN is false under IEEE 754, so `frequency <= 0.0f` is false for NaN
+    // (falls through, as intended, to the NaN throw below) while `!(frequency > 0.0f)` would be
+    // true for NaN (`frequency > 0.0f` is false, negated to true) and route NaN into this rest
+    // branch instead -- silently reintroducing the exact bug the round 3 ruling exists to
+    // prevent. The NaN throw below is only reachable because this comparison is spelled this way.
     if (frequency <= 0.0f) {
         setPitch(MUSIC_XML::PITCH::REST);
         return;
@@ -274,7 +306,14 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
     if (!std::isfinite(frequency)) {
         // Only +infinity reaches here: NaN threw above, -infinity is already a rest, and every
         // other non-finite IEEE 754 value is one of those two.
-        baseMidi = clampToRepresentableMidi(std::numeric_limits<int>::max());
+        //
+        // REVIEW ROUND 4 (task-3-review.md F1) — reads the ceiling value directly via
+        // maxRepresentableMidi() rather than exercising clampToRepresentableMidi()'s clamp
+        // branch with a sentinel (the round 3 shape was clampToRepresentableMidi(INT_MAX)): a
+        // single comparison should not simultaneously gate this path, the finite ceiling clamp
+        // below, and the walk-down loop's starting point. Splitting the seam means a future
+        // regression in the clamp branch cannot also take this path down with it.
+        baseMidi = maxRepresentableMidi();
         clamped = true;
     } else {
         // Exact inverse of getFrequency()'s formula, in quarter-tone-step space. Computed in
@@ -365,20 +404,47 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
     // REVIEW ROUND 3 (task-3-review.md O5) — the "try preferredAccType, then fall back to the
     // default spelling" pair used to be written out twice (once before the loop, once inside
     // it); factored into trySpellPreferredThenDefault() so there is exactly one copy.
+    //
+    // REVIEW ROUND 4 (task-3-review.md F4) — short-circuits the fallback when preferredAccType is
+    // already the default (""): without this, the empty-accType path (every caller that does not
+    // pass accType) called trySpell(baseMidi, "") twice in a row whenever the first attempt
+    // failed -- the same call, made redundantly, since {} and "" spell identically. O5 removed
+    // the source-level duplication but not this runtime one.
     auto trySpellPreferredThenDefault = [&](const std::string& preferredAccType) -> std::string {
         std::string pitch = trySpell(baseMidi, preferredAccType);
-        if (pitch.empty()) {
+        if (pitch.empty() && !preferredAccType.empty()) {
             pitch = trySpell(baseMidi, {});
         }
         return pitch;
     };
+
+    // REVIEW ROUND 4 (task-3-review.md F1) — bounds the walk-down independently of
+    // clampToRepresentableMidi()'s and maxRepresentableMidi()'s own correctness:
+    // kMaxWalkDownSteps is a small constant, not derived from either of them or from anything
+    // else this loop already depends on, so a future regression in the clamp above cannot also
+    // make this loop run away (the failure mode round 4's re-review found: a single broken
+    // comparison could hang both the clamp itself and the +infinity path that used to route
+    // through it). The real bound is never more than 2-3 in practice -- natural spelling starts
+    // fitting again at MIDI 155, three below the ceiling of 157 -- so this is generous headroom,
+    // not a tuned value. If the loop is ever exhausted without a fitting spelling (unreachable
+    // today, but this must hold even if that changes), it falls back to the always-valid natural
+    // spelling of MIDI 0 rather than ever handing splitPitch() an empty string.
+    constexpr int kMaxWalkDownSteps = 16;
     auto spellWithClamp = [&](const std::string& preferredAccType) -> std::string {
         std::string pitch = trySpellPreferredThenDefault(preferredAccType);
-        while (pitch.empty() && baseMidi > 0) {
+        int steps = 0;
+        while (pitch.empty() && baseMidi > 0 && steps < kMaxWalkDownSteps) {
             --baseMidi;
+            ++steps;
             residual = 0.0f;
             clamped = true;
             pitch = trySpellPreferredThenDefault(preferredAccType);
+        }
+        if (pitch.empty()) {
+            baseMidi = 0;
+            residual = 0.0f;
+            clamped = true;
+            pitch = trySpell(0, {});
         }
         return pitch;
     };

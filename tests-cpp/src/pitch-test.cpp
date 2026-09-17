@@ -222,6 +222,29 @@ TEST(Pitch, setMidiNumberNegativeIsRest) {
 
 // ===== TASK 3 — frequency, and the MIDI/frequency constructors ===== //
 
+// REVIEW ROUND 4 (task-3-review.md F2) — moved here, ahead of every other Task 3 test, from its
+// original position after fromExtremeFiniteFrequencyClampsToCeiling further down this file
+// (round 3, item 2). It was registered *after* two tests (fromInfinityFrequencyClampsToCeiling...
+// and fromExtremeFiniteFrequencyClampsToCeiling) that hang under the exact regression this test
+// pins -- a broken clampToRepresentableMidi() -- so in a full-suite run the binary never reached
+// it: it could only discriminate that regression under --gtest_filter, a cousin of the "coverage
+// that cannot deliver a verdict when it counts" problem this project has hit before. This is a
+// pure static-method test with no dependency on tuning-system state or anything else in this
+// file, so placing it first costs nothing and guarantees it always gets to report a result.
+//
+// REVIEW ROUND 3 (task-3-review.md item 2) — the deterministic replacement for the timing
+// assertion round 2 used: clampToRepresentableMidi() is the exact function setFrequency() calls
+// for both ends of its range clamp (there is no separate copy of this logic inside setFrequency()
+// any more), so asserting its return value directly proves the same clamp setFrequency() applies,
+// without going through the frequency-to-steps pipeline or timing anything.
+TEST(Pitch, clampToRepresentableMidiClampsAnyMidiToTheRepresentableRange) {
+    EXPECT_EQ(Pitch::clampToRepresentableMidi(1000000), 157);  // "Bx11", the documented ceiling
+    EXPECT_EQ(Pitch::clampToRepresentableMidi(157), 157);      // already at the ceiling
+    EXPECT_EQ(Pitch::clampToRepresentableMidi(156), 156);      // unchanged, in range
+    EXPECT_EQ(Pitch::clampToRepresentableMidi(0), 0);          // already at the floor
+    EXPECT_EQ(Pitch::clampToRepresentableMidi(-1000000), 0);   // "C-1", the floor
+}
+
 // task-3-brief.md Step 1, verbatim. Resets the global tuning system first: config-test.cpp
 // (linked into the same binary) leaves it changed, and getFrequency() reads that global state.
 TEST(Pitch, frequencyOfA4) {
@@ -384,27 +407,16 @@ TEST(Pitch, fromNanFrequencyThrows) {
 // (correctness alone does not discriminate an O(1)-vs-O(n) regression: both eventually reach the
 // same right answer). Replaced with the strictly better alternative the re-review suggested:
 // clampToRepresentableMidi() is now a pure, directly-testable function
-// (clampToRepresentableMidiClampsAnyMidiToTheRepresentableRange below), and since setFrequency()
-// calls that exact function for its own clamp (not a parallel copy of the logic), testing it
-// pins the same regression with no clock, no shared-machine sensitivity, and no flaky margin.
-// This test now checks only correctness at the end-to-end level.
+// (clampToRepresentableMidiClampsAnyMidiToTheRepresentableRange, moved to the top of this Task 3
+// section in round 4 -- see F2 there for why), and since setFrequency() calls that exact function
+// for its own clamp (not a parallel copy of the logic), testing it pins the same regression with
+// no clock, no shared-machine sensitivity, and no flaky margin. This test now checks only
+// correctness at the end-to-end level. (Round 4, F1, also bounds this method's walk-down loop
+// independently, so even a badly broken clamp can no longer make this specific test hang.)
 TEST(Pitch, fromExtremeFiniteFrequencyClampsToCeiling) {
     Pitch p(std::numeric_limits<float>::max());
     EXPECT_FALSE(p.isRest());
     EXPECT_EQ(p.getPitch(), "B11");
-}
-
-// REVIEW ROUND 3 (task-3-review.md item 2) — the deterministic replacement for the timing
-// assertion above: clampToRepresentableMidi() is the exact function setFrequency() calls for
-// both ends of its range clamp (there is no separate copy of this logic inside setFrequency()
-// any more), so asserting its return value directly proves the same clamp setFrequency() applies,
-// without going through the frequency-to-steps pipeline or timing anything.
-TEST(Pitch, clampToRepresentableMidiClampsAnyMidiToTheRepresentableRange) {
-    EXPECT_EQ(Pitch::clampToRepresentableMidi(1000000), 157);  // "Bx11", the documented ceiling
-    EXPECT_EQ(Pitch::clampToRepresentableMidi(157), 157);      // already at the ceiling
-    EXPECT_EQ(Pitch::clampToRepresentableMidi(156), 156);      // unchanged, in range
-    EXPECT_EQ(Pitch::clampToRepresentableMidi(0), 0);          // already at the floor
-    EXPECT_EQ(Pitch::clampToRepresentableMidi(-1000000), 0);   // "C-1", the floor
 }
 
 // REVIEW ROUND 2 (task-3-review.md, credited to the re-reviewer) — pins that IEEE 754 negative
