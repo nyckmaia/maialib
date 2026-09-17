@@ -1066,10 +1066,17 @@ TEST(NoteComposesPitch, GetAlterSymbolForwardsToSoundingPitchOnTransposedNote) {
 // below were measured against a d26aa67 worktree, not assumed -- and cross-checked with a
 // 1197-combination sweep ((pitch x transposeDiatonic x transposeChromatic), spanning naturals,
 // sharps, flats and double accidentals) that found zero divergence between this fixed HEAD and
-// d26aa67 on getMidiNumber(), getOctave() and getPitch(), everywhere. getPitch()'s pitch CLASS
-// letter+accidental is intentionally still wrong here (e.g. "Bb" where "B" is the correct
-// spelling for this MIDI number) -- that defect is genuinely pre-existing, reproduces
-// byte-for-byte at d26aa67, and belongs to Task 10's scale-lookup rewrite, not this one.
+// d26aa67 on getMidiNumber(), getOctave() and getPitch(), everywhere.
+//
+// getPitch()'s output below is pinned as CURRENT, DEFECTIVE behaviour, not the intended one.
+// Two separate, genuinely pre-existing defects reproduce byte-for-byte at d26aa67 and belong to
+// Task 10's scale-lookup rewrite, not this branch:
+//   1. Pitch CLASS (letter+accidental): e.g. "Bb" where "B" is the correct spelling for this
+//      MIDI number.
+//   2. Octave-increment boundary: computeSoundingPitch()'s octave-wrap check only fires for a
+//      transpose index strictly greater than one octave, so an exact +/-12 semitone transpose
+//      (the Piccolo case below) fails to increment/decrement the octave at all. The CORRECT
+//      octave for that case is called out explicitly in that test.
 TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForBFlatClarinet) {
     // B-flat clarinet: written C#4 sounds a major second lower.
     const Note n("C#4", RhythmFigure::QUARTER, true, false, -1, -2);
@@ -1090,6 +1097,36 @@ TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForPiccolo) {
     // Piccolo: written C4 sounds an octave higher.
     const Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
     EXPECT_EQ(n.getMidiNumber(), 72);
-    EXPECT_EQ(n.getOctave(), 4);  // pre-existing octave-tracking defect, not this round's to fix
+    // Pinning CURRENT, DEFECTIVE behaviour (Task 10's pre-existing octave-increment boundary
+    // bug, see the block comment above): the correct octave for this construction is 5, one
+    // higher than written, matching a full-octave transpose. 4 (== the written octave,
+    // unchanged) is what computeSoundingPitch() actually returns today, because its octave-wrap
+    // check does not fire for a transpose index of exactly one octave (+/-12 semitones).
+    EXPECT_EQ(n.getOctave(), 4);
     EXPECT_EQ(n.getPitch(), "C5");
+}
+
+// N1 (controller ruling on the re-review's Important finding): getEnharmonicPitch() used to
+// derive its own MIDI number from computeSoundingPitch() directly -- the same buggy
+// scale-lookup-tracked octave getOctave() intentionally still reproduces -- while getPitch()
+// (fixed in round 2) used the arithmetic octave. The two disagreed: for this exact
+// construction, getPitch() returned "C5" while getEnharmonicPitch(false) returned "Dbb4", the
+// same note spelled a full octave apart -- HEAD contradicting itself, no baseline needed to see
+// it. Fixed by re-deriving getEnharmonicPitch()'s MIDI number from getPitch() (exactly as
+// d26aa67 did, via Helper::pitch2midiNote()), which is correct again since round 2. Measured
+// against a d26aa67 worktree for four cases (untransposed control plus these three transposing
+// instruments) and matched exactly in every one; only the Piccolo case is pinned here since the
+// other two are already covered by the getMidiNumber() tests above.
+TEST(NoteComposesPitch, GetEnharmonicPitchAgreesWithGetPitchOnTransposedNote) {
+    // Piccolo: written C4 sounds an octave higher.
+    const Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
+    ASSERT_EQ(n.getPitch(), "C5");
+    EXPECT_EQ(n.getEnharmonicPitch(false), "Dbb5");
+    EXPECT_EQ(n.getEnharmonicPitch(true), "B#4");
+
+    // The general invariant, independent of any measured string or baseline: an enharmonic
+    // respelling must describe the same pitch -- the same MIDI number -- as the note it was
+    // spelled from.
+    EXPECT_EQ(Note(n.getEnharmonicPitch(false)).getMidiNumber(), n.getMidiNumber());
+    EXPECT_EQ(Note(n.getEnharmonicPitch(true)).getMidiNumber(), n.getMidiNumber());
 }

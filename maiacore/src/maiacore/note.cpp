@@ -302,10 +302,25 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnharmonicPitch) cons
         return MUSIC_XML::PITCH::REST;
     }
 
-    const Pitch soundingPitch = computeSoundingPitch();
-    const std::string pitch = soundingPitch.getPitch();
-    const int midiNumber = soundingPitch.getMidiNumber();
-    const float alterValue = soundingPitch.getAlter();
+    // Fix round 3 (N1): deliberately NOT computeSoundingPitch().getMidiNumber() -- that is the
+    // buggy scale-lookup-tracked octave (the same one getOctave() intentionally still
+    // reproduces), and routing this method's own MIDI number through it reintroduced exactly
+    // the coupling fix round 2 removed from getMidiNumber() itself, one call further out: HEAD
+    // contradicted itself (getPitch() and getEnharmonicPitch() disagreeing on the octave of the
+    // same note; measured for the Piccolo case: getPitch()=="C5" vs
+    // getEnharmonicPitch(false)=="Dbb4"). getPitch() itself is correct again since fix round 2
+    // (its octave digit is arithmetic; only the pitch CLASS is the pre-existing, still-broken
+    // spelling), so re-deriving through it here -- exactly as d26aa67 did -- restores agreement
+    // without touching the scale lookup or the class it produces.
+    const std::string pitch = getPitch();
+    std::string pitchClass;
+    std::string pitchStep;
+    std::string alterSymbol;
+    std::optional<int> octave;
+    float alterValue = 0.0f;
+    Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
+
+    const int midiNumber = Helper::pitch2midiNote(pitch);
     // spellMidiNumber() below only enumerates the five integer-semitone accidentals
     // ("bb","b","","#","x"); a quarter-tone alter has no spelling in that vocabulary.
     if (alterValue != std::floor(alterValue)) {
