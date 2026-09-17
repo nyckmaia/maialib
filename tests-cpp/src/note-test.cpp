@@ -909,3 +909,16 @@ TEST(PitchSpelling, EnharmonicRangeFallback) {
     EXPECT_EQ(Note("G#4").getEnharmonicPitches(true),
               std::vector<std::string>({"G#4", "Ab4", "Ab4"}));
 }
+
+// Quarter-tone alters are reachable here now that Helper::splitPitch accepts them, but
+// Note::getEnharmonicPitch() still indexes a 5-slot semitone-only spellings array (SP2:
+// marker). Until that is redesigned (a later task), it must refuse rather than silently
+// truncate to a wrong semitone spelling.
+TEST(PitchSpelling, EnharmonicRejectsQuarterTones) {
+    for (const std::string pitch : {"C1x4", "C3x4", "D1b4", "D3b4"}) {
+        EXPECT_THROW(Note(pitch).getEnharmonicPitch(false), std::runtime_error)
+            << "pitch: " << pitch;
+        EXPECT_THROW(Note(pitch).getEnharmonicPitch(true), std::runtime_error)
+            << "pitch: " << pitch;
+    }
+}

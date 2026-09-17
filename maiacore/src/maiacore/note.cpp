@@ -312,6 +312,12 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnharmonicPitch) cons
     const int midiNumber = Helper::pitch2midiNote(pitch);
     // SP2: alterValue is integral today because splitPitch rejects quarter-tone symbols;
     // widening c_alterSymbol must replace this truncation.
+    if (alterValue != std::floor(alterValue)) {
+        LOG_ERROR(
+            "Quarter-tone enharmonic spelling arrives in a later task, not yet supported "
+            "for pitch: " +
+            pitch);
+    }
     const int ownAlter = static_cast<int>(alterValue);
 
     // Other spellings of the same MIDI number, indexed by 'alter + 2' (empty if unavailable)

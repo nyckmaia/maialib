@@ -244,7 +244,12 @@ int Helper::spelling2midiNote(const std::string& pitchStep, const float alterVal
         LOG_ERROR("Unknown diatonic pitch step: " + pitchStep);
     }
     const auto stepIdx = static_cast<size_t>(std::distance(c_C_diatonicScale.begin(), stepIt));
-    return 12 * (octave + 1) + c_diatonicStepSemitones[stepIdx] + alterValue;
+    // SP2: alterValue may carry a quarter-tone fraction (e.g. 0.5f); round ties upward per
+    // spec section 4.5 (std::floor(x + 0.5f) rounds half up for both signs, unlike
+    // std::lround, which rounds half away from zero and therefore disagrees on negative
+    // alters).
+    const float exact = 12.0f * (octave + 1) + c_diatonicStepSemitones[stepIdx] + alterValue;
+    return static_cast<int>(std::floor(exact + 0.5f));
 }
 
 std::pair<int, int> Helper::freq2midiNote(const float freq, std::function<int(float)> modelo) {

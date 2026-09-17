@@ -403,6 +403,17 @@ TEST(splitPitch, acceptsQuarterTones) {
     EXPECT_EQ(oct, 4);
 }
 
+// Quarter-tone alters must round to the nearest MIDI number with ties broken upward (spec
+// section 4.5), for both signs and across an octave boundary at 0.
+TEST(PitchSpelling, QuarterToneRoundsTiesUpward) {
+    EXPECT_EQ(Helper::pitch2midiNote("C1x4"), 61);
+    EXPECT_EQ(Helper::pitch2midiNote("C3x4"), 62);
+    EXPECT_EQ(Helper::pitch2midiNote("D1b4"), 62);
+    EXPECT_EQ(Helper::pitch2midiNote("D3b4"), 61);
+    EXPECT_EQ(Helper::pitch2midiNote("D1x4"), 63);
+    EXPECT_EQ(Helper::pitch2midiNote("C1x-1"), 1);
+}
+
 TEST(PitchSpelling, Spelling2MidiNote) {
     EXPECT_EQ(Helper::spelling2midiNote("C", 0.0f, -1), 0);
     EXPECT_EQ(Helper::spelling2midiNote("C", 0.0f, 4), 60);
