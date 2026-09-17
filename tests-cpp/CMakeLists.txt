@@ -58,6 +58,7 @@ add_executable(${PROJECT_NAME}
     ${PROJECT_SOURCE_DIR}/src/barline-test.cpp
     ${PROJECT_SOURCE_DIR}/src/utils-test.cpp
     ${PROJECT_SOURCE_DIR}/src/config-test.cpp
+    ${PROJECT_SOURCE_DIR}/src/pitch-test.cpp
 )
 
 include(FetchContent)
