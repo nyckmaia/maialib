@@ -136,6 +136,17 @@ TEST(Pitch, roundToSemitoneTiesUp) {
     p.roundToSemitone();
     EXPECT_EQ(p.getPitch(), "C#4");
 }
+
+// Flat-side cases. Every test above uses a positive alter, where the two
+// candidate rounding rules give identical answers; only these distinguish
+// ties-upward from ties-away-from-zero. Added during execution after Task 4
+// shipped that exact bug through a sharp-side-only suite.
+TEST(Pitch, midiNumberRoundsHalfUpOnFlatSide) {
+    EXPECT_EQ(Pitch("D1b4").getMidiNumber(), 62);   // 61.5 -> 62, not 61
+    EXPECT_EQ(Pitch("D3b4").getMidiNumber(), 61);   // 60.5 -> 61, not 60
+    EXPECT_EQ(Pitch("C1x-1").getMidiNumber(), 1);   // negative octave, sharp side
+    EXPECT_FLOAT_EQ(Pitch("D1b4").getQuarterToneSteps(), 61.5f);
+}
 ```
 
 - [ ] **Step 2: Run them and confirm they fail to compile** (`pitch.h` does not exist)
@@ -146,7 +157,14 @@ Declare the class exactly as spec §4.2 lists it, `#include <optional>`, with Do
 
 - [ ] **Step 4: Write `pitch.cpp`**
 
-`getMidiNumber()` is `12 * (octave + 1) + c_diatonicStepSemitones[stepIdx] + lround(alter)`, returning `MIDI_REST` when `isRest()`. `getQuarterToneSteps()` is the same without rounding. `setAlter` throws via `LOG_ERROR` unless `alter * 2` is integral and `alter` is within `[-2, 2]`. `roundToSemitone()` sets `_alter = std::floor(_alter + 0.5f)`.
+`getMidiNumber()` computes the exact value in floating point and rounds **half upward**, returning `MIDI_REST` when `isRest()`:
+
+```cpp
+const float exact = 12.0f * (octave + 1) + c_diatonicStepSemitones[stepIdx] + _alter;
+return static_cast<int>(std::floor(exact + 0.5f));
+```
+
+> **Corrected during execution.** This step originally specified `lround(alter)`. `std::lround` rounds half *away from zero*, so it disagrees with spec §4.5 (ties upward) on negative alters: `lround(-0.5)` is −1 where the spec requires 0. The two agree on positive alters, which is why a sharp-side-only test suite cannot tell them apart — Task 4 shipped exactly this bug past its implementer and halfway past its reviewer for that reason. `std::floor(x + 0.5f)` rounds half up for both signs and matches what `roundToSemitone()` already does below. Requires `#include <cmath>`. `getQuarterToneSteps()` is the same without rounding. `setAlter` throws via `LOG_ERROR` unless `alter * 2` is integral and `alter` is within `[-2, 2]`. `roundToSemitone()` sets `_alter = std::floor(_alter + 0.5f)`.
 
 - [ ] **Step 5: Reconfigure (the GLOB must pick up the new file), rebuild, run 3 times**
 
