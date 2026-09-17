@@ -71,7 +71,7 @@ std::string getPitchClass() const;      // "C1x"
 std::string getPitchStep() const;       // "C"
 std::string getAlterSymbol() const;     // "1x"
 float       getAlter() const;           // 0.5
-int         getOctave() const;
+std::optional<int> getOctave() const;   // empty for a rest - see 4.4
 int         getMidiNumber() const;      // nearest integer
 float       getQuarterToneSteps() const;// exact, unrounded
 float       getFrequency(float freqA4 = 440.0f) const;
@@ -80,6 +80,7 @@ bool        isRest() const;
 void setStep(const std::string&);
 void setAlter(float);                   // validates multiple of 0.5
 void setOctave(int);
+void roundToSemitone();                 // nearest semitone, ties up - see 8.1
 void setPitch(const std::string&);
 void setPitchClass(const std::string&);
 void setMidiNumber(int, const std::string& accType = "");
@@ -111,11 +112,19 @@ Because `setFrequency(0)` produces a rest, `Pitch` must be able to *be* a rest, 
 | `isRest()` | `false` | `true` |
 | `getPitch()` / `getPitchClass()` / `getPitchStep()` | `"C1x4"` / `"C1x"` / `"C"` | `"rest"` |
 | `getAlterSymbol()` / `getAlter()` | `"1x"` / `0.5` | `""` / `0.0` |
-| `getOctave()` | `4` | `-1` |
+| `getOctave()` | `4` (as `std::optional<int>`) | empty optional (`None` in Python) |
 | `getMidiNumber()` | `61` | `MIDI_REST` (−1) |
 | `getFrequency()` | `277.18` | `0.0` |
 
-**The rest octave is standardised at −1 across the whole library.** `MUSIC_XML::OCTAVE::ALL` is already `-1` (`constants.h:175`) and the XML reader already assigns it (`score.cpp:1659`), so no new constant is needed. But the library currently gives **three different answers** to the same question, and all three collapse to −1:
+**A rest has no octave, and the type says so: `getOctave()` returns `std::optional<int>`, empty for a rest.** No numeric sentinel is used. This is the one place the class needs `#include <optional>`; pybind11 converts it to `None` automatically once `<pybind11/stl.h>` is included in the wrapper, which it already is.
+
+The reasoning matters, because an earlier draft of this spec chose −1 and was wrong. **A sentinel is only safe when it falls outside the value's domain.** `MIDI_REST = -1` satisfies that: MIDI is floored at 0, so −1 can never be a real MIDI number, and the sentinel is sound. **Octave −1 does not satisfy it**, because −1 is itself the lowest legitimate octave in this library — `C-1` is MIDI 0, the system's minimum pitch. A value that is simultaneously "the bottom of the range" and "no value at all" cannot be told apart from the thing it is supposed to exclude. The optional carries no magic number, cannot be silently ignored the way a sentinel can, and maps to `None` through pybind11, which is idiomatic on the Python side.
+
+**The octave range is unchanged: `c_minPitchOctave = -1`, `c_maxPitchOctave = 11`** (`constants.h:109-110`), enforced at `helper.cpp:155`, `helper.cpp:1409` and `note.cpp:29`. `C-1` = MIDI 0 remains the system's minimum pitch, and SP1's rule that a MIDI number is always ≥ 0 stands. No implementer should widen the range as part of this work.
+
+A rest therefore reports MIDI `-1` (`MIDI_REST`) and an empty octave — the two answers use different mechanisms because their domains differ, which is a fact about the domains rather than an inconsistency.
+
+The library currently gives **three different answers** for a rest's octave, and all three are replaced by the empty optional:
 
 | Site | Current value |
 |---|---|
@@ -123,7 +132,7 @@ Because `setFrequency(0)` produces a rest, `Pitch` must be able to *be* a rest, 
 | MusicXML reader (`score.cpp:1659`) | `-1` |
 | `Helper::midiNote2octave(MIDI_REST)` | `-2` |
 
-**Documented ambiguity:** −1 is simultaneously the rest sentinel and a legitimate octave, since SP1 fixed the range at −1..11 with `C-1` = MIDI 0. `getOctave() == -1` therefore cannot distinguish a rest from a real note in octave −1. The Doxygen on both `getOctave()` and `isRest()` must state that **`isRest()` is the authoritative test**. This is a pre-existing property of the sentinel choice, not introduced here.
+`isRest()` remains the cheap, total test, and is what callers should use before reaching for the octave at all.
 
 ### 4.5 Rounding
 
@@ -208,6 +217,25 @@ The public analysis surface is 136 declarations in `chord.h` and 45+ in `interva
 
 Error messages name the offending note, not merely the condition.
 
+### 8.1 `Chord::roundQuarterTones()` — the escape hatch
+
+Rejecting is correct but unhelpful on its own, so `Chord` gains a public `roundQuarterTones()` that rounds every quarter-tone note to its nearest semitone. A caller who wants a chord name for microtonal material calls it first and then `getName()` without an error:
+
+```cpp
+Chord c({"C4", "E1b4", "G4"});
+c.getName();            // throws: analysis does not support quarter tones
+c.roundQuarterTones();  // E1b4 -> E4
+c.getName();            // "C"
+```
+
+Details that the implementation must honour:
+
+- The rounding logic lives in **`Pitch::roundToSemitone()`**, so there is one implementation; `Chord::roundQuarterTones()` iterates and delegates.
+- Ties round **upward**, consistent with §4.5.
+- It is a **mutator**, so it must call `invalidateStackCache()` like every other `Chord` mutator. Omitting that call is the exact defect class that required four review rounds to eliminate on 2026-09-16.
+- It returns the **number of notes changed**, so a caller can tell whether anything happened without comparing before and after.
+- Bound to Python with a numpydoc docstring, per the standing project rule.
+
 ## 9. Enharmonic equivalence uses exact pitch
 
 `Helper::isEnharmonic` (`helper.h:302`) is currently documented as true when both pitches have the same MIDI number. It changes to compare **exact** pitch. `Note::getEnharmonicPitch`, `getEnharmonicPitches`, `getEnharmonicNote` and `getEnharmonicNotes` (`note.h:530-553`) extend to quarter tones.
@@ -242,10 +270,26 @@ A quarter-tone spelling has **exactly one** enharmonic partner in the 24-tone gr
 
 **MusicXML round-trip**, with three fixtures under `test/xml_examples/unit_test/`: one written by maialib itself; one third-party file using the arrow family; and one carrying `<accidental>` with **no** `<alter>`, the MuseScore case.
 
+### 12.1 Rest octave: reconciling the three sites
+
+`Pitch::getOctave()` returning `std::optional<int>` (§4.4) is not enough on its own, because two **free functions** also answer the octave question and cannot express "no octave" with their current types. They are aligned rather than left inconsistent:
+
+| Function | Today | Becomes |
+|---|---|---|
+| `Helper::splitPitch(..., int& octave, ...)` (`helper.h:320`) | writes `0` for a rest (`helper.cpp:1380`) | `std::optional<int>&`, left empty for a rest |
+| `Helper::midiNote2octave(int)` | returns `-2` for `MIDI_REST` | `std::optional<int>`, empty for `MIDI_REST` |
+| MusicXML reader (`score.cpp:1659`) | assigns `OCTAVE::ALL` (−1) | no octave |
+
+The alternative — leaving the free functions on `int` and confining the optional to `Pitch` — was considered and rejected: it would mean the library still invents a number for a rest's octave in two public places, which is the very thing the optional exists to stop.
+
+Both functions are public and Python-bound, so their pybind11 wrappers and numpydoc docstrings change with them; in Python the empty optional surfaces as `None`.
+
+`MUSIC_XML::OCTAVE::ALL` (−1, `constants.h:175`) keeps its own, unrelated meaning as a wildcard in queries. It is not a rest marker and must not be reused as one.
+
 **Two deliberate expectation changes**, to be flagged prominently in the implementation plan so that no implementer "repairs" the code to match a stale test:
 
-- `test/test_helpers.py:409` — `splitPitch("rest")` asserts octave `0`, becomes `-1`.
-- `tests-cpp/src/helpers-test.cpp:261` — `midiNote2octave(MIDI_REST)` asserts `-2`, becomes `-1`.
+- `test/test_helpers.py:409` — `splitPitch("rest")` asserts octave `0`; the octave becomes absent (`None` in Python).
+- `tests-cpp/src/helpers-test.cpp:261` — `midiNote2octave(MIDI_REST)` asserts `-2`; it becomes an empty optional.
 
 **Mutation testing as the acceptance criterion for any test whose purpose is to pin new behaviour:** delete the line the test protects, rebuild, confirm the test fails, restore, confirm it passes. Reasoning that a test discriminates failed three separate times during the 2026-09-16 work; only the experiment counts.
 
@@ -258,9 +302,9 @@ Baselines to hold: C++ 832/832 and Python 264/264, plus whatever this work adds.
 3. `Note` composes it; the parallel written/sounding fields are deleted.
 4. Vocabulary: `c_alterSymbol` widened to eight entries.
 5. Truncations deleted; `int&` → `float&`.
-6. Rest octave standardised at −1 across all three sites.
+6. Rest octave: `Pitch::getOctave()` returns an empty optional (§4.4), and the three currently-disagreeing sites are reconciled (§12.1).
 7. MusicXML: unified read, then write.
-8. Rejection guards at the two sites, plus the 181-method coverage test.
+8. Rejection guards at the two sites, plus the 181-method coverage test, plus the `Pitch::roundToSemitone()` / `Chord::roundQuarterTones()` escape hatch (§8.1).
 9. Exact enharmonic comparison.
 10. Fractional transposition.
 11. Python bindings and documentation throughout.
