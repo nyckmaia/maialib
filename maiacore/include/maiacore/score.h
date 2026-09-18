@@ -345,49 +345,6 @@ class Score {
     bool haveTypeTag(void) const;
 
     /**
-     * @brief Retrieves detailed information about a specific note in the score.
-     * @details Accesses attributes such as pitch, duration, voice, type, stem, and staff.
-     * @param part Part index.
-     * @param measure Measure index.
-     * @param note Note index.
-     * @param pitch Output: pitch string.
-     * @param step Output: step string.
-     * @param octave Output: octave integer.
-     * @param duration Output: duration integer.
-     * @param voice Output: voice integer.
-     * @param type Output: type string.
-     * @param steam Output: stem string.
-     * @param staff Output: staff integer.
-     * @return True if the note was found.
-     */
-    bool getNote(const int part, const int measure, const int note, std::string& pitch,
-                 std::string& step, int& octave, int& duration, int& voice, std::string& type,
-                 std::string& steam, int& staff) const;
-
-    /**
-     * @brief Retrieves basic information about a specific note (pitch, step, octave).
-     * @param part Part index.
-     * @param measure Measure index.
-     * @param note Note index.
-     * @param pitch Output: pitch string.
-     * @param step Output: step string.
-     * @param octave Output: octave integer.
-     * @return True if the note was found.
-     */
-    bool getNote(const int part, const int measure, const int note, std::string& pitch,
-                 std::string& step, int& octave) const;
-
-    /**
-     * @brief Retrieves only the pitch of a specific note.
-     * @param part Part index.
-     * @param measure Measure index.
-     * @param note Note index.
-     * @param pitch Output: pitch string.
-     * @return True if the note was found.
-     */
-    bool getNote(const int part, const int measure, const int note, std::string& pitch) const;
-
-    /**
      * @brief Prints the names of all parts/instruments in the score to the terminal.
      */
     void printPartNames() const;
@@ -419,23 +376,6 @@ class Score {
      * @return True if anacrusis is present.
      */
     bool haveAnacrusisMeasure() const;
-
-    /**
-     * @brief Retrieves detailed information from a note XML node.
-     * @param node XML node of the note.
-     * @param partName Output: part name.
-     * @param measure Output: measure number.
-     * @param pitch Output: pitch string.
-     * @param pitchClass Output: pitch class string.
-     * @param alterSymbol Output: accidental symbol.
-     * @param alterValue Output: accidental value in semitones (fractional for quarter tones).
-     * @param octave Output: octave.
-     * @param type Output: note type.
-     * @param duration Output: note duration.
-     */
-    void getNoteNodeData(const pugi::xml_node& node, std::string& partName, int& measure,
-                         std::string& pitch, std::string& pitchClass, std::string& alterSymbol,
-                         float& alterValue, int& octave, std::string& type, float& duration) const;
 
     /**
      * @brief Sets repeat barlines for a range of measures.

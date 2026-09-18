@@ -373,22 +373,6 @@ class Helper {
     static const std::string alterValue2Name(const float alterValue);
 
     /**
-     * @brief Retrieves detailed information from a MusicXML note node.
-     * @param node XML node of the note.
-     * @param pitch Output: pitch string.
-     * @param pitchClass Output: pitch class.
-     * @param alterSymbol Output: accidental symbol.
-     * @param alterValue Output: accidental value in semitones (fractional for quarter tones).
-     * @param octave Output: octave.
-     * @param type Output: note type.
-     * @param duration Output: duration.
-     */
-    static void getNoteNodeData(const pugi::xml_node& node, std::string& pitch,
-                                std::string& pitchClass, std::string& alterSymbol,
-                                float& alterValue, int& octave, std::string& type,
-                                float& duration);
-
-    /**
      * @brief Selects nodes from a MusicXML document using an XPath expression.
      * @param doc XML document.
      * @param xPath XPath query string.
