@@ -644,21 +644,17 @@ void Score::loadXMLFile(const std::string& filePath) {
                         auto pitchChild = node.child("pitch");
                         if (pitchChild) {
                             const std::string alterTag = pitchChild.child_value("alter");
-                            if (!alterTag.empty()) {
-                                switch (hash(alterTag.c_str())) {
-                                    case hash("-2"):
-                                        alterSymbol = "bb";
-                                        break;
-                                    case hash("-1"):
-                                        alterSymbol = "b";
-                                        break;
-                                    case hash("1"):
-                                        alterSymbol = "#";
-                                        break;
-                                    case hash("2"):
-                                        alterSymbol = "x";
-                                        break;
-                                }
+                            const std::string accidentalTag = node.child_value("accidental");
+
+                            // Precedence: <accidental> (where quarter tones live) first, then
+                            // the decimal <alter> value, else natural. MuseScore has historically
+                            // exported the quarter-tone glyph with no matching <alter>, so
+                            // trusting <alter> first would lose quarter tones from real files.
+                            if (!accidentalTag.empty()) {
+                                alterSymbol = Helper::alterName2symbol(accidentalTag);
+                            } else if (!alterTag.empty()) {
+                                alterSymbol = Helper::alterValue2symbol(
+                                    static_cast<float>(atof(alterTag.c_str())));
                             }
                         }
                     }
@@ -1585,7 +1581,8 @@ bool Score::getNote(const int part, const int measure, const int note, std::stri
     }
 
     if (step.empty()) {
-        octave = MUSIC_XML::OCTAVE::ALL;
+        // A rest has no octave: MUSIC_XML::OCTAVE::ALL is a query wildcard with an unrelated
+        // meaning and must not be reused as a rest marker (spec 12.1).
         pitch = MUSIC_XML::PITCH::REST;
     } else {
         octave = atoi(node.child("pitch").child_value("octave"));
@@ -1644,6 +1641,7 @@ void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, i
     // Catch the quarter-tone accidental:
     if (!pitchAccidental.empty()) {
         alterSymbol = Helper::alterName2symbol(pitchAccidental);
+        alterValue = Helper::alterSymbol2Value(alterSymbol);
         // Catch a standard acidental:
     } else if (!pitchAlter.empty()) {
         alterValue = static_cast<float>(atof(pitchAlter.c_str()));
@@ -1656,7 +1654,8 @@ void Score::getNoteNodeData(const pugi::xml_node& node, std::string& partName, i
 
     // ===== GET OCTAVE AND PITCH ===== //
     if (pitchClass.empty()) {
-        octave = MUSIC_XML::OCTAVE::ALL;
+        // A rest has no octave: MUSIC_XML::OCTAVE::ALL is a query wildcard with an unrelated
+        // meaning and must not be reused as a rest marker (spec 12.1).
         pitchClass = MUSIC_XML::PITCH::REST;
         pitch = MUSIC_XML::PITCH::REST;
     } else {

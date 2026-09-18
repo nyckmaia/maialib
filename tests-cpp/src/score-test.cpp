@@ -767,3 +767,32 @@ TEST(ScoreCopySemantics, AssignmentOperatorSelfAssignment) {
     EXPECT_EQ(score.getNumParts(), 1);
     EXPECT_EQ(score.getNumMeasures(), 4);
 }
+
+// ====================
+// Quarter Tone MusicXML Read Tests
+// ====================
+
+TEST(ScoreQuarterToneRead, TartiniAccidentalWithMatchingAlter) {
+    // <alter>0.5</alter> + <accidental>quarter-sharp</accidental> together: the
+    // <accidental> branch must win the spelling AND still produce the numeric value.
+    Score score("./test/xml_examples/unit_test/quarter_tone_tartini.xml");
+
+    ASSERT_TRUE(score.isValid());
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C1x4");
+}
+
+TEST(ScoreQuarterToneRead, ArrowAccidentalNoAlter) {
+    // <accidental>sharp-down</accidental>, no <alter> at all (the arrow family).
+    Score score("./test/xml_examples/unit_test/quarter_tone_arrow.xml");
+
+    ASSERT_TRUE(score.isValid());
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C1x4");
+}
+
+TEST(ScoreQuarterToneRead, AccidentalOnlyNoAlterMuseScoreCase) {
+    // <accidental>quarter-sharp</accidental>, no <alter> at all (the MuseScore case).
+    Score score("./test/xml_examples/unit_test/quarter_tone_accidental_only.xml");
+
+    ASSERT_TRUE(score.isValid());
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C1x4");
+}

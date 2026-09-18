@@ -338,19 +338,19 @@ const std::string Helper::alterValue2Name(const float alterValue) {
         case hash("-2.0"):
             return "flat-flat";
         case hash("-1.5"):
-            return "flat-down";
+            return "three-quarters-flat";
         case hash("-1.0"):
             return "flat";
         case hash("-0.5"):
-            return "flat-up";
+            return "quarter-flat";
         case hash("0.0"):
             return "natural";
         case hash("0.5"):
-            return "sharp-down";
+            return "quarter-sharp";
         case hash("1.0"):
             return "sharp";
         case hash("1.5"):
-            return "sharp-up";
+            return "three-quarters-sharp";
         case hash("2.0"):
             return "double-sharp";
 
@@ -409,10 +409,16 @@ const std::string Helper::alterName2symbol(const std::string& alterName) {
         case hash("sharp-down"):
             return "1x";
             break;
+        case hash("quarter-sharp"):
+            return "1x";
+            break;
         case hash("sharp"):
             return "#";
             break;
         case hash("sharp-up"):
+            return "3x";
+            break;
+        case hash("three-quarters-sharp"):
             return "3x";
             break;
         case hash("double-sharp"):
@@ -421,10 +427,16 @@ const std::string Helper::alterName2symbol(const std::string& alterName) {
         case hash("flat-up"):
             return "1b";
             break;
+        case hash("quarter-flat"):
+            return "1b";
+            break;
         case hash("flat"):
             return "b";
             break;
         case hash("flat-down"):
+            return "3b";
+            break;
+        case hash("three-quarters-flat"):
             return "3b";
             break;
         case hash("flat-flat"):
