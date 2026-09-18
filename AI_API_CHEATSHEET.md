@@ -154,14 +154,15 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `removeDuplicateNotes() -> None`
 - `removeNote(noteIndex: int) -> None`
 - `removeTopNote() -> None`
+- `roundQuarterTones() -> int`
 - `setDuration(duration: Duration) -> None`  *(overloaded)*
 - `size() -> int`
 - `sortNotes() -> None`
 - `stackSize() -> int`
 - `toCents() -> list[int]`
 - `toInversion(inversionNumber: int) -> None`
-- `transpose(semiTonesNumber: int) -> None`
-- `transposeStackOnly(semiTonesNumber: int) -> None`
+- `transpose(semiTonesNumber: float) -> None`
+- `transposeStackOnly(semiTonesNumber: float) -> None`
 
 #### Class `Clef`
 - `__init__(sign: ClefSign = ..., line: int = -1) -> None`
@@ -205,7 +206,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `spelling2midiNote(pitchStep: str, alterValue: float, octave: int) -> int`
 - `splitPitch(pitch: str) -> tuple[str, str, int | None, float, str]`
 - `ticks2noteType(durationTicks: int, divisionsPerQuarterNote: int = 256, actualNotes: int = 1, normalNotes: int = 1) -> tuple[str, int]`
-- `transposePitch(pitch: str, semitones: int, accType: str = '#') -> str`
+- `transposePitch(pitch: str, semitones: float, accType: str = '#') -> str`
 
 #### Class `Interval`
 - `__init__(pitch_A: str = 'C4', pitch_B: str = 'C4') -> None`  *(overloaded)*
@@ -380,7 +381,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `getLongType() -> str`
 - `getMidiNumber() -> int`
 - `getNumDots() -> int`  *(overloaded)*
-- `getOctave() -> int`
+- `getOctave() -> int | None`
 - `getPitch() -> str`
 - `getPitchClass() -> str`
 - `getPitchStep() -> str`
@@ -388,7 +389,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `getScaleDegree(key: Key) -> int`
 - `getShortType() -> str`
 - `getSlur() -> tuple[str, str]`
-- `getSoundingOctave() -> int`
+- `getSoundingOctave() -> int | None`
 - `getSoundingPitch() -> str`
 - `getSoundingPitchClass() -> str`
 - `getSoundingPitchStep() -> str`
@@ -400,7 +401,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `getType() -> str`  *(overloaded)*
 - `getUnpitchedIndex() -> int`
 - `getVoice() -> int`
-- `getWrittenOctave() -> int`
+- `getWrittenOctave() -> int | None`
 - `getWrittenPitch() -> str`
 - `getWrittenPitchClass() -> str`
 - `getWrittenPitchStep() -> str`
@@ -412,8 +413,11 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `isNoteOff() -> bool`
 - `isNoteOn() -> bool`
 - `isPitched() -> bool`
+- `isQuarterTone() -> bool`
 - `isTransposed() -> bool`
 - `removeTies() -> None`
+- `roundToSemitone() -> None`
+- `setAlter(alter: float) -> None`
 - `setDuration(duration: Duration) -> None`  *(overloaded)*
 - `setIsGraceNote(isGraceNote: bool = False) -> None`
 - `setIsInChord(inChord: bool) -> None`
@@ -425,6 +429,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `setPitchClass(pitchClass: str) -> None`
 - `setStaff(staff: int) -> None`
 - `setStem(stem: str) -> None`
+- `setStep(step: str) -> None`
 - `setTieStart() -> None`
 - `setTieStop() -> None`
 - `setTieStopStart() -> None`
@@ -434,7 +439,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `setVoice(voice: int) -> None`
 - `toEnharmonicPitch(alternativeEnharmonicPitch: bool = False) -> None`
 - `toXML(instrumentId: int = 1, identSize: int = 2) -> str`
-- `transpose(semitones: int, accType: str = '') -> None`
+- `transpose(semitones: float, accType: str = '') -> None`
 
 #### Class `NoteData`
 - `__init__() -> None`  *(overloaded)*
