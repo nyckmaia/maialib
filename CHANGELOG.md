@@ -23,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - `Interval` direction and diatonic interval were wrong for notes outside C0–C10
 - `Helper.midiNote2pitch()` could return spellings outside the supported octaves
 - `Note.getPitch()` and `Note.getSoundingPitch()` returned a transposing instrument's stale sounding pitch (e.g. `"Bb3"`) for a note silenced with `Note.setIsNoteOn(False)`, because silencing a note deliberately keeps its transposing interval; both now return `"rest"`, matching the untransposed case and `Note.setPitch("rest")`
+- `Score(path)` (MusicXML read) discarded quarter-tone accidentals: the note-construction path never read `<accidental>` at all, and its `<alter>` fallback only matched the four integer semitone strings, so a decimal alter like `0.5` was silently read as natural. Now reads `<accidental>` first (where quarter tones live), then the decimal `<alter>` value, else natural — the same precedence MuseScore's own historical export (glyph with no matching `<alter>`) requires. An `<accidental>` name this library doesn't spell (MusicXML defines roughly 40; `Helper.alterName2symbol()` knows 13) now warns and falls back to `<alter>`/natural instead of raising and aborting the whole load
 
 ### Removed
 
