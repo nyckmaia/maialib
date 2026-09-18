@@ -806,3 +806,21 @@ TEST(ScoreQuarterToneRead, UnrecognisedAccidentalNameFallsBackToAlterInsteadOfAb
     ASSERT_TRUE(score.isValid());
     EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C#4");
 }
+
+TEST(ScoreQuarterToneRead, UnrepresentableAlterTripleSharpFallsBackToNatural) {
+    // <alter>3</alter>, no <accidental> at all. A triple sharp is outside the nine values
+    // Helper::alterValue2symbol() can spell -- must load as natural with a warning, not throw.
+    Score score("./test/xml_examples/unit_test/unrepresentable_alter_triple_sharp.xml");
+
+    ASSERT_TRUE(score.isValid());
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C4");
+}
+
+TEST(ScoreQuarterToneRead, UnrepresentableAlterEighthToneFallsBackToNatural) {
+    // <alter>0.25</alter>, no <accidental> at all: a non-quarter-tone microtonal value,
+    // also outside the nine spellable values -- same expectation as the triple-sharp case.
+    Score score("./test/xml_examples/unit_test/unrepresentable_alter_eighth_tone.xml");
+
+    ASSERT_TRUE(score.isValid());
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C4");
+}
