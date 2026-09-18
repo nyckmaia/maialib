@@ -427,9 +427,14 @@ class QuarterToneAnalysisGuard(unittest.TestCase):
     """
 
     def testGetNameRaises(self):
+        # Asserting only that it raises would NOT discriminate the guard: the pre-existing
+        # enharmonic-spelling guard also raises RuntimeError for a quarter tone, reached from
+        # deep inside the stacking code. The diagnosable message is what this guard adds.
         myChord = ml.Chord(["C4", "E1b4", "G4"])
-        with self.assertRaises(RuntimeError):
+        with self.assertRaises(RuntimeError) as context:
             myChord.getName()
+
+        self.assertIn("roundQuarterTones", str(context.exception))
 
     def testErrorMessageNamesTheNoteAndTheEscapeHatch(self):
         myChord = ml.Chord(["C4", "E1b4", "G4"])
@@ -467,8 +472,12 @@ class QuarterToneAnalysisGuard(unittest.TestCase):
 
         for methodName in analysisMethods:
             with self.subTest(method=methodName):
-                with self.assertRaises(RuntimeError):
+                with self.assertRaises(RuntimeError) as context:
                     getattr(myChord, methodName)()
+
+                # The remedy named in the message is what identifies this as the analysis
+                # guard rather than some deeper failure (see testGetNameRaises).
+                self.assertIn("roundQuarterTones", str(context.exception))
 
     def testAccessorsAndMutatorsKeepWorking(self):
         # The reason the guard sits at the analysis chokepoint and not on the class as a whole:

@@ -599,13 +599,38 @@ class CoutCapture {
 };
 }  // namespace
 
-TEST(quarterToneAnalysisGuard, getNameThrows) {
+// Asserts that 'statement' is rejected by a quarter-tone guard, identified by the remedy its
+// message names: "roundQuarterTones" for Chord's analysis chokepoint, "roundToSemitone" for
+// Interval's.
+//
+// Asserting merely that the call throws would NOT discriminate these guards. Measured: with the
+// Chord guard downgraded to a warning, every EXPECT_THROW below still passes, because the
+// pre-existing enharmonic-spelling guard (Note::getEnharmonicPitch, note.cpp) also throws a
+// std::runtime_error for a quarter tone, reached from stackInThirds() ->
+// computeEnharmonicUnitsGroups(). What the analysis guard actually adds is a diagnosable failure
+// -- a message naming the offending note and the escape hatch, instead of an internal complaint
+// about enharmonic spelling -- raised at the entry point, before stackInThirds() has already
+// overwritten '_openStack'. So the message is the behaviour worth pinning.
+#define EXPECT_REJECTED_NAMING(statement, remedy)                                               \
+    do {                                                                                        \
+        try {                                                                                   \
+            statement;                                                                          \
+            ADD_FAILURE() << #statement " did not throw on a quarter-tone chord";               \
+        } catch (const std::runtime_error& error) {                                             \
+            const std::string actualMessage(error.what());                                      \
+            EXPECT_NE(actualMessage.find(remedy), std::string::npos)                            \
+                << #statement " threw, but not from the quarter-tone guard: " << actualMessage; \
+        }                                                                                       \
+    } while (false)
+
+TEST(quarterToneAnalysisGuard, getNameIsRejectedByTheGuard) {
     // Deliberately inconsistent with getName()'s neighbouring behaviour for a NON-TONAL chord,
     // which warns and returns an empty string: a quarter tone is not "an atonal chord", it is
     // input the analyser cannot represent at all. Returning empty would hide the loss silently,
     // and the roundQuarterTones() escape hatch only makes sense if the normal path fails visibly.
     Chord myChord({"C4", "E1b4", "G4"});
     EXPECT_THROW(myChord.getName(), std::runtime_error);
+    EXPECT_REJECTED_NAMING(myChord.getName(), "roundQuarterTones");
 }
 
 TEST(quarterToneAnalysisGuard, errorMessageNamesTheOffendingNoteAndTheEscapeHatch) {
@@ -633,61 +658,61 @@ TEST(quarterToneAnalysisGuard, coversEveryAnalysisEntryPoint) {
     Chord myChord({"C4", "E1b4", "G4"});
     const Key cMajor("C");
 
-    EXPECT_THROW(myChord.getName(), std::runtime_error);
-    EXPECT_THROW(myChord.getRoot(), std::runtime_error);
-    EXPECT_THROW(myChord.getBassNote(), std::runtime_error);
-    EXPECT_THROW(myChord.stackSize(), std::runtime_error);
-    EXPECT_THROW(myChord.getStackedHeaps(), std::runtime_error);
-    EXPECT_THROW(myChord.getOpenStackNotes(), std::runtime_error);
-    EXPECT_THROW(myChord.getOpenStackIntervals(), std::runtime_error);
-    EXPECT_THROW(myChord.getCloseStackIntervals(), std::runtime_error);
-    EXPECT_THROW(myChord.getCloseStackHarmonicComplexity(), std::runtime_error);
-    EXPECT_THROW(myChord.getOpenStackChord(), std::runtime_error);
-    EXPECT_THROW(myChord.getCloseStackChord(), std::runtime_error);
-    EXPECT_THROW(myChord.getCloseChord(), std::runtime_error);
-    EXPECT_THROW(myChord.getDegree(cMajor), std::runtime_error);
+    EXPECT_REJECTED_NAMING(myChord.getName(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getRoot(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getBassNote(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.stackSize(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getStackedHeaps(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getOpenStackNotes(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getOpenStackIntervals(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getCloseStackIntervals(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getCloseStackHarmonicComplexity(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getOpenStackChord(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getCloseStackChord(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getCloseChord(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getDegree(cMajor), "roundQuarterTones");
 
     // Reached through the chokepoint indirectly, via isTonal()/stackSize()/getDegree().
-    EXPECT_THROW(myChord.getQuality(), std::runtime_error);
-    EXPECT_THROW(myChord.getRomanDegree(cMajor), std::runtime_error);
+    EXPECT_REJECTED_NAMING(myChord.getQuality(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getRomanDegree(cMajor), "roundQuarterTones");
 
     // The isXxx() family.
-    EXPECT_THROW(myChord.isTonal(), std::runtime_error);
-    EXPECT_THROW(myChord.isMajorChord(), std::runtime_error);
-    EXPECT_THROW(myChord.isMinorChord(), std::runtime_error);
-    EXPECT_THROW(myChord.isAugmentedChord(), std::runtime_error);
-    EXPECT_THROW(myChord.isDiminishedChord(), std::runtime_error);
-    EXPECT_THROW(myChord.isHalfDiminishedChord(), std::runtime_error);
-    EXPECT_THROW(myChord.isWholeDiminishedChord(), std::runtime_error);
-    EXPECT_THROW(myChord.isDominantSeventhChord(), std::runtime_error);
-    EXPECT_THROW(myChord.isSus(), std::runtime_error);
-    EXPECT_THROW(myChord.isDyad(), std::runtime_error);
-    EXPECT_THROW(myChord.isInRootPosition(), std::runtime_error);
+    EXPECT_REJECTED_NAMING(myChord.isTonal(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.isMajorChord(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.isMinorChord(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.isAugmentedChord(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.isDiminishedChord(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.isHalfDiminishedChord(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.isWholeDiminishedChord(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.isDominantSeventhChord(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.isSus(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.isDyad(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.isInRootPosition(), "roundQuarterTones");
 
     // The haveXxx() predicates that stack the chord in thirds.
-    EXPECT_THROW(myChord.haveMinorSecond(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMajorSecond(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMinorThird(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMajorThird(), std::runtime_error);
-    EXPECT_THROW(myChord.havePerfectFourth(), std::runtime_error);
-    EXPECT_THROW(myChord.haveAugmentedFourth(), std::runtime_error);
-    EXPECT_THROW(myChord.haveDiminishedFifth(), std::runtime_error);
-    EXPECT_THROW(myChord.havePerfectFifth(), std::runtime_error);
-    EXPECT_THROW(myChord.haveAugmentedFifth(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMinorSixth(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMajorSixth(), std::runtime_error);
-    EXPECT_THROW(myChord.haveDiminishedSeventh(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMinorSeventh(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMajorSeventh(), std::runtime_error);
-    EXPECT_THROW(myChord.haveDiminishedOctave(), std::runtime_error);
-    EXPECT_THROW(myChord.havePerfectOctave(), std::runtime_error);
-    EXPECT_THROW(myChord.haveAugmentedOctave(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMinorNinth(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMajorNinth(), std::runtime_error);
-    EXPECT_THROW(myChord.havePerfectEleventh(), std::runtime_error);
-    EXPECT_THROW(myChord.haveSharpEleventh(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMinorThirdteenth(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMajorThirdteenth(), std::runtime_error);
+    EXPECT_REJECTED_NAMING(myChord.haveMinorSecond(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveMajorSecond(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveMinorThird(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveMajorThird(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.havePerfectFourth(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveAugmentedFourth(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveDiminishedFifth(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.havePerfectFifth(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveAugmentedFifth(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveMinorSixth(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveMajorSixth(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveDiminishedSeventh(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveMinorSeventh(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveMajorSeventh(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveDiminishedOctave(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.havePerfectOctave(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveAugmentedOctave(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveMinorNinth(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveMajorNinth(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.havePerfectEleventh(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveSharpEleventh(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveMinorThirdteenth(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.haveMajorThirdteenth(), "roundQuarterTones");
 }
 
 TEST(quarterToneAnalysisGuard, coversTheIntervalBasedHaveFamilyThroughTheIntervalGuard) {
@@ -698,14 +723,14 @@ TEST(quarterToneAnalysisGuard, coversTheIntervalBasedHaveFamilyThroughTheInterva
     // removed on the assumption that the other one covers these.
     Chord myChord({"C4", "E1b4", "G4"});
 
-    EXPECT_THROW(myChord.haveThird(), std::runtime_error);
-    EXPECT_THROW(myChord.haveFifth(), std::runtime_error);
-    EXPECT_THROW(myChord.haveSeventh(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMajorInterval(), std::runtime_error);
-    EXPECT_THROW(myChord.haveMinorInterval(), std::runtime_error);
-    EXPECT_THROW(myChord.havePerfectInterval(), std::runtime_error);
-    EXPECT_THROW(myChord.haveAnyOctaveMajorThird(), std::runtime_error);
-    EXPECT_THROW(myChord.haveAnyOctavePerfectFifth(), std::runtime_error);
+    EXPECT_REJECTED_NAMING(myChord.haveThird(), "roundToSemitone");
+    EXPECT_REJECTED_NAMING(myChord.haveFifth(), "roundToSemitone");
+    EXPECT_REJECTED_NAMING(myChord.haveSeventh(), "roundToSemitone");
+    EXPECT_REJECTED_NAMING(myChord.haveMajorInterval(), "roundToSemitone");
+    EXPECT_REJECTED_NAMING(myChord.haveMinorInterval(), "roundToSemitone");
+    EXPECT_REJECTED_NAMING(myChord.havePerfectInterval(), "roundToSemitone");
+    EXPECT_REJECTED_NAMING(myChord.haveAnyOctaveMajorThird(), "roundToSemitone");
+    EXPECT_REJECTED_NAMING(myChord.haveAnyOctavePerfectFifth(), "roundToSemitone");
 }
 
 TEST(quarterToneAnalysisGuard, accessorsAndMutatorsKeepWorking) {
