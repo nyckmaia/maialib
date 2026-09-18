@@ -1124,9 +1124,81 @@ TEST(NoteComposesPitch, GetEnharmonicPitchAgreesWithGetPitchOnTransposedNote) {
     EXPECT_EQ(n.getEnharmonicPitch(false), "Dbb5");
     EXPECT_EQ(n.getEnharmonicPitch(true), "B#4");
 
-    // The general invariant, independent of any measured string or baseline: an enharmonic
-    // respelling must describe the same pitch -- the same MIDI number -- as the note it was
-    // spelled from.
+    // Scope of this check: it pins THIS case's respellings against THIS note's own MIDI number,
+    // comparing two live calls rather than a hard-coded literal, so a future legitimate change
+    // of spelling moves both sides together and a genuine regression is still caught.
+    //
+    // It is NOT a general invariant of the library today, despite reading like one. Measured, it
+    // holds here only because the Piccolo's sounding pitch CLASS happens to be spelled
+    // correctly; it FAILS right now for the B-flat clarinet (59 vs 58) and the horn in F (59 vs
+    // 53), where the pre-existing transpose scale-lookup picks the wrong spelling. Task 10's
+    // rewrite of that lookup is what would make "an enharmonic respelling describes the same
+    // pitch as the note it was spelled from" true everywhere -- do not promote this check to
+    // those two cases before then.
     EXPECT_EQ(Note(n.getEnharmonicPitch(false)).getMidiNumber(), n.getMidiNumber());
     EXPECT_EQ(Note(n.getEnharmonicPitch(true)).getMidiNumber(), n.getMidiNumber());
+}
+
+// Fix round 4 (controller ruling on re-review 2's finding P1). getOctave() is the last method
+// that still takes a NUMBER out of computeSoundingPitch()'s pre-existing, defective transpose
+// scale lookup. On the CONSTRUCTION path that faithfully reproduces d26aa67 (the round-2 sweep
+// confirmed it in 1197 of 1197 combinations). On the setOctave() MUTATION path it does not:
+// d26aa67's setOctave() recomputed the sounding octave arithmetically (written MIDI + chromatic
+// transpose -> midiNote2pitch -> octave) and bypassed the lookup entirely, so after any
+// setOctave() call the two answers differ by a full octave for every transposing instrument
+// whose pitch class that lookup mis-spells.
+//
+// THE OCTAVES PINNED BELOW ARE THE KNOWN-DEFECTIVE VALUES, NOT THE CORRECT ONES. Measured,
+// HEAD against a d26aa67 worktree, calling setOctave() with the note's OWN current octave (4),
+// so nothing but the derivation mechanism can explain the difference:
+//
+//   case                         getOctave() HEAD   getOctave() d26aa67   CORRECT
+//   B-flat clarinet  C#4 -1/-2           4                   3              3
+//   horn in F        F#4 -4/-7           4                   3              3
+//   piccolo          C4  +7/+12          4                   5              5
+//
+// HEAD answers "the written octave, unchanged" in all three, because that lookup's octave-wrap
+// check never fires for these transpositions. The correct answer is the sounding octave: one
+// BELOW written for the clarinet and horn, one ABOVE for the piccolo -- which is exactly what
+// getSoundingOctave() (arithmetic since round 2) already returns, asserted alongside each case.
+//
+// This is pinned, NOT restored, deliberately. d26aa67 was history-dependent here: constructing
+// a transposed note reported one octave, then calling setOctave() with that very same value
+// reported another, without anything about the note having changed. HEAD is consistently wrong
+// where d26aa67 was inconsistently wrong, and consistent wrongness is what lets TASK 10 fix the
+// scale lookup once and correct every dependant at the same time. TASK 10 OWNS THIS: when that
+// lookup is rewritten, the three getOctave() expectations below must become 3, 3 and 5.
+TEST(NoteComposesPitch, GetOctaveAfterSetOctaveOnTransposedNoteIsPinnedDefective) {
+    // B-flat clarinet: written C#4 sounds a major second lower.
+    {
+        Note n("C#4", RhythmFigure::QUARTER, true, false, -1, -2);
+        ASSERT_EQ(n.getOctave(), 4);  // construction path: matches d26aa67
+        n.setOctave(4);               // no-op value: the note's own current octave
+        EXPECT_EQ(n.getOctave(), 4);  // DEFECTIVE (Task 10); d26aa67 gave 3; correct is 3
+        EXPECT_EQ(n.getSoundingOctave(), 3);  // arithmetic, correct, untouched by the defect
+        EXPECT_EQ(n.getMidiNumber(), 59);
+        EXPECT_EQ(n.getPitch(), "Bb3");  // wrong pitch class, pre-existing (Task 10)
+    }
+
+    // Horn in F: written F#4 sounds a perfect fifth lower.
+    {
+        Note n("F#4", RhythmFigure::QUARTER, true, false, -4, -7);
+        ASSERT_EQ(n.getOctave(), 4);
+        n.setOctave(4);
+        EXPECT_EQ(n.getOctave(), 4);  // DEFECTIVE (Task 10); d26aa67 gave 3; correct is 3
+        EXPECT_EQ(n.getSoundingOctave(), 3);
+        EXPECT_EQ(n.getMidiNumber(), 59);
+        EXPECT_EQ(n.getPitch(), "F3");
+    }
+
+    // Piccolo: written C4 sounds an octave higher.
+    {
+        Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
+        ASSERT_EQ(n.getOctave(), 4);
+        n.setOctave(4);
+        EXPECT_EQ(n.getOctave(), 4);  // DEFECTIVE (Task 10); d26aa67 gave 5; correct is 5
+        EXPECT_EQ(n.getSoundingOctave(), 5);
+        EXPECT_EQ(n.getMidiNumber(), 72);
+        EXPECT_EQ(n.getPitch(), "C5");
+    }
 }
