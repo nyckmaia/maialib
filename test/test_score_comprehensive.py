@@ -37,6 +37,36 @@ class ScoreLoadingTestCase(unittest.TestCase):
         self.assertIn("test_chord.xml", score.getFilePath())
 
 
+class ScoreQuarterToneReadTestCase(unittest.TestCase):
+    """Tests that MusicXML quarter tones survive a real Score(path) load through the
+    Python bindings, not just the underlying C++ function. loadXMLFile() is the only
+    Python-reachable entry point Task 7 fixes; the C++ suite covers the same function
+    directly, this covers it through the actual binding surface end users call."""
+
+    def _first_note_pitch(self, fileName):
+        score = ml.Score(f"./xml_examples/unit_test/{fileName}")
+        self.assertTrue(score.isValid())
+        return score.getPart(0).getMeasure(0).getNote(0, 0).getPitch()
+
+    def test_tartini_accidental_with_matching_alter(self):
+        """<alter>0.5</alter> together with <accidental>quarter-sharp</accidental>"""
+        self.assertEqual(self._first_note_pitch("quarter_tone_tartini.xml"), "C1x4")
+
+    def test_arrow_accidental_no_alter(self):
+        """<accidental>sharp-down</accidental> alone, no <alter> at all"""
+        self.assertEqual(self._first_note_pitch("quarter_tone_arrow.xml"), "C1x4")
+
+    def test_accidental_only_no_alter_musescore_case(self):
+        """<accidental>quarter-sharp</accidental> alone, no <alter> (MuseScore export)"""
+        self.assertEqual(self._first_note_pitch("quarter_tone_accidental_only.xml"), "C1x4")
+
+    def test_unrecognised_accidental_name_falls_back_instead_of_raising(self):
+        """<accidental>natural-sharp</accidental> is outside the 13 names this library
+        spells but carries a usable <alter>1</alter>; the load must degrade to that
+        value instead of raising and aborting."""
+        self.assertEqual(self._first_note_pitch("quarter_tone_unknown_accidental_name.xml"), "C#4")
+
+
 class ScorePropertiesTestCase(unittest.TestCase):
     """Tests for Score basic properties"""
 
