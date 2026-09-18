@@ -109,6 +109,24 @@ TEST(Pitch, setOctaveOnRestIsRefusedAndWarns) {
     EXPECT_FALSE(r.getOctave().has_value());
 }
 
+// Task 6b, section K: the rest check must run BEFORE the range check. Before this reordering, a
+// rest handed an OUT-OF-RANGE octave hit the throwing range check first and threw instead of
+// warning (setOctaveOnRestIsRefusedAndWarns above only exercises an IN-range octave (4), which
+// never reached the range check to begin with, so it could not catch this). -2 is used
+// deliberately: it is the exact value Note::getOctave() used to answer for a rest before Task
+// 6b, so this closes fix round 5's finding F2 round-trip hazard at the Pitch layer too.
+// Reverting the check order in Pitch::setOctave() fails this.
+TEST(Pitch, setOctaveOutOfRangeOnRestIsRefusedAndWarnsNotThrows) {
+    Pitch r("rest");
+    EXPECT_NO_THROW(r.setOctave(-2));
+    EXPECT_TRUE(r.isRest());
+    EXPECT_FALSE(r.getOctave().has_value());
+
+    EXPECT_NO_THROW(r.setOctave(12));
+    EXPECT_TRUE(r.isRest());
+    EXPECT_FALSE(r.getOctave().has_value());
+}
+
 // REVIEW ROUND 1 — I2: setStep() had no test at all. Reverting Pitch::setStep() to not
 // assign _step (a no-op stub) fails this.
 TEST(Pitch, setStepValidTransitionKeepsOctave) {

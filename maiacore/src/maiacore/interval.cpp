@@ -49,7 +49,9 @@ int Interval::whiteKeyDistance() const {
         const auto stepIt =
             std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), note.getPitchStep());
         const int stepIdx = static_cast<int>(std::distance(c_C_diatonicScale.begin(), stepIt));
-        return stepIdx + 7 * note.getOctave();
+        // The Interval constructor/setNotes() reject a rest note up front (LOG_ERROR), so every
+        // note reachable through an Interval is a real pitch and getOctave() is always engaged.
+        return stepIdx + 7 * note.getOctave().value();
     };
 
     return diatonicIndex(_note[1]) - diatonicIndex(_note[0]);
@@ -355,7 +357,9 @@ int Interval::getNumSemitones(const bool absoluteValue) const {
 }
 
 int Interval::getNumOctaves(const bool absoluteValue) const {
-    const int diff = _note[1].getOctave() - _note[0].getOctave();
+    // Rests are rejected up front by the constructor/setNotes(), so both getOctave() calls are
+    // always engaged.
+    const int diff = _note[1].getOctave().value() - _note[0].getOctave().value();
 
     return (absoluteValue) ? abs(diff) : diff;
 }

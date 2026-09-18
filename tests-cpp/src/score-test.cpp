@@ -460,7 +460,7 @@ TEST(ScoreNoteIteration, ForEachNoteModifyPitch) {
     // Transpose all notes up one octave
     score.forEachNote([](Part* part, Measure* measure, int staveId, Note* note) {
         if (note->isNoteOn()) {
-            int currentOctave = note->getOctave();
+            int currentOctave = note->getOctave().value();  // guarded by isNoteOn() above
             note->setOctave(currentOctave + 1);
         }
     });

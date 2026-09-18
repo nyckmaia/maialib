@@ -203,11 +203,35 @@ void NoteClass(const py::module& m) {
     cls.def("getDiatonicWrittenPitchClass", &Note::getDiatonicWrittenPitchClass);
     cls.def("getDiatonicSoundingPitchClass", &Note::getDiatonicSoundingPitchClass);
 
-    cls.def("getSoundingOctave", &Note::getSoundingOctave);
-    cls.def("getWrittenOctave", &Note::getWrittenOctave);
+    cls.def("getSoundingOctave", &Note::getSoundingOctave,
+            R"pbdoc(
+        Return the sounding octave (after transposition).
+
+        Returns
+        -------
+        int or None
+            Sounding octave number, or ``None`` for a rest.
+    )pbdoc");
+    cls.def("getWrittenOctave", &Note::getWrittenOctave,
+            R"pbdoc(
+        Return the written octave (as notated).
+
+        Returns
+        -------
+        int or None
+            Written octave number, or ``None`` for a rest.
+    )pbdoc");
 
     cls.def("getPitchClass", &Note::getPitchClass);
-    cls.def("getOctave", &Note::getOctave);
+    cls.def("getOctave", &Note::getOctave,
+            R"pbdoc(
+        Return the octave (sounding).
+
+        Returns
+        -------
+        int or None
+            Octave number, or ``None`` for a rest.
+    )pbdoc");
 
     cls.def("getType", &Note::getType);
     cls.def("getLongType", &Note::getLongType);

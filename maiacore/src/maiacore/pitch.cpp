@@ -188,13 +188,19 @@ void Pitch::setAlter(float alter) {
 }
 
 void Pitch::setOctave(int octave) {
-    if (octave < c_minPitchOctave || octave > c_maxPitchOctave) {
-        LOG_ERROR("Invalid octave value: " + std::to_string(octave));
-    }
-
+    // Task 6b, section K: the rest check runs FIRST, ahead of the range check below. An
+    // operation that is inapplicable to a rest is inapplicable whatever the argument -- before
+    // this reordering, a rest handed an out-of-range octave hit the range check first and threw
+    // instead of warning (see pitch-test.cpp's setOctaveOutOfRangeOnRestIsRefusedAndWarnsNotThrows
+    // and note-test.cpp's SetOctaveOutOfRangeOnRestWarnsAndDoesNotThrow for the pinned
+    // round-trip this closes).
     if (isRest()) {
         LOG_WARN("Pitch::setOctave: cannot set the octave of a rest; ignoring");
         return;
+    }
+
+    if (octave < c_minPitchOctave || octave > c_maxPitchOctave) {
+        LOG_ERROR("Invalid octave value: " + std::to_string(octave));
     }
 
     if (Helper::spelling2midiNote(_step, _alter, octave) < 0) {

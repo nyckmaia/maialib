@@ -127,7 +127,7 @@ void Note::setOctave(const int octave) {
     _writtenPitch.setOctave(octave);
 }
 
-int Note::getOctave() const {
+std::optional<int> Note::getOctave() const {
     // Fix round 2: NOT an alias for getSoundingOctave() any more (that method is now arithmetic
     // -- see its own comment). This is "the octave" (documented as the sounding octave) and,
     // pre-Task-6, its body was `return _soundingOctave;`, a field tracked by the same
@@ -136,7 +136,11 @@ int Note::getOctave() const {
     // buggy transposition (measured: swept 1197 (pitch, transposeDiatonic, transposeChromatic)
     // combinations against d26aa67 -- getOctave() matched in every single one; only
     // getMidiNumber(), and the octave DIGIT embedded in getSoundingPitch()'s string, regressed).
-    return computeSoundingPitch().getOctave().value_or(-2);
+    // Task 6b: the `-2` sentinel is gone -- a rest now answers an empty optional instead of a
+    // fabricated numeric octave. computeSoundingPitch().getOctave() is already an empty optional
+    // for a rest, so this is a pure propagation; the non-rest scale-lookup behaviour above
+    // (including its known defect, owned by Task 10) is untouched.
+    return computeSoundingPitch().getOctave();
 }
 
 int Note::getTransposeDiatonic() const { return _transposeDiatonic; }
@@ -749,7 +753,8 @@ const std::string Note::getSoundingPitch() const {
     if (!isTransposed()) {
         return getWrittenPitch();
     }
-    return getSoundingPitchClass() + std::to_string(getSoundingOctave());
+    // Not a rest on this path (guarded above), so getSoundingOctave() is always engaged.
+    return getSoundingPitchClass() + std::to_string(getSoundingOctave().value());
 }
 
 const std::string Note::getDiatonicWrittenPitchClass() const {
@@ -766,21 +771,25 @@ const std::string Note::getDiatonicSoundingPitchClass() const {
     return getSoundingPitchClass().substr(0, 1);
 }
 
-int Note::getSoundingOctave() const {
+std::optional<int> Note::getSoundingOctave() const {
     // Fix round 2: arithmetic, derived from the (now again arithmetic) getMidiNumber() -- the
     // pre-Task-6 body was `Helper::midiNote2octave(_midiNumber).value_or(-2)`; _midiNumber was
     // itself always arithmetic, so this is that same formula through the new single source of
     // truth. Deliberately NOT computeSoundingPitch().getOctave(): that tracks octave through the
     // same pre-existing, unfixed scale-lookup defect getOctave() below still (correctly, by
     // design) reproduces, and this method must not inherit it.
-    return Helper::midiNote2octave(getMidiNumber()).value_or(-2);
+    // Task 6b: Helper::midiNote2octave() already returns an empty optional for MIDI_REST, so the
+    // `-2` sentinel that used to replace it here is simply gone; nothing else changes.
+    return Helper::midiNote2octave(getMidiNumber());
 }
 
 const std::string Note::getWrittenPitchClass() const { return _writtenPitch.getPitchClass(); }
 
 const std::string Note::getWrittenPitch() const { return _writtenPitch.getPitch(); }
 
-int Note::getWrittenOctave() const { return _writtenPitch.getOctave().value_or(-2); }
+// Task 6b: propagates _writtenPitch's own optional instead of collapsing a rest to the `-2`
+// sentinel.
+std::optional<int> Note::getWrittenOctave() const { return _writtenPitch.getOctave(); }
 
 std::string Note::getPitch() const { return getSoundingPitch(); }
 

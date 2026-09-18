@@ -1,6 +1,7 @@
 #pragma once
 
 #include <functional>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -317,21 +318,27 @@ class Note {
 
     /**
      * @brief Returns the sounding octave (after transposition).
-     * @return Sounding octave number.
+     * @details An empty optional means this note is a rest, which has no octave.
+     *          isNoteOff() is the authoritative test.
+     * @return Sounding octave number, or an empty optional for a rest.
      */
-    int getSoundingOctave() const;
+    std::optional<int> getSoundingOctave() const;
 
     /**
      * @brief Returns the written octave (as notated).
-     * @return Written octave number.
+     * @details An empty optional means this note is a rest, which has no octave.
+     *          isNoteOff() is the authoritative test.
+     * @return Written octave number, or an empty optional for a rest.
      */
-    int getWrittenOctave() const;
+    std::optional<int> getWrittenOctave() const;
 
     /**
      * @brief Returns the octave (sounding).
-     * @return Octave number.
+     * @details An empty optional means this note is a rest, which has no octave.
+     *          isNoteOff() is the authoritative test.
+     * @return Octave number, or an empty optional for a rest.
      */
-    int getOctave() const;
+    std::optional<int> getOctave() const;
 
     /**
      * @brief Returns the pitch class (sounding).

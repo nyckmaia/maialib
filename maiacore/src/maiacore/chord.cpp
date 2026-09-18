@@ -2445,7 +2445,9 @@ Chord Chord::getCloseChord(const bool enharmonyNotes) {
     Chord closeChord(_closeStack);
 
     const Note& rootNote = getRoot();
-    const int rootNoteOctave = rootNote.getWrittenOctave();
+    // Chord::addNote() skips rests, so every note reachable through a Chord is a real pitch and
+    // getWrittenOctave() is always engaged here.
+    const int rootNoteOctave = rootNote.getWrittenOctave().value();
 
     const std::vector<Note> originalNotes = getNotes();
 
@@ -2469,7 +2471,8 @@ Chord Chord::getCloseChord(const bool enharmonyNotes) {
                 return note.getPitchClass() == closeNote.getPitchClass();
             });
 
-        if (extendedNoteWithOriginalOct->getOctave() == rootNoteWithOriginalOct->getOctave()) {
+        if (extendedNoteWithOriginalOct->getOctave().value() ==
+            rootNoteWithOriginalOct->getOctave().value()) {
             closeNote.setOctave(rootNoteOctave);
         }
     }
@@ -2821,14 +2824,16 @@ void sortHeapOctaves(NoteDataHeap* heap) {
         const int currentNoteFirstOct = currentNote.getMidiNumber() % 12;
         const int nextNoteFirstOct = nextNote.getMidiNumber() % 12;
 
+        // Every note reachable here came through Chord::addNote(), which skips rests, so
+        // getWrittenOctave() is always engaged.
         if (nextNoteFirstOct > currentNoteFirstOct) {
             // Special cases:
             if (nextNote.getPitchClass() == "Cb" || nextNote.getPitchClass() == "Cbb") {
-                nextNote.setOctave(currentNote.getWrittenOctave() + 1);
+                nextNote.setOctave(currentNote.getWrittenOctave().value() + 1);
             } else if (currentNote.getPitchClass() == "B#" || currentNote.getPitchClass() == "Bx") {
-                nextNote.setOctave(currentNote.getWrittenOctave() + 1);
+                nextNote.setOctave(currentNote.getWrittenOctave().value() + 1);
             } else {
-                nextNote.setOctave(currentNote.getWrittenOctave());
+                nextNote.setOctave(currentNote.getWrittenOctave().value());
             }
 
             continue;
@@ -2837,9 +2842,9 @@ void sortHeapOctaves(NoteDataHeap* heap) {
         if (nextNoteFirstOct < currentNoteFirstOct) {
             // Special cases:
             if (nextNote.getPitchClass() == "B#" || nextNote.getPitchClass() == "Bx") {
-                nextNote.setOctave(currentNote.getWrittenOctave());
+                nextNote.setOctave(currentNote.getWrittenOctave().value());
             } else {
-                nextNote.setOctave(currentNote.getWrittenOctave() + 1);
+                nextNote.setOctave(currentNote.getWrittenOctave().value() + 1);
             }
         }
     }

@@ -198,7 +198,9 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getPitch(), "rest")
         self.assertEqual(note.getMidiNumber(), -1)
         self.assertEqual(note.getPitchStep(), "rest")
-        self.assertEqual(note.getOctave(), -2)
+        # Task 6b: was self.assertEqual(note.getOctave(), -2); getOctave() now returns
+        # int | None, None for a rest instead of the -2 sentinel.
+        self.assertIsNone(note.getOctave())
 
     # T5 (Python parity for T2): setIsNoteOn(False) makes every getter report a rest, not just
     # isNoteOn(). Before this task, getPitchClass()/getMidiNumber() kept reporting the note's
@@ -212,7 +214,8 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getPitch(), "rest")
         self.assertEqual(note.getMidiNumber(), -1)
         self.assertEqual(note.getPitchStep(), "rest")
-        self.assertEqual(note.getOctave(), -2)
+        # Task 6b: was self.assertEqual(note.getOctave(), -2).
+        self.assertIsNone(note.getOctave())
 
     # T5 (Python parity for T3): setIsNoteOn(True) on a rest refuses (warns, does not throw)
     # instead of flipping the flag under a still-empty pitch.
@@ -252,7 +255,8 @@ class NoteComposesPitch(unittest.TestCase):
         note = ml.Note("rest")
         note.setAlter(0.5)  # must not raise
         self.assertTrue(note.isNoteOff())
-        self.assertEqual(note.getOctave(), -2)
+        # Task 6b: was self.assertEqual(note.getOctave(), -2).
+        self.assertIsNone(note.getOctave())
         self.assertEqual(note.getPitchClass(), "rest")
 
     def testSetStepResurrectsRestToOctave4(self):
@@ -282,6 +286,59 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getSoundingPitch(), "rest")
         self.assertEqual(note.getWrittenPitch(), "rest")
         self.assertEqual(note.getMidiNumber(), -1)
+
+    # Task 6b, Python parity: a rest has no octave. Note's three octave getters used to
+    # collapse that absence to the numeric sentinel -2; they now return int | None, None for a
+    # rest, unchanged for every non-rest input.
+    def testRestHasNoOctave(self):
+        rest = ml.Note("", isNoteOn=False)
+        self.assertIsNone(rest.getOctave())
+        self.assertIsNone(rest.getWrittenOctave())
+        self.assertIsNone(rest.getSoundingOctave())
+        self.assertEqual(ml.Note("C#4").getOctave(), 4)
+
+    # Task 6b, section K, Python parity: the rest check in Pitch::setOctave() (reached through
+    # Note::setOctave()) now runs before the range check, so a rest given an out-of-range
+    # octave -- including the literal old -2 sentinel -- warns and does not mutate, instead of
+    # throwing. A genuine out-of-range octave on a real (non-rest) note still throws.
+    def testSetOctaveOutOfRangeOnRestWarnsAndDoesNotThrow(self):
+        note = ml.Note("rest")
+        note.setOctave(-2)  # must not raise
+        self.assertTrue(note.isNoteOff())
+        self.assertIsNone(note.getOctave())
+
+        note.setOctave(12)  # must not raise
+        self.assertTrue(note.isNoteOff())
+        self.assertIsNone(note.getOctave())
+
+        sounding = ml.Note("C4")
+        with self.assertRaises(RuntimeError):
+            sounding.setOctave(-2)
+        self.assertEqual(sounding.getOctave(), 4)
+
+    # Task 6b, finding N1, Python parity (see note-test.cpp's
+    # NoteComposesPitch.SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval for the full
+    # reasoning): setIsNoteOn(False) deliberately keeps a transposing note's interval, and
+    # setStep() resurrecting a rest does not clear it either. The revived note is not leaking
+    # stale state -- it is identical to constructing the same written pitch on the same
+    # transposing instrument from scratch. Pinned as defensible, not a bug.
+    def testSetStepAfterSetIsNoteOnFalseKeepsTransposingInterval(self):
+        note = ml.Note(
+            "C4", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
+        )
+        self.assertEqual(note.getSoundingPitch(), "Bb3")
+
+        note.setIsNoteOn(False)
+        self.assertTrue(note.isNoteOff())
+        self.assertTrue(note.isTransposed())
+
+        note.setStep("C")
+        self.assertTrue(note.isNoteOn())
+        self.assertTrue(note.isTransposed())
+        self.assertEqual(note.getTransposeDiatonic(), -1)
+        self.assertEqual(note.getTransposeChromatic(), -2)
+        self.assertEqual(note.getWrittenPitch(), "C4")
+        self.assertEqual(note.getSoundingPitch(), "Bb3")
 
 
 if __name__ == "__main__":

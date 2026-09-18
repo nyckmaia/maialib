@@ -939,6 +939,21 @@ TEST(Note, setPitchClassUpdatesAccidentalAndMidi) {
     EXPECT_EQ(n.getMidiNumber(), 63);
 }
 
+// Task 6b: a rest has no octave. Note's three octave getters used to collapse that absence to
+// the numeric sentinel -2 (0 and -1 are both legitimate octaves, so no int value is safe to use
+// as a stand-in). They now return std::optional<int>, empty for a rest, unchanged for every
+// non-rest input.
+TEST(Note, restHasNoOctaveAnywhere) {
+    const Note rest("");
+    EXPECT_FALSE(rest.getOctave().has_value());
+    EXPECT_FALSE(rest.getWrittenOctave().has_value());
+    EXPECT_FALSE(rest.getSoundingOctave().has_value());
+
+    const Note note("C#4");
+    EXPECT_EQ(note.getOctave().value(), 4);
+    EXPECT_EQ(note.getWrittenOctave().value(), 4);
+}
+
 // T1: Note(pitch, isNoteOn=false) is a fully consistent rest -- every getter agrees, not just
 // isNoteOn(). The "C4" is deliberately discarded (see the constructor's rest guard).
 TEST(NoteComposesPitch, ConstructorIsNoteOnFalseIsAFullyConsistentRest) {
@@ -949,7 +964,9 @@ TEST(NoteComposesPitch, ConstructorIsNoteOnFalseIsAFullyConsistentRest) {
     EXPECT_EQ(n.getPitch(), "rest");
     EXPECT_EQ(n.getMidiNumber(), -1);
     EXPECT_EQ(n.getPitchStep(), "rest");
-    EXPECT_EQ(n.getOctave(), -2);
+    // Task 6b: was EXPECT_EQ(n.getOctave(), -2); getOctave() now returns std::optional<int>,
+    // empty for a rest instead of the -2 sentinel.
+    EXPECT_FALSE(n.getOctave().has_value());
 }
 
 // T2: setIsNoteOn(false) used to only flip a bool, leaving the pitch string/MIDI fields stale
@@ -965,7 +982,9 @@ TEST(NoteComposesPitch, SetIsNoteOnFalseReportsRestEverywhere) {
     EXPECT_EQ(n.getPitch(), "rest");
     EXPECT_EQ(n.getMidiNumber(), -1);
     EXPECT_EQ(n.getPitchStep(), "rest");
-    EXPECT_EQ(n.getOctave(), -2);
+    // Task 6b: was EXPECT_EQ(n.getOctave(), -2); see
+    // ConstructorIsNoteOnFalseIsAFullyConsistentRest.
+    EXPECT_FALSE(n.getOctave().has_value());
 }
 
 // T3: setIsNoteOn(true) on a rest carries no pitch to resurrect one with, so it must refuse
@@ -983,13 +1002,15 @@ TEST(NoteComposesPitch, SetIsNoteOnTrueOnRestRefusesAndWarns) {
 }
 
 // T4: getOctave()/getWrittenOctave() used to return 0 for a rest while getSoundingOctave()
-// returned -2 -- three different answers to "what octave is a rest". All three now derive from
-// Pitch's std::optional<int> octave and agree on the sentinel -2 (0 is a legitimate octave).
-TEST(NoteComposesPitch, AllOctaveGettersAgreeOnRestSentinel) {
+// returned -2 (then, after Task 6, all three agreed on -2) -- pre-Task-6b, three different
+// answers to "what octave is a rest" collapsed onto a numeric sentinel that was itself unsound
+// (0 and -1 are both legitimate octaves). Task 6b removes the sentinel: all three now derive
+// from Pitch's std::optional<int> octave and agree on an EMPTY optional for a rest.
+TEST(NoteComposesPitch, AllOctaveGettersAgreeRestHasNoOctave) {
     const Note n("rest");
-    EXPECT_EQ(n.getOctave(), -2);
-    EXPECT_EQ(n.getWrittenOctave(), -2);
-    EXPECT_EQ(n.getSoundingOctave(), -2);
+    EXPECT_FALSE(n.getOctave().has_value());
+    EXPECT_FALSE(n.getWrittenOctave().has_value());
+    EXPECT_FALSE(n.getSoundingOctave().has_value());
 }
 
 // T7: setOctave() used to write the caller's octave straight into a rest's fields
@@ -999,7 +1020,8 @@ TEST(NoteComposesPitch, SetOctaveOnRestRefusesAndWarns) {
     Note n("rest");
     n.setOctave(5);  // must not throw
     EXPECT_TRUE(n.isNoteOff());
-    EXPECT_EQ(n.getOctave(), -2);
+    // Task 6b: was EXPECT_EQ(n.getOctave(), -2);
+    EXPECT_FALSE(n.getOctave().has_value());
     EXPECT_EQ(n.getPitchClass(), "rest");
 }
 
@@ -1009,7 +1031,8 @@ TEST(NoteComposesPitch, SetAlterOnRestRefusesAndWarns) {
     Note n("rest");
     n.setAlter(0.5f);  // must not throw
     EXPECT_TRUE(n.isNoteOff());
-    EXPECT_EQ(n.getOctave(), -2);
+    // Task 6b: was EXPECT_EQ(n.getOctave(), -2);
+    EXPECT_FALSE(n.getOctave().has_value());
     EXPECT_EQ(n.getPitchClass(), "rest");
 }
 
@@ -1023,6 +1046,48 @@ TEST(NoteComposesPitch, SetStepResurrectsRestToOctave4) {
     EXPECT_FALSE(n.isNoteOff());
     EXPECT_EQ(n.getPitch(), "C4");
     EXPECT_EQ(n.getOctave(), 4);
+}
+
+// Task 6b, finding N1 -- MEASURED, and pinned as DEFENSIBLE (not a bug).
+//
+// setIsNoteOn(false) deliberately keeps a note's transposing interval (see the CHANGELOG entry
+// for fix round 5/F1 and the constructor comment on _writtenPitch): silencing a transposing
+// instrument's note is temporary, and the instrument it belongs to does not stop transposing
+// while it is quiet. setStep() is permissive on a rest (T9 above) and resurrects it at octave 4
+// -- but it only touches _writtenPitch; it has no reason to touch _transposeDiatonic/
+// _transposeChromatic; and it should not guess whether the caller wants the note to keep
+// belonging to the same transposing instrument. So the dead interval survives resurrection too.
+//
+// Measured (Bb clarinet, transposeDiatonic=-1, transposeChromatic=-2): after
+// setIsNoteOn(false); setStep("C"), the note is written "C4" and sounds "Bb3" -- byte-for-byte
+// what a *fresh* Note("C4", transposeDiatonic=-1, transposeChromatic=-2) reports. Resurrection
+// is not leaking stale, inconsistent state (the T2 defect Task 6 fixed): the revived note is
+// fully self-consistent, and identical to constructing the same written pitch on the same
+// transposing instrument from scratch. That is the defensible reading, so it is pinned as-is;
+// a caller who wants a non-transposing note back must clear the interval explicitly (e.g.
+// setTransposingInterval(0, 0)), exactly as setPitch("rest") already does when it clears the
+// interval as part of fully replacing the pitch.
+TEST(NoteComposesPitch, SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval) {
+    Note n("C4", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+           /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
+    ASSERT_EQ(n.getSoundingPitch(), "Bb3");
+
+    n.setIsNoteOn(false);
+    ASSERT_TRUE(n.isNoteOff());
+    // the dead interval survives silencing (documented, fix round 5)
+    ASSERT_TRUE(n.isTransposed());
+
+    n.setStep("C");
+    EXPECT_TRUE(n.isNoteOn());
+    EXPECT_TRUE(n.isTransposed());
+    EXPECT_EQ(n.getTransposeDiatonic(), -1);
+    EXPECT_EQ(n.getTransposeChromatic(), -2);
+    EXPECT_EQ(n.getWrittenPitch(), "C4");
+    // The revived note sounds transposed, matching a note freshly constructed with the same
+    // written pitch and the same transposing interval -- not a leftover-state inconsistency.
+    EXPECT_EQ(n.getSoundingPitch(), "Bb3");
+    const Note fresh("C4", RhythmFigure::QUARTER, true, false, -1, -2);
+    EXPECT_EQ(n.getSoundingPitch(), fresh.getSoundingPitch());
 }
 
 // Fix round 1 (controller ruling on Task 6 concern 2): getAlterSymbol() forwarding to the
@@ -1249,42 +1314,49 @@ TEST(NoteComposesPitch, GetPitchIsWellFormedRestForTransposedNoteTurnedOff) {
     EXPECT_EQ(control.getPitch(), "rest");
 }
 
-// Fix round 5, finding F2 -- PINNED AS DEFECTIVE, deliberately NOT fixed here.
-//
-// Round trip hazard: reading getOctave() off a rest and writing it straight back throws.
-// getOctave() answers the -2 rest sentinel, -2 is outside the valid octave range (-1..11), and
-// Pitch::setOctave()'s range check is a LOG_ERROR, which throws.
-//
-// THE THROW BELOW IS THE DEFECTIVE BEHAVIOUR. The correct behaviour is to refuse with a warning
-// and no mutation, as setOctave() already does for an in-range octave on a rest (T7). It is
-// backlog, not Task 6's, for two measured reasons:
-//   1. The throw is VALUE-driven, not rest-driven. setOctave(-2) throws on an ordinary sounding
-//      note too -- and so did d26aa67, measured. Only the rest case differs between the two
-//      commits, and only because getOctave() returns -2 at HEAD where d26aa67 returned 0.
-//   2. TASK 6b DELETES THAT SENTINEL, replacing it with an empty std::optional<int>. That
-//      removes the hazard at its source, so any fix applied here would be undone by 6b.
-// Separately, and reported to the controller rather than changed here: inside Pitch::setOctave()
-// the throwing range check runs BEFORE the refuse-on-rest check, so a rest is validated as
-// though it had an octave. Reordering those two would make this case warn instead of throw, but
-// it treats the symptom; the sentinel is the cause. Both belong to Task 6b.
-// When 6b lands, this test must be replaced by one asserting a warning and no mutation.
-TEST(NoteComposesPitch, SetOctaveWithOwnOctaveOnRestThrowsPinnedDefective) {
+// Fix round 5, finding F2 -- was PINNED AS DEFECTIVE; Task 6b closes it, on both halves the
+// controller identified (section L of the Task 6b brief):
+//   1. THE SENTINEL: getOctave() on a rest used to answer the numeric -2 sentinel, which is
+//      itself outside Pitch's valid octave range (-1..11), so writing it straight back into
+//      setOctave() hit the range check and threw. That sentinel is gone: getOctave() now
+//      answers an empty std::optional<int>, which cannot be fed to setOctave(int) at all --
+//      the round trip this test used to pin is no longer expressible, let alone hazardous.
+//   2. THE CHECK ORDER (section K): independently of (1), Pitch::setOctave() ran its
+//      throwing range check BEFORE its refuse-on-rest warning, so a rest handed ANY
+//      out-of-range octave -- not just the old -2 sentinel -- was validated as though it had
+//      one and threw. The rest check now runs first: an operation that is inapplicable to a
+//      rest is inapplicable whatever the argument.
+// This test now pins the CORRECTED behaviour: a rest given an out-of-range octave (including
+// the literal old sentinel value, -2) warns and does not mutate, on both Note and its own
+// terms, while a genuine out-of-range octave on a real (non-rest) pitch still throws --
+// unchanged, and still exercised independently by Pitch.setOctaveRejectsOutOfRange /
+// note-test.cpp's own in-range-on-rest test (T7).
+TEST(NoteComposesPitch, SetOctaveOutOfRangeOnRestWarnsAndDoesNotThrow) {
     Note n("rest");
-    ASSERT_EQ(n.getOctave(), -2);  // the sentinel Task 6b removes
+    ASSERT_FALSE(n.getOctave().has_value());  // no sentinel to round-trip any more
 
-    // DEFECTIVE: the round trip throws. Correct would be a LOG_WARN and no mutation.
-    EXPECT_THROW(n.setOctave(n.getOctave()), std::runtime_error);
-    EXPECT_TRUE(n.isNoteOff());  // nothing was mutated by the failed call
-    EXPECT_EQ(n.getOctave(), -2);
+    // The literal old sentinel value, handed directly to setOctave(): must warn, not throw.
+    EXPECT_NO_THROW(n.setOctave(-2));
+    EXPECT_TRUE(n.isNoteOff());  // nothing was mutated by the refused call
+    EXPECT_FALSE(n.getOctave().has_value());
 
-    // Control 1: an in-range octave on the same rest refuses with a warning and does not throw
-    // (T7's pinned policy), which is what makes the throw above specifically a value problem.
+    // A different out-of-range value confirms this is the rest check firing first, not a
+    // value-specific carve-out for -2.
+    EXPECT_NO_THROW(n.setOctave(12));
+    EXPECT_TRUE(n.isNoteOff());
+    EXPECT_FALSE(n.getOctave().has_value());
+
+    // Control 1: an in-range octave on the same rest also refuses with a warning (T7's pinned
+    // policy) -- rest-ness alone is sufficient to refuse, regardless of range.
     EXPECT_NO_THROW(n.setOctave(5));
-    EXPECT_EQ(n.getOctave(), -2);
+    EXPECT_FALSE(n.getOctave().has_value());
 
-    // Control 2: the throw is not about rests at all -- a sounding note rejects -2 the same way,
-    // and d26aa67 did too (measured).
+    // Control 2: the range check is still alive and still throws for a genuine out-of-range
+    // octave on a real (non-rest) pitch -- section K only reorders the two checks, it does not
+    // remove or weaken either one.
     Note sounding("C4");
     EXPECT_THROW(sounding.setOctave(-2), std::runtime_error);
+    EXPECT_EQ(sounding.getOctave(), 4);
+    EXPECT_THROW(sounding.setOctave(12), std::runtime_error);
     EXPECT_EQ(sounding.getOctave(), 4);
 }
