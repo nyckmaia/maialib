@@ -52,8 +52,10 @@ class Note {
      *          timing: an unspellable written pitch class under a nonzero transpose throws
      *          immediately from setTransposingInterval(), not from a later getter call.
      * @return The sounding Pitch.
-     * @throws std::runtime_error If this note is transposed and its written pitch class is not
-     *         one of the sharp/flat/double-sharp/double-flat single-octave scales.
+     * @throws std::runtime_error If this note is transposed and its sounding pitch cannot be
+     *         spelled within octaves -1..11 (see Helper::steps2pitch()). A sounding pitch below
+     *         MIDI 0 is NOT an error here -- it answers a rest, so such a note stays constructible
+     *         -- and getSoundingPitch() reports that condition diagnosably instead.
      */
     Pitch computeSoundingPitch() const;
 
@@ -661,10 +663,15 @@ class Note {
 
     /**
      * @brief Transposes the note by a number of semitones and optional accidental type.
-     * @param semitones Number of semitones.
+     * @details Transposes on exact pitch positions, so a quarter tone survives: transposing
+     *          "C4" by 0.5 gives "C1x4", and transposing "C1x4" by 2 gives "D1x4".
+     * @param semitones Number of semitones; must be a multiple of 0.5 (e.g. 0.5 for one quarter
+     *        tone up, -2 for a whole tone down).
      * @param accType Accidental type (e.g., "#", "b").
+     * @throws std::runtime_error If semitones is not a multiple of 0.5, or if the transposed
+     *         pitch cannot be spelled within octaves -1..11.
      */
-    void transpose(const int semitones, const std::string& accType = MUSIC_XML::ACCIDENT::NONE);
+    void transpose(const float semitones, const std::string& accType = MUSIC_XML::ACCIDENT::NONE);
 
     /**
      * @brief Serializes the note to MusicXML format.

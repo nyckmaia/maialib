@@ -710,6 +710,47 @@ TEST(NoteTransposition, TransposeDownAcrossOctave) {
     EXPECT_EQ(note.getMidiNumber(), 58);
 }
 
+// Task 10: Note::transpose() took `const int`, so half a semitone could not even be expressed as
+// an argument; and it delegated to Helper::transposePitch(), which rounded the pitch to a MIDI
+// integer BEFORE applying the interval, destroying any quarter tone it was given. Both are fixed
+// by computing on exact pitch positions.
+TEST(NoteTransposition, TransposeByQuarterTone) {
+    Note note("C4");
+
+    note.transpose(0.5f);
+    EXPECT_EQ(note.getPitch(), "C1x4");
+    EXPECT_TRUE(note.isQuarterTone());
+    EXPECT_EQ(note.getMidiNumber(), 61);  // ties upward, as getMidiNumber() always has
+
+    note.transpose(-0.5f);  // and back to where it started
+    EXPECT_EQ(note.getPitch(), "C4");
+    EXPECT_FALSE(note.isQuarterTone());
+    EXPECT_EQ(note.getMidiNumber(), 60);
+}
+
+TEST(NoteTransposition, TransposePreservesAQuarterToneAcrossAWholeToneInterval) {
+    Note note("C1x4");
+
+    note.transpose(2.0f);
+    EXPECT_EQ(note.getPitch(), "D1x4");  // rounded to "D4" before Task 10
+    EXPECT_TRUE(note.isQuarterTone());
+}
+
+TEST(NoteTransposition, TransposeRejectsAnIntervalOffTheQuarterToneGrid) {
+    Note note("C4");
+
+    try {
+        note.transpose(0.3f);
+        FAIL() << "Expected std::runtime_error for a transposition off the quarter-tone grid";
+    } catch (const std::runtime_error& e) {
+        const std::string what = e.what();
+        EXPECT_NE(what.find("multiple of 0.5"), std::string::npos) << "message: " << what;
+        EXPECT_NE(what.find("0.3"), std::string::npos) << "message: " << what;
+    }
+
+    EXPECT_EQ(note.getPitch(), "C4");  // the refused call changed nothing
+}
+
 // ===================================================================================================
 // MIDI AND FREQUENCY
 // ===================================================================================================
@@ -1140,41 +1181,47 @@ TEST(NoteComposesPitch, GetAlterSymbolForwardsToSoundingPitchOnTransposedNote) {
 // sharps, flats and double accidentals) that found zero divergence between this fixed HEAD and
 // d26aa67 on getMidiNumber(), getOctave() and getPitch(), everywhere.
 //
-// getPitch()'s output below is pinned as CURRENT, DEFECTIVE behaviour, not the intended one.
-// Two separate, genuinely pre-existing defects reproduce byte-for-byte at d26aa67 and belong to
-// Task 10's scale-lookup rewrite, not this branch:
-//   1. Pitch CLASS (letter+accidental): e.g. "Bb" where "B" is the correct spelling for this
-//      MIDI number.
-//   2. Octave-increment boundary: computeSoundingPitch()'s octave-wrap check only fires for a
-//      transpose index strictly greater than one octave, so an exact +/-12 semitone transpose
-//      (the Piccolo case below) fails to increment/decrement the octave at all. The CORRECT
-//      octave for that case is called out explicitly in that test.
+// TASK 10 REWROTE THE THREE TESTS BELOW. They previously pinned the scale lookup's DEFECTIVE
+// spellings and octaves as current behaviour, each with a comment recording the correct value and
+// naming Task 10 as its owner. That lookup is now deleted (see computeSoundingPitch() in
+// note.cpp), so each assertion below carries the correct value, and the old one is recorded
+// beside it so the change is auditable:
+//   case                        getPitch() before   after     getOctave() before   after
+//   B-flat clarinet C#4 -1/-2   "Bb3"               "B3"      4                    3
+//   horn in F       F#4 -4/-7   "F3"                "B3"      4                    3
+//   piccolo         C4  +7/+12  "C5"                "C5"      4                    5
+//
+// The two spelling defects were separate. The clarinet and the horn both sound MIDI 59, which is
+// B3: the lookup answered "Bb" and "F" because a pitch class found only in its sharp scale still
+// indexed its flat array, at end(). The piccolo's pitch CLASS was already right; its OCTAVE was
+// not, because the lookup's octave-wrap check did not fire at exactly +/-12 semitones.
+//
+// getMidiNumber() is unchanged in all three: it has been arithmetic since Task 6 (fix round 2,
+// below), which is precisely why it was already correct while the spellings around it were not.
 TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForBFlatClarinet) {
     // B-flat clarinet: written C#4 sounds a major second lower.
     const Note n("C#4", RhythmFigure::QUARTER, true, false, -1, -2);
     EXPECT_EQ(n.getMidiNumber(), 59);
-    EXPECT_EQ(n.getOctave(), 4);
-    EXPECT_EQ(n.getPitch(), "Bb3");  // wrong spelling, pre-existing, not this round's to fix
+    EXPECT_EQ(n.getOctave(), 3);     // Task 10: was 4
+    EXPECT_EQ(n.getPitch(), "B3");   // Task 10: was "Bb3"; MIDI 59 is B3
 }
 
 TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForHornInF) {
     // Horn in F: written F#4 sounds a perfect fifth lower.
     const Note n("F#4", RhythmFigure::QUARTER, true, false, -4, -7);
     EXPECT_EQ(n.getMidiNumber(), 59);
-    EXPECT_EQ(n.getOctave(), 4);
-    EXPECT_EQ(n.getPitch(), "F3");  // wrong spelling, pre-existing, not this round's to fix
+    EXPECT_EQ(n.getOctave(), 3);     // Task 10: was 4
+    EXPECT_EQ(n.getPitch(), "B3");   // Task 10: was "F3"; MIDI 59 is B3, not F3
 }
 
 TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForPiccolo) {
     // Piccolo: written C4 sounds an octave higher.
     const Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
     EXPECT_EQ(n.getMidiNumber(), 72);
-    // Pinning CURRENT, DEFECTIVE behaviour (Task 10's pre-existing octave-increment boundary
-    // bug, see the block comment above): the correct octave for this construction is 5, one
-    // higher than written, matching a full-octave transpose. 4 (== the written octave,
-    // unchanged) is what computeSoundingPitch() actually returns today, because its octave-wrap
-    // check does not fire for a transpose index of exactly one octave (+/-12 semitones).
-    EXPECT_EQ(n.getOctave(), 4);
+    // Task 10: was 4. An exact +12 transpose now increments the octave, so the sounding octave is
+    // one above the written one, and getOctave() agrees with getSoundingOctave() below.
+    EXPECT_EQ(n.getOctave(), 5);
+    EXPECT_EQ(n.getSoundingOctave(), 5);
     EXPECT_EQ(n.getPitch(), "C5");
 }
 
@@ -1200,79 +1247,110 @@ TEST(NoteComposesPitch, GetEnharmonicPitchAgreesWithGetPitchOnTransposedNote) {
     // comparing two live calls rather than a hard-coded literal, so a future legitimate change
     // of spelling moves both sides together and a genuine regression is still caught.
     //
-    // It is NOT a general invariant of the library today, despite reading like one. Measured, it
-    // holds here only because the Piccolo's sounding pitch CLASS happens to be spelled
-    // correctly; it FAILS right now for the B-flat clarinet (59 vs 58) and the horn in F (59 vs
-    // 53), where the pre-existing transpose scale-lookup picks the wrong spelling. Task 10's
-    // rewrite of that lookup is what would make "an enharmonic respelling describes the same
-    // pitch as the note it was spelled from" true everywhere -- do not promote this check to
-    // those two cases before then.
+    // TASK 10 PROMOTED THIS TO THE OTHER TWO CASES, in the test below. It used to hold only for
+    // the Piccolo, whose sounding pitch CLASS happened to be spelled correctly, and FAILED for
+    // the B-flat clarinet (59 vs 58) and the horn in F (59 vs 53), where the scale lookup picked
+    // the wrong spelling. Deleting that lookup is what makes "an enharmonic respelling describes
+    // the same pitch as the note it was spelled from" true everywhere.
     EXPECT_EQ(Note(n.getEnharmonicPitch(false)).getMidiNumber(), n.getMidiNumber());
     EXPECT_EQ(Note(n.getEnharmonicPitch(true)).getMidiNumber(), n.getMidiNumber());
 }
 
-// Fix round 4 (controller ruling on re-review 2's finding P1). getOctave() is the last method
-// that still takes a NUMBER out of computeSoundingPitch()'s pre-existing, defective transpose
-// scale lookup. On the CONSTRUCTION path that faithfully reproduces d26aa67 (the round-2 sweep
-// confirmed it in 1197 of 1197 combinations). On the setOctave() MUTATION path it does not:
-// d26aa67's setOctave() recomputed the sounding octave arithmetically (written MIDI + chromatic
-// transpose -> midiNote2pitch -> octave) and bypassed the lookup entirely, so after any
-// setOctave() call the two answers differ by a full octave for every transposing instrument
-// whose pitch class that lookup mis-spells.
+// Task 10: the promotion the test above could not make before the scale lookup was deleted. An
+// enharmonic respelling must describe the same pitch as the note it was spelled from, for EVERY
+// transposing instrument -- not just the one whose spelling happened to come out right. Measured
+// before the rewrite: the clarinet respelled MIDI 59 as 58 and the horn as 53, because
+// getEnharmonicPitch() re-derives from getPitch(), which carried the lookup's wrong pitch class.
+TEST(NoteComposesPitch, GetEnharmonicPitchDescribesTheSamePitchForEveryTransposingInstrument) {
+    const std::vector<std::pair<std::string, std::pair<int, int>>> instruments = {
+        {"C#4", {-1, -2}},  // B-flat clarinet
+        {"F#4", {-4, -7}},  // horn in F
+        {"C4", {7, 12}}};   // piccolo
+
+    for (const auto& instrument : instruments) {
+        const Note n("" + instrument.first, RhythmFigure::QUARTER, /*isNoteOn=*/true,
+                     /*inChord=*/false, instrument.second.first, instrument.second.second);
+        EXPECT_EQ(Note(n.getEnharmonicPitch(false)).getMidiNumber(), n.getMidiNumber())
+            << "written pitch: " << instrument.first;
+        EXPECT_EQ(Note(n.getEnharmonicPitch(true)).getMidiNumber(), n.getMidiNumber())
+            << "written pitch: " << instrument.first;
+    }
+}
+
+// TASK 10 REWROTE THIS TEST. It previously pinned getOctave() as KNOWN-DEFECTIVE on the
+// setOctave() mutation path: getOctave() was the last method taking a NUMBER out of
+// computeSoundingPitch()'s scale lookup, and that lookup's octave-wrap check never fired for
+// these transpositions, so all three cases answered "the written octave, unchanged".
 //
-// THE OCTAVES PINNED BELOW ARE THE KNOWN-DEFECTIVE VALUES, NOT THE CORRECT ONES. Measured,
-// HEAD against a d26aa67 worktree, calling setOctave() with the note's OWN current octave (4),
-// so nothing but the derivation mechanism can explain the difference:
+//   case                         getOctave() before   after (correct)
+//   B-flat clarinet  C#4 -1/-2           4                   3
+//   horn in F        F#4 -4/-7           4                   3
+//   piccolo          C4  +7/+12          4                   5
 //
-//   case                         getOctave() HEAD   getOctave() d26aa67   CORRECT
-//   B-flat clarinet  C#4 -1/-2           4                   3              3
-//   horn in F        F#4 -4/-7           4                   3              3
-//   piccolo          C4  +7/+12          4                   5              5
+// The correct answer is the sounding octave: one BELOW written for the clarinet and the horn, one
+// ABOVE for the piccolo. That is what getSoundingOctave() (arithmetic since Task 6) has returned
+// all along, and it is asserted alongside each case here -- the two now agree, which is the point
+// of the fix. The old comment recorded the correct values and named Task 10 as the owner; this is
+// that correction.
 //
-// HEAD answers "the written octave, unchanged" in all three, because that lookup's octave-wrap
-// check never fires for these transpositions. The correct answer is the sounding octave: one
-// BELOW written for the clarinet and horn, one ABOVE for the piccolo -- which is exactly what
-// getSoundingOctave() (arithmetic since round 2) already returns, asserted alongside each case.
-//
-// This is pinned, NOT restored, deliberately. d26aa67 was history-dependent here: constructing
-// a transposed note reported one octave, then calling setOctave() with that very same value
-// reported another, without anything about the note having changed. HEAD is consistently wrong
-// where d26aa67 was inconsistently wrong, and consistent wrongness is what lets TASK 10 fix the
-// scale lookup once and correct every dependant at the same time. TASK 10 OWNS THIS: when that
-// lookup is rewritten, the three getOctave() expectations below must become 3, 3 and 5.
-TEST(NoteComposesPitch, GetOctaveAfterSetOctaveOnTransposedNoteIsPinnedDefective) {
+// What this test still guards is CONSISTENCY ACROSS THE MUTATION PATH: setOctave() called with
+// the note's OWN current octave (4) is a no-op value, so getOctave() must answer the same thing
+// before and after it. d26aa67 was history-dependent exactly here -- constructing a transposed
+// note reported one octave, then re-setting that same octave reported another -- and nothing may
+// reintroduce that.
+TEST(NoteComposesPitch, GetOctaveIsUnchangedByASetOctaveNoOpOnATransposedNote) {
     // B-flat clarinet: written C#4 sounds a major second lower.
     {
         Note n("C#4", RhythmFigure::QUARTER, true, false, -1, -2);
-        ASSERT_EQ(n.getOctave(), 4);  // construction path: matches d26aa67
-        n.setOctave(4);               // no-op value: the note's own current octave
-        EXPECT_EQ(n.getOctave(), 4);  // DEFECTIVE (Task 10); d26aa67 gave 3; correct is 3
-        EXPECT_EQ(n.getSoundingOctave(), 3);  // arithmetic, correct, untouched by the defect
+        ASSERT_EQ(n.getOctave(), 3);  // construction path
+        n.setOctave(4);               // no-op value: the note's own current WRITTEN octave
+        EXPECT_EQ(n.getOctave(), 3);  // Task 10: was 4
+        EXPECT_EQ(n.getSoundingOctave(), 3);  // arithmetic; now agrees with getOctave()
         EXPECT_EQ(n.getMidiNumber(), 59);
-        EXPECT_EQ(n.getPitch(), "Bb3");  // wrong pitch class, pre-existing (Task 10)
+        EXPECT_EQ(n.getPitch(), "B3");  // Task 10: was "Bb3"
     }
 
     // Horn in F: written F#4 sounds a perfect fifth lower.
     {
         Note n("F#4", RhythmFigure::QUARTER, true, false, -4, -7);
-        ASSERT_EQ(n.getOctave(), 4);
+        ASSERT_EQ(n.getOctave(), 3);
         n.setOctave(4);
-        EXPECT_EQ(n.getOctave(), 4);  // DEFECTIVE (Task 10); d26aa67 gave 3; correct is 3
+        EXPECT_EQ(n.getOctave(), 3);  // Task 10: was 4
         EXPECT_EQ(n.getSoundingOctave(), 3);
         EXPECT_EQ(n.getMidiNumber(), 59);
-        EXPECT_EQ(n.getPitch(), "F3");
+        EXPECT_EQ(n.getPitch(), "B3");  // Task 10: was "F3"
     }
 
     // Piccolo: written C4 sounds an octave higher.
     {
         Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
-        ASSERT_EQ(n.getOctave(), 4);
+        ASSERT_EQ(n.getOctave(), 5);
         n.setOctave(4);
-        EXPECT_EQ(n.getOctave(), 4);  // DEFECTIVE (Task 10); d26aa67 gave 5; correct is 5
+        EXPECT_EQ(n.getOctave(), 5);  // Task 10: was 4
         EXPECT_EQ(n.getSoundingOctave(), 5);
         EXPECT_EQ(n.getMidiNumber(), 72);
         EXPECT_EQ(n.getPitch(), "C5");
     }
+}
+
+// Task 10, section H: a quarter-tone written pitch on a transposing instrument used to throw a
+// bare LOG_ERROR("Unknown note type") -- loud, but naming neither the pitch class nor the interval
+// -- because computeSoundingPitch()'s four twelve-entry scales had no entry for "C1x" and the
+// lookup fell through every branch. With the lookup deleted the case simply works: the sounding
+// position is the written position plus the chromatic interval, quarter tone and all. Verifies
+// that no throw remains on that path, which is what section H asked for.
+TEST(NoteComposesPitch, QuarterTonePitchOnATransposingInstrumentSoundsInsteadOfThrowing) {
+    // B-flat clarinet: written C1x4 (exactly 60.5) sounds a major second lower, 58.5.
+    const Note n("C1x4", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                 /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
+    EXPECT_TRUE(n.isQuarterTone());
+    EXPECT_EQ(n.getSoundingPitch(), "B1b3");
+    EXPECT_EQ(n.getSoundingPitchClass(), "B1b");
+    EXPECT_EQ(n.getAlterSymbol(), "1b");
+    EXPECT_EQ(n.getOctave(), 3);
+    // getMidiNumber() still rounds ties upward: 58.5 -> 59. The spelling above keeps the exact
+    // value the MIDI number rounds away.
+    EXPECT_EQ(n.getMidiNumber(), 59);
 }
 
 // Fix round 5, finding F1 -- a Task 6 REGRESSION, therefore FIXED here (not backlog).

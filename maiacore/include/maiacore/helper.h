@@ -149,6 +149,26 @@ class Helper {
     static const std::string midiNote2pitch(const int midiNote, const std::string& accType = {});
 
     /**
+     * @brief Converts an exact, unrounded pitch position in quarter-tone steps to a pitch string.
+     * @details The fractional counterpart of midiNote2pitch(), and the single place a quarter tone
+     *          is spelled from a numeric position. The position is split into the base semitone it
+     *          rounds to (ties upward, the rule spelling2midiNote() owns) and the remaining
+     *          quarter tone, which is always 0 or -0.5; the base semitone is spelled with
+     *          midiNote2pitch() and the remainder is then folded into that spelling's accidental
+     *          (e.g. 60.5 with accType "" gives "C1x4", since "C4" carries an alter of 0).
+     * @param exactSteps Exact pitch position in semitones, a multiple of 0.5 (e.g. 60.5 for
+     *        "C1x4"). A negative position returns "rest", matching midiNote2pitch().
+     * @param accType Preferred accidental type for the BASE semitone: "", "#", "b", "x" or "bb".
+     *        It is a preference, not a demand: when the requested type cannot absorb the quarter
+     *        tone (a "bb" base is already at the -2 limit, so -2.5 has no spelling), the default
+     *        spelling is used instead and a warning is logged.
+     * @return Pitch string within octaves -1..11.
+     * @throws std::runtime_error If the base semitone cannot be spelled with accType, or if the
+     *         resulting octave falls outside -1..11 (both from midiNote2pitch()).
+     */
+    static const std::string steps2pitch(const float exactSteps, const std::string& accType = {});
+
+    /**
      * @brief Returns all possible pitch spellings for a given MIDI note.
      * @param midiNote MIDI note number.
      * @return Vector of pitch strings.
@@ -281,23 +301,44 @@ class Helper {
     static RhythmFigure noteType2RhythmFigure(const std::string& noteType);
 
     /**
+     * @brief Validates that a transposition interval lands on the quarter-tone grid.
+     * @details Transposition is defined on multiples of 0.5 semitones, because that is the finest
+     *          interval this library can spell: there is no pitch between "C1x4" and "C#4" for a
+     *          0.3-semitone transposition to land on. Shared by all four transposition entry
+     *          points (Note::transpose(), Chord::transpose(), Chord::transposeStackOnly() and
+     *          transposePitch()) so the rule and its message are stated once.
+     * @param semitones Transposition interval in semitones.
+     * @throws std::runtime_error If semitones is not a multiple of 0.5, naming the value.
+     */
+    static void validateTransposeSemitones(const float semitones);
+
+    /**
      * @brief Transposes a pitch string by a number of semitones.
-     * @param pitch Input pitch string.
-     * @param semitones Number of semitones to transpose.
+     * @details Computed on exact pitch positions (see steps2pitch()), so a quarter tone survives
+     *          the transposition instead of being rounded away first: "C1x4" transposed by 2
+     *          gives "D1x4".
+     * @param pitch Input pitch string. A rest transposes to a rest.
+     * @param semitones Number of semitones to transpose; must be a multiple of 0.5 (e.g. 0.5 for
+     *        one quarter tone up, -2 for a whole tone down). 0 returns the pitch unchanged.
      * @param accType Accidental type for output pitch (default: "#").
      * @return Transposed pitch string.
+     * @throws std::runtime_error If semitones is not a multiple of 0.5, if the input is invalid,
+     *         or if the result cannot be spelled within octaves -1..11.
      */
     static const std::string transposePitch(
-        const std::string& pitch, const int semitones,
+        const std::string& pitch, const float semitones,
         const std::string& accType = MUSIC_XML::ACCIDENT::SHARP);
 
     /**
      * @brief Checks if two pitch strings are enharmonically equivalent.
-     * @details Compares the MIDI note numbers of both pitches, so "E#4" and "F4", or "B#3" and
-     *          "C4", are enharmonic. Two rests are considered enharmonic.
+     * @details Compares the exact, unrounded pitch positions of both pitches, so "E#4" and "F4",
+     *          or "B#3" and "C4", are enharmonic, and so are the two spellings of a quarter tone
+     *          ("C1x4" and "D3b4"). A quarter tone is NOT enharmonic with the semitone it rounds
+     *          to: "C1x4" (60.5) and "C#4" (61) are different pitches. Two rests are considered
+     *          enharmonic.
      * @param pitch_A First pitch string.
      * @param pitch_B Second pitch string.
-     * @return True if both pitches have the same MIDI note number.
+     * @return True if both pitches denote the same exact pitch position.
      * @throws std::runtime_error If a pitch string is invalid (see splitPitch()).
      */
     static bool isEnharmonic(const std::string& pitch_A, const std::string& pitch_B);

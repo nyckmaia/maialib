@@ -364,27 +364,53 @@ void Chord::toInversion(int inversionNumber) {
     }
 }
 
-void Chord::transpose(const int semitonesNumber) {
-    if (semitonesNumber == 0) {
+namespace {
+// The accidental type Chord::transpose() and Chord::transposeStackOnly() prefer when spelling a
+// transposed note: the note's own accidental, so a chord written with flats stays written with
+// flats. This preserves the behaviour both methods had when each carried its own copy of the
+// transposition.
+//
+// A quarter-tone accidental ("1x", "1b", "3x", "3b") is not one of the five spellings
+// Helper::midiNote2pitch() accepts, so those fall back to the default spelling of the base
+// semitone. The quarter tone itself is never lost by that fallback: Helper::steps2pitch()
+// re-applies it to whichever base spelling comes back.
+std::string preferredAccType(const std::string& pitch) {
+    std::string pitchClass;
+    std::string pitchStep;
+    std::string alterSymbol;
+    std::optional<int> octave;
+    float alterValue = 0.0f;
+    Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
+
+    const bool isSpellableAccType = alterSymbol == MUSIC_XML::ACCIDENT::NONE ||
+                                     alterSymbol == MUSIC_XML::ACCIDENT::SHARP ||
+                                     alterSymbol == MUSIC_XML::ACCIDENT::FLAT ||
+                                     alterSymbol == MUSIC_XML::ACCIDENT::DOUBLE_SHARP ||
+                                     alterSymbol == MUSIC_XML::ACCIDENT::DOUBLE_FLAT;
+
+    return isSpellableAccType ? alterSymbol : MUSIC_XML::ACCIDENT::NONE;
+}
+}  // namespace
+
+void Chord::transpose(const float semitonesNumber) {
+    // Validated before the zero check, so an off-the-grid interval is rejected even for an empty
+    // chord, where the loop below would never run to reject it.
+    Helper::validateTransposeSemitones(semitonesNumber);
+
+    if (semitonesNumber == 0.0f) {
         return;
     }
 
-    std::string pitchClass, pitchStep, alterSymbol;
-    std::optional<int> octave;
-    float alterValue = 0.0f;
-
-    // Transpose the original chord
+    // Transpose the original chord. Task 10: this used to be its own copy of
+    // "pitch2midiNote(...) + semitones, then midiNote2pitch(...)" -- one of three copies of a
+    // single operation, which is why transposing a Chord and transposing a Note diverged. Both
+    // now route through Helper::transposePitch(), which computes on exact pitch positions and so
+    // no longer rounds a quarter tone away before applying the interval.
     const int chordSize = _originalNotes.size();
     for (int i = 0; i < chordSize; i++) {
         const std::string pitch = _originalNotes[i].getWrittenPitch();
-
-        int midinumber = Helper::pitch2midiNote(pitch) + semitonesNumber;
-
-        Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
-
-        const std::string newPitch = Helper::midiNote2pitch(midinumber, alterSymbol);
-
-        _originalNotes[i].setPitch(newPitch);
+        _originalNotes[i].setPitch(
+            Helper::transposePitch(pitch, semitonesNumber, preferredAccType(pitch)));
     }
 
     // The pitch content of '_originalNotes' changed: any previously-computed stacked-in-thirds
@@ -394,27 +420,19 @@ void Chord::transpose(const int semitonesNumber) {
     transposeStackOnly(semitonesNumber);
 }
 
-void Chord::transposeStackOnly(const int semitonesNumber) {
-    if (semitonesNumber == 0) {
+void Chord::transposeStackOnly(const float semitonesNumber) {
+    Helper::validateTransposeSemitones(semitonesNumber);
+
+    if (semitonesNumber == 0.0f) {
         return;
     }
 
-    std::string pitchClass, pitchStep, alterSymbol;
-    std::optional<int> octave;
-    float alterValue = 0.0f;
-
-    // Transpose the stack version
+    // Transpose the stack version, through the same single implementation transpose() uses.
     const int openStackSize = _openStack.size();
     for (int i = 0; i < openStackSize; i++) {
         const std::string pitch = _openStack[i].getWrittenPitch();
-
-        int midinumber = Helper::pitch2midiNote(pitch) + semitonesNumber;
-
-        Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
-
-        const std::string newPitch = Helper::midiNote2pitch(midinumber, alterSymbol);
-
-        _openStack[i].setPitch(newPitch);
+        _openStack[i].setPitch(
+            Helper::transposePitch(pitch, semitonesNumber, preferredAccType(pitch)));
     }
 }
 

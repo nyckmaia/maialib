@@ -411,6 +411,29 @@ class PitchSpelling(unittest.TestCase):
         self.assertTrue(ml.Helper.isEnharmonic(pitch_A="B#3", pitch_B="C4"))
         self.assertFalse(ml.Helper.isEnharmonic("C4", "D4"))
 
+    # Task 10, Python parity: isEnharmonic() compared rounded MIDI numbers, so a quarter tone and
+    # the semitone it rounds to collided on one integer and were reported as the same pitch.
+    # Mirrors the C++ PitchSpelling.IsEnharmonicComparesExactPitchNotRoundedMidi test.
+    def testIsEnharmonicComparesExactPitchNotRoundedMidi(self):
+        # The two spellings of one quarter tone, both exactly 60.5.
+        self.assertTrue(ml.Helper.isEnharmonic("C1x4", "D3b4"))
+        # A quarter tone is not the semitone it rounds to: 60.5 is not 61.
+        self.assertFalse(ml.Helper.isEnharmonic("C1x4", "C#4"))
+        self.assertFalse(ml.Helper.isEnharmonic("C1x4", "C4"))
+
+    # Task 10, Python parity: transposePitch() rounded the pitch to a MIDI integer before applying
+    # the interval, and its semitones parameter was an int. Mirrors the C++
+    # PitchSpelling.TransposePitchMovesByAndPreservesQuarterTones test.
+    def testTransposePitchMovesByAndPreservesQuarterTones(self):
+        self.assertEqual(ml.Helper.transposePitch("C4", 0.5, ""), "C1x4")
+        self.assertEqual(ml.Helper.transposePitch("C1x4", 2, ""), "D1x4")
+        self.assertEqual(ml.Helper.transposePitch("C4", 2, ""), "D4")
+
+    def testTransposePitchRejectsIntervalOffTheQuarterToneGrid(self):
+        with self.assertRaises(RuntimeError) as ctx:
+            ml.Helper.transposePitch("C4", 0.3)
+        self.assertIn("multiple of 0.5", str(ctx.exception))
+
     def testSplitPitch(self):
         self.assertEqual(ml.Helper.splitPitch("Dbb-1"), ("Dbb", "D", -1, -2.0, "bb"))
         self.assertEqual(ml.Helper.splitPitch("E"), ("E", "E", 4, 0.0, ""))

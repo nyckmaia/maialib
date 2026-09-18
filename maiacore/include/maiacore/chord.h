@@ -308,15 +308,28 @@ class Chord {
 
     /**
      * @brief Transpose all notes in the chord by a number of semitones.
-     * @param semiTonesNumber Number of semitones to transpose.
+     * @details Each note keeps its own accidental as the preferred spelling of the result, and
+     *          transposition is computed on exact pitch positions, so a quarter-tone chord
+     *          transposes without losing its quarter tones.
+     * @param semiTonesNumber Number of semitones to transpose; must be a multiple of 0.5.
+     * @warning Transposing BY a quarter tone (any interval that is not a whole number of
+     *          semitones) moves the chord off the semitone grid, so every harmonic-analysis
+     *          method — getName(), getQuality(), the stacked-in-thirds family and the have*
+     *          predicates — will then reject the chord, because all of them are defined over
+     *          twelve-tone equal temperament. Call roundQuarterTones() first to analyse it.
+     * @throws std::runtime_error If semiTonesNumber is not a multiple of 0.5, or if a transposed
+     *         note cannot be spelled within octaves -1..11.
      */
-    void transpose(const int semiTonesNumber);
+    void transpose(const float semiTonesNumber);
 
     /**
      * @brief Transpose only the stacked (open) version of the chord by a number of semitones.
-     * @param semiTonesNumber Number of semitones to transpose.
+     * @param semiTonesNumber Number of semitones to transpose; must be a multiple of 0.5.
+     * @warning Same off-the-grid caveat as transpose(); see its documentation.
+     * @throws std::runtime_error If semiTonesNumber is not a multiple of 0.5, or if a transposed
+     *         note cannot be spelled within octaves -1..11.
      */
-    void transposeStackOnly(const int semiTonesNumber);
+    void transposeStackOnly(const float semiTonesNumber);
 
     /**
      * @brief Remove duplicate notes (by pitch) from the chord.

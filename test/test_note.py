@@ -232,9 +232,12 @@ class NoteComposesPitch(unittest.TestCase):
     # forwards to the sounding pitch, not the written one. B-flat clarinet: written "C4"
     # (alter symbol "") transposed by (transposeDiatonic=-1, transposeChromatic=-2) sounds
     # "Bb3" (alter symbol "b") -- the same construction and measured values pinned in
-    # note-test.cpp's NoteComposesPitch.GetAlterSymbolForwardsToSoundingPitchOnTransposedNote
-    # (see that test's comment for why the controller's suggested "written C#4" case was
-    # discarded: it triggers an unrelated, pre-existing bug in the transpose scale lookup).
+    # note-test.cpp's NoteComposesPitch.GetAlterSymbolForwardsToSoundingPitchOnTransposedNote.
+    #
+    # TASK 10 RESTORED THE DISCARDED CASE. This comment used to end by saying the controller's
+    # suggested "written C#4" case was discarded because "it triggers an unrelated, pre-existing
+    # bug in the transpose scale lookup". That bug is the scale lookup Task 10 deleted, so the
+    # case works now and is asserted below.
     def testGetAlterSymbolForwardsToSoundingPitchOnTransposedNote(self):
         written = ml.Note("C4")
         self.assertEqual(written.getAlterSymbol(), "")
@@ -246,6 +249,22 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(transposed.getMidiNumber(), 58)
         self.assertEqual(transposed.getAlterSymbol(), "b")
         self.assertNotEqual(transposed.getAlterSymbol(), written.getAlterSymbol())
+
+        # The restored case, forwarding in the opposite direction: written "C#4" (alter symbol
+        # "#") sounds "B3" (alter symbol ""). Before Task 10 the scale lookup mis-spelled this
+        # sounding pitch as "Bb3" and getAlterSymbol() answered "b".
+        sharpWritten = ml.Note("C#4")
+        self.assertEqual(sharpWritten.getAlterSymbol(), "#")
+
+        sharpTransposed = ml.Note(
+            "C#4", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
+        )
+        self.assertEqual(sharpTransposed.getSoundingPitch(), "B3")
+        self.assertEqual(sharpTransposed.getMidiNumber(), 59)
+        self.assertEqual(sharpTransposed.getAlterSymbol(), "")
+        self.assertNotEqual(
+            sharpTransposed.getAlterSymbol(), sharpWritten.getAlterSymbol()
+        )
 
     # Fix round 2 (I2), Python parity for T7's sibling on the C++ side: setStep()/setAlter()
     # were new public methods added by Task 6 with no pybind11 wrapper. Now bound; mirror the
@@ -266,6 +285,33 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertFalse(note.isNoteOff())
         self.assertEqual(note.getPitch(), "C4")
         self.assertEqual(note.getOctave(), 4)
+
+    # Task 10, Python parity: Note.transpose() took an int, so a quarter-tone interval could not
+    # be expressed, and it rounded the pitch to a MIDI integer before applying the interval, so a
+    # quarter tone was destroyed by the first step. Mirrors the C++ NoteTransposition
+    # .TransposeByQuarterTone family.
+    def testTransposeByQuarterTone(self):
+        note = ml.Note("C4")
+        note.transpose(0.5)
+        self.assertEqual(note.getPitch(), "C1x4")
+        self.assertTrue(note.isQuarterTone())
+
+        note.transpose(-0.5)
+        self.assertEqual(note.getPitch(), "C4")
+        self.assertFalse(note.isQuarterTone())
+
+    def testTransposePreservesQuarterToneAcrossWholeToneInterval(self):
+        note = ml.Note("C1x4")
+        note.transpose(2)
+        self.assertEqual(note.getPitch(), "D1x4")  # rounded to "D4" before Task 10
+        self.assertTrue(note.isQuarterTone())
+
+    def testTransposeRejectsIntervalOffTheQuarterToneGrid(self):
+        note = ml.Note("C4")
+        with self.assertRaises(RuntimeError) as ctx:
+            note.transpose(0.3)
+        self.assertIn("multiple of 0.5", str(ctx.exception))
+        self.assertEqual(note.getPitch(), "C4")  # the refused call changed nothing
 
     # Fix round 5 (F1), Python parity: silencing a TRANSPOSING instrument with
     # setIsNoteOn(False) makes it a rest but deliberately keeps its transposing interval, so

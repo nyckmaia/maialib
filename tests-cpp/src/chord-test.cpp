@@ -194,6 +194,68 @@ TEST(transpose, throwsWhenPastTopOfSupportedRange) {
     EXPECT_THROW(myChord.transpose(2), std::runtime_error);
 }
 
+// Task 10: Chord::transpose() and Chord::transposeStackOnly() each carried their OWN copy of
+// "pitch2midiNote(...) + semitones, then midiNote2pitch(...)" and neither called
+// Helper::transposePitch(). Three copies of one operation is why the defects diverged between
+// entry points: both Chord copies rounded a quarter tone away before applying the interval, and
+// `int semitonesNumber` could not express a quarter-tone interval at all. All three now share
+// Helper::transposePitch().
+TEST(transpose, preservesQuarterTonesAndMovesByThem) {
+    // Transposing a chord that CONTAINS a quarter tone by whole semitones: the quarter tone used
+    // to be silently rounded away, so this answered "D4" for the first note.
+    const std::vector<std::string> quarterTonePitches = {"C1x4", "E4", "G4"};
+    Chord quarterToneChord(quarterTonePitches);
+    quarterToneChord.transpose(2);
+    EXPECT_EQ(quarterToneChord.getNote(0).getPitch(), "D1x4");
+    EXPECT_EQ(quarterToneChord.getNote(1).getPitch(), "F#4");
+    EXPECT_EQ(quarterToneChord.getNote(2).getPitch(), "A4");
+
+    // Transposing BY a quarter tone, which the old int parameter could not express.
+    const std::vector<std::string> semitonePitches = {"C4", "G4"};
+    Chord semitoneChord(semitonePitches);
+    semitoneChord.transpose(0.5f);
+    EXPECT_EQ(semitoneChord.getNote(0).getPitch(), "C1x4");
+    EXPECT_EQ(semitoneChord.getNote(1).getPitch(), "G1x4");
+}
+
+TEST(transpose, rejectsAnIntervalOffTheQuarterToneGrid) {
+    const std::vector<std::string> pitches = {"C4", "E4"};
+    Chord myChord(pitches);
+    try {
+        myChord.transpose(0.3f);
+        FAIL() << "Expected std::runtime_error for a transposition off the quarter-tone grid";
+    } catch (const std::runtime_error& e) {
+        const std::string what = e.what();
+        EXPECT_NE(what.find("multiple of 0.5"), std::string::npos) << "message: " << what;
+        EXPECT_NE(what.find("0.3"), std::string::npos) << "message: " << what;
+    }
+    EXPECT_EQ(myChord.getNote(0).getPitch(), "C4");  // the refused call changed nothing
+
+    // An EMPTY chord rejects it too: the validation runs before the note loop, which would
+    // otherwise have no note to reject it on.
+    Chord emptyChord;
+    try {
+        emptyChord.transpose(0.3f);
+        FAIL() << "Expected std::runtime_error for an empty chord as well";
+    } catch (const std::runtime_error& e) {
+        EXPECT_NE(std::string(e.what()).find("multiple of 0.5"), std::string::npos);
+    }
+}
+
+// Task 10, section D: toInversion() needs no transposition of its own -- its body calls
+// _originalNotes[0].transpose(12), so repairing Note::transpose() covers it. Pinned so nobody
+// later gives the inversion a private copy of the operation again.
+TEST(toInversion, movesTheLowestNoteUpOneOctaveThroughNoteTranspose) {
+    const std::vector<std::string> pitches = {"C4", "E4", "G4"};
+    Chord myChord(pitches);
+    myChord.toInversion(1);
+
+    ASSERT_EQ(myChord.size(), 3);
+    EXPECT_EQ(myChord.getNote(0).getPitch(), "E4");
+    EXPECT_EQ(myChord.getNote(1).getPitch(), "G4");
+    EXPECT_EQ(myChord.getNote(2).getPitch(), "C5");
+}
+
 TEST(stackInThirds, throwsOnEightDistinctPitchClassChord) {
     // A 10th out-of-bounds site the original audit missed: Chord::computeBestOpenStackHeap()
     // reads stackedHeaps[0] unconditionally. Every note has at most 3 enharmonic spellings

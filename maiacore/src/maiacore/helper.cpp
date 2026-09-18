@@ -15,6 +15,7 @@
 #include "cherno/instrumentor.h"
 #include "maiacore/interval.h"
 #include "maiacore/log.h"
+#include "maiacore/pitch.h"
 #include "maiacore/utils.h"
 
 #define STRINGIFY(x) #x
@@ -1609,9 +1610,73 @@ RhythmFigure Helper::noteType2RhythmFigure(const std::string& noteType) {
     return {};
 }
 
-const std::string Helper::transposePitch(const std::string& pitch, const int semitones,
+void Helper::validateTransposeSemitones(const float semitones) {
+    // A transposition must land on a pitch this library can spell, and the finest spellable
+    // interval is the quarter tone: there is no pitch between "C1x4" and "C#4". Doubling turns
+    // "is a multiple of 0.5" into an exact integer test -- every multiple of 0.5 in the usable
+    // range is represented exactly in float, so this neither over- nor under-accepts.
+    const float twiceSemitones = semitones * 2.0f;
+    if (twiceSemitones != std::floor(twiceSemitones)) {
+        LOG_ERROR("A transposition must be a multiple of 0.5 semitones (one quarter tone), but '" +
+                  std::to_string(semitones) + "' is not");
+    }
+}
+
+const std::string Helper::steps2pitch(const float exactSteps, const std::string& accType) {
+    // Below the lowest representable pitch: the rest sentinel, matching midiNote2pitch()'s own
+    // negative-MIDI convention rather than inventing a second one.
+    if (exactSteps < 0.0f) {
+        return MUSIC_XML::PITCH::REST;
+    }
+
+    // Split the exact position into the semitone it is spelled from and the quarter tone left
+    // over. spelling2midiNote() owns the ties-upward rounding rule (std::floor(x + 0.5f), never
+    // std::lround), so a quarter tone always rounds UP to its base semitone and the remainder is
+    // therefore always exactly 0.0 or -0.5 -- never +0.5.
+    const int baseMidiNote = static_cast<int>(std::floor(exactSteps + 0.5f));
+    const float quarterToneResidual = exactSteps - static_cast<float>(baseMidiNote);
+
+    const std::string basePitch = midiNote2pitch(baseMidiNote, accType);
+    if (quarterToneResidual == 0.0f) {
+        return basePitch;
+    }
+
+    std::string pitchClass;
+    std::string pitchStep;
+    std::string alterSymbol;
+    std::optional<int> octave;
+    float baseAlter = 0.0f;
+    splitPitch(basePitch, pitchClass, pitchStep, octave, baseAlter, alterSymbol);
+
+    // accType is a preference, not a demand -- the same rule Pitch::setFrequency() applies. A
+    // base spelling already at an alter of -2 ("bb") cannot absorb the -0.5 residual, because
+    // -2.5 is outside the [-2, 2] range alterValue2symbol() can spell. The default spelling's
+    // alter is always 0 or +1 (midiNote2pitch()'s default branch never produces a double
+    // accidental), so it always can.
+    try {
+        alterSymbol = alterValue2symbol(baseAlter + quarterToneResidual);
+    } catch (const std::runtime_error& error) {
+        ignore(error);
+        const std::string defaultBasePitch =
+            midiNote2pitch(baseMidiNote, MUSIC_XML::ACCIDENT::NONE);
+        splitPitch(defaultBasePitch, pitchClass, pitchStep, octave, baseAlter, alterSymbol);
+        alterSymbol = alterValue2symbol(baseAlter + quarterToneResidual);
+        LOG_WARN("Helper::steps2pitch: the '" + accType +
+                 "' accidental type cannot spell a quarter tone at MIDI note " +
+                 std::to_string(baseMidiNote) + "; using '" + pitchStep + alterSymbol +
+                 "' instead");
+    }
+
+    // basePitch is a real pitch here (the negative case returned above), so splitPitch() cannot
+    // have taken its rest branch: the octave is always populated.
+    return pitchStep + alterSymbol + std::to_string(octave.value());
+}
+
+const std::string Helper::transposePitch(const std::string& pitch, const float semitones,
                                          const std::string& accType) {
-    if (semitones == 0) {
+    validateTransposeSemitones(semitones);
+
+    if (semitones == 0.0f) {
         return pitch;
     }
 
@@ -1619,18 +1684,25 @@ const std::string Helper::transposePitch(const std::string& pitch, const int sem
         return MUSIC_XML::PITCH::REST;
     }
 
-    // Get the pitch MIDI note number:
-    const int midiNote = pitch2midiNote(pitch);
-
-    // Transpose:
-    const int transposedMidiNote = midiNote + semitones;
-
-    // Return the Pitch transposed:
-    return midiNote2pitch(transposedMidiNote, accType);
+    // The single implementation of this operation. Chord::transpose() and
+    // Chord::transposeStackOnly() used to carry their own copy of
+    // "pitch2midiNote(...) + semitones, then midiNote2pitch(...)", which is why the defects
+    // diverged between entry points; both now route through here.
+    //
+    // Computed on exact positions rather than pitch2midiNote()'s rounded ones: rounding happened
+    // BEFORE the interval was applied, so a quarter tone was destroyed by the very first step
+    // ("C1x4" transposed by 2 landed on "D4"). Pitch::getQuarterToneSteps() is this library's one
+    // unrounded pitch position.
+    return steps2pitch(Pitch(pitch).getQuarterToneSteps() + semitones, accType);
 }
 
 bool Helper::isEnharmonic(const std::string& pitch_A, const std::string& pitch_B) {
-    return pitch2midiNote(pitch_A) == pitch2midiNote(pitch_B);
+    // Exact positions, not pitch2midiNote()'s rounded ones. Rounding collapsed "C1x4" (60.5) onto
+    // "C#4" (61) and reported two genuinely different pitches as enharmonic -- the whole defect.
+    // Every pitch position is a multiple of 0.5, which float represents exactly, so == compares
+    // these values exactly. Two rests compare equal through getQuarterToneSteps()'s own MIDI_REST
+    // sentinel.
+    return Pitch(pitch_A).getQuarterToneSteps() == Pitch(pitch_B).getQuarterToneSteps();
 }
 
 const pugi::xpath_node_set Helper::getNodeSet(const pugi::xml_document& doc,

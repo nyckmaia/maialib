@@ -552,7 +552,7 @@ std::pair<std::vector<float>, std::vector<float>> Note::getHarmonicSpectrum(
     return {freqs, ampls};
 }
 
-void Note::transpose(const int semitones, const std::string& accType) {
+void Note::transpose(const float semitones, const std::string& accType) {
     const std::string newPitch = Helper::transposePitch(getPitch(), semitones, accType);
     setPitch(newPitch);
 }
@@ -598,113 +598,63 @@ Pitch Note::computeSoundingPitch() const {
         return _writtenPitch;
     }
 
-    // ===== TRANSPOSE PITCH (STRING) ===== //
-
-    // Check if this is a transposing instrument
+    // Not a transposing instrument: the written pitch IS the sounding pitch.
     if (!isTransposed()) {
         return _writtenPitch;
     }
 
-    // Create musical scales
-    const std::array<std::string, 12> sharpScale = {"C",  "C#", "D",  "D#", "E",  "F",
-                                                    "F#", "G",  "G#", "A",  "A#", "B"};
-    const std::array<std::string, 12> flatScale = {"C",  "Db", "D",  "Eb", "E",  "F",
-                                                   "Gb", "G",  "Ab", "A",  "Bb", "B"};
-    const std::array<std::string, 12> doubleSharpScale = {"C#", "Cx", "D#", "Dx", "E#", "F#",
-                                                          "Fx", "G#", "Gx", "A#", "Ax", "B#"};
-    const std::array<std::string, 12> doubleFlatScale = {"Cb",  "Dbb", "Db",  "Ebb", "Eb",  "Fb",
-                                                         "Gbb", "Gb",  "Abb", "Ab",  "Bbb", "Bb"};
+    // Task 10: the sounding pitch is derived arithmetically from the written pitch and the
+    // chromatic interval, exactly as getMidiNumber() has done since Task 6.
+    //
+    // This replaced four twelve-entry arrays of semitone spellings (sharp, flat, double-sharp and
+    // double-flat), indexed by written pitch class. They were DELETED rather than repaired: with
+    // twelve entries per octave there is no index for a quarter tone, so the structure could not
+    // represent "C1x4" at all -- such a pitch class matched none of the four scales and fell
+    // through to LOG_ERROR("Unknown note type"), a message naming neither the pitch class nor the
+    // interval. Both of those throws went with the arrays; there is no longer a spelling this
+    // method can fail to look up.
+    //
+    // The index arithmetic carried two further defects, both fixed by deleting it:
+    //   1. A pitch class found only in the SHARP scale (e.g. "C#") still indexed the FLAT array,
+    //      at end() -- an index of 12 on a 12-element array, which only stayed in bounds by
+    //      accident -- so a B-flat clarinet's written C#4 sounded "Bb" instead of "B".
+    //   2. The octave-wrap check `tempIdx >= 0 && tempIdx <= 12` also took the no-wrap branch at
+    //      exactly 12, so a piccolo's written C4 (chromatic +12) sounded in octave 4, not 5.
+    const float soundingSteps =
+        _writtenPitch.getQuarterToneSteps() + static_cast<float>(_transposeChromatic);
 
-    const std::string writtenPitchClass = _writtenPitch.getPitchClass();
+    // Helper::steps2pitch() answers the rest sentinel, rather than throwing, when the sounding
+    // pitch falls below MIDI 0. setTransposingInterval() calls this method eagerly, so such a note
+    // must stay constructible -- pinned by note-test.cpp's
+    // GetPitchBelowMidiZeroFailsDiagnosablyNotWithBadOptionalAccess -- and getSoundingPitch() is
+    // where that condition is reported diagnosably.
+    //
+    // Accidental preference: flats going down, the default (natural/sharp-side) spelling going up.
+    // That is the one sound convention the deleted lookup had, and it is what keeps a B-flat
+    // clarinet's written C4 sounding "Bb3" rather than "A#3".
+    const Pitch defaultSpelling(Helper::steps2pitch(soundingSteps, MUSIC_XML::ACCIDENT::NONE));
 
-    // Try to find the written PitchClass in both scales
-    const auto sharpNote = find(sharpScale.begin(), sharpScale.end(), writtenPitchClass);
-    const auto flatNote = find(flatScale.begin(), flatScale.end(), writtenPitchClass);
-    const auto doubleShapNote =
-        find(doubleSharpScale.begin(), doubleSharpScale.end(), writtenPitchClass);
-    const auto doubleFlatNote =
-        find(doubleFlatScale.begin(), doubleFlatScale.end(), writtenPitchClass);
-
-    // Check if the current note is a double flat/sharp note
-    const bool isInsideSharpScale = sharpNote != sharpScale.end();
-    const bool isInsideFlatScale = flatNote != flatScale.end();
-    const bool isInsideDoubleSharpScale = doubleShapNote != doubleSharpScale.end();
-    const bool isInsideDoubleFlatScale = doubleFlatNote != doubleFlatScale.end();
-
-    // Get the transposition direction
-    const bool upDirection = (_transposeChromatic > 0) ? true : false;
-
-    // Define control variables
-    bool useFlatScale = false;
-    bool useSharpScale = false;
-    bool useDoubleFlatScale = false;
-    bool useDoubleSharpScale = false;
-
-    // Index control variable
-    int writtenPitchClassIdx = 0;
-
-    // Choose the between use flat or sharp scale
-    if (isInsideSharpScale && upDirection) {
-        useSharpScale = true;
-
-        // Get the index of the written pitch
-        writtenPitchClassIdx = sharpNote - sharpScale.begin();
-
-    } else if ((isInsideSharpScale && !upDirection) || isInsideFlatScale) {
-        useFlatScale = true;
-        // Get the index of the written pitch
-        writtenPitchClassIdx = flatNote - flatScale.begin();
-
-    } else if (isInsideDoubleSharpScale) {
-        useDoubleSharpScale = true;
-
-        // Get the index of the written pitch
-        writtenPitchClassIdx = doubleShapNote - doubleSharpScale.begin();
-
-    } else if (isInsideDoubleFlatScale) {
-        useDoubleFlatScale = true;
-
-        // Get the index of the written pitch
-        writtenPitchClassIdx = doubleFlatNote - doubleFlatScale.begin();
-    } else {
-        LOG_ERROR("Unknown note type");
+    if (_transposeChromatic > 0) {
+        return defaultSpelling;
     }
 
-    // Compute the temp 'fake' index (can be out of array bounds)
-    const int tempIdx = writtenPitchClassIdx + _transposeChromatic;
-
-    // Scale index to be setted in the future
-    int soundingPitchClassIdx = 0;
-
-    // Not a rest on this path (guarded above), so the written octave is always populated.
-    int soundingOctave = _writtenPitch.getOctave().value();
-
-    // Get the single octave chromatic scale index for sounding pitchClass
-    if (tempIdx >= 0 && tempIdx <= 12) {  // Transpose inside one octave
-        soundingPitchClassIdx = tempIdx % 12;
-    } else if (tempIdx > 12) {  // Transpose outside one octave
-        soundingPitchClassIdx = tempIdx % 12;
-        soundingOctave++;
-    } else {  // Transpose down octave
-        soundingPitchClassIdx = tempIdx + 12;
-        soundingOctave--;
+    // Going down, the flat spelling is preferred -- but only when it agrees with the default about
+    // the OCTAVE. getSoundingPitch() composes its string from this method's pitch CLASS and
+    // getSoundingOctave()'s arithmetic octave, so a spelling that crosses the octave boundary
+    // ("Cb4" rather than "B3" for MIDI 59) would compose "Cb3": a different note entirely, a full
+    // octave off. Dropping the preference in that case is what keeps the two halves consistent.
+    try {
+        const Pitch flatSpelling(Helper::steps2pitch(soundingSteps, MUSIC_XML::ACCIDENT::FLAT));
+        if (flatSpelling.getOctave() == defaultSpelling.getOctave()) {
+            return flatSpelling;
+        }
+    } catch (const std::runtime_error& error) {
+        // This MIDI note has no flat spelling at all (e.g. MIDI 60, a natural "C"). The default
+        // spelling always exists, so the preference is simply dropped.
+        ignore(error);
     }
 
-    // Get the correct sounding pitch class
-    std::string soundingPitchClass;
-    if (useSharpScale) {
-        soundingPitchClass = sharpScale[soundingPitchClassIdx];
-    } else if (useFlatScale) {
-        soundingPitchClass = flatScale[soundingPitchClassIdx];
-    } else if (useDoubleSharpScale) {
-        soundingPitchClass = doubleSharpScale[soundingPitchClassIdx];
-    } else if (useDoubleFlatScale) {
-        soundingPitchClass = doubleFlatScale[soundingPitchClassIdx];
-    } else {
-        LOG_ERROR("Unknown note type");
-    }
-
-    return Pitch(soundingPitchClass + std::to_string(soundingOctave));
+    return defaultSpelling;
 }
 
 void Note::setVoice(const int voice) { _voice = voice; }

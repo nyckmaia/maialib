@@ -535,6 +535,57 @@ TEST(PitchSpelling, IsEnharmonic) {
     }
 }
 
+// Task 10: isEnharmonic() compared pitch2midiNote()'s ROUNDED MIDI numbers, so a quarter tone and
+// the semitone it rounds to collided on one integer and were reported as the same pitch. It now
+// compares exact pitch positions.
+TEST(PitchSpelling, IsEnharmonicComparesExactPitchNotRoundedMidi) {
+    // The two spellings of a single quarter tone: "C1x4" and "D3b4" are both exactly 60.5.
+    EXPECT_TRUE(Helper::isEnharmonic("C1x4", "D3b4"));
+    EXPECT_TRUE(Helper::isEnharmonic("E1b4", "D3x4"));  // both exactly 63.5
+
+    // A quarter tone is NOT the semitone it rounds to. This is the pair that used to collide:
+    // pitch2midiNote() rounds 60.5 up to 61, which is C#4's own value.
+    EXPECT_FALSE(Helper::isEnharmonic("C1x4", "C#4"));
+    EXPECT_FALSE(Helper::isEnharmonic("C1x4", "C4"));
+    EXPECT_FALSE(Helper::isEnharmonic("E1b4", "E4"));
+
+    // Semitone behaviour is unchanged.
+    EXPECT_TRUE(Helper::isEnharmonic("E#4", "F4"));
+    EXPECT_FALSE(Helper::isEnharmonic("C4", "D4"));
+}
+
+// Task 10: transposePitch() rounded the pitch to a MIDI integer BEFORE applying the interval, so
+// a quarter tone was destroyed by the very first step, and `int semitones` could not express half
+// a semitone at all.
+TEST(PitchSpelling, TransposePitchMovesByAndPreservesQuarterTones) {
+    // Transposing BY a quarter tone.
+    EXPECT_EQ(Helper::transposePitch("C4", 0.5f, ""), "C1x4");
+    EXPECT_EQ(Helper::transposePitch("C1x4", 0.5f, ""), "C#4");
+
+    // Transposing a quarter tone BY whole semitones keeps the quarter tone: this used to answer
+    // "D4", silently rounded. The spelling follows the base semitone the exact position rounds
+    // up to, so 62.5 is spelled from "D#4" (alter +1) as "D1x4", and 58.5 from "B3" (alter 0) as
+    // "B1b3" -- two spellings of the same rule, not two rules.
+    EXPECT_EQ(Helper::transposePitch("C1x4", 2.0f, ""), "D1x4");
+    EXPECT_EQ(Helper::transposePitch("C1x4", -2.0f, ""), "B1b3");
+
+    // A whole-tone transposition of a whole-tone pitch is untouched by any of this.
+    EXPECT_EQ(Helper::transposePitch("C4", 2.0f, ""), "D4");
+    EXPECT_EQ(Helper::transposePitch("C4", 0.0f, ""), "C4");
+    EXPECT_EQ(Helper::transposePitch("rest", 2.0f, ""), "rest");
+}
+
+TEST(PitchSpelling, TransposePitchRejectsAnIntervalOffTheQuarterToneGrid) {
+    try {
+        Helper::transposePitch("C4", 0.3f);
+        FAIL() << "Expected std::runtime_error for a transposition off the quarter-tone grid";
+    } catch (const std::runtime_error& e) {
+        const std::string what = e.what();
+        EXPECT_NE(what.find("multiple of 0.5"), std::string::npos) << "message: " << what;
+        EXPECT_NE(what.find("0.3"), std::string::npos) << "message: " << what;
+    }
+}
+
 TEST(Helper, GetLibraryVersion) {
     const std::string version = Helper::getLibraryVersion();
     EXPECT_FALSE(version.empty());

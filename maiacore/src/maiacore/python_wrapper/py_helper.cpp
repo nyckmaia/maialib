@@ -252,7 +252,10 @@ void HelperClass(const py::module& m) {
         Returns
         -------
         bool
-            True if both pitches have the same MIDI note number (two rests are enharmonic).
+            True if both pitches denote the same exact pitch position (two rests are enharmonic).
+            Compared exactly, so the two spellings of a quarter tone are enharmonic ("C1x4" and
+            "D3b4"), while a quarter tone and the semitone it rounds to are not ("C1x4" and
+            "C#4").
 
         Raises
         ------
@@ -263,6 +266,8 @@ void HelperClass(const py::module& m) {
         --------
         >>> ml.Helper.isEnharmonic("E#4", "F4")
         True
+        >>> ml.Helper.isEnharmonic("C1x4", "C#4")
+        False
     )pbdoc",
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
@@ -275,8 +280,10 @@ void HelperClass(const py::module& m) {
         ----------
         pitch : str
             Input pitch string.
-        semitones : int
-            Number of semitones (negative values transpose down).
+        semitones : float
+            Number of semitones (negative values transpose down). Must be a multiple of 0.5:
+            0.5 is one quarter tone up. Computed on exact pitch positions, so a quarter tone
+            survives the transposition instead of being rounded away first.
         accType : str, default "#"
             Accidental type of the result: ``""``, ``"#"``, ``"b"``, ``"x"`` or ``"bb"``.
 
@@ -288,12 +295,15 @@ void HelperClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the input is invalid or the result cannot be spelled within octaves -1 to 11.
+            If ``semitones`` is not a multiple of 0.5, if the input is invalid, or if the result
+            cannot be spelled within octaves -1 to 11.
 
         Examples
         --------
         >>> ml.Helper.transposePitch("B11", 1)
         'B#11'
+        >>> ml.Helper.transposePitch("C1x4", 2, "")
+        'D1x4'
     )pbdoc",
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
