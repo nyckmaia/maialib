@@ -263,6 +263,26 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getPitch(), "C4")
         self.assertEqual(note.getOctave(), 4)
 
+    # Fix round 5 (F1), Python parity: silencing a TRANSPOSING instrument with
+    # setIsNoteOn(False) makes it a rest but deliberately keeps its transposing interval, so
+    # isTransposed() stays True. getSoundingPitch() therefore used to take its transposition
+    # branch and concatenate the pitch class "rest" with the octave -2, returning the malformed
+    # string "rest-2" -- not a valid pitch, and rejected by the Note constructor. Measured
+    # against a d26aa67 worktree, which never produced a malformed pitch string, so this was a
+    # Task 6 regression rather than pre-existing. Mirrors the C++
+    # NoteComposesPitch.GetPitchIsWellFormedRestForTransposedNoteTurnedOff test.
+    def testSilencedTransposedNoteReportsWellFormedRest(self):
+        note = ml.Note(
+            "C#4", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
+        )
+        note.setIsNoteOn(False)
+        self.assertTrue(note.isTransposed())  # the interval survives; hence the guard
+        self.assertTrue(note.isNoteOff())
+        self.assertEqual(note.getPitch(), "rest")
+        self.assertEqual(note.getSoundingPitch(), "rest")
+        self.assertEqual(note.getWrittenPitch(), "rest")
+        self.assertEqual(note.getMidiNumber(), -1)
+
 
 if __name__ == "__main__":
     unittest.main()

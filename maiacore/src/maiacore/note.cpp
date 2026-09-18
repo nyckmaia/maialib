@@ -727,6 +727,20 @@ const std::string Note::getSoundingPitchClass() const {
 }
 
 const std::string Note::getSoundingPitch() const {
+    // Fix round 5 (F1): a rest has no sounding pitch, so answer the rest sentinel BEFORE the
+    // transposition branch below can concatenate anything. setIsNoteOn(false) turns a note into
+    // a rest but deliberately does NOT clear its transposing intervals, so isTransposed() stays
+    // true; without this guard that combination fell through to the concatenation below and
+    // produced "rest" + "-2" == the malformed string "rest-2", which is not a valid pitch and
+    // which no Note constructor would accept back. Measured against a d26aa67 worktree before
+    // fixing: the baseline produced no malformed pitch string anywhere (0 occurrences across an
+    // 864-cell probe, against 16 at HEAD), so this was a Task 6 regression, not pre-existing.
+    // The guard is placed here, not at the concatenation site, so every route into this method
+    // is covered at once.
+    if (_writtenPitch.isRest()) {
+        return MUSIC_XML::PITCH::REST;
+    }
+
     // Fix round 2: restored to the pre-Task-6 body exactly (was
     // `computeSoundingPitch().getPitch()`, which glued the pitch CLASS to the SAME buggy
     // scale-lookup octave getOctave() intentionally still reproduces -- see that method's

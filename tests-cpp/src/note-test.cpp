@@ -1202,3 +1202,89 @@ TEST(NoteComposesPitch, GetOctaveAfterSetOctaveOnTransposedNoteIsPinnedDefective
         EXPECT_EQ(n.getPitch(), "C5");
     }
 }
+
+// Fix round 5, finding F1 -- a Task 6 REGRESSION, therefore FIXED here (not backlog).
+//
+// setIsNoteOn(false) turns a note into a rest but deliberately does not clear its transposing
+// intervals, so isTransposed() stays true. Before the fix, getSoundingPitch() still took its
+// transposition branch and concatenated the pitch CLASS ("rest") with the octave (-2), yielding
+// the malformed string "rest-2" -- not a valid pitch, and rejected by every Note constructor.
+//
+// Baseline measurement that made this ours: a d26aa67 worktree produced NO malformed pitch
+// string anywhere (0 occurrences across an 864-cell probe; HEAD had 16), so Task 6 introduced
+// it. Fixed by a rest guard at the top of getSoundingPitch(), ahead of the transposition
+// branch, so every route in is covered rather than just the concatenation site. An audit of the
+// sibling getters found no second hole: computeSoundingPitch() returns early for a rest,
+// toXML() emits its pitch block only under isNoteOn(), and getWrittenPitch() delegates to
+// Pitch::getPitch(), which guards rest itself.
+//
+// The fix deliberately does NOT restore d26aa67's value. The baseline answered the note's STALE
+// sounding pitch here ("Bb3" for the clarinet, "C5" for the piccolo) because its
+// setIsNoteOn(false) only flipped a bool and left the pitch fields behind -- exactly the
+// staleness Task 6 exists to close, already pinned by T2. "rest" is the correct answer, and is
+// what the untransposed case and setPitch("rest") have always returned on both sides.
+TEST(NoteComposesPitch, GetPitchIsWellFormedRestForTransposedNoteTurnedOff) {
+    // B-flat clarinet, horn in F and piccolo: every transposing case produced "rest-2" before.
+    const std::vector<std::pair<std::string, std::pair<int, int>>> transposed = {
+        {"C#4", {-1, -2}}, {"F#4", {-4, -7}}, {"C4", {7, 12}}};
+
+    for (const auto& c : transposed) {
+        Note n(c.first, RhythmFigure::QUARTER, true, false, c.second.first, c.second.second);
+        ASSERT_TRUE(n.isNoteOn());
+        n.setIsNoteOn(false);
+
+        // The transposing intervals survive, which is precisely why the guard is needed.
+        EXPECT_TRUE(n.isTransposed()) << "pitch: " << c.first;
+        EXPECT_TRUE(n.isNoteOff()) << "pitch: " << c.first;
+        EXPECT_EQ(n.getPitch(), "rest") << "pitch: " << c.first;
+        EXPECT_EQ(n.getSoundingPitch(), "rest") << "pitch: " << c.first;
+        EXPECT_EQ(n.getWrittenPitch(), "rest") << "pitch: " << c.first;
+        EXPECT_EQ(n.getMidiNumber(), -1) << "pitch: " << c.first;
+    }
+
+    // Untransposed control: unchanged by the fix, and already correct on both sides.
+    Note control("C4");
+    control.setIsNoteOn(false);
+    EXPECT_FALSE(control.isTransposed());
+    EXPECT_EQ(control.getPitch(), "rest");
+}
+
+// Fix round 5, finding F2 -- PINNED AS DEFECTIVE, deliberately NOT fixed here.
+//
+// Round trip hazard: reading getOctave() off a rest and writing it straight back throws.
+// getOctave() answers the -2 rest sentinel, -2 is outside the valid octave range (-1..11), and
+// Pitch::setOctave()'s range check is a LOG_ERROR, which throws.
+//
+// THE THROW BELOW IS THE DEFECTIVE BEHAVIOUR. The correct behaviour is to refuse with a warning
+// and no mutation, as setOctave() already does for an in-range octave on a rest (T7). It is
+// backlog, not Task 6's, for two measured reasons:
+//   1. The throw is VALUE-driven, not rest-driven. setOctave(-2) throws on an ordinary sounding
+//      note too -- and so did d26aa67, measured. Only the rest case differs between the two
+//      commits, and only because getOctave() returns -2 at HEAD where d26aa67 returned 0.
+//   2. TASK 6b DELETES THAT SENTINEL, replacing it with an empty std::optional<int>. That
+//      removes the hazard at its source, so any fix applied here would be undone by 6b.
+// Separately, and reported to the controller rather than changed here: inside Pitch::setOctave()
+// the throwing range check runs BEFORE the refuse-on-rest check, so a rest is validated as
+// though it had an octave. Reordering those two would make this case warn instead of throw, but
+// it treats the symptom; the sentinel is the cause. Both belong to Task 6b.
+// When 6b lands, this test must be replaced by one asserting a warning and no mutation.
+TEST(NoteComposesPitch, SetOctaveWithOwnOctaveOnRestThrowsPinnedDefective) {
+    Note n("rest");
+    ASSERT_EQ(n.getOctave(), -2);  // the sentinel Task 6b removes
+
+    // DEFECTIVE: the round trip throws. Correct would be a LOG_WARN and no mutation.
+    EXPECT_THROW(n.setOctave(n.getOctave()), std::runtime_error);
+    EXPECT_TRUE(n.isNoteOff());  // nothing was mutated by the failed call
+    EXPECT_EQ(n.getOctave(), -2);
+
+    // Control 1: an in-range octave on the same rest refuses with a warning and does not throw
+    // (T7's pinned policy), which is what makes the throw above specifically a value problem.
+    EXPECT_NO_THROW(n.setOctave(5));
+    EXPECT_EQ(n.getOctave(), -2);
+
+    // Control 2: the throw is not about rests at all -- a sounding note rejects -2 the same way,
+    // and d26aa67 did too (measured).
+    Note sounding("C4");
+    EXPECT_THROW(sounding.setOctave(-2), std::runtime_error);
+    EXPECT_EQ(sounding.getOctave(), 4);
+}

@@ -22,6 +22,7 @@ All notable changes to this project will be documented in this file.
 - `Helper.isEnharmonic()` did not detect E#/F, B#/C and Cb/B (this also affected `Helper.noteSimilarity()`)
 - `Interval` direction and diatonic interval were wrong for notes outside C0–C10
 - `Helper.midiNote2pitch()` could return spellings outside the supported octaves
+- `Note.getPitch()` and `Note.getSoundingPitch()` returned a transposing instrument's stale sounding pitch (e.g. `"Bb3"`) for a note silenced with `Note.setIsNoteOn(False)`, because silencing a note deliberately keeps its transposing interval; both now return `"rest"`, matching the untransposed case and `Note.setPitch("rest")`
 
 ### Removed
 
