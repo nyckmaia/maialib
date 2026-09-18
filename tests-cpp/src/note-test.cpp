@@ -1417,3 +1417,121 @@ TEST(NoteComposesPitch, SetOctaveOutOfRangeOnRestWarnsAndDoesNotThrow) {
     EXPECT_THROW(sounding.setOctave(12), std::runtime_error);
     EXPECT_EQ(sounding.getOctave(), 4);
 }
+
+// =====================================================================================
+// MUSICXML WRITE -- ALTER AND ACCIDENTAL (Task 8)
+// =====================================================================================
+
+// The round trip this task exists to fix: before it, Note::toXML() truncated the written
+// alter to an int, so a quarter tone silently lost its accidental on write
+// (<alter>0</alter>, no <accidental> element at all). It now writes the real float alter and
+// the matching Tartini <accidental> name (the name itself was already wired up in Task 7;
+// this pins it reaching the live write path).
+TEST(NoteToXML, QuarterSharpWritesFractionalAlterAndTartiniAccidental) {
+    const std::string xml = Note("C1x4").toXML();
+    EXPECT_NE(xml.find("<alter>0.5</alter>"), std::string::npos) << xml;
+    EXPECT_NE(xml.find("<accidental>quarter-sharp</accidental>"), std::string::npos) << xml;
+}
+
+// All four quarter-tone symbols, both directions (flat/sharp) and both quarter-tone depths
+// (1x/3x), so the Tartini mapping is exercised through the live write path for each one
+// individually, not just for "C1x4".
+TEST(NoteToXML, AllFourQuarterTonesWriteMatchingAlterAndAccidental) {
+    struct Case {
+        std::string pitch;
+        std::string alterStr;
+        std::string accidentalName;
+    };
+    const std::vector<Case> cases = {
+        {"C1x4", "0.5", "quarter-sharp"},
+        {"C3x4", "1.5", "three-quarters-sharp"},
+        {"D1b4", "-0.5", "quarter-flat"},
+        {"D3b4", "-1.5", "three-quarters-flat"},
+    };
+
+    for (const auto& c : cases) {
+        const std::string xml = Note(c.pitch).toXML();
+        EXPECT_NE(xml.find("<alter>" + c.alterStr + "</alter>"), std::string::npos)
+            << "pitch: " << c.pitch << " xml: " << xml;
+        EXPECT_NE(xml.find("<accidental>" + c.accidentalName + "</accidental>"),
+                  std::string::npos)
+            << "pitch: " << c.pitch << " xml: " << xml;
+    }
+}
+
+// Whole-tone (integer) alters must NOT gain the decimal formatting a naive fractional
+// formatter would apply universally (e.g. "1.0"/"-2.0"), and must never regress to
+// std::to_string(float)'s six decimals either ("1.000000"). Addendum section D: without this
+// rule, the first re-export of any existing score produces a false diff on every integer
+// alter in the file. Measured against genuine accidentals (sharp, double-flat) so <alter> is
+// actually emitted -- a natural has no accidental symbol and emits no <alter> at all (see
+// NoAccidentalPitchWritesNeitherAlterNorAccidental below).
+TEST(NoteToXML, IntegerAlterWritesWithoutDecimalPart) {
+    const std::string sharp = Note("C#4").toXML();
+    EXPECT_NE(sharp.find("<alter>1</alter>"), std::string::npos) << sharp;
+    EXPECT_EQ(sharp.find("<alter>1.0"), std::string::npos) << sharp;
+    EXPECT_NE(sharp.find("<accidental>sharp</accidental>"), std::string::npos) << sharp;
+
+    const std::string doubleFlat = Note("Cbb4").toXML();
+    EXPECT_NE(doubleFlat.find("<alter>-2</alter>"), std::string::npos) << doubleFlat;
+    EXPECT_EQ(doubleFlat.find("<alter>-2.0"), std::string::npos) << doubleFlat;
+    EXPECT_NE(doubleFlat.find("<accidental>flat-flat</accidental>"), std::string::npos)
+        << doubleFlat;
+}
+
+// A natural pitch carries no accidental symbol (Pitch::getAlterSymbol() == ""), so it must
+// continue to emit neither <alter> nor <accidental> -- unchanged from before this task.
+// Measured here so a future change to the shared guard condition cannot silently start
+// writing a spurious natural.
+TEST(NoteToXML, NoAccidentalPitchWritesNeitherAlterNorAccidental) {
+    const std::string xml = Note("C4").toXML();
+    EXPECT_EQ(xml.find("<alter>"), std::string::npos) << xml;
+    EXPECT_EQ(xml.find("<accidental>"), std::string::npos) << xml;
+}
+
+// The unpitched (percussion) branch is a separate code path in Note::toXML() from the pitched
+// one and nothing previously exercised its <alter>/<accidental> output. Same fractional-alter
+// and Tartini-accidental fix, measured independently.
+TEST(NoteToXML, UnpitchedBranchWritesFractionalAlterAndAccidental) {
+    Note note("C1x4");
+    note.setIsPitched(false);
+    const std::string xml = note.toXML();
+
+    EXPECT_NE(xml.find("<display-step>C</display-step>"), std::string::npos) << xml;
+    EXPECT_NE(xml.find("<alter>0.5</alter>"), std::string::npos) << xml;
+    EXPECT_NE(xml.find("<accidental>quarter-sharp</accidental>"), std::string::npos) << xml;
+    EXPECT_NE(xml.find("<display-octave>4</display-octave>"), std::string::npos) << xml;
+}
+
+// <accidental> lands where addendum section E requires: immediately after <type> and before
+// <time-modification>. This also MEASURES (without fixing -- section F, not this task's to
+// fix) the pre-existing inversion of <dot> and <time-modification>: the MusicXML schema wants
+// `type?, dot*, accidental?, time-modification?, stem?`, but this library emits
+// type, [accidental], time-modification, dot, stem. That inversion predates this task; this
+// test only pins where <accidental> sits relative to it, not that the relative order of the
+// other two is correct.
+TEST(NoteToXML, AccidentalPositionedAfterTypeAndBeforeTimeModification) {
+    Note note("C1x4");
+    note.setDuration(1.5f);  // adds one augmentation dot
+    note.setIsTuplet(true);
+    note.setTupleValues(3, 2, "eighth");
+
+    const std::string xml = note.toXML();
+
+    const auto typePos = xml.find("<type>");
+    const auto accidentalPos = xml.find("<accidental>");
+    const auto timeModPos = xml.find("<time-modification>");
+    const auto dotPos = xml.find("<dot");
+
+    ASSERT_NE(typePos, std::string::npos) << xml;
+    ASSERT_NE(accidentalPos, std::string::npos) << xml;
+    ASSERT_NE(timeModPos, std::string::npos) << xml;
+    ASSERT_NE(dotPos, std::string::npos) << xml;
+
+    EXPECT_LT(typePos, accidentalPos) << xml;
+    EXPECT_LT(accidentalPos, timeModPos) << xml;
+    // Pre-existing, not this task's to fix (addendum section F): <time-modification> still
+    // precedes <dot> here, though the schema orders dot* before time-modification?. Recorded,
+    // not corrected.
+    EXPECT_LT(timeModPos, dotPos) << xml;
+}

@@ -5,7 +5,9 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <iomanip>
 #include <optional>
+#include <sstream>
 #include <string>
 
 #include "maiacore/helper.h"
@@ -13,6 +15,21 @@
 #include "maiacore/utils.h"
 
 namespace {
+// Formats a pitch alter value for the MusicXML <alter> element: integral values (whole-tone
+// accidentals) print with no decimal part (e.g. "1", "-2"); quarter tones print with exactly one
+// decimal place (e.g. "0.5", "-1.5"). std::to_string() cannot be used here -- it always emits six
+// decimals (std::to_string(1.0f) == "1.000000"), which would put a false diff on every integer
+// alter re-exported from an existing score.
+std::string formatAlterValue(const float alterValue) {
+    std::ostringstream stream;
+    if (alterValue == static_cast<float>(static_cast<int>(alterValue))) {
+        stream << static_cast<int>(alterValue);
+    } else {
+        stream << std::fixed << std::setprecision(1) << alterValue;
+    }
+    return stream.str();
+}
+
 // Returns the pitch string that spells 'midiNumber' with 'alter' semitones (-2..2), or an
 // empty string if no diatonic step fits or the octave falls outside the supported range
 std::string spellMidiNumber(const int midiNumber, const int alter) {
@@ -841,9 +858,8 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
 
             if (!_writtenPitch.getAlterSymbol().empty()) {
                 const float alterValue = _writtenPitch.getAlter();
-                const int x = static_cast<int>(alterValue);
                 pitch.append(Helper::generateIdentation(5, identSize) + "<alter>" +
-                             std::to_string(x) + "</alter>\n");
+                             formatAlterValue(alterValue) + "</alter>\n");
             }
 
             pitch.append(Helper::generateIdentation(5, identSize) + "<octave>" +
@@ -859,9 +875,8 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
 
             if (!_writtenPitch.getAlterSymbol().empty()) {
                 const float alterValue = _writtenPitch.getAlter();
-                const int x = static_cast<int>(alterValue);
                 unpitched.append(Helper::generateIdentation(5, identSize) + "<alter>" +
-                                 std::to_string(x) + "</alter>\n");
+                                 formatAlterValue(alterValue) + "</alter>\n");
             }
 
             unpitched.append(Helper::generateIdentation(5, identSize) + "<display-octave>" +
@@ -909,6 +924,17 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
             // Helper::ticks2noteType(_durationTicks, _divisionsPerQuarterNote)
             // + "</type>\n");
         }
+    }
+
+    // <accidental> is emitted under the same condition as <alter> (a non-empty alter symbol),
+    // right after <type> and before <time-modification>. Per the MusicXML schema the note
+    // element sequence is `type?, dot*, accidental?, time-modification?, stem?`; <dot> and
+    // <time-modification> are already emitted in the wrong relative order below (pre-existing,
+    // not fixed here -- see CHANGELOG), so this is the closest schema-correct position available
+    // without reordering the existing elements.
+    if (!_writtenPitch.getAlterSymbol().empty()) {
+        xml.append(Helper::generateIdentation(4, identSize) + "<accidental>" +
+                   Helper::alterValue2Name(_writtenPitch.getAlter()) + "</accidental>\n");
     }
 
     if (_isTuplet) {
