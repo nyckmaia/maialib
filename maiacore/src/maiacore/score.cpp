@@ -680,17 +680,6 @@ void Score::loadXMLFile(const std::string& filePath) {
                             // a spelling for it, and never round to the nearest representable
                             // pitch -- a silent wrong pitch is worse than a loud dropped
                             // accidental in a library used for musical analysis.
-                            // Helper::alterValue2symbol() only knows the nine semitone/
-                            // quarter-tone values this library can spell (-2..2 in 0.5 steps).
-                            // A value outside that range (e.g. a triple accidental like 3, or a
-                            // non-quarter-tone microtonal value like 0.25) is a real limitation
-                            // of that vocabulary, not something to solve here, so it must not
-                            // abort the load either: this is exactly what the pre-Task-7 switch
-                            // did silently (no default case, note left natural), so restore
-                            // that outcome but make it audible instead of silent. Never invent
-                            // a spelling for it, and never round to the nearest representable
-                            // pitch -- a silent wrong pitch is worse than a loud dropped
-                            // accidental in a library used for musical analysis.
                             if (!accidentalRecognised && !alterTag.empty()) {
                                 try {
                                     alterSymbol = Helper::alterValue2symbol(
