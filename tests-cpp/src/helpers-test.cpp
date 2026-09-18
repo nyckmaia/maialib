@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <limits>
 #include <optional>
 #include <regex>
 
@@ -584,6 +585,35 @@ TEST(PitchSpelling, TransposePitchRejectsAnIntervalOffTheQuarterToneGrid) {
         EXPECT_NE(what.find("multiple of 0.5"), std::string::npos) << "message: " << what;
         EXPECT_NE(what.find("0.3"), std::string::npos) << "message: " << what;
     }
+}
+
+// Fix round 1, Minor 2: an infinity SLIPPED THROUGH the multiple-of-0.5 check, because
+// inf * 2 == inf and std::floor(inf) == inf, so the inequality that rejects 0.3 was false for it.
+// The two consequences differed and both were bad: "+inf" failed far away with the unrelated
+// message "Unknown accidental alter value: inf", and "-inf" SILENTLY returned "rest" -- an
+// infinite transposition quietly turning a note into a rest, exactly the class of silent
+// wrongness this sub-project exists to remove. Both are now rejected by the validator itself.
+//
+// The "got '<result>'" branch is what pins the -inf case specifically: a returned value fails the
+// test and prints what came back, so a silent "rest" is reported as the wrong ANSWER it is, rather
+// than being indistinguishable from a wrong error message.
+TEST(PitchSpelling, TransposePitchRejectsNonFiniteIntervals) {
+    const auto expectRejected = [](const char* label, const float interval) {
+        try {
+            const std::string result = Helper::transposePitch("C4", interval);
+            ADD_FAILURE() << label << ": expected std::runtime_error, got '" << result << "'";
+        } catch (const std::runtime_error& e) {
+            const std::string what = e.what();
+            EXPECT_NE(what.find("finite"), std::string::npos) << label << " message: " << what;
+            EXPECT_EQ(what.find("Unknown accidental"), std::string::npos)
+                << label << " message: " << what;
+        }
+    };
+
+    const float infinity = std::numeric_limits<float>::infinity();
+    expectRejected("+inf", infinity);
+    expectRejected("-inf", -infinity);
+    expectRejected("nan", std::numeric_limits<float>::quiet_NaN());
 }
 
 TEST(Helper, GetLibraryVersion) {

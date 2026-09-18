@@ -434,6 +434,21 @@ class PitchSpelling(unittest.TestCase):
             ml.Helper.transposePitch("C4", 0.3)
         self.assertIn("multiple of 0.5", str(ctx.exception))
 
+    # Fix round 1 (Minor 2), Python parity: an infinity passed the multiple-of-0.5 check, because
+    # inf * 2 == inf == floor(inf). +inf then failed far away with an unrelated message, and -inf
+    # SILENTLY returned "rest" -- an infinite transposition quietly turning a note into a rest.
+    # Mirrors the C++ PitchSpelling.TransposePitchRejectsNonFiniteIntervals test.
+    def testTransposePitchRejectsNonFiniteIntervals(self):
+        for label, value in (
+            ("+inf", float("inf")),
+            ("-inf", float("-inf")),
+            ("nan", float("nan")),
+        ):
+            with self.subTest(interval=label):
+                with self.assertRaises(RuntimeError) as ctx:
+                    ml.Helper.transposePitch("C4", value)
+                self.assertIn("finite", str(ctx.exception))
+
     def testSplitPitch(self):
         self.assertEqual(ml.Helper.splitPitch("Dbb-1"), ("Dbb", "D", -1, -2.0, "bb"))
         self.assertEqual(ml.Helper.splitPitch("E"), ("E", "E", 4, 0.0, ""))

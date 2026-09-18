@@ -308,7 +308,11 @@ class Helper {
      *          points (Note::transpose(), Chord::transpose(), Chord::transposeStackOnly() and
      *          transposePitch()) so the rule and its message are stated once.
      * @param semitones Transposition interval in semitones.
-     * @throws std::runtime_error If semitones is not a multiple of 0.5, naming the value.
+     * @throws std::runtime_error If semitones is not finite (an infinity or NaN), or is finite but
+     *         not a multiple of 0.5. Both messages name the offending value. The non-finite check
+     *         is separate because an infinity passes the multiple-of-0.5 test (`inf * 2 == inf ==
+     *         std::floor(inf)`), and would otherwise reach the spelling code — where `-inf`
+     *         silently produced a rest.
      */
     static void validateTransposeSemitones(const float semitones);
 

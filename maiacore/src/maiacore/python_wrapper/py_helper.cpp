@@ -295,8 +295,9 @@ void HelperClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If ``semitones`` is not a multiple of 0.5, if the input is invalid, or if the result
-            cannot be spelled within octaves -1 to 11.
+            If ``semitones`` is not finite (``inf``, ``-inf`` or ``nan``) or is not a multiple of
+            0.5, if the input is invalid, or if the result cannot be spelled within octaves -1
+            to 11.
 
         Examples
         --------

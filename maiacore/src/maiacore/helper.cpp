@@ -1611,6 +1611,20 @@ RhythmFigure Helper::noteType2RhythmFigure(const std::string& noteType) {
 }
 
 void Helper::validateTransposeSemitones(const float semitones) {
+    // Non-finite first. An infinity SLIPS THROUGH the multiple-of-0.5 test below: inf * 2 == inf
+    // and std::floor(inf) == inf, so the inequality that rejects 0.3 is false for it. The two
+    // consequences differed and both were bad -- +inf failed far away with the unrelated message
+    // "Unknown accidental alter value: inf", and -inf SILENTLY returned "rest" through
+    // steps2pitch()'s below-MIDI-0 branch, an infinite transposition quietly turning a note into a
+    // rest. NaN is classified here with them rather than being left to the comparison below: it
+    // satisfies neither "is a multiple of 0.5" nor "is not", so stating the rule once is honest
+    // where relying on NaN != NaN is an accident. Mirrors Pitch::setFrequency(), which classifies
+    // non-finite input explicitly (spec section 4.3).
+    if (!std::isfinite(semitones)) {
+        LOG_ERROR("A transposition must be a finite number of semitones, but '" +
+                  std::to_string(semitones) + "' is not");
+    }
+
     // A transposition must land on a pitch this library can spell, and the finest spellable
     // interval is the quarter tone: there is no pitch between "C1x4" and "C#4". Doubling turns
     // "is a multiple of 0.5" into an exact integer test -- every multiple of 0.5 in the usable

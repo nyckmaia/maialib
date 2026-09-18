@@ -254,6 +254,22 @@ TEST(toInversion, movesTheLowestNoteUpOneOctaveThroughNoteTranspose) {
     EXPECT_EQ(myChord.getNote(0).getPitch(), "E4");
     EXPECT_EQ(myChord.getNote(1).getPitch(), "G4");
     EXPECT_EQ(myChord.getNote(2).getPitch(), "C5");
+
+    // Fix round 1, Minor 1: the semitone case above DEMONSTRATES the delegation but does not GUARD
+    // the quarter tone -- it would pass unchanged if a later change rounded the inverted note back
+    // to a semitone. This half guards it: the note moved up an octave keeps its quarter tone,
+    // because toInversion() goes through Note::transpose() and so through the exact arithmetic
+    // rather than a MIDI integer. C1x4 is exactly 60.5, so an octave up is 72.5, spelled from the
+    // base semitone it rounds up to (C#5, alter +1) as C1x5.
+    const std::vector<std::string> quarterTonePitches = {"C1x4", "E4", "G4"};
+    Chord quarterToneChord(quarterTonePitches);
+    quarterToneChord.toInversion(1);
+
+    ASSERT_EQ(quarterToneChord.size(), 3);
+    EXPECT_EQ(quarterToneChord.getNote(0).getPitch(), "E4");
+    EXPECT_EQ(quarterToneChord.getNote(1).getPitch(), "G4");
+    EXPECT_EQ(quarterToneChord.getNote(2).getPitch(), "C1x5");
+    EXPECT_TRUE(quarterToneChord.getNote(2).isQuarterTone());
 }
 
 TEST(stackInThirds, throwsOnEightDistinctPitchClassChord) {
