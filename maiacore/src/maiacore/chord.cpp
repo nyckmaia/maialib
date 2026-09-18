@@ -38,6 +38,20 @@ float exactSemitoneSteps(const Note& note) {
     return static_cast<float>(twiceExactSemitoneSteps(note)) / 2.0f;
 }
 
+// The note count divided by the span it occupies, in semitones, from doubled exact step positions.
+// The '+ 1' preserves the original inclusive-semitone-slot convention, so a chord with no quarter
+// tone gets exactly the value it always did.
+//
+// Shared by both getHarmonicDensity() overloads: the string overload cannot delegate to the numeric
+// one without rounding, because that one's parameters are ints.
+float densityOverRange(const int numNotes, const int lowestTwiceSteps,
+                       const int highestTwiceSteps) {
+    const float midiRange =
+        (static_cast<float>(highestTwiceSteps - lowestTwiceSteps) / 2.0f) + 1.0f;
+
+    return static_cast<float>(numNotes) / midiRange;
+}
+
 // Rejects a quarter tone in a method whose RETURN TYPE cannot express one, in the style the
 // analysis chokepoint in stackInThirds() established: the message names the offending note and the
 // escape hatch, so a caller can act on it without consulting the documentation.
@@ -1566,18 +1580,20 @@ bool Chord::isInRootPosition() {
 
 bool Chord::isSorted() const {
     // Ordering is a predicate, and a bool expresses the true answer for a quarter-tone chord
-    // exactly, so this computes rather than rejects. It compares exact positions instead of
-    // getMidiNumber(), whose ties-upward rounding collapses a quarter tone onto the semitone above
-    // it: measured, Chord{"E1b4", "E4"} -- 63.5 then 64, genuinely ascending -- reported false,
-    // because both notes rounded to 64 and the comparator below reads equal values as unsorted.
+    // exactly, so this computes rather than rejects.
+    //
+    // The exactness lives in Note's comparison operators, not in a lambda here. Fix round 1 found
+    // the two halves disagreeing: this method compared exact positions while Chord::sortNotes()
+    // still ordered by the rounded Note::operator<, so sorting {"E4", "E1b4"} left the pair
+    // untouched -- std::sort saw two equal notes -- and this method then called the result
+    // unsorted. That was a chord sortNotes() could not make sorted. Keeping one source of truth
+    // for pitch order removes the contradiction by construction rather than by agreement.
     //
     // That '<=' is kept exactly as it was. With it, a chord holding the same pitch twice reports
     // unsorted, which is a separate pre-existing defect about equal pitches rather than about
     // quarter tones; changing it here would alter semitone chords this task does not touch.
     return std::is_sorted(_originalNotes.begin(), _originalNotes.end(),
-                          [](const Note& lh, const Note& rh) {
-                              return twiceExactSemitoneSteps(lh) <= twiceExactSemitoneSteps(rh);
-                          });
+                          [](const Note& lh, const Note& rh) { return lh <= rh; });
 }
 
 float Chord::getCloseStackHarmonicComplexity(const bool useEnharmony) {
@@ -1659,11 +1675,7 @@ float Chord::getHarmonicDensity(int lowerBoundMIDI, int higherBoundMIDI) const {
             highestTwiceSteps = std::max(highestTwiceSteps, twiceSteps);
         }
 
-        const float midiRange =
-            (static_cast<float>(highestTwiceSteps - lowestTwiceSteps) / 2.0f) + 1.0f;
-        const float density = static_cast<float>(numNotes) / midiRange;
-
-        return density;
+        return densityOverRange(numNotes, lowestTwiceSteps, highestTwiceSteps);
     }
 
     // Case 02: User defined values of 'higherBoundMIDI' and 'lowerBoundMIDI'
@@ -1685,12 +1697,16 @@ float Chord::getHarmonicDensity(const std::string& lowerBoundPitch,
         LOG_ERROR("'higherBoundPitch' cannot be empty or be 'rest'");
     }
 
-    // Get MIDI values from the user input pitches
-    const int lowerBoundMIDI = Helper::pitch2midiNote(lowerBoundPitch);
-    const int higherBoundMIDI = Helper::pitch2midiNote(higherBoundPitch);
+    // Fix round 1: the bounds are exact rather than rounded. Helper::pitch2midiNote() rounds a
+    // quarter-tone bound ties-upward, so "C1x4" (60.5) became 61 and this overload measured a
+    // density of 2/7 for a span the numeric overload's auto-detected path already measured as the
+    // true 2/7.5. Delegating to that overload cannot preserve the half step, because its parameters
+    // are ints, so the density is computed here from the same shared helper it uses.
+    const int lowerBoundTwiceSteps = twiceExactSemitoneSteps(Note(lowerBoundPitch));
+    const int higherBoundTwiceSteps = twiceExactSemitoneSteps(Note(higherBoundPitch));
 
-    // Compute density
-    return getHarmonicDensity(lowerBoundMIDI, higherBoundMIDI);
+    return densityOverRange(static_cast<int>(_originalNotes.size()), lowerBoundTwiceSteps,
+                            higherBoundTwiceSteps);
 }
 
 bool Chord::haveMajorInterval(const bool useEnharmony) const {
@@ -2779,13 +2795,39 @@ float Chord::getMeanOfExtremesFrequency(const float freqA4) const {
 }
 
 float Chord::getFrequencyStd(const float freqA4) const {
-    std::vector<float> freqVec(_originalNotes.size(), 0.0f);
+    // Fix round 1: this carried the identical zero-padding defect getMidiValueStd() had. The vector
+    // was sized to the note count and then push_back()ed into, so it averaged a leading run of
+    // zeros: measured, a C major triad reported 168.144 -- the standard deviation of
+    // {0, 0, 0, 261.63, 329.63, 392.00} -- instead of the true 53.24.
+    //
+    // This is NOT the frequency-rounding defect that belongs to the tuning work:
+    // Note::getFrequency() still derives its value from the rounded MIDI number, and repairing
+    // that would not have repaired this. The padding is arithmetic, independent of where the
+    // frequencies come from.
+    // That is why it is fixed here, beside its now-repaired sibling, rather than deferred.
+    //
+    // An empty chord now returns 0.0f instead of the NaN the old route produced by dividing by a
+    // zero-length vector.
+    const size_t numNotes = _originalNotes.size();
 
-    for (const auto& note : _originalNotes) {
-        freqVec.push_back(note.getFrequency(freqA4));
+    if (numNotes == 0) {
+        return 0.0f;
     }
 
-    return computeStandardDeviation(freqVec);
+    float sum = 0.0f;
+    for (const auto& note : _originalNotes) {
+        sum += note.getFrequency(freqA4);
+    }
+
+    const float mean = sum / static_cast<float>(numNotes);
+
+    float squaredDeviationSum = 0.0f;
+    for (const auto& note : _originalNotes) {
+        const float deviation = note.getFrequency(freqA4) - mean;
+        squaredDeviationSum += deviation * deviation;
+    }
+
+    return std::sqrt(squaredDeviationSum / static_cast<float>(numNotes));
 }
 
 int Chord::getMeanMidiValue() const {
@@ -2837,12 +2879,11 @@ float Chord::getMidiValueStd() const {
     // of 2.8674, and the quarter-tone chord reported that very same 31.8978. Second, the values
     // came from the rounded getMidiNumber().
     //
-    // The standard deviation is computed here rather than through the shared
-    // computeStandardDeviation() helper because that helper seeds std::accumulate() with the
-    // integer literal 0, which makes the running sum an int and would truncate the .5 of every
-    // quarter tone. The helper is left untouched on purpose: its only other caller is
-    // getFrequencyStd(), one of the frequency-based methods whose rounding fix belongs to the
-    // tuning work rather than to this task.
+    // The standard deviation is computed inline rather than through the old shared
+    // computeStandardDeviation() helper, which seeded std::accumulate() with the integer literal 0
+    // -- making the running sum an int, which would have truncated the .5 of every quarter tone.
+    // Fix round 1 repaired getFrequencyStd() the same way, which left that helper with no callers
+    // at all, so it was removed rather than left as dead code.
     //
     // An empty chord now returns 0.0f instead of the NaN the old route produced by dividing by a
     // zero-length vector.

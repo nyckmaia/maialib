@@ -644,5 +644,62 @@ class QuarterToneComputedValues(unittest.TestCase):
         self.assertIn("roundToSemitone", str(context.exception))
 
 
+class QuarterToneOrderingAndSpread(unittest.TestCase):
+    """Fix round 1: pitch ordering, and the two spread/density defects beside it."""
+
+    def testSortNotesAgreesWithIsSorted(self):
+        # The round trip that was broken: sortNotes() ordered by the rounded MIDI number, so this
+        # pair looked equal and was left untouched, after which isSorted() -- which compares exact
+        # positions -- called the result unsorted. A chord sortNotes() could not make sorted.
+        myChord = ml.Chord(["E4", "E1b4"])
+        myChord.sortNotes()
+
+        self.assertEqual(myChord.getNote(0).getPitch(), "E1b4")
+        self.assertEqual(myChord.getNote(1).getPitch(), "E4")
+        self.assertTrue(myChord.isSorted())
+
+    def testSortNotesSemitoneChordIsUnchanged(self):
+        myChord = ml.Chord(["G4", "E4", "C4"])
+        myChord.sortNotes()
+
+        self.assertEqual(myChord.getNote(0).getPitch(), "C4")
+        self.assertEqual(myChord.getNote(2).getPitch(), "G4")
+        self.assertTrue(myChord.isSorted())
+
+    def testNoteComparisonsUseExactPitchPositions(self):
+        # Bound straight to Note's C++ operators. E1b4 is 63.5, E4 is 64; before the fix both
+        # rounded to 64 and the first assertion below was False.
+        self.assertTrue(ml.Note("E1b4") < ml.Note("E4"))
+        self.assertFalse(ml.Note("E4") < ml.Note("E1b4"))
+        self.assertTrue(ml.Note("E4") > ml.Note("E1b4"))
+        self.assertTrue(ml.Note("E1b4") <= ml.Note("E4"))
+
+        # __eq__/__ne__ compare pitch strings and were always correct.
+        self.assertNotEqual(ml.Note("E1b4"), ml.Note("E4"))
+
+    def testNoteComparisonsUnchangedForSemitones(self):
+        self.assertTrue(ml.Note("C4") < ml.Note("E4"))
+        self.assertFalse(ml.Note("G4") < ml.Note("E4"))
+
+    def testFrequencyStdIsNotZeroPadded(self):
+        # Reported 168.14 before the fix: the standard deviation of the padded sample
+        # {0, 0, 0, 261.63, 329.63, 392.00}.
+        self.assertAlmostEqual(ml.Chord(["C4", "E4", "G4"]).getFrequencyStd(), 53.24, places=1)
+
+    def testFrequencyStdEmptyChordIsZero(self):
+        self.assertEqual(ml.Chord().getFrequencyStd(), 0.0)
+
+    def testHarmonicDensityStringBoundsAreExact(self):
+        # "C1x4" is 60.5; rounding it to 61 gave 2/7 instead of the true 2/7.5.
+        myChord = ml.Chord(["C1x4", "G4"])
+
+        self.assertAlmostEqual(myChord.getHarmonicDensity("C1x4", "G4"), 2.0 / 7.5, places=4)
+        # The two overloads now agree about the same span.
+        self.assertAlmostEqual(
+            myChord.getHarmonicDensity("C1x4", "G4"), myChord.getHarmonicDensity(), places=4
+        )
+        self.assertAlmostEqual(myChord.getHarmonicDensity("C4", "G4"), 0.25, places=4)
+
+
 if __name__ == "__main__":
     unittest.main()

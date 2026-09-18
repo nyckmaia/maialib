@@ -884,10 +884,14 @@ TEST(quarterToneMidiDomainGuard, meanMidiValueFamilyIsRejected) {
     EXPECT_REJECTED_NAMING(myChord.getMeanOfExtremesMidiValue(), "roundQuarterTones");
 
     // These two spell whatever the int mean above produced, so they inherit that rejection rather
-    // than carrying a guard of their own. A string CAN spell a quarter tone ("D3x4"), but the
-    // value being spelled is the mean of N notes, which is a multiple of 1/N and generally not a
-    // multiple of 0.5 -- so computing here would need a rounding policy, and rounding is exactly
-    // what this task removes.
+    // than carrying a guard of their own.
+    //
+    // The reason is NOT that the mean rarely lands on a quarter tone: a string CAN spell one
+    // ("D3x4"), and this very chord averages to exactly 63.5, which IS spellable. The decisive
+    // obstacle is the spelling route -- getMeanPitch() spells through Helper::midiNote2pitch(),
+    // whose parameter is an int, so a half step cannot be expressed through it at all, and adding
+    // a fractional-input speller would be new public API. Rejecting is the only honest answer even
+    // for the means that would have been spellable.
     EXPECT_REJECTED_NAMING(myChord.getMeanPitch(), "roundQuarterTones");
     EXPECT_REJECTED_NAMING(myChord.getMeanOfExtremesPitch(), "roundQuarterTones");
 }
@@ -1029,4 +1033,101 @@ TEST(getHarmonicDensity, aQuarterToneExtremeWidensTheRangeByHalfASemitone) {
     // Unchanged for a chord with no quarter tone.
     Chord semitone({"C4", "E4", "G4"});
     EXPECT_NEAR(semitone.getHarmonicDensity(-1, -1), 0.375f, 0.0001f);
+}
+
+// ===== Fix round 1 ===== //
+
+TEST(sortNotes, sortsAQuarterToneChordAndAgreesWithIsSorted) {
+    // The round trip that was broken: this task fixed the measurer and left the sorter. sortNotes()
+    // ordered through the rounded Note::operator<, so std::sort saw E4 (64) and E1b4 (rounded to
+    // 64) as equal and left the pair untouched -- after which isSorted(), comparing exact
+    // positions, called the result unsorted. Measured before the fix: note(0) stayed "E4" and
+    // isSorted() was false. A chord sortNotes() could not make sorted.
+    Chord myChord(std::vector<std::string>{"E4", "E1b4"});
+
+    myChord.sortNotes();
+
+    EXPECT_EQ(myChord.getNote(0).getPitch(), "E1b4");
+    EXPECT_EQ(myChord.getNote(1).getPitch(), "E4");
+    EXPECT_TRUE(myChord.isSorted());
+}
+
+TEST(sortNotes, semitoneChordRoundTripIsUnchanged) {
+    // The fix must not disturb ordinary chords.
+    Chord myChord({"G4", "E4", "C4"});
+
+    myChord.sortNotes();
+
+    EXPECT_EQ(myChord.getNote(0).getPitch(), "C4");
+    EXPECT_EQ(myChord.getNote(1).getPitch(), "E4");
+    EXPECT_EQ(myChord.getNote(2).getPitch(), "G4");
+    EXPECT_TRUE(myChord.isSorted());
+}
+
+TEST(noteOrdering, comparesExactPitchPositionsNotRoundedMidiNumbers) {
+    // The root of the sorter/measurer contradiction, and user-visible in its own right: these
+    // operators are bound straight to Python. Measured before the fix, `quarterTone < semitone`
+    // was false, because 63.5 and 64 both rounded to 64.
+    const Note quarterTone("E1b4");  // 63.5
+    const Note semitone("E4");       // 64
+
+    EXPECT_TRUE(quarterTone < semitone);
+    EXPECT_FALSE(semitone < quarterTone);
+    EXPECT_TRUE(semitone > quarterTone);
+    EXPECT_FALSE(quarterTone > semitone);
+    EXPECT_TRUE(quarterTone <= semitone);
+    EXPECT_FALSE(semitone <= quarterTone);
+    EXPECT_TRUE(semitone >= quarterTone);
+    EXPECT_FALSE(quarterTone >= semitone);
+
+    // operator==/!= compare pitch strings, so they could always tell these two apart and are
+    // deliberately left alone.
+    EXPECT_FALSE(quarterTone == semitone);
+    EXPECT_TRUE(quarterTone != semitone);
+}
+
+TEST(noteOrdering, semitoneComparisonsAreUnchanged) {
+    // Exact and rounded positions coincide for any note without a quarter tone.
+    EXPECT_TRUE(Note("C4") < Note("E4"));
+    EXPECT_FALSE(Note("G4") < Note("E4"));
+    EXPECT_TRUE(Note("C4") <= Note("C4"));
+    EXPECT_TRUE(Note("G4") >= Note("G4"));
+    EXPECT_TRUE(Note("G4") > Note("C4"));
+}
+
+TEST(getFrequencyStd, isTheRealStandardDeviationNotAZeroPaddedOne) {
+    // The identical zero-padding defect getMidiValueStd() had: the vector was sized to the note
+    // count and then appended to. Measured before the fix: 168.144, the standard deviation of
+    // {0, 0, 0, 261.63, 329.63, 392.00}, rather than of the three frequencies themselves.
+    //
+    // This does NOT assert anything about quarter tones: the frequencies still come from the
+    // rounded MIDI number, which is a separate deferred tuning concern.
+    Chord myChord({"C4", "E4", "G4"});
+
+    EXPECT_NEAR(myChord.getFrequencyStd(), 53.24f, 0.05f);
+}
+
+TEST(getFrequencyStd, emptyChordReturnsZero) {
+    // The old route divided by a zero-length vector and produced NaN.
+    Chord myChord;
+
+    EXPECT_FLOAT_EQ(myChord.getFrequencyStd(), 0.0f);
+}
+
+TEST(getHarmonicDensity, stringBoundsAreExactLikeTheNumericOverload) {
+    // The string overload converted its bounds with Helper::pitch2midiNote(), which rounds, so
+    // "C1x4" (60.5) became 61: measured 2/7 = 0.2857, while the numeric overload's auto-detected
+    // path already measured the true 2/7.5 = 0.2667.
+    Chord myChord(std::vector<std::string>{"C1x4", "G4"});
+
+    EXPECT_NEAR(myChord.getHarmonicDensity(std::string("C1x4"), std::string("G4")), 2.0f / 7.5f,
+                0.0001f);
+
+    // The two overloads now agree about the same span, which is the property that was violated.
+    EXPECT_NEAR(myChord.getHarmonicDensity(std::string("C1x4"), std::string("G4")),
+                myChord.getHarmonicDensity(-1, -1), 0.0001f);
+
+    // Unchanged for semitone bounds.
+    EXPECT_NEAR(myChord.getHarmonicDensity(std::string("C4"), std::string("G4")), 2.0f / 8.0f,
+                0.0001f);
 }

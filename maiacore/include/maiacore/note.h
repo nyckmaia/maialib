@@ -682,22 +682,30 @@ class Note {
     // ===== OPERATORS ===== //
 
     /**
-     * @brief Less-than operator for comparing notes by MIDI number.
+     * @brief Less-than operator for comparing notes by exact pitch position.
+     * @details Compares the exact, unrounded pitch position, so a quarter tone orders correctly
+     *          instead of being collapsed onto the semitone above it: `Note("E1b4") < Note("E4")`
+     *          is true, because 63.5 really is below 64. Identical to comparing getMidiNumber()
+     *          for any note without a quarter tone. This is the single source of truth for pitch
+     *          order: Chord::sortNotes() and Chord::isSorted() both resolve through it.
      */
     bool operator<(const Note& otherNote) const;
 
     /**
-     * @brief Greater-than operator for comparing notes by MIDI number.
+     * @brief Greater-than operator for comparing notes by exact pitch position.
+     * @details See operator<() for the exactness guarantee.
      */
     bool operator>(const Note& otherNote) const;
 
     /**
-     * @brief Less-than-or-equal operator for comparing notes by MIDI number.
+     * @brief Less-than-or-equal operator for comparing notes by exact pitch position.
+     * @details See operator<() for the exactness guarantee.
      */
     bool operator<=(const Note& otherNote) const;
 
     /**
-     * @brief Greater-than-or-equal operator for comparing notes by MIDI number.
+     * @brief Greater-than-or-equal operator for comparing notes by exact pitch position.
+     * @details See operator<() for the exactness guarantee.
      */
     bool operator>=(const Note& otherNote) const;
 

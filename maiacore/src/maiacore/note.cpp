@@ -16,6 +16,26 @@
 #include "maiacore/utils.h"
 
 namespace {
+// Twice the exact, unrounded pitch position in semitones, as an integer.
+//
+// getMidiNumber() rounds a quarter tone ties-upward (Helper::spelling2midiNote()), which is what
+// made every ordering in this class collapse a quarter tone onto the semitone above it: measured,
+// Note("E1b4") < Note("E4") was false, although 63.5 really is below 64, because both rounded to
+// 64. Ordering is where that mattered most, because Chord::sortNotes() sorts through these
+// operators: std::sort saw two equal notes, left {"E4", "E1b4"} untouched, and Chord::isSorted()
+// then called the result unsorted -- a chord sortNotes() could not make sorted.
+//
+// The recovery is exact, not an approximation. Pitch::setAlter() constrains an alter to a multiple
+// of 0.5, so a quarter tone's exact position is always an integer plus 0.5, and ties-upward
+// rounding therefore always adds exactly 0.5 to it, on the flat and sharp sides alike. Doubling
+// keeps the comparison in integer arithmetic.
+//
+// For a note with no quarter tone this is exactly 2 * getMidiNumber(), so every comparison between
+// ordinary notes is bit-identical to the previous implementation's.
+int twiceExactSemitoneSteps(const Note& note) {
+    return (2 * note.getMidiNumber()) - (note.isQuarterTone() ? 1 : 0);
+}
+
 // Formats a pitch alter value for the MusicXML <alter> element: integral values (whole-tone
 // accidentals) print with no decimal part (e.g. "1", "-2"); quarter tones print with exactly one
 // decimal place (e.g. "0.5", "-1.5"). std::to_string() cannot be used here -- it always emits six
@@ -1028,20 +1048,30 @@ int Note::getMidiNumber() const {
     return _writtenPitch.getMidiNumber() + _transposeChromatic;
 }
 
+// The four ordering operators compare exact pitch positions rather than the rounded
+// getMidiNumber() -- see twiceExactSemitoneSteps() at the top of this file for why that is exact
+// and why it changes nothing for a note without a quarter tone.
+//
+// This is the single source of truth for pitch order in the library: Chord::sortNotes(),
+// Chord::isSorted() and every internal std::sort over Notes go through it, as do Python's
+// Note comparisons, which are bound directly to these operators.
+//
+// operator==/!= are deliberately NOT touched: they compare pitch STRINGS, so they already
+// distinguish "E1b4" from "E4" and were never affected by the rounding.
 bool Note::operator<(const Note& otherNote) const {
-    return (getMidiNumber() < otherNote.getMidiNumber());
+    return twiceExactSemitoneSteps(*this) < twiceExactSemitoneSteps(otherNote);
 }
 
 bool Note::operator>(const Note& otherNote) const {
-    return (getMidiNumber() > otherNote.getMidiNumber());
+    return twiceExactSemitoneSteps(*this) > twiceExactSemitoneSteps(otherNote);
 }
 
 bool Note::operator<=(const Note& otherNote) const {
-    return (getMidiNumber() <= otherNote.getMidiNumber());
+    return twiceExactSemitoneSteps(*this) <= twiceExactSemitoneSteps(otherNote);
 }
 
 bool Note::operator>=(const Note& otherNote) const {
-    return (getMidiNumber() >= otherNote.getMidiNumber());
+    return twiceExactSemitoneSteps(*this) >= twiceExactSemitoneSteps(otherNote);
 }
 
 bool Note::operator==(const Note& otherNote) const { return getPitch() == otherNote.getPitch(); }

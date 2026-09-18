@@ -314,7 +314,19 @@ void ChordClass(const py::module& m) {
     cls.def("getHarmonicDensity",
             py::overload_cast<const std::string&, const std::string&>(&Chord::getHarmonicDensity,
                                                                       py::const_),
-            py::arg("lowerBoundPitch") = "", py::arg("higherBoundPitch") = "");
+            py::arg("lowerBoundPitch") = "", py::arg("higherBoundPitch") = "",
+            R"pbdoc(
+        Get the harmonic density of the chord within a range given as pitch names.
+
+        The bounds are taken at their exact pitch positions, so a quarter-tone bound is not rounded:
+        ``"C1x4"`` is 60.5, giving a span of 6.5 semitones to ``"G4"`` and matching the numeric
+        overload's auto-detected range, rather than the 6 that rounding produces.
+
+        Returns
+        -------
+        float
+            The density: the note count divided by the range it spans.
+    )pbdoc");
 
     cls.def("haveMajorInterval", &Chord::haveMajorInterval, py::arg("useEnharmony") = false);
     cls.def("haveMinorInterval", &Chord::haveMinorInterval, py::arg("useEnharmony") = false);
@@ -576,7 +588,22 @@ void ChordClass(const py::module& m) {
     cls.def("getMeanFrequency", &Chord::getMeanFrequency, py::arg("freqA4") = 440.0f);
     cls.def("getMeanOfExtremesFrequency", &Chord::getMeanOfExtremesFrequency,
             py::arg("freqA4") = 440.0f);
-    cls.def("getFrequencyStd", &Chord::getFrequencyStd, py::arg("freqA4") = 440.0f);
+    cls.def("getFrequencyStd", &Chord::getFrequencyStd, py::arg("freqA4") = 440.0f,
+            R"pbdoc(
+        Get the standard deviation of the chord's note frequencies.
+
+        An empty chord returns ``0.0``.
+
+        Note that the frequencies are still derived from the rounded MIDI number by
+        ``Note.getFrequency()``, so a quarter tone contributes the frequency of the semitone above
+        it -- a separate, deferred tuning concern. It is not the arithmetic defect (a zero-padded
+        sample) that used to make this report ``168.14`` for a C major triad instead of ``53.24``.
+
+        Returns
+        -------
+        float
+            The standard deviation of the frequencies, in Hz.
+    )pbdoc");
 
     cls.def("getMeanMidiValue", &Chord::getMeanMidiValue,
             R"pbdoc(
@@ -636,9 +663,14 @@ void ChordClass(const py::module& m) {
         ------
         RuntimeError
             If the chord contains a quarter tone, inherited from ``getMeanMidiValue``, which this
-            method spells. A pitch string CAN spell a quarter tone (``"D3x4"``), but the value
-            being spelled is the mean of N notes -- a multiple of 1/N, generally not a multiple of
-            0.5 -- so there is no exact spelling to return. Call ``roundQuarterTones`` first.
+            method spells.
+
+            The reason is NOT that the mean rarely lands on a quarter tone: a pitch string can
+            spell one (``"D3x4"``), and ``["C4", "E1b4", "G4"]`` averages to exactly 63.5, which is
+            spellable. The decisive obstacle is the spelling route -- this method spells through
+            ``Helper.midiNote2pitch()``, whose parameter is an int, so a half step cannot be
+            expressed through it at all, and adding a fractional-input speller would be new public
+            API. Call ``roundQuarterTones`` first.
     )pbdoc");
     cls.def("getMeanOfExtremesPitch", &Chord::getMeanOfExtremesPitch, py::arg("accType") = "",
             R"pbdoc(

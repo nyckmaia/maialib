@@ -197,25 +197,6 @@ class Chord {
      */
     const Note* findQuarterToneNote() const;
 
-    /**
-     * @brief Computes the standard deviation of a vector of values.
-     * @tparam T Numeric type.
-     * @param v The vector of values.
-     * @return Standard deviation as float.
-     */
-    template <typename T>
-    float computeStandardDeviation(const std::vector<T>& v) const {
-        const float sum = std::accumulate(v.begin(), v.end(), 0);
-        const float mean = sum / v.size();
-
-        std::vector<float> diff(v.size());
-        std::transform(v.begin(), v.end(), diff.begin(), [mean](double x) { return x - mean; });
-        const float sq_sum = std::inner_product(diff.begin(), diff.end(), diff.begin(), 0.0);
-        const float stdev = std::sqrt(sq_sum / v.size());
-
-        return stdev;
-    }
-
    public:
     /**
      * @brief Construct an empty Chord object.
@@ -474,6 +455,9 @@ class Chord {
 
     /**
      * @brief Compute the harmonic density of the chord in a pitch range.
+     * @details The bounds are taken at their exact pitch positions, so a quarter-tone bound is not
+     *          rounded: "C1x4" is 60.5, giving a span of 6.5 semitones to "G4", matching the
+     *          numeric overload's auto-detected range rather than the 6 that rounding produces.
      * @param lowerBoundPitch Lowest pitch string (e.g., "C4").
      * @param higherBoundPitch Highest pitch string (e.g., "G5").
      * @return Density as float.
@@ -1415,7 +1399,13 @@ class Chord {
 
     /**
      * @brief Calculates the standard deviation of the frequencies of all notes in the chord.
-     * @details Useful for measuring the spectral spread or compactness of the chord.
+     * @details Useful for measuring the spectral spread or compactness of the chord. An empty chord
+     *          returns 0.0f.
+     * @note The frequencies themselves are still derived from the rounded MIDI number by
+     *       Note::getFrequency(), so a quarter tone contributes the frequency of the semitone above
+     *       it. That is a separate, deliberately deferred tuning concern; it is not the arithmetic
+     *       defect (a zero-padded sample) that used to make this method report 168.14 for a C major
+     *       triad instead of 53.24.
      * @param freqA4 Reference frequency for A4 (default: 440.0 Hz).
      * @return Frequency standard deviation as a float.
      */
@@ -1458,10 +1448,15 @@ class Chord {
      * @param accType Optional: specify accidental type for pitch spelling.
      * @return String with the pitch name (e.g., "C4", "F#3").
      * @throws std::runtime_error If the chord contains a quarter tone, inherited from
-     *         getMeanMidiValue(), which this method spells. A pitch string CAN spell a quarter
-     *         tone ("D3x4"), but the value being spelled is the mean of N notes, which is a
-     *         multiple of 1/N and generally not a multiple of 0.5, so there is no exact spelling
-     *         to return. Call roundQuarterTones() first.
+     *         getMeanMidiValue(), which this method spells.
+     *
+     *         The reason is NOT that the mean rarely lands on a quarter tone: a pitch string can
+     *         spell one ("D3x4"), and {C4, E1b4, G4} averages to exactly 63.5, which is spellable.
+     *         The decisive obstacle is the spelling route. This method spells through
+     *         Helper::midiNote2pitch(), whose parameter is an int, so a half step cannot be
+     *         expressed through it at all, and adding a fractional-input speller would be new
+     *         public API. Rejecting is therefore the only honest answer here, even for the means
+     *         that would have been spellable. Call roundQuarterTones() first.
      */
     std::string getMeanPitch(const std::string& accType = {}) const;
 
