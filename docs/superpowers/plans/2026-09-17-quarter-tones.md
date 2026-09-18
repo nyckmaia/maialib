@@ -453,6 +453,74 @@ git commit -m "fix: read quarter tones from MusicXML, preferring <accidental>"
 
 ---
 
+
+### Task 7b: Delete the dead Score readers
+
+**Files:**
+- Modify: `maiacore/include/maiacore/score.h` (remove three `getNote` declarations and the `getNoteNodeData` declaration)
+- Modify: `maiacore/src/maiacore/score.cpp` (remove three `getNote` definitions and the `getNoteNodeData` definition)
+- Modify: `maiacore/include/maiacore/helper.h` (remove the `getNoteNodeData` declaration, which has no definition anywhere)
+- Modify: `CHANGELOG.md`
+- Test: no new tests; the compiler and linker are the proof, and both existing suites must hold
+
+**Interfaces:**
+- Consumes: nothing.
+- Produces: nothing. This task only removes.
+
+**Why this is its own task.** These are public C++ API removals. They deserve an isolated commit, a CHANGELOG breaking-change entry and their own review gate rather than being buried inside a MusicXML-read diff — the same reasoning that gave the octave migration its own Task 6b. The removal also closes two findings from Task 7's review for free (M2: `Score::getNote` still held an untouched copy of the four-case `-2/-1/1/2` switch the spec condemned; M3: the rest `octave` out-parameter left unwritten in both dead readers), and it finally satisfies spec §7.1's "one read path", which Task 7 could not achieve while a duplicate reader still existed.
+
+**What is NOT being removed — read this before touching anything.** There are three different `getNote` methods in this project. `Chord::getNote` and `Measure::getNote` are heavily used internal helpers **and** are bound to Python — they appear in `part.cpp`, `chord.cpp`, `chord.h`, `score.cpp`, `py_score.cpp`, `py_measure.cpp`, `py_chord.cpp` and `maialib/maiapy/plots.py`. **Only `Score::getNote` is dead.** Deleting either of the others would break the library and the Python package.
+
+- [ ] **Step 1: Verify the targets are dead yourself — do not trust this brief**
+
+Run these and read the output before deleting anything:
+
+```bash
+grep -rn "getNoteNodeData" --include=*.cpp --include=*.h --include=*.py . | grep -v "^./build/"
+grep -rn "getNote(" --include=*.cpp --include=*.h --include=*.py . | grep -v "^./build/"
+```
+
+Expected: `getNoteNodeData` appears only as two declarations (`helper.h`, `score.h`) and one definition (`score.cpp`), with zero calls. Every live `getNote(` call is on a `Chord` or a `Measure` object, never on a `Score`. `Score::getNote`'s only callers are its own short overloads delegating to the long one.
+
+If what you find disagrees with that, **stop and report** rather than deleting.
+
+- [ ] **Step 2: Delete the three `Score::getNote` overloads**
+
+Remove the three declarations from `score.h` and the three definitions from `score.cpp`, including their Doxygen blocks. Two of the definitions exist only to delegate to the third, so all three go together.
+
+- [ ] **Step 3: Delete `Score::getNoteNodeData`**
+
+Remove the declaration from `score.h` and the definition from `score.cpp`, with its Doxygen block.
+
+- [ ] **Step 4: Delete `Helper::getNoteNodeData`**
+
+Remove the declaration from `helper.h`. It has no definition anywhere in the repository, so any caller would already have been a link error — which is itself the proof that none exists.
+
+- [ ] **Step 5: Build — the toolchain is the test**
+
+Run: `make cpp-tests`
+Expected: compiles and links cleanly. A link error here would mean a caller existed after all; if that happens, stop and report rather than restoring blindly.
+
+Delete `cpp-tests.exe` before rebuilding — `tests-cpp/CMakeLists.txt` links `maiacore` by bare name and Make does not track it, so a stale binary would hide a real failure. Set the MSVC environment (VC 14.40.33807 + Windows SDK 10.0.22621.0) from PowerShell, never from Git Bash. Read the log tail; the wrapper and `make cpp-tests` both exit 0 even on failure.
+
+- [ ] **Step 6: Run both suites**
+
+Run: `make cpp-tests` and `make py-tests`
+Expected: C++ **906/906** and Python **282/282**, unchanged. Nothing should move — if a test fails, the deleted code was not dead and you must stop and report.
+
+- [ ] **Step 7: CHANGELOG**
+
+Add a breaking-change bullet under `[Unreleased]`, following the file's existing conventions, recording that `Score::getNote` (three overloads) and `Score::getNoteNodeData` are removed from the public C++ API, along with the unimplemented `Helper::getNoteNodeData` declaration. Note that none of them was ever bound to Python, so the Python package is unaffected. Do not edit the Task 5, 6, 6b or 7 entries.
+
+- [ ] **Step 8: Commit**
+
+```bash
+git add maiacore/include/maiacore/score.h maiacore/src/maiacore/score.cpp \
+        maiacore/include/maiacore/helper.h CHANGELOG.md
+git commit -m "refactor!: remove the dead Score readers and the unimplemented Helper declaration"
+```
+
+---
 ### Task 8: MusicXML write
 
 **Files:** Modify `note.cpp:766-769`, `:784-787`, `helper.cpp:320-354` (`alterValue2Name`), `score.cpp:1431-1437` (delete the commented block); Test `tests-cpp/src/note-test.cpp`
