@@ -578,6 +578,81 @@ git commit -m "feat: reject quarter tones in analysis, with roundQuarterTones() 
 
 ---
 
+
+### Task 9b: The MIDI-domain family the two chokepoints miss
+
+**Files:**
+- Modify: `maiacore/src/maiacore/chord.cpp` (the methods classified below)
+- Modify: `maiacore/src/maiacore/python_wrapper/py_chord.cpp` (docstrings for any changed contract)
+- Modify: `CHANGELOG.md`
+- Test: `tests-cpp/src/chord-test.cpp`, `test/test_chord.py`
+
+**Interfaces:**
+- Consumes: the `Chord` and `Interval` guards from Task 9; `Pitch::roundToSemitone()`; `Chord::roundQuarterTones()`.
+- Produces: no new API. This task decides, per method, between rejecting and computing correctly.
+
+**Why this task exists.** Task 9 rejected quarter tones at two chokepoints — `Interval`'s constructor/`setNotes` and `Chord::stackInThirds()` — and its review proved those two cover the stacked-in-thirds and interval-quality surface completely. But a third family bypasses both, because it works in the MIDI integer domain and never builds an `Interval` or a stack. Measured on a `Chord{"C4", "E1b4", "G4"}` — a triad with a neutral third:
+
+- `getMidiIntervals()` returns **`[4, 3]`**, identical to a plain C major triad, while its sibling `getIntervals()` correctly throws.
+- `getMeanMidiValue()` returns `63`; `getMeanPitch()` returns `"D#4"`.
+- `getHarmonicDensity()`, `isSorted()` and the `getMeanOfExtremes*`/`*Std` family answer likewise.
+
+A confident wrong answer is exactly what Task 9 exists to prevent, and this is the largest remaining instance of it.
+
+**The classification rule — and why the previous one failed.** Task 9's brief said a method counts as analysis if it *reaches a guard*. That rule is circular: it defines coverage by what is already covered, and by construction can never find a gap like this one. Replace it with a rule about representability:
+
+> **Can the method's return type express a quarter tone?**
+> If **no**, the only honest answer is to reject.
+> If **yes**, rejecting destroys working functionality — compute the correct value instead.
+
+- [ ] **Step 1: Classify every method yourself before changing anything**
+
+Enumerate every public `Chord` method whose result derives from pitch and which reaches neither guard. For each, record the return type and which side of the rule it falls on. **Report the table to the controller before implementing.** My preliminary classification follows; treat it as a hypothesis to verify, not as instruction:
+
+*Cannot represent — expected to reject:*
+`std::vector<int> getMidiIntervals()`, `int getMeanMidiValue()`, `int getMeanOfExtremesMidiValue()`.
+
+*Can represent — expected to compute correctly:*
+`std::string getMeanPitch()` and `getMeanOfExtremesPitch()` (the string `"C1x4"` exists), `float getMidiValueStd()`, `bool isSorted()` (ordering is computable from a fractional alter).
+
+*Frequency-based, therefore SP3 and NOT yours:*
+`getMeanFrequency()`, `getMeanOfExtremesFrequency()`, `getFrequencyStd()`, `getSetharesDissonance()`. Leave them alone; their correct fix is for `Note::getFrequency()` to stop routing through a rounded MIDI number, which is SP3 tuning work.
+
+*Undecided, measure and recommend:* `float getHarmonicDensity()` — it returns a float but takes MIDI bounds as `int`.
+
+- [ ] **Step 2: `toCents()` is the opposite bug — it rejects and should not**
+
+`std::vector<int> toCents()` is currently covered by the `Interval` guard, so a quarter tone makes it throw. **Cents are the one unit in this codebase that expresses a quarter tone exactly**: a quarter tone is 50 cents, a three-quarter tone 150. Integer cents lose nothing.
+
+Measure what it does today, then make it compute the correct value rather than reject. Pin it with a test asserting a neutral third reads 350 cents, not a throw and not 300 or 400.
+
+- [ ] **Step 3: Implement the rejections**
+
+For the methods that cannot represent a quarter tone, reject in the style Task 9 established: the message names the offending note and points at `Chord::roundQuarterTones()`. `LOG_ERROR` throws; `LOG_WARN` only prints.
+
+- [ ] **Step 4: Implement the corrections**
+
+For the methods that can represent one, compute the true value. Do not round, and do not reach for `getMidiNumber()`, which rounds at `helper.cpp:255` — that rounding is the root cause of this whole family and fixing `getFrequency()` alone would not reach these methods, since they never touch frequency.
+
+- [ ] **Step 5: Pin the two Task 9 methods that are covered but untested**
+
+`getIntervals()` and — before your change — `toCents()` are covered by the `Interval` guard but pinned by no test. Add pins so neither coverage can be removed unnoticed.
+
+- [ ] **Step 6: Tests**
+
+Every rejecting method throws with a message naming the note, and works after `roundQuarterTones()`. Every computing method returns the correct value for a neutral third. **Do not use a bare `EXPECT_THROW`** — Task 9 proved it does not discriminate here, because a pre-existing guard in `Note::getEnharmonicPitch()` throws anyway; assert the message, as `EXPECT_REJECTED_NAMING` does.
+
+Prove every test discriminates individually.
+
+- [ ] **Step 7: Run both suites, then commit**
+
+C++ **932/932** and Python **296/296** are the baselines. After rebuilding, assert **both** a fresh mtime on `cpp-tests.exe` **and** a `Linking CXX executable` line — `make` prints `Built target cpp-tests` without relinking when only a `maiacore` source changed, and two of Task 9's mutation rounds were invalidated by exactly that.
+
+```bash
+git commit -m "fix: reject or correct quarter tones in the MIDI-domain analysis family"
+```
+
+---
 ### Task 10: Exact enharmonics and fractional transposition
 
 **Files:** Modify `helper.cpp` (`isEnharmonic`), `note.cpp:299` (`getEnharmonicPitch`), `note.h:593`, `chord.h:301`, `:307`, `helper.h:289`; Test `tests-cpp/src/helpers-test.cpp`, `note-test.cpp`, `chord-test.cpp`
