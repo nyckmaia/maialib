@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <cmath>
 #include <iomanip>
 #include <optional>
 #include <sstream>
@@ -926,15 +927,23 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
         }
     }
 
-    // <accidental> is emitted under the same condition as <alter> (a non-empty alter symbol),
-    // right after <type> and before <time-modification>. Per the MusicXML schema the note
-    // element sequence is `type?, dot*, accidental?, time-modification?, stem?`; <dot> and
-    // <time-modification> are already emitted in the wrong relative order below (pre-existing,
-    // not fixed here -- see CHANGELOG), so this is the closest schema-correct position available
-    // without reordering the existing elements.
-    if (!_writtenPitch.getAlterSymbol().empty()) {
+    // <accidental> is reserved for accidentals a key signature cannot already imply -- i.e.
+    // quarter tones, whose fractional alter has no key-signature analogue. A semitone
+    // accidental (#, b, x, bb) may be implied by the key signature alone (e.g. an F# in D
+    // major carries only <alter>1</alter>, no glyph); emitting <accidental> for every
+    // non-empty alter symbol would draw a redundant accidental on every such note, which a
+    // fix round found and corrected -- <alter> is still written for every accidental exactly
+    // as before, but <accidental> only for a fractional (quarter-tone) alter.
+    //
+    // Positioned right after <type> and before <time-modification>. Per the MusicXML schema
+    // the note element sequence is `type?, dot*, accidental?, time-modification?, stem?`;
+    // <dot> and <time-modification> are already emitted in the wrong relative order below
+    // (pre-existing, not fixed here -- see CHANGELOG), so this is the closest schema-correct
+    // position available without reordering the existing elements.
+    const float alterValue = _writtenPitch.getAlter();
+    if (alterValue != std::floor(alterValue)) {
         xml.append(Helper::generateIdentation(4, identSize) + "<accidental>" +
-                   Helper::alterValue2Name(_writtenPitch.getAlter()) + "</accidental>\n");
+                   Helper::alterValue2Name(alterValue) + "</accidental>\n");
     }
 
     if (_isTuplet) {

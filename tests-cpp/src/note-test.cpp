@@ -1466,23 +1466,31 @@ TEST(NoteToXML, AllFourQuarterTonesWriteMatchingAlterAndAccidental) {
 // alter in the file. Measured against genuine accidentals (sharp, double-flat) so <alter> is
 // actually emitted -- a natural has no accidental symbol and emits no <alter> at all (see
 // NoAccidentalPitchWritesNeitherAlterNorAccidental below).
+//
+// Fix round 1: this test used to also assert <accidental> WAS present for these two notes.
+// That was wrong -- a controller review caught it (see the note.cpp comment at the
+// <accidental> guard): a semitone accidental can be implied entirely by the key signature
+// (e.g. an F# in D major needs only <alter>1</alter>, no glyph), so <accidental> must be
+// reserved for alters a key signature cannot express -- i.e. quarter tones only. This now
+// pins the corrected behaviour: <alter> unchanged, <accidental> ABSENT for a whole-tone
+// accidental. This is also the "plain #" case the fix-round-1 instruction asked to pin
+// explicitly.
 TEST(NoteToXML, IntegerAlterWritesWithoutDecimalPart) {
     const std::string sharp = Note("C#4").toXML();
     EXPECT_NE(sharp.find("<alter>1</alter>"), std::string::npos) << sharp;
     EXPECT_EQ(sharp.find("<alter>1.0"), std::string::npos) << sharp;
-    EXPECT_NE(sharp.find("<accidental>sharp</accidental>"), std::string::npos) << sharp;
+    EXPECT_EQ(sharp.find("<accidental>"), std::string::npos) << sharp;
 
     const std::string doubleFlat = Note("Cbb4").toXML();
     EXPECT_NE(doubleFlat.find("<alter>-2</alter>"), std::string::npos) << doubleFlat;
     EXPECT_EQ(doubleFlat.find("<alter>-2.0"), std::string::npos) << doubleFlat;
-    EXPECT_NE(doubleFlat.find("<accidental>flat-flat</accidental>"), std::string::npos)
-        << doubleFlat;
+    EXPECT_EQ(doubleFlat.find("<accidental>"), std::string::npos) << doubleFlat;
 }
 
-// A natural pitch carries no accidental symbol (Pitch::getAlterSymbol() == ""), so it must
-// continue to emit neither <alter> nor <accidental> -- unchanged from before this task.
-// Measured here so a future change to the shared guard condition cannot silently start
-// writing a spurious natural.
+// A natural pitch carries no accidental symbol (Pitch::getAlterSymbol() == ""), and its alter
+// (0.0) is also not fractional, so it must continue to emit neither <alter> nor <accidental>
+// -- unchanged from before this task under either guard. Measured here so a future change to
+// either guard condition cannot silently start writing a spurious natural.
 TEST(NoteToXML, NoAccidentalPitchWritesNeitherAlterNorAccidental) {
     const std::string xml = Note("C4").toXML();
     EXPECT_EQ(xml.find("<alter>"), std::string::npos) << xml;
