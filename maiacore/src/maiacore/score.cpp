@@ -650,9 +650,25 @@ void Score::loadXMLFile(const std::string& filePath) {
                             // the decimal <alter> value, else natural. MuseScore has historically
                             // exported the quarter-tone glyph with no matching <alter>, so
                             // trusting <alter> first would lose quarter tones from real files.
+                            //
+                            // Helper::alterName2symbol() only knows the 13 names this library
+                            // can spell; MusicXML defines roughly 40. Its own contract is to
+                            // throw on an unrecognised one, but that contract must not abort a
+                            // whole score load here: warn and fall through to <alter>, then
+                            // natural, exactly as if no <accidental> had been present.
+                            bool accidentalRecognised = false;
                             if (!accidentalTag.empty()) {
-                                alterSymbol = Helper::alterName2symbol(accidentalTag);
-                            } else if (!alterTag.empty()) {
+                                try {
+                                    alterSymbol = Helper::alterName2symbol(accidentalTag);
+                                    accidentalRecognised = true;
+                                } catch (const std::runtime_error&) {
+                                    LOG_WARN("Unrecognized <accidental> name '"
+                                             << accidentalTag
+                                             << "'; falling back to <alter> or natural");
+                                }
+                            }
+
+                            if (!accidentalRecognised && !alterTag.empty()) {
                                 alterSymbol = Helper::alterValue2symbol(
                                     static_cast<float>(atof(alterTag.c_str())));
                             }

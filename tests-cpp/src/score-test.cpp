@@ -796,3 +796,13 @@ TEST(ScoreQuarterToneRead, AccidentalOnlyNoAlterMuseScoreCase) {
     ASSERT_TRUE(score.isValid());
     EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C1x4");
 }
+
+TEST(ScoreQuarterToneRead, UnrecognisedAccidentalNameFallsBackToAlterInsteadOfAborting) {
+    // <accidental>natural-sharp</accidental> is a real MusicXML name outside the 13 this
+    // library spells. It carries a usable <alter>1</alter>, so the whole load must not abort;
+    // it must degrade to the <alter> value, same as if no <accidental> had been present.
+    Score score("./test/xml_examples/unit_test/quarter_tone_unknown_accidental_name.xml");
+
+    ASSERT_TRUE(score.isValid());
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C#4");
+}
