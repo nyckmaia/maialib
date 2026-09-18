@@ -66,6 +66,13 @@ class ScoreQuarterToneReadTestCase(unittest.TestCase):
         value instead of raising and aborting."""
         self.assertEqual(self._first_note_pitch("quarter_tone_unknown_accidental_name.xml"), "C#4")
 
+    def test_unrepresentable_alter_falls_back_to_natural_instead_of_raising(self):
+        """<alter>3</alter>, no <accidental> at all: a triple sharp is outside the nine
+        values this library's accidental vocabulary can spell. The load must degrade to
+        natural (the pre-Task-7 outcome) rather than raising and aborting -- this is the
+        path a real ml.Score() user actually hits, not just the underlying C++ function."""
+        self.assertEqual(self._first_note_pitch("unrepresentable_alter_triple_sharp.xml"), "C4")
+
 
 class ScorePropertiesTestCase(unittest.TestCase):
     """Tests for Score basic properties"""
