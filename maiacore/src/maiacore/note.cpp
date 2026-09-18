@@ -753,8 +753,34 @@ const std::string Note::getSoundingPitch() const {
     if (!isTransposed()) {
         return getWrittenPitch();
     }
-    // Not a rest on this path (guarded above), so getSoundingOctave() is always engaged.
-    return getSoundingPitchClass() + std::to_string(getSoundingOctave().value());
+
+    // Fix round 1 (Task 6b): NOT rest-guarded alone. getSoundingOctave() is arithmetic
+    // (written MIDI + transposeChromatic) and is empty whenever that sum is negative, which
+    // happens for an ordinary, constructible, non-rest transposed note whose sounding pitch
+    // falls below the system minimum C-1 (MIDI 0) -- e.g. a B-flat clarinet's written "C#-1"
+    // (transposeDiatonic=-1, transposeChromatic=-2) sounds MIDI -1. Calling .value() on that
+    // unconditionally let a raw std::bad_optional_access escape this public getter (measured:
+    // 162/4434 constructible non-rest transposed notes swept by the reviewer; corroborated
+    // independently here). getSoundingPitchClass() does NOT fail alongside it: it derives its
+    // answer from computeSoundingPitch()'s separate, pre-existing scale-lookup defect (Task
+    // 10's to fix, untouched here), which can land back in-range by coincidence of its own
+    // (unrelated) bug and so "succeeds" with a pitch class even when the arithmetic sounding
+    // MIDI is unrepresentable. The two were never meant to agree (see getOctave()'s comment);
+    // concatenating them when the arithmetic side is empty was never sound, sentinel or not.
+    // Do NOT resurrect the pre-6b `-2` sentinel here (e.g. via value_or(-2)) -- octave -2 does
+    // not exist in this library and round 5 of Task 6 was spent removing exactly that kind of
+    // malformed pitch string. Fail loudly and diagnosably instead.
+    const std::optional<int> soundingOctave = getSoundingOctave();
+    if (!soundingOctave.has_value()) {
+        LOG_ERROR(
+            "Note::getSoundingPitch: this note's sounding pitch falls below the representable "
+            "minimum C-1 (MIDI 0), so it has no sounding octave or sounding pitch string. "
+            "Written pitch: '" +
+            getWrittenPitch() + "', transposeDiatonic=" + std::to_string(_transposeDiatonic) +
+            ", transposeChromatic=" + std::to_string(_transposeChromatic) +
+            ", sounding MIDI=" + std::to_string(getMidiNumber()));
+    }
+    return getSoundingPitchClass() + std::to_string(soundingOctave.value());
 }
 
 const std::string Note::getDiatonicWrittenPitchClass() const {

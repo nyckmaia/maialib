@@ -289,6 +289,9 @@ class Note {
     /**
      * @brief Returns the full sounding pitch (after transposition).
      * @return Sounding pitch string.
+     * @throws std::runtime_error If this note is sounding but transposition carries its
+     *         sounding pitch below the representable minimum C-1 / MIDI 0 (see
+     *         getSoundingOctave()'s @details) -- never for a rest, which returns "rest".
      */
     const std::string getSoundingPitch() const;
 
@@ -318,16 +321,23 @@ class Note {
 
     /**
      * @brief Returns the sounding octave (after transposition).
-     * @details An empty optional means this note is a rest, which has no octave.
-     *          isNoteOff() is the authoritative test.
-     * @return Sounding octave number, or an empty optional for a rest.
+     * @details Arithmetic (written MIDI + transposeChromatic), so the optional is empty in TWO
+     *          cases, not one: this note is a rest (isNoteOff() is the authoritative test for
+     *          that case), OR the note is sounding but transposition carries its sounding pitch
+     *          below the representable minimum C-1 / MIDI 0 (an ordinary, constructible,
+     *          non-rest note can do this, e.g. a written "C#-1" on a B-flat clarinet). Check
+     *          has_value() rather than assuming isNoteOff() covers every empty case.
+     * @return Sounding octave number, or an empty optional if this note is a rest or its
+     *         sounding pitch falls below MIDI 0.
      */
     std::optional<int> getSoundingOctave() const;
 
     /**
      * @brief Returns the written octave (as notated).
      * @details An empty optional means this note is a rest, which has no octave.
-     *          isNoteOff() is the authoritative test.
+     *          isNoteOff() is the authoritative test. Unlike getSoundingOctave(), this reads
+     *          the written pitch directly (no transposition arithmetic involved), so a rest is
+     *          the only case in which it is empty.
      * @return Written octave number, or an empty optional for a rest.
      */
     std::optional<int> getWrittenOctave() const;
@@ -335,7 +345,10 @@ class Note {
     /**
      * @brief Returns the octave (sounding).
      * @details An empty optional means this note is a rest, which has no octave.
-     *          isNoteOff() is the authoritative test.
+     *          isNoteOff() is the authoritative test. Unlike getSoundingOctave(), this derives
+     *          the octave from the (pre-existing, unfixed) transpose scale lookup, which either
+     *          succeeds with a real octave or throws for an unspellable result -- it does not
+     *          fall through to an empty optional for a non-rest note.
      * @return Octave number, or an empty optional for a rest.
      */
     std::optional<int> getOctave() const;
@@ -445,6 +458,7 @@ class Note {
     /**
      * @brief Returns the full pitch string (sounding).
      * @return Pitch string.
+     * @throws std::runtime_error See getSoundingPitch(), which this delegates to.
      */
     std::string getPitch() const;
 

@@ -207,10 +207,16 @@ void NoteClass(const py::module& m) {
             R"pbdoc(
         Return the sounding octave (after transposition).
 
+        Arithmetic (written MIDI + transposeChromatic), so this is ``None`` in two cases: the
+        note is a rest, or the note is sounding but transposition carries its sounding pitch
+        below the representable minimum C-1 / MIDI 0. ``isNoteOff()`` alone does not cover the
+        second case.
+
         Returns
         -------
         int or None
-            Sounding octave number, or ``None`` for a rest.
+            Sounding octave number, or ``None`` if this note is a rest or its sounding pitch
+            falls below MIDI 0.
     )pbdoc");
     cls.def("getWrittenOctave", &Note::getWrittenOctave,
             R"pbdoc(

@@ -287,6 +287,27 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getWrittenPitch(), "rest")
         self.assertEqual(note.getMidiNumber(), -1)
 
+    # Task 6b, fix round 1, Python parity (see note-test.cpp's
+    # NoteComposesPitch.GetPitchBelowMidiZeroFailsDiagnosablyNotWithBadOptionalAccess for the
+    # full reasoning): an ordinary, constructible, non-rest transposed note whose sounding pitch
+    # falls below MIDI 0 must fail with a diagnosable message, not an unexplained internal
+    # error, and must not be silently treated as a rest.
+    def testGetPitchBelowMidiZeroFailsDiagnosably(self):
+        note = ml.Note(
+            "C#-1", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
+        )
+        self.assertTrue(note.isNoteOn())
+        self.assertFalse(note.isNoteOff())
+        self.assertEqual(note.getMidiNumber(), -1)
+        self.assertIsNone(note.getSoundingOctave())
+
+        with self.assertRaises(RuntimeError) as ctx:
+            note.getPitch()
+        message = str(ctx.exception)
+        self.assertIn("C-1", message)
+        self.assertIn("MIDI 0", message)
+        self.assertNotIn("ptional access", message)
+
     # Task 6b, Python parity: a rest has no octave. Note's three octave getters used to
     # collapse that absence to the numeric sentinel -2; they now return int | None, None for a
     # rest, unchanged for every non-rest input.
@@ -316,17 +337,33 @@ class NoteComposesPitch(unittest.TestCase):
             sounding.setOctave(-2)
         self.assertEqual(sounding.getOctave(), 4)
 
+    # Task 6b, section L, fix round 1: pins the round trip the C++ side can no longer even
+    # express (Note.setOctave(int) has no overload accepting the None getOctave() now returns
+    # for a rest, so the equivalent C++ call is a compile error, not a runtime one -- this is
+    # the Python-only half of closing fix round 5's finding F2). setOctave(getOctave()) on a
+    # rest raises TypeError from the pybind11 argument conversion (None cannot become int),
+    # never the old std::runtime_error round-trip hazard, and mutates nothing.
+    def testSetOctaveOfGetOctaveRoundTripOnRestRaisesTypeError(self):
+        note = ml.Note("rest")
+        self.assertIsNone(note.getOctave())
+        with self.assertRaises(TypeError):
+            note.setOctave(note.getOctave())
+        self.assertTrue(note.isNoteOff())
+        self.assertIsNone(note.getOctave())
+
     # Task 6b, finding N1, Python parity (see note-test.cpp's
     # NoteComposesPitch.SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval for the full
-    # reasoning): setIsNoteOn(False) deliberately keeps a transposing note's interval, and
-    # setStep() resurrecting a rest does not clear it either. The revived note is not leaking
-    # stale state -- it is identical to constructing the same written pitch on the same
-    # transposing instrument from scratch. Pinned as defensible, not a bug.
+    # reasoning, including fix round 1's rebuild at C5 so the pin actually discriminates --
+    # C4 could not tell "octave preserved" from "octave defaulted to 4" by setStep()). Pinned
+    # finding: the revived note is SELF-CONSISTENT (freshly derived from its current, defaulted
+    # written pitch and the surviving interval), not a stale-leftover defect. Not "revived
+    # equals a note that already carries the interval" -- that would assume the answer.
     def testSetStepAfterSetIsNoteOnFalseKeepsTransposingInterval(self):
         note = ml.Note(
-            "C4", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
+            "C5", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
         )
-        self.assertEqual(note.getSoundingPitch(), "Bb3")
+        self.assertEqual(note.getWrittenPitch(), "C5")
+        self.assertEqual(note.getSoundingPitch(), "Bb4")
 
         note.setIsNoteOn(False)
         self.assertTrue(note.isNoteOff())
@@ -337,8 +374,11 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertTrue(note.isTransposed())
         self.assertEqual(note.getTransposeDiatonic(), -1)
         self.assertEqual(note.getTransposeChromatic(), -2)
+        # Octave is NOT preserved (would be "C5"); setStep()'s ordinary hardcoded-4 default.
         self.assertEqual(note.getWrittenPitch(), "C4")
+        # Freshly derived, not the pre-silence sounding pitch ("Bb4").
         self.assertEqual(note.getSoundingPitch(), "Bb3")
+        self.assertNotEqual(note.getSoundingPitch(), "Bb4")
 
 
 if __name__ == "__main__":

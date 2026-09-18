@@ -1057,20 +1057,25 @@ TEST(NoteComposesPitch, SetStepResurrectsRestToOctave4) {
 // -- but it only touches _writtenPitch; it has no reason to touch _transposeDiatonic/
 // _transposeChromatic; and it should not guess whether the caller wants the note to keep
 // belonging to the same transposing instrument. So the dead interval survives resurrection too.
+// The conclusion rests on that instrument-ownership argument, not on numeric coincidence (see
+// fix round 1 below).
 //
-// Measured (Bb clarinet, transposeDiatonic=-1, transposeChromatic=-2): after
-// setIsNoteOn(false); setStep("C"), the note is written "C4" and sounds "Bb3" -- byte-for-byte
-// what a *fresh* Note("C4", transposeDiatonic=-1, transposeChromatic=-2) reports. Resurrection
-// is not leaking stale, inconsistent state (the T2 defect Task 6 fixed): the revived note is
-// fully self-consistent, and identical to constructing the same written pitch on the same
-// transposing instrument from scratch. That is the defensible reading, so it is pinned as-is;
-// a caller who wants a non-transposing note back must clear the interval explicitly (e.g.
-// setTransposingInterval(0, 0)), exactly as setPitch("rest") already does when it clears the
-// interval as part of fully replacing the pitch.
+// Fix round 1: the original pin started from C4. T9 already establishes that setStep() revives
+// ANY rest at a HARDCODED octave 4, regardless of what octave it had before becoming a rest --
+// so starting from C4 made "the octave survived silencing" and "the octave was just reset to
+// the resurrection default" look identical; the pin could not tell them apart. Rebuilt starting
+// from C5 (octave 5, so the pre-silence octave and the post-revival default differ) to make it
+// discriminate. This also narrows the claim: what is pinned is not "revived == a note that
+// already carries the interval" (that assumes the very thing N1 asks, since such a fresh note
+// is only the right comparison if the interval SHOULD have survived); it is SELF-CONSISTENCY --
+// the revived note's sounding pitch is freshly derived from its (defaulted) written pitch and
+// the surviving interval, not a stale leftover of the pre-silence sounding pitch. That is not
+// the T2 stale-field defect Task 6 closed.
 TEST(NoteComposesPitch, SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval) {
-    Note n("C4", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+    Note n("C5", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
            /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
-    ASSERT_EQ(n.getSoundingPitch(), "Bb3");
+    ASSERT_EQ(n.getWrittenPitch(), "C5");
+    ASSERT_EQ(n.getSoundingPitch(), "Bb4");
 
     n.setIsNoteOn(false);
     ASSERT_TRUE(n.isNoteOff());
@@ -1082,12 +1087,14 @@ TEST(NoteComposesPitch, SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval) {
     EXPECT_TRUE(n.isTransposed());
     EXPECT_EQ(n.getTransposeDiatonic(), -1);
     EXPECT_EQ(n.getTransposeChromatic(), -2);
+    // Discriminates octave handling: NOT preserved from before silencing (that would be "C5");
+    // this is setStep()'s ordinary hardcoded-4 default (T9), unaffected by the interval.
     EXPECT_EQ(n.getWrittenPitch(), "C4");
-    // The revived note sounds transposed, matching a note freshly constructed with the same
-    // written pitch and the same transposing interval -- not a leftover-state inconsistency.
+    // Discriminates staleness: freshly derived from the CURRENT written pitch ("C4") and the
+    // surviving interval, giving "Bb3" -- never the pre-silence sounding pitch "Bb4", which
+    // would indicate a leftover/cached value rather than a live recomputation.
     EXPECT_EQ(n.getSoundingPitch(), "Bb3");
-    const Note fresh("C4", RhythmFigure::QUARTER, true, false, -1, -2);
-    EXPECT_EQ(n.getSoundingPitch(), fresh.getSoundingPitch());
+    EXPECT_NE(n.getSoundingPitch(), "Bb4");
 }
 
 // Fix round 1 (controller ruling on Task 6 concern 2): getAlterSymbol() forwarding to the
@@ -1312,6 +1319,56 @@ TEST(NoteComposesPitch, GetPitchIsWellFormedRestForTransposedNoteTurnedOff) {
     control.setIsNoteOn(false);
     EXPECT_FALSE(control.isTransposed());
     EXPECT_EQ(control.getPitch(), "rest");
+}
+
+// Task 6b, fix round 1 -- reviewer finding: the `.value()` this task added to
+// getSoundingPitch() assumed "not a rest, therefore getSoundingOctave() is engaged". That
+// precondition is false. getSoundingOctave() is arithmetic (written MIDI + transposeChromatic)
+// and is empty whenever that sum is negative -- which an ordinary, constructible, non-rest
+// transposed note can reach, not just a rest. The reviewer swept 4434 constructible non-rest
+// transposed notes and found 162 that raised an unexplained std::bad_optional_access from
+// getPitch(); corroborated independently here with a smaller sweep (10/1704). Reachable with an
+// ordinary B-flat clarinet transpose: a written "C#-1" (transposeDiatonic=-1,
+// transposeChromatic=-2) sounds MIDI -1 (written MIDI 1, minus the chromatic interval of 2).
+// getSoundingPitchClass() does NOT fail alongside it -- it goes through the separate,
+// pre-existing scale-lookup defect (Task 10's, untouched here), which happens to land back
+// in-range for this case by coincidence of its own unrelated bug; the two halves of the
+// concatenation were never guaranteed to agree, sentinel or not (see getOctave()'s own
+// comment). Must NOT resurrect the pre-6b "-2" sentinel here -- octave -2 does not exist in
+// this library, and round 5 of Task 6 was spent removing exactly that kind of malformed pitch
+// string. Must fail loudly and diagnosably instead of with a raw bad_optional_access.
+TEST(NoteComposesPitch, GetPitchBelowMidiZeroFailsDiagnosablyNotWithBadOptionalAccess) {
+    const Note n("C#-1", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                 /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
+    ASSERT_TRUE(n.isNoteOn());
+    ASSERT_EQ(n.getMidiNumber(), -1);
+    ASSERT_FALSE(n.getSoundingOctave().has_value());
+
+    try {
+        n.getPitch();
+        FAIL() << "Expected std::runtime_error for a sounding pitch below MIDI 0";
+    } catch (const std::runtime_error& e) {
+        const std::string what = e.what();
+        // Diagnosable: names the real condition (below the representable minimum).
+        EXPECT_NE(what.find("C-1"), std::string::npos) << "message: " << what;
+        EXPECT_NE(what.find("MIDI 0"), std::string::npos) << "message: " << what;
+        // NOT an unexplained standard-library exception escaping this public getter.
+        EXPECT_EQ(what.find("ptional access"), std::string::npos) << "message: " << what;
+    }
+
+    // getSoundingPitch() delegates the same failure through the same path.
+    EXPECT_THROW(n.getSoundingPitch(), std::runtime_error);
+}
+
+// The other half of the same fix: getSoundingOctave()'s contract (note.h) is now empty in TWO
+// cases, not one. Confirm the non-rest case is independently reachable and that isNoteOff()
+// does not (and must not be assumed to) cover it.
+TEST(NoteComposesPitch, GetSoundingOctaveEmptyWithoutBeingARest) {
+    const Note n("C#-1", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                 /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
+    EXPECT_TRUE(n.isNoteOn());
+    EXPECT_FALSE(n.isNoteOff());
+    EXPECT_FALSE(n.getSoundingOctave().has_value());
 }
 
 // Fix round 5, finding F2 -- was PINNED AS DEFECTIVE; Task 6b closes it, on both halves the
