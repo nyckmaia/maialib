@@ -375,5 +375,46 @@ class IntervalEdgeCasesTestCase(unittest.TestCase):
         self.assertTrue(interval2.isAugmentedFourth(useEnharmony=True))
 
 
+class IntervalQuarterToneGuardTestCase(unittest.TestCase):
+    """Interval rejects quarter tones at construction
+
+    Every answer the class computes is defined over twelve-tone equal temperament, so an
+    Interval carrying a quarter tone is never constructed rather than answering wrongly later.
+    """
+
+    def test_constructor_rejects_quarter_tone_on_either_side(self):
+        with self.assertRaises(RuntimeError):
+            ml.Interval("C4", "E1b4")
+        with self.assertRaises(RuntimeError):
+            ml.Interval("E1b4", "C4")
+
+    def test_constructor_rejects_quarter_tone_notes(self):
+        with self.assertRaises(RuntimeError):
+            ml.Interval(ml.Note("C4"), ml.Note("D3b4"))
+
+    def test_set_notes_rejects_quarter_tones(self):
+        interval = ml.Interval("C4", "E4")
+        with self.assertRaises(RuntimeError):
+            interval.setNotes("C4", "E1b4")
+
+    def test_error_message_names_the_note_and_the_remedy(self):
+        with self.assertRaises(RuntimeError) as context:
+            ml.Interval("C4", "E1b4")
+
+        message = str(context.exception)
+        self.assertIn("E1b4", message)
+        self.assertIn("roundToSemitone", message)
+
+    def test_rounding_the_note_makes_the_interval_constructible(self):
+        note = ml.Note("E1b4")
+        self.assertTrue(note.isQuarterTone())
+
+        note.roundToSemitone()
+
+        self.assertFalse(note.isQuarterTone())
+        self.assertEqual(note.getPitch(), "E4")
+        self.assertEqual(ml.Interval(ml.Note("C4"), note).getName(), "M3")
+
+
 if __name__ == "__main__":
     unittest.main()

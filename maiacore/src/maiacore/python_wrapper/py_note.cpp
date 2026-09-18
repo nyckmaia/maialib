@@ -268,6 +268,32 @@ void NoteClass(const py::module& m) {
 
     cls.def("getAlterSymbol", &Note::getAlterSymbol);
 
+    cls.def("isQuarterTone", &Note::isQuarterTone,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Check whether this note carries a quarter-tone accidental.
+
+        Returns
+        -------
+        bool
+            True if the note's alter value has a fractional part (e.g. ``Note("C1x4")``,
+            ``Note("D3b4")``); False for the whole-tone accidentals and for a rest.
+    )pbdoc");
+
+    cls.def("roundToSemitone", &Note::roundToSemitone,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Round a quarter-tone accidental to the nearest semitone, ties upward.
+
+        ``C1x4`` becomes ``C#4``, ``D1b4`` becomes ``D4`` and ``D3b4`` becomes ``Db4``. A note
+        that already carries a whole-tone accidental (or none) is unchanged, so this is safe to
+        call unconditionally.
+
+        Use it to make a quarter-tone note acceptable to ``Interval``, which rejects quarter
+        tones at construction. The rounding is destructive: the original quarter-tone spelling
+        is not recoverable afterwards.
+    )pbdoc");
+
     cls.def("inChord", &Note::inChord);
     cls.def("getTransposeDiatonic", &Note::getTransposeDiatonic);
     cls.def("getTransposeChromatic", &Note::getTransposeChromatic);

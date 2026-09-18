@@ -9,6 +9,29 @@
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
 
+namespace {
+// Rejects a quarter tone at an Interval entry point.
+//
+// Every interval name, quality, classification and semitone count this class computes is defined
+// over twelve-tone equal temperament, so a quarter tone would not make the analysis fail -- it
+// would make it return a confident wrong answer, which in an analysis library is worse than an
+// error. Guarding the two Note-taking entry points (the Note constructor and
+// setNotes(Note, Note)) makes an Interval carrying a quarter tone unconstructible, and the two
+// string-taking entry points delegate to them, so every public method of this class is covered
+// without guarding a single one of them individually.
+void rejectQuarterTones(const Note& note_A, const Note& note_B) {
+    for (const Note* note : {&note_A, &note_B}) {
+        if (note->isQuarterTone()) {
+            LOG_ERROR("Cannot compute an interval with the quarter tone " +
+                      note->getWrittenPitch() +
+                      ": interval analysis is defined only over twelve-tone equal temperament. "
+                      "Call Note::roundToSemitone() on that note to round it to the nearest "
+                      "semitone, then build the interval again.");
+        }
+    }
+}
+}  // namespace
+
 Interval::Interval(const std::string& pitch_A, const std::string& pitch_B)
     : Interval(Note(pitch_A), Note(pitch_B)) {}
 
@@ -17,6 +40,8 @@ Interval::Interval(const Note& note_A, const Note& note_B) : _numSemitones(0) {
     if (!note_A.isNoteOn() || !note_B.isNoteOn()) {
         LOG_ERROR("Cannot compute the interval between a note and a REST");
     }
+
+    rejectQuarterTones(note_A, note_B);
 
     _note.resize(2);
     _note[0] = note_A;
@@ -34,6 +59,8 @@ void Interval::setNotes(const Note& note_A, const Note& note_B) {
     if (!note_A.isNoteOn() || !note_B.isNoteOn()) {
         LOG_ERROR("Cannot compute the interval between a note and a rest");
     }
+
+    rejectQuarterTones(note_A, note_B);
 
     _note.clear();
     _note.resize(2);

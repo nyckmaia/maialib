@@ -133,6 +133,8 @@ void Note::setStep(const std::string& step) { _writtenPitch.setStep(step); }
 
 void Note::setAlter(const float alter) { _writtenPitch.setAlter(alter); }
 
+void Note::roundToSemitone() { _writtenPitch.roundToSemitone(); }
+
 void Note::setIsPitched(const bool isPitched) { _isPitched = isPitched; }
 
 bool Note::isPitched() const { return _isPitched; }
@@ -310,6 +312,13 @@ void Note::setIsNoteOn(bool isNoteOn) {
 bool Note::isNoteOn() const { return !_writtenPitch.isRest(); }
 
 bool Note::isNoteOff() const { return _writtenPitch.isRest(); }
+
+bool Note::isQuarterTone() const {
+    // Same test used by toXML() and getEnharmonicPitch() to spot an alter with no whole-tone
+    // spelling: a fractional part is exactly what makes an accidental a quarter tone.
+    const float alterValue = _writtenPitch.getAlter();
+    return alterValue != std::floor(alterValue);
+}
 
 std::string Note::getAlterSymbol() const { return computeSoundingPitch().getAlterSymbol(); }
 

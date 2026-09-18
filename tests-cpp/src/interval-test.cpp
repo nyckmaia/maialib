@@ -2184,3 +2184,53 @@ TEST(IntervalRestGuard, SetNotesRejectsRestOnEitherSide) {
     EXPECT_THROW(interval.setNotes("C4", "rest"), std::runtime_error);
     EXPECT_THROW(interval.setNotes("rest", "C4"), std::runtime_error);
 }
+
+// =====================================================================================
+// TASK 9: INTERVAL REJECTS QUARTER TONES AT CONSTRUCTION
+//
+// Every name, quality, classification and semitone count this class computes is defined over
+// twelve-tone equal temperament, so a quarter tone would not make the analysis fail -- it would
+// make it return a confident wrong answer. Rather than guarding 85 public methods, the two
+// Note-taking entry points reject a quarter tone and the two string-taking ones delegate to
+// them, so an Interval carrying a quarter tone can never be constructed in the first place.
+// =====================================================================================
+
+TEST(IntervalQuarterToneGuard, ConstructorRejectsQuarterToneOnEitherSide) {
+    EXPECT_THROW(Interval("C4", "E1b4"), std::runtime_error);
+    EXPECT_THROW(Interval("E1b4", "C4"), std::runtime_error);
+    EXPECT_THROW(Interval(Note("C4"), Note("D3b4")), std::runtime_error);
+    EXPECT_THROW(Interval(Note("D3b4"), Note("C4")), std::runtime_error);
+}
+
+TEST(IntervalQuarterToneGuard, SetNotesRejectsQuarterToneOnEitherSide) {
+    Interval interval;
+    EXPECT_THROW(interval.setNotes("C4", "E1b4"), std::runtime_error);
+    EXPECT_THROW(interval.setNotes("E1b4", "C4"), std::runtime_error);
+    EXPECT_THROW(interval.setNotes(Note("C4"), Note("C1x4")), std::runtime_error);
+    EXPECT_THROW(interval.setNotes(Note("C1x4"), Note("C4")), std::runtime_error);
+}
+
+TEST(IntervalQuarterToneGuard, ErrorMessageNamesTheNoteAndTheRemedy) {
+    // A caller hitting this must be able to learn what to do from the message alone. Interval
+    // has no escape hatch of its own, so the message names Note::roundToSemitone(), the per-note
+    // equivalent of Chord::roundQuarterTones().
+    try {
+        Interval("C4", "E1b4");
+        FAIL() << "Interval did not throw on a quarter-tone pitch";
+    } catch (const std::runtime_error& error) {
+        const std::string message(error.what());
+        EXPECT_NE(message.find("E1b4"), std::string::npos) << message;
+        EXPECT_NE(message.find("roundToSemitone"), std::string::npos) << message;
+    }
+}
+
+TEST(IntervalQuarterToneGuard, WholeToneIntervalsAreUnaffectedAndTheRemedyWorks) {
+    EXPECT_NO_THROW(Interval("C4", "E4"));
+    EXPECT_EQ(Interval("C4", "E4").getNumSemitones(false), 4);
+
+    // The remedy the error message names actually makes the interval constructible.
+    Note rounded("E1b4");
+    rounded.roundToSemitone();
+    EXPECT_NO_THROW(Interval(Note("C4"), rounded));
+    EXPECT_EQ(Interval(Note("C4"), rounded).getNumSemitones(false), 4);
+}

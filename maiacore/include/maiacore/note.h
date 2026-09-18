@@ -139,6 +139,16 @@ class Note {
     void setAlter(float alter);
 
     /**
+     * @brief Rounds a quarter-tone accidental to the nearest semitone, ties upward.
+     * @details Delegates to Pitch::roundToSemitone(), the single implementation of the
+     *          ties-upward rule (`std::floor(alter + 0.5f)`), so it is never re-implemented
+     *          here: `C1x4` -> `C#4`, `D1b4` -> `D4`, `D3b4` -> `Db4`. A note that already
+     *          carries a whole-tone accidental (or none) is left unchanged, so this is safe to
+     *          call unconditionally. Acts on the written pitch; see isQuarterTone().
+     */
+    void roundToSemitone();
+
+    /**
      * @brief Sets the duration for the note.
      * @param duration Duration object.
      */
@@ -454,6 +464,18 @@ class Note {
      * @return True if note off.
      */
     bool isNoteOff() const;
+
+    /**
+     * @brief Returns true if this note carries a quarter-tone accidental.
+     * @details True when the alter value has a fractional part (e.g. 0.5 for `C1x4`, -1.5 for
+     *          `D3b4`), false for the whole-tone accidentals and for a rest (whose alter is 0).
+     *          Reads the *written* pitch deliberately: transposition is an integer number of
+     *          semitones, so a written quarter tone is always a sounding quarter tone and vice
+     *          versa, and the written pitch can never throw the way getSoundingPitch() can for a
+     *          note transposed below the representable minimum.
+     * @return True if the note's accidental is a quarter tone.
+     */
+    bool isQuarterTone() const;
 
     /**
      * @brief Returns the full pitch string (sounding).

@@ -1543,3 +1543,49 @@ TEST(NoteToXML, AccidentalPositionedAfterTypeAndBeforeTimeModification) {
     // not corrected.
     EXPECT_LT(timeModPos, dotPos) << xml;
 }
+
+// ===================================================================================================
+// TASK 9: QUARTER-TONE PREDICATE AND ROUNDING ON Note
+//
+// Thin delegations to the already-tested Pitch behaviour, added so that the Chord and Interval
+// analysis guards, and Chord::roundQuarterTones(), can ask a Note about its accidental without
+// re-implementing the rounding rule (or re-parsing the pitch string) at each site.
+// ===================================================================================================
+
+TEST(NoteIsQuarterTone, TrueOnlyForFractionalAlters) {
+    EXPECT_TRUE(Note("C1x4").isQuarterTone());
+    EXPECT_TRUE(Note("C3x4").isQuarterTone());
+    EXPECT_TRUE(Note("D1b4").isQuarterTone());
+    EXPECT_TRUE(Note("D3b4").isQuarterTone());
+
+    EXPECT_FALSE(Note("C4").isQuarterTone());
+    EXPECT_FALSE(Note("C#4").isQuarterTone());
+    EXPECT_FALSE(Note("Cb4").isQuarterTone());
+    EXPECT_FALSE(Note("Cx4").isQuarterTone());
+    EXPECT_FALSE(Note("Cbb4").isQuarterTone());
+
+    // A rest has no accidental: its alter is 0, so it is not a quarter tone.
+    EXPECT_FALSE(Note("rest").isQuarterTone());
+}
+
+TEST(NoteRoundToSemitone, RoundsTiesUpwardAndLeavesWholeTonesAlone) {
+    Note sharpSide("C1x4");
+    sharpSide.roundToSemitone();
+    EXPECT_EQ(sharpSide.getPitch(), "C#4");
+    EXPECT_FALSE(sharpSide.isQuarterTone());
+
+    // The flat side is what discriminates ties-upward from ties-away-from-zero:
+    // floor(-0.5 + 0.5) == 0, so D1b4 rounds UP to D4; std::round(-0.5) would give Db4.
+    Note flatSide("D1b4");
+    flatSide.roundToSemitone();
+    EXPECT_EQ(flatSide.getPitch(), "D4");
+
+    Note lowerFlatSide("D3b4");
+    lowerFlatSide.roundToSemitone();
+    EXPECT_EQ(lowerFlatSide.getPitch(), "Db4");
+
+    // Safe to call unconditionally: a whole-tone accidental is left exactly as it was.
+    Note wholeTone("F#4");
+    wholeTone.roundToSemitone();
+    EXPECT_EQ(wholeTone.getPitch(), "F#4");
+}

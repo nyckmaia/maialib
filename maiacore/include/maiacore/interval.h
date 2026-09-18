@@ -37,13 +37,21 @@ class Interval {
      * @brief Constructs an Interval from two pitch strings.
      * @param pitch_A First pitch string (default: "C4").
      * @param pitch_B Second pitch string (default: "C4").
+     * @throws std::runtime_error If either pitch is a rest, or carries a quarter-tone accidental
+     *         (see the Note overload, which this delegates to).
      */
     Interval(const std::string& pitch_A = "C4", const std::string& pitch_B = "C4");
 
     /**
      * @brief Constructs an Interval from two Note objects.
+     * @details Rejects quarter tones up front: every answer this class computes is defined over
+     *          twelve-tone equal temperament, so an Interval carrying a quarter tone is never
+     *          constructed rather than being allowed to return a wrong answer later. Call
+     *          Note::roundToSemitone() on the offending note to round it to the nearest semitone
+     *          first.
      * @param note_A First Note.
      * @param note_B Second Note.
+     * @throws std::runtime_error If either note is a rest, or carries a quarter-tone accidental.
      */
     Interval(const Note& note_A, const Note& note_B);
 
@@ -51,13 +59,18 @@ class Interval {
      * @brief Sets the notes of the interval using pitch strings.
      * @param pitch_A First pitch string.
      * @param pitch_B Second pitch string.
+     * @throws std::runtime_error If either pitch is a rest, or carries a quarter-tone accidental
+     *         (see the Note overload, which this delegates to).
      */
     void setNotes(const std::string& pitch_A, const std::string& pitch_B);
 
     /**
      * @brief Sets the notes of the interval using Note objects.
+     * @details Rejects quarter tones for the same reason as the Note constructor; see its
+     *          @details.
      * @param note_A First Note.
      * @param note_B Second Note.
+     * @throws std::runtime_error If either note is a rest, or carries a quarter-tone accidental.
      */
     void setNotes(const Note& note_A, const Note& note_B);
 

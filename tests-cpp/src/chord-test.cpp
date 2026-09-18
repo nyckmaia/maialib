@@ -2,7 +2,9 @@
 
 #include <gtest/gtest.h>
 
+#include <iostream>
 #include <sstream>
+#include <string>
 
 #include "maiacore/note.h"
 using namespace testing;
@@ -566,4 +568,262 @@ TEST(removeNote, throwsOnIndexEqualToSize) {
 TEST(removeNote, throwsOnEmptyChord) {
     Chord myChord;
     EXPECT_THROW(myChord.removeNote(0), std::runtime_error);
+}
+
+// ====================
+// TASK 9: THE HARMONIC ANALYSIS REJECTS QUARTER TONES
+//
+// Every answer the stacked-in-thirds analysis produces -- the thirds, the fifths, the chord
+// quality, the scale degrees -- is defined over twelve-tone equal temperament. Given a quarter
+// tone the analysis does not fail: it returns a confident wrong answer, which in an analysis
+// library is worse than an error. Chord therefore rejects at the single chokepoint every
+// analysis method funnels through (stackInThirds()), and roundQuarterTones() is the escape hatch
+// for callers who want the analysis anyway.
+// ====================
+
+namespace {
+// Redirects std::cout for the lifetime of the object, so a test can assert on what the
+// LOG_INFO-based printing methods actually wrote. Restores the original buffer in the
+// destructor, so an exception escaping the captured call cannot leave std::cout dangling into
+// the rest of the suite.
+class CoutCapture {
+   public:
+    CoutCapture() : _oldBuffer(std::cout.rdbuf(_buffer.rdbuf())) {}
+    ~CoutCapture() { std::cout.rdbuf(_oldBuffer); }
+
+    std::string str() const { return _buffer.str(); }
+
+   private:
+    std::stringstream _buffer;
+    std::streambuf* _oldBuffer;
+};
+}  // namespace
+
+TEST(quarterToneAnalysisGuard, getNameThrows) {
+    // Deliberately inconsistent with getName()'s neighbouring behaviour for a NON-TONAL chord,
+    // which warns and returns an empty string: a quarter tone is not "an atonal chord", it is
+    // input the analyser cannot represent at all. Returning empty would hide the loss silently,
+    // and the roundQuarterTones() escape hatch only makes sense if the normal path fails visibly.
+    Chord myChord({"C4", "E1b4", "G4"});
+    EXPECT_THROW(myChord.getName(), std::runtime_error);
+}
+
+TEST(quarterToneAnalysisGuard, errorMessageNamesTheOffendingNoteAndTheEscapeHatch) {
+    // A caller hitting this must be able to learn what to do from the message alone.
+    Chord myChord({"C4", "E1b4", "G4"});
+
+    try {
+        myChord.getName();
+        FAIL() << "getName() did not throw on a chord containing a quarter tone";
+    } catch (const std::runtime_error& error) {
+        const std::string message(error.what());
+        EXPECT_NE(message.find("E1b4"), std::string::npos) << message;
+        EXPECT_NE(message.find("roundQuarterTones"), std::string::npos) << message;
+    }
+}
+
+TEST(quarterToneAnalysisGuard, coversEveryAnalysisEntryPoint) {
+    // The analysis surface is defined by measurement rather than taste: a method belongs here if
+    // it reaches stackInThirds(), whose prologue -- `if (!_isStackedInThirds) { stackInThirds();
+    // }` -- every one of these opens with. stackSize() is included despite looking like a
+    // trivial accessor, because it does reach the chokepoint.
+    //
+    // The guard sits before stackInThirds() mutates anything, so a rejected chord is left
+    // untouched and every assertion below sees the same state as the first.
+    Chord myChord({"C4", "E1b4", "G4"});
+    const Key cMajor("C");
+
+    EXPECT_THROW(myChord.getName(), std::runtime_error);
+    EXPECT_THROW(myChord.getRoot(), std::runtime_error);
+    EXPECT_THROW(myChord.getBassNote(), std::runtime_error);
+    EXPECT_THROW(myChord.stackSize(), std::runtime_error);
+    EXPECT_THROW(myChord.getStackedHeaps(), std::runtime_error);
+    EXPECT_THROW(myChord.getOpenStackNotes(), std::runtime_error);
+    EXPECT_THROW(myChord.getOpenStackIntervals(), std::runtime_error);
+    EXPECT_THROW(myChord.getCloseStackIntervals(), std::runtime_error);
+    EXPECT_THROW(myChord.getCloseStackHarmonicComplexity(), std::runtime_error);
+    EXPECT_THROW(myChord.getOpenStackChord(), std::runtime_error);
+    EXPECT_THROW(myChord.getCloseStackChord(), std::runtime_error);
+    EXPECT_THROW(myChord.getCloseChord(), std::runtime_error);
+    EXPECT_THROW(myChord.getDegree(cMajor), std::runtime_error);
+
+    // Reached through the chokepoint indirectly, via isTonal()/stackSize()/getDegree().
+    EXPECT_THROW(myChord.getQuality(), std::runtime_error);
+    EXPECT_THROW(myChord.getRomanDegree(cMajor), std::runtime_error);
+
+    // The isXxx() family.
+    EXPECT_THROW(myChord.isTonal(), std::runtime_error);
+    EXPECT_THROW(myChord.isMajorChord(), std::runtime_error);
+    EXPECT_THROW(myChord.isMinorChord(), std::runtime_error);
+    EXPECT_THROW(myChord.isAugmentedChord(), std::runtime_error);
+    EXPECT_THROW(myChord.isDiminishedChord(), std::runtime_error);
+    EXPECT_THROW(myChord.isHalfDiminishedChord(), std::runtime_error);
+    EXPECT_THROW(myChord.isWholeDiminishedChord(), std::runtime_error);
+    EXPECT_THROW(myChord.isDominantSeventhChord(), std::runtime_error);
+    EXPECT_THROW(myChord.isSus(), std::runtime_error);
+    EXPECT_THROW(myChord.isDyad(), std::runtime_error);
+    EXPECT_THROW(myChord.isInRootPosition(), std::runtime_error);
+
+    // The haveXxx() predicates that stack the chord in thirds.
+    EXPECT_THROW(myChord.haveMinorSecond(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMajorSecond(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMinorThird(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMajorThird(), std::runtime_error);
+    EXPECT_THROW(myChord.havePerfectFourth(), std::runtime_error);
+    EXPECT_THROW(myChord.haveAugmentedFourth(), std::runtime_error);
+    EXPECT_THROW(myChord.haveDiminishedFifth(), std::runtime_error);
+    EXPECT_THROW(myChord.havePerfectFifth(), std::runtime_error);
+    EXPECT_THROW(myChord.haveAugmentedFifth(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMinorSixth(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMajorSixth(), std::runtime_error);
+    EXPECT_THROW(myChord.haveDiminishedSeventh(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMinorSeventh(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMajorSeventh(), std::runtime_error);
+    EXPECT_THROW(myChord.haveDiminishedOctave(), std::runtime_error);
+    EXPECT_THROW(myChord.havePerfectOctave(), std::runtime_error);
+    EXPECT_THROW(myChord.haveAugmentedOctave(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMinorNinth(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMajorNinth(), std::runtime_error);
+    EXPECT_THROW(myChord.havePerfectEleventh(), std::runtime_error);
+    EXPECT_THROW(myChord.haveSharpEleventh(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMinorThirdteenth(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMajorThirdteenth(), std::runtime_error);
+}
+
+TEST(quarterToneAnalysisGuard, coversTheIntervalBasedHaveFamilyThroughTheIntervalGuard) {
+    // These haveXxx() overloads do NOT reach stackInThirds(): they build Intervals from the
+    // original sorted notes instead. They are still covered, by the OTHER guard -- Interval
+    // rejects a quarter tone at construction -- so the two guards together cover more of the
+    // analysis surface than the chokepoint alone. Pinned here so that neither guard can be
+    // removed on the assumption that the other one covers these.
+    Chord myChord({"C4", "E1b4", "G4"});
+
+    EXPECT_THROW(myChord.haveThird(), std::runtime_error);
+    EXPECT_THROW(myChord.haveFifth(), std::runtime_error);
+    EXPECT_THROW(myChord.haveSeventh(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMajorInterval(), std::runtime_error);
+    EXPECT_THROW(myChord.haveMinorInterval(), std::runtime_error);
+    EXPECT_THROW(myChord.havePerfectInterval(), std::runtime_error);
+    EXPECT_THROW(myChord.haveAnyOctaveMajorThird(), std::runtime_error);
+    EXPECT_THROW(myChord.haveAnyOctavePerfectFifth(), std::runtime_error);
+}
+
+TEST(quarterToneAnalysisGuard, accessorsAndMutatorsKeepWorking) {
+    // The counterpart of the coverage test above, and the reason the guard sits at the analysis
+    // chokepoint rather than on the class as a whole: nothing that merely reads or edits the
+    // chord's notes touches the stack, so none of it may throw on a quarter-tone chord. A user
+    // must still be able to hold, inspect and repair such a chord.
+    Chord myChord({"C4", "E1b4", "G4"});
+
+    EXPECT_EQ(myChord.size(), 3);
+    EXPECT_NO_THROW(myChord.getNote(1));
+    EXPECT_EQ(myChord.getNote(1).getPitch(), "E1b4");
+    EXPECT_NO_THROW(myChord.getNotes());
+    EXPECT_NO_THROW(myChord[1]);
+    EXPECT_NO_THROW(myChord.getDuration());
+    EXPECT_NO_THROW(myChord.getQuarterDuration());
+    EXPECT_NO_THROW(myChord.getDurationTicks());
+    EXPECT_NO_THROW(myChord.setDuration(2.0f));
+    EXPECT_NO_THROW(myChord.print());
+    EXPECT_NO_THROW(myChord.printStack());
+    EXPECT_NO_THROW(myChord.addNote("B4"));
+    EXPECT_EQ(myChord.size(), 4);
+    EXPECT_NO_THROW(myChord.removeNote(3));
+    EXPECT_NO_THROW(myChord.removeTopNote());
+    EXPECT_NO_THROW(myChord.clear());
+}
+
+TEST(info, degradesInsteadOfThrowingOnQuarterToneChord) {
+    // info() is the diagnostic a caller reaches for precisely when holding a chord they do not
+    // understand, so it must work on any chord that can be built. It reaches the chokepoint by
+    // two routes -- getName() and stackSize() -- and both are skipped here.
+    Chord myChord({"C4", "E1b4", "G4"});
+
+    std::string output;
+    {
+        CoutCapture capture;
+        EXPECT_NO_THROW(myChord.info());
+        output = capture.str();
+    }
+
+    // Still prints what it can: the size and the full note list, quarter tone included.
+    EXPECT_NE(output.find("Size:3"), std::string::npos) << output;
+    EXPECT_NE(output.find("[C4, E1b4, G4]"), std::string::npos) << output;
+
+    // Says why the analysis is missing instead of printing a name, and names the escape hatch.
+    EXPECT_NE(output.find("unavailable"), std::string::npos) << output;
+    EXPECT_NE(output.find("roundQuarterTones"), std::string::npos) << output;
+
+    // Skips the stack section rather than throwing on stackSize().
+    EXPECT_EQ(output.find("Open Stack Size"), std::string::npos) << output;
+}
+
+TEST(info, stillPrintsTheFullAnalysisForASemitoneChord) {
+    // The other half of the test above: the degraded path must not leak into ordinary chords.
+    Chord myChord({"C4", "E4", "G4"});
+
+    std::string output;
+    {
+        CoutCapture capture;
+        EXPECT_NO_THROW(myChord.info());
+        output = capture.str();
+    }
+
+    EXPECT_NE(output.find("Name: C"), std::string::npos) << output;
+    EXPECT_NE(output.find("Open Stack Size"), std::string::npos) << output;
+    EXPECT_EQ(output.find("unavailable"), std::string::npos) << output;
+}
+
+TEST(roundQuarterTones, enablesAnalysis) {
+    Chord myChord({"C4", "E1b4", "G4"});
+
+    EXPECT_EQ(myChord.roundQuarterTones(), 1);
+    EXPECT_EQ(myChord.getName(), "C");
+}
+
+TEST(roundQuarterTones, roundsTiesUpwardOnBothSides) {
+    // Delegates to Pitch::roundToSemitone(), the single implementation of the ties-upward rule
+    // (std::floor(alter + 0.5f)). The flat-side cases are the ones that discriminate it from
+    // ties-away-from-zero: std::round(-0.5) would give Eb4 here, and std::round(-1.5) Ebb4.
+    // Spelled out rather than braced: a TWO-element braced list of string literals is ambiguous
+    // between Chord's vector<string> and vector<Note> constructors, because std::vector's
+    // iterator-pair constructor also matches two const char*. Three-element lists elsewhere in
+    // this file are unaffected.
+    Chord flatSide(std::vector<std::string>{"E1b4", "E3b4"});
+    EXPECT_EQ(flatSide.roundQuarterTones(), 2);
+    EXPECT_EQ(flatSide.getNote(0).getPitch(), "E4");
+    EXPECT_EQ(flatSide.getNote(1).getPitch(), "Eb4");
+
+    Chord sharpSide(std::vector<std::string>{"C1x4", "C3x4"});
+    EXPECT_EQ(sharpSide.roundQuarterTones(), 2);
+    EXPECT_EQ(sharpSide.getNote(0).getPitch(), "C#4");
+    EXPECT_EQ(sharpSide.getNote(1).getPitch(), "Cx4");
+}
+
+TEST(roundQuarterTones, returnsZeroAndLeavesASemitoneChordAlone) {
+    Chord myChord({"C4", "E4", "G4"});
+
+    EXPECT_EQ(myChord.roundQuarterTones(), 0);
+    EXPECT_EQ(myChord.getNote(1).getPitch(), "E4");
+    EXPECT_EQ(myChord.getName(), "C");
+}
+
+TEST(roundQuarterTones, invalidatesTheStackCache) {
+    // The mutable getNote() reference bypasses every mutator, so the stacked-in-thirds cache is
+    // still marked valid after the edit below (see operator[]'s @warning in chord.h). Without
+    // the invalidateStackCache() call in roundQuarterTones(), getName() would keep answering
+    // from the stack computed for the PRE-round pitches and still say "C" at the end.
+    Chord myChord({"C4", "E4", "G4"});
+    EXPECT_EQ(myChord.getName(), "C");
+
+    myChord.getNote(1).setAlter(-1.5f);  // E4 -> E3b4, a quarter tone, cache left marked valid
+    EXPECT_EQ(myChord.getNote(1).getPitch(), "E3b4");
+
+    EXPECT_EQ(myChord.roundQuarterTones(), 1);  // E3b4 -> Eb4, ties upward
+    EXPECT_EQ(myChord.getName(), "Cm");
+}
+
+TEST(roundQuarterTones, emptyChordReturnsZero) {
+    Chord myChord;
+    EXPECT_EQ(myChord.roundQuarterTones(), 0);
 }

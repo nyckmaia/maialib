@@ -1,4 +1,6 @@
+import io
 import unittest
+from contextlib import redirect_stdout
 
 import maialib as ml
 
@@ -415,6 +417,112 @@ class RemoveNote(unittest.TestCase):
         myChord = ml.Chord()
         with self.assertRaises(RuntimeError):
             myChord.removeNote(0)
+
+
+class QuarterToneAnalysisGuard(unittest.TestCase):
+    """Harmonic analysis rejects quarter tones; roundQuarterTones() is the escape hatch.
+
+    Every answer the stacked-in-thirds analysis computes is defined over twelve-tone equal
+    temperament, so a quarter tone did not make it fail, it made it answer wrongly.
+    """
+
+    def testGetNameRaises(self):
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+        with self.assertRaises(RuntimeError):
+            myChord.getName()
+
+    def testErrorMessageNamesTheNoteAndTheEscapeHatch(self):
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+        with self.assertRaises(RuntimeError) as context:
+            myChord.getName()
+
+        message = str(context.exception)
+        self.assertIn("E1b4", message)
+        self.assertIn("roundQuarterTones", message)
+
+    def testEveryAnalysisMethodRaises(self):
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+        analysisMethods = (
+            "getName",
+            "getQuality",
+            "getRoot",
+            "getBassNote",
+            "stackSize",
+            "getOpenStackNotes",
+            "getOpenStackIntervals",
+            "getCloseStackIntervals",
+            "getOpenStackChord",
+            "getCloseStackChord",
+            "getCloseChord",
+            "isTonal",
+            "isMajorChord",
+            "isMinorChord",
+            "isSus",
+            "isInRootPosition",
+            "haveMajorThird",
+            "haveMinorThird",
+            "havePerfectFifth",
+            "haveMajorSeventh",
+        )
+
+        for methodName in analysisMethods:
+            with self.subTest(method=methodName):
+                with self.assertRaises(RuntimeError):
+                    getattr(myChord, methodName)()
+
+    def testAccessorsAndMutatorsKeepWorking(self):
+        # The reason the guard sits at the analysis chokepoint and not on the class as a whole:
+        # a user must still be able to hold, inspect and repair a quarter-tone chord.
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+
+        self.assertEqual(myChord.size(), 3)
+        self.assertEqual(myChord.getNote(1).getPitch(), "E1b4")
+        self.assertEqual(len(myChord.getNotes()), 3)
+        myChord.getDuration()
+        myChord.setDuration(2.0)
+        myChord.addNote("B4")
+        self.assertEqual(myChord.size(), 4)
+        myChord.removeNote(3)
+        self.assertEqual(myChord.size(), 3)
+
+    def testRoundQuarterTonesEnablesAnalysis(self):
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+        self.assertEqual(myChord.roundQuarterTones(), 1)
+        self.assertEqual(myChord.getNote(1).getPitch(), "E4")
+        self.assertEqual(myChord.getName(), "C")
+
+    def testRoundQuarterTonesReturnsZeroOnASemitoneChord(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        self.assertEqual(myChord.roundQuarterTones(), 0)
+        self.assertEqual(myChord.getName(), "C")
+
+    def testInfoDegradesInsteadOfRaising(self):
+        # info() is the diagnostic a user reaches for precisely when holding a chord they do not
+        # understand, so it must work on any chord that can be built.
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            myChord.info()
+        output = buffer.getvalue()
+
+        self.assertIn("Size:3", output)
+        self.assertIn("[C4, E1b4, G4]", output)
+        self.assertIn("unavailable", output)
+        self.assertIn("roundQuarterTones", output)
+        self.assertNotIn("Open Stack Size", output)
+
+    def testInfoStillPrintsTheFullAnalysisForASemitoneChord(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+
+        buffer = io.StringIO()
+        with redirect_stdout(buffer):
+            myChord.info()
+        output = buffer.getvalue()
+
+        self.assertIn("Name: C", output)
+        self.assertIn("Open Stack Size", output)
+        self.assertNotIn("unavailable", output)
 
 
 if __name__ == "__main__":

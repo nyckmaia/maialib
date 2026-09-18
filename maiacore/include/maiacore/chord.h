@@ -185,6 +185,19 @@ class Chord {
     void invalidateStackCache();
 
     /**
+     * @brief Find the first note of the chord carrying a quarter-tone accidental.
+     *
+     * Shared by the analysis guard in stackInThirds(), which rejects such a chord, and by info(),
+     * which degrades on one instead of throwing. Searches '_originalNotes' (the authoritative
+     * note set, which stackInThirds() copies into '_openStack') in original order, so the note it
+     * names in either message is stable and recognisable to the caller.
+     *
+     * @return Pointer to the first quarter-tone note, or nullptr if the chord has none. The
+     *         pointer is owned by '_originalNotes' and is invalidated by any mutation of it.
+     */
+    const Note* findQuarterToneNote() const;
+
+    /**
      * @brief Computes the standard deviation of a vector of values.
      * @tparam T Numeric type.
      * @param v The vector of values.
@@ -286,6 +299,24 @@ class Chord {
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
      */
     void setDuration(const float quarterDuration, const int divisionsPerQuarterNote = 256);
+
+    /**
+     * @brief Round every quarter-tone note in the chord to the nearest semitone, ties upward.
+     * @details The escape hatch for the harmonic-analysis rejection. `getName()`, `getQuality()`,
+     *          `getRoot()`, `getBassNote()`, `getDegree()`, `stackSize()`, the `isXxx()` family,
+     *          the `haveXxx()` predicates and every other method that stacks the chord in thirds
+     *          throw on a chord containing a quarter tone, because all of them are defined over
+     *          twelve-tone equal temperament. Calling this first rounds the quarter tones away
+     *          (`Pitch::roundToSemitone()`'s ties-upward rule: `E1b4` -> `E4`, `E3b4` -> `Eb4`),
+     *          so the analysis then runs on the rounded pitches.
+     * @warning The rounding is destructive and in place: the original quarter-tone spelling is
+     *          not recoverable from this Chord afterwards. Keep a copy if you need it.
+     * @note Invalidates any cached stacked-in-thirds analysis, so the next analysis call sees the
+     *       rounded pitches.
+     * @return Number of notes whose pitch was rounded; 0 if the chord contained no quarter tone,
+     *         in which case the chord is musically unchanged.
+     */
+    int roundQuarterTones();
 
     /**
      * @brief Invert the chord by moving the lowest note up by one octave, repeated inversionNumber
@@ -1267,6 +1298,15 @@ class Chord {
     /**
      * @brief Prints detailed information about the chord, including name, size, notes, and stack.
      * @details Useful for analysis and debugging.
+     *
+     *          On a chord containing a quarter tone this degrades rather than throwing, unlike
+     *          every analysis method: it still prints the size and the note list, replaces the
+     *          name with a note that the harmonic analysis is unavailable, skips the stack
+     *          section, and names roundQuarterTones() as the way to enable the analysis. This is
+     *          deliberate -- info() is the diagnostic a caller reaches for precisely when holding
+     *          a chord they do not understand, so it must work on any chord that can be built.
+     * @throws std::runtime_error If the chord (or, for an analysable chord, its stacked-in-thirds
+     *         representation) is empty. Quarter tones are never the cause.
      */
     void info();
 

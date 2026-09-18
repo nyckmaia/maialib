@@ -40,8 +40,64 @@ void Chord::clear() {
     invalidateStackCache();
 }
 
+const Note* Chord::findQuarterToneNote() const {
+    for (const auto& note : _originalNotes) {
+        if (note.isQuarterTone()) {
+            return &note;
+        }
+    }
+
+    return nullptr;
+}
+
+int Chord::roundQuarterTones() {
+    int numRoundedNotes = 0;
+
+    for (auto& note : _originalNotes) {
+        if (note.isQuarterTone()) {
+            note.roundToSemitone();
+            numRoundedNotes++;
+        }
+    }
+
+    // '_originalNotes' and '_openStack' are bounded separately, for the same reason setDuration()
+    // iterates them separately: stackInThirds() dedups '_openStack' down to one note per unique
+    // pitch class, so it can be strictly smaller than '_originalNotes'. '_openStack' is rounded
+    // here too rather than left alone because invalidateStackCache() deliberately does not clear
+    // it (const readers such as printStack() may still read it before the next stack
+    // computation), so skipping it would leave those readers showing the pre-round pitches.
+    for (auto& note : _openStack) {
+        if (note.isQuarterTone()) {
+            note.roundToSemitone();
+        }
+    }
+
+    // Unconditional, not 'if (numRoundedNotes > 0)': a note can acquire a quarter tone through
+    // the mutable getNote()/operator[] references, which bypass every mutator and leave the cache
+    // marked valid (see operator[]'s @warning in chord.h). Such a chord can reach here with a
+    // stale cache, and -- if some other call already rounded it -- with nothing left to round, so
+    // tying the invalidation to this call's own count could keep a stack computed for the
+    // pre-round pitches. Invalidating regardless costs one recomputation and can never be wrong.
+    invalidateStackCache();
+
+    return numRoundedNotes;
+}
+
 void Chord::info() {
-    LOG_INFO("Name: " << getName());
+    // A chord containing a quarter tone cannot be analysed (see the guard in stackInThirds()),
+    // but info() degrades instead of throwing: it is the diagnostic a caller reaches for
+    // precisely when holding a chord they do not understand, so it must work on any chord that
+    // can be built. Both of this method's routes into the analysis chokepoint -- getName() just
+    // below and stackSize() further down -- are skipped, and everything that does not depend on
+    // the stacked-in-thirds representation is still printed.
+    const Note* quarterToneNote = findQuarterToneNote();
+
+    if (quarterToneNote == nullptr) {
+        LOG_INFO("Name: " << getName());
+    } else {
+        LOG_INFO("Name: <unavailable: the chord contains quarter tones>");
+    }
+
     LOG_INFO("Size:" << size());
 
     const int chordSize = size();
@@ -62,6 +118,20 @@ void Chord::info() {
     noteNames.append("]");
 
     LOG_INFO(noteNames);
+
+    // The note list above is printed from '_originalNotes' and never touches the stack, so it is
+    // still correct for a quarter-tone chord. Everything below it is the stacked-in-thirds
+    // analysis, which is what the quarter tone makes unavailable: replace it with the reason and
+    // the remedy rather than letting stackSize() throw out of a diagnostic method.
+    if (quarterToneNote != nullptr) {
+        LOG_INFO("=====> HARMONIC ANALYSIS UNAVAILABLE <=====");
+        LOG_INFO("This chord contains the quarter tone "
+                 << quarterToneNote->getWrittenPitch()
+                 << ", which the harmonic analysis cannot represent. Call "
+                    "Chord::roundQuarterTones() to round every quarter tone to the nearest "
+                    "semitone, then call info() again.");
+        return;
+    }
 
     // ---------------- //
     const int chordStackSize = stackSize();
@@ -398,6 +468,31 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
     if (_originalNotes.empty()) {
         // LOG_WARN("The chord is empty!");
         return;
+    }
+
+    // Single chokepoint for this class's whole harmonic-analysis surface. Every analysis method
+    // opens with `if (!_isStackedInThirds) { stackInThirds(...); }`, so rejecting here covers
+    // getName(), getQuality(), getRoot(), getBassNote(), getDegree(), getStackedHeaps(),
+    // stackSize(), the isXxx() family, the 26 haveXxx() predicates and the interval getters at
+    // once, without a guard in any of them.
+    //
+    // It is an outright rejection rather than a best effort because all of those answers -- the
+    // thirds, the fifths, the chord quality, the scale degrees -- are defined over twelve-tone
+    // equal temperament. Given a quarter tone the analysis does not fail: it returns a confident
+    // wrong answer, which in an analysis library is worse than an error. The message names
+    // roundQuarterTones(), the escape hatch for callers who want the analysis anyway.
+    //
+    // Deliberately NOT covered by this guard: info(), which degrades instead of throwing, and
+    // every plain accessor and mutator (size(), getNote(), getNotes(), getDuration(),
+    // setDuration(), addNote(), removeNote(), ...), none of which touches the stack -- they must
+    // keep working on a quarter-tone chord.
+    const Note* quarterToneNote = findQuarterToneNote();
+    if (quarterToneNote != nullptr) {
+        LOG_ERROR("Cannot analyse a chord containing the quarter tone " +
+                  quarterToneNote->getWrittenPitch() +
+                  ": harmonic analysis is defined only over twelve-tone equal temperament. Call "
+                  "Chord::roundQuarterTones() to round every quarter tone to the nearest "
+                  "semitone, then repeat the analysis.");
     }
 
     // ===== STEP 1: COMPUTE THE OPEN STACK ===== //

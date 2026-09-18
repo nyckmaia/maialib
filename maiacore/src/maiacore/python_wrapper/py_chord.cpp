@@ -78,6 +78,32 @@ void ChordClass(const py::module& m) {
             py::arg("quarterDuration"), py::arg("divisionsPerQuarterNote") = 256,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
+    cls.def("roundQuarterTones", &Chord::roundQuarterTones,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Round every quarter-tone note in the chord to the nearest semitone, ties upward.
+
+        This is the escape hatch for the harmonic-analysis rejection: ``getName``,
+        ``getQuality``, ``getRoot``, ``getBassNote``, ``getDegree``, ``stackSize``, the ``is*``
+        family, the ``have*`` predicates and every other method that stacks the chord in thirds
+        raise ``RuntimeError`` on a chord containing a quarter tone, because all of them are
+        defined over twelve-tone equal temperament. Call this first and the analysis runs on the
+        rounded pitches::
+
+            chord = ml.Chord(["C4", "E1b4", "G4"])
+            chord.roundQuarterTones()   # 1
+            chord.getName()             # "C"
+
+        ``E1b4`` becomes ``E4`` and ``E3b4`` becomes ``Eb4``. The rounding is destructive and in
+        place: the original quarter-tone spelling is not recoverable from this chord afterwards.
+
+        Returns
+        -------
+        int
+            Number of notes whose pitch was rounded; 0 if the chord contained no quarter tone,
+            in which case the chord is musically unchanged.
+    )pbdoc");
+
     //     cls.def("setDuration", py::overload_cast<const RhythmFigure, const
     //     int>(&Chord::setDuration),
     //             py::arg("rhythmFigure"), py::arg("divisionsPerQuarterNote") = 256);
@@ -451,10 +477,17 @@ void ChordClass(const py::module& m) {
             R"pbdoc(
         Print the chord's name, size, note list and stacked-in-thirds data to stdout.
 
+        On a chord containing a quarter tone this degrades instead of raising, unlike every
+        analysis method: it still prints the size and the note list, replaces the name with a
+        note that the harmonic analysis is unavailable, skips the stack section, and names
+        ``roundQuarterTones`` as the way to enable the analysis. ``info`` works on any chord
+        that can be built.
+
         Raises
         ------
         RuntimeError
-            If the chord (or its stacked-in-thirds representation) is empty.
+            If the chord (or, for an analysable chord, its stacked-in-thirds representation) is
+            empty. Quarter tones are never the cause.
     )pbdoc");
 
     cls.def("print", &Chord::print,
