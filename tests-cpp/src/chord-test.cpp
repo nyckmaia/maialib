@@ -852,3 +852,181 @@ TEST(roundQuarterTones, emptyChordReturnsZero) {
     Chord myChord;
     EXPECT_EQ(myChord.roundQuarterTones(), 0);
 }
+
+// ===== Task 9b: the MIDI-domain family, which reaches neither Task 9 guard ===== //
+//
+// These methods never build an Interval and never stack the chord in thirds, so neither the
+// Interval constructor guard nor the stackInThirds() chokepoint can see them. They answer in the
+// MIDI integer domain, where Note::getMidiNumber() has already rounded a quarter tone ties-upward.
+//
+// Each one is classified by a single question -- can its RETURN TYPE express a quarter tone? A
+// method that cannot rejects; a method that can computes the true value, because rejecting there
+// would destroy functionality that works.
+
+TEST(quarterToneMidiDomainGuard, getMidiIntervalsIsRejected) {
+    // The measurement that opened this task: before the guard this returned [4, 3], byte for byte
+    // what a plain C major triad returns, because getMidiNumber() rounds E1b4 (63.5) up to E4
+    // (64). A vector<int> of semitone counts cannot hold the 3.5 semitones of a neutral third, so
+    // there is no honest value to return.
+    Chord myChord({"C4", "E1b4", "G4"});
+
+    EXPECT_REJECTED_NAMING(myChord.getMidiIntervals(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getMidiIntervals(true), "roundQuarterTones");
+}
+
+TEST(quarterToneMidiDomainGuard, meanMidiValueFamilyIsRejected) {
+    // An int cannot express 63.5, the true mean of {60, 63.5, 67}. Measured before the guard:
+    // getMeanMidiValue() returned 63 and getMeanPitch() "D#4" -- the same answers a C major triad
+    // gives.
+    Chord myChord({"C4", "E1b4", "G4"});
+
+    EXPECT_REJECTED_NAMING(myChord.getMeanMidiValue(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getMeanOfExtremesMidiValue(), "roundQuarterTones");
+
+    // These two spell whatever the int mean above produced, so they inherit that rejection rather
+    // than carrying a guard of their own. A string CAN spell a quarter tone ("D3x4"), but the
+    // value being spelled is the mean of N notes, which is a multiple of 1/N and generally not a
+    // multiple of 0.5 -- so computing here would need a rounding policy, and rounding is exactly
+    // what this task removes.
+    EXPECT_REJECTED_NAMING(myChord.getMeanPitch(), "roundQuarterTones");
+    EXPECT_REJECTED_NAMING(myChord.getMeanOfExtremesPitch(), "roundQuarterTones");
+}
+
+TEST(quarterToneMidiDomainGuard, messageNamesTheOffendingNoteAndTheEscapeHatch) {
+    // A caller hitting this must be able to learn what to do from the message alone.
+    Chord myChord({"C4", "E1b4", "G4"});
+
+    try {
+        myChord.getMidiIntervals();
+        FAIL() << "getMidiIntervals() did not throw on a chord containing a quarter tone";
+    } catch (const std::runtime_error& error) {
+        const std::string message(error.what());
+        EXPECT_NE(message.find("E1b4"), std::string::npos) << message;
+        EXPECT_NE(message.find("roundQuarterTones"), std::string::npos) << message;
+    }
+}
+
+TEST(quarterToneMidiDomainGuard, everyRejectedMethodWorksAfterRoundQuarterTones) {
+    // The escape hatch has to open every door its name appears on.
+    Chord myChord({"C4", "E1b4", "G4"});
+    EXPECT_EQ(myChord.roundQuarterTones(), 1);
+
+    EXPECT_EQ(myChord.getMidiIntervals(), (std::vector<int>{4, 3}));
+    EXPECT_EQ(myChord.getMeanMidiValue(), 63);
+    EXPECT_EQ(myChord.getMeanOfExtremesMidiValue(), 63);
+    EXPECT_EQ(myChord.getMeanPitch(), "D#4");
+    EXPECT_EQ(myChord.getMeanOfExtremesPitch(), "D#4");
+}
+
+TEST(quarterToneMidiDomainGuard, semitoneChordsAreUntouchedByTheGuard) {
+    // The counterpart of the rejections: a chord with no quarter tone must answer exactly as it
+    // did before this task.
+    Chord myChord({"C4", "E4", "G4"});
+
+    EXPECT_EQ(myChord.getMidiIntervals(), (std::vector<int>{4, 3}));
+    EXPECT_EQ(myChord.getMidiIntervals(true), (std::vector<int>{4, 7}));
+    EXPECT_EQ(myChord.getMeanMidiValue(), 63);
+    EXPECT_EQ(myChord.getMeanOfExtremesMidiValue(), 63);
+    EXPECT_EQ(myChord.getMeanPitch(), "D#4");
+}
+
+TEST(quarterToneAnalysisGuard, getIntervalsIsPinnedToTheIntervalGuard) {
+    // Task 9 covered getIntervals() through Interval's constructor guard but pinned it with no
+    // test at all, so that coverage could have been removed without anything going red. The remedy
+    // named is Interval's ("roundToSemitone"), not Chord's, which is what identifies WHICH of the
+    // two guards is doing the work here.
+    Chord myChord({"C4", "E1b4", "G4"});
+
+    EXPECT_REJECTED_NAMING(myChord.getIntervals(), "roundToSemitone");
+    EXPECT_REJECTED_NAMING(myChord.getIntervals(true), "roundToSemitone");
+    EXPECT_REJECTED_NAMING(myChord.getIntervalsFromOriginalSortedNotes(), "roundToSemitone");
+}
+
+TEST(toCents, neutralThirdReadsThreeHundredAndFiftyCents) {
+    // toCents() runs opposite to every other method in this task: it used to REJECT, through the
+    // Interval guard, and should not. Cents are the one unit in this library that expresses a
+    // quarter tone exactly, so an int loses nothing and rejecting destroyed working functionality.
+    //
+    // 350 is the whole point -- not a throw, and not 300 or 400, which is what any route through
+    // the rounded getMidiNumber() produces.
+    Chord myChord({"C4", "E1b4", "G4"});
+
+    EXPECT_EQ(myChord.toCents(), (std::vector<int>{350, 350}));
+}
+
+TEST(toCents, semitoneIntervalsAreExactHundreds) {
+    // The frequency route this replaced measured [400, 299]: Interval::toCents() compares two
+    // frequencies and Helper::frequencies2cents() truncates 299.9999 rather than rounding it.
+    // Integer arithmetic on doubled step positions cannot drift like that.
+    Chord myChord({"C4", "E4", "G4"});
+
+    EXPECT_EQ(myChord.toCents(), (std::vector<int>{400, 300}));
+}
+
+TEST(toCents, quarterAndThreeQuarterToneStepsAndDescendingIntervals) {
+    // Spelled out rather than braced: a TWO-element braced list of string literals is ambiguous
+    // between Chord's vector<string> and vector<Note> constructors.
+    Chord quarterTone(std::vector<std::string>{"C4", "C1x4"});  // 60 -> 60.5
+    EXPECT_EQ(quarterTone.toCents(), (std::vector<int>{50}));
+
+    Chord threeQuarterTone(std::vector<std::string>{"C4", "D1b4"});  // 60 -> 61.5
+    EXPECT_EQ(threeQuarterTone.toCents(), (std::vector<int>{150}));
+
+    // Descending intervals stay negative, and the half step survives the sign.
+    Chord descending(std::vector<std::string>{"E1b4", "C4"});  // 63.5 -> 60
+    EXPECT_EQ(descending.toCents(), (std::vector<int>{-350}));
+}
+
+TEST(isSorted, quarterToneOrderingIsComputedExactly) {
+    // A bool expresses the true answer for a quarter tone exactly, so this computes rather than
+    // rejects. Measured before the change: BOTH of these returned false, because E1b4 (63.5) and
+    // E4 (64) both rounded to 64, and the comparator reads equal values as unsorted.
+    Chord ascending(std::vector<std::string>{"E1b4", "E4"});
+    EXPECT_TRUE(ascending.isSorted());
+
+    Chord descending(std::vector<std::string>{"E4", "E1b4"});
+    EXPECT_FALSE(descending.isSorted());
+}
+
+TEST(isSorted, semitoneChordsAreUnchanged) {
+    Chord sorted({"C4", "E4", "G4"});
+    EXPECT_TRUE(sorted.isSorted());
+
+    Chord unsorted({"G4", "E4", "C4"});
+    EXPECT_FALSE(unsorted.isSorted());
+}
+
+TEST(getMidiValueStd, isTheRealStandardDeviationAndSeparatesAQuarterTone) {
+    // A float expresses this spread exactly, so it computes rather than rejects.
+    //
+    // Measured before the change: BOTH chords reported 31.8978 -- the standard deviation of
+    // {0, 0, 0, 60, 64, 67}, because the method sized its vector with a leading run of zeros and
+    // then push_back()ed the real values after them. The quarter tone was invisible behind a
+    // number that was wrong for every chord.
+    Chord semitone({"C4", "E4", "G4"});  // {60, 64, 67}
+    EXPECT_NEAR(semitone.getMidiValueStd(), 2.8674f, 0.001f);
+
+    Chord quarterTone({"C4", "E1b4", "G4"});  // {60, 63.5, 67}
+    EXPECT_NEAR(quarterTone.getMidiValueStd(), 2.8577f, 0.001f);
+}
+
+TEST(getMidiValueStd, emptyChordReturnsZero) {
+    // The old route divided by a zero-length vector and produced NaN.
+    Chord myChord;
+    EXPECT_FLOAT_EQ(myChord.getMidiValueStd(), 0.0f);
+}
+
+TEST(getHarmonicDensity, aQuarterToneExtremeWidensTheRangeByHalfASemitone) {
+    // A float expresses a 6.5-semitone span exactly, so this computes rather than rejects. C1x4 is
+    // 60.5, so its span to G4 (67) is 6.5 semitones, not the 6 that rounding it to 61 produces.
+    //
+    // Both bounds are passed explicitly because getHarmonicDensity() with NO arguments is
+    // ambiguous in C++: both overloads have every parameter defaulted. Python is unaffected --
+    // pybind11 resolves the overloads in declaration order.
+    Chord quarterTone(std::vector<std::string>{"C1x4", "G4"});
+    EXPECT_NEAR(quarterTone.getHarmonicDensity(-1, -1), 2.0f / 7.5f, 0.0001f);
+
+    // Unchanged for a chord with no quarter tone.
+    Chord semitone({"C4", "E4", "G4"});
+    EXPECT_NEAR(semitone.getHarmonicDensity(-1, -1), 0.375f, 0.0001f);
+}

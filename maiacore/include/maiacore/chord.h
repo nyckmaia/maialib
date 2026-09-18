@@ -461,6 +461,14 @@ class Chord {
      *          - Greater spectral clarity and reduced masking effects
      *
      *          Useful for analyzing orchestration, voice-leading efficiency, and harmonic texture.
+     *
+     *          When the range is auto-detected, the extremes are taken from exact pitch positions,
+     *          so a quarter-tone extreme widens the range by half a semitone rather than being
+     *          rounded: Chord{"C1x4", "G4"} spans 6.5 semitones, not 6. A float expresses that
+     *          exactly, so this method never rejects a quarter-tone chord.
+     * @note Calling this overload with NO arguments is ambiguous in C++, because both
+     *       getHarmonicDensity() overloads have every parameter defaulted; pass both bounds
+     *       explicitly (e.g. `getHarmonicDensity(-1, -1)`). Python is unaffected.
      */
     float getHarmonicDensity(int lowerBoundMIDI = -1, int higherBoundMIDI = -1) const;
 
@@ -1165,9 +1173,14 @@ class Chord {
     std::string getQuality();
 
     /**
-     * @brief Checks if the notes in the chord are sorted in ascending order by MIDI number.
+     * @brief Checks if the notes in the chord are sorted in ascending order by pitch.
      * @details Useful for ensuring consistent interval calculations and for algorithms that require
      * sorted input.
+     *
+     *          Compares exact pitch positions, so a quarter tone orders correctly instead of being
+     *          rounded onto the semitone above it: Chord{"E1b4", "E4"} is sorted, because 63.5
+     *          precedes 64. Ordering is a predicate, so the bool returned expresses the true
+     *          answer for a quarter-tone chord exactly and this method never rejects one.
      * @return True if the notes are sorted from lowest to highest pitch.
      */
     bool isSorted() const;
@@ -1222,6 +1235,11 @@ class Chord {
      * notes.
      * @param firstNoteAsReference If true, use the first note as the reference for all intervals.
      * @return Vector of intervals in semitones.
+     * @throws std::runtime_error If the chord contains a quarter tone. A vector of whole semitone
+     *         counts cannot express the 3.5 semitones of a neutral third, and answering 3 or 4
+     *         would be indistinguishable from a chord that really holds a minor or major third.
+     *         Call roundQuarterTones() first, or use toCents(), which expresses a quarter tone
+     *         exactly.
      */
     std::vector<int> getMidiIntervals(const bool firstNoteAsReference = false) const;
 
@@ -1348,6 +1366,13 @@ class Chord {
      * the chord.
      * @details Useful for microtonal and tuning analysis, as well as for comparing intervallic
      * content.
+     *
+     *          Cents are the one unit in this library that expresses a quarter tone exactly -- 50
+     *          cents to the quarter tone, 350 to the neutral third -- so this method accepts a
+     *          quarter-tone chord and computes the true value, unlike the MIDI-semitone methods,
+     *          which reject one. Computed as integer arithmetic on exact step positions (100 cents
+     *          to the semitone in twelve-tone equal temperament), not from the notes' frequencies,
+     *          so the result carries no floating-point error and does not depend on freqA4.
      * @return Vector of integer values representing the interval in cents between each note pair.
      */
     std::vector<int> toCents() const;
@@ -1400,6 +1425,9 @@ class Chord {
      * @brief Calculates the arithmetic mean of the MIDI numbers of all notes in the chord.
      * @details Useful for pitch center analysis.
      * @return Mean MIDI value as an integer.
+     * @throws std::runtime_error If the chord contains a quarter tone: an int cannot express the
+     *         63.5 that {C4, E1b4, G4} averages to, and the 63 it used to return is the same value
+     *         a plain C major triad gives. Call roundQuarterTones() first.
      */
     int getMeanMidiValue() const;
 
@@ -1407,12 +1435,19 @@ class Chord {
      * @brief Calculates the mean MIDI value between the lowest and highest notes in the chord.
      * @details Useful for summarizing the pitch range of the chord.
      * @return Mean of extremes MIDI value as an integer.
+     * @throws std::runtime_error If the chord contains a quarter tone, anywhere in it and not only
+     *         at an extreme -- the extremes themselves are selected by an ordering that the
+     *         rounding can get wrong. Call roundQuarterTones() first.
      */
     int getMeanOfExtremesMidiValue() const;
 
     /**
      * @brief Calculates the standard deviation of the MIDI numbers of all notes in the chord.
      * @details Useful for measuring the pitch spread or compactness of the chord.
+     *
+     *          Uses exact pitch positions, so a quarter tone contributes its true value; a float
+     *          expresses that spread exactly and this method never rejects a quarter-tone chord.
+     *          An empty chord returns 0.0f.
      * @return MIDI value standard deviation as a float.
      */
     float getMidiValueStd() const;
@@ -1422,6 +1457,11 @@ class Chord {
      * @details The accidental type can be specified (e.g., sharp, flat, natural).
      * @param accType Optional: specify accidental type for pitch spelling.
      * @return String with the pitch name (e.g., "C4", "F#3").
+     * @throws std::runtime_error If the chord contains a quarter tone, inherited from
+     *         getMeanMidiValue(), which this method spells. A pitch string CAN spell a quarter
+     *         tone ("D3x4"), but the value being spelled is the mean of N notes, which is a
+     *         multiple of 1/N and generally not a multiple of 0.5, so there is no exact spelling
+     *         to return. Call roundQuarterTones() first.
      */
     std::string getMeanPitch(const std::string& accType = {}) const;
 
@@ -1431,6 +1471,9 @@ class Chord {
      * @details The accidental type can be specified (e.g., sharp, flat, natural).
      * @param accType Optional: specify accidental type for pitch spelling.
      * @return String with the pitch name (e.g., "C4", "F#3").
+     * @throws std::runtime_error If the chord contains a quarter tone, inherited from
+     *         getMeanOfExtremesMidiValue(), which this method spells. Call roundQuarterTones()
+     *         first.
      */
     std::string getMeanOfExtremesPitch(const std::string& accType = {}) const;
 

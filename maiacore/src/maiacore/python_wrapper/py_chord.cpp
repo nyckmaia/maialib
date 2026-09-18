@@ -297,7 +297,20 @@ void ChordClass(const py::module& m) {
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def("getHarmonicDensity",
             py::overload_cast<int, int>(&Chord::getHarmonicDensity, py::const_),
-            py::arg("lowerBoundMIDI") = -1, py::arg("higherBoundMIDI") = -1);
+            py::arg("lowerBoundMIDI") = -1, py::arg("higherBoundMIDI") = -1,
+            R"pbdoc(
+        Get the harmonic density of the chord within a MIDI pitch range.
+
+        When the bounds are left at -1 the range is auto-detected from the chord's own extremes,
+        taken from exact pitch positions: a quarter-tone extreme widens the range by half a
+        semitone rather than being rounded, so ``["C1x4", "G4"]`` spans 6.5 semitones, not 6. A
+        float expresses that exactly, so this method never raises on a quarter-tone chord.
+
+        Returns
+        -------
+        float
+            The density: the note count divided by the range it spans.
+    )pbdoc");
     cls.def("getHarmonicDensity",
             py::overload_cast<const std::string&, const std::string&>(&Chord::getHarmonicDensity,
                                                                       py::const_),
@@ -408,7 +421,20 @@ void ChordClass(const py::module& m) {
     cls.def("isDominantSeventhChord", &Chord::isDominantSeventhChord);
     cls.def("getQuality", &Chord::getQuality);
 
-    cls.def("isSorted", &Chord::isSorted);
+    cls.def("isSorted", &Chord::isSorted,
+            R"pbdoc(
+        Check whether the chord's notes are in ascending pitch order.
+
+        Compares exact pitch positions, so a quarter tone orders correctly instead of being
+        rounded onto the semitone above it: ``Chord(["E1b4", "E4"])`` is sorted, because 63.5
+        precedes 64. Ordering is a predicate, so the bool returned expresses the true answer for a
+        quarter-tone chord exactly and this method never raises on one.
+
+        Returns
+        -------
+        bool
+            ``True`` if the notes run from lowest to highest.
+    )pbdoc");
     cls.def("isTonal", &Chord::isTonal, py::arg("model") = nullptr);
     cls.def("isInRootPosition", &Chord::isInRootPosition,
             R"pbdoc(
@@ -428,7 +454,23 @@ void ChordClass(const py::module& m) {
             it is not limited to large chords).
     )pbdoc");
 
-    cls.def("getMidiIntervals", &Chord::getMidiIntervals, py::arg("firstNoteAsReference") = false);
+    cls.def("getMidiIntervals", &Chord::getMidiIntervals, py::arg("firstNoteAsReference") = false,
+            R"pbdoc(
+        Get the intervals between the chord's notes, in whole MIDI semitones.
+
+        Returns
+        -------
+        list[int]
+            One value per note pair, or an empty list for an empty chord.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone. A list of whole semitone counts cannot express
+            the 3.5 semitones of a neutral third, and answering 3 or 4 would be indistinguishable
+            from a chord that really holds a minor or major third. Call ``roundQuarterTones``
+            first, or use ``toCents``, which expresses a quarter tone exactly.
+    )pbdoc");
     cls.def("getIntervals", &Chord::getIntervals, py::arg("firstNoteAsReference") = false);
     cls.def("getIntervalsFromOriginalSortedNotes", &Chord::getIntervalsFromOriginalSortedNotes);
 
@@ -512,6 +554,16 @@ void ChordClass(const py::module& m) {
 
         Returns
         -------
+        Cents are the one unit in this library that expresses a quarter tone exactly -- 50 cents to
+        the quarter tone, 350 to the neutral third -- so this method accepts a quarter-tone chord
+        and computes the true value, unlike the MIDI-semitone methods, which reject one.
+
+        Computed as integer arithmetic on exact step positions (100 cents to the semitone in
+        twelve-tone equal temperament) rather than from the notes' frequencies, so the result
+        carries no floating-point error and does not depend on ``freqA4``.
+
+        Returns
+        -------
         list[int]
             One value per adjacent note pair, or an empty list if the chord has fewer than 2
             notes (including an empty chord).
@@ -526,12 +578,83 @@ void ChordClass(const py::module& m) {
             py::arg("freqA4") = 440.0f);
     cls.def("getFrequencyStd", &Chord::getFrequencyStd, py::arg("freqA4") = 440.0f);
 
-    cls.def("getMeanMidiValue", &Chord::getMeanMidiValue);
-    cls.def("getMeanOfExtremesMidiValue", &Chord::getMeanOfExtremesMidiValue);
-    cls.def("getMidiValueStd", &Chord::getMidiValueStd);
+    cls.def("getMeanMidiValue", &Chord::getMeanMidiValue,
+            R"pbdoc(
+        Get the arithmetic mean of the chord's MIDI numbers.
 
-    cls.def("getMeanPitch", &Chord::getMeanPitch, py::arg("accType") = "");
-    cls.def("getMeanOfExtremesPitch", &Chord::getMeanOfExtremesPitch, py::arg("accType") = "");
+        Returns
+        -------
+        int
+            The mean MIDI value, or 0 for an empty chord.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone: an int cannot express the 63.5 that
+            ``["C4", "E1b4", "G4"]`` averages to, and the 63 it used to return is the same value a
+            plain C major triad gives. Call ``roundQuarterTones`` first.
+    )pbdoc");
+    cls.def("getMeanOfExtremesMidiValue", &Chord::getMeanOfExtremesMidiValue,
+            R"pbdoc(
+        Get the mean MIDI value of the chord's lowest and highest notes.
+
+        Returns
+        -------
+        int
+            The mean of the extremes.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone -- anywhere in it, not only at an extreme, since
+            the extremes themselves are selected by an ordering the rounding can get wrong. Call
+            ``roundQuarterTones`` first.
+    )pbdoc");
+    cls.def("getMidiValueStd", &Chord::getMidiValueStd,
+            R"pbdoc(
+        Get the standard deviation of the chord's pitch positions.
+
+        Uses exact pitch positions, so a quarter tone contributes its true value; a float expresses
+        that spread exactly and this method never raises on a quarter-tone chord.
+
+        Returns
+        -------
+        float
+            The standard deviation, or ``0.0`` for an empty chord.
+    )pbdoc");
+
+    cls.def("getMeanPitch", &Chord::getMeanPitch, py::arg("accType") = "",
+            R"pbdoc(
+        Get the pitch name of the chord's mean MIDI value.
+
+        Returns
+        -------
+        str
+            The pitch name (e.g. ``"C4"``, ``"F#3"``).
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone, inherited from ``getMeanMidiValue``, which this
+            method spells. A pitch string CAN spell a quarter tone (``"D3x4"``), but the value
+            being spelled is the mean of N notes -- a multiple of 1/N, generally not a multiple of
+            0.5 -- so there is no exact spelling to return. Call ``roundQuarterTones`` first.
+    )pbdoc");
+    cls.def("getMeanOfExtremesPitch", &Chord::getMeanOfExtremesPitch, py::arg("accType") = "",
+            R"pbdoc(
+        Get the pitch name of the chord's mean-of-extremes MIDI value.
+
+        Returns
+        -------
+        str
+            The pitch name (e.g. ``"C4"``, ``"F#3"``).
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone, inherited from ``getMeanOfExtremesMidiValue``,
+            which this method spells. Call ``roundQuarterTones`` first.
+    )pbdoc");
 
     cls.def("getHarmonicSpectrum", &Chord::getHarmonicSpectrum, py::arg("numPartialsPerNote") = 6,
             py::arg("amplCallback") = nullptr, py::arg("partialsDecayExpRate") = 0.88f);

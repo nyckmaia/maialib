@@ -534,5 +534,115 @@ class QuarterToneAnalysisGuard(unittest.TestCase):
         self.assertNotIn("unavailable", output)
 
 
+class QuarterToneMidiDomainGuard(unittest.TestCase):
+    """The MIDI-domain family, which reaches neither of the two analysis guards.
+
+    These methods never build an Interval and never stack the chord in thirds; they answer in the
+    MIDI integer domain, where a quarter tone has already been rounded to the semitone above it.
+    Each one is settled by a single question: can its return type express a quarter tone?
+    """
+
+    def testGetMidiIntervalsRaises(self):
+        # Before this guard, the measured result was [4, 3] -- identical to a plain C major triad.
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+        with self.assertRaises(RuntimeError) as context:
+            myChord.getMidiIntervals()
+
+        self.assertIn("roundQuarterTones", str(context.exception))
+
+    def testMeanMidiValueFamilyRaises(self):
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+        rejectedMethods = (
+            "getMeanMidiValue",
+            "getMeanOfExtremesMidiValue",
+            "getMeanPitch",
+            "getMeanOfExtremesPitch",
+        )
+
+        for methodName in rejectedMethods:
+            with self.subTest(method=methodName):
+                with self.assertRaises(RuntimeError) as context:
+                    getattr(myChord, methodName)()
+
+                # The remedy named in the message is what identifies this as the quarter-tone
+                # guard rather than some deeper failure.
+                self.assertIn("roundQuarterTones", str(context.exception))
+
+    def testErrorMessageNamesTheNoteAndTheEscapeHatch(self):
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+        with self.assertRaises(RuntimeError) as context:
+            myChord.getMidiIntervals()
+
+        message = str(context.exception)
+        self.assertIn("E1b4", message)
+        self.assertIn("roundQuarterTones", message)
+
+    def testEveryRejectedMethodWorksAfterRounding(self):
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+        self.assertEqual(myChord.roundQuarterTones(), 1)
+
+        self.assertEqual(myChord.getMidiIntervals(), [4, 3])
+        self.assertEqual(myChord.getMeanMidiValue(), 63)
+        self.assertEqual(myChord.getMeanOfExtremesMidiValue(), 63)
+        self.assertEqual(myChord.getMeanPitch(), "D#4")
+        self.assertEqual(myChord.getMeanOfExtremesPitch(), "D#4")
+
+    def testSemitoneChordsAreUntouched(self):
+        myChord = ml.Chord(["C4", "E4", "G4"])
+
+        self.assertEqual(myChord.getMidiIntervals(), [4, 3])
+        self.assertEqual(myChord.getMeanMidiValue(), 63)
+        self.assertEqual(myChord.getMeanPitch(), "D#4")
+
+
+class QuarterToneComputedValues(unittest.TestCase):
+    """The other half of the rule: where the return type CAN express a quarter tone, compute it.
+
+    Rejecting in these methods would destroy functionality that works.
+    """
+
+    def testToCentsReadsANeutralThirdAs350(self):
+        # toCents() runs opposite to everything else here: it used to reject, through the Interval
+        # guard, and should not. Not a raise, and not 300 or 400.
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+        self.assertEqual(myChord.toCents(), [350, 350])
+
+    def testToCentsSemitoneIntervalsAreExactHundreds(self):
+        # The frequency route this replaced measured [400, 299], truncating 299.9999.
+        myChord = ml.Chord(["C4", "E4", "G4"])
+        self.assertEqual(myChord.toCents(), [400, 300])
+
+    def testToCentsQuarterAndThreeQuarterToneSteps(self):
+        self.assertEqual(ml.Chord(["C4", "C1x4"]).toCents(), [50])
+        self.assertEqual(ml.Chord(["C4", "D1b4"]).toCents(), [150])
+        self.assertEqual(ml.Chord(["E1b4", "C4"]).toCents(), [-350])
+
+    def testIsSortedOrdersAQuarterToneExactly(self):
+        # Both of these returned False before the change, because E1b4 (63.5) and E4 (64) both
+        # rounded to 64 and the comparator reads equal values as unsorted.
+        self.assertTrue(ml.Chord(["E1b4", "E4"]).isSorted())
+        self.assertFalse(ml.Chord(["E4", "E1b4"]).isSorted())
+
+    def testMidiValueStdIsTheRealStandardDeviation(self):
+        # Both chords reported 31.8978 before the change: the standard deviation of the padded
+        # list {0, 0, 0, 60, 64, 67}.
+        self.assertAlmostEqual(ml.Chord(["C4", "E4", "G4"]).getMidiValueStd(), 2.8674, places=3)
+        self.assertAlmostEqual(ml.Chord(["C4", "E1b4", "G4"]).getMidiValueStd(), 2.8577, places=3)
+
+    def testHarmonicDensityUsesExactExtremes(self):
+        # C1x4 is 60.5, so its span to G4 (67) is 6.5 semitones, not the 6 that rounding gives.
+        self.assertAlmostEqual(ml.Chord(["C1x4", "G4"]).getHarmonicDensity(), 2.0 / 7.5, places=4)
+        self.assertAlmostEqual(ml.Chord(["C4", "E4", "G4"]).getHarmonicDensity(), 0.375, places=4)
+
+    def testGetIntervalsIsPinnedToTheIntervalGuard(self):
+        # Covered by Interval's guard since Task 9, but pinned by no test until now. The remedy
+        # named is Interval's, which is what identifies which of the two guards does the work.
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+        with self.assertRaises(RuntimeError) as context:
+            myChord.getIntervals()
+
+        self.assertIn("roundToSemitone", str(context.exception))
+
+
 if __name__ == "__main__":
     unittest.main()

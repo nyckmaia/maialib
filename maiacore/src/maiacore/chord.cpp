@@ -1,6 +1,7 @@
 #include "maiacore/chord.h"
 
 #include <algorithm>  // std::rotate, std::count
+#include <cmath>      // std::sqrt
 #include <iostream>
 #include <map>
 #include <optional>
@@ -13,6 +14,53 @@
 #include "maiacore/interval.h"
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
+
+namespace {
+// Twice the exact, unrounded pitch position in semitones, as an integer.
+//
+// Note::getMidiNumber() rounds a quarter tone ties-upward (Helper::spelling2midiNote() in
+// helper.cpp), which is what lets the MIDI-domain methods in this file answer for a quarter-tone
+// chord exactly as they would for a semitone one. Pitch::getQuarterToneSteps() already holds the
+// exact position, but Note does not expose it and this task adds no public API, so the exact value
+// is recovered arithmetically here instead.
+//
+// The recovery is exact, not an approximation. Pitch::setAlter() constrains an alter to a multiple
+// of 0.5, so a quarter tone's exact position is always an integer plus 0.5, and ties-upward
+// rounding therefore always adds exactly 0.5 to it -- never more, never less, on either the flat
+// or the sharp side. Working in doubled steps keeps the whole thing in integer arithmetic, so
+// callers that need only a difference (toCents(), isSorted()) carry no floating-point error at all.
+int twiceExactSemitoneSteps(const Note& note) {
+    return (2 * note.getMidiNumber()) - (note.isQuarterTone() ? 1 : 0);
+}
+
+// The exact, unrounded pitch position in semitones, for the callers that need a real number.
+float exactSemitoneSteps(const Note& note) {
+    return static_cast<float>(twiceExactSemitoneSteps(note)) / 2.0f;
+}
+
+// Rejects a quarter tone in a method whose RETURN TYPE cannot express one, in the style the
+// analysis chokepoint in stackInThirds() established: the message names the offending note and the
+// escape hatch, so a caller can act on it without consulting the documentation.
+//
+// These methods reach neither Task 9 guard: they never build an Interval and never stack the chord
+// in thirds, they just do integer arithmetic on MIDI numbers. That is precisely why they needed a
+// guard of their own -- a quarter tone was silently rounded to the semitone above, and the wrong
+// answer was indistinguishable from a right one (getMidiIntervals() returned [4, 3] for a triad
+// with a neutral third, exactly as for a plain major triad).
+//
+// 'quantity' completes the sentence "Cannot compute <quantity> for a chord containing ...".
+void rejectQuarterToneInMidiDomain(const Note* quarterToneNote, const std::string& quantity) {
+    if (quarterToneNote == nullptr) {
+        return;
+    }
+
+    LOG_ERROR("Cannot compute " + quantity + " for a chord containing the quarter tone " +
+              quarterToneNote->getWrittenPitch() +
+              ": this value is expressed in whole MIDI semitones, which cannot represent a quarter "
+              "tone. Call Chord::roundQuarterTones() to round every quarter tone to the nearest "
+              "semitone, then repeat the computation.");
+}
+}  // namespace
 
 Chord::Chord() : _isStackedInThirds(false) {}
 
@@ -1080,6 +1128,10 @@ std::vector<int> Chord::getMidiIntervals(const bool firstNoteAsReference) const 
         return {};
     }
 
+    // A vector<int> of semitone counts cannot express the 3.5 semitones of a neutral third, so
+    // this rejects rather than answering 3 or 4.
+    rejectQuarterToneInMidiDomain(findQuarterToneNote(), "the MIDI intervals");
+
     std::vector<int> midiIntervals(numNotes - 1);
 
     // ===== GET INTERVALS USING THE FIRST NOTE AS REFERENCE ===== //
@@ -1513,9 +1565,19 @@ bool Chord::isInRootPosition() {
 }
 
 bool Chord::isSorted() const {
-    return std::is_sorted(
-        _originalNotes.begin(), _originalNotes.end(),
-        [](const Note& lh, const Note& rh) { return lh.getMidiNumber() <= rh.getMidiNumber(); });
+    // Ordering is a predicate, and a bool expresses the true answer for a quarter-tone chord
+    // exactly, so this computes rather than rejects. It compares exact positions instead of
+    // getMidiNumber(), whose ties-upward rounding collapses a quarter tone onto the semitone above
+    // it: measured, Chord{"E1b4", "E4"} -- 63.5 then 64, genuinely ascending -- reported false,
+    // because both notes rounded to 64 and the comparator below reads equal values as unsorted.
+    //
+    // That '<=' is kept exactly as it was. With it, a chord holding the same pitch twice reports
+    // unsorted, which is a separate pre-existing defect about equal pitches rather than about
+    // quarter tones; changing it here would alter semitone chords this task does not touch.
+    return std::is_sorted(_originalNotes.begin(), _originalNotes.end(),
+                          [](const Note& lh, const Note& rh) {
+                              return twiceExactSemitoneSteps(lh) <= twiceExactSemitoneSteps(rh);
+                          });
 }
 
 float Chord::getCloseStackHarmonicComplexity(const bool useEnharmony) {
@@ -1580,15 +1642,26 @@ float Chord::getHarmonicDensity(int lowerBoundMIDI, int higherBoundMIDI) const {
 
     // Case 01: No parameters are passed by the user: Use default values
     if (lowerBoundMIDI == -1 && higherBoundMIDI == -1) {
-        std::vector<Note> sortedNotes = _originalNotes;
-        std::sort(sortedNotes.begin(), sortedNotes.end());
+        // Returns a float, which expresses a range that is a whole number of semitones plus a
+        // quarter tone exactly, so this computes rather than rejects. The extremes come from the
+        // exact positions rather than from std::sort + getMidiNumber(): sorting by the rounded
+        // number can pick the wrong extreme, and for Chord{"C1x4", "G4"} the old route reported a
+        // range of 7 semitones instead of the true 6.5. For a chord with no quarter tone every
+        // value below is a whole number and the result is identical to the previous
+        // implementation's, including the std::out_of_range that .at(0) raises on an empty chord.
+        const int numNotes = static_cast<int>(_originalNotes.size());
+        int lowestTwiceSteps = twiceExactSemitoneSteps(_originalNotes.at(0));
+        int highestTwiceSteps = lowestTwiceSteps;
 
-        const int numNotes = sortedNotes.size();
-        const int lowestMIDI = sortedNotes.at(0).getMidiNumber();
-        const int highestMIDI = sortedNotes.at(numNotes - 1).getMidiNumber();
+        for (const auto& note : _originalNotes) {
+            const int twiceSteps = twiceExactSemitoneSteps(note);
+            lowestTwiceSteps = std::min(lowestTwiceSteps, twiceSteps);
+            highestTwiceSteps = std::max(highestTwiceSteps, twiceSteps);
+        }
 
-        const int midiRange = (highestMIDI - lowestMIDI) + 1;
-        const float density = static_cast<float>(numNotes) / static_cast<float>(midiRange);
+        const float midiRange =
+            (static_cast<float>(highestTwiceSteps - lowestTwiceSteps) / 2.0f) + 1.0f;
+        const float density = static_cast<float>(numNotes) / midiRange;
 
         return density;
     }
@@ -2594,9 +2667,25 @@ std::vector<int> Chord::toCents() const {
 
     const int numIntervals = numNotes - 1;
     std::vector<int> centsVec(numIntervals, 0);
+
+    // Cents are the one unit in this library that expresses a quarter tone exactly -- 50 cents to
+    // the quarter tone, 350 to the neutral third -- so this computes rather than rejects, and the
+    // Interval guard that used to reject here is deliberately no longer in the path.
+    //
+    // It no longer goes through Interval::toCents(), which measures the ratio between the two
+    // notes' frequencies, because Note::getFrequency() derives that frequency from the ROUNDED
+    // getMidiNumber(): a neutral third measured 400 cents, indistinguishable from a major third.
+    // Twelve-tone equal temperament puts exactly 100 cents in a semitone and 50 in half of one, so
+    // the whole computation is integer arithmetic on doubled step positions -- no frequency, no
+    // logarithm, no freqA4 dependence and no floating-point error.
+    //
+    // That also removes a rounding defect the frequency route had for ordinary semitones: a C
+    // major triad measured [400, 299], because Helper::frequencies2cents() truncates 299.9999
+    // instead of rounding it. It now reads [400, 300].
     for (int i = 0; i < numIntervals; i++) {
-        const Interval interval(_originalNotes[i], _originalNotes[i + 1]);
-        centsVec[i] = interval.toCents();
+        const int twiceStepsDiff = twiceExactSemitoneSteps(_originalNotes[i + 1]) -
+                                   twiceExactSemitoneSteps(_originalNotes[i]);
+        centsVec[i] = twiceStepsDiff * 50;
     }
 
     return centsVec;
@@ -2704,6 +2793,10 @@ int Chord::getMeanMidiValue() const {
         return 0;
     }
 
+    // An int cannot express the 63.5 that {C4, E1b4, G4} averages to, so this rejects rather than
+    // answering 63 -- the same value a plain C major triad gives.
+    rejectQuarterToneInMidiDomain(findQuarterToneNote(), "the mean MIDI value");
+
     int sum = 0;
     for (const auto& note : _originalNotes) {
         sum += note.getMidiNumber();
@@ -2718,6 +2811,12 @@ int Chord::getMeanOfExtremesMidiValue() const {
         return MUSIC_XML::MIDI::NUMBER::MIDI_REST;
     }
 
+    // An int cannot express the mean of two extremes when either of them is a quarter tone, so
+    // this rejects. It rejects for any quarter tone anywhere in the chord, not only one that
+    // happens to be an extreme, because the extremes themselves are selected by an ordering that
+    // the rounding can get wrong.
+    rejectQuarterToneInMidiDomain(findQuarterToneNote(), "the mean of extremes MIDI value");
+
     auto copyNotes = _originalNotes;
     std::sort(copyNotes.begin(), copyNotes.end());
     int lowMIDI = copyNotes.at(0).getMidiNumber();
@@ -2728,13 +2827,45 @@ int Chord::getMeanOfExtremesMidiValue() const {
 }
 
 float Chord::getMidiValueStd() const {
-    std::vector<int> midiVec(_originalNotes.size(), 0);
+    // Returns a float, which expresses the spread of a quarter-tone chord exactly, so this
+    // computes rather than rejects. Two defects had to go before it could compute anything
+    // correct at all.
+    //
+    // First, the vector was built as `std::vector<int> midiVec(size, 0)` and then push_back()ed
+    // into, so it held 'size' leading zeros followed by the real MIDI values. Measured, a plain C
+    // major triad reported 31.8978 -- the standard deviation of {0, 0, 0, 60, 64, 67} -- instead
+    // of 2.8674, and the quarter-tone chord reported that very same 31.8978. Second, the values
+    // came from the rounded getMidiNumber().
+    //
+    // The standard deviation is computed here rather than through the shared
+    // computeStandardDeviation() helper because that helper seeds std::accumulate() with the
+    // integer literal 0, which makes the running sum an int and would truncate the .5 of every
+    // quarter tone. The helper is left untouched on purpose: its only other caller is
+    // getFrequencyStd(), one of the frequency-based methods whose rounding fix belongs to the
+    // tuning work rather than to this task.
+    //
+    // An empty chord now returns 0.0f instead of the NaN the old route produced by dividing by a
+    // zero-length vector.
+    const size_t numNotes = _originalNotes.size();
 
-    for (const auto& note : _originalNotes) {
-        midiVec.push_back(note.getMidiNumber());
+    if (numNotes == 0) {
+        return 0.0f;
     }
 
-    return computeStandardDeviation(midiVec);
+    float sum = 0.0f;
+    for (const auto& note : _originalNotes) {
+        sum += exactSemitoneSteps(note);
+    }
+
+    const float mean = sum / static_cast<float>(numNotes);
+
+    float squaredDeviationSum = 0.0f;
+    for (const auto& note : _originalNotes) {
+        const float deviation = exactSemitoneSteps(note) - mean;
+        squaredDeviationSum += deviation * deviation;
+    }
+
+    return std::sqrt(squaredDeviationSum / static_cast<float>(numNotes));
 }
 
 std::string Chord::getMeanPitch(const std::string& accType) const {
