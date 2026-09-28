@@ -642,6 +642,25 @@ class QuarterToneHelpers(unittest.TestCase):
             with self.subTest(name=name):
                 self.assertEqual(ml.Helper.alterName2symbol(name), symbol)
 
+    # Exactly one of the nine alters, or an error naming the value: a value near one is not
+    # rounded onto it, as a one-decimal text match would.
+    def testAlterValueMustBeExactlyOneOfTheNine(self):
+        for function in (ml.Helper.alterValue2symbol, ml.Helper.alterValue2Name):
+            for alter in (0.46, 0.54, 1.04, 0.25, 2.5, math.nan):
+                with self.subTest(function=function.__name__, alter=alter):
+                    with self.assertRaises(RuntimeError) as ctx:
+                        function(alter)
+                    message = str(ctx.exception).splitlines()[0]
+                    self.assertIn("Unknown accidental alter value", message)
+                    self.assertIn("exactly a multiple of 0.5 from -2 to 2", message)
+
+    def testNegativeZeroIsTheNatural(self):
+        self.assertEqual(ml.Helper.alterValue2symbol(-0.0), "")
+        self.assertEqual(ml.Helper.alterValue2Name(-0.0), "natural")
+
+    def testSharpSharpIsADoubleSharp(self):
+        self.assertEqual(ml.Helper.alterName2symbol("sharp-sharp"), "x")
+
     def testUnknownAlterInputsRaise(self):
         with self.assertRaises(RuntimeError) as ctx:
             ml.Helper.alterName2symbol("slash-flat")

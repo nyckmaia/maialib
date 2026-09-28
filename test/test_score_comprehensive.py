@@ -5,10 +5,46 @@ covering loading, properties, navigation, analysis, manipulation,
 and edge cases.
 """
 
+import contextlib
+import io
+import locale
 import os
+import tempfile
 import unittest
 
 import maialib as ml
+
+# Comma-decimal locale names: Windows first, then glibc and macOS.
+COMMA_DECIMAL_LOCALES = (
+    "Portuguese_Brazil.1252",
+    "pt_BR.UTF-8",
+    "pt_BR.utf8",
+    "de_DE.UTF-8",
+    "de_DE.utf8",
+    "fr_FR.UTF-8",
+    "German_Germany.1252",
+)
+
+
+def setCommaDecimalNumericLocale():
+    """Set LC_NUMERIC to the first installed comma-decimal locale; return its name, or None."""
+    for name in COMMA_DECIMAL_LOCALES:
+        try:
+            locale.setlocale(locale.LC_NUMERIC, name)
+            return name
+        except locale.Error:
+            continue
+    return None
+
+
+def writtenPitches(score):
+    """Every written pitch on stave 0 of the score's first part, measure by measure."""
+    part = score.getPart(0)
+    pitches = []
+    for m in range(part.getNumMeasures()):
+        measure = part.getMeasure(m)
+        pitches += [measure.getNote(i, 0).getWrittenPitch() for i in range(measure.getNumNotes(0))]
+    return pitches
 
 
 class ScoreLoadingTestCase(unittest.TestCase):
@@ -61,7 +97,7 @@ class ScoreQuarterToneReadTestCase(unittest.TestCase):
         self.assertEqual(self._first_note_pitch("quarter_tone_accidental_only.xml"), "C1x4")
 
     def test_unrecognised_accidental_name_falls_back_instead_of_raising(self):
-        """<accidental>natural-sharp</accidental> is outside the 13 names this library
+        """<accidental>natural-sharp</accidental> is outside the 14 names this library
         spells but carries a usable <alter>1</alter>; the load must degrade to that
         value instead of raising and aborting."""
         self.assertEqual(self._first_note_pitch("quarter_tone_unknown_accidental_name.xml"), "C#4")
@@ -72,6 +108,85 @@ class ScoreQuarterToneReadTestCase(unittest.TestCase):
         natural (the pre-Task-7 outcome) rather than raising and aborting -- this is the
         path a real ml.Score() user actually hits, not just the underlying C++ function."""
         self.assertEqual(self._first_note_pitch("unrepresentable_alter_triple_sharp.xml"), "C4")
+
+    def _pitches_and_output(self, fileName):
+        """Every written pitch of the loaded score's first part, and what the load printed."""
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            score = ml.Score(f"./xml_examples/unit_test/{fileName}")
+        return writtenPitches(score), buffer.getvalue()
+
+    def test_alter_without_accidental_is_read_as_a_quarter_tone(self):
+        """<alter>0.5</alter> and <alter>-1.5</alter> with no <accidental>: the form a quarter
+        tone takes when its accidental carries through the measure."""
+        pitches, printed = self._pitches_and_output("quarter_tone_alter_only.xml")
+        self.assertEqual(pitches, ["C1x4", "E3b4"])
+        self.assertNotIn("[WARN]", printed)
+
+    def test_alter_is_read_the_same_under_a_comma_decimal_locale(self):
+        """The reader parses <alter> in the classic locale, not with atof(), which follows
+        setlocale() and, under a comma-decimal locale, stops at the '.' of "0.5". On Linux and
+        macOS the extension shares the process's C library, so this runs the reader under the
+        comma locale; on Windows the extension links its own copy of the C runtime, which
+        Python's setlocale() does not reach, and the test passes either way."""
+        previous = locale.setlocale(locale.LC_NUMERIC)
+        try:
+            if setCommaDecimalNumericLocale() is None:
+                self.skipTest("no comma-decimal locale is installed")
+            self.assertEqual(locale.localeconv()["decimal_point"], ",")
+            pitches, printed = self._pitches_and_output("quarter_tone_alter_only.xml")
+        finally:
+            locale.setlocale(locale.LC_NUMERIC, previous)
+        self.assertEqual(pitches, ["C1x4", "E3b4"])
+        self.assertNotIn("[WARN]", printed)
+
+    def test_alter_near_a_quarter_tone_is_not_snapped_onto_it(self):
+        """<alter>0.46</alter> is near a quarter-tone sharp but is not one: the note reads as
+        natural, with a warning naming the value, never rounded to the nearest pitch."""
+        pitches, printed = self._pitches_and_output("unrepresentable_alter_near_quarter_tone.xml")
+        self.assertEqual(pitches, ["C4"])
+        self.assertIn("[WARN] Unrepresentable <alter> value '0.46'", printed)
+
+    def test_disagreeing_accidental_wins_with_a_warning(self):
+        """<accidental>quarter-sharp</accidental> with <alter>1</alter>: the accidental wins,
+        and the disagreement is reported."""
+        pitches, printed = self._pitches_and_output("quarter_tone_accidental_alter_disagree.xml")
+        self.assertEqual(pitches, ["C1x4"])
+        self.assertIn(
+            "[WARN] The <accidental> 'quarter-sharp' and the <alter> '1' of this note disagree",
+            printed,
+        )
+
+    def test_agreeing_accidental_and_alter_read_without_a_warning(self):
+        pitches, printed = self._pitches_and_output("quarter_tone_tartini.xml")
+        self.assertEqual(pitches, ["C1x4"])
+        self.assertNotIn("[WARN]", printed)
+
+    def test_sharp_sharp_accidental_is_a_double_sharp(self):
+        """"sharp-sharp" is MusicXML's double sharp drawn as two sharp signs."""
+        pitches, printed = self._pitches_and_output("accidental_sharp_sharp.xml")
+        self.assertEqual(pitches, ["Cx4"])
+        self.assertNotIn("[WARN]", printed)
+
+    def test_quarter_tone_score_written_by_maialib_reads_back_unchanged(self):
+        """The source spells every quarter tone with an arrow glyph and no <alter>, so each
+        <alter> in the written file is maialib's own; it must agree with the <accidental>
+        written beside it."""
+        original = ml.Score("./xml_examples/unit_test/test_quarter_tones.musicxml")
+        pitches = writtenPitches(original)
+        for quarterTone in ("C1x4", "C3x4", "C1b4", "C3b4"):
+            self.assertIn(quarterTone, pitches)
+
+        with tempfile.TemporaryDirectory() as directory:
+            base = os.path.join(directory, "round_trip")
+            original.toFile(base, False)
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                reread = ml.Score(base + ".xml")
+            readBack = writtenPitches(reread)
+
+        self.assertEqual(readBack, pitches)
+        self.assertNotIn("[WARN]", buffer.getvalue())
 
 
 class ScorePropertiesTestCase(unittest.TestCase):

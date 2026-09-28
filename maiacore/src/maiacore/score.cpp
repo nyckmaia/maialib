@@ -5,8 +5,11 @@
 #include <future>
 #include <iostream>
 #include <limits>  // std::numeric_limits
+#include <locale>
 #include <mutex>
+#include <optional>
 #include <set>
+#include <sstream>
 #include <thread>
 #include <tuple>
 #include <vector>
@@ -18,6 +21,31 @@
 #include "maiacore/utils.h"
 #include "miniz-cpp/zip_file.hpp"
 #include "nlohmann/json.hpp"
+
+namespace {
+// The value of a MusicXML <alter> element, if its text is one of the nine alters this library can
+// spell: a decimal number, exactly a multiple of 0.5 from -2 to 2. std::nullopt otherwise.
+//
+// The text is parsed in the classic "C" locale whatever the process locale is: the C library's
+// atof() follows setlocale(), and under a comma-decimal locale it stops at the '.' of "0.5" and
+// reads 0. The whole text must be the number, surrounding whitespace aside. Parsed as a double
+// and tested on the grid before narrowing, so a value merely close to a quarter tone ("0.46", or
+// "0.50000001", which a float cannot tell from 0.5) is never snapped onto one.
+std::optional<float> spellableAlterValue(const std::string& text) {
+    std::istringstream stream(text);
+    stream.imbue(std::locale::classic());
+    double value = 0.0;
+    stream >> value;
+    if (stream.fail()) {
+        return std::nullopt;
+    }
+    stream >> std::ws;
+    if (!stream.eof() || !isOnQuarterToneGrid(value) || value < -2.0 || value > 2.0) {
+        return std::nullopt;
+    }
+    return static_cast<float>(value);
+}
+}  // namespace
 
 Score::Score(const std::initializer_list<std::string>& partsName, const int numMeasures)
     : _numParts(partsName.size()),
@@ -651,7 +679,7 @@ void Score::loadXMLFile(const std::string& filePath) {
                             // exported the quarter-tone glyph with no matching <alter>, so
                             // trusting <alter> first would lose quarter tones from real files.
                             //
-                            // Helper::alterName2symbol() only knows the 13 names this library
+                            // Helper::alterName2symbol() only knows the 14 names this library
                             // can spell; MusicXML defines roughly 40. Its own contract is to
                             // throw on an unrecognised one, but that contract must not abort a
                             // whole score load here: warn and fall through to <alter>, then
@@ -669,29 +697,40 @@ void Score::loadXMLFile(const std::string& filePath) {
                                 }
                             }
 
-                            // Helper::alterValue2symbol() only knows the nine semitone/
-                            // quarter-tone values this library can spell (-2..2 in 0.5 steps).
-                            // A value outside that range (e.g. a triple accidental like 3, or a
-                            // non-quarter-tone microtonal value like 0.25) is a real limitation
-                            // of that vocabulary, not something to solve here, so it must not
-                            // abort the load either: this is exactly what the pre-Task-7 switch
-                            // did silently (no default case, note left natural), so restore
-                            // that outcome but make it audible instead of silent. Never invent
-                            // a spelling for it, and never round to the nearest representable
-                            // pitch -- a silent wrong pitch is worse than a loud dropped
-                            // accidental in a library used for musical analysis.
+                            // Only the nine alters this library can spell (-2 to 2 in steps of
+                            // 0.5) are read from <alter>. Anything else -- a triple accidental
+                            // such as 3, a microtone such as the eighth tone 0.25, a value near
+                            // the grid such as 0.46, or text that is not a number -- is a real
+                            // limitation of that vocabulary, not something to solve here, and
+                            // must not abort the load: the note is read as natural, with a
+                            // warning. Never invent a spelling for it, and never round to the
+                            // nearest representable pitch -- a silent wrong pitch is worse than
+                            // a loud dropped accidental in a library used for musical analysis.
+                            const std::optional<float> alterValue =
+                                alterTag.empty() ? std::nullopt : spellableAlterValue(alterTag);
+
                             if (!accidentalRecognised && !alterTag.empty()) {
-                                try {
-                                    alterSymbol = Helper::alterValue2symbol(
-                                        static_cast<float>(atof(alterTag.c_str())));
-                                } catch (const std::runtime_error& e) {
+                                if (alterValue.has_value()) {
+                                    alterSymbol = Helper::alterValue2symbol(alterValue.value());
+                                } else {
                                     LOG_WARN("Unrepresentable <alter> value '"
                                              << alterTag
                                              << "': this library's accidental vocabulary "
-                                             << "cannot spell it, so the note was read as "
-                                             << "natural (its pitch is off by that amount). "
-                                             << e.what());
+                                             << "spells only multiples of 0.5 from -2 to 2, so "
+                                             << "the note was read as natural (its pitch is off "
+                                             << "by that amount).");
                                 }
+                            }
+
+                            // An <accidental> that is recognised wins over a disagreeing <alter>,
+                            // but the disagreement is reported: arrow glyphs, for one, also mark
+                            // microtones other than the quarter tone.
+                            if (accidentalRecognised && !alterTag.empty() &&
+                                (!alterValue.has_value() ||
+                                 alterValue.value() != Helper::alterSymbol2Value(alterSymbol))) {
+                                LOG_WARN("The <accidental> '"
+                                         << accidentalTag << "' and the <alter> '" << alterTag
+                                         << "' of this note disagree; the <accidental> is used.");
                             }
                         }
                     }

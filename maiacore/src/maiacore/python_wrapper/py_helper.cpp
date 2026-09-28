@@ -303,12 +303,12 @@ void HelperClass(const py::module& m) {
                    R"pbdoc(
         Convert a MusicXML accidental name to this library's accidental symbol.
 
-        Accepts the 13 names that denote an accidental this library can spell: the whole-tone
-        ``"flat-flat"``, ``"flat"``, ``"natural"``, ``"sharp"`` and ``"double-sharp"``, and, for
-        the quarter tones, both the Tartini names ``"quarter-flat"``, ``"three-quarters-flat"``,
-        ``"quarter-sharp"``, ``"three-quarters-sharp"`` and the arrow names ``"flat-up"``
-        (``"1b"``), ``"flat-down"`` (``"3b"``), ``"sharp-down"`` (``"1x"``) and ``"sharp-up"``
-        (``"3x"``).
+        Accepts the 14 names that denote an accidental this library can spell: the whole-tone
+        ``"flat-flat"``, ``"flat"``, ``"natural"``, ``"sharp"``, ``"double-sharp"`` and
+        ``"sharp-sharp"`` (a double sharp drawn as two sharps), and, for the quarter tones, both
+        the Tartini names ``"quarter-flat"``, ``"three-quarters-flat"``, ``"quarter-sharp"``,
+        ``"three-quarters-sharp"`` and the arrow names ``"flat-up"`` (``"1b"``), ``"flat-down"``
+        (``"3b"``), ``"sharp-down"`` (``"1x"``) and ``"sharp-up"`` (``"3x"``).
 
         Parameters
         ----------
@@ -324,7 +324,7 @@ void HelperClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the name is not one of the 13 accepted names (MusicXML defines others, e.g.
+            If the name is not one of the 14 accepted names (MusicXML defines others, e.g.
             ``"slash-flat"``, which this library cannot spell).
 
         Examples
@@ -367,9 +367,9 @@ void HelperClass(const py::module& m) {
                    R"pbdoc(
         Convert an accidental value in semitones to its symbol.
 
-        The value is matched after rounding it to one decimal place, so a value within 0.05 of
-        an accepted one is read as that value (0.46 gives ``"1x"``). A negative value that rounds
-        to zero, ``-0.0`` included, does not match and raises.
+        The value must be exactly one of the nine accepted values: one merely close to them,
+        such as 0.46, raises rather than being rounded. ``-0.0`` is the natural. The result does
+        not depend on the process locale.
 
         Parameters
         ----------
@@ -385,7 +385,7 @@ void HelperClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the value, rounded to one decimal place, is not one of the nine accepted values.
+            If the value is not exactly one of the nine accepted values; the message names it.
 
         Examples
         --------
@@ -400,9 +400,9 @@ void HelperClass(const py::module& m) {
         Convert an accidental value in semitones to its MusicXML accidental name.
 
         The quarter tones get their Tartini names (``"quarter-sharp"``, ``"three-quarters-flat"``,
-        ...), the names ``Note.toXML`` writes. The value is matched after rounding it to one
-        decimal place, as in ``alterValue2symbol``: a value within 0.05 of an accepted one is
-        read as that value, and a negative value that rounds to zero, ``-0.0`` included, raises.
+        ...), the names ``Note.toXML`` writes. As in ``alterValue2symbol``, the value must be
+        exactly one of the nine accepted values (``-0.0`` is the natural), and the result does
+        not depend on the process locale.
 
         Parameters
         ----------
@@ -419,7 +419,7 @@ void HelperClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the value, rounded to one decimal place, is not one of the nine accepted values.
+            If the value is not exactly one of the nine accepted values; the message names it.
 
         Examples
         --------

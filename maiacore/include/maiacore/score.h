@@ -134,6 +134,16 @@ class Score {
     /**
      * @brief Constructs a new Score object by loading a MusicXML file.
      * @details Supported formats: *.xml, *.musicxml, *.mxl (compressed).
+     *
+     *          A note's accidental is read from its `<accidental>` element first, then from the
+     *          decimal `<alter>` value, and is natural otherwise. `<alter>` is parsed with a '.'
+     *          decimal point whatever the C or C++ locale, and must be exactly one of the nine
+     *          alters this library can spell (a multiple of 0.5 from -2 to 2). An `<accidental>`
+     *          name this library cannot spell warns and falls back to `<alter>`; an `<alter>` it
+     *          cannot spell (3, the eighth tone 0.25, or 0.46, near a quarter tone but not one)
+     *          warns and leaves the note natural, never rounded to the nearest pitch. When a
+     *          recognised `<accidental>` and the `<alter>` disagree, the `<accidental>` is used
+     *          and a warning is printed. None of these aborts the load.
      * @param filePath Path to the MusicXML file.
      */
     explicit Score(const std::string& filePath);

@@ -37,9 +37,10 @@ namespace {
 // arithmetic, whatever the frequency.
 void validateFreqA4(const float freqA4) {
     if (!std::isfinite(freqA4) || !(freqA4 > 0.0f)) {
-        LOG_ERROR("The reference frequency freqA4 must be a finite number of Hz greater than 0, "
-                  "but '" +
-                  std::to_string(freqA4) + "' is not");
+        LOG_ERROR(
+            "The reference frequency freqA4 must be a finite number of Hz greater than 0, "
+            "but '" +
+            std::to_string(freqA4) + "' is not");
     }
 }
 }  // namespace

@@ -6,9 +6,7 @@
 #include <array>
 #include <cctype>
 #include <cmath>
-#include <iomanip>
 #include <optional>
-#include <sstream>
 #include <string>
 
 #include "maiacore/helper.h"
@@ -16,19 +14,37 @@
 #include "maiacore/utils.h"
 
 namespace {
-// Formats a pitch alter value for the MusicXML <alter> element: integral values (whole-tone
-// accidentals) print with no decimal part (e.g. "1", "-2"); quarter tones print with exactly one
-// decimal place (e.g. "0.5", "-1.5"). std::to_string() cannot be used here -- it always emits six
-// decimals (std::to_string(1.0f) == "1.000000"), which would put a false diff on every integer
-// alter re-exported from an existing score.
+// Formats a pitch alter value for the MusicXML <alter> element: a whole-tone accidental with no
+// decimal part ("1", "-2"), a quarter tone with exactly one decimal place ("0.5", "-1.5"). The
+// text is looked up by accidental symbol rather than formatted through a stream, so it never
+// depends on the global C++ locale (a comma-decimal one would write "0,5"), and
+// Helper::alterValue2symbol() throws, naming the value, for anything that is not one of the nine
+// alters this library can spell.
 std::string formatAlterValue(const float alterValue) {
-    std::ostringstream stream;
-    if (alterValue == static_cast<float>(static_cast<int>(alterValue))) {
-        stream << static_cast<int>(alterValue);
-    } else {
-        stream << std::fixed << std::setprecision(1) << alterValue;
+    switch (hash(Helper::alterValue2symbol(alterValue).c_str())) {
+        case hash("bb"):
+            return "-2";
+        case hash("3b"):
+            return "-1.5";
+        case hash("b"):
+            return "-1";
+        case hash("1b"):
+            return "-0.5";
+        case hash(""):
+            return "0";
+        case hash("1x"):
+            return "0.5";
+        case hash("#"):
+            return "1";
+        case hash("3x"):
+            return "1.5";
+        case hash("x"):
+            return "2";
+        default:
+            break;
     }
-    return stream.str();
+
+    return {};  // unreachable: alterValue2symbol() answers one of the nine symbols above
 }
 
 // Returns the pitch string that spells 'midiNumber' with 'alter' semitones (-2..2), or an

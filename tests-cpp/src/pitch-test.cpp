@@ -1,3 +1,5 @@
+#include "maiacore/pitch.h"
+
 #include <gtest/gtest.h>
 
 #include <cmath>
@@ -6,7 +8,6 @@
 #include "maiacore/config.h"
 #include "maiacore/helper.h"
 #include "maiacore/note.h"
-#include "maiacore/pitch.h"
 #include "quarter-tone-characterization-data.h"
 #include "test-capture.h"
 
@@ -514,9 +515,9 @@ TEST(Pitch, midiNumberConstructorHonoursAccType) {
 // an infinity is merely "out of range"; both are rejected as what they are, and the pitch is left
 // unchanged.
 TEST(PitchSetAlter, rejectsNonFiniteValues) {
-    for (const float alter : {std::numeric_limits<float>::quiet_NaN(),
-                              std::numeric_limits<float>::infinity(),
-                              -std::numeric_limits<float>::infinity()}) {
+    for (const float alter :
+         {std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::infinity(),
+          -std::numeric_limits<float>::infinity()}) {
         Pitch p("C4");
         const std::string message = thrownFirstLine([&] { p.setAlter(alter); });
         EXPECT_NE(message.find("must be a finite number"), std::string::npos)
@@ -549,9 +550,9 @@ TEST(PitchSetAlter, storesNegativeZeroAsPositiveZero) {
 // ===== freqA4: a finite number of Hz greater than 0, checked before any arithmetic ===== //
 
 TEST(PitchReferenceFrequency, fromFrequencyRejectsAnInvalidFreqA4) {
-    for (const float freqA4 : {0.0f, -440.0f, std::numeric_limits<float>::quiet_NaN(),
-                               std::numeric_limits<float>::infinity(),
-                               -std::numeric_limits<float>::infinity()}) {
+    for (const float freqA4 :
+         {0.0f, -440.0f, std::numeric_limits<float>::quiet_NaN(),
+          std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity()}) {
         const std::string message = thrownFirstLine([&] { Pitch p(440.0f, "", freqA4); });
         EXPECT_NE(message.find("reference frequency freqA4"), std::string::npos)
             << "freqA4 " << freqA4 << ": " << message;

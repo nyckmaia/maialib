@@ -1,14 +1,18 @@
 #include <gtest/gtest.h>
 
+#include <iomanip>
 #include <limits>
 #include <optional>
 #include <regex>
+#include <sstream>
 
 #include "maiacore/helper.h"
 #include "maiacore/log.h"
+#include "maiacore/note.h"
 #include "maiacore/utils.h"
 #include "pitch-spelling-legacy-data.h"
 #include "test-capture.h"
+#include "test-locale.h"
 
 using namespace testing;
 
@@ -448,9 +452,9 @@ TEST(PitchSpelling, Spelling2MidiNote) {
 // -1 to 11. Anything else is rejected before the sum is converted to int, which is undefined
 // behaviour for a value out of int's range, NaN and infinity included.
 TEST(PitchSpelling, Spelling2MidiNoteRejectsComponentsNoPitchCanHave) {
-    for (const float alter : {std::numeric_limits<float>::quiet_NaN(),
-                              std::numeric_limits<float>::infinity(),
-                              -std::numeric_limits<float>::infinity(), 2.5f, -2.5f, 3.0e9f}) {
+    for (const float alter :
+         {std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::infinity(),
+          -std::numeric_limits<float>::infinity(), 2.5f, -2.5f, 3.0e9f}) {
         const std::string message =
             thrownFirstLine([&] { Helper::spelling2midiNote("C", alter, 4); });
         EXPECT_NE(message.find("the alter value must be a finite number of semitones from -2 to 2"),
@@ -760,10 +764,9 @@ TEST(PitchSpelling, Steps2PitchRejectsAPositionAboveTheRepresentableRange) {
     }
 }
 
-// Task 11, section N: every pitch position is a multiple of 0.5, but steps2pitch() never checked,
-// and alterValue2symbol() formats its argument to one decimal place before matching it -- so an
-// off-grid position was silently SNAPPED to the grid (60.45 became "C1x4") or rejected with an
-// unrelated "Unknown accidental alter value", depending on how far off it was.
+// Every pitch position is a multiple of 0.5. steps2pitch() rejects any other position, naming
+// it, rather than snapping it onto the grid (60.45 is not "C1x4") or failing with an unrelated
+// message.
 TEST(PitchSpelling, Steps2PitchRejectsAPositionOffTheQuarterToneGrid) {
     const float positions[] = {60.45f, 60.25f, -0.3f};
     for (const float position : positions) {
@@ -800,4 +803,59 @@ TEST(Helper, GetLibraryVersion) {
     EXPECT_EQ(version.find('"'), std::string::npos);
     EXPECT_TRUE(std::regex_match(version, std::regex("^[0-9]+\\.[0-9]+\\.[0-9]+$")))
         << "version: " << version;
+}
+
+// ===== Accidental spelling: exact, and independent of the locale ===== //
+
+// Exactly one of the nine alters, or an error naming the value: a value near one is not rounded
+// onto it, as a one-decimal text match would.
+TEST(AccidentalSpelling, AlterValueMustBeExactlyOneOfTheNine) {
+    for (const float alter :
+         {0.46f, 0.54f, 1.04f, 0.25f, 2.5f, std::numeric_limits<float>::quiet_NaN()}) {
+        for (const bool name : {false, true}) {
+            const std::string message = thrownFirstLine(
+                [&] { name ? Helper::alterValue2Name(alter) : Helper::alterValue2symbol(alter); });
+            EXPECT_NE(message.find("Unknown accidental alter value: " + std::to_string(alter)),
+                      std::string::npos)
+                << "alter " << alter << ": " << message;
+        }
+    }
+}
+
+TEST(AccidentalSpelling, NegativeZeroIsTheNatural) {
+    EXPECT_EQ(Helper::alterValue2symbol(-0.0f), "");
+    EXPECT_EQ(Helper::alterValue2Name(-0.0f), "natural");
+}
+
+TEST(AccidentalSpelling, SharpSharpIsADoubleSharp) {
+    EXPECT_EQ(Helper::alterName2symbol("sharp-sharp"), "x");
+    EXPECT_EQ(Helper::alterName2symbol("double-sharp"), "x");
+}
+
+// A C++ host may set a comma-decimal global C++ locale. Nothing in the spelling of a pitch, or in
+// the <alter> text Note::toXML() writes, may depend on it.
+TEST(AccidentalSpelling, IsIndependentOfTheGlobalCppLocale) {
+    const std::string localeName = installedCommaDecimalLocale();
+    if (localeName.empty()) {
+        GTEST_SKIP() << "no comma-decimal locale is installed";
+    }
+
+    const ScopedGlobalLocale commaLocale(localeName);
+    std::ostringstream probe;
+    probe << std::fixed << std::setprecision(1) << 0.5;
+    ASSERT_EQ(probe.str(), "0,5") << "the locale does not use a decimal comma";
+
+    EXPECT_EQ(Helper::alterValue2symbol(0.5f), "1x");
+    EXPECT_EQ(Helper::alterValue2symbol(0.0f), "");
+    EXPECT_EQ(Helper::alterValue2Name(-1.5f), "three-quarters-flat");
+    EXPECT_EQ(Note("C4").getPitch(), "C4");
+    EXPECT_EQ(Note("C1x4").getPitch(), "C1x4");
+
+    const std::string quarterSharp = Note("C1x4").toXML();
+    EXPECT_NE(quarterSharp.find("<alter>0.5</alter>"), std::string::npos) << quarterSharp;
+    EXPECT_NE(quarterSharp.find("<accidental>quarter-sharp</accidental>"), std::string::npos)
+        << quarterSharp;
+    const std::string threeQuartersFlat = Note("E3b4").toXML();
+    EXPECT_NE(threeQuartersFlat.find("<alter>-1.5</alter>"), std::string::npos)
+        << threeQuartersFlat;
 }

@@ -409,8 +409,15 @@ class Helper {
 
     /**
      * @brief Converts an accidental name (e.g., "sharp") to its symbol (e.g., "#").
+     * @details Accepts the 14 MusicXML accidental names that denote an accidental this library
+     *          can spell: "flat-flat", "flat", "natural", "sharp", "double-sharp" and
+     *          "sharp-sharp" (a double sharp drawn as two sharps), and for the quarter tones both
+     *          the Tartini names ("quarter-flat", "three-quarters-flat", "quarter-sharp",
+     *          "three-quarters-sharp") and the arrow names ("flat-up", "flat-down", "sharp-down",
+     *          "sharp-up").
      * @param alterName Accidental name.
      * @return Accidental symbol.
+     * @throws std::runtime_error If alterName is not one of the 14 accepted names.
      */
     static const std::string alterName2symbol(const std::string& alterName);
 
@@ -423,15 +430,27 @@ class Helper {
 
     /**
      * @brief Converts an accidental value to its symbol (e.g., 1.0 -> "#").
-     * @param alterValue Accidental value.
-     * @return Accidental symbol.
+     * @details The value must be exactly one of the nine alters this library can spell, a
+     *          multiple of 0.5 from -2 to 2 (isOnQuarterToneGrid(), utils.h): a value merely
+     *          close to one, such as 0.46, is rejected rather than rounded. -0.0 is the natural.
+     *          The symbol is looked up, never formatted through a stream, so the result does not
+     *          depend on the C or C++ locale.
+     * @param alterValue Accidental value in semitones.
+     * @return Accidental symbol: "bb", "3b", "b", "1b", "" (natural), "1x", "#", "3x" or "x".
+     * @throws std::runtime_error Naming the value, if it is not one of the nine.
      */
     static const std::string alterValue2symbol(const float alterValue);
 
     /**
-     * @brief Converts an accidental value to its name (e.g., 1.0 -> "sharp").
-     * @param alterValue Accidental value.
-     * @return Accidental name.
+     * @brief Converts an accidental value to its MusicXML name (e.g., 1.0 -> "sharp").
+     * @details The quarter tones get their Tartini names ("quarter-sharp", ...). The value must
+     *          be exactly one of the nine alters this library can spell, as in
+     *          alterValue2symbol(), and the name is looked up, so the result does not depend on
+     *          the C or C++ locale.
+     * @param alterValue Accidental value in semitones.
+     * @return Accidental name: "flat-flat", "three-quarters-flat", "flat", "quarter-flat",
+     *         "natural", "quarter-sharp", "sharp", "three-quarters-sharp" or "double-sharp".
+     * @throws std::runtime_error Naming the value, if it is not one of the nine.
      */
     static const std::string alterValue2Name(const float alterValue);
 

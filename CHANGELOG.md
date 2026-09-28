@@ -22,9 +22,11 @@ All notable changes to this project will be documented in this file.
 - Add `Note.getQuarterToneSteps()` (C++ and Python): the exact, unrounded sounding pitch position in semitones, so `Note("C1x4").getQuarterToneSteps()` is 60.5 where `getMidiNumber()` gives 61. Notes order by it
 - `Pitch.setAlter()` and `Note.setAlter()` accept only an alter exactly on the quarter-tone grid within [-2, 2]: NaN, infinity and near-grid values such as `0.99996` raise, and `-0.0` is stored as `0.0`
 - `Pitch.fromFrequency()`, `Pitch.setFrequency()` and `Pitch.getFrequency()` raise when `freqA4` is not a finite number greater than 0
+- `Score(path)` reads a MusicXML `<alter>` with a `.` decimal point whatever the C or C++ locale, and only when it is exactly a multiple of 0.5 from -2 to 2: a value near a quarter tone, such as `0.46`, is read as natural with a warning instead of being rounded to it. When a note's `<accidental>` and `<alter>` disagree, the `<accidental>` is used and a warning is printed. `sharp-sharp`, MusicXML's double sharp drawn as two sharps, is read as a double sharp, and `Helper.alterName2symbol()` accepts it
 
 ### Fix
 
+- **Breaking:** `Helper::alterValue2symbol()` and `Helper::alterValue2Name()` accept only an alter that is exactly a multiple of 0.5 from -2 to 2 and raise, naming the value, for any other — a value within 0.05 of one used to be rounded to it — and no longer depend on the global C++ locale, under a comma-decimal one of which they raised for every value. `-0.0` is the natural
 - **Breaking:** `Helper.spelling2midiNote()` raises when `alterValue` is NaN, infinite or outside [-2, 2], or `octave` is outside [-1, 11] — the components of a pitch this library can spell — instead of converting an out-of-range sum to `int`, which is undefined behaviour
 - `maialib.__version__` and `maialib.maiacore.__version__` no longer carry literal quote characters; the value still comes from the root `VERSION` file
 - `Helper.pitch2midiNote("Db10")` returned 132 instead of 133

@@ -6,7 +6,6 @@
 #include <cmath>
 #include <fstream>  // std::ofstream
 #include <functional>
-#include <iomanip>
 #include <iostream>
 #include <limits>
 #include <optional>
@@ -236,9 +235,10 @@ int Helper::spelling2midiNote(const std::string& pitchStep, const float alterVal
     // a value outside int's range, NaN and infinity included. The accepted ranges are exactly
     // the components of a pitch this library can spell, so every caller that holds one passes.
     if (!std::isfinite(alterValue) || alterValue < -2.0f || alterValue > 2.0f) {
-        LOG_ERROR("Helper::spelling2midiNote: the alter value must be a finite number of "
-                  "semitones from -2 to 2, but '" +
-                  std::to_string(alterValue) + "' is not");
+        LOG_ERROR(
+            "Helper::spelling2midiNote: the alter value must be a finite number of "
+            "semitones from -2 to 2, but '" +
+            std::to_string(alterValue) + "' is not");
     }
     if (octave < c_minPitchOctave || octave > c_maxPitchOctave) {
         LOG_ERROR("Helper::spelling2midiNote: the octave must be from " +
@@ -320,82 +320,31 @@ float Helper::alterSymbol2Value(const std::string& alterSymbol) {
     return {};
 }
 
-const std::string Helper::alterValue2Name(const float alterValue) {
-    std::ostringstream streamObj;
+namespace {
+// The nine alter values this library can spell, -2 to 2 in steps of 0.5, each at index
+// 2 * alter + 4: its accidental symbol and its MusicXML accidental name.
+const std::array<const char*, 9> kAlterSymbols = {"bb", "3b", "b", "1b", "", "1x", "#", "3x", "x"};
+const std::array<const char*, 9> kAlterNames = {
+    "flat-flat", "three-quarters-flat",  "flat",        "quarter-flat", "natural", "quarter-sharp",
+    "sharp",     "three-quarters-sharp", "double-sharp"};
 
-    // Set Fixed-Point Notation
-    streamObj << std::fixed;
-    streamObj << std::setprecision(1);
-
-    streamObj << alterValue;
-
-    const std::string alterStr = streamObj.str().c_str();
-
-    switch (hash(alterStr.c_str())) {
-        case hash("-2.0"):
-            return "flat-flat";
-        case hash("-1.5"):
-            return "three-quarters-flat";
-        case hash("-1.0"):
-            return "flat";
-        case hash("-0.5"):
-            return "quarter-flat";
-        case hash("0.0"):
-            return "natural";
-        case hash("0.5"):
-            return "quarter-sharp";
-        case hash("1.0"):
-            return "sharp";
-        case hash("1.5"):
-            return "three-quarters-sharp";
-        case hash("2.0"):
-            return "double-sharp";
-
-        default:
-            LOG_ERROR("Unknown accidental alter value: " + alterStr);
-            break;
+// The index of alterValue in the two tables above. The value must be exactly one of the nine:
+// nothing is rounded, and nothing is formatted as text, so the answer cannot depend on a locale.
+size_t alterTableIndex(const float alterValue) {
+    if (!isOnQuarterToneGrid(alterValue) || alterValue < -2.0f || alterValue > 2.0f) {
+        LOG_ERROR("Unknown accidental alter value: " + std::to_string(alterValue) +
+                  " (an alter must be exactly a multiple of 0.5 from -2 to 2)");
     }
+    return static_cast<size_t>(std::lround(alterValue * 2.0f) + 4);
+}
+}  // namespace
 
-    return {};
+const std::string Helper::alterValue2Name(const float alterValue) {
+    return kAlterNames[alterTableIndex(alterValue)];
 }
 
 const std::string Helper::alterValue2symbol(const float alterValue) {
-    std::ostringstream streamObj;
-
-    // Set Fixed-Point Notation
-    streamObj << std::fixed;
-    streamObj << std::setprecision(1);
-
-    streamObj << alterValue;
-
-    std::string value = streamObj.str();
-
-    switch (hash(value.c_str())) {
-        case hash("-2.0"):
-            return "bb";
-        case hash("-1.5"):
-            return "3b";
-        case hash("-1.0"):
-            return "b";
-        case hash("-0.5"):
-            return "1b";
-        case hash("0.0"):
-            return "";
-        case hash("0.5"):
-            return "1x";
-        case hash("1.0"):
-            return "#";
-        case hash("1.5"):
-            return "3x";
-        case hash("2.0"):
-            return "x";
-
-        default:
-            LOG_ERROR("Unknown accidental alter value: " + value);
-            break;
-    }
-
-    return {};
+    return kAlterSymbols[alterTableIndex(alterValue)];
 }
 
 const std::string Helper::alterName2symbol(const std::string& alterName) {
@@ -419,6 +368,9 @@ const std::string Helper::alterName2symbol(const std::string& alterName) {
             return "3x";
             break;
         case hash("double-sharp"):
+            return "x";
+            break;
+        case hash("sharp-sharp"):
             return "x";
             break;
         case hash("flat-up"):

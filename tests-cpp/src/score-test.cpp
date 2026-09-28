@@ -2,9 +2,20 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cstdio>
+#include <filesystem>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "maiacore/helper.h"
 #include "maiacore/note.h"
 #include "maiacore/part.h"
+#include "test-capture.h"
+#include "test-locale.h"
 
 using namespace testing;
 
@@ -823,4 +834,188 @@ TEST(ScoreQuarterToneRead, UnrepresentableAlterEighthToneFallsBackToNatural) {
 
     ASSERT_TRUE(score.isValid());
     EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C4");
+}
+
+namespace {
+// The written pitches of every note on stave 0 of a score's first part, measure by measure.
+std::vector<std::string> writtenPitches(Score& score) {
+    Part& part = score.getPart(0);
+    std::vector<std::string> pitches;
+    for (int m = 0; m < part.getNumMeasures(); m++) {
+        const Measure& measure = part.getMeasure(m);
+        for (int i = 0; i < measure.getNumNotes(0); i++) {
+            pitches.push_back(measure.getNote(i, 0).getWrittenPitch());
+        }
+    }
+    return pitches;
+}
+
+const std::vector<std::string> kAlterOnlyPitches = {"C1x4", "E3b4"};
+
+// Loads a one-note score whose only note is a C4 with the given <alter> text and no
+// <accidental>, and returns its pitch and what the load printed.
+std::pair<std::string, std::string> loadWithAlterText(const std::string& alterText) {
+    std::ifstream in("./test/xml_examples/unit_test/unrepresentable_alter_eighth_tone.xml");
+    std::stringstream source;
+    source << in.rdbuf();
+    std::string xml = source.str();
+    const std::string original = "<alter>0.25</alter>";
+    for (size_t at = xml.find(original); at != std::string::npos; at = xml.find(original, at)) {
+        xml.replace(at, original.size(), "<alter>" + alterText + "</alter>");
+        at += alterText.size();
+    }
+
+    const std::filesystem::path path =
+        std::filesystem::temp_directory_path() / "maialib_alter_text.xml";
+    {
+        std::ofstream out(path);
+        out << xml;
+    }
+
+    std::string pitch;
+    std::string printed;
+    {
+        StdoutCapture capture;
+        Score score(path.string());
+        pitch = score.getPart(0).getMeasure(0).getNote(0, 0).getPitch();
+        printed = capture.str();
+    }
+    std::filesystem::remove(path);
+    return {pitch, printed};
+}
+}  // namespace
+
+// A quarter tone given by <alter> alone, with no <accidental>: the form a quarter tone takes when
+// its accidental carries through the measure.
+TEST(ScoreQuarterToneRead, AlterWithoutAccidentalIsReadAsAQuarterTone) {
+    StdoutCapture capture;
+    Score score("./test/xml_examples/unit_test/quarter_tone_alter_only.xml");
+    EXPECT_EQ(writtenPitches(score), kAlterOnlyPitches);
+    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+}
+
+// The C library's atof() follows setlocale(): under a comma-decimal LC_NUMERIC it stops at the
+// '.' of "0.5". The reader parses <alter> in the classic locale instead.
+TEST(ScoreQuarterToneRead, AlterIsReadTheSameUnderACommaDecimalCLocale) {
+    const std::string localeName = installedCommaDecimalLocale();
+    if (localeName.empty()) {
+        GTEST_SKIP() << "no comma-decimal locale is installed";
+    }
+
+    const ScopedCNumericLocale commaLocale(localeName);
+    ASSERT_TRUE(commaLocale.active());
+    char formatted[16];
+    std::snprintf(formatted, sizeof(formatted), "%.1f", 0.5);
+    ASSERT_EQ(std::string(formatted), "0,5") << "the locale does not use a decimal comma";
+
+    StdoutCapture capture;
+    Score score("./test/xml_examples/unit_test/quarter_tone_alter_only.xml");
+    EXPECT_EQ(writtenPitches(score), kAlterOnlyPitches);
+    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+}
+
+// The reader's string stream is imbued with the classic locale, so a comma-decimal global C++
+// locale, which a stream would otherwise pick up, does not change how <alter> is read either.
+TEST(ScoreQuarterToneRead, AlterIsReadTheSameUnderACommaDecimalGlobalCppLocale) {
+    const std::string localeName = installedCommaDecimalLocale();
+    if (localeName.empty()) {
+        GTEST_SKIP() << "no comma-decimal locale is installed";
+    }
+
+    const ScopedGlobalLocale commaLocale(localeName);
+    std::istringstream probe("0,5");
+    double parsed = 0.0;
+    probe >> parsed;
+    ASSERT_EQ(parsed, 0.5) << "the locale does not use a decimal comma";
+
+    StdoutCapture capture;
+    Score score("./test/xml_examples/unit_test/quarter_tone_alter_only.xml");
+    EXPECT_EQ(writtenPitches(score), kAlterOnlyPitches);
+    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+}
+
+// The whole <alter> text must be the number, surrounding whitespace aside: "1,5" is not a sharp
+// followed by noise, and a number with trailing text is not a number.
+TEST(ScoreQuarterToneRead, AlterTextMustBeANumberAndNothingElse) {
+    for (const std::string text : {"1,5", "0.5abc", "0.5.5", "sharp"}) {
+        const auto [pitch, printed] = loadWithAlterText(text);
+        EXPECT_EQ(pitch, "C4") << "<alter>" << text << "</alter>";
+        EXPECT_NE(printed.find("[WARN] Unrepresentable <alter> value '" + text + "'"),
+                  std::string::npos)
+            << printed;
+    }
+
+    for (const std::string text : {" 0.5 ", "\n-1.5\n", "+0.5"}) {
+        const auto [pitch, printed] = loadWithAlterText(text);
+        EXPECT_EQ(pitch, text.find("-1.5") != std::string::npos ? "C3b4" : "C1x4")
+            << "<alter>" << text << "</alter>";
+        EXPECT_EQ(printed.find("[WARN]"), std::string::npos) << printed;
+    }
+}
+
+// Near a quarter-tone sharp is not a quarter-tone sharp: the reader never rounds to the nearest
+// representable pitch, it reads the note as natural and says so, naming the value.
+TEST(ScoreQuarterToneRead, AlterNearAQuarterToneIsNotSnappedOntoIt) {
+    StdoutCapture capture;
+    Score score("./test/xml_examples/unit_test/unrepresentable_alter_near_quarter_tone.xml");
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C4");
+    EXPECT_NE(capture.str().find("[WARN] Unrepresentable <alter> value '0.46'"), std::string::npos)
+        << capture.str();
+}
+
+// A recognised <accidental> wins over a disagreeing <alter>, and the disagreement is reported.
+TEST(ScoreQuarterToneRead, DisagreeingAccidentalWinsWithAWarning) {
+    StdoutCapture capture;
+    Score score("./test/xml_examples/unit_test/quarter_tone_accidental_alter_disagree.xml");
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C1x4");
+    EXPECT_NE(capture.str().find("[WARN] The <accidental> 'quarter-sharp' and the <alter> '1' of "
+                                 "this note disagree"),
+              std::string::npos)
+        << capture.str();
+}
+
+TEST(ScoreQuarterToneRead, AgreeingAccidentalAndAlterReadWithoutAWarning) {
+    StdoutCapture capture;
+    Score score("./test/xml_examples/unit_test/quarter_tone_tartini.xml");
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C1x4");
+    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+}
+
+// "sharp-sharp" is MusicXML's double sharp drawn as two sharp signs: a recognised name.
+TEST(ScoreQuarterToneRead, SharpSharpAccidentalIsADoubleSharp) {
+    StdoutCapture capture;
+    Score score("./test/xml_examples/unit_test/accidental_sharp_sharp.xml");
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "Cx4");
+    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+}
+
+// A quarter-tone score written by maialib itself reads back unchanged, with no warning: the
+// <alter> and the <accidental> it writes for each quarter tone agree. The source spells every
+// quarter tone with an arrow glyph and no <alter>, so each <alter> in the written file is
+// maialib's own.
+TEST(ScoreQuarterToneRoundTrip, AQuarterToneScoreWrittenByMaialibReadsBackUnchanged) {
+    Score original("./test/xml_examples/unit_test/test_quarter_tones.musicxml");
+    const std::vector<std::string> pitches = writtenPitches(original);
+    for (const char* quarterTone : {"C1x4", "C3x4", "C1b4", "C3b4"}) {
+        ASSERT_NE(std::find(pitches.begin(), pitches.end(), quarterTone), pitches.end())
+            << quarterTone;
+    }
+
+    const std::filesystem::path base =
+        std::filesystem::temp_directory_path() / "maialib_quarter_tone_round_trip";
+    original.toFile(base.string(), false);
+    const std::string written = base.string() + ".xml";
+
+    std::vector<std::string> readBack;
+    std::string printed;
+    {
+        StdoutCapture capture;
+        Score reread(written);
+        readBack = writtenPitches(reread);
+        printed = capture.str();
+    }
+    std::filesystem::remove(written);
+
+    EXPECT_EQ(readBack, pitches);
+    EXPECT_EQ(printed.find("[WARN]"), std::string::npos) << printed;
 }

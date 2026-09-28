@@ -27,11 +27,15 @@ void ScoreClass(const py::module& m) {
         Load a score from a MusicXML file (``.xml``, ``.musicxml`` or compressed ``.mxl``).
 
         A note's accidental is read from its ``<accidental>`` element first -- where a quarter
-        tone lives -- then from the decimal ``<alter>`` value, and is natural otherwise. An
-        ``<accidental>`` name this library cannot spell (see ``Helper.alterName2symbol``)
+        tone lives -- then from the decimal ``<alter>`` value, and is natural otherwise.
+        ``<alter>`` is read with a ``.`` decimal point whatever the process locale, and must be
+        exactly one of the nine alters this library can spell (a multiple of 0.5 from -2 to 2).
+        An ``<accidental>`` name this library cannot spell (see ``Helper.alterName2symbol``)
         prints a warning and falls back to ``<alter>``; an ``<alter>`` value it cannot spell
-        (e.g. 3, or the eighth tone 0.25) prints a warning and leaves the note natural. Neither
-        aborts the load.
+        (e.g. 3, the eighth tone 0.25, or 0.46, near a quarter tone but not one) prints a
+        warning and leaves the note natural, never rounded to the nearest pitch. When a
+        recognised ``<accidental>`` and the ``<alter>`` disagree, the ``<accidental>`` is used
+        and a warning is printed. None of these aborts the load.
 
         Parameters
         ----------
