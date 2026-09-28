@@ -14,16 +14,108 @@ void IntervalClass(const py::module& m) {
     // bindings to Interval class
     py::class_<Interval> cls(m, "Interval");
     cls.def(py::init<const std::string&, const std::string&>(), py::arg("pitch_A") = "C4",
-            py::arg("pitch_B") = "C4");
+            py::arg("pitch_B") = "C4",
+            R"pbdoc(
+        Create the interval between two pitch strings.
+
+        Interval analysis is defined only over twelve-tone equal temperament, so an interval
+        with a quarter-tone note cannot be built: its name, quality and semitone count would
+        all be wrong.
+
+        Parameters
+        ----------
+        pitch_A : str, default "C4"
+            The first pitch.
+        pitch_B : str, default "C4"
+            The second pitch.
+
+        Raises
+        ------
+        RuntimeError
+            If either pitch is a quarter tone -- the message names it and the remedy,
+            ``Note.roundToSemitone`` -- or if a pitch string is invalid.
+
+        Examples
+        --------
+        >>> ml.Interval("C4", "E4").getName()
+        'M3'
+    )pbdoc");
 
     // Overloaded constructor for rests
-    cls.def(py::init<const Note&, const Note&>(), py::arg("note_A"), py::arg("note_B"));
+    cls.def(py::init<const Note&, const Note&>(), py::arg("note_A"), py::arg("note_B"),
+            R"pbdoc(
+        Create the interval between two notes.
+
+        Parameters
+        ----------
+        note_A : Note
+            The first note.
+        note_B : Note
+            The second note.
+
+        Raises
+        ------
+        RuntimeError
+            If either note is a quarter tone; the message names it and the remedy,
+            ``Note.roundToSemitone``.
+
+        Examples
+        --------
+        >>> ml.Interval(ml.Note("C4"), ml.Note("G4")).getName()
+        'P5'
+    )pbdoc");
 
     cls.def("setNotes",
             py::overload_cast<const std::string&, const std::string&>(&Interval::setNotes),
-            py::arg("pitch_A"), py::arg("pitch_B"));
+            py::arg("pitch_A"), py::arg("pitch_B"),
+            R"pbdoc(
+        Replace both pitches of the interval.
+
+        Parameters
+        ----------
+        pitch_A : str
+            The first pitch.
+        pitch_B : str
+            The second pitch.
+
+        Raises
+        ------
+        RuntimeError
+            If either pitch is a quarter tone -- the message names it and the remedy,
+            ``Note.roundToSemitone`` -- or if a pitch string is invalid.
+
+        Examples
+        --------
+        >>> interval = ml.Interval()
+        >>> interval.setNotes("C4", "Eb4")
+        >>> interval.getName()
+        'm3'
+    )pbdoc");
     cls.def("setNotes", py::overload_cast<const Note&, const Note&>(&Interval::setNotes),
-            py::arg("note_A"), py::arg("note_B"));
+            py::arg("note_A"), py::arg("note_B"),
+            R"pbdoc(
+        Replace both notes of the interval.
+
+        Parameters
+        ----------
+        note_A : Note
+            The first note.
+        note_B : Note
+            The second note.
+
+        Raises
+        ------
+        RuntimeError
+            If either note is a quarter tone; the message names it and the remedy,
+            ``Note.roundToSemitone``.
+
+        Examples
+        --------
+        >>> interval = ml.Interval()
+        >>> interval.setNotes(ml.Note("C4"), ml.Note("A4"))
+        >>> interval.getName()
+        'M6'
+    )pbdoc");
 
     cls.def("getName", &Interval::getName);
 

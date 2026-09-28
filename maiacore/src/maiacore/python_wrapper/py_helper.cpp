@@ -47,12 +47,17 @@ void HelperClass(const py::module& m) {
                    R"pbdoc(
         Convert a pitch string to a MIDI note number.
 
+        A quarter tone lies halfway between two MIDI numbers and rounds to the upper one:
+        ``"C1x4"`` and ``"D3b4"`` (both 60.5) give 61. Use ``Pitch.getQuarterToneSteps`` for
+        the exact position.
+
         Parameters
         ----------
         pitch : str
-            Pitch string such as ``"C4"``, ``"F#11"`` or ``"Dbb-1"``. Accidentals: ``bb``, ``b``,
-            ``#``, ``x``. Octaves: -1 to 11 (default 4). An empty string or any string containing
-            ``"rest"`` is a rest.
+            Pitch string such as ``"C4"``, ``"F#11"``, ``"Dbb-1"`` or ``"C1x4"``. Accidentals:
+            ``bb``, ``b``, ``#``, ``x`` and the quarter tones ``3b``, ``1b``, ``1x``, ``3x``.
+            Octaves: -1 to 11 (default 4). An empty string or any string containing ``"rest"``
+            is a rest.
 
         Returns
         -------
@@ -68,6 +73,8 @@ void HelperClass(const py::module& m) {
         --------
         >>> ml.Helper.pitch2midiNote("Bx11")
         157
+        >>> ml.Helper.pitch2midiNote("D1b4")
+        62
     )pbdoc",
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
@@ -79,21 +86,22 @@ void HelperClass(const py::module& m) {
         Single implementation of ``12 * (octave + 1) + stepSemitone + alterValue``, also used
         internally by ``pitch2midiNote`` and ``splitPitch``. Intended for callers that already
         parsed a pitch string with ``splitPitch`` and want to avoid rebuilding and re-parsing a
-        pitch string just to get its MIDI number.
+        pitch string just to get its MIDI number. A quarter-tone ``alterValue`` leaves the sum
+        halfway between two MIDI numbers, and it rounds to the upper one.
 
         Parameters
         ----------
         pitchStep : str
             Diatonic step, one of ``"A"`` to ``"G"`` (see ``splitPitch``).
         alterValue : float
-            Accidental value in semitones (e.g. -2.0 for ``"bb"``).
+            Accidental value in semitones (e.g. -2.0 for ``"bb"``, 0.5 for ``"1x"``).
         octave : int
             Octave number.
 
         Returns
         -------
         int
-            MIDI note number.
+            MIDI note number, rounded ties upward for a quarter tone.
 
         Raises
         ------
@@ -104,6 +112,8 @@ void HelperClass(const py::module& m) {
         --------
         >>> ml.Helper.spelling2midiNote("B", 2.0, 11)
         157
+        >>> ml.Helper.spelling2midiNote("D", -0.5, 4)
+        62
     )pbdoc",
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
@@ -125,13 +135,16 @@ void HelperClass(const py::module& m) {
         Parameters
         ----------
         pitch : str
-            Pitch string such as ``"C4"``, ``"F#11"``, ``"Dbb-1"`` or ``"Eb"`` (default octave 4).
+            Pitch string such as ``"C4"``, ``"F#11"``, ``"Dbb-1"``, ``"C1x4"`` or ``"Eb"``
+            (default octave 4). Accidentals: ``bb``, ``b``, ``#``, ``x`` and the quarter tones
+            ``3b``, ``1b``, ``1x``, ``3x``.
 
         Returns
         -------
         tuple of (str, str, int or None, float, str)
-            ``(pitchClass, pitchStep, octave, alterValue, alterSymbol)``. A rest has no octave
-            and returns ``("rest", "rest", None, 0.0, "")``.
+            ``(pitchClass, pitchStep, octave, alterValue, alterSymbol)``; ``alterValue`` is a
+            multiple of 0.5 (0.5 for ``1x``). A rest has no octave and returns
+            ``("rest", "rest", None, 0.0, "")``.
 
         Raises
         ------
@@ -142,6 +155,8 @@ void HelperClass(const py::module& m) {
         --------
         >>> ml.Helper.splitPitch("Dbb-1")
         ('Dbb', 'D', -1, -2.0, 'bb')
+        >>> ml.Helper.splitPitch("E1b4")
+        ('E1b', 'E', 4, -0.5, '1b')
     )pbdoc",
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //
@@ -196,6 +211,221 @@ void HelperClass(const py::module& m) {
         'Bx11'
     )pbdoc",
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    //--------------------- //
+    cls.def_static("steps2pitch", &Helper::steps2pitch, py::arg("exactSteps"),
+                   py::arg("accType") = std::string(),
+                   R"pbdoc(
+        Spell an exact pitch position, which may be a quarter tone, as a pitch string.
+
+        The fractional counterpart of ``midiNote2pitch``. The position is split into the
+        semitone it rounds to, ties upward, and the quarter tone left over; the semitone is
+        spelled with ``accType`` and the quarter tone is folded into its accidental, so 60.5
+        with ``accType=""`` gives ``"C1x4"``.
+
+        The representable range runs from -0.5 (``"C1b-1"``, the lowest position that still
+        rounds to MIDI note 0) to 157 (``"Bx11"``). A position below it -- one that rounds to a
+        negative MIDI number, i.e. anything below -0.5 -- returns ``"rest"``, as
+        ``midiNote2pitch`` does for a negative MIDI number.
+
+        Parameters
+        ----------
+        exactSteps : float
+            Exact pitch position in semitones (60.0 is ``"C4"``, 60.5 is ``"C1x4"``). Must be
+            finite and a multiple of 0.5.
+        accType : str, default ""
+            Preferred accidental of the semitone the position rounds to: ``""`` (natural for a
+            white key, ``#`` for a black key), ``"#"``, ``"b"``, ``"x"`` or ``"bb"``. A
+            preference for the quarter tone: when it cannot absorb it (a ``"bb"`` spelling is
+            already at the -2 limit), the default spelling is used and a warning is printed.
+
+        Returns
+        -------
+        str
+            Pitch string within octaves -1 to 11, or ``"rest"`` below MIDI note 0.
+
+        Raises
+        ------
+        RuntimeError
+            If ``exactSteps`` is not finite (the message names the value and the representable
+            range), is not a multiple of 0.5 (names the value), or lies above the representable
+            range (names the value and the range). Also if the semitone cannot be spelled with
+            ``accType`` within octaves -1 to 11: 157 exists only as ``"Bx11"``, so it raises for
+            any other ``accType``.
+
+        Examples
+        --------
+        >>> ml.Helper.steps2pitch(60.5)
+        'C1x4'
+        >>> ml.Helper.steps2pitch(63.5)
+        'E1b4'
+        >>> ml.Helper.steps2pitch(63.5, "b")
+        'F3b4'
+        >>> ml.Helper.steps2pitch(-0.5)
+        'C1b-1'
+        >>> ml.Helper.steps2pitch(-1.0)
+        'rest'
+    )pbdoc",
+                   py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+    //--------------------- //
+    cls.def_static("validateTransposeSemitones", &Helper::validateTransposeSemitones,
+                   py::arg("semitones"),
+                   R"pbdoc(
+        Check that a transposition interval lies on the quarter-tone grid.
+
+        The rule every transposition applies before it moves anything (``transposePitch``,
+        ``Note.transpose``, ``Chord.transpose`` and ``Chord.transposeStackOnly``): the finest
+        interval this library can spell is the quarter tone, so an interval must be a finite
+        multiple of 0.5 semitones.
+
+        Parameters
+        ----------
+        semitones : float
+            Transposition interval in semitones.
+
+        Raises
+        ------
+        RuntimeError
+            If ``semitones`` is not finite (``inf``, ``-inf`` or ``nan``), or is finite but not a
+            multiple of 0.5. Both messages name the value.
+
+        Examples
+        --------
+        >>> ml.Helper.validateTransposeSemitones(-1.5)
+        >>> ml.Helper.validateTransposeSemitones(0.3)
+        Traceback (most recent call last):
+            ...
+        RuntimeError: [maiacore] A transposition must be a multiple of 0.5 ... '0.300000'...
+    )pbdoc");
+    //--------------------- //
+    cls.def_static("alterName2symbol", &Helper::alterName2symbol, py::arg("alterName"),
+                   R"pbdoc(
+        Convert a MusicXML accidental name to this library's accidental symbol.
+
+        Accepts the 13 names that denote an accidental this library can spell: the whole-tone
+        ``"flat-flat"``, ``"flat"``, ``"natural"``, ``"sharp"`` and ``"double-sharp"``, and, for
+        the quarter tones, both the Tartini names ``"quarter-flat"``, ``"three-quarters-flat"``,
+        ``"quarter-sharp"``, ``"three-quarters-sharp"`` and the arrow names ``"flat-up"``
+        (``"1b"``), ``"flat-down"`` (``"3b"``), ``"sharp-down"`` (``"1x"``) and ``"sharp-up"``
+        (``"3x"``).
+
+        Parameters
+        ----------
+        alterName : str
+            Accidental name, as in a MusicXML ``<accidental>`` element.
+
+        Returns
+        -------
+        str
+            One of ``"bb"``, ``"3b"``, ``"b"``, ``"1b"``, ``""``, ``"1x"``, ``"#"``, ``"3x"``,
+            ``"x"``.
+
+        Raises
+        ------
+        RuntimeError
+            If the name is not one of the 13 accepted names (MusicXML defines others, e.g.
+            ``"slash-flat"``, which this library cannot spell).
+
+        Examples
+        --------
+        >>> ml.Helper.alterName2symbol("quarter-sharp")
+        '1x'
+        >>> ml.Helper.alterName2symbol("flat-down")
+        '3b'
+    )pbdoc");
+    //--------------------- //
+    cls.def_static("alterSymbol2Value", &Helper::alterSymbol2Value, py::arg("alterSymbol"),
+                   R"pbdoc(
+        Convert an accidental symbol to its value in semitones.
+
+        Parameters
+        ----------
+        alterSymbol : str
+            One of ``"bb"``, ``"3b"``, ``"b"``, ``"1b"``, ``""`` (natural), ``"1x"``, ``"#"``,
+            ``"3x"``, ``"x"``.
+
+        Returns
+        -------
+        float
+            The value, a multiple of 0.5 from -2.0 to 2.0 (``"1x"`` is 0.5).
+
+        Raises
+        ------
+        RuntimeError
+            If the symbol is not one of the nine accepted symbols.
+
+        Examples
+        --------
+        >>> ml.Helper.alterSymbol2Value("3b")
+        -1.5
+        >>> ml.Helper.alterSymbol2Value("#")
+        1.0
+    )pbdoc");
+    //--------------------- //
+    cls.def_static("alterValue2symbol", &Helper::alterValue2symbol, py::arg("alterValue"),
+                   R"pbdoc(
+        Convert an accidental value in semitones to its symbol.
+
+        The value is matched after rounding it to one decimal place, so a value within 0.05 of
+        an accepted one is read as that value (0.46 gives ``"1x"``). A negative value that rounds
+        to zero, ``-0.0`` included, does not match and raises.
+
+        Parameters
+        ----------
+        alterValue : float
+            A multiple of 0.5 from -2.0 to 2.0.
+
+        Returns
+        -------
+        str
+            One of ``"bb"``, ``"3b"``, ``"b"``, ``"1b"``, ``""`` (natural), ``"1x"``, ``"#"``,
+            ``"3x"``, ``"x"``.
+
+        Raises
+        ------
+        RuntimeError
+            If the value, rounded to one decimal place, is not one of the nine accepted values.
+
+        Examples
+        --------
+        >>> ml.Helper.alterValue2symbol(-1.5)
+        '3b'
+        >>> ml.Helper.alterValue2symbol(0.5)
+        '1x'
+    )pbdoc");
+    //--------------------- //
+    cls.def_static("alterValue2Name", &Helper::alterValue2Name, py::arg("alterValue"),
+                   R"pbdoc(
+        Convert an accidental value in semitones to its MusicXML accidental name.
+
+        The quarter tones get their Tartini names (``"quarter-sharp"``, ``"three-quarters-flat"``,
+        ...), the names ``Note.toXML`` writes. The value is matched after rounding it to one
+        decimal place, as in ``alterValue2symbol``: a value within 0.05 of an accepted one is
+        read as that value, and a negative value that rounds to zero, ``-0.0`` included, raises.
+
+        Parameters
+        ----------
+        alterValue : float
+            A multiple of 0.5 from -2.0 to 2.0.
+
+        Returns
+        -------
+        str
+            One of ``"flat-flat"``, ``"three-quarters-flat"``, ``"flat"``, ``"quarter-flat"``,
+            ``"natural"``, ``"quarter-sharp"``, ``"sharp"``, ``"three-quarters-sharp"``,
+            ``"double-sharp"``.
+
+        Raises
+        ------
+        RuntimeError
+            If the value, rounded to one decimal place, is not one of the nine accepted values.
+
+        Examples
+        --------
+        >>> ml.Helper.alterValue2Name(0.5)
+        'quarter-sharp'
+        >>> ml.Helper.alterValue2Name(-1.5)
+        'three-quarters-flat'
+    )pbdoc");
     //--------------------- //
     cls.def_static(
         "notes2Intervals",
@@ -290,7 +520,7 @@ void HelperClass(const py::module& m) {
             of 0.5: 0.5 is one quarter tone up. 0 returns ``pitch`` unchanged.
         accType : str, default "#"
             Preferred accidental type of the result's base semitone: ``""``, ``"#"``, ``"b"``,
-            ``"x"`` or ``"bb"``.
+            ``"x"`` or ``"bb"`` (see ``Helper.steps2pitch``, which spells the result).
 
         Returns
         -------

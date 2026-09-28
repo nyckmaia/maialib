@@ -29,9 +29,11 @@ void NoteClass(const py::module& m) {
         Parameters
         ----------
         pitch : str
-            Pitch string such as ``"C4"``, ``"G#3"``, ``"Dbb-1"`` or ``"Bx11"``. Accidentals:
-            ``bb``, ``b``, ``#``, ``x``. Octaves: -1 to 11 (default 4). The MIDI number must be
-            >= 0. An empty string or any string containing ``"rest"`` creates a rest.
+            Pitch string such as ``"C4"``, ``"G#3"``, ``"Dbb-1"``, ``"Bx11"`` or ``"C1x4"``.
+            Accidentals: ``bb``, ``b``, ``#``, ``x`` and the quarter tones ``3b``, ``1b``,
+            ``1x``, ``3x``. Octaves: -1 to 11 (default 4). The MIDI number, rounded ties upward
+            for a quarter tone, must be >= 0. An empty string or any string containing
+            ``"rest"`` creates a rest.
         rhythmFigure : RhythmFigure, default RhythmFigure.QUARTER
             Rhythm figure.
         isNoteOn : bool, default True
@@ -49,6 +51,13 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If the pitch string is invalid.
+
+        Examples
+        --------
+        >>> ml.Note("C1x4").getMidiNumber()
+        61
+        >>> ml.Note("C1x4").isQuarterTone()
+        True
     )pbdoc");
 
     cls.def(py::init<const int, const std::string&, const RhythmFigure, bool, bool, const int,
@@ -89,7 +98,34 @@ void NoteClass(const py::module& m) {
     // ====== Methods SETTERS for class Note ===== //
     cls.def("setPitchClass", &Note::setPitchClass, py::arg("pitchClass"),
             "Set the note pitch class");
-    cls.def("setOctave", &Note::setOctave, py::arg("octave"));
+    cls.def("setOctave", &Note::setOctave, py::arg("octave"),
+            R"pbdoc(
+        Set the octave of the written pitch, keeping its step and accidental.
+
+        Refused on a rest, whatever the value, and when the result would lie below MIDI note 0:
+        in both cases a warning is printed to standard output and the note is left unchanged.
+        ``getOctave()`` afterwards reports the same octave a note constructed with that pitch
+        would.
+
+        Parameters
+        ----------
+        octave : int
+            Octave from -1 to 11.
+
+        Raises
+        ------
+        TypeError
+            If ``octave`` is not an int -- e.g. None, which ``getOctave()`` returns for a rest.
+        RuntimeError
+            If the note is not a rest and ``octave`` lies outside -1 to 11.
+
+        Examples
+        --------
+        >>> note = ml.Note("C1x4")
+        >>> note.setOctave(5)
+        >>> note.getPitch()
+        'C1x5'
+    )pbdoc");
     cls.def("setStep", &Note::setStep, py::arg("step"),
             R"pbdoc(
         Set the diatonic step of the written pitch, keeping the current accidental and octave.
@@ -195,7 +231,36 @@ void NoteClass(const py::module& m) {
     cls.def("getSoundingPitchStep", &Note::getSoundingPitchStep);
     cls.def("getPitchStep", &Note::getPitchStep);
     cls.def("getSoundingPitchClass", &Note::getSoundingPitchClass);
-    cls.def("getSoundingPitch", &Note::getSoundingPitch);
+    cls.def("getSoundingPitch", &Note::getSoundingPitch,
+            R"pbdoc(
+        Return the sounding pitch: the written pitch moved by the transposing interval.
+
+        Derived arithmetically from the written pitch and the chromatic interval, so a quarter
+        tone keeps sounding as one: a B-flat clarinet's written ``C4`` sounds ``"Bb3"`` and its
+        written ``C1x4`` sounds ``"B1b3"``. Without a transposing interval this is the written
+        pitch.
+
+        Returns
+        -------
+        str
+            Sounding pitch string, or ``"rest"`` for a rest -- including a transposing
+            instrument's note silenced with ``setIsNoteOn(False)``.
+
+        Raises
+        ------
+        RuntimeError
+            If the note is sounding but its transposing interval carries it below the
+            representable minimum, C-1 (MIDI 0) -- e.g. a B-flat clarinet's written ``"C#-1"``.
+            The message names that condition, the written pitch and the interval.
+            ``getSoundingOctave()`` is None for such a note.
+
+        Examples
+        --------
+        >>> ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2).getSoundingPitch()
+        'Bb3'
+        >>> ml.Note("C1x4", transposeDiatonic=-1, transposeChromatic=-2).getSoundingPitch()
+        'B1b3'
+    )pbdoc");
 
     cls.def("getWrittenPitchClass", &Note::getWrittenPitchClass);
     cls.def("getWrittenPitch", &Note::getWrittenPitch);
@@ -252,7 +317,28 @@ void NoteClass(const py::module& m) {
 
     cls.def("isNoteOn", &Note::isNoteOn);
     cls.def("isNoteOff", &Note::isNoteOff);
-    cls.def("getPitch", &Note::getPitch);
+    cls.def("getPitch", &Note::getPitch,
+            R"pbdoc(
+        Return the pitch string -- the sounding pitch (see ``getSoundingPitch``).
+
+        Returns
+        -------
+        str
+            Pitch string (e.g. ``"C1x4"``), or ``"rest"`` for a rest.
+
+        Raises
+        ------
+        RuntimeError
+            If the note's transposing interval carries its sounding pitch below C-1 (MIDI 0);
+            see ``getSoundingPitch``.
+
+        Examples
+        --------
+        >>> ml.Note("C1x4").getPitch()
+        'C1x4'
+        >>> ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2).getPitch()
+        'Bb3'
+    )pbdoc");
     cls.def("getMidiNumber", &Note::getMidiNumber);
 
     cls.def("getVoice", &Note::getVoice);
@@ -266,7 +352,26 @@ void NoteClass(const py::module& m) {
     cls.def("getArticulation", &Note::getArticulation);
     cls.def("getBeam", &Note::getBeam);
 
-    cls.def("getAlterSymbol", &Note::getAlterSymbol);
+    cls.def("getAlterSymbol", &Note::getAlterSymbol,
+            R"pbdoc(
+        Return the accidental symbol of the sounding pitch.
+
+        For a transposing instrument this is the sounding pitch's accidental, not the written
+        one: a B-flat clarinet's written ``C4`` sounds ``Bb3``, so this returns ``"b"``.
+
+        Returns
+        -------
+        str
+            One of ``"bb"``, ``"3b"``, ``"b"``, ``"1b"``, ``""`` (natural), ``"1x"``, ``"#"``,
+            ``"3x"`` and ``"x"``; ``""`` for a rest.
+
+        Examples
+        --------
+        >>> ml.Note("E1b4").getAlterSymbol()
+        '1b'
+        >>> ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2).getAlterSymbol()
+        'b'
+    )pbdoc");
 
     cls.def("isQuarterTone", &Note::isQuarterTone,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
@@ -392,10 +497,76 @@ void NoteClass(const py::module& m) {
             py::arg("freqA4") = 440.0f);
 
     cls.def("transpose", &Note::transpose, py::arg("semitones"),
-            py::arg("accType") = MUSIC_XML::ACCIDENT::NONE);
+            py::arg("accType") = MUSIC_XML::ACCIDENT::NONE,
+            R"pbdoc(
+        Transpose the note by a number of semitones.
+
+        Computed on exact pitch positions, so a quarter tone survives: ``C4`` up 0.5 is
+        ``C1x4``, and ``C1x4`` up 2 is ``D1x4``. The note is left unchanged when this raises.
+
+        Parameters
+        ----------
+        semitones : float
+            Number of semitones (negative values transpose down); must be finite and a multiple
+            of 0.5, where 0.5 is one quarter tone.
+        accType : str, default ""
+            Preferred accidental type of the result: ``""``, ``"#"``, ``"b"``, ``"x"`` or
+            ``"bb"``.
+
+        Raises
+        ------
+        RuntimeError
+            If ``semitones`` is not finite or not a multiple of 0.5; if the result would lie
+            outside the representable range, ``"C1b-1"`` to ``"Bx11"`` -- the note never silently
+            becomes a rest; or if the result cannot be spelled with ``accType`` within octaves -1
+            to 11.
+
+        Warnings
+        --------
+        On a transposing instrument this transposes the SOUNDING pitch but stores the result as
+        the WRITTEN pitch, so the transposing interval is applied again when the note is read: a
+        B-flat clarinet's written ``C4`` (sounding ``Bb3``) transposed by 2 still sounds
+        ``Bb3``. For such a note, transpose the written pitch instead:
+        ``note.setPitch(ml.Helper.transposePitch(note.getWrittenPitch(), 2, ""))``.
+
+        Examples
+        --------
+        >>> note = ml.Note("C4")
+        >>> note.transpose(0.5)
+        >>> note.getPitch()
+        'C1x4'
+    )pbdoc");
 
     cls.def("toXML", &Note::toXML, py::arg("instrumentId") = 1, py::arg("identSize") = 2,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Serialize the note as a MusicXML ``<note>`` element.
+
+        The written pitch's accidental is written as ``<alter>`` with its real value: a whole
+        number for a whole-tone accidental (``1``, ``-2``) and one decimal place for a quarter
+        tone (``0.5``, ``-1.5``). A quarter tone also gets an ``<accidental>`` element, right
+        after ``<type>``, carrying its Tartini name (``quarter-sharp``, ``three-quarters-flat``,
+        ...), because no key signature can imply one; a whole-tone accidental gets none.
+
+        Parameters
+        ----------
+        instrumentId : int, default 1
+            Zero-based index of the part: a sounding note references the score instrument
+            ``P<instrumentId + 1>-I<n>``.
+        identSize : int, default 2
+            Number of spaces per indentation level.
+
+        Returns
+        -------
+        str
+            The ``<note>`` element as XML text.
+
+        Examples
+        --------
+        >>> xml = ml.Note("C1x4").toXML()
+        >>> "<alter>0.5</alter>" in xml, "<accidental>quarter-sharp</accidental>" in xml
+        (True, True)
+    )pbdoc");
 
     // Default Python 'print' function:
     cls.def("__repr__", [](const Note& note) { return "<Note " + note.getPitch() + ">"; });

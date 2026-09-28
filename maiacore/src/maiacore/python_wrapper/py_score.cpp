@@ -22,7 +22,34 @@ void ScoreClass(const py::module& m) {
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def(py::init<const std::string&>(), py::arg("filePath"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Load a score from a MusicXML file (``.xml``, ``.musicxml`` or compressed ``.mxl``).
+
+        A note's accidental is read from its ``<accidental>`` element first -- where a quarter
+        tone lives -- then from the decimal ``<alter>`` value, and is natural otherwise. An
+        ``<accidental>`` name this library cannot spell (see ``Helper.alterName2symbol``)
+        prints a warning and falls back to ``<alter>``; an ``<alter>`` value it cannot spell
+        (e.g. 3, or the eighth tone 0.25) prints a warning and leaves the note natural. Neither
+        aborts the load.
+
+        Parameters
+        ----------
+        filePath : str
+            Path to the MusicXML file.
+
+        Raises
+        ------
+        RuntimeError
+            If the path is too short to name a file, the file cannot be loaded, or it lacks
+            the MusicXML part and measure elements.
+
+        Examples
+        --------
+        >>> score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
+        >>> score.getNumParts()
+        1
+    )pbdoc");
 
     cls.def("clear", &Score::clear);
     cls.def("addPart", &Score::addPart, py::arg("partName"), py::arg("numStaves") = 1,

@@ -14,7 +14,51 @@ void ChordClass(const py::module& m) {
     m.doc() = "Chord class binding";
 
     // bindings to Chord class
-    py::class_<Chord> cls(m, "Chord");
+    py::class_<Chord> cls(m, "Chord", R"pbdoc(
+        A chord: a collection of notes, analysed harmonically by stacking them in thirds.
+
+        Notes
+        -----
+        A chord can hold quarter-tone notes (e.g. ``"C1x4"``), and every accessor and mutator
+        works on them. Harmonic analysis is defined only over twelve-tone equal temperament, so
+        every method whose answer would be wrong for a quarter tone raises ``RuntimeError``
+        instead of answering. Three families of methods reject one, each naming a remedy:
+
+        - The stacked-in-thirds family: ``getName``, ``getQuality``, ``getRoot``,
+          ``getBassNote``, ``getDegree``, ``getRomanDegree``, ``stackSize``,
+          ``getStackedHeaps``, ``getStackDataFrame``, ``getOpenStackNotes``,
+          ``getOpenStackChord``, ``getCloseStackChord``, ``getCloseChord``,
+          ``getOpenStackIntervals``, ``getCloseStackIntervals``,
+          ``getCloseStackHarmonicComplexity``, ``isTonal``, ``isInRootPosition``, ``isDyad``,
+          ``isSus``, the ``is...Chord`` predicates, and the interval predicates measured from
+          the root, ``haveMinorSecond`` to ``haveMajorThirdteenth``. The message names
+          ``roundQuarterTones``; a single quarter-tone note is enough.
+        - The interval family, which builds an ``Interval`` from each pair of adjacent notes in
+          pitch order: ``getIntervals``, ``getIntervalsFromOriginalSortedNotes``,
+          ``haveMajorInterval`` and its four siblings, the three unison predicates,
+          ``haveSecond`` to ``haveThirdteenth``, and every ``haveAnyOctave...`` predicate. The
+          message comes from ``Interval`` and names ``Note.roundToSemitone``; a chord with fewer
+          than two notes builds no interval and is not rejected.
+        - The MIDI-integer family, whose return type cannot express a quarter tone:
+          ``getMidiIntervals``, ``getMeanMidiValue``, ``getMeanOfExtremesMidiValue``,
+          ``getMeanPitch`` and ``getMeanOfExtremesPitch``. The message names
+          ``roundQuarterTones``.
+
+        ``roundQuarterTones()`` rounds every quarter tone to the nearest semitone, ties upward,
+        after which all of them work. ``toCents``, ``isSorted``, ``getHarmonicDensity`` and
+        ``getMidiValueStd`` compute the exact value for a quarter-tone chord instead, and
+        ``info`` degrades rather than raising.
+
+        Examples
+        --------
+        >>> chord = ml.Chord(["C4", "E1b4", "G4"])
+        >>> chord.toCents()
+        [350, 350]
+        >>> chord.roundQuarterTones()
+        1
+        >>> chord.getName()
+        'C'
+    )pbdoc");
     cls.def(py::init<>(),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     cls.def(py::init<const std::vector<Note>&, const RhythmFigure>(), py::arg("notes"),
@@ -130,11 +174,133 @@ void ChordClass(const py::module& m) {
             If the chord is empty.
     )pbdoc");
     cls.def("transpose", &Chord::transpose, py::arg("semiTonesNumber"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Transpose every note of the chord by a number of semitones.
+
+        Computed on exact pitch positions, so a quarter tone survives the transposition, and
+        each note keeps its own accidental as the preferred spelling of the result. Every note
+        is transposed before any is stored, so the chord is left unchanged when this raises.
+        Transposing by a quarter tone moves the chord off the semitone grid, after which the
+        harmonic analysis rejects it (see the class notes).
+
+        Parameters
+        ----------
+        semiTonesNumber : float
+            Number of semitones (negative values transpose down); must be finite and a multiple
+            of 0.5, where 0.5 is one quarter tone.
+
+        Raises
+        ------
+        RuntimeError
+            If ``semiTonesNumber`` is not finite or not a multiple of 0.5; if a note would move
+            outside the representable range, ``"C1b-1"`` to ``"Bx11"`` -- it never silently
+            becomes a rest; or if a transposed note cannot be spelled with its own accidental
+            type within octaves -1 to 11.
+
+        Examples
+        --------
+        >>> chord = ml.Chord(["C1x4", "E4", "G4"])
+        >>> chord.transpose(2)
+        >>> [note.getPitch() for note in chord.getNotes()]
+        ['D1x4', 'F#4', 'A4']
+    )pbdoc");
     cls.def("transposeStackOnly", &Chord::transposeStackOnly, py::arg("semiTonesNumber"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Transpose only the open stack (the stacked-in-thirds form), not the chord's notes.
+
+        The open stack of a chord that has not been stacked yet is recomputed from the notes by
+        the next analysis call, which discards this transposition: stack the chord first (any
+        analysis call does).
+
+        Parameters
+        ----------
+        semiTonesNumber : float
+            Number of semitones; must be finite and a multiple of 0.5.
+
+        Raises
+        ------
+        RuntimeError
+            In the same cases as ``transpose``, with the same guarantee: the stack is left
+            unchanged when this raises.
+
+        Examples
+        --------
+        >>> chord = ml.Chord(["C4", "E4", "G4"])
+        >>> [note.getPitch() for note in chord.getOpenStackNotes()]
+        ['C4', 'E4', 'G4']
+        >>> chord.transposeStackOnly(2)
+        >>> [note.getPitch() for note in chord.getOpenStackNotes()]
+        ['D4', 'F#4', 'A4']
+    )pbdoc");
 
     cls.def("removeDuplicateNotes", &Chord::removeDuplicateNotes);
+
+    // Task 11, section D: bound only now, although both predate this branch.
+    cls.def("getStackedHeaps", &Chord::getStackedHeaps, py::arg("enharmonyNotes") = false,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Get every candidate stacked-in-thirds arrangement of the chord, with its match value.
+
+        Stacks the chord first if it has not been stacked yet. Each candidate is one spelling of
+        the chord's pitch classes, enharmonic respellings included, arranged in thirds; the
+        chord's open stack is chosen from them. ``getStackDataFrame`` presents the same data as
+        a table.
+
+        Parameters
+        ----------
+        enharmonyNotes : bool, default False
+            Accepted but currently ignored by the stacking, which always considers enharmonic
+            respellings.
+
+        Returns
+        -------
+        list of tuple of (list of NoteData, float)
+            One ``(heap, matchValue)`` pair per candidate, sorted from the highest match value
+            (1.0 is a perfect stack of thirds) down. Each ``NoteData`` holds a ``note``, whether
+            it ``wasEnharmonized`` and its ``enharmonicDiatonicDistance``.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone (call ``roundQuarterTones`` first), or if no
+            enharmonic respelling of the notes produces a valid stacked-in-thirds form (see
+            ``getName``).
+
+        Examples
+        --------
+        >>> heap, matchValue = ml.Chord(["E4", "G4", "C5"]).getStackedHeaps()[0]
+        >>> [data.note.getPitch() for data in heap], matchValue
+        (['C5', 'E4', 'G4'], 1.0)
+    )pbdoc");
+    cls.def("isDyad", &Chord::isDyad,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Check whether the chord, stacked in thirds, has exactly two notes.
+
+        Stacking keeps one note per pitch class, so an octave doubling does not count:
+        ``["C4", "E4", "C5"]`` is a dyad.
+
+        Returns
+        -------
+        bool
+            True if the open stack has exactly two notes.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone (call ``roundQuarterTones`` first), or if no
+            enharmonic respelling of the notes produces a valid stacked-in-thirds form (see
+            ``getName``).
+
+        Examples
+        --------
+        >>> ml.Chord(["C4", "E4", "C5"]).isDyad()
+        True
+        >>> ml.Chord(["C4", "E4", "G4"]).isDyad()
+        False
+    )pbdoc");
 
     cls.def(
         "getStackDataFrame",
@@ -281,13 +447,20 @@ void ChordClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If no enharmonic respelling of this chord's notes can produce a valid
+            If the chord contains a quarter tone: the analysis is defined only over twelve-tone
+            equal temperament (call ``roundQuarterTones`` first; see the class notes). Also if
+            no enharmonic respelling of this chord's notes can produce a valid
             stacked-in-thirds representation. This is not limited to large chords: pitch classes
             are distinguished by spelling (``"C"``, ``"C#"`` and ``"Db"`` are three different
             pitch classes), so even a 3-note chord like ``["C4", "C#4", "Db4"]`` can raise this.
             This applies to every method that triggers the stacked-in-thirds computation (e.g.
             ``isDyad``, ``stackSize``, ``isInRootPosition``, ``getOpenStackIntervals``,
             ``getCloseStackIntervals``, the ``have*`` family), not only ``getName``.
+
+        Examples
+        --------
+        >>> ml.Chord(["C4", "Eb4", "G4", "Bb4"]).getName()
+        'Cm7'
     )pbdoc");
     cls.def("getBassNote", &Chord::getBassNote);
     cls.def("getNotes", &Chord::getNotes);
@@ -461,9 +634,17 @@ void ChordClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If no enharmonic respelling of this chord's notes can produce a valid
-            stacked-in-thirds representation (see ``getName``'s docstring for when this applies --
-            it is not limited to large chords).
+            If the chord contains a quarter tone (call ``roundQuarterTones`` first; see the
+            class notes), or if no enharmonic respelling of this chord's notes can produce a
+            valid stacked-in-thirds representation (see ``getName``'s docstring for when this
+            applies -- it is not limited to large chords).
+
+        Examples
+        --------
+        >>> ml.Chord(["C4", "E4", "G4"]).isInRootPosition()
+        True
+        >>> ml.Chord(["E4", "G4", "C5"]).isInRootPosition()
+        False
     )pbdoc");
 
     cls.def("getMidiIntervals", &Chord::getMidiIntervals, py::arg("firstNoteAsReference") = false,
@@ -500,9 +681,16 @@ void ChordClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If no enharmonic respelling of this chord's notes can produce a valid
-            stacked-in-thirds representation (see ``getName``'s docstring for when this applies --
-            it is not limited to large chords).
+            If the chord contains a quarter tone (call ``roundQuarterTones`` first; see the
+            class notes), or if no enharmonic respelling of this chord's notes can produce a
+            valid stacked-in-thirds representation (see ``getName``'s docstring for when this
+            applies -- it is not limited to large chords).
+
+        Examples
+        --------
+        >>> intervals = ml.Chord(["C4", "E4", "G4"]).getOpenStackIntervals()
+        >>> [interval.getName() for interval in intervals]
+        ['M3', 'm3']
     )pbdoc");
     cls.def("getCloseStackIntervals", &Chord::getCloseStackIntervals,
             py::arg("firstNoteAsReference") = false,
@@ -518,9 +706,16 @@ void ChordClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If no enharmonic respelling of this chord's notes can produce a valid
-            stacked-in-thirds representation (see ``getName``'s docstring for when this applies --
-            it is not limited to large chords).
+            If the chord contains a quarter tone (call ``roundQuarterTones`` first; see the
+            class notes), or if no enharmonic respelling of this chord's notes can produce a
+            valid stacked-in-thirds representation (see ``getName``'s docstring for when this
+            applies -- it is not limited to large chords).
+
+        Examples
+        --------
+        >>> intervals = ml.Chord(["E4", "G4", "C5"]).getCloseStackIntervals()
+        >>> [interval.getName() for interval in intervals]
+        ['M3', 'm3']
     )pbdoc");
     cls.def("getQuarterDuration", &Chord::getQuarterDuration);
 
@@ -558,14 +753,26 @@ void ChordClass(const py::module& m) {
 
     cls.def("getOpenStackNotes", &Chord::getOpenStackNotes);
 
-    cls.def("sortNotes", &Chord::sortNotes);
+    cls.def("sortNotes", &Chord::sortNotes,
+            R"pbdoc(
+        Sort the chord's notes in ascending pitch order, in place.
+
+        Compares exact pitch positions, so a quarter tone sorts correctly: ``["E4", "E1b4"]``
+        becomes ``["E1b4", "E4"]``, because 63.5 precedes 64. Invalidates the cached
+        stacked-in-thirds analysis.
+
+        Examples
+        --------
+        >>> chord = ml.Chord(["E4", "E1b4"])
+        >>> chord.sortNotes()
+        >>> [note.getPitch() for note in chord.getNotes()]
+        ['E1b4', 'E4']
+    )pbdoc");
 
     cls.def("toCents", &Chord::toCents,
             R"pbdoc(
         Get the interval, in cents, between each pair of consecutive notes.
 
-        Returns
-        -------
         Cents are the one unit in this library that expresses a quarter tone exactly -- 50 cents to
         the quarter tone, 350 to the neutral third -- so this method accepts a quarter-tone chord
         and computes the true value, unlike the MIDI-semitone methods, which reject one.
@@ -579,6 +786,13 @@ void ChordClass(const py::module& m) {
         list[int]
             One value per adjacent note pair, or an empty list if the chord has fewer than 2
             notes (including an empty chord).
+
+        Examples
+        --------
+        >>> ml.Chord(["C4", "E1b4", "G4"]).toCents()
+        [350, 350]
+        >>> ml.Chord(["C4", "E4", "G4"]).toCents()
+        [400, 300]
     )pbdoc");
 
     cls.def("getDegree", &Chord::getDegree, py::arg("key"), py::arg("enharmonyNotes") = false);
@@ -797,10 +1011,19 @@ void ChordClass(const py::module& m) {
     cls.def("__sizeof__", [](const Chord& chord) { return sizeof(chord); });
 
     // bindings to NoteDataHeap Data typedef
-    py::class_<NoteData> clsNoteData(m, "NoteData");
+    py::class_<NoteData> clsNoteData(m, "NoteData", R"pbdoc(
+        One note of a candidate stack returned by ``Chord.getStackedHeaps``.
+    )pbdoc");
     clsNoteData.def(py::init<>());
     clsNoteData.def(py::init<const Note&, const bool, const int>(), py::arg("note"),
                     py::arg("wasEnharmonized"), py::arg("enharmonicDiatonicDistance"));
+    // Task 11, section D: without these, the NoteData objects getStackedHeaps() returns carried
+    // no readable content at all.
+    clsNoteData.def_readonly("note", &NoteData::note, "The note, as spelled in this stack.");
+    clsNoteData.def_readonly("wasEnharmonized", &NoteData::wasEnharmonized,
+                             "True if the note was respelled enharmonically for this stack.");
+    clsNoteData.def_readonly("enharmonicDiatonicDistance", &NoteData::enharmonicDiatonicDistance,
+                             "Diatonic distance between the original and the respelled note.");
 
     py::class_<NoteDataHeap> clsHeap(m, "NoteDataHeap");
     py::class_<HeapData> clsHeapData(m, "HeapData");

@@ -627,7 +627,8 @@ TEST(PitchSpelling, TransposePitchRejectsNonFiniteIntervals) {
 // Chord::transpose() a note transposed too low was silently deleted (also true on main). Far above
 // the top, an out-of-range int conversion failed with the unrelated "Unknown accidental alter
 // value: 5147483648.0". Both ends now raise, naming the pitch, the interval and the range.
-// Transposing a REST still answers "rest" (pinned in TransposePitchMovesByAndPreservesQuarterTones).
+// Transposing a REST still answers "rest" (pinned in
+// TransposePitchMovesByAndPreservesQuarterTones).
 TEST(PitchSpelling, TransposePitchRejectsAResultOutsideTheRepresentableRange) {
     struct Case {
         const char* pitch;

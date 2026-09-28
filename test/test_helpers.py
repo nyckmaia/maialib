@@ -1,3 +1,5 @@
+import contextlib
+import io
 import unittest
 from pathlib import Path
 
@@ -497,6 +499,141 @@ class PitchSpelling(unittest.TestCase):
 
     def testPitch2numberWasRemoved(self):
         self.assertFalse(hasattr(ml.Helper, "pitch2number"))
+
+
+class QuarterToneHelpers(unittest.TestCase):
+    """Task 11, section C: the Helper functions this sub-project added or changed, bound."""
+
+    ALTERS = (
+        # (value, symbol, Tartini or whole-tone name)
+        (-2.0, "bb", "flat-flat"),
+        (-1.5, "3b", "three-quarters-flat"),
+        (-1.0, "b", "flat"),
+        (-0.5, "1b", "quarter-flat"),
+        (0.0, "", "natural"),
+        (0.5, "1x", "quarter-sharp"),
+        (1.0, "#", "sharp"),
+        (1.5, "3x", "three-quarters-sharp"),
+        (2.0, "x", "double-sharp"),
+    )
+
+    def testEveryNewBindingIsDocumentedWithAnExample(self):
+        for name in (
+            "steps2pitch",
+            "validateTransposeSemitones",
+            "alterName2symbol",
+            "alterSymbol2Value",
+            "alterValue2symbol",
+            "alterValue2Name",
+        ):
+            with self.subTest(function=name):
+                self.assertIn("Examples\n", getattr(ml.Helper, name).__doc__)
+
+    def testSteps2PitchSpellsAnExactPosition(self):
+        self.assertEqual(ml.Helper.steps2pitch(60.0), "C4")
+        self.assertEqual(ml.Helper.steps2pitch(60.5), "C1x4")
+        self.assertEqual(ml.Helper.steps2pitch(63.5), "E1b4")
+        # accType spells the semitone the position rounds UP to: 64 as "Fb4", so "F3b4".
+        self.assertEqual(ml.Helper.steps2pitch(63.5, "b"), "F3b4")
+        self.assertEqual(ml.Helper.steps2pitch(157.0, "x"), "Bx11")
+
+    # The rest sentinel only below MIDI 0: -0.5 rounds, ties upward, to MIDI 0 and is "C1b-1".
+    def testSteps2PitchAnswersARestOnlyBelowMidiZero(self):
+        self.assertEqual(ml.Helper.steps2pitch(-0.5), "C1b-1")
+        self.assertEqual(ml.Helper.steps2pitch(-1.0), "rest")
+        self.assertEqual(ml.Helper.steps2pitch(-3e9), "rest")
+
+    # Section N: without these checks a position was converted with an undefined-behaviour
+    # static_cast<int> (non-finite or huge), or silently snapped to the grid (off-grid).
+    def testSteps2PitchRejectsNonFiniteOffGridAndTooHighPositions(self):
+        for label, value, expected in (
+            ("+inf", float("inf"), "'inf'"),
+            ("-inf", float("-inf"), "'-inf'"),
+            ("nan", float("nan"), "nan"),
+        ):
+            with self.subTest(position=label):
+                with self.assertRaises(RuntimeError) as ctx:
+                    ml.Helper.steps2pitch(value)
+                message = str(ctx.exception).splitlines()[0]
+                self.assertIn("finite", message)
+                self.assertIn(expected, message)
+
+        for value in (60.25, 60.45):
+            with self.subTest(position=value):
+                with self.assertRaises(RuntimeError) as ctx:
+                    ml.Helper.steps2pitch(value)
+                self.assertIn("multiple of 0.5", str(ctx.exception).splitlines()[0])
+
+        for value in (157.5, 3e9):
+            with self.subTest(position=value):
+                with self.assertRaises(RuntimeError) as ctx:
+                    ml.Helper.steps2pitch(value, "x")
+                message = str(ctx.exception).splitlines()[0]
+                self.assertIn("above the representable range", message)
+                self.assertIn("Bx11", message)
+
+    # accType is a preference for the quarter tone: a "bb" spelling (62 as "Ebb4") is already at
+    # the -2 limit and cannot absorb -0.5, so the default spelling is used, with a warning that
+    # the binding redirects to sys.stdout.
+    def testSteps2PitchFallsBackAndWarnsWhenAccTypeCannotAbsorbTheQuarterTone(self):
+        buffer = io.StringIO()
+        with contextlib.redirect_stdout(buffer):
+            pitch = ml.Helper.steps2pitch(61.5, "bb")
+        self.assertEqual(pitch, "D1b4")
+        self.assertIn("[WARN] Helper::steps2pitch", buffer.getvalue())
+
+    def testValidateTransposeSemitones(self):
+        self.assertIsNone(ml.Helper.validateTransposeSemitones(0.5))
+        self.assertIsNone(ml.Helper.validateTransposeSemitones(-12))
+
+        with self.assertRaises(RuntimeError) as ctx:
+            ml.Helper.validateTransposeSemitones(0.3)
+        message = str(ctx.exception).splitlines()[0]
+        self.assertIn("multiple of 0.5", message)
+        self.assertIn("0.3", message)
+
+        with self.assertRaises(RuntimeError) as ctx:
+            ml.Helper.validateTransposeSemitones(float("inf"))
+        message = str(ctx.exception).splitlines()[0]
+        self.assertIn("finite", message)
+        self.assertIn("'inf'", message)
+
+    def testAlterSymbol2ValueAndAlterValue2symbolAreInverse(self):
+        for value, symbol, _ in self.ALTERS:
+            with self.subTest(symbol=symbol):
+                self.assertEqual(ml.Helper.alterSymbol2Value(symbol), value)
+                self.assertEqual(ml.Helper.alterValue2symbol(value), symbol)
+
+    def testAlterValue2NameUsesTheTartiniNames(self):
+        for value, _, name in self.ALTERS:
+            with self.subTest(value=value):
+                self.assertEqual(ml.Helper.alterValue2Name(value), name)
+
+    # All 13 names, the arrow spellings included, and each Tartini name round-trips through
+    # alterValue2Name().
+    def testAlterName2symbolAcceptsTheThirteenNames(self):
+        arrows = {"flat-up": "1b", "flat-down": "3b", "sharp-down": "1x", "sharp-up": "3x"}
+        for name, symbol in arrows.items():
+            with self.subTest(name=name):
+                self.assertEqual(ml.Helper.alterName2symbol(name), symbol)
+        for _, symbol, name in self.ALTERS:
+            with self.subTest(name=name):
+                self.assertEqual(ml.Helper.alterName2symbol(name), symbol)
+
+    def testUnknownAlterInputsRaise(self):
+        with self.assertRaises(RuntimeError) as ctx:
+            ml.Helper.alterName2symbol("slash-flat")
+        self.assertIn("Unknown accidental name: slash-flat", str(ctx.exception).splitlines()[0])
+
+        with self.assertRaises(RuntimeError) as ctx:
+            ml.Helper.alterSymbol2Value("2x")
+        self.assertIn("Unknown accident symbol: 2x", str(ctx.exception).splitlines()[0])
+
+        for function in (ml.Helper.alterValue2symbol, ml.Helper.alterValue2Name):
+            with self.subTest(function=function.__name__):
+                with self.assertRaises(RuntimeError) as ctx:
+                    function(0.25)  # an eighth tone: no spelling
+                self.assertIn("Unknown accidental alter value", str(ctx.exception).splitlines()[0])
 
 
 class Version(unittest.TestCase):

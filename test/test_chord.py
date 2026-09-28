@@ -210,10 +210,38 @@ class Transpose(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             myChord.transpose(-1)
 
-        self.assertIn(
-            "outside the representable range", str(context.exception).splitlines()[0]
-        )
+        self.assertIn("outside the representable range", str(context.exception).splitlines()[0])
         self.assertEqual([note.getPitch() for note in myChord.getNotes()], ["C4", "C-1"])
+
+
+class StackedHeapsAndDyads(unittest.TestCase):
+    """Task 11, section D: getStackedHeaps() and isDyad() existed in C++ but were never bound."""
+
+    def testIsDyadCountsThePitchClassesOfTheStack(self):
+        self.assertTrue(ml.Chord(["C4", "E4"]).isDyad())
+        # Stacking keeps one note per pitch class, so an octave doubling does not count.
+        self.assertTrue(ml.Chord(["C4", "E4", "C5"]).isDyad())
+        self.assertFalse(ml.Chord(["C4", "E4", "G4"]).isDyad())
+        self.assertIn("Examples\n", ml.Chord.isDyad.__doc__)
+
+    def testGetStackedHeapsReturnsTheCandidatesBestFirst(self):
+        heaps = ml.Chord(["E4", "G4", "C5"]).getStackedHeaps()
+        self.assertGreater(len(heaps), 1)
+
+        heap, value = heaps[0]
+        self.assertEqual([data.note.getPitch() for data in heap], ["C5", "E4", "G4"])
+        self.assertEqual(value, 1.0)
+        self.assertEqual([data.wasEnharmonized for data in heap], [False, False, False])
+        self.assertEqual([data.enharmonicDiatonicDistance for data in heap], [0, 0, 0])
+
+        values = [value for _, value in heaps]
+        self.assertEqual(values, sorted(values, reverse=True))
+
+        # The candidates include enharmonic respellings, marked as such.
+        respelled = [data for heap, _ in heaps for data in heap if data.wasEnharmonized]
+        self.assertTrue(respelled)
+        self.assertTrue(all(data.enharmonicDiatonicDistance != 0 for data in respelled))
+        self.assertIn("Examples\n", ml.Chord.getStackedHeaps.__doc__)
 
 
 class ToInversion(unittest.TestCase):
@@ -480,6 +508,8 @@ class QuarterToneAnalysisGuard(unittest.TestCase):
             "isMinorChord",
             "isSus",
             "isInRootPosition",
+            "isDyad",
+            "getStackedHeaps",
             "haveMajorThird",
             "haveMinorThird",
             "havePerfectFifth",
