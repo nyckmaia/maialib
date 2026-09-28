@@ -207,14 +207,6 @@ class Helper {
                                                  const bool firstNoteAsReference = false);
 
     /**
-     * @brief Calculates the number of semitones between two pitch strings.
-     * @param pitch_A First pitch string.
-     * @param pitch_B Second pitch string.
-     * @return Number of semitones from pitch_A to pitch_B.
-     */
-    static int semitonesBetweenPitches(const std::string& pitch_A, const std::string& pitch_B);
-
-    /**
      * @brief Computes multidimensional similarity between two notes using pitch-space and rhythmic
      * metrics.
      * @param pitchClass_A Pitch class of note A (e.g., "C", "F#", "Bb").

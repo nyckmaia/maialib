@@ -46,23 +46,6 @@ std::string Helper::formatFloat(float floatValue, int digits) {
     return ss.str();
 }
 
-int Helper::semitonesBetweenPitches(const std::string& pitch_A, const std::string& pitch_B) {
-    // Error checking
-    if (pitch_A.empty() || pitch_B.empty()) {
-        return 0;
-    }
-
-    // Rest case
-    if (pitch_A == MUSIC_XML::PITCH::REST || pitch_B == MUSIC_XML::PITCH::REST) {
-        return 0;
-    }
-
-    const int midiNumber_A = static_cast<int>(pitch2midiNote(pitch_A));
-    const int midiNumber_B = static_cast<int>(pitch2midiNote(pitch_B));
-
-    return midiNumber_B - midiNumber_A;
-}
-
 const std::string Helper::midiNote2pitch(const int midiNote, const std::string& accType) {
     // Rest case
     if (midiNote < 0) {
