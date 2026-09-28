@@ -12,6 +12,7 @@ void ScoreClass(const py::module &);
 void PartClass(const py::module &);
 void ClefClass(const py::module &);
 void MeasureClass(const py::module &);
+void PitchClass(const py::module &);
 void NoteClass(const py::module &);
 void ChordClass(const py::module &);
 void BarlineClass(const py::module &);
@@ -26,6 +27,7 @@ PYBIND11_MODULE(maiacore, m) {
     m.doc() = "This is a Python binding of C++ Maia Library";
 
     Constants(m);
+    PitchClass(m);
     NoteClass(m);
     ChordClass(m);
     ScoreClass(m);
