@@ -315,10 +315,8 @@ class Helper {
      *          transposePitch()) so the rule and its message are stated once.
      * @param semitones Transposition interval in semitones.
      * @throws std::runtime_error If semitones is not finite (an infinity or NaN), or is finite but
-     *         not a multiple of 0.5. Both messages name the offending value. The non-finite check
-     *         is separate because an infinity passes the multiple-of-0.5 test (`inf * 2 == inf ==
-     *         std::floor(inf)`), and would otherwise reach the spelling code — where `-inf`
-     *         silently produced a rest.
+     *         not a multiple of 0.5. Both messages name the offending value; a non-finite value
+     *         gets its own message, since it is not a number of semitones at all.
      */
     static void validateTransposeSemitones(const float semitones);
 
@@ -505,37 +503,24 @@ class Helper {
     static std::string toString(const RhythmFigure rhythmFigure);
 
     /**
-     * @brief Computes the intervallic contour difference vector between two melodic sequences.
+     * @brief Computes the interval-by-interval difference between two melodies' contours.
      * @param referenceMelody Vector of notes representing the reference melodic pattern.
      * @param otherMelody Vector of notes to compare against the reference melody.
-     * @return Vector of signed semitone differences (positive = upward transposition, negative =
-     * downward).
-     * @details Calculates the interval-by-interval pitch displacement between two melodies of equal
-     * length, producing a difference vector that quantifies melodic transposition, contour
-     * divergence, and pitch-space transformation. This function is fundamental for melodic
-     * similarity analysis, thematic variation studies, and computational pattern matching.
-     *
-     *          **Computation Process**:
-     *          For each aligned note pair (referenceMelody[i], otherMelody[i]):
-     *          - Compute signed semitone distance: otherMelody[i].pitch - referenceMelody[i].pitch
-     *          - Positive values indicate upward transposition (otherMelody higher than reference)
-     *          - Negative values indicate downward transposition (otherMelody lower than reference)
-     *          - Zero values indicate exact pitch match at that position
+     * @return One value per pair of consecutive positions: the reference melody's interval minus
+     *         the other melody's, in semitones (positive where the reference moves further up).
+     * @details At each position i, the interval from note i to note i + 1 is taken in each melody,
+     *          as the difference of the two notes' exact sounding positions
+     *          (Note::getQuarterToneSteps()), so a quarter tone counts as half a semitone; a pair
+     *          that includes a rest counts as an interval of 0. Only intervals are compared, so a
+     *          transposed copy of a melody gives all zeros, and a nonzero value marks where the two
+     *          contours differ.
      *
      *          **Example**:
      *          \code
-     *          referenceMelody: C4-E4-G4 (semitone sequence: 60-64-67)
-     *          otherMelody:     D4-F#4-A4 (semitone sequence: 62-66-69)
-     *          Difference vector: [+2, +2, +2] → uniform transposition up by major second
+     *          referenceMelody: C4-E4-G4    (intervals +4, +3)
+     *          otherMelody:     D4-F#4-A4   (intervals +4, +3)      -> [0, 0]: a transposition
+     *          otherMelody:     C4-E1b4-G4  (intervals +3.5, +3.5)  -> [+0.5, -0.5]
      *          \endcode
-     *
-     *          **Interpretation of Results**:
-     *          - **Constant difference vector** (e.g., [+5, +5, +5]): Exact transposition
-     *          - **Zero-centered fluctuations** (e.g., [-1, 0, +1]): Approximate contour match with
-     * chromatic variation
-     *          - **Large absolute values** (e.g., [+12, +7, -3]): Significant contour divergence,
-     * octave displacements
-     *          - **Alternating signs**: Contour inversion or melodic inversion transformation
      *
      *          **Applications**:
      *          - Melodic variation analysis (identifying theme-and-variation relationships)
@@ -544,11 +529,11 @@ class Helper {
      *          - Contour analysis (studying intervallic contour preservation vs. transformation)
      *          - Computational musicology (corpus-wide melodic relationship detection)
      *
-     * @note Both melodies must have the same length. If lengths differ, the function processes
-     *       min(referenceMelody.size(), otherMelody.size()) notes and ignores excess notes.
-     *
-     * @warning This function compares absolute pitch, not pitch-class. C4 and C5 differ by 12
-     * semitones. For pitch-class comparison (octave-invariant), reduce results modulo 12.
+     * @note If the lengths differ, only the first min(referenceMelody.size(), otherMelody.size())
+     *       notes of each melody are compared.
+     * @throws std::runtime_error If either melody has fewer than 2 notes, or holds a note whose
+     *         sounding pitch falls below the lowest representable pitch (see
+     *         Note::getMidiNumber()).
      */
     static std::vector<float> getSemitonesDifferenceBetweenMelodies(
         const std::vector<Note>& referenceMelody, const std::vector<Note>& otherMelody);

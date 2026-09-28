@@ -189,6 +189,51 @@ class ScoreQuarterToneReadTestCase(unittest.TestCase):
         self.assertNotIn("[WARN]", buffer.getvalue())
 
 
+class ScoreMelodyPatternSearchTestCase(unittest.TestCase):
+    """findMelodyPatternDataFrame's list overload searches each pattern on a worker thread."""
+
+    def test_a_failing_pattern_fails_the_list_overload_too(self):
+        """A segment that starts on a quarter tone has no interval name for its transposition, so
+        the search raises -- through the list overload exactly as through the single-pattern one,
+        instead of answering an empty DataFrame."""
+        score = ml.Score("./xml_examples/unit_test/test_quarter_tones.musicxml")
+        pattern = [ml.Note("C4"), ml.Note("D4")]
+
+        with self.assertRaises(RuntimeError) as single:
+            score.findMelodyPatternDataFrame(pattern)
+        with self.assertRaises(RuntimeError) as listed:
+            score.findMelodyPatternDataFrame([pattern])
+
+        message = str(listed.exception).splitlines()[0]
+        self.assertIn("Cannot compute an interval with the quarter tone", message)
+        self.assertEqual(message, str(single.exception).splitlines()[0])
+
+    def test_every_pattern_is_searched_whatever_the_thread_count(self):
+        """More patterns than processors: each is searched, and finds as many rows as when it is
+        searched on its own."""
+        score = ml.Score("./xml_examples/Bach/cello_suite_1_violin.xml")
+        numPatterns = (os.cpu_count() or 1) + 3
+        opening = []
+        part = score.getPart(0)
+        for m in range(part.getNumMeasures()):
+            measure = part.getMeasure(m)
+            for n in range(measure.getNumNotes(0)):
+                note = measure.getNote(n, 0)
+                if note.isNoteOn() and note.getVoice() == 1 and not note.inChord():
+                    opening.append(note.getWrittenPitch())
+            if len(opening) >= numPatterns + 2:
+                break
+        patterns = [[ml.Note(p) for p in opening[i : i + 3]] for i in range(numPatterns)]
+
+        table = score.findMelodyPatternDataFrame(patterns)
+        counts = table.groupby("patternIdx").size().to_dict()
+        for i, pattern in enumerate(patterns):
+            with self.subTest(pattern=i):
+                single = len(score.findMelodyPatternDataFrame(pattern))
+                self.assertGreater(single, 0)
+                self.assertEqual(int(counts.get(i, 0)), single)
+
+
 class ScorePropertiesTestCase(unittest.TestCase):
     """Tests for Score basic properties"""
 

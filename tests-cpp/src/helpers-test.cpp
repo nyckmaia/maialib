@@ -1,10 +1,12 @@
 #include <gtest/gtest.h>
 
+#include <cmath>
 #include <iomanip>
 #include <limits>
 #include <optional>
 #include <regex>
 #include <sstream>
+#include <vector>
 
 #include "maiacore/helper.h"
 #include "maiacore/log.h"
@@ -858,4 +860,32 @@ TEST(AccidentalSpelling, IsIndependentOfTheGlobalCppLocale) {
     const std::string threeQuartersFlat = Note("E3b4").toXML();
     EXPECT_NE(threeQuartersFlat.find("<alter>-1.5</alter>"), std::string::npos)
         << threeQuartersFlat;
+}
+
+// ===== Melodic contour differences: exact for quarter tones ===== //
+
+// The result's float type expresses a quarter tone exactly, so the difference is computed rather
+// than rejected: a neutral third (3.5 semitones) against a major third (4) differs by half a
+// semitone.
+TEST(MelodyContour, QuarterToneIntervalsAreComputedExactly) {
+    const std::vector<Note> reference = {Note("C4"), Note("E4"), Note("G4")};
+    const std::vector<Note> neutralThird = {Note("C4"), Note("E1b4"), Note("G4")};
+    EXPECT_EQ(Helper::getSemitonesDifferenceBetweenMelodies(reference, neutralThird),
+              (std::vector<float>{0.5f, -0.5f}));
+
+    // Transposed by a quarter tone and two semitones: the same contour, so no difference.
+    const std::vector<Note> transposed = {Note("D1x4"), Note("F3x4"), Note("A1x4")};
+    EXPECT_EQ(Helper::getSemitonesDifferenceBetweenMelodies(reference, transposed),
+              (std::vector<float>{0.0f, 0.0f}));
+
+    EXPECT_NEAR(Helper::calculateMelodyEuclideanSimilarity(reference, neutralThird),
+                1.0f / (1.0f + std::sqrt(0.5f)), 1e-6f);
+}
+
+// A pair that includes a rest counts as an interval of 0, as before.
+TEST(MelodyContour, APairWithARestCountsAsNoInterval) {
+    const std::vector<Note> reference = {Note("C4"), Note("E4"), Note("G4")};
+    const std::vector<Note> withRest = {Note("C4"), Note("rest"), Note("G1x4")};
+    EXPECT_EQ(Helper::getSemitonesDifferenceBetweenMelodies(reference, withRest),
+              (std::vector<float>{4.0f, 3.0f}));
 }

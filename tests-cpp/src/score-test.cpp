@@ -8,6 +8,7 @@
 #include <fstream>
 #include <sstream>
 #include <string>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -1018,4 +1019,64 @@ TEST(ScoreQuarterToneRoundTrip, AQuarterToneScoreWrittenByMaialibReadsBackUnchan
 
     EXPECT_EQ(readBack, pitches);
     EXPECT_EQ(printed.find("[WARN]"), std::string::npos) << printed;
+}
+
+// ====================
+// Melody Pattern Search
+// ====================
+
+// The list overload searches each pattern on a worker thread. A pattern whose search raises -- here
+// every segment that starts on a quarter tone, whose transposition has no interval name -- fails
+// the whole call with that error, exactly as the single-pattern overload does, instead of leaving
+// an empty table behind.
+TEST(ScoreMelodyPatternSearch, AFailingPatternFailsTheListOverloadToo) {
+    Score score("./test/xml_examples/unit_test/test_quarter_tones.musicxml");
+    const std::vector<std::vector<Note>> patterns = {{Note("C4"), Note("D4")}};
+
+    const std::string single = thrownFirstLine([&] { score.findMelodyPattern(patterns[0]); });
+    ASSERT_NE(single.find("Cannot compute an interval with the quarter tone"), std::string::npos)
+        << single;
+
+    const std::string list = thrownFirstLine([&] { score.findMelodyPattern(patterns); });
+    EXPECT_EQ(list, single);
+}
+
+// More patterns than hardware threads: every pattern is searched, and each finds exactly what it
+// finds when searched on its own.
+TEST(ScoreMelodyPatternSearch, EveryPatternIsSearchedWhateverTheThreadCount) {
+    Score score("./test/xml_examples/Bach/cello_suite_1_violin.xml");
+    const size_t numThreads = std::max(1u, std::thread::hardware_concurrency());
+
+    // Three-note windows of the score's own opening melody, so every pattern matches somewhere.
+    std::vector<std::string> opening;
+    Part& part = score.getPart(0);
+    for (int m = 0; m < part.getNumMeasures() && opening.size() < numThreads + 5; m++) {
+        const Measure& measure = part.getMeasure(m);
+        for (int n = 0; n < measure.getNumNotes(0); n++) {
+            const Note& note = measure.getNote(n, 0);
+            if (note.isNoteOn() && note.getVoice() == 1 && !note.inChord()) {
+                opening.push_back(note.getWrittenPitch());
+            }
+        }
+    }
+    std::vector<std::vector<Note>> patterns;
+    for (size_t i = 0; i < numThreads + 3; i++) {
+        patterns.push_back({Note(opening[i]), Note(opening[i + 1]), Note(opening[i + 2])});
+    }
+
+    const auto tables = score.findMelodyPattern(patterns, 0.5f, 0.5f);
+    ASSERT_EQ(tables.size(), patterns.size());
+    for (size_t i = 0; i < patterns.size(); i++) {
+        const auto single = score.findMelodyPattern(patterns[i], 0.5f, 0.5f);
+        EXPECT_FALSE(single.empty()) << "pattern " << i;
+        EXPECT_EQ(tables[i], single) << "pattern " << i << " of " << patterns.size();
+    }
+}
+
+// C4-D4 (+2) and C4-D1b4 (+1.5) are two patterns a quarter tone apart, not duplicates: comparing
+// rounded MIDI numbers made them equal, since D1b4 rounds to the MIDI number of D4.
+TEST(ScoreMelodyPatternSearch, PatternsAQuarterToneApartAreNotMergedAsDuplicates) {
+    Score score("./test/xml_examples/unit_test/melody_patterns_quarter_tone_apart.xml");
+    const auto tables = score.findAnyMelodyPattern(2);
+    EXPECT_EQ(tables.size(), 3u);  // C4-D4, D4-C4 and C4-D1b4
 }

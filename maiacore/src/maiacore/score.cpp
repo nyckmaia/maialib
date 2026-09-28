@@ -1,12 +1,13 @@
 #include "maiacore/score.h"
 
 #include <algorithm>
+#include <atomic>
+#include <exception>
 #include <filesystem>  // Para std::filesystem::absolute
 #include <future>
 #include <iostream>
 #include <limits>  // std::numeric_limits
 #include <locale>
-#include <mutex>
 #include <optional>
 #include <set>
 #include <sstream>
@@ -1829,45 +1830,50 @@ std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
     const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
     const std::function<float(float, float)> totalSimilarityCallback) const {
     const auto& noteEvents = collectNoteEvents();  // Obtém o cache de eventos de nota uma única vez
-    std::vector<Score::MelodyPatternTable> results(melodyPatterns.size());
+    const size_t numPatterns = melodyPatterns.size();
+    std::vector<Score::MelodyPatternTable> results(numPatterns);
 
-    // Mutex para proteger o acesso ao vetor `results`
-    std::mutex results_mutex;
+    // An exception cannot leave a worker thread, so each pattern's search stores the one it
+    // raised in its own slot, and the first of them, in pattern order, is rethrown once every
+    // worker has joined: a failing pattern fails the whole call, as it does for a single pattern,
+    // instead of leaving an empty table behind.
+    std::vector<std::exception_ptr> errors(numPatterns);
 
-    // Função para processar cada padrão de melodia
-    auto process_pattern = [&](size_t idx) {
-        std::cout << "Processando padrão de melodia: " << idx << std::endl;
-
-        // Realiza a operação intensiva em C++ e armazena o resultado
-        auto result = findMelodyPattern(melodyPatterns[idx], totalIntervalsSimilarityThreshold,
-                                        totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
-                                        rhythmSimilarityCallback, totalIntervalSimilarityCallback,
-                                        totalRhythmSimilarityCallback, totalSimilarityCallback);
-
-        // Protege o acesso a `results` antes de armazenar o resultado
-        std::lock_guard<std::mutex> lock(results_mutex);
-        results[idx] = std::move(result);
+    // Each worker takes the next pattern nobody has claimed until none is left, so every pattern
+    // is searched however many there are; the thread count only bounds how many run at once.
+    // Workers write distinct elements of 'results' and 'errors', so no lock is needed.
+    std::atomic<size_t> nextPattern{0};
+    auto worker = [&]() {
+        for (size_t idx = nextPattern++; idx < numPatterns; idx = nextPattern++) {
+            std::cout << "Processando padrão de melodia: " << idx << std::endl;
+            try {
+                results[idx] =
+                    findMelodyPattern(melodyPatterns[idx], totalIntervalsSimilarityThreshold,
+                                      totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
+                                      rhythmSimilarityCallback, totalIntervalSimilarityCallback,
+                                      totalRhythmSimilarityCallback, totalSimilarityCallback);
+            } catch (...) {
+                errors[idx] = std::current_exception();
+            }
+        }
     };
 
-    // Limita o número de threads de acordo com o número de núcleos da CPU
-    size_t num_threads =
-        std::min(melodyPatterns.size(), static_cast<size_t>(std::thread::hardware_concurrency()));
+    // hardware_concurrency() answers 0 when it cannot tell, hence at least one thread.
+    const size_t numThreads = std::max<size_t>(
+        1, std::min(numPatterns, static_cast<size_t>(std::thread::hardware_concurrency())));
     std::vector<std::thread> threads;
-
-    // Executa cada padrão de melodia em um thread separado até o limite definido
-    for (size_t idx = 0; idx < num_threads; ++idx) {
-        threads.emplace_back([&, idx]() {
-            try {
-                process_pattern(idx);
-            } catch (const std::exception& e) {
-                std::cerr << "Erro ao processar padrão: " << e.what() << std::endl;
-            }
-        });
+    threads.reserve(numThreads);
+    for (size_t t = 0; t < numThreads; ++t) {
+        threads.emplace_back(worker);
+    }
+    for (auto& thread : threads) {
+        thread.join();
     }
 
-    // Espera por todos os threads
-    for (auto& thread : threads) {
-        if (thread.joinable()) thread.join();
+    for (const auto& error : errors) {
+        if (error) {
+            std::rethrow_exception(error);
+        }
     }
 
     return results;
@@ -1877,13 +1883,16 @@ void Score::removeDuplicatePatterns(std::vector<std::vector<Note>>* patterns) co
     auto& patternsRef = *patterns;
     std::set<size_t> uniqueIndices;  // Armazena os índices de padrões únicos
 
-    // Função auxiliar para calcular as diferenças de MIDI entre notas
-    auto calculateMidiDifferences = [](const std::vector<Note>& pattern) {
-        std::vector<int> midiDiffs;
+    // The interval between each pair of consecutive notes, in exact semitones: patterns that
+    // differ by a quarter tone are different patterns, which rounded MIDI numbers cannot tell.
+    // Positions are multiples of 0.5, held exactly, so the differences compare exactly.
+    auto calculatePitchDifferences = [](const std::vector<Note>& pattern) {
+        std::vector<float> pitchDiffs;
         for (size_t i = 1; i < pattern.size(); ++i) {
-            midiDiffs.push_back(pattern[i].getMidiNumber() - pattern[i - 1].getMidiNumber());
+            pitchDiffs.push_back(pattern[i].getQuarterToneSteps() -
+                                 pattern[i - 1].getQuarterToneSteps());
         }
-        return midiDiffs;
+        return pitchDiffs;
     };
 
     // Função auxiliar para calcular as diferenças de durações normalizadas entre notas
@@ -1901,19 +1910,19 @@ void Score::removeDuplicatePatterns(std::vector<std::vector<Note>>* patterns) co
             continue;  // Padrão já marcado como único
         }
 
-        // Calcula as diferenças de MIDI e duração para o padrão atual
-        auto midiDiffs1 = calculateMidiDifferences(patternsRef[i]);
+        // The pitch and duration differences of the current pattern
+        auto pitchDiffs1 = calculatePitchDifferences(patternsRef[i]);
         auto durationDiffs1 = calculateDurationDifferences(patternsRef[i]);
 
         bool isUnique = true;
 
         for (size_t j = i + 1; j < patternsRef.size(); ++j) {
-            // Calcula as diferenças de MIDI e duração para o padrão a ser comparado
-            auto midiDiffs2 = calculateMidiDifferences(patternsRef[j]);
+            // The pitch and duration differences of the pattern it is compared with
+            auto pitchDiffs2 = calculatePitchDifferences(patternsRef[j]);
             auto durationDiffs2 = calculateDurationDifferences(patternsRef[j]);
 
             // Verifica se ambos os critérios de igualdade são atendidos
-            if (midiDiffs1 == midiDiffs2 && durationDiffs1 == durationDiffs2) {
+            if (pitchDiffs1 == pitchDiffs2 && durationDiffs1 == durationDiffs2) {
                 isUnique = false;
                 uniqueIndices.insert(j);  // Marca o padrão `j` como duplicado
             }

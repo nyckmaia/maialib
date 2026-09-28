@@ -677,6 +677,21 @@ class QuarterToneHelpers(unittest.TestCase):
                 self.assertIn("Unknown accidental alter value", str(ctx.exception).splitlines()[0])
 
 
+class MelodyContour(unittest.TestCase):
+    # Mirrors MelodyContour.QuarterToneIntervalsAreComputedExactly: the float result expresses a
+    # quarter tone exactly, so the difference is computed rather than rejected.
+    def testQuarterToneIntervalsAreComputedExactly(self):
+        reference = [ml.Note("C4"), ml.Note("E4"), ml.Note("G4")]
+        neutralThird = [ml.Note("C4"), ml.Note("E1b4"), ml.Note("G4")]
+        self.assertEqual(
+            ml.Helper.getSemitonesDifferenceBetweenMelodies(reference, neutralThird), [0.5, -0.5]
+        )
+        transposed = [ml.Note("D1x4"), ml.Note("F3x4"), ml.Note("A1x4")]
+        self.assertEqual(
+            ml.Helper.getSemitonesDifferenceBetweenMelodies(reference, transposed), [0.0, 0.0]
+        )
+
+
 class Version(unittest.TestCase):
     def testVersionHasNoQuoteCharacters(self):
         self.assertNotIn('"', ml.__version__)

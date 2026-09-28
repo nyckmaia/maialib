@@ -1799,32 +1799,19 @@ std::vector<float> Helper::getSemitonesDifferenceBetweenMelodies(
     const int numValidSemitones = minSize - 1;
     std::vector<float> semitones(numValidSemitones, 0.0f);
 
+    // The signed interval from one note to the next, in exact semitones, or 0 when either is a
+    // rest. A quarter tone is half a semitone, which the float result expresses exactly, so this
+    // computes the interval rather than rejecting it as an Interval would.
+    const auto exactInterval = [](const Note& first, const Note& second) {
+        if (first.isNoteOff() || second.isNoteOff()) {
+            return 0.0f;
+        }
+        return second.getQuarterToneSteps() - first.getQuarterToneSteps();
+    };
+
     for (int i = 0; i < numValidSemitones; i++) {
-        // For the Reference Melody
-        const Note& firstReferenceNote = referenceMelody.at(i);
-        const Note& secondReferenceNote = referenceMelody.at(i + 1);
-
-        int referenceSemitones = 0;
-        if (firstReferenceNote.isNoteOff() || secondReferenceNote.isNoteOff()) {
-            referenceSemitones = 0;
-        } else {
-            const Interval& referenceInterval = Interval(firstReferenceNote, secondReferenceNote);
-            referenceSemitones = referenceInterval.getNumSemitones();
-        }
-
-        // For the Other Melody
-        const Note& firstOtherNote = otherMelody.at(i);
-        const Note& secondOtherNote = otherMelody.at(i + 1);
-
-        int otherSemitones = 0;
-        if (firstOtherNote.isNoteOff() || secondOtherNote.isNoteOff()) {
-            otherSemitones = 0;
-        } else {
-            const Interval& otherInterval = Interval(firstOtherNote, secondOtherNote);
-            otherSemitones = otherInterval.getNumSemitones();
-        }
-
-        semitones[i] = (float)referenceSemitones - (float)otherSemitones;
+        semitones[i] = exactInterval(referenceMelody.at(i), referenceMelody.at(i + 1)) -
+                       exactInterval(otherMelody.at(i), otherMelody.at(i + 1));
     }
 
     return semitones;
