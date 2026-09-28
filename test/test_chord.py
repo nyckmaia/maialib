@@ -200,6 +200,22 @@ class Info(unittest.TestCase):
             myChord.info()
 
 
+class Transpose(unittest.TestCase):
+    # Task 11, section N, Python parity: a note transposed below MIDI 0 was silently replaced by
+    # a rest ({"C4", "C-1"} transposed by -1 became {"B3", "rest"}), and a note that raised
+    # part-way through left the chord half-transposed. It now raises and changes nothing. Mirrors
+    # the C++ transpose.outOfRangeRaisesAndLeavesTheChordUnchanged test.
+    def testOutOfRangeRaisesAndLeavesTheChordUnchanged(self):
+        myChord = ml.Chord(["C4", "C-1"])
+        with self.assertRaises(RuntimeError) as context:
+            myChord.transpose(-1)
+
+        self.assertIn(
+            "outside the representable range", str(context.exception).splitlines()[0]
+        )
+        self.assertEqual([note.getPitch() for note in myChord.getNotes()], ["C4", "C-1"])
+
+
 class ToInversion(unittest.TestCase):
     def testEmptyChordRaises(self):
         myChord = ml.Chord()

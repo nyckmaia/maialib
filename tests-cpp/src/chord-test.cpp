@@ -242,6 +242,53 @@ TEST(transpose, rejectsAnIntervalOffTheQuarterToneGrid) {
     }
 }
 
+// Task 11, section N: both transposition methods stored each transposed note as they went, so a
+// note that raised part-way through left the chord half-transposed. Rejecting an out-of-range
+// result, instead of answering a rest, made that reachable at the bottom of the range, where the
+// note used to be silently deleted instead -- measured at HEAD 9051bb8: {"C4", "C-1"} transposed
+// by -1 became {"B3", "rest"}. Every note is now transposed before any is stored.
+TEST(transpose, outOfRangeRaisesAndLeavesTheChordUnchanged) {
+    const std::vector<std::string> pitches = {"C4", "C-1"};
+    Chord chord(pitches);
+
+    try {
+        chord.transpose(-1.0f);
+        FAIL() << "Expected std::runtime_error for a note transposed below MIDI 0";
+    } catch (const std::runtime_error& e) {
+        const std::string what = e.what();
+        EXPECT_NE(what.find("outside the representable range"), std::string::npos)
+            << "message: " << what;
+    }
+
+    ASSERT_EQ(chord.size(), 2);
+    EXPECT_EQ(chord.getNote(0).getPitch(), "C4");   // not "B3": nothing was stored
+    EXPECT_EQ(chord.getNote(1).getPitch(), "C-1");  // not "rest"
+}
+
+// The stack half of the same fix, at the top of the range. Measured at HEAD 9051bb8: this open
+// stack was left as {"F4", "A4", "G11"} after the raise.
+TEST(transposeStackOnly, aFailureLeavesTheStackUnchanged) {
+    const std::vector<std::string> pitches = {"C4", "E4", "G11"};
+    Chord chord(pitches);
+    ASSERT_EQ(chord.getOpenStackNotes().size(), 3u);  // stacks the chord: {C4, E4, G11}
+
+    // G11 + 5 is MIDI 156, which only "B#11" spells; the note's own (natural) spelling overflows
+    // to octave 12.
+    try {
+        chord.transposeStackOnly(5.0f);
+        FAIL() << "Expected std::runtime_error for G11 transposed by 5 with a natural spelling";
+    } catch (const std::runtime_error& e) {
+        EXPECT_NE(std::string(e.what()).find("within octaves"), std::string::npos)
+            << "message: " << e.what();
+    }
+
+    const std::vector<Note> stack = chord.getOpenStackNotes();
+    ASSERT_EQ(stack.size(), 3u);
+    EXPECT_EQ(stack[0].getPitch(), "C4");  // not "F4"
+    EXPECT_EQ(stack[1].getPitch(), "E4");  // not "A4"
+    EXPECT_EQ(stack[2].getPitch(), "G11");
+}
+
 // Task 10, section D: toInversion() needs no transposition of its own -- its body calls
 // _originalNotes[0].transpose(12), so repairing Note::transpose() covers it. Pinned so nobody
 // later gives the inversion a private copy of the operation again.

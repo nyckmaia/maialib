@@ -313,6 +313,17 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertIn("multiple of 0.5", str(ctx.exception))
         self.assertEqual(note.getPitch(), "C4")  # the refused call changed nothing
 
+    # Task 11, section N, Python parity: Note.transpose() silently turned a note transposed below
+    # MIDI 0 into a rest. Mirrors the C++
+    # NoteTransposition.TransposeOutOfRangeRaisesAndLeavesTheNoteUnchanged test.
+    def testTransposeOutOfRangeRaisesAndLeavesTheNoteUnchanged(self):
+        note = ml.Note("C4")
+        with self.assertRaises(RuntimeError) as ctx:
+            note.transpose(-61)
+        self.assertIn("outside the representable range", str(ctx.exception).splitlines()[0])
+        self.assertEqual(note.getPitch(), "C4")
+        self.assertTrue(note.isNoteOn())
+
     # Fix round 5 (F1), Python parity: silencing a TRANSPOSING instrument with
     # setIsNoteOn(False) makes it a rest but deliberately keeps its transposing interval, so
     # isTransposed() stays True. getSoundingPitch() therefore used to take its transposition

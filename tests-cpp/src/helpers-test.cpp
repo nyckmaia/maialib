@@ -597,23 +597,173 @@ TEST(PitchSpelling, TransposePitchRejectsAnIntervalOffTheQuarterToneGrid) {
 // The "got '<result>'" branch is what pins the -inf case specifically: a returned value fails the
 // test and prints what came back, so a silent "rest" is reported as the wrong ANSWER it is, rather
 // than being indistinguishable from a wrong error message.
+//
+// Task 11, section N item 4: the message must also NAME the offending value, as the sibling
+// off-grid test above requires of '0.3'. Asserting "finite" alone let the value drop out of the
+// message unnoticed. "nan" is matched without its quotes because std::to_string() writes a NaN
+// with its sign bit set as "-nan(ind)" on this platform's C runtime.
 TEST(PitchSpelling, TransposePitchRejectsNonFiniteIntervals) {
-    const auto expectRejected = [](const char* label, const float interval) {
+    const auto expectRejected = [](const char* label, const float interval, const char* value) {
         try {
             const std::string result = Helper::transposePitch("C4", interval);
             ADD_FAILURE() << label << ": expected std::runtime_error, got '" << result << "'";
         } catch (const std::runtime_error& e) {
             const std::string what = e.what();
             EXPECT_NE(what.find("finite"), std::string::npos) << label << " message: " << what;
+            EXPECT_NE(what.find(value), std::string::npos) << label << " message: " << what;
             EXPECT_EQ(what.find("Unknown accidental"), std::string::npos)
                 << label << " message: " << what;
         }
     };
 
     const float infinity = std::numeric_limits<float>::infinity();
-    expectRejected("+inf", infinity);
-    expectRejected("-inf", -infinity);
-    expectRejected("nan", std::numeric_limits<float>::quiet_NaN());
+    expectRejected("+inf", infinity, "'inf'");
+    expectRejected("-inf", -infinity, "'-inf'");
+    expectRejected("nan", std::numeric_limits<float>::quiet_NaN(), "nan");
+}
+
+// Task 11, section N item 2: a real pitch transposed below MIDI 0 answered steps2pitch()'s rest
+// sentinel, so transposePitch("C4", -61) returned "rest" -- and through Note::transpose() and
+// Chord::transpose() a note transposed too low was silently deleted (also true on main). Far above
+// the top, an out-of-range int conversion failed with the unrelated "Unknown accidental alter
+// value: 5147483648.0". Both ends now raise, naming the pitch, the interval and the range.
+// Transposing a REST still answers "rest" (pinned in TransposePitchMovesByAndPreservesQuarterTones).
+TEST(PitchSpelling, TransposePitchRejectsAResultOutsideTheRepresentableRange) {
+    struct Case {
+        const char* pitch;
+        float semitones;
+        const char* quotedPitch;
+        const char* interval;
+    };
+    const Case cases[] = {
+        {"C4", -61.0f, "'C4'", "-61"},           // position -1: was "rest"
+        {"C4", -3e9f, "'C4'", "-3000000000"},    // far below: was "rest"
+        {"C1b-1", -0.5f, "'C1b-1'", "-0.5"},     // one quarter tone below the lowest pitch
+        {"C4", 3e9f, "'C4'", "3000000000"},      // far above: was "Unknown accidental ..."
+        {"B11", 2.5f, "'B11'", "2.5"},           // 157.5: one quarter tone above "Bx11"
+    };
+
+    for (const auto& c : cases) {
+        const std::string label = std::string(c.pitch) + " by " + c.interval;
+        try {
+            const std::string result = Helper::transposePitch(c.pitch, c.semitones);
+            ADD_FAILURE() << label << ": expected std::runtime_error, got '" << result << "'";
+        } catch (const std::runtime_error& e) {
+            const std::string what = e.what();
+            EXPECT_NE(what.find("outside the representable range"), std::string::npos)
+                << label << " message: " << what;
+            EXPECT_NE(what.find(c.quotedPitch), std::string::npos) << label << " message: " << what;
+            EXPECT_NE(what.find(c.interval), std::string::npos) << label << " message: " << what;
+            EXPECT_NE(what.find("C1b-1"), std::string::npos) << label << " message: " << what;
+            EXPECT_NE(what.find("Bx11"), std::string::npos) << label << " message: " << what;
+        }
+    }
+
+    // Both ends of the range are still reachable: the lowest pitch is "C1b-1" (-0.5, which rounds,
+    // ties upward, to MIDI 0) and the highest is "Bx11" (157).
+    EXPECT_EQ(Helper::transposePitch("C-1", -0.5f, ""), "C1b-1");
+    EXPECT_EQ(Helper::transposePitch("B11", 2.0f, "x"), "Bx11");
+}
+
+// Task 11, section N: two more ways transposePitch() said something other than what it does.
+TEST(PitchSpelling, TransposePitchTreatsEveryRestSpellingAsARestAndParsesTheInputFirst) {
+    // An empty string is a rest (splitPitch()'s rule), but transposePitch() compared the string
+    // with "rest", so "" fell through to the arithmetic as MIDI_REST (-1): transposed up two
+    // semitones it answered "C#-1", a pitch conjured out of a rest.
+    EXPECT_EQ(Helper::transposePitch("", 2.0f), "rest");
+    EXPECT_EQ(Helper::transposePitch("", -2.0f), "rest");
+
+    // An interval of 0 returned the input unchanged without parsing it, so an invalid pitch
+    // string passed straight through although the documentation promised a throw.
+    try {
+        const std::string result = Helper::transposePitch("H4", 0.0f);
+        ADD_FAILURE() << "expected std::runtime_error for 'H4', got '" << result << "'";
+    } catch (const std::runtime_error& e) {
+        EXPECT_NE(std::string(e.what()).find("Unknown diatonic pitch"), std::string::npos)
+            << "message: " << e.what();
+    }
+    EXPECT_EQ(Helper::transposePitch("Eb", 0.0f), "Eb");  // a valid input is still returned as is
+}
+
+// Task 11, section N item 1: steps2pitch() converted its argument with static_cast<int> after
+// checking only the negative side, so a non-finite position was undefined behaviour -- reachable
+// from Python the moment this function is bound. It is now rejected before any cast, naming the
+// value and the representable range. Without the check, +inf and nan throw with a different
+// message and -inf silently answers "rest".
+TEST(PitchSpelling, Steps2PitchRejectsANonFinitePositionBeforeAnyCast) {
+    const auto expectRejected = [](const char* label, const float position, const char* value) {
+        try {
+            const std::string result = Helper::steps2pitch(position);
+            ADD_FAILURE() << label << ": expected std::runtime_error, got '" << result << "'";
+        } catch (const std::runtime_error& e) {
+            const std::string what = e.what();
+            EXPECT_NE(what.find("finite"), std::string::npos) << label << " message: " << what;
+            EXPECT_NE(what.find(value), std::string::npos) << label << " message: " << what;
+            EXPECT_NE(what.find("C1b-1"), std::string::npos) << label << " message: " << what;
+            EXPECT_NE(what.find("Bx11"), std::string::npos) << label << " message: " << what;
+        }
+    };
+
+    const float infinity = std::numeric_limits<float>::infinity();
+    expectRejected("+inf", infinity, "'inf'");
+    expectRejected("-inf", -infinity, "'-inf'");
+    expectRejected("nan", std::numeric_limits<float>::quiet_NaN(), "nan");
+}
+
+// Task 11, section N item 1: the positive side had no check at all -- a position above int's range
+// was an undefined-behaviour cast, and one merely above "Bx11" failed with midiNote2pitch()'s
+// unrelated octave message. Both now name the value and the range.
+TEST(PitchSpelling, Steps2PitchRejectsAPositionAboveTheRepresentableRange) {
+    EXPECT_EQ(Helper::steps2pitch(157.0f, "x"), "Bx11");  // the ceiling itself is spellable
+
+    const float positions[] = {157.5f, 158.0f, 3e9f, std::numeric_limits<float>::max()};
+    for (const float position : positions) {
+        const std::string value = std::to_string(position);
+        try {
+            const std::string result = Helper::steps2pitch(position, "x");
+            ADD_FAILURE() << value << ": expected std::runtime_error, got '" << result << "'";
+        } catch (const std::runtime_error& e) {
+            const std::string what = e.what();
+            EXPECT_NE(what.find("above the representable range"), std::string::npos)
+                << value << " message: " << what;
+            EXPECT_NE(what.find(value), std::string::npos) << value << " message: " << what;
+            EXPECT_NE(what.find("Bx11"), std::string::npos) << value << " message: " << what;
+        }
+    }
+}
+
+// Task 11, section N: every pitch position is a multiple of 0.5, but steps2pitch() never checked,
+// and alterValue2symbol() formats its argument to one decimal place before matching it -- so an
+// off-grid position was silently SNAPPED to the grid (60.45 became "C1x4") or rejected with an
+// unrelated "Unknown accidental alter value", depending on how far off it was.
+TEST(PitchSpelling, Steps2PitchRejectsAPositionOffTheQuarterToneGrid) {
+    const float positions[] = {60.45f, 60.25f, -0.3f};
+    for (const float position : positions) {
+        const std::string value = std::to_string(position);
+        try {
+            const std::string result = Helper::steps2pitch(position);
+            ADD_FAILURE() << value << ": expected std::runtime_error, got '" << result << "'";
+        } catch (const std::runtime_error& e) {
+            const std::string what = e.what();
+            EXPECT_NE(what.find("multiple of 0.5"), std::string::npos)
+                << value << " message: " << what;
+            EXPECT_NE(what.find(value), std::string::npos) << value << " message: " << what;
+        }
+    }
+}
+
+// Task 11, section N: below MIDI note 0 still answers the rest sentinel -- deliberately, parallel
+// to midiNote2pitch() for a negative MIDI number, so a note transposed below MIDI 0 stays
+// constructible -- but "below MIDI 0" now means what it means everywhere else in this library: the
+// position ROUNDS, ties upward, to a negative MIDI number. The test was `exactSteps < 0`, which
+// also turned -0.5 into a rest although it rounds to MIDI 0 and is "C1b-1", a pitch this library
+// holds (Pitch("C1b-1") is constructible).
+TEST(PitchSpelling, Steps2PitchAnswersARestOnlyBelowMidiZero) {
+    EXPECT_EQ(Helper::steps2pitch(-0.5f), "C1b-1");  // was "rest"
+    EXPECT_EQ(Helper::steps2pitch(0.0f), "C-1");
+    EXPECT_EQ(Helper::steps2pitch(-1.0f), "rest");
+    EXPECT_EQ(Helper::steps2pitch(-3e9f), "rest");
+    EXPECT_EQ(Helper::steps2pitch(-std::numeric_limits<float>::max()), "rest");
 }
 
 TEST(Helper, GetLibraryVersion) {

@@ -438,16 +438,57 @@ class PitchSpelling(unittest.TestCase):
     # inf * 2 == inf == floor(inf). +inf then failed far away with an unrelated message, and -inf
     # SILENTLY returned "rest" -- an infinite transposition quietly turning a note into a rest.
     # Mirrors the C++ PitchSpelling.TransposePitchRejectsNonFiniteIntervals test.
+    #
+    # Task 11, section N item 4: the message must also NAME the offending value, as the sibling
+    # off-grid test requires of 0.3. Only the first line is read: the rest is a stack trace.
     def testTransposePitchRejectsNonFiniteIntervals(self):
-        for label, value in (
-            ("+inf", float("inf")),
-            ("-inf", float("-inf")),
-            ("nan", float("nan")),
+        for label, value, shown in (
+            ("+inf", float("inf"), "'inf'"),
+            ("-inf", float("-inf"), "'-inf'"),
+            ("nan", float("nan"), "nan"),
         ):
             with self.subTest(interval=label):
                 with self.assertRaises(RuntimeError) as ctx:
                     ml.Helper.transposePitch("C4", value)
-                self.assertIn("finite", str(ctx.exception))
+                message = str(ctx.exception).splitlines()[0]
+                self.assertIn("finite", message)
+                self.assertIn(shown, message)
+
+    # Task 11, section N, Python parity: a real pitch transposed below MIDI 0 answered "rest"
+    # (transposePitch("C4", -61) returned "rest"), and far above the top it failed with the
+    # unrelated "Unknown accidental alter value: 5147483648.0". Both ends now raise, naming the
+    # pitch and the range. Mirrors the C++
+    # PitchSpelling.TransposePitchRejectsAResultOutsideTheRepresentableRange test.
+    def testTransposePitchRejectsResultOutsideRepresentableRange(self):
+        for pitch, semitones in (
+            ("C4", -61),
+            ("C4", -3e9),
+            ("C1b-1", -0.5),
+            ("C4", 3e9),
+            ("B11", 2.5),
+        ):
+            with self.subTest(pitch=pitch, semitones=semitones):
+                with self.assertRaises(RuntimeError) as ctx:
+                    ml.Helper.transposePitch(pitch, semitones)
+                message = str(ctx.exception).splitlines()[0]
+                self.assertIn("outside the representable range", message)
+                self.assertIn(f"'{pitch}'", message)
+                self.assertIn("C1b-1", message)
+                self.assertIn("Bx11", message)
+
+        # Both ends of the range stay reachable.
+        self.assertEqual(ml.Helper.transposePitch("C-1", -0.5, ""), "C1b-1")
+        self.assertEqual(ml.Helper.transposePitch("B11", 2, "x"), "Bx11")
+
+    # Task 11, section N, Python parity: an empty string is a rest, but transposePitch() compared
+    # the string with "rest", so "" transposed up two semitones answered "C#-1"; and an interval
+    # of 0 returned an invalid pitch string unchanged instead of raising.
+    def testTransposePitchTreatsEveryRestSpellingAsARestAndParsesTheInputFirst(self):
+        self.assertEqual(ml.Helper.transposePitch("", 2), "rest")
+        self.assertEqual(ml.Helper.transposePitch("rest", 2), "rest")
+        with self.assertRaises(RuntimeError) as ctx:
+            ml.Helper.transposePitch("H4", 0)
+        self.assertIn("Unknown diatonic pitch", str(ctx.exception).splitlines()[0])
 
     def testSplitPitch(self):
         self.assertEqual(ml.Helper.splitPitch("Dbb-1"), ("Dbb", "D", -1, -2.0, "bb"))

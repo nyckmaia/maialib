@@ -156,15 +156,26 @@ class Helper {
      *          quarter tone, which is always 0 or -0.5; the base semitone is spelled with
      *          midiNote2pitch() and the remainder is then folded into that spelling's accidental
      *          (e.g. 60.5 with accType "" gives "C1x4", since "C4" carries an alter of 0).
-     * @param exactSteps Exact pitch position in semitones, a multiple of 0.5 (e.g. 60.5 for
-     *        "C1x4"). A negative position returns "rest", matching midiNote2pitch().
+     *
+     *          Defined for every float: a non-finite, off-grid or too-high position throws, a
+     *          position below MIDI note 0 returns "rest", and only a position inside the
+     *          representable range is ever converted to an int. The representable range runs from
+     *          -0.5 ("C1b-1", the lowest position that still rounds, ties upward, to MIDI note 0)
+     *          to Pitch::maxRepresentableMidi() (157, "Bx11").
+     * @param exactSteps Exact pitch position in semitones (e.g. 60.5 for "C1x4"); must be finite
+     *        and a multiple of 0.5. A position below MIDI note 0 -- one that rounds to a negative
+     *        MIDI number, i.e. anything below -0.5 -- returns "rest", deliberately parallel to
+     *        midiNote2pitch()'s contract for a negative MIDI number; -0.5 itself is "C1b-1".
      * @param accType Preferred accidental type for the BASE semitone: "", "#", "b", "x" or "bb".
      *        It is a preference, not a demand: when the requested type cannot absorb the quarter
      *        tone (a "bb" base is already at the -2 limit, so -2.5 has no spelling), the default
      *        spelling is used instead and a warning is logged.
-     * @return Pitch string within octaves -1..11.
-     * @throws std::runtime_error If the base semitone cannot be spelled with accType, or if the
-     *         resulting octave falls outside -1..11 (both from midiNote2pitch()).
+     * @return Pitch string within octaves -1..11, or "rest" for a position below MIDI note 0.
+     * @throws std::runtime_error If exactSteps is not finite (the message names the value and the
+     *         representable range), is not a multiple of 0.5 (names the value), or lies above the
+     *         representable range (names the value and the range). Also, from midiNote2pitch(),
+     *         if the base semitone cannot be spelled with accType or its octave falls outside
+     *         -1..11: e.g. 157 is only reachable as "Bx11", so it throws for any other accType.
      */
     static const std::string steps2pitch(const float exactSteps, const std::string& accType = {});
 
@@ -320,14 +331,26 @@ class Helper {
      * @brief Transposes a pitch string by a number of semitones.
      * @details Computed on exact pitch positions (see steps2pitch()), so a quarter tone survives
      *          the transposition instead of being rounded away first: "C1x4" transposed by 2
-     *          gives "D1x4".
-     * @param pitch Input pitch string. A rest transposes to a rest.
-     * @param semitones Number of semitones to transpose; must be a multiple of 0.5 (e.g. 0.5 for
-     *        one quarter tone up, -2 for a whole tone down). 0 returns the pitch unchanged.
-     * @param accType Accidental type for output pitch (default: "#").
+     *          gives "D1x4". The interval is validated first and the pitch string parsed second,
+     *          so an invalid argument is rejected whatever the other one is.
+     *
+     *          A real pitch never silently becomes a rest: a result outside the representable
+     *          range, -0.5 ("C1b-1") to Pitch::maxRepresentableMidi() (157, "Bx11"), throws. This
+     *          differs deliberately from steps2pitch(), whose rest sentinel below MIDI note 0
+     *          exists for a sounding pitch computed from a transposing instrument.
+     * @param pitch Input pitch string. A rest (an empty string or any string containing "rest")
+     *        transposes to "rest".
+     * @param semitones Number of semitones to transpose; must be finite and a multiple of 0.5
+     *        (e.g. 0.5 for one quarter tone up, -2 for a whole tone down). 0 returns the pitch
+     *        string unchanged.
+     * @param accType Preferred accidental type for the result's base semitone (default: "#"); see
+     *        steps2pitch().
      * @return Transposed pitch string.
-     * @throws std::runtime_error If semitones is not a multiple of 0.5, if the input is invalid,
-     *         or if the result cannot be spelled within octaves -1..11.
+     * @throws std::runtime_error If semitones is not finite or not a multiple of 0.5 (see
+     *         validateTransposeSemitones()); if the pitch string is invalid; if a non-rest pitch
+     *         transposes outside the representable range (the message names the pitch, the
+     *         interval and the range); or if the result cannot be spelled with accType within
+     *         octaves -1..11 (e.g. MIDI 0 with "#", which would be "B#-2").
      */
     static const std::string transposePitch(
         const std::string& pitch, const float semitones,

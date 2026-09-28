@@ -52,10 +52,11 @@ class Note {
      *          timing: an unspellable written pitch class under a nonzero transpose throws
      *          immediately from setTransposingInterval(), not from a later getter call.
      * @return The sounding Pitch.
-     * @throws std::runtime_error If this note is transposed and its sounding pitch cannot be
-     *         spelled within octaves -1..11 (see Helper::steps2pitch()). A sounding pitch below
-     *         MIDI 0 is NOT an error here -- it answers a rest, so such a note stays constructible
-     *         -- and getSoundingPitch() reports that condition diagnosably instead.
+     * @throws std::runtime_error If this note is transposed and its sounding pitch lies above the
+     *         representable range or cannot be spelled within octaves -1..11 (see
+     *         Helper::steps2pitch()). A sounding pitch below MIDI 0 is NOT an error here -- it
+     *         answers a rest, so such a note stays constructible -- and getSoundingPitch()
+     *         reports that condition diagnosably instead.
      */
     Pitch computeSoundingPitch() const;
 
@@ -668,8 +669,10 @@ class Note {
      * @param semitones Number of semitones; must be a multiple of 0.5 (e.g. 0.5 for one quarter
      *        tone up, -2 for a whole tone down).
      * @param accType Accidental type (e.g., "#", "b").
-     * @throws std::runtime_error If semitones is not a multiple of 0.5, or if the transposed
-     *         pitch cannot be spelled within octaves -1..11.
+     * @throws std::runtime_error If semitones is not finite or not a multiple of 0.5, or if the
+     *         transposed pitch falls outside the representable range or cannot be spelled within
+     *         octaves -1..11 (see Helper::transposePitch()). The note is left unchanged when this
+     *         throws: a note transposed too low no longer silently becomes a rest.
      */
     void transpose(const float semitones, const std::string& accType = MUSIC_XML::ACCIDENT::NONE);
 

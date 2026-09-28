@@ -317,8 +317,11 @@ class Chord {
      *          method — getName(), getQuality(), the stacked-in-thirds family and the have*
      *          predicates — will then reject the chord, because all of them are defined over
      *          twelve-tone equal temperament. Call roundQuarterTones() first to analyse it.
-     * @throws std::runtime_error If semiTonesNumber is not a multiple of 0.5, or if a transposed
-     *         note cannot be spelled within octaves -1..11.
+     * @throws std::runtime_error If semiTonesNumber is not finite or not a multiple of 0.5, or if
+     *         a transposed note falls outside the representable range or cannot be spelled within
+     *         octaves -1..11 (see Helper::transposePitch(); a note never silently becomes a rest).
+     *         Every note is transposed before any is stored, so the chord is left unchanged when
+     *         this throws.
      */
     void transpose(const float semiTonesNumber);
 
@@ -326,8 +329,8 @@ class Chord {
      * @brief Transpose only the stacked (open) version of the chord by a number of semitones.
      * @param semiTonesNumber Number of semitones to transpose; must be a multiple of 0.5.
      * @warning Same off-the-grid caveat as transpose(); see its documentation.
-     * @throws std::runtime_error If semiTonesNumber is not a multiple of 0.5, or if a transposed
-     *         note cannot be spelled within octaves -1..11.
+     * @throws std::runtime_error In the same cases as transpose(), and with the same guarantee:
+     *         the stack is left unchanged when this throws.
      */
     void transposeStackOnly(const float semiTonesNumber);
 

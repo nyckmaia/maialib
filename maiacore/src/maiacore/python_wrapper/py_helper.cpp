@@ -276,28 +276,35 @@ void HelperClass(const py::module& m) {
                    R"pbdoc(
         Transpose a pitch string by a number of semitones.
 
+        Computed on exact pitch positions, so a quarter tone survives the transposition instead
+        of being rounded away first. A real pitch never silently becomes a rest: a result outside
+        the representable range, from -0.5 (``"C1b-1"``) to 157 (``"Bx11"``), raises.
+
         Parameters
         ----------
         pitch : str
-            Input pitch string.
+            Input pitch string. A rest (an empty string or any string containing ``"rest"``)
+            transposes to ``"rest"``.
         semitones : float
-            Number of semitones (negative values transpose down). Must be a multiple of 0.5:
-            0.5 is one quarter tone up. Computed on exact pitch positions, so a quarter tone
-            survives the transposition instead of being rounded away first.
+            Number of semitones (negative values transpose down). Must be finite and a multiple
+            of 0.5: 0.5 is one quarter tone up. 0 returns ``pitch`` unchanged.
         accType : str, default "#"
-            Accidental type of the result: ``""``, ``"#"``, ``"b"``, ``"x"`` or ``"bb"``.
+            Preferred accidental type of the result's base semitone: ``""``, ``"#"``, ``"b"``,
+            ``"x"`` or ``"bb"``.
 
         Returns
         -------
         str
-            Transposed pitch string within octaves -1 to 11.
+            Transposed pitch string within octaves -1 to 11, or ``"rest"`` for a rest.
 
         Raises
         ------
         RuntimeError
             If ``semitones`` is not finite (``inf``, ``-inf`` or ``nan``) or is not a multiple of
-            0.5, if the input is invalid, or if the result cannot be spelled within octaves -1
-            to 11.
+            0.5; if ``pitch`` is invalid, whatever the interval; if a non-rest pitch transposes
+            outside the representable range (the message names the pitch, the interval and the
+            range); or if the result cannot be spelled with ``accType`` within octaves -1 to 11
+            (e.g. MIDI 0 with ``"#"``, which would be ``"B#-2"``).
 
         Examples
         --------
@@ -305,6 +312,8 @@ void HelperClass(const py::module& m) {
         'B#11'
         >>> ml.Helper.transposePitch("C1x4", 2, "")
         'D1x4'
+        >>> ml.Helper.transposePitch("C-1", -0.5, "")
+        'C1b-1'
     )pbdoc",
                    py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
     //--------------------- //

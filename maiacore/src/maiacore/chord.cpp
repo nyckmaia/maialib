@@ -390,6 +390,19 @@ std::string preferredAccType(const std::string& pitch) {
 
     return isSpellableAccType ? alterSymbol : MUSIC_XML::ACCIDENT::NONE;
 }
+
+// Transposes a COPY of 'notes' and returns it, so a rejection part-way through -- a note that
+// transposes outside the representable range raises -- leaves the caller's notes untouched.
+// Transposing in place used to leave a chord half-transposed when its second note raised:
+// {"C4", "B11"} transposed by 2 was left as {"D4", "B11"}.
+std::vector<Note> transposedCopy(const std::vector<Note>& notes, const float semitonesNumber) {
+    std::vector<Note> transposed = notes;
+    for (auto& note : transposed) {
+        const std::string pitch = note.getWrittenPitch();
+        note.setPitch(Helper::transposePitch(pitch, semitonesNumber, preferredAccType(pitch)));
+    }
+    return transposed;
+}
 }  // namespace
 
 void Chord::transpose(const float semitonesNumber) {
@@ -401,23 +414,23 @@ void Chord::transpose(const float semitonesNumber) {
         return;
     }
 
-    // Transpose the original chord. Task 10: this used to be its own copy of
-    // "pitch2midiNote(...) + semitones, then midiNote2pitch(...)" -- one of three copies of a
-    // single operation, which is why transposing a Chord and transposing a Note diverged. Both
-    // now route through Helper::transposePitch(), which computes on exact pitch positions and so
-    // no longer rounds a quarter tone away before applying the interval.
-    const int chordSize = _originalNotes.size();
-    for (int i = 0; i < chordSize; i++) {
-        const std::string pitch = _originalNotes[i].getWrittenPitch();
-        _originalNotes[i].setPitch(
-            Helper::transposePitch(pitch, semitonesNumber, preferredAccType(pitch)));
-    }
+    // Task 10: this used to be its own copy of "pitch2midiNote(...) + semitones, then
+    // midiNote2pitch(...)" -- one of three copies of a single operation, which is why
+    // transposing a Chord and transposing a Note diverged. Both now route through
+    // Helper::transposePitch(), which computes on exact pitch positions and so no longer rounds
+    // a quarter tone away before applying the interval.
+    //
+    // Both halves are computed before either is committed, so a rejection leaves the whole chord
+    // -- original notes and stack alike -- exactly as it was.
+    std::vector<Note> transposedNotes = transposedCopy(_originalNotes, semitonesNumber);
+    std::vector<Note> transposedStack = transposedCopy(_openStack, semitonesNumber);
+
+    _originalNotes = std::move(transposedNotes);
+    _openStack = std::move(transposedStack);
 
     // The pitch content of '_originalNotes' changed: any previously-computed stacked-in-thirds
     // representation (computed from the pre-transpose pitches) no longer matches.
     invalidateStackCache();
-
-    transposeStackOnly(semitonesNumber);
 }
 
 void Chord::transposeStackOnly(const float semitonesNumber) {
@@ -427,13 +440,9 @@ void Chord::transposeStackOnly(const float semitonesNumber) {
         return;
     }
 
-    // Transpose the stack version, through the same single implementation transpose() uses.
-    const int openStackSize = _openStack.size();
-    for (int i = 0; i < openStackSize; i++) {
-        const std::string pitch = _openStack[i].getWrittenPitch();
-        _openStack[i].setPitch(
-            Helper::transposePitch(pitch, semitonesNumber, preferredAccType(pitch)));
-    }
+    // Transpose the stack version, through the same single implementation transpose() uses, and
+    // with the same all-or-nothing commit.
+    _openStack = transposedCopy(_openStack, semitonesNumber);
 }
 
 void Chord::removeDuplicateNotes() {

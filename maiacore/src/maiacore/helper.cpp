@@ -1610,6 +1610,25 @@ RhythmFigure Helper::noteType2RhythmFigure(const std::string& noteType) {
     return {};
 }
 
+namespace {
+// The representable range of exact pitch positions, as named by the range errors below: from
+// "C1b-1" (-0.5, the lowest position that still rounds, ties upward, to MIDI note 0) up to "Bx11"
+// (Pitch::maxRepresentableMidi(), the highest position Pitch can hold).
+std::string representablePitchRange() {
+    return "-0.5 (C1b-1) to " + std::to_string(Pitch::maxRepresentableMidi()) + " (Bx" +
+           std::to_string(c_maxPitchOctave) + ")";
+}
+
+// Below MIDI note 0 by the library's own rule: the position rounds, ties upward, to a negative
+// MIDI number. That is the rule splitPitch() rejects "Cb-1" (-1) by and admits "C1b-1" (-0.5) by,
+// so the two agree on where the range starts. Evaluated in floating point: no int conversion.
+bool isBelowMidiZero(const float exactSteps) { return std::floor(exactSteps + 0.5f) < 0.0f; }
+
+bool isAboveHighestPitch(const float exactSteps) {
+    return exactSteps > static_cast<float>(Pitch::maxRepresentableMidi());
+}
+}  // namespace
+
 void Helper::validateTransposeSemitones(const float semitones) {
     // Non-finite first. An infinity SLIPS THROUGH the multiple-of-0.5 test below: inf * 2 == inf
     // and std::floor(inf) == inf, so the inequality that rejects 0.3 is false for it. The two
@@ -1637,16 +1656,50 @@ void Helper::validateTransposeSemitones(const float semitones) {
 }
 
 const std::string Helper::steps2pitch(const float exactSteps, const std::string& accType) {
-    // Below the lowest representable pitch: the rest sentinel, matching midiNote2pitch()'s own
-    // negative-MIDI convention rather than inventing a second one.
-    if (exactSteps < 0.0f) {
+    // Every check below runs BEFORE the static_cast<int> further down: converting a float outside
+    // int's range -- a non-finite one included -- is undefined behaviour. It was reachable:
+    // transposePitch("C4", 3e9) failed with "Unknown accidental alter value: 5147483648.0", the
+    // visible symptom of that cast, and binding this function to Python would otherwise hand the
+    // same undefined behaviour to any caller passing nan, inf or a large number directly.
+    if (!std::isfinite(exactSteps)) {
+        LOG_ERROR(
+            "Helper::steps2pitch: a pitch position must be a finite number of semitones, but '" +
+            std::to_string(exactSteps) + "' is not (the representable range is " +
+            representablePitchRange() + ")");
+    }
+
+    // Every pitch position is a multiple of 0.5: there is no pitch between "C1x4" and "C#4". An
+    // off-grid position used to be snapped or rejected by accident, depending on how far off it
+    // was, because alterValue2symbol() formats its argument to one decimal place before matching
+    // it. Doubling turns the test into an exact integer test, as in validateTransposeSemitones().
+    const float twiceSteps = exactSteps * 2.0f;
+    if (twiceSteps != std::floor(twiceSteps)) {
+        LOG_ERROR(
+            "Helper::steps2pitch: a pitch position must be a multiple of 0.5 semitones (one "
+            "quarter tone), but '" +
+            std::to_string(exactSteps) + "' is not");
+    }
+
+    if (isAboveHighestPitch(exactSteps)) {
+        LOG_ERROR("Helper::steps2pitch: the pitch position '" + std::to_string(exactSteps) +
+                  "' is above the representable range " + representablePitchRange());
+    }
+
+    // Below MIDI note 0: the rest sentinel, deliberately parallel to midiNote2pitch()'s contract
+    // for a negative MIDI number, and relied on by Note::computeSoundingPitch() so that a note
+    // transposed below MIDI 0 stays constructible. "Below MIDI 0" means the position ROUNDS to a
+    // negative MIDI number: the test used to be `exactSteps < 0`, which also turned -0.5 into a
+    // rest although "C1b-1" is a pitch this library holds -- a written "C1x-1" on an instrument
+    // sounding a semitone lower answered the malformed sounding pitch "rest-1".
+    if (isBelowMidiZero(exactSteps)) {
         return MUSIC_XML::PITCH::REST;
     }
 
     // Split the exact position into the semitone it is spelled from and the quarter tone left
     // over. spelling2midiNote() owns the ties-upward rounding rule (std::floor(x + 0.5f), never
     // std::lround), so a quarter tone always rounds UP to its base semitone and the remainder is
-    // therefore always exactly 0.0 or -0.5 -- never +0.5.
+    // therefore always exactly 0.0 or -0.5 -- never +0.5. The cast is safe: the checks above
+    // leave exactSteps finite, on the grid and within [-0.5, maxRepresentableMidi()].
     const int baseMidiNote = static_cast<int>(std::floor(exactSteps + 0.5f));
     const float quarterToneResidual = exactSteps - static_cast<float>(baseMidiNote);
 
@@ -1681,8 +1734,8 @@ const std::string Helper::steps2pitch(const float exactSteps, const std::string&
                  "' instead");
     }
 
-    // basePitch is a real pitch here (the negative case returned above), so splitPitch() cannot
-    // have taken its rest branch: the octave is always populated.
+    // basePitch is a real pitch here (the below-MIDI-0 case returned above), so splitPitch()
+    // cannot have taken its rest branch: the octave is always populated.
     return pitchStep + alterSymbol + std::to_string(octave.value());
 }
 
@@ -1690,12 +1743,33 @@ const std::string Helper::transposePitch(const std::string& pitch, const float s
                                          const std::string& accType) {
     validateTransposeSemitones(semitones);
 
+    // Parsed before either early return below, so an invalid pitch string is rejected whatever
+    // the interval: an interval of 0 used to hand it back unchanged.
+    const Pitch source(pitch);
+
     if (semitones == 0.0f) {
         return pitch;
     }
 
-    if (pitch == MUSIC_XML::PITCH::REST) {
+    // Asked of the parsed Pitch rather than by comparing the string with "rest": an empty string
+    // is a rest too, and used to fall through to the arithmetic below as MIDI_REST (-1), so
+    // transposing "" up two semitones answered "C#-1".
+    if (source.isRest()) {
         return MUSIC_XML::PITCH::REST;
+    }
+
+    const float targetSteps = source.getQuarterToneSteps() + semitones;
+
+    // A real pitch transposed out of the representable range raises, checked here in floating
+    // point before steps2pitch() is called. Below MIDI 0 it used to answer steps2pitch()'s rest
+    // sentinel -- so Note::transpose() and Chord::transpose() silently deleted a note transposed
+    // too low -- and far enough above the top it failed with an unrelated message through an
+    // out-of-range int conversion. The rest sentinel is right for a SOUNDING pitch computed from
+    // a transposing instrument (see Note::computeSoundingPitch()), never for this operation.
+    if (isBelowMidiZero(targetSteps) || isAboveHighestPitch(targetSteps)) {
+        LOG_ERROR("Transposing '" + pitch + "' by " + std::to_string(semitones) +
+                  " semitones gives the pitch position " + std::to_string(targetSteps) +
+                  ", outside the representable range " + representablePitchRange());
     }
 
     // The single implementation of this operation. Chord::transpose() and
@@ -1707,7 +1781,7 @@ const std::string Helper::transposePitch(const std::string& pitch, const float s
     // BEFORE the interval was applied, so a quarter tone was destroyed by the very first step
     // ("C1x4" transposed by 2 landed on "D4"). Pitch::getQuarterToneSteps() is this library's one
     // unrounded pitch position.
-    return steps2pitch(Pitch(pitch).getQuarterToneSteps() + semitones, accType);
+    return steps2pitch(targetSteps, accType);
 }
 
 bool Helper::isEnharmonic(const std::string& pitch_A, const std::string& pitch_B) {

@@ -751,6 +751,27 @@ TEST(NoteTransposition, TransposeRejectsAnIntervalOffTheQuarterToneGrid) {
     EXPECT_EQ(note.getPitch(), "C4");  // the refused call changed nothing
 }
 
+// Task 11, section N: Helper::transposePitch() answered "rest" for a result below MIDI 0, and
+// Note::transpose() stored it, so a note transposed too low was silently turned into a rest --
+// measured at HEAD 9051bb8: Note("C4").transpose(-61) left a rest behind. It now raises, and the
+// note is left exactly as it was.
+TEST(NoteTransposition, TransposeOutOfRangeRaisesAndLeavesTheNoteUnchanged) {
+    Note note("C4");
+
+    try {
+        note.transpose(-61.0f);
+        FAIL() << "Expected std::runtime_error; the note became '" << note.getPitch() << "'";
+    } catch (const std::runtime_error& e) {
+        const std::string what = e.what();
+        EXPECT_NE(what.find("outside the representable range"), std::string::npos)
+            << "message: " << what;
+        EXPECT_NE(what.find("'C4'"), std::string::npos) << "message: " << what;
+    }
+
+    EXPECT_EQ(note.getPitch(), "C4");
+    EXPECT_TRUE(note.isNoteOn());
+}
+
 // ===================================================================================================
 // MIDI AND FREQUENCY
 // ===================================================================================================
@@ -1447,6 +1468,21 @@ TEST(NoteComposesPitch, GetSoundingOctaveEmptyWithoutBeingARest) {
     EXPECT_TRUE(n.isNoteOn());
     EXPECT_FALSE(n.isNoteOff());
     EXPECT_FALSE(n.getSoundingOctave().has_value());
+}
+
+// Task 11, section N: Helper::steps2pitch() treated every negative position as below MIDI 0,
+// including -0.5 -- which rounds, ties upward, to MIDI 0 and is "C1b-1". A written "C1x-1" (0.5)
+// on an instrument sounding a semitone lower sounds exactly -0.5, so its sounding pitch CLASS came
+// back as "rest" while its MIDI number was 0, and getSoundingPitch() glued the two into the
+// malformed string "rest-1" (measured at HEAD 9051bb8) -- the shape Task 6's fix round 5 removed.
+TEST(NoteComposesPitch, SoundingPitchOnTheLowestQuarterToneIsWellFormedNotRestMinus1) {
+    const Note n("C1x-1", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                 /*transposeDiatonic=*/-1, /*transposeChromatic=*/-1);
+    EXPECT_EQ(n.getMidiNumber(), 0);
+    EXPECT_EQ(n.getSoundingPitch(), "C1b-1");  // was "rest-1"
+    EXPECT_EQ(n.getSoundingPitchClass(), "C1b");
+    EXPECT_EQ(n.getOctave().value_or(-99), -1);  // was empty, disagreeing with the line below
+    EXPECT_EQ(n.getSoundingOctave().value_or(-99), -1);
 }
 
 // Fix round 5, finding F2 -- was PINNED AS DEFECTIVE; Task 6b closes it, on both halves the
