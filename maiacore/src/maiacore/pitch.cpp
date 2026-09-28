@@ -7,6 +7,7 @@
 #include "maiacore/config.h"
 #include "maiacore/helper.h"
 #include "maiacore/log.h"
+#include "maiacore/utils.h"
 
 // REVIEW ROUND 4 (task-3-review.md, "enforce the fast-math constraint in code") — this project
 // has no CI test step at all (wheels.yml runs no C++ or Python tests), so this compile-time
@@ -28,6 +29,20 @@
 frequency out of undefined behaviour; fast-math lets the compiler assume NaN and infinity \
 never occur and may delete those checks. Remove the fast-math flag for this file."
 #endif
+
+namespace {
+// The reference frequency of A4 must be a positive, finite number of Hz. Zero or a negative value
+// has no equal-tempered scale to measure against, and a non-finite one makes every pitch position
+// non-finite, which the conversion to a MIDI number cannot survive. Checked first, before any
+// arithmetic, whatever the frequency.
+void validateFreqA4(const float freqA4) {
+    if (!std::isfinite(freqA4) || !(freqA4 > 0.0f)) {
+        LOG_ERROR("The reference frequency freqA4 must be a finite number of Hz greater than 0, "
+                  "but '" +
+                  std::to_string(freqA4) + "' is not");
+    }
+}
+}  // namespace
 
 Pitch::Pitch(const std::string& pitch) : _step("rest"), _alter(0.0f), _octave(std::nullopt) {
     setPitch(pitch);
@@ -107,6 +122,8 @@ float Pitch::getQuarterToneSteps() const {
 bool Pitch::isRest() const { return _step == MUSIC_XML::PITCH::REST; }
 
 float Pitch::getFrequency(float freqA4) const {
+    validateFreqA4(freqA4);
+
     if (isRest()) {
         return 0.0f;
     }
@@ -162,9 +179,11 @@ void Pitch::setStep(const std::string& step) {
 }
 
 void Pitch::setAlter(float alter) {
-    const float doubled = alter * 2.0f;
-    const float roundedDoubled = std::round(doubled);
-    if (std::fabs(doubled - roundedDoubled) > 1e-4f) {
+    if (!std::isfinite(alter)) {
+        LOG_ERROR("Alter value must be a finite number of semitones, but '" +
+                  std::to_string(alter) + "' is not");
+    }
+    if (!isOnQuarterToneGrid(alter)) {
         LOG_ERROR(
             "Alter value must be a multiple of 0.5 (a semitone or quarter-tone step): " +
             std::to_string(alter));
@@ -173,18 +192,22 @@ void Pitch::setAlter(float alter) {
         LOG_ERROR("Alter value out of range [-2, 2]: " + std::to_string(alter));
     }
 
+    // Stored canonically: adding +0.0f turns -0.0 into +0.0 and leaves every other value on the
+    // grid unchanged, so a natural always reads back as the one value +0.0.
+    const float canonicalAlter = alter + 0.0f;
+
     if (isRest()) {
         LOG_WARN("Pitch::setAlter: cannot set the alter of a rest; ignoring");
         return;
     }
 
-    if (Helper::spelling2midiNote(_step, alter, _octave.value()) < 0) {
-        LOG_WARN("Pitch::setAlter: alter " + std::to_string(alter) +
+    if (Helper::spelling2midiNote(_step, canonicalAlter, _octave.value()) < 0) {
+        LOG_WARN("Pitch::setAlter: alter " + std::to_string(canonicalAlter) +
                  " would move this pitch below MIDI note 0; ignoring");
         return;
     }
 
-    _alter = alter;
+    _alter = canonicalAlter;
 }
 
 void Pitch::setOctave(int octave) {
@@ -236,6 +259,8 @@ void Pitch::setMidiNumber(int midiNumber) { setPitch(Helper::midiNote2pitch(midi
 
 void Pitch::setFrequency(float frequency, const std::string& accType, float freqA4,
                           bool enableQuarterToneRound) {
+    validateFreqA4(freqA4);
+
     // A frequency <= 0 is a whole-state replacement into a rest (spec section 4.4.1), not a
     // caller error: this never throws for that reason alone.
     //
@@ -325,38 +350,24 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
         clamped = true;
     } else {
         // Exact inverse of getFrequency()'s formula, in quarter-tone-step space. Computed in
-        // double (review round 1, I3) to remove the cross-platform libm risk a float32
-        // computation would carry here.
+        // double to remove the cross-platform libm risk a float32 computation would carry here.
         const double steps =
             12.0 * std::log2(static_cast<double>(frequency) / static_cast<double>(freqA4)) +
             69.0;
 
-        // Ties round upward (spec section 4.5): std::floor(x + 0.5), scaled to the rounding
-        // granularity, never std::round()/std::lround(). Those round half away from zero and
-        // would disagree with this rule for a negative step position (e.g. a frequency below
-        // C-1).
+        // Ties round upward (spec section 4.5), at the rounding granularity, through
+        // roundTiesUpward() -- never std::round()/std::lround(), which round half away from zero
+        // and would disagree with this rule for a negative step position (a frequency below C-1).
         //
-        // REVIEW ROUND 1 (task-3-review.md I3) -- this specific line cannot be exercised by a
-        // frequency-based unit test at a genuine mathematical tie, and that is not a test-writing
-        // gap: `frequency` is float32 by this method's public signature, and no non-integer power
-        // of two (the ratio a tie in `steps` requires, since a tie needs frequency / freqA4 ==
-        // 2^(k/12) for k ending in .5 or .25/.75) is exactly representable in finite binary
-        // floating point -- it always involves an irrational factor (e.g. sqrt(2) for a
-        // semitone-granularity tie). Consequently the *recovered* `steps` for any frequency a
-        // test can pass in lands fractionally off an intended tie, in an unpredictable direction,
-        // which floor(x + 0.5) and std::round(x) agree on identically (they only diverge exactly
-        // AT a tie). This was verified empirically during round 1's fix, not assumed: a frequency
-        // engineered for the quarter-tone tie at steps == -0.25 passed under both this line and a
-        // std::round() revert. The rounding rule itself remains covered where it CAN be tested
-        // exactly -- directly against alter/step values with no transcendental round-trip -- by
-        // Pitch::roundToSemitoneTiesUpFlatSide and Pitch::midiNumberRoundsHalfUpOnFlatSide
-        // (pitch-test.cpp), which this line's formula matches exactly in shape. What
-        // frequency-based tests in this file DO verify at this boundary: that it resolves to a
-        // real pitch, never a silent rest, at and around the C-1 floor (see
-        // fromFrequencyAtFloorBoundaryIsNotARest, fromFrequencyClampsBelowFloorInsteadOfSilentRest
-        // and fromFrequencyRecoversExactQuarterToneAtFloor in pitch-test.cpp).
+        // No frequency lands exactly on a tie: a tie needs frequency / freqA4 to equal 2^(k/12)
+        // for a k ending in .5 (or .25/.75), an irrational ratio that no binary float holds, so
+        // the recovered position always sits slightly to one side of it, where roundTiesUpward()
+        // and std::round() agree. The rule is therefore pinned where it can be hit exactly, on
+        // alters and step positions (pitch-test.cpp's roundToSemitoneTiesUpFlatSide and
+        // midiNumberRoundsHalfUpOnFlatSide); the frequency tests pin that a frequency at or near
+        // the C-1 floor resolves to a real pitch, never a silent rest.
         const double granularity = enableQuarterToneRound ? 0.5 : 1.0;
-        const double roundedSteps = granularity * std::floor(steps / granularity + 0.5);
+        const double roundedSteps = granularity * roundTiesUpward(steps / granularity);
 
         // Split into an integer MIDI number plus a residual of 0 or 0.5. Safe to cast now: the
         // non-finite case above never reaches here, and roundedSteps is otherwise always finite.
@@ -506,4 +517,4 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
     setPitch(pitchStep + alterSymbol + std::to_string(octave.value()));
 }
 
-void Pitch::roundToSemitone() { _alter = std::floor(_alter + 0.5f); }
+void Pitch::roundToSemitone() { _alter = roundTiesUpward(_alter); }

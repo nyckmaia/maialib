@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include "pitch-spelling-legacy-data.h"
+#include "test-capture.h"
 
 using namespace testing;
 
@@ -1702,4 +1703,46 @@ TEST(NoteRoundToSemitone, RoundsTiesUpwardAndLeavesWholeTonesAlone) {
     Note wholeTone("F#4");
     wholeTone.roundToSemitone();
     EXPECT_EQ(wholeTone.getPitch(), "F#4");
+}
+
+// ===== getQuarterToneSteps(): the exact, unrounded sounding position ===== //
+
+TEST(NoteQuarterToneSteps, isTheExactPositionOfTheSoundingPitch) {
+    EXPECT_EQ(Note("C1x4").getQuarterToneSteps(), 60.5f);
+    EXPECT_EQ(Note("E1b4").getQuarterToneSteps(), 63.5f);
+    EXPECT_EQ(Note("C4").getQuarterToneSteps(), 60.0f);
+    EXPECT_EQ(Note("rest").getQuarterToneSteps(), -1.0f);
+
+    // Sounding, not written: a B-flat clarinet's written C1x4 sounds a whole tone lower.
+    const Note clarinet("C1x4", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                        /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
+    EXPECT_EQ(clarinet.getQuarterToneSteps(), 58.5f);
+    EXPECT_EQ(clarinet.getMidiNumber(), 59);
+}
+
+// The ordering operators compare these positions: E1b4 (63.5) sorts below E4 (64), which its
+// rounded MIDI number (64) cannot tell apart.
+TEST(NoteQuarterToneSteps, orderingComparesExactPositions) {
+    EXPECT_TRUE(Note("E1b4") < Note("E4"));
+    EXPECT_FALSE(Note("E4") < Note("E1b4"));
+    EXPECT_TRUE(Note("E4") > Note("E1b4"));
+    EXPECT_FALSE(Note("E1b4") >= Note("E4"));
+    EXPECT_TRUE(Note("E1b4") <= Note("D3x4"));  // the same position, 63.5
+    EXPECT_TRUE(Note("E1b4") >= Note("D3x4"));
+}
+
+TEST(NoteQuarterToneSteps, setAlterRejectsAValueNearTheGrid) {
+    Note note("C4");
+    const std::string message = thrownFirstLine([&] { note.setAlter(0.99996f); });
+    EXPECT_NE(message.find("multiple of 0.5"), std::string::npos) << message;
+    EXPECT_EQ(note.getPitch(), "C4");
+    EXPECT_FALSE(note.isQuarterTone());
+}
+
+// Negating a natural's alter gives -0.0; the note must still spell, and write, as a natural.
+TEST(NoteQuarterToneSteps, setAlterOfNegativeZeroLeavesAPlainNatural) {
+    Note note("C#4");
+    note.setAlter(-0.0f);
+    EXPECT_EQ(note.getPitch(), "C4");
+    EXPECT_EQ(note.toXML().find("<alter>"), std::string::npos);
 }

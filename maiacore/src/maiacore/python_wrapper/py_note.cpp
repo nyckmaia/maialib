@@ -149,7 +149,8 @@ void NoteClass(const py::module& m) {
 
         Delegates to the underlying pitch's alter setter and inherits its policy: refuses on a
         rest (logs a warning, no mutation) since a bare alter value carries no octave to
-        resurrect one with.
+        resurrect one with. The value must be exactly a multiple of 0.5: one merely close to it,
+        such as 0.99996, is rejected rather than rounded.
 
         Parameters
         ----------
@@ -160,7 +161,8 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If alter is not a multiple of 0.5, or is outside [-2, 2].
+            If alter is NaN or infinite, is not exactly a multiple of 0.5, or is outside
+            [-2, 2].
     )pbdoc");
     cls.def("setDuration", py::overload_cast<const Duration&>(&Note::setDuration),
             py::arg("duration"));
@@ -340,6 +342,28 @@ void NoteClass(const py::module& m) {
         'Bb3'
     )pbdoc");
     cls.def("getMidiNumber", &Note::getMidiNumber);
+
+    cls.def("getQuarterToneSteps", &Note::getQuarterToneSteps,
+            R"pbdoc(
+        Return the exact, unrounded sounding pitch position in semitones.
+
+        The written pitch's exact position plus the chromatic transposing interval, so a quarter
+        tone keeps its half: ``C1x4`` is 60.5, where ``getMidiNumber()`` rounds it to 61. Every
+        position is a multiple of 0.5, held exactly, and notes compare (``<``, ``>``, ...) by this
+        value.
+
+        Returns
+        -------
+        float
+            The exact sounding position, a multiple of 0.5; -1.0 for a rest.
+
+        Examples
+        --------
+        >>> ml.Note("C1x4").getQuarterToneSteps()
+        60.5
+        >>> ml.Note("C1x4", transposeDiatonic=-1, transposeChromatic=-2).getQuarterToneSteps()
+        58.5
+    )pbdoc");
 
     cls.def("getVoice", &Note::getVoice);
     cls.def("getStaff", &Note::getStaff);

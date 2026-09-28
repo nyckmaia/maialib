@@ -1,5 +1,6 @@
 import contextlib
 import io
+import math
 import unittest
 from pathlib import Path
 
@@ -581,6 +582,27 @@ class QuarterToneHelpers(unittest.TestCase):
             pitch = ml.Helper.steps2pitch(61.5, "bb")
         self.assertEqual(pitch, "D1b4")
         self.assertIn("[WARN] Helper::steps2pitch", buffer.getvalue())
+
+    # The components of a pitch this library can spell: an alter from -2 to 2 and an octave from
+    # -1 to 11. Anything else is rejected before the sum is converted to an int.
+    def testSpelling2midiNoteRejectsComponentsNoPitchCanHave(self):
+        for alter in (math.nan, math.inf, -math.inf, 2.5, -2.5, 3.0e9):
+            with self.subTest(alter=alter):
+                with self.assertRaises(RuntimeError) as ctx:
+                    ml.Helper.spelling2midiNote("C", alter, 4)
+                self.assertIn(
+                    "the alter value must be a finite number of semitones from -2 to 2",
+                    str(ctx.exception).splitlines()[0],
+                )
+
+        for octave in (-2, 12, 100000):
+            with self.subTest(octave=octave):
+                with self.assertRaises(RuntimeError) as ctx:
+                    ml.Helper.spelling2midiNote("C", 0.0, octave)
+                self.assertIn("the octave must be from -1 to 11", str(ctx.exception).splitlines()[0])
+
+        self.assertEqual(ml.Helper.spelling2midiNote("B", 2.0, 11), 157)
+        self.assertEqual(ml.Helper.spelling2midiNote("D", -2.0, -1), 0)
 
     def testValidateTransposeSemitones(self):
         self.assertIsNone(ml.Helper.validateTransposeSemitones(0.5))

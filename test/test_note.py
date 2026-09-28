@@ -438,5 +438,43 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertNotEqual(note.getSoundingPitch(), "Bb4")
 
 
+def firstLine(exception):
+    """The message proper: the lines after it are a stack trace."""
+    return str(exception).splitlines()[0]
+
+
+class NoteQuarterToneSteps(unittest.TestCase):
+    # Mirrors NoteQuarterToneSteps.isTheExactPositionOfTheSoundingPitch.
+    def testIsTheExactPositionOfTheSoundingPitch(self):
+        self.assertEqual(ml.Note("C1x4").getQuarterToneSteps(), 60.5)
+        self.assertEqual(ml.Note("E1b4").getQuarterToneSteps(), 63.5)
+        self.assertEqual(ml.Note("C4").getQuarterToneSteps(), 60.0)
+        self.assertEqual(ml.Note("rest").getQuarterToneSteps(), -1.0)
+
+        # Sounding, not written: a B-flat clarinet's written C1x4 sounds a whole tone lower.
+        clarinet = ml.Note("C1x4", transposeDiatonic=-1, transposeChromatic=-2)
+        self.assertEqual(clarinet.getQuarterToneSteps(), 58.5)
+        self.assertEqual(clarinet.getMidiNumber(), 59)
+
+    def testIsDocumentedWithAnExample(self):
+        self.assertIn("Examples\n", ml.Note.getQuarterToneSteps.__doc__)
+
+    # Mirrors NoteQuarterToneSteps.setAlterRejectsAValueNearTheGrid.
+    def testSetAlterRejectsAValueNearTheGrid(self):
+        note = ml.Note("C4")
+        with self.assertRaises(RuntimeError) as context:
+            note.setAlter(0.99996)
+        self.assertIn("multiple of 0.5", firstLine(context.exception))
+        self.assertEqual(note.getPitch(), "C4")
+        self.assertFalse(note.isQuarterTone())
+
+    # Mirrors NoteQuarterToneSteps.setAlterOfNegativeZeroLeavesAPlainNatural.
+    def testSetAlterOfNegativeZeroLeavesAPlainNatural(self):
+        note = ml.Note("C#4")
+        note.setAlter(-0.0)
+        self.assertEqual(note.getPitch(), "C4")
+        self.assertNotIn("<alter>", note.toXML())
+
+
 if __name__ == "__main__":
     unittest.main()

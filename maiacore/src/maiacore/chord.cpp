@@ -16,38 +16,15 @@
 #include "maiacore/utils.h"
 
 namespace {
-// Twice the exact, unrounded pitch position in semitones, as an integer.
-//
-// Note::getMidiNumber() rounds a quarter tone ties-upward (Helper::spelling2midiNote() in
-// helper.cpp), which is what lets the MIDI-domain methods in this file answer for a quarter-tone
-// chord exactly as they would for a semitone one. Pitch::getQuarterToneSteps() already holds the
-// exact position, but Note does not expose it and this task adds no public API, so the exact value
-// is recovered arithmetically here instead.
-//
-// The recovery is exact, not an approximation. Pitch::setAlter() constrains an alter to a multiple
-// of 0.5, so a quarter tone's exact position is always an integer plus 0.5, and ties-upward
-// rounding therefore always adds exactly 0.5 to it -- never more, never less, on either the flat
-// or the sharp side. Working in doubled steps keeps the whole thing in integer arithmetic, so
-// callers that need only a difference (toCents(), isSorted()) carry no floating-point error at all.
-int twiceExactSemitoneSteps(const Note& note) {
-    return (2 * note.getMidiNumber()) - (note.isQuarterTone() ? 1 : 0);
-}
-
-// The exact, unrounded pitch position in semitones, for the callers that need a real number.
-float exactSemitoneSteps(const Note& note) {
-    return static_cast<float>(twiceExactSemitoneSteps(note)) / 2.0f;
-}
-
-// The note count divided by the span it occupies, in semitones, from doubled exact step positions.
-// The '+ 1' preserves the original inclusive-semitone-slot convention, so a chord with no quarter
-// tone gets exactly the value it always did.
+// The note count divided by the span it occupies, in semitones, between two exact sounding
+// positions (Note::getQuarterToneSteps()). Positions are multiples of 0.5, which float holds
+// exactly, so the span is exact. The '+ 1' keeps the inclusive-semitone-slot convention of the
+// numeric overload.
 //
 // Shared by both getHarmonicDensity() overloads: the string overload cannot delegate to the numeric
 // one without rounding, because that one's parameters are ints.
-float densityOverRange(const int numNotes, const int lowestTwiceSteps,
-                       const int highestTwiceSteps) {
-    const float midiRange =
-        (static_cast<float>(highestTwiceSteps - lowestTwiceSteps) / 2.0f) + 1.0f;
+float densityOverRange(const int numNotes, const float lowestSteps, const float highestSteps) {
+    const float midiRange = (highestSteps - lowestSteps) + 1.0f;
 
     return static_cast<float>(numNotes) / midiRange;
 }
@@ -1687,22 +1664,20 @@ float Chord::getHarmonicDensity(int lowerBoundMIDI, int higherBoundMIDI) const {
     if (lowerBoundMIDI == -1 && higherBoundMIDI == -1) {
         // Returns a float, which expresses a range that is a whole number of semitones plus a
         // quarter tone exactly, so this computes rather than rejects. The extremes come from the
-        // exact positions rather than from std::sort + getMidiNumber(): sorting by the rounded
-        // number can pick the wrong extreme, and for Chord{"C1x4", "G4"} the old route reported a
-        // range of 7 semitones instead of the true 6.5. For a chord with no quarter tone every
-        // value below is a whole number and the result is identical to the previous
-        // implementation's, including the std::out_of_range that .at(0) raises on an empty chord.
+        // exact positions: the rounded MIDI numbers can pick the wrong extreme, and
+        // Chord{"C1x4", "G4"} spans 6.5 semitones, not 7. For a chord with no quarter tone every
+        // value below is a whole number. An empty chord raises std::out_of_range from .at(0).
         const int numNotes = static_cast<int>(_originalNotes.size());
-        int lowestTwiceSteps = twiceExactSemitoneSteps(_originalNotes.at(0));
-        int highestTwiceSteps = lowestTwiceSteps;
+        float lowestSteps = _originalNotes.at(0).getQuarterToneSteps();
+        float highestSteps = lowestSteps;
 
         for (const auto& note : _originalNotes) {
-            const int twiceSteps = twiceExactSemitoneSteps(note);
-            lowestTwiceSteps = std::min(lowestTwiceSteps, twiceSteps);
-            highestTwiceSteps = std::max(highestTwiceSteps, twiceSteps);
+            const float steps = note.getQuarterToneSteps();
+            lowestSteps = std::min(lowestSteps, steps);
+            highestSteps = std::max(highestSteps, steps);
         }
 
-        return densityOverRange(numNotes, lowestTwiceSteps, highestTwiceSteps);
+        return densityOverRange(numNotes, lowestSteps, highestSteps);
     }
 
     // Case 02: User defined values of 'higherBoundMIDI' and 'lowerBoundMIDI'
@@ -1724,16 +1699,15 @@ float Chord::getHarmonicDensity(const std::string& lowerBoundPitch,
         LOG_ERROR("'higherBoundPitch' cannot be empty or be 'rest'");
     }
 
-    // Fix round 1: the bounds are exact rather than rounded. Helper::pitch2midiNote() rounds a
-    // quarter-tone bound ties-upward, so "C1x4" (60.5) became 61 and this overload measured a
-    // density of 2/7 for a span the numeric overload's auto-detected path already measured as the
-    // true 2/7.5. Delegating to that overload cannot preserve the half step, because its parameters
+    // The bounds are exact rather than rounded, so a quarter-tone bound keeps its half step:
+    // "C1x4" to "G4" spans 6.5 semitones, not the 6 that Helper::pitch2midiNote() would give.
+    // Delegating to the numeric overload cannot preserve the half step, because its parameters
     // are ints, so the density is computed here from the same shared helper it uses.
-    const int lowerBoundTwiceSteps = twiceExactSemitoneSteps(Note(lowerBoundPitch));
-    const int higherBoundTwiceSteps = twiceExactSemitoneSteps(Note(higherBoundPitch));
+    const float lowerBoundSteps = Note(lowerBoundPitch).getQuarterToneSteps();
+    const float higherBoundSteps = Note(higherBoundPitch).getQuarterToneSteps();
 
-    return densityOverRange(static_cast<int>(_originalNotes.size()), lowerBoundTwiceSteps,
-                            higherBoundTwiceSteps);
+    return densityOverRange(static_cast<int>(_originalNotes.size()), lowerBoundSteps,
+                            higherBoundSteps);
 }
 
 bool Chord::haveMajorInterval(const bool useEnharmony) const {
@@ -2712,23 +2686,18 @@ std::vector<int> Chord::toCents() const {
     std::vector<int> centsVec(numIntervals, 0);
 
     // Cents are the one unit in this library that expresses a quarter tone exactly -- 50 cents to
-    // the quarter tone, 350 to the neutral third -- so this computes rather than rejects, and the
-    // Interval guard that used to reject here is deliberately no longer in the path.
+    // the quarter tone, 350 to the neutral third -- so this computes rather than rejects.
     //
-    // It no longer goes through Interval::toCents(), which measures the ratio between the two
-    // notes' frequencies, because Note::getFrequency() derives that frequency from the ROUNDED
-    // getMidiNumber(): a neutral third measured 400 cents, indistinguishable from a major third.
-    // Twelve-tone equal temperament puts exactly 100 cents in a semitone and 50 in half of one, so
-    // the whole computation is integer arithmetic on doubled step positions -- no frequency, no
-    // logarithm, no freqA4 dependence and no floating-point error.
-    //
-    // That also removes a rounding defect the frequency route had for ordinary semitones: a C
-    // major triad measured [400, 299], because Helper::frequencies2cents() truncates 299.9999
-    // instead of rounding it. It now reads [400, 300].
+    // Twelve-tone equal temperament puts exactly 100 cents in a semitone, so the value comes
+    // straight from the exact sounding positions: no frequency, no logarithm, no dependence on
+    // freqA4. Positions are multiples of 0.5, which float holds exactly, so the difference times
+    // 100 is an exact whole number of cents. A frequency route would instead inherit
+    // Note::getFrequency()'s rounded MIDI number (a neutral third would read 400) and
+    // Helper::frequencies2cents()'s truncation (a C major triad would read [400, 299]).
     for (int i = 0; i < numIntervals; i++) {
-        const int twiceStepsDiff = twiceExactSemitoneSteps(_originalNotes[i + 1]) -
-                                   twiceExactSemitoneSteps(_originalNotes[i]);
-        centsVec[i] = twiceStepsDiff * 50;
+        const float stepsDiff =
+            _originalNotes[i + 1].getQuarterToneSteps() - _originalNotes[i].getQuarterToneSteps();
+        centsVec[i] = static_cast<int>(stepsDiff * 100.0f);
     }
 
     return centsVec;
@@ -2922,14 +2891,14 @@ float Chord::getMidiValueStd() const {
 
     float sum = 0.0f;
     for (const auto& note : _originalNotes) {
-        sum += exactSemitoneSteps(note);
+        sum += note.getQuarterToneSteps();
     }
 
     const float mean = sum / static_cast<float>(numNotes);
 
     float squaredDeviationSum = 0.0f;
     for (const auto& note : _originalNotes) {
-        const float deviation = exactSemitoneSteps(note) - mean;
+        const float deviation = note.getQuarterToneSteps() - mean;
         squaredDeviationSum += deviation * deviation;
     }
 

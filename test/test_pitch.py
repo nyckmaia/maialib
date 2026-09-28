@@ -269,6 +269,34 @@ class PitchSetAlter(unittest.TestCase):
         self.assertEqual(pitch.getMidiNumber(), 0)
         self.assertFalse(pitch.isRest())
 
+    # Mirrors PitchSetAlter.rejectsNonFiniteValues: NaN passes a range test, since every
+    # comparison with it is false, and an infinity is more than "out of range".
+    def testSetAlterRejectsNonFiniteValues(self):
+        for alter in (math.nan, math.inf, -math.inf):
+            with self.subTest(alter=alter):
+                pitch = ml.Pitch("C4")
+                with self.assertRaises(RuntimeError) as context:
+                    pitch.setAlter(alter)
+                self.assertIn("must be a finite number", firstLine(context.exception))
+                self.assertEqual(pitch.getPitch(), "C4")
+
+    # Mirrors PitchSetAlter.rejectsAValueNearTheGrid: exact membership, never snapped.
+    def testSetAlterRejectsAValueNearTheGrid(self):
+        for alter in (0.99996, 1.00004, 0.46):
+            with self.subTest(alter=alter):
+                pitch = ml.Pitch("C4")
+                with self.assertRaises(RuntimeError) as context:
+                    pitch.setAlter(alter)
+                self.assertIn("multiple of 0.5", firstLine(context.exception))
+                self.assertEqual(pitch.getAlter(), 0.0)
+
+    # Mirrors PitchSetAlter.storesNegativeZeroAsPositiveZero.
+    def testSetAlterStoresNegativeZeroAsZero(self):
+        pitch = ml.Pitch("C1x4")
+        pitch.setAlter(-0.0)
+        self.assertEqual(math.copysign(1.0, pitch.getAlter()), 1.0)
+        self.assertEqual(pitch.getPitch(), "C4")
+
 
 class PitchSetOctave(unittest.TestCase):
     # Mirrors Pitch.setOctaveValidTransition.
@@ -381,6 +409,36 @@ class PitchRange(unittest.TestCase):
     def testMaxRepresentableMidiIsBDoubleSharpInOctave11(self):
         self.assertEqual(ml.Pitch.maxRepresentableMidi(), 157)
         self.assertEqual(ml.Pitch("Bx11").getMidiNumber(), ml.Pitch.maxRepresentableMidi())
+
+
+class PitchReferenceFrequency(unittest.TestCase):
+    # Mirrors the PitchReferenceFrequency tests: freqA4 must be a finite number of Hz greater than
+    # 0, checked before any arithmetic, also when the result would be a rest.
+    INVALID = (0.0, -440.0, math.nan, math.inf, -math.inf)
+
+    def testFromFrequencyRejectsAnInvalidFreqA4(self):
+        for freqA4 in self.INVALID:
+            for frequency in (440.0, 0.0):
+                with self.subTest(freqA4=freqA4, frequency=frequency):
+                    with self.assertRaises(RuntimeError) as context:
+                        ml.Pitch.fromFrequency(frequency, freqA4=freqA4)
+                    self.assertIn("reference frequency freqA4", firstLine(context.exception))
+
+    def testSetFrequencyRejectsAnInvalidFreqA4AndLeavesThePitch(self):
+        pitch = ml.Pitch("C4")
+        with self.assertRaises(RuntimeError) as context:
+            pitch.setFrequency(440.0, freqA4=0.0)
+        self.assertIn("reference frequency freqA4", firstLine(context.exception))
+        self.assertEqual(pitch.getPitch(), "C4")
+
+    def testGetFrequencyRejectsAnInvalidFreqA4(self):
+        for freqA4 in self.INVALID:
+            for pitch in ("A4", "rest"):
+                with self.subTest(freqA4=freqA4, pitch=pitch):
+                    with self.assertRaises(RuntimeError) as context:
+                        ml.Pitch(pitch).getFrequency(freqA4)
+                    self.assertIn("reference frequency freqA4", firstLine(context.exception))
+        self.assertAlmostEqual(ml.Pitch("A4").getFrequency(442.0), 442.0, places=3)
 
 
 class PitchFrequency(unittest.TestCase):

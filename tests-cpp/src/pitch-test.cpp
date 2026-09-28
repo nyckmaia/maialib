@@ -8,6 +8,7 @@
 #include "maiacore/note.h"
 #include "maiacore/pitch.h"
 #include "quarter-tone-characterization-data.h"
+#include "test-capture.h"
 
 TEST(Characterization, semitoneBehaviourIsUnchanged) {
     for (const auto& e : kSemitoneCharTable) {
@@ -505,4 +506,81 @@ TEST(Pitch, midiNumberConstructorHonoursAccType) {
     EXPECT_EQ(Pitch(61, "b").getPitch(), "Db4");
     EXPECT_EQ(Pitch(61, "#").getPitch(), "C#4");
     EXPECT_TRUE(Pitch(-1).isRest());
+}
+
+// ===== setAlter(): a malformed alter is rejected, a valid one is stored canonically ===== //
+
+// NaN passes both a tolerance test and a range test, since every comparison with it is false, and
+// an infinity is merely "out of range"; both are rejected as what they are, and the pitch is left
+// unchanged.
+TEST(PitchSetAlter, rejectsNonFiniteValues) {
+    for (const float alter : {std::numeric_limits<float>::quiet_NaN(),
+                              std::numeric_limits<float>::infinity(),
+                              -std::numeric_limits<float>::infinity()}) {
+        Pitch p("C4");
+        const std::string message = thrownFirstLine([&] { p.setAlter(alter); });
+        EXPECT_NE(message.find("must be a finite number"), std::string::npos)
+            << "alter " << alter << ": " << message;
+        EXPECT_EQ(p.getPitch(), "C4");
+    }
+}
+
+// Grid membership is exact: a value near a multiple of 0.5 is rejected, never stored as it is
+// and never rounded onto the grid.
+TEST(PitchSetAlter, rejectsAValueNearTheGrid) {
+    for (const float alter : {0.99996f, 1.00004f, 0.46f}) {
+        Pitch p("C4");
+        const std::string message = thrownFirstLine([&] { p.setAlter(alter); });
+        EXPECT_NE(message.find("multiple of 0.5"), std::string::npos)
+            << "alter " << alter << ": " << message;
+        EXPECT_EQ(p.getAlter(), 0.0f);
+    }
+}
+
+// -0.0 is a natural, stored as the one value +0.0.
+TEST(PitchSetAlter, storesNegativeZeroAsPositiveZero) {
+    Pitch p("C1x4");
+    p.setAlter(-0.0f);
+    EXPECT_FALSE(std::signbit(p.getAlter()));
+    EXPECT_EQ(p.getPitch(), "C4");
+    EXPECT_EQ(p.getAlterSymbol(), "");
+}
+
+// ===== freqA4: a finite number of Hz greater than 0, checked before any arithmetic ===== //
+
+TEST(PitchReferenceFrequency, fromFrequencyRejectsAnInvalidFreqA4) {
+    for (const float freqA4 : {0.0f, -440.0f, std::numeric_limits<float>::quiet_NaN(),
+                               std::numeric_limits<float>::infinity(),
+                               -std::numeric_limits<float>::infinity()}) {
+        const std::string message = thrownFirstLine([&] { Pitch p(440.0f, "", freqA4); });
+        EXPECT_NE(message.find("reference frequency freqA4"), std::string::npos)
+            << "freqA4 " << freqA4 << ": " << message;
+
+        // Checked first, whatever the frequency: also for one that would make a rest.
+        const std::string restMessage = thrownFirstLine([&] { Pitch p(0.0f, "", freqA4); });
+        EXPECT_NE(restMessage.find("reference frequency freqA4"), std::string::npos)
+            << "freqA4 " << freqA4 << ": " << restMessage;
+    }
+}
+
+TEST(PitchReferenceFrequency, setFrequencyRejectsAnInvalidFreqA4AndLeavesThePitch) {
+    Pitch p("C4");
+    const std::string message = thrownFirstLine([&] { p.setFrequency(440.0f, "", 0.0f); });
+    EXPECT_NE(message.find("reference frequency freqA4"), std::string::npos) << message;
+    EXPECT_EQ(p.getPitch(), "C4");
+}
+
+TEST(PitchReferenceFrequency, getFrequencyRejectsAnInvalidFreqA4) {
+    for (const float freqA4 : {0.0f, -440.0f, std::numeric_limits<float>::quiet_NaN(),
+                               std::numeric_limits<float>::infinity()}) {
+        const std::string message = thrownFirstLine([&] { Pitch("A4").getFrequency(freqA4); });
+        EXPECT_NE(message.find("reference frequency freqA4"), std::string::npos)
+            << "freqA4 " << freqA4 << ": " << message;
+
+        const std::string restMessage =
+            thrownFirstLine([&] { Pitch("rest").getFrequency(freqA4); });
+        EXPECT_NE(restMessage.find("reference frequency freqA4"), std::string::npos)
+            << "freqA4 " << freqA4 << ": " << restMessage;
+    }
+    EXPECT_FLOAT_EQ(Pitch("A4").getFrequency(442.0f), 442.0f);
 }

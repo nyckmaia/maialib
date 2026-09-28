@@ -94,9 +94,10 @@ void HelperClass(const py::module& m) {
         pitchStep : str
             Diatonic step, one of ``"A"`` to ``"G"`` (see ``splitPitch``).
         alterValue : float
-            Accidental value in semitones (e.g. -2.0 for ``"bb"``, 0.5 for ``"1x"``).
+            Accidental value in semitones, from -2.0 to 2.0 (e.g. -2.0 for ``"bb"``, 0.5 for
+            ``"1x"``).
         octave : int
-            Octave number.
+            Octave number, from -1 to 11.
 
         Returns
         -------
@@ -106,7 +107,8 @@ void HelperClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If pitchStep is not a valid diatonic step.
+            If pitchStep is not a valid diatonic step, if alterValue is NaN, infinite or outside
+            [-2, 2], or if octave is outside [-1, 11].
 
         Examples
         --------

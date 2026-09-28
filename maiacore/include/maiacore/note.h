@@ -134,18 +134,20 @@ class Note {
      * @brief Sets the accidental value (in semitones) of the written pitch.
      * @details Delegates to Pitch::setAlter() and inherits its policy: refuses on a rest
      *          (LOG_WARN, no mutation) since a bare alter value carries no octave to resurrect
-     *          one with.
+     *          one with. The alter must be exactly on the grid: a value near a multiple of 0.5,
+     *          such as 0.99996, is rejected rather than rounded.
      * @param alter Alter value; must be a multiple of 0.5 (a semitone or quarter-tone step),
      *        within [-2, 2].
-     * @throws std::runtime_error If alter is not a multiple of 0.5, or is outside [-2, 2].
+     * @throws std::runtime_error If alter is NaN or infinite, is not a multiple of 0.5, or is
+     *         outside [-2, 2].
      */
     void setAlter(float alter);
 
     /**
      * @brief Rounds a quarter-tone accidental to the nearest semitone, ties upward.
-     * @details Delegates to Pitch::roundToSemitone(), the single implementation of the
-     *          ties-upward rule (`std::floor(alter + 0.5f)`), so it is never re-implemented
-     *          here: `C1x4` -> `C#4`, `D1b4` -> `D4`, `D3b4` -> `Db4`. A note that already
+     * @details Delegates to Pitch::roundToSemitone(), which applies roundTiesUpward()
+     *          (utils.h), the library's single implementation of the ties-upward rule:
+     *          `C1x4` -> `C#4`, `D1b4` -> `D4`, `D3b4` -> `Db4`. A note that already
      *          carries a whole-tone accidental (or none) is left unchanged, so this is safe to
      *          call unconditionally. Acts on the written pitch; see isQuarterTone().
      */
@@ -494,6 +496,19 @@ class Note {
     int getMidiNumber() const;
 
     /**
+     * @brief Returns the exact, unrounded sounding pitch position, in semitones.
+     * @details The written pitch's exact position (Pitch::getQuarterToneSteps()) plus the
+     *          chromatic transposing interval, so a quarter tone keeps its half: a written `C1x4`
+     *          is 60.5 where getMidiNumber() rounds it to 61, and on a B-flat clarinet
+     *          (transposeChromatic -2) it sounds at 58.5. Every position is a multiple of 0.5,
+     *          which a float holds exactly, so positions compare and subtract exactly. The
+     *          ordering operators compare notes by this value.
+     * @return The exact sounding position, or -1.0 (MUSIC_XML::MIDI::NUMBER::MIDI_REST) for a
+     *         rest.
+     */
+    float getQuarterToneSteps() const;
+
+    /**
      * @brief Returns the voice number.
      * @return Voice number.
      */
@@ -693,11 +708,12 @@ class Note {
 
     /**
      * @brief Less-than operator for comparing notes by exact pitch position.
-     * @details Compares the exact, unrounded pitch position, so a quarter tone orders correctly
-     *          instead of being collapsed onto the semitone above it: `Note("E1b4") < Note("E4")`
-     *          is true, because 63.5 really is below 64. Identical to comparing getMidiNumber()
-     *          for any note without a quarter tone. This is the single source of truth for pitch
-     *          order: Chord::sortNotes() and Chord::isSorted() both resolve through it.
+     * @details Compares getQuarterToneSteps(), the exact, unrounded sounding position, so a
+     *          quarter tone orders correctly instead of being collapsed onto the semitone above
+     *          it: `Note("E1b4") < Note("E4")` is true, because 63.5 really is below 64. Identical
+     *          to comparing getMidiNumber() for any note without a quarter tone. This is the
+     *          single source of truth for pitch order: Chord::sortNotes() and Chord::isSorted()
+     *          both resolve through it.
      */
     bool operator<(const Note& otherNote) const;
 

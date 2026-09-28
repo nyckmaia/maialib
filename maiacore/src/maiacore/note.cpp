@@ -16,26 +16,6 @@
 #include "maiacore/utils.h"
 
 namespace {
-// Twice the exact, unrounded pitch position in semitones, as an integer.
-//
-// getMidiNumber() rounds a quarter tone ties-upward (Helper::spelling2midiNote()), which is what
-// made every ordering in this class collapse a quarter tone onto the semitone above it: measured,
-// Note("E1b4") < Note("E4") was false, although 63.5 really is below 64, because both rounded to
-// 64. Ordering is where that mattered most, because Chord::sortNotes() sorts through these
-// operators: std::sort saw two equal notes, left {"E4", "E1b4"} untouched, and Chord::isSorted()
-// then called the result unsorted -- a chord sortNotes() could not make sorted.
-//
-// The recovery is exact, not an approximation. Pitch::setAlter() constrains an alter to a multiple
-// of 0.5, so a quarter tone's exact position is always an integer plus 0.5, and ties-upward
-// rounding therefore always adds exactly 0.5 to it, on the flat and sharp sides alike. Doubling
-// keeps the comparison in integer arithmetic.
-//
-// For a note with no quarter tone this is exactly 2 * getMidiNumber(), so every comparison between
-// ordinary notes is bit-identical to the previous implementation's.
-int twiceExactSemitoneSteps(const Note& note) {
-    return (2 * note.getMidiNumber()) - (note.isQuarterTone() ? 1 : 0);
-}
-
 // Formats a pitch alter value for the MusicXML <alter> element: integral values (whole-tone
 // accidentals) print with no decimal part (e.g. "1", "-2"); quarter tones print with exactly one
 // decimal place (e.g. "0.5", "-1.5"). std::to_string() cannot be used here -- it always emits six
@@ -333,12 +313,7 @@ bool Note::isNoteOn() const { return !_writtenPitch.isRest(); }
 
 bool Note::isNoteOff() const { return _writtenPitch.isRest(); }
 
-bool Note::isQuarterTone() const {
-    // Same test used by toXML() and getEnharmonicPitch() to spot an alter with no whole-tone
-    // spelling: a fractional part is exactly what makes an accidental a quarter tone.
-    const float alterValue = _writtenPitch.getAlter();
-    return alterValue != std::floor(alterValue);
-}
+bool Note::isQuarterTone() const { return isQuarterToneValue(_writtenPitch.getAlter()); }
 
 std::string Note::getAlterSymbol() const { return computeSoundingPitch().getAlterSymbol(); }
 
@@ -374,7 +349,7 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnharmonicPitch) cons
     const int midiNumber = Helper::pitch2midiNote(pitch);
     // spellMidiNumber() below only enumerates the five integer-semitone accidentals
     // ("bb","b","","#","x"); a quarter-tone alter has no spelling in that vocabulary.
-    if (alterValue != std::floor(alterValue)) {
+    if (isQuarterToneValue(alterValue)) {
         LOG_ERROR("Quarter-tone enharmonic spelling is not supported for pitch: " + pitch);
     }
     const int ownAlter = static_cast<int>(alterValue);
@@ -909,20 +884,17 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
     // <accidental> is reserved for accidentals a key signature cannot already imply -- i.e.
     // quarter tones, whose fractional alter has no key-signature analogue. A semitone
     // accidental (#, b, x, bb) may be implied by the key signature alone (e.g. an F# in D
-    // major carries only <alter>1</alter>, no glyph); emitting <accidental> for every
-    // non-empty alter symbol would draw a redundant accidental on every such note, which a
-    // fix round found and corrected -- <alter> is still written for every accidental exactly
-    // as before, but <accidental> only for a fractional (quarter-tone) alter.
+    // major carries only <alter>1</alter>, no glyph), so emitting <accidental> for every
+    // non-empty alter symbol would draw a redundant accidental on every such note. <alter> is
+    // written for every accidental; <accidental> only for a quarter tone.
     //
     // Positioned right after <type> and before <time-modification>. Per the MusicXML schema
     // the note element sequence is `type?, dot*, accidental?, time-modification?, stem?`;
-    // <dot> and <time-modification> are already emitted in the wrong relative order below
-    // (pre-existing, not fixed here -- see CHANGELOG), so this is the closest schema-correct
-    // position available without reordering the existing elements.
-    const float alterValue = _writtenPitch.getAlter();
-    if (alterValue != std::floor(alterValue)) {
+    // <dot> and <time-modification> are emitted in the wrong relative order below, so this is
+    // the closest schema-correct position available without reordering the existing elements.
+    if (isQuarterTone()) {
         xml.append(Helper::generateIdentation(4, identSize) + "<accidental>" +
-                   Helper::alterValue2Name(alterValue) + "</accidental>\n");
+                   Helper::alterValue2Name(_writtenPitch.getAlter()) + "</accidental>\n");
     }
 
     if (_isTuplet) {
@@ -998,30 +970,41 @@ int Note::getMidiNumber() const {
     return _writtenPitch.getMidiNumber() + _transposeChromatic;
 }
 
-// The four ordering operators compare exact pitch positions rather than the rounded
-// getMidiNumber() -- see twiceExactSemitoneSteps() at the top of this file for why that is exact
-// and why it changes nothing for a note without a quarter tone.
+float Note::getQuarterToneSteps() const {
+    if (_writtenPitch.isRest()) {
+        return static_cast<float>(MUSIC_XML::MIDI::NUMBER::MIDI_REST);
+    }
+
+    // The transposing interval is a whole number of semitones, so the sounding position is the
+    // written one moved by it, exactly.
+    return _writtenPitch.getQuarterToneSteps() + static_cast<float>(_transposeChromatic);
+}
+
+// The four ordering operators compare exact sounding positions, getQuarterToneSteps(), rather
+// than the rounded getMidiNumber(), which puts a quarter tone level with the semitone above it
+// ("E1b4" and "E4" both round to 64). Every position is a multiple of 0.5, which float holds
+// exactly, so these comparisons are exact; for notes without a quarter tone they order exactly
+// as getMidiNumber() does.
 //
 // This is the single source of truth for pitch order in the library: Chord::sortNotes(),
 // Chord::isSorted() and every internal std::sort over Notes go through it, as do Python's
 // Note comparisons, which are bound directly to these operators.
 //
-// operator==/!= are deliberately NOT touched: they compare pitch STRINGS, so they already
-// distinguish "E1b4" from "E4" and were never affected by the rounding.
+// operator==/!= compare pitch strings instead, which distinguish "E1b4" from "E4" too.
 bool Note::operator<(const Note& otherNote) const {
-    return twiceExactSemitoneSteps(*this) < twiceExactSemitoneSteps(otherNote);
+    return getQuarterToneSteps() < otherNote.getQuarterToneSteps();
 }
 
 bool Note::operator>(const Note& otherNote) const {
-    return twiceExactSemitoneSteps(*this) > twiceExactSemitoneSteps(otherNote);
+    return getQuarterToneSteps() > otherNote.getQuarterToneSteps();
 }
 
 bool Note::operator<=(const Note& otherNote) const {
-    return twiceExactSemitoneSteps(*this) <= twiceExactSemitoneSteps(otherNote);
+    return getQuarterToneSteps() <= otherNote.getQuarterToneSteps();
 }
 
 bool Note::operator>=(const Note& otherNote) const {
-    return twiceExactSemitoneSteps(*this) >= twiceExactSemitoneSteps(otherNote);
+    return getQuarterToneSteps() >= otherNote.getQuarterToneSteps();
 }
 
 bool Note::operator==(const Note& otherNote) const { return getPitch() == otherNote.getPitch(); }

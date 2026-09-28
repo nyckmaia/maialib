@@ -8,6 +8,7 @@
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
 #include "pitch-spelling-legacy-data.h"
+#include "test-capture.h"
 
 using namespace testing;
 
@@ -441,6 +442,32 @@ TEST(PitchSpelling, Spelling2MidiNote) {
         EXPECT_NE(std::string::npos, std::string(e.what()).find("Unknown diatonic pitch step"))
             << "message: " << e.what();
     }
+}
+
+// The components of a pitch this library can spell are an alter from -2 to 2 and an octave from
+// -1 to 11. Anything else is rejected before the sum is converted to int, which is undefined
+// behaviour for a value out of int's range, NaN and infinity included.
+TEST(PitchSpelling, Spelling2MidiNoteRejectsComponentsNoPitchCanHave) {
+    for (const float alter : {std::numeric_limits<float>::quiet_NaN(),
+                              std::numeric_limits<float>::infinity(),
+                              -std::numeric_limits<float>::infinity(), 2.5f, -2.5f, 3.0e9f}) {
+        const std::string message =
+            thrownFirstLine([&] { Helper::spelling2midiNote("C", alter, 4); });
+        EXPECT_NE(message.find("the alter value must be a finite number of semitones from -2 to 2"),
+                  std::string::npos)
+            << "alter " << alter << ": " << message;
+    }
+
+    for (const int octave : {-2, 12, 100000, -100000}) {
+        const std::string message =
+            thrownFirstLine([&] { Helper::spelling2midiNote("C", 0.0f, octave); });
+        EXPECT_NE(message.find("the octave must be from -1 to 11"), std::string::npos)
+            << "octave " << octave << ": " << message;
+    }
+
+    // The limits themselves are components of real spellings.
+    EXPECT_EQ(Helper::spelling2midiNote("B", 2.0f, 11), 157);
+    EXPECT_EQ(Helper::spelling2midiNote("D", -2.0f, -1), 0);
 }
 
 TEST(PitchSpelling, AcceptedEdgeCases) {

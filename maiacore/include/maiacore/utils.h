@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <iostream>
 #include <numeric>
 
@@ -64,4 +65,51 @@ constexpr int factorial(const int n) { return (n == 0) || (n == 1) ? 1 : n * fac
  */
 inline bool isFloatEqual(float A, float B, float epsilon = 0.005f) {
     return (std::fabs(A - B) < epsilon);
+}
+
+/**
+ * @brief Rounds a value to the nearest integer, ties upward (toward +infinity).
+ * @tparam T A floating-point type.
+ * @param value Value to round.
+ * @return `std::floor(value + 0.5)`, as T.
+ * @details The library's single implementation of the ties-upward rule for pitch positions and
+ *          alters: a quarter tone always rounds to the semitone above it, on the flat side as on
+ *          the sharp side ("C1x4", 60.5, rounds to 61; "D1b4", 61.5, to 62). std::round() and
+ *          std::lround() round half away from zero instead, and disagree with this rule for every
+ *          negative tie: -0.5 rounds to 0 here and to -1 there.
+ */
+template <typename T>
+T roundTiesUpward(const T value) {
+    return std::floor(value + static_cast<T>(0.5));
+}
+
+/**
+ * @brief Tests whether a value is a whole multiple of 0.5 -- a point of the quarter-tone grid.
+ * @tparam T A floating-point type.
+ * @param value A pitch position, alter or interval, in semitones.
+ * @return True if value is finite and exactly a multiple of 0.5.
+ * @details The library's single definition of "on the grid". Every pitch position, alter and
+ *          transposition this library can spell is a multiple of 0.5 semitones: there is no pitch
+ *          between "C1x4" and "C#4". The test is exact, with no tolerance, so a value near the
+ *          grid (0.46, or 0.99996) is off it rather than snapped to it. Doubling turns the test
+ *          into an integer test, and doubling is exact in binary floating point. A non-finite
+ *          value is never on the grid.
+ */
+template <typename T>
+bool isOnQuarterToneGrid(const T value) {
+    const T twice = value * static_cast<T>(2);
+    return std::isfinite(value) && twice == std::floor(twice);
+}
+
+/**
+ * @brief Tests whether a value is a quarter tone: on the grid, but between two semitones.
+ * @tparam T A floating-point type.
+ * @param value A pitch position, alter or interval, in semitones.
+ * @return True if value is an odd multiple of 0.5 (0.5, -1.5, 60.5, ...).
+ * @details False for a whole number of semitones and for any value off the grid (see
+ *          isOnQuarterToneGrid()).
+ */
+template <typename T>
+bool isQuarterToneValue(const T value) {
+    return isOnQuarterToneGrid(value) && value != std::floor(value);
 }

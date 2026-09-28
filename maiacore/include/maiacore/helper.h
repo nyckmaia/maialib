@@ -128,11 +128,14 @@ class Helper {
      *          pitch2midiNote() and splitPitch() so the formula is evaluated in one place. Intended
      *          for callers (e.g. Note) that already parsed a pitch string with splitPitch() and
      * want to avoid rebuilding and re-parsing a pitch string just to get its MIDI number.
+     *          A quarter-tone alterValue leaves the sum halfway between two MIDI numbers; it
+     *          rounds to the upper one (roundTiesUpward(), utils.h).
      * @param pitchStep Diatonic step, one of "A".."G" (see splitPitch()).
-     * @param alterValue Accidental value in semitones (e.g., -2.0 for "bb").
-     * @param octave Octave number.
+     * @param alterValue Accidental value in semitones, from -2 to 2 (e.g., -2.0 for "bb").
+     * @param octave Octave number, from -1 to 11.
      * @return MIDI note number.
-     * @throws std::runtime_error If pitchStep is not a valid diatonic step.
+     * @throws std::runtime_error If pitchStep is not a valid diatonic step, if alterValue is NaN,
+     *         infinite or outside [-2, 2], or if octave is outside [-1, 11].
      */
     static int spelling2midiNote(const std::string& pitchStep, const float alterValue,
                                  const int octave);

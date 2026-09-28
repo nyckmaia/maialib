@@ -130,7 +130,7 @@ void PitchClass(const py::module& m) {
             A preference, not a demand: when it cannot spell the rounded pitch, the default
             spelling is used and a warning is printed.
         freqA4 : float, default 440.0
-            Reference frequency of A4, in Hz.
+            Reference frequency of A4, in Hz: a finite number greater than 0.
         enableQuarterToneRound : bool, default False
             Round to the nearest quarter tone instead of the nearest semitone.
 
@@ -142,9 +142,10 @@ void PitchClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If ``frequency`` is NaN, if ``accType`` is not one of the five accepted values, or
-            if the active tuning system is not equal temperament (the only one implemented; it
-            cannot currently be changed from Python).
+            If ``freqA4`` is not a finite number greater than 0 (checked first, whatever the
+            frequency), if ``frequency`` is NaN, if ``accType`` is not one of the five accepted
+            values, or if the active tuning system is not equal temperament (the only one
+            implemented; it cannot currently be changed from Python).
 
         Examples
         --------
@@ -345,7 +346,7 @@ void PitchClass(const py::module& m) {
         Parameters
         ----------
         freqA4 : float, default 440.0
-            Reference frequency of A4, in Hz.
+            Reference frequency of A4, in Hz: a finite number greater than 0.
 
         Returns
         -------
@@ -355,8 +356,9 @@ void PitchClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the active tuning system is not equal temperament, the only one implemented. The
-            tuning system cannot currently be changed from Python.
+            If ``freqA4`` is not a finite number greater than 0 (for a rest too), or if the
+            active tuning system is not equal temperament, the only one implemented. The tuning
+            system cannot currently be changed from Python.
 
         Examples
         --------
@@ -419,7 +421,9 @@ void PitchClass(const py::module& m) {
         Set the accidental, as a number of semitones.
 
         Refused on a rest, and when the result would lie below MIDI note 0: in both cases a
-        warning is printed and the pitch is left unchanged. A malformed value is an error.
+        warning is printed and the pitch is left unchanged. A malformed value is an error. The
+        value must be exactly a multiple of 0.5: one merely close to it, such as 0.99996, is
+        rejected rather than rounded. ``-0.0`` is stored as ``0.0``.
 
         Parameters
         ----------
@@ -430,7 +434,8 @@ void PitchClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If ``alter`` is not a multiple of 0.5, or lies outside [-2, 2].
+            If ``alter`` is NaN or infinite, is not exactly a multiple of 0.5, or lies outside
+            [-2, 2].
 
         Examples
         --------
@@ -560,16 +565,17 @@ void PitchClass(const py::module& m) {
         accType : str, default ""
             Preferred accidental of the spelling (see ``Pitch.fromFrequency``).
         freqA4 : float, default 440.0
-            Reference frequency of A4, in Hz.
+            Reference frequency of A4, in Hz: a finite number greater than 0.
         enableQuarterToneRound : bool, default False
             Round to the nearest quarter tone instead of the nearest semitone.
 
         Raises
         ------
         RuntimeError
-            If ``frequency`` is NaN, if ``accType`` is not one of the five accepted values, or
-            if the active tuning system is not equal temperament (it cannot currently be
-            changed from Python).
+            If ``freqA4`` is not a finite number greater than 0 (checked first, whatever the
+            frequency), if ``frequency`` is NaN, if ``accType`` is not one of the five accepted
+            values, or if the active tuning system is not equal temperament (it cannot currently
+            be changed from Python).
 
         Examples
         --------

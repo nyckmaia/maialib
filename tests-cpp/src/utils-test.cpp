@@ -266,3 +266,52 @@ TEST(UtilsIntegration, FloatEqualityTransitivity) {
     EXPECT_TRUE(isFloatEqual(b, c, epsilon));
     // Note: Due to epsilon nature, A might not equal C
 }
+
+// ============================================================================
+// roundTiesUpward(), isOnQuarterToneGrid() and isQuarterToneValue()
+// ============================================================================
+
+// Every tie rounds toward +infinity, on the negative side too, where std::round() and
+// std::lround() round away from zero instead.
+TEST(UtilsQuarterToneGrid, RoundTiesUpwardRoundsEveryTieUpward) {
+    EXPECT_EQ(roundTiesUpward(0.5f), 1.0f);
+    EXPECT_EQ(roundTiesUpward(60.5f), 61.0f);
+    EXPECT_EQ(roundTiesUpward(-0.5f), 0.0f);
+    EXPECT_EQ(roundTiesUpward(-1.5f), -1.0f);
+    EXPECT_EQ(roundTiesUpward(-2.5), -2.0);  // the double instantiation
+    EXPECT_EQ(roundTiesUpward(0.49f), 0.0f);
+    EXPECT_EQ(roundTiesUpward(-0.51f), -1.0f);
+    EXPECT_EQ(roundTiesUpward(157.0f), 157.0f);
+}
+
+// Membership is exact: a value near the grid is off it, not snapped onto it.
+TEST(UtilsQuarterToneGrid, IsOnQuarterToneGridIsExact) {
+    for (const float value : {0.0f, -0.0f, 0.5f, -0.5f, -1.5f, 2.0f, 60.5f, 157.0f}) {
+        EXPECT_TRUE(isOnQuarterToneGrid(value)) << value;
+    }
+    for (const float value : {0.99996f, 1.00004f, 0.46f, 0.25f, -0.49999f}) {
+        EXPECT_FALSE(isOnQuarterToneGrid(value)) << value;
+    }
+    EXPECT_TRUE(isOnQuarterToneGrid(0.5));
+    EXPECT_FALSE(isOnQuarterToneGrid(0.50000001));  // a double; as a float it would be 0.5
+}
+
+// Doubling infinity gives infinity, which std::floor() leaves unchanged, so only the explicit
+// finiteness check keeps it off the grid.
+TEST(UtilsQuarterToneGrid, NonFiniteValuesAreNeverOnTheGrid) {
+    EXPECT_FALSE(isOnQuarterToneGrid(std::numeric_limits<float>::infinity()));
+    EXPECT_FALSE(isOnQuarterToneGrid(-std::numeric_limits<float>::infinity()));
+    EXPECT_FALSE(isOnQuarterToneGrid(std::numeric_limits<float>::quiet_NaN()));
+    EXPECT_FALSE(isOnQuarterToneGrid(std::numeric_limits<double>::infinity()));
+}
+
+TEST(UtilsQuarterToneGrid, IsQuarterToneValueIsAnOddMultipleOfHalf) {
+    for (const float value : {0.5f, -0.5f, 1.5f, -1.5f, 60.5f}) {
+        EXPECT_TRUE(isQuarterToneValue(value)) << value;
+    }
+    for (const float value : {0.0f, 1.0f, -2.0f, 61.0f, 0.99996f, 0.25f}) {
+        EXPECT_FALSE(isQuarterToneValue(value)) << value;
+    }
+    EXPECT_FALSE(isQuarterToneValue(std::numeric_limits<float>::quiet_NaN()));
+    EXPECT_FALSE(isQuarterToneValue(std::numeric_limits<float>::infinity()));
+}

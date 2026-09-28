@@ -1255,6 +1255,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `getPitchClass() -> str`
 - `getPitchStep() -> str`
 - `getQuarterDuration() -> float`
+- `getQuarterToneSteps() -> float`
 - `getScaleDegree(key: Key) -> int`
 - `getShortType() -> str`
 - `getSlur() -> tuple[str, str]`

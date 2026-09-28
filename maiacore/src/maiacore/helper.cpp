@@ -231,12 +231,25 @@ int Helper::spelling2midiNote(const std::string& pitchStep, const float alterVal
         LOG_ERROR("Unknown diatonic pitch step: " + pitchStep);
     }
     const auto stepIdx = static_cast<size_t>(std::distance(c_C_diatonicScale.begin(), stepIt));
-    // SP2: alterValue may carry a quarter-tone fraction (e.g. 0.5f); round ties upward per
-    // spec section 4.5 (std::floor(x + 0.5f) rounds half up for both signs, unlike
-    // std::lround, which rounds half away from zero and therefore disagrees on negative
-    // alters).
+
+    // Both checks run before the float-to-int conversion below, which is undefined behaviour for
+    // a value outside int's range, NaN and infinity included. The accepted ranges are exactly
+    // the components of a pitch this library can spell, so every caller that holds one passes.
+    if (!std::isfinite(alterValue) || alterValue < -2.0f || alterValue > 2.0f) {
+        LOG_ERROR("Helper::spelling2midiNote: the alter value must be a finite number of "
+                  "semitones from -2 to 2, but '" +
+                  std::to_string(alterValue) + "' is not");
+    }
+    if (octave < c_minPitchOctave || octave > c_maxPitchOctave) {
+        LOG_ERROR("Helper::spelling2midiNote: the octave must be from " +
+                  std::to_string(c_minPitchOctave) + " to " + std::to_string(c_maxPitchOctave) +
+                  ", but '" + std::to_string(octave) + "' is not");
+    }
+
+    // A quarter-tone alter leaves the position halfway between two MIDI numbers; it rounds to
+    // the upper one.
     const float exact = 12.0f * (octave + 1) + c_diatonicStepSemitones[stepIdx] + alterValue;
-    return static_cast<int>(std::floor(exact + 0.5f));
+    return static_cast<int>(roundTiesUpward(exact));
 }
 
 std::pair<int, int> Helper::freq2midiNote(const float freq, std::function<int(float)> modelo) {
@@ -1605,7 +1618,7 @@ std::string representablePitchRange() {
 // Below MIDI note 0 by the library's own rule: the position rounds, ties upward, to a negative
 // MIDI number. That is the rule splitPitch() rejects "Cb-1" (-1) by and admits "C1b-1" (-0.5) by,
 // so the two agree on where the range starts. Evaluated in floating point: no int conversion.
-bool isBelowMidiZero(const float exactSteps) { return std::floor(exactSteps + 0.5f) < 0.0f; }
+bool isBelowMidiZero(const float exactSteps) { return roundTiesUpward(exactSteps) < 0.0f; }
 
 bool isAboveHighestPitch(const float exactSteps) {
     return exactSteps > static_cast<float>(Pitch::maxRepresentableMidi());
@@ -1613,26 +1626,18 @@ bool isAboveHighestPitch(const float exactSteps) {
 }  // namespace
 
 void Helper::validateTransposeSemitones(const float semitones) {
-    // Non-finite first. An infinity SLIPS THROUGH the multiple-of-0.5 test below: inf * 2 == inf
-    // and std::floor(inf) == inf, so the inequality that rejects 0.3 is false for it. The two
-    // consequences differed and both were bad -- +inf failed far away with the unrelated message
-    // "Unknown accidental alter value: inf", and -inf SILENTLY returned "rest" through
-    // steps2pitch()'s below-MIDI-0 branch, an infinite transposition quietly turning a note into a
-    // rest. NaN is classified here with them rather than being left to the comparison below: it
-    // satisfies neither "is a multiple of 0.5" nor "is not", so stating the rule once is honest
-    // where relying on NaN != NaN is an accident. Mirrors Pitch::setFrequency(), which classifies
-    // non-finite input explicitly (spec section 4.3).
+    // Non-finite first, with its own message: an infinite or NaN interval is not a number of
+    // semitones at all, which is a different mistake from one that falls between two quarter
+    // tones. Mirrors Pitch::setFrequency(), which classifies non-finite input explicitly (spec
+    // section 4.3).
     if (!std::isfinite(semitones)) {
         LOG_ERROR("A transposition must be a finite number of semitones, but '" +
                   std::to_string(semitones) + "' is not");
     }
 
     // A transposition must land on a pitch this library can spell, and the finest spellable
-    // interval is the quarter tone: there is no pitch between "C1x4" and "C#4". Doubling turns
-    // "is a multiple of 0.5" into an exact integer test -- every multiple of 0.5 in the usable
-    // range is represented exactly in float, so this neither over- nor under-accepts.
-    const float twiceSemitones = semitones * 2.0f;
-    if (twiceSemitones != std::floor(twiceSemitones)) {
+    // interval is the quarter tone: there is no pitch between "C1x4" and "C#4".
+    if (!isOnQuarterToneGrid(semitones)) {
         LOG_ERROR("A transposition must be a multiple of 0.5 semitones (one quarter tone), but '" +
                   std::to_string(semitones) + "' is not");
     }
@@ -1651,12 +1656,8 @@ const std::string Helper::steps2pitch(const float exactSteps, const std::string&
             representablePitchRange() + ")");
     }
 
-    // Every pitch position is a multiple of 0.5: there is no pitch between "C1x4" and "C#4". An
-    // off-grid position used to be snapped or rejected by accident, depending on how far off it
-    // was, because alterValue2symbol() formats its argument to one decimal place before matching
-    // it. Doubling turns the test into an exact integer test, as in validateTransposeSemitones().
-    const float twiceSteps = exactSteps * 2.0f;
-    if (twiceSteps != std::floor(twiceSteps)) {
+    // Every pitch position is a multiple of 0.5: there is no pitch between "C1x4" and "C#4".
+    if (!isOnQuarterToneGrid(exactSteps)) {
         LOG_ERROR(
             "Helper::steps2pitch: a pitch position must be a multiple of 0.5 semitones (one "
             "quarter tone), but '" +
@@ -1679,11 +1680,10 @@ const std::string Helper::steps2pitch(const float exactSteps, const std::string&
     }
 
     // Split the exact position into the semitone it is spelled from and the quarter tone left
-    // over. spelling2midiNote() owns the ties-upward rounding rule (std::floor(x + 0.5f), never
-    // std::lround), so a quarter tone always rounds UP to its base semitone and the remainder is
-    // therefore always exactly 0.0 or -0.5 -- never +0.5. The cast is safe: the checks above
-    // leave exactSteps finite, on the grid and within [-0.5, maxRepresentableMidi()].
-    const int baseMidiNote = static_cast<int>(std::floor(exactSteps + 0.5f));
+    // over. A quarter tone rounds, ties upward, to the semitone above it, so the remainder is
+    // always exactly 0.0 or -0.5 -- never +0.5. The cast is safe: the checks above leave
+    // exactSteps finite, on the grid and within [-0.5, maxRepresentableMidi()].
+    const int baseMidiNote = static_cast<int>(roundTiesUpward(exactSteps));
     const float quarterToneResidual = exactSteps - static_cast<float>(baseMidiNote);
 
     const std::string basePitch = midiNote2pitch(baseMidiNote, accType);

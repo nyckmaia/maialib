@@ -10,8 +10,7 @@
  * The Pitch class stores a pitch using its diatonic step ("A".."G"), an accidental value in
  * semitones that may carry a quarter-tone fraction (a multiple of 0.5, within [-2, 2]), and an
  * octave number. It provides pitch-string round-tripping, MIDI conversion and quarter-tone-aware
- * rounding. This class is the foundation `Note` will be rebuilt on in a later task; it is
- * deliberately standalone and does not interact with `Note`.
+ * rounding. `Note` holds its written pitch as a Pitch; Pitch itself knows nothing of `Note`.
  *
  * @invariant `isRest() ⟺ _step == "rest" ⟺ !_octave.has_value() ⟹ _alter == 0.0f`, across every
  *            reachable state. A rest is represented internally by an empty octave (see
@@ -27,8 +26,8 @@
  *            argument is individually well-formed but would move an already-constructed Pitch
  *            below MIDI note 0 treats that as a boundary condition, not a caller error: it logs a
  *            warning and leaves the object unchanged, rather than throwing. Malformed input (an
- *            unknown step, a non-multiple-of-0.5 or out-of-range alter, an out-of-range octave)
- *            remains a caller error and still throws std::runtime_error.
+ *            unknown step, a non-finite, non-multiple-of-0.5 or out-of-range alter, an
+ *            out-of-range octave) remains a caller error and still throws std::runtime_error.
  */
 class Pitch {
    private:
@@ -42,13 +41,10 @@ class Pitch {
      *        (step, alter, octave) triple, without reading or mutating this object's state.
      * @details Single implementation, within this class, of
      *          `12 * (octave + 1) + diatonicStepSemitones + alter`, so getQuarterToneSteps()
-     *          does not carry its own inline copy of that formula. This is deliberately *not*
-     *          used by getMidiNumber(): that method continues to delegate to
-     *          Helper::spelling2midiNote(), the codebase's single implementation of the
-     *          ties-upward rounding rule (see the CONTROLLER RULING in task-2-brief.md). Reusing
-     *          this unrounded helper for getMidiNumber() would require re-implementing that
-     *          rounding rule a second time in this file, which is the exact defect shape the
-     *          ruling exists to prevent.
+     *          does not carry its own inline copy of that formula. getMidiNumber() does not use
+     *          it: it delegates to Helper::spelling2midiNote(), which evaluates the same sum and
+     *          rounds it with roundTiesUpward() (utils.h), the library's single implementation of
+     *          the ties-upward rule.
      * @param step Diatonic step ("A".."G").
      * @param alter Accidental value in semitones.
      * @param octave Octave number.
@@ -92,9 +88,9 @@ class Pitch {
      * @param freqA4 Reference frequency for A4, in Hz (default: 440.0).
      * @param enableQuarterToneRound When false (default), rounds to the nearest semitone; when
      *        true, rounds to the nearest quarter tone. Ties round upward.
-     * @throws std::runtime_error If accType is not one of the five accepted values, if the
-     *         active tuning system is not TuningSystem::EQUAL_TEMPERAMENT, or if frequency is
-     *         NaN.
+     * @throws std::runtime_error If freqA4 is not a finite number greater than 0, if accType is
+     *         not one of the five accepted values, if the active tuning system is not
+     *         TuningSystem::EQUAL_TEMPERAMENT, or if frequency is NaN.
      */
     explicit Pitch(float frequency, const std::string& accType = {}, float freqA4 = 440.0f,
                    bool enableQuarterToneRound = false);
@@ -171,8 +167,8 @@ class Pitch {
     /**
      * @brief Returns the MIDI note number, rounding a quarter-tone alter half upward to the
      *        nearest semitone.
-     * @details Delegates to Helper::spelling2midiNote(), the single implementation of the
-     *          ties-upward rounding rule, so it is never re-implemented here.
+     * @details Delegates to Helper::spelling2midiNote(), which rounds with roundTiesUpward()
+     *          (utils.h), the library's single implementation of the ties-upward rule.
      * @return MIDI note number, or MUSIC_XML::MIDI::NUMBER::MIDI_REST for a rest.
      */
     int getMidiNumber() const;
@@ -201,8 +197,8 @@ class Pitch {
      *          number first and is therefore never used here).
      * @param freqA4 Reference frequency for A4, in Hz (default: 440.0).
      * @return Frequency in Hz, or 0.0f for a rest.
-     * @throws std::runtime_error If the active tuning system is not
-     *         TuningSystem::EQUAL_TEMPERAMENT.
+     * @throws std::runtime_error If freqA4 is not a finite number greater than 0 (checked for a
+     *         rest too), or if the active tuning system is not TuningSystem::EQUAL_TEMPERAMENT.
      */
     float getFrequency(float freqA4 = 440.0f) const;
 
@@ -223,11 +219,15 @@ class Pitch {
      * @details Refuses (warns via LOG_WARN, no-op) when called on a rest, and refuses the same
      *          way when the resulting pitch would fall below MIDI note 0 — both are boundary
      *          conditions, not caller errors, so this Pitch is left unchanged rather than an
-     *          exception being thrown. A malformed alter (not a multiple of 0.5, or outside
-     *          [-2, 2]) remains a caller error and still throws.
+     *          exception being thrown. A malformed alter (NaN or infinite, not exactly a
+     *          multiple of 0.5, or outside [-2, 2]) remains a caller error and still throws.
+     *          Membership of the grid is exact (isOnQuarterToneGrid(), utils.h): a value near a
+     *          multiple of 0.5, such as 0.99996, is rejected rather than rounded. The value is
+     *          stored canonically: -0.0 is stored as +0.0.
      * @param alter Alter value; must be a multiple of 0.5 (a semitone or quarter-tone step),
      *        within [-2, 2].
-     * @throws std::runtime_error If alter is not a multiple of 0.5, or is outside [-2, 2].
+     * @throws std::runtime_error If alter is NaN or infinite, is not a multiple of 0.5, or is
+     *         outside [-2, 2].
      */
     void setAlter(float alter);
 
@@ -318,17 +318,18 @@ class Pitch {
      * @param freqA4 Reference frequency for A4, in Hz (default: 440.0).
      * @param enableQuarterToneRound When false (default), rounds to the nearest semitone; when
      *        true, rounds to the nearest quarter tone.
-     * @throws std::runtime_error If accType is not one of the five accepted values, if the
-     *         active tuning system is not TuningSystem::EQUAL_TEMPERAMENT, or if frequency is
-     *         NaN.
+     * @throws std::runtime_error If freqA4 is not a finite number greater than 0 (checked
+     *         first, whatever the frequency), if accType is not one of the five accepted values,
+     *         if the active tuning system is not TuningSystem::EQUAL_TEMPERAMENT, or if
+     *         frequency is NaN.
      */
     void setFrequency(float frequency, const std::string& accType = {}, float freqA4 = 440.0f,
                        bool enableQuarterToneRound = false);
 
     /**
      * @brief Rounds a quarter-tone alter to the nearest semitone, ties upward.
-     * @details Sets alter to `std::floor(alter + 0.5f)`, matching the ties-upward rounding rule
-     *          used by getMidiNumber().
+     * @details Sets alter to `roundTiesUpward(alter)` (utils.h), the same ties-upward rule
+     *          getMidiNumber() applies.
      */
     void roundToSemitone();
 };
