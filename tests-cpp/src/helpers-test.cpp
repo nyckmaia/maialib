@@ -785,14 +785,12 @@ TEST(PitchSpelling, Steps2PitchRejectsAPositionOffTheQuarterToneGrid) {
     }
 }
 
-// Task 11, section N: below MIDI note 0 still answers the rest sentinel -- deliberately, parallel
-// to midiNote2pitch() for a negative MIDI number, so a note transposed below MIDI 0 stays
-// constructible -- but "below MIDI 0" now means what it means everywhere else in this library: the
-// position ROUNDS, ties upward, to a negative MIDI number. The test was `exactSteps < 0`, which
-// also turned -0.5 into a rest although it rounds to MIDI 0 and is "C1b-1", a pitch this library
-// holds (Pitch("C1b-1") is constructible).
+// Below MIDI note 0 steps2pitch() answers the rest sentinel, parallel to midiNote2pitch() for a
+// negative MIDI number, and "below MIDI 0" means what it means everywhere else in this library:
+// the position ROUNDS, ties upward, to a negative MIDI number. So -0.5, which rounds to MIDI 0, is
+// "C1b-1", a pitch this library holds (Pitch("C1b-1") is constructible), not a rest.
 TEST(PitchSpelling, Steps2PitchAnswersARestOnlyBelowMidiZero) {
-    EXPECT_EQ(Helper::steps2pitch(-0.5f), "C1b-1");  // was "rest"
+    EXPECT_EQ(Helper::steps2pitch(-0.5f), "C1b-1");
     EXPECT_EQ(Helper::steps2pitch(0.0f), "C-1");
     EXPECT_EQ(Helper::steps2pitch(-1.0f), "rest");
     EXPECT_EQ(Helper::steps2pitch(-3e9f), "rest");
@@ -888,4 +886,17 @@ TEST(MelodyContour, APairWithARestCountsAsNoInterval) {
     const std::vector<Note> withRest = {Note("C4"), Note("rest"), Note("G1x4")};
     EXPECT_EQ(Helper::getSemitonesDifferenceBetweenMelodies(reference, withRest),
               (std::vector<float>{4.0f, 3.0f}));
+}
+
+// ===== pitch2freq(): whole-tone spellings only ===== //
+
+// pitch2freq() has a table entry only for pitch classes spelled with the whole-tone accidentals; a
+// quarter tone is refused rather than answered with an approximate frequency.
+TEST(PitchToFrequency, AQuarterToneIsRefusedNotApproximated) {
+    EXPECT_NEAR(Helper::pitch2freq("A4"), 440.0f, 0.01f);
+    for (const char* quarterTone : {"C1x4", "D3b4", "E1b4", "F3x4"}) {
+        const std::string message = thrownFirstLine([&] { Helper::pitch2freq(quarterTone); });
+        EXPECT_NE(message.find("Pitch not found"), std::string::npos)
+            << quarterTone << ": " << message;
+    }
 }

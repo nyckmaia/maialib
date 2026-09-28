@@ -1169,24 +1169,8 @@ float Helper::pitch2freq(const std::string& pitch) {
     // fallback here only satisfies the type system.
     const int octaveValue = octave.value_or(0);
 
-    // Verify if there is a quarter accident in this note:
-    float quarterRatio = 1.0f;
-    if (pitch.size() > 2) {
-        if (accidental == "1x") {
-            quarterRatio = 1.005f;  // Empirical ratio
-        } else if (accidental == "3x") {
-            quarterRatio = 1.015f;  // Empirical ratio
-        } else if (accidental == "1b") {
-            quarterRatio = 0.095f;  // Empirical ratio
-        } else if (accidental == "3b") {
-            quarterRatio = 0.085f;  // Empirical ratio
-        } else {
-            // No quarter accident:
-            quarterRatio = 1.0f;
-        }
-    }
-
-    // Compute the frequency:
+    // Compute the frequency. Only the pitch classes spelled with the whole-tone accidentals have a
+    // case: a quarter-tone pitch class falls to 'default' and is rejected.
     float freq = 0.0f;
     switch (hash(pitchClass.c_str())) {
         case hash("C"):
@@ -1297,9 +1281,6 @@ float Helper::pitch2freq(const std::string& pitch) {
         default:
             LOG_ERROR("Pitch not found!");
     }
-
-    // Apply the quarter accidental to the pure tone frequency value:
-    freq *= quarterRatio;
 
     return freq;
 }
