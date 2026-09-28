@@ -71,6 +71,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `getSetharesDissonance(numPartialsPerNote: int = 6, useMinModel: bool = True, amplCallback: typing.Callable[[list[float]], list[float]] = None, partialsDecayExpRate: float = 0.8799999952316284, dissCallback: typing.Callable[[list[float]], float] = None) -> float`
 - `getSetharesDyadsDataFrame(numPartialsPerNote: int = 6, useMinModel: bool = True, amplCallback: typing.Callable[[list[float]], list[float]] = None, partialsDecayExpRate: float = 0.8799999952316284) -> typing.Any`
 - `getStackDataFrame(enharmonyNotes: bool = False) -> typing.Any`
+- `getStackedHeaps(enharmonyNotes: bool = False) -> list[tuple[list[NoteData], float]]`
 - `haveAnyOctaveAugmentedFifth(useEnharmony: bool = False) -> bool`
 - `haveAnyOctaveAugmentedFourth(useEnharmony: bool = False) -> bool`
 - `haveAnyOctaveAugmentedOctave(useEnharmony: bool = False) -> bool`
@@ -141,6 +142,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `isAugmentedChord() -> bool`
 - `isDiminishedChord() -> bool`
 - `isDominantSeventhChord() -> bool`
+- `isDyad() -> bool`
 - `isHalfDiminishedChord() -> bool`
 - `isInRootPosition() -> bool`
 - `isMajorChord() -> bool`
@@ -178,6 +180,10 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `value() -> int`
 
 #### Class `Helper`
+- `alterName2symbol(alterName: str) -> str`
+- `alterSymbol2Value(alterSymbol: str) -> float`
+- `alterValue2Name(alterValue: float) -> str`
+- `alterValue2symbol(alterValue: float) -> str`
 - `calculateMelodyEuclideanSimilarity(melodyPattern: list[Note], otherMelody: list[Note]) -> float`  *(overloaded)*
 - `calculateRhythmicEuclideanSimilarity(rhythmPattern: list[Note], otherRhythm: list[Note]) -> float`  *(overloaded)*
 - `durationRatio(duration_A: float, duration_B: float) -> float`
@@ -205,8 +211,10 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `rhythmFigure2noteType(rhythmFigure: RhythmFigure) -> str`
 - `spelling2midiNote(pitchStep: str, alterValue: float, octave: int) -> int`
 - `splitPitch(pitch: str) -> tuple[str, str, int | None, float, str]`
+- `steps2pitch(exactSteps: float, accType: str = '') -> str`
 - `ticks2noteType(durationTicks: int, divisionsPerQuarterNote: int = 256, actualNotes: int = 1, normalNotes: int = 1) -> tuple[str, int]`
 - `transposePitch(pitch: str, semitones: float, accType: str = '#') -> str`
+- `validateTransposeSemitones(semitones: float) -> None`
 
 #### Class `Interval`
 - `__init__(pitch_A: str = 'C4', pitch_B: str = 'C4') -> None`  *(overloaded)*
@@ -443,6 +451,9 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 
 #### Class `NoteData`
 - `__init__() -> None`  *(overloaded)*
+- `enharmonicDiatonicDistance() -> int`
+- `note() -> Note`
+- `wasEnharmonized() -> bool`
 
 #### Class `Part`
 - `__init__(partName: str, numStaves: int = 1, isPitched: bool = True, divisionsPerQuarterNote: int = 256) -> None`
@@ -474,6 +485,31 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `setStaffLines(staffLines: int = 5) -> None`
 - `toJSON() -> str`
 - `toXML(instrumentId: int = 1, identSize: int = 2) -> str`
+
+#### Class `Pitch`
+- `clampToRepresentableMidi(midi: int) -> int`
+- `fromFrequency(frequency: float, accType: str = '', freqA4: float = 440.0, enableQuarterToneRound: bool = False) -> Pitch`
+- `fromMidi(midiNumber: int, accType: str = '') -> Pitch`
+- `maxRepresentableMidi() -> int`
+- `__init__(pitch: str = 'rest') -> None`
+- `getAlter() -> float`
+- `getAlterSymbol() -> str`
+- `getFrequency(freqA4: float = 440.0) -> float`
+- `getMidiNumber() -> int`
+- `getOctave() -> int | None`
+- `getPitch() -> str`
+- `getPitchClass() -> str`
+- `getPitchStep() -> str`
+- `getQuarterToneSteps() -> float`
+- `isRest() -> bool`
+- `roundToSemitone() -> None`
+- `setAlter(alter: float) -> None`
+- `setFrequency(frequency: float, accType: str = '', freqA4: float = 440.0, enableQuarterToneRound: bool = False) -> None`
+- `setMidiNumber(midiNumber: int) -> None`
+- `setOctave(octave: int) -> None`
+- `setPitch(pitch: str) -> None`
+- `setPitchClass(pitchClass: str) -> None`
+- `setStep(step: str) -> None`
 
 #### Class `RhythmFigure`
 - `__init__(value: int) -> None`
