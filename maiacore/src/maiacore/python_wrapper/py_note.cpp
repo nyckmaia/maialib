@@ -457,15 +457,26 @@ void NoteClass(const py::module& m) {
     cls.def("getEnharmonicPitch", &Note::getEnharmonicPitch,
             py::arg("alternativeEnharmonicPitch") = false,
             R"pbdoc(
-        Return an enharmonic spelling of the note.
+        Return an enharmonic spelling of the sounding pitch, ``getPitch()``.
 
-        White keys: a natural returns its flat-side spelling (``C4`` -> ``Dbb4``) and the
-        sharp-side spelling as the alternative (``B#3``); other spellings return the natural and,
-        as the alternative, the remaining spelling. Black keys: ``#`` and ``b`` swap
+        A semitone pitch is respelled among the spellings of the same MIDI number. White keys: a
+        natural returns its flat-side spelling (``C4`` -> ``Dbb4``) and the sharp-side spelling
+        as the alternative (``B#3``); other spellings return the natural and, as the
+        alternative, the remaining spelling. Black keys: ``#`` and ``b`` swap
         (``C#4`` <-> ``Db4``) with the double accidental as the alternative; ``x``/``bb`` return
         the single accidental in the same direction and, as the alternative, the opposite one.
+
+        A quarter tone is respelled on the 24-tone grid. Its partners are the white-key steps
+        within 1.5 semitones of it, each spelled with the quarter-tone accidental that separates
+        them (``1x`` +0.5, ``3x`` +1.5, ``1b`` -0.5, ``3b`` -1.5) in that step's own octave, so
+        a quarter tone has one or two: ``C1x4`` (60.5) has ``D3b4`` and ``B3x3``, ``C3x4``
+        (61.5) only ``D1b4``. The default is the partner with the smaller alter; on a tie, the
+        one on the other side of the note's own accidental, as ``#`` and ``b`` swap
+        (``C1x4`` -> ``D3b4``, ``E1b4`` -> ``D3x4``). The alternative is the other partner.
+
         Spellings outside octaves -1 to 11 do not exist: a missing alternative returns the
-        default and a missing default returns the note's own pitch.
+        default and a missing default returns the note's own pitch (``Bx11`` -> ``Bx11``,
+        ``B1x11`` -> ``B1x11``).
 
         Parameters
         ----------
@@ -477,15 +488,25 @@ void NoteClass(const py::module& m) {
         str
             Enharmonic pitch string, or ``"rest"`` for a rest.
 
+        Raises
+        ------
+        RuntimeError
+            If the note's transposing interval carries its sounding pitch below the lowest
+            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
+
         Examples
         --------
         >>> ml.Note("C#4").getEnharmonicPitch()
         'Db4'
+        >>> ml.Note("C1x4").getEnharmonicPitch(), ml.Note("C1x4").getEnharmonicPitch(True)
+        ('D3b4', 'B3x3')
+        >>> ml.Note("C3x4").getEnharmonicPitch(), ml.Note("C3x4").getEnharmonicPitch(True)
+        ('D1b4', 'D1b4')
     )pbdoc");
     cls.def("getEnharmonicPitches", &Note::getEnharmonicPitches,
             py::arg("includeCurrentPitch") = false,
             R"pbdoc(
-        Return the default and alternative enharmonic spellings.
+        Return the default and alternative enharmonic spellings of the sounding pitch.
 
         Parameters
         ----------
@@ -495,14 +516,31 @@ void NoteClass(const py::module& m) {
         Returns
         -------
         list of str
-            ``[default, alternative]`` (optionally preceded by the current pitch). Entries may
-            repeat, e.g. ``["G#4", "Ab4", "Ab4"]``.
+            ``[getEnharmonicPitch(False), getEnharmonicPitch(True)]``, preceded by
+            ``getPitch()`` when ``includeCurrentPitch`` is True. Entries may repeat, e.g.
+            ``["G#4", "Ab4", "Ab4"]``.
+
+        Raises
+        ------
+        RuntimeError
+            If the note's transposing interval carries its sounding pitch below the lowest
+            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
+
+        Examples
+        --------
+        >>> ml.Note("C1x4").getEnharmonicPitches(True)
+        ['C1x4', 'D3b4', 'B3x3']
+        >>> ml.Note("C3x4").getEnharmonicPitches(True)
+        ['C3x4', 'D1b4', 'D1b4']
     )pbdoc");
 
     cls.def("getEnharmonicNote", &Note::getEnharmonicNote,
             py::arg("alternativeEnharmonicPitch") = false,
             R"pbdoc(
-        Return a new Note with an enharmonic spelling (see ``getEnharmonicPitch``).
+        Return a new Note spelled with ``getEnharmonicPitch(alternativeEnharmonicPitch)``.
+
+        The new note holds that spelling as its written pitch, with no transposing interval and
+        the default rhythm figure.
 
         Parameters
         ----------
@@ -513,31 +551,78 @@ void NoteClass(const py::module& m) {
         -------
         Note
             Enharmonic note.
+
+        Raises
+        ------
+        RuntimeError
+            If the note's transposing interval carries its sounding pitch below the lowest
+            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
+
+        Examples
+        --------
+        >>> ml.Note("E1b4").getEnharmonicNote().getPitch()
+        'D3x4'
     )pbdoc");
     cls.def("getEnharmonicNotes", &Note::getEnharmonicNotes, py::arg("includeCurrentPitch") = false,
             R"pbdoc(
-        Return Notes for the default and alternative enharmonic spellings.
+        Return new Notes spelled with the strings ``getEnharmonicPitches`` returns.
+
+        Each new note holds its spelling as its written pitch, with no transposing interval and
+        the default rhythm figure.
 
         Parameters
         ----------
         includeCurrentPitch : bool, default False
-            Prepend a copy of the current note.
+            Prepend a note spelled with the current pitch.
 
         Returns
         -------
         list of Note
             Enharmonic notes (entries may repeat, see ``getEnharmonicPitches``).
+
+        Raises
+        ------
+        RuntimeError
+            If the note's transposing interval carries its sounding pitch below the lowest
+            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
+
+        Examples
+        --------
+        >>> [note.getPitch() for note in ml.Note("E1b4").getEnharmonicNotes()]
+        ['D3x4', 'F3b4']
     )pbdoc");
 
     cls.def("toEnharmonicPitch", &Note::toEnharmonicPitch,
             py::arg("alternativeEnharmonicPitch") = false,
             R"pbdoc(
-        Respell the note in place with an enharmonic spelling (see ``getEnharmonicPitch``).
+        Respell the note in place with ``getEnharmonicPitch(alternativeEnharmonicPitch)``.
+
+        The respelling is set as the written pitch, through ``setPitch``.
 
         Parameters
         ----------
         alternativeEnharmonicPitch : bool, default False
             Use the alternative spelling instead of the default one.
+
+        Raises
+        ------
+        RuntimeError
+            If the note's transposing interval carries its sounding pitch below the lowest
+            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
+
+        Warnings
+        --------
+        On a transposing instrument the respelling is of the SOUNDING pitch but is stored as
+        the WRITTEN pitch, so the note then sounds that respelling moved by the transposing
+        interval again: a B-flat clarinet's written ``C#4`` (sounding ``B3``) becomes a written
+        ``Cb4``, sounding ``A3``.
+
+        Examples
+        --------
+        >>> note = ml.Note("C1x4")
+        >>> note.toEnharmonicPitch()
+        >>> note.getPitch()
+        'D3b4'
     )pbdoc");
     cls.def("getScaleDegree", &Note::getScaleDegree, py::arg("key"));
     cls.def("getFrequency", &Note::getFrequency, py::arg("freqA4") = 440.0f);

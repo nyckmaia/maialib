@@ -623,9 +623,9 @@ class Note {
     bool isTransposed() const;
 
     /**
-     * @brief Returns an enharmonic equivalent pitch string.
-     * @details Candidates are the other spellings (accidentals "bb", "b", natural, "#", "x") of
-     *          the same MIDI number within octaves -1..11.
+     * @brief Returns an enharmonic spelling of the sounding pitch, getPitch().
+     * @details A semitone pitch is respelled among the other spellings of the same MIDI number,
+     *          with the accidentals "bb", "b", natural, "#" and "x", within octaves -1..11:
      *          - White keys: a natural returns its flat-side spelling by default (C4 -> Dbb4) and
      *            its sharp-side spelling as the alternative (B#3); a flat-side or sharp-side
      *            spelling returns the natural by default and the remaining spelling as the
@@ -633,33 +633,56 @@ class Note {
      *          - Black keys: "#" and "b" swap (C#4 <-> Db4) and the double accidental is the
      *            alternative; "x" and "bb" return the single accidental in the same direction
      *            by default and the opposite single accidental as the alternative.
-     *          Range fallback: a missing alternative returns the default, and a missing default
-     *          returns the note's own pitch (e.g., "Bx11" -> "Bx11").
+     *
+     *          A quarter tone is respelled on the 24-tone grid. Its partners are the white-key
+     *          steps within 1.5 semitones of it, each spelled with the quarter-tone accidental
+     *          that separates them ("1x" +0.5, "3x" +1.5, "1b" -0.5, "3b" -1.5) in that step's
+     *          own octave, within octaves -1..11, so a quarter tone has one or two: C1x4 (60.5)
+     *          has D3b4 and B3x3, C3x4 (61.5) only D1b4. The default is the partner with the
+     *          smaller alter; on a tie, the one on the other side of the note's own accidental,
+     *          as "#" and "b" swap (C1x4 -> D3b4, E1b4 -> D3x4). The alternative is the other
+     *          partner.
+     *
+     *          Range fallback, for both: a missing alternative returns the default, and a missing
+     *          default returns the note's own pitch (e.g., "Bx11" -> "Bx11", "B1x11" -> "B1x11").
      * @param alternativeEnharmonicPitch If true, returns the alternative enharmonic.
      * @return Enharmonic pitch string, or "rest" for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::string getEnharmonicPitch(const bool alternativeEnharmonicPitch = false) const;
 
     /**
-     * @brief Returns all enharmonic pitch strings for the note.
-     * @details Built from getEnharmonicPitch(false) and getEnharmonicPitch(true), so the vector
-     *          may contain duplicates (e.g., "G#4" -> {"G#4", "Ab4", "Ab4"}).
+     * @brief Returns the default and alternative enharmonic spellings of the sounding pitch.
+     * @details {getEnharmonicPitch(false), getEnharmonicPitch(true)}, preceded by getPitch() if
+     *          includeCurrentPitch is true, so the vector may contain duplicates (e.g., "G#4" ->
+     *          {"G#4", "Ab4", "Ab4"}, "C3x4" -> {"C3x4", "D1b4", "D1b4"}).
      * @param includeCurrentPitch If true, includes the current pitch.
      * @return Vector of enharmonic pitch strings.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::vector<std::string> getEnharmonicPitches(const bool includeCurrentPitch = false) const;
 
     /**
-     * @brief Returns an enharmonic equivalent Note object.
-     * @param alternativeEnharmonicPitch If true, returns an alternative enharmonic.
+     * @brief Returns a new Note spelled with getEnharmonicPitch(alternativeEnharmonicPitch).
+     * @details The new Note holds that spelling as its written pitch, with no transposing
+     *          interval and the default rhythm figure.
+     * @param alternativeEnharmonicPitch If true, uses the alternative enharmonic.
      * @return Enharmonic Note object.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     Note getEnharmonicNote(const bool alternativeEnharmonicPitch = false) const;
 
     /**
-     * @brief Returns all enharmonic Note objects for the note.
-     * @param includeCurrentPitch If true, includes the current note.
+     * @brief Returns new Notes spelled with the strings getEnharmonicPitches() returns.
+     * @details Each new Note holds its spelling as its written pitch, with no transposing
+     *          interval and the default rhythm figure; entries may repeat.
+     * @param includeCurrentPitch If true, includes a Note spelled with the current pitch.
      * @return Vector of enharmonic Note objects.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::vector<Note> getEnharmonicNotes(const bool includeCurrentPitch = false) const;
 
@@ -671,8 +694,15 @@ class Note {
     int getScaleDegree(const Key& key) const;
 
     /**
-     * @brief Converts the note to its enharmonic equivalent.
+     * @brief Respells the note with getEnharmonicPitch(alternativeEnharmonicPitch), through
+     *        setPitch().
+     * @details setPitch() sets the written pitch. On a transposing instrument the respelling is
+     *          of the sounding pitch, so the note then sounds that respelling moved by the
+     *          transposing interval again: a B-flat clarinet's written C#4 (sounding B3) becomes
+     *          a written Cb4, sounding A3.
      * @param alternativeEnharmonicPitch If true, uses alternative enharmonic.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     void toEnharmonicPitch(const bool alternativeEnharmonicPitch = false);
 

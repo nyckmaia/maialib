@@ -180,6 +180,77 @@ class NotePitchSpellingRange(unittest.TestCase):
         self.assertEqual(ml.Note("C-1").getEnharmonicPitches(True), ["C-1", "Dbb-1", "Dbb-1"])
 
 
+def enharmonicsOf(note):
+    """The default and the alternative enharmonic spelling of a note."""
+    return (note.getEnharmonicPitch(False), note.getEnharmonicPitch(True))
+
+
+class NoteQuarterToneEnharmonic(unittest.TestCase):
+    """A quarter tone's partners are the white-key steps within 1.5 semitones of it, spelled with
+    the quarter-tone accidental that separates them in that step's own octave. The default is the
+    partner with the smaller alter, a tie going to the side opposite the note's own accidental.
+    Mirrors the C++ QuarterToneEnharmonic tests."""
+
+    def testAQuarterToneHasOneOrTwoPartners(self):
+        self.assertEqual(enharmonicsOf(ml.Note("C1x4")), ("D3b4", "B3x3"))
+        self.assertEqual(enharmonicsOf(ml.Note("C3x4")), ("D1b4", "D1b4"))
+        self.assertEqual(enharmonicsOf(ml.Note("E1b4")), ("D3x4", "F3b4"))
+        self.assertEqual(enharmonicsOf(ml.Note("E1x4")), ("F1b4", "F1b4"))
+
+    def testTheDefaultIsTheSmallerAlterThenTheOppositeSide(self):
+        self.assertEqual(enharmonicsOf(ml.Note("D3b4")), ("C1x4", "B3x3"))
+        self.assertEqual(enharmonicsOf(ml.Note("B3x3")), ("C1x4", "D3b4"))
+        self.assertEqual(enharmonicsOf(ml.Note("F3b4")), ("E1b4", "D3x4"))
+        self.assertEqual(enharmonicsOf(ml.Note("B1b3")), ("A3x3", "C3b4"))
+
+    def testAPartnerOutsideTheOctaveRangeDoesNotExist(self):
+        self.assertEqual(enharmonicsOf(ml.Note("A3x11")), ("B1b11", "B1b11"))
+        self.assertEqual(enharmonicsOf(ml.Note("B1x11")), ("B1x11", "B1x11"))
+        self.assertEqual(enharmonicsOf(ml.Note("C1x-1")), ("D3b-1", "D3b-1"))
+        self.assertEqual(enharmonicsOf(ml.Note("C1b-1")), ("C1b-1", "C1b-1"))
+
+    def testTheWholeFamilyRespellsAQuarterTone(self):
+        self.assertEqual(ml.Note("C1x4").getEnharmonicPitches(True), ["C1x4", "D3b4", "B3x3"])
+        self.assertEqual(ml.Note("C1x4").getEnharmonicPitches(), ["D3b4", "B3x3"])
+        self.assertEqual(ml.Note("C3x4").getEnharmonicPitches(True), ["C3x4", "D1b4", "D1b4"])
+        self.assertEqual(ml.Note("E1b4").getEnharmonicNote().getPitch(), "D3x4")
+        self.assertEqual(ml.Note("E1b4").getEnharmonicNote(True).getPitch(), "F3b4")
+        self.assertEqual(
+            [note.getPitch() for note in ml.Note("E1b4").getEnharmonicNotes(True)],
+            ["E1b4", "D3x4", "F3b4"],
+        )
+
+        note = ml.Note("C1x4")
+        note.toEnharmonicPitch()
+        self.assertEqual(note.getPitch(), "D3b4")
+        note.toEnharmonicPitch(alternativeEnharmonicPitch=True)
+        self.assertEqual(note.getPitch(), "B3x3")
+
+    def testTheSoundingPitchIsRespelled(self):
+        clarinet = ml.Note("C1x4", transposeDiatonic=-1, transposeChromatic=-2)
+        self.assertEqual(clarinet.getPitch(), "B1b3")
+        self.assertEqual(enharmonicsOf(clarinet), ("A3x3", "C3b4"))
+
+    def testEveryRespellingDescribesTheSamePitch(self):
+        numSpellings = 0
+        for step in "CDEFGAB":
+            for symbol in ("3b", "1b", "1x", "3x"):
+                for octave in range(-1, 12):
+                    if step == "C" and symbol == "3b" and octave == -1:
+                        continue  # -1.5, below the lowest representable pitch, C1b-1
+                    pitch = f"{step}{symbol}{octave}"
+                    note = ml.Note(pitch)
+                    numSpellings += 1
+                    for respelling in enharmonicsOf(note):
+                        with self.subTest(pitch=pitch, respelling=respelling):
+                            respelled = ml.Note(respelling)
+                            self.assertEqual(
+                                respelled.getQuarterToneSteps(), note.getQuarterToneSteps()
+                            )
+                            self.assertTrue(respelled.isQuarterTone())
+        self.assertEqual(numSpellings, 7 * 4 * 13 - 1)
+
+
 class NoteComposesPitch(unittest.TestCase):
     # Step 1 bug fix, through the bindings: setPitchClass() used to leave getMidiNumber()
     # reporting the note's previous pitch.

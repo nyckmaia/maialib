@@ -294,7 +294,16 @@ C#4  = 1.0                -> NOT enharmonic with C1x4
 
 This does not contradict §8. Analysis is rejected because the theory has a genuine gap — there is no agreed chord-name for a neutral third. Enharmonic equivalence is merely "same sounding pitch, different spelling", which generalises to 24 divisions with no gap at all.
 
-A quarter-tone spelling has **exactly one** enharmonic partner in the 24-tone grid, whereas semitone spellings may have two — which is what the `alternativeEnharmonicPitch` parameter exists for. When no alternative exists, SP1's established range-fallback rule applies: return the default spelling.
+A quarter-tone spelling has **one or two** enharmonic partners in the 24-tone grid, as a semitone spelling may have two — which is what the `alternativeEnharmonicPitch` parameter exists for. The partners of a quarter-tone position `p` (in semitones) are the white-key steps `s` within 1.5 semitones of it whose offset `p − s` is ±0.5 or ±1.5, each spelled with the matching accidental (`1x` +0.5, `3x` +1.5, `1b` −0.5, `3b` −1.5) in that step's own octave (`B3x3` is octave 3), excluding the note's own spelling and any spelling outside the representable range (octaves −1..11, floor −0.5):
+
+```
+C1x4 (60.5) -> D3b4, B3x3    two partners
+C3x4 (61.5) -> D1b4          one partner
+E1b4 (63.5) -> D3x4, F3b4    two partners
+E1x4 (64.5) -> F1b4          one partner
+```
+
+The default is the partner with the smallest `|alter|`; on a tie, the partner on the opposite side of the note's own accidental, so a sharp-side spelling prefers the flat-side partner and vice versa. This reproduces the semitone convention: `C1x4` → `D3b4` (as C♯ → D♭), `E1b4` → `D3x4` (as E♭ → D♯), `D3b4` → `C1x4`, `B3x3` → `C1x4`. The alternative is the other partner. When there is only one partner, SP1's established range-fallback rule applies: the alternative is the default. When no partner lies in the representable range, the default is the note's own pitch, and so is the alternative (`B1x11` → `B1x11`, as `Bx11` → `Bx11`).
 
 ## 10. Transposition
 

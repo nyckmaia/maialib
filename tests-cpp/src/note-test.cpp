@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "maiacore/helper.h"
 #include "maiacore/interval.h"
 #include "pitch-spelling-legacy-data.h"
 #include "test-capture.h"
@@ -979,18 +980,121 @@ TEST(PitchSpelling, EnharmonicRangeFallback) {
               std::vector<std::string>({"G#4", "Ab4", "Ab4"}));
 }
 
-// Quarter-tone alters are reachable here now that Helper::splitPitch accepts them, but
-// Note::getEnharmonicPitch() still indexes a 5-slot semitone-only spellings array. Real
-// quarter-tone enharmonic spelling remains out of scope (spellMidiNumber() only enumerates
-// the five integer-semitone accidentals), so this must refuse rather than silently truncate
-// to a wrong semitone spelling.
-TEST(PitchSpelling, EnharmonicRejectsQuarterTones) {
-    for (const std::string pitch : {"C1x4", "C3x4", "D1b4", "D3b4"}) {
-        EXPECT_THROW(Note(pitch).getEnharmonicPitch(false), std::runtime_error)
-            << "pitch: " << pitch;
-        EXPECT_THROW(Note(pitch).getEnharmonicPitch(true), std::runtime_error)
-            << "pitch: " << pitch;
+// ===== Quarter-tone enharmonic spellings ===== //
+//
+// A quarter tone's partners are the white-key steps within 1.5 semitones of it, spelled with the
+// quarter-tone accidental that separates them in that step's own octave. The default is the
+// partner with the smaller alter, a tie going to the side opposite the note's own accidental; the
+// alternative is the other partner, or the default when there is only one.
+
+namespace {
+using SpellingPair = std::pair<std::string, std::string>;
+
+// The default and the alternative enharmonic spelling of 'note'.
+SpellingPair enharmonicsOf(const Note& note) {
+    return {note.getEnharmonicPitch(false), note.getEnharmonicPitch(true)};
+}
+}  // namespace
+
+TEST(QuarterToneEnharmonic, aQuarterToneHasOneOrTwoPartners) {
+    EXPECT_EQ(enharmonicsOf(Note("C1x4")), SpellingPair("D3b4", "B3x3"));  // 60.5: two
+    EXPECT_EQ(enharmonicsOf(Note("C3x4")), SpellingPair("D1b4", "D1b4"));  // 61.5: one
+    EXPECT_EQ(enharmonicsOf(Note("E1b4")), SpellingPair("D3x4", "F3b4"));  // 63.5: two
+    EXPECT_EQ(enharmonicsOf(Note("E1x4")), SpellingPair("F1b4", "F1b4"));  // 64.5: one
+}
+
+TEST(QuarterToneEnharmonic, theDefaultIsTheSmallerAlterThenTheOppositeSide) {
+    // One partner is nearer: it is the default, whichever side it is on.
+    EXPECT_EQ(enharmonicsOf(Note("D3b4")), SpellingPair("C1x4", "B3x3"));
+    EXPECT_EQ(enharmonicsOf(Note("B3x3")), SpellingPair("C1x4", "D3b4"));
+    EXPECT_EQ(enharmonicsOf(Note("F3b4")), SpellingPair("E1b4", "D3x4"));
+    // Both partners equally far: the one opposite the note's own accidental, as C#4 -> Db4.
+    EXPECT_EQ(enharmonicsOf(Note("C1x4")).first, "D3b4");  // sharp side -> flat side
+    EXPECT_EQ(enharmonicsOf(Note("E1b4")).first, "D3x4");  // flat side -> sharp side
+    EXPECT_EQ(enharmonicsOf(Note("B1b3")), SpellingPair("A3x3", "C3b4"));
+}
+
+// Octaves -1..11 bound the partners exactly as they bound the semitone spellings: a partner
+// outside them does not exist, and the range fallback applies.
+TEST(QuarterToneEnharmonic, aPartnerOutsideTheOctaveRangeDoesNotExist) {
+    // Top: C3b12 (154.5) would be A3x11's second partner, C1b12 (155.5) B1x11's only one.
+    EXPECT_EQ(enharmonicsOf(Note("A3x11")), SpellingPair("B1b11", "B1b11"));
+    EXPECT_EQ(enharmonicsOf(Note("B1x11")), SpellingPair("B1x11", "B1x11"));
+    // Bottom: B3x-2 (0.5) would be C1x-1's second partner, B1x-2 (-0.5) C1b-1's only one.
+    EXPECT_EQ(enharmonicsOf(Note("C1x-1")), SpellingPair("D3b-1", "D3b-1"));
+    EXPECT_EQ(enharmonicsOf(Note("C1b-1")), SpellingPair("C1b-1", "C1b-1"));
+}
+
+// The rest of the family builds on getEnharmonicPitch() exactly as it does for a semitone,
+// repeats included.
+TEST(QuarterToneEnharmonic, theWholeFamilyRespellsAQuarterTone) {
+    EXPECT_EQ(Note("C1x4").getEnharmonicPitches(true),
+              std::vector<std::string>({"C1x4", "D3b4", "B3x3"}));
+    EXPECT_EQ(Note("C1x4").getEnharmonicPitches(false), std::vector<std::string>({"D3b4", "B3x3"}));
+    EXPECT_EQ(Note("C3x4").getEnharmonicPitches(true),
+              std::vector<std::string>({"C3x4", "D1b4", "D1b4"}));
+
+    EXPECT_EQ(Note("E1b4").getEnharmonicNote(false).getPitch(), "D3x4");
+    EXPECT_EQ(Note("E1b4").getEnharmonicNote(true).getPitch(), "F3b4");
+
+    std::vector<std::string> notePitches;
+    for (const Note& note : Note("E1b4").getEnharmonicNotes(true)) {
+        notePitches.push_back(note.getPitch());
     }
+    EXPECT_EQ(notePitches, std::vector<std::string>({"E1b4", "D3x4", "F3b4"}));
+
+    Note respelled("C1x4");
+    respelled.toEnharmonicPitch();
+    EXPECT_EQ(respelled.getPitch(), "D3b4");
+    respelled.toEnharmonicPitch(true);
+    EXPECT_EQ(respelled.getPitch(), "B3x3");
+}
+
+// The family respells the sounding pitch, which is what getPitch() reports: a B-flat clarinet's
+// written C1x4 sounds B1b3 (58.5), respelled A3x3 or C3b4 -- not D3b4 or B3x3, the partners of
+// the written pitch.
+TEST(QuarterToneEnharmonic, theSoundingPitchIsRespelled) {
+    const Note clarinet("C1x4", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                        /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
+    ASSERT_EQ(clarinet.getPitch(), "B1b3");
+    EXPECT_EQ(enharmonicsOf(clarinet), SpellingPair("A3x3", "C3b4"));
+}
+
+// Every quarter-tone spelling in the representable range is respelled into spellings of the same
+// exact position, each a quarter tone, and differing from the note's own unless it has no
+// partner.
+TEST(QuarterToneEnharmonic, everyRespellingDescribesTheSamePitch) {
+    int numSpellings = 0;
+    int numWithoutPartner = 0;
+    for (const std::string& step : c_C_diatonicScale) {
+        for (const std::string symbol : {"3b", "1b", "1x", "3x"}) {
+            for (int octave = c_minPitchOctave; octave <= c_maxPitchOctave; octave++) {
+                if (Helper::spelling2midiNote(step, Helper::alterSymbol2Value(symbol), octave) <
+                    0) {
+                    continue;  // below the lowest representable pitch, C1b-1
+                }
+                const std::string pitch = step + symbol + std::to_string(octave);
+                const Note note(pitch);
+                numSpellings++;
+                const auto [defaultPitch, alternativePitch] = enharmonicsOf(note);
+                for (const std::string& respelling : {defaultPitch, alternativePitch}) {
+                    const Note respelled(respelling);
+                    EXPECT_EQ(respelled.getQuarterToneSteps(), note.getQuarterToneSteps())
+                        << pitch << " -> " << respelling;
+                    EXPECT_TRUE(respelled.isQuarterTone()) << pitch << " -> " << respelling;
+                }
+                if (defaultPitch == pitch) {
+                    numWithoutPartner++;
+                    EXPECT_EQ(alternativePitch, pitch) << pitch;
+                } else {
+                    EXPECT_NE(alternativePitch, pitch) << pitch;
+                }
+            }
+        }
+    }
+    EXPECT_EQ(numSpellings, 7 * 4 * 13 - 1);  // every spelling but C3b-1 (-1.5)
+    // B1x11 (155.5), B3x11 (156.5) and C1b-1 (-0.5) are the only positions with one spelling.
+    EXPECT_EQ(numWithoutPartner, 3);
 }
 
 // =====================================================================================

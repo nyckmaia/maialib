@@ -471,9 +471,9 @@ class QuarterToneAnalysisGuard(unittest.TestCase):
     """
 
     def testGetNameRaises(self):
-        # Asserting only that it raises would NOT discriminate the guard: the pre-existing
-        # enharmonic-spelling guard also raises RuntimeError for a quarter tone, reached from
-        # deep inside the stacking code. The diagnosable message is what this guard adds.
+        # Asserting only that it raises would NOT discriminate the guard: without it, the
+        # stacking code still raises RuntimeError for a quarter tone, from an Interval it builds
+        # between two of the chord's notes. The diagnosable message is what this guard adds.
         myChord = ml.Chord(["C4", "E1b4", "G4"])
         with self.assertRaises(RuntimeError) as context:
             myChord.getName()

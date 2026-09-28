@@ -727,14 +727,14 @@ class CoutCapture {
 // Asserts that 'statement' is rejected by a quarter-tone guard, identified by a part of its
 // message: the remedy "roundQuarterTones" that every Chord guard names, or a guard's own wording.
 //
-// Asserting merely that the call throws would NOT discriminate these guards. Measured: with the
-// Chord guard downgraded to a warning, every EXPECT_THROW below still passes, because the
-// pre-existing enharmonic-spelling guard (Note::getEnharmonicPitch, note.cpp) also throws a
-// std::runtime_error for a quarter tone, reached from stackInThirds() ->
-// computeEnharmonicUnitsGroups(). What the analysis guard actually adds is a diagnosable failure
-// -- a message naming the offending note and the escape hatch, instead of an internal complaint
-// about enharmonic spelling -- raised at the entry point, before stackInThirds() has already
-// overwritten '_openStack'. So the message is the behaviour worth pinning.
+// Asserting merely that the call throws would NOT discriminate these guards: without the Chord
+// guard, the stacking code still throws a std::runtime_error for a quarter tone, from the first
+// Interval it builds between two of the chord's notes (stackInThirds() ->
+// filterTertianHeapsOnly()), whose message names Note::roundToSemitone(), a remedy that cannot
+// reach the chord's own notes. What the analysis guard actually adds is a diagnosable failure --
+// a message naming the offending note and the chord's escape hatch -- raised at the entry point,
+// before stackInThirds() has overwritten '_openStack'. So the message is the behaviour worth
+// pinning.
 #define EXPECT_REJECTED_NAMING(statement, remedy)                                               \
     do {                                                                                        \
         try {                                                                                   \

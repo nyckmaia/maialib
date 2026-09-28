@@ -8,6 +8,8 @@
 #include <cmath>
 #include <optional>
 #include <string>
+#include <utility>
+#include <vector>
 
 #include "maiacore/helper.h"
 #include "maiacore/log.h"
@@ -94,6 +96,78 @@ std::string spellMidiNumber(const int midiNumber, const int alter) {
         static_cast<size_t>(std::distance(c_diatonicStepSemitones.begin(), stepIt));
     return c_C_diatonicScale[stepIdx] + alterSymbols[static_cast<size_t>(alter + 2)] +
            std::to_string(octave);
+}
+
+// Returns the spelling of the pitch 'alter' semitones from the white key at the whole-semitone
+// position 'whiteKeySteps', in that white key's own octave (59 and +1.5 give "B3x3"), or an empty
+// string if 'whiteKeySteps' is a black key or its octave falls outside the supported range
+std::string spellFromWhiteKey(const int whiteKeySteps, const float alter) {
+    const int pitchClassIdx = ((whiteKeySteps % 12) + 12) % 12;
+    const auto stepIt =
+        std::find(c_diatonicStepSemitones.begin(), c_diatonicStepSemitones.end(), pitchClassIdx);
+    if (stepIt == c_diatonicStepSemitones.end()) {
+        return {};
+    }
+
+    const int octave = (whiteKeySteps - pitchClassIdx) / 12 - 1;
+    if (octave < c_minPitchOctave || octave > c_maxPitchOctave) {
+        return {};
+    }
+
+    const auto stepIdx =
+        static_cast<size_t>(std::distance(c_diatonicStepSemitones.begin(), stepIt));
+    return c_C_diatonicScale[stepIdx] + Helper::alterValue2symbol(alter) + std::to_string(octave);
+}
+
+// The default and alternative enharmonic spellings of the quarter-tone pitch 'pitch', whose exact
+// position is 'steps' and whose own alter is 'ownAlter'.
+//
+// A quarter-tone position is spelled from each white key within 1.5 semitones of it, with the
+// alter that separates them -- +0.5 "1x", +1.5 "3x", -0.5 "1b" or -1.5 "3b" -- in that white
+// key's own octave: 60.5 is "C1x4", "D3b4" and "B3x3". Those four whole semitones never hold more
+// than three white keys, and one of them spells the pitch itself, so a quarter tone has at most
+// two partners: "C1x4" has two, "C3x4" (61.5) only "D1b4". A partner outside octaves -1..11 does
+// not exist. Every partner lies at the pitch's own position, so none can fall below the lowest
+// representable pitch, "C1b-1".
+//
+// The default is the partner with the smaller alter. On a tie -- one partner on each side, the
+// same distance away -- it is the one on the other side of the pitch's own accidental, as a
+// semitone's sharp and flat spellings swap (C#4 -> Db4): "C1x4" -> "D3b4" and "E1b4" -> "D3x4".
+// The alternative is the other partner. A single partner is both, and with no partner both are
+// the pitch itself: the range fallback the semitone spellings follow.
+std::pair<std::string, std::string> quarterToneEnharmonics(const std::string& pitch,
+                                                           const float steps,
+                                                           const float ownAlter) {
+    std::vector<std::pair<std::string, float>> partners;  // spelling, alter
+    const int semitoneBelow = static_cast<int>(std::floor(steps));
+    for (int whiteKeySteps = semitoneBelow - 1; whiteKeySteps <= semitoneBelow + 2;
+         whiteKeySteps++) {
+        const float alter = steps - static_cast<float>(whiteKeySteps);
+        if (alter == ownAlter) {
+            continue;  // the pitch's own spelling
+        }
+
+        const std::string spelling = spellFromWhiteKey(whiteKeySteps, alter);
+        if (!spelling.empty()) {
+            partners.emplace_back(spelling, alter);
+        }
+    }
+
+    if (partners.empty()) {
+        return {pitch, pitch};
+    }
+    if (partners.size() == 1) {
+        return {partners[0].first, partners[0].first};
+    }
+
+    const float firstDistance = std::fabs(partners[0].second);
+    const float secondDistance = std::fabs(partners[1].second);
+    const bool firstIsDefault = (firstDistance != secondDistance)
+                                    ? firstDistance < secondDistance
+                                    : (partners[0].second > 0.0f) != (ownAlter > 0.0f);
+
+    return firstIsDefault ? std::make_pair(partners[0].first, partners[1].first)
+                          : std::make_pair(partners[1].first, partners[0].first);
 }
 }  // namespace
 
@@ -359,16 +433,9 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnharmonicPitch) cons
         return MUSIC_XML::PITCH::REST;
     }
 
-    // Fix round 3 (N1): deliberately NOT computeSoundingPitch().getMidiNumber() -- that is the
-    // buggy scale-lookup-tracked octave (the same one getOctave() intentionally still
-    // reproduces), and routing this method's own MIDI number through it reintroduced exactly
-    // the coupling fix round 2 removed from getMidiNumber() itself, one call further out: HEAD
-    // contradicted itself (getPitch() and getEnharmonicPitch() disagreeing on the octave of the
-    // same note; measured for the Piccolo case: getPitch()=="C5" vs
-    // getEnharmonicPitch(false)=="Dbb4"). getPitch() itself is correct again since fix round 2
-    // (its octave digit is arithmetic; only the pitch CLASS is the pre-existing, still-broken
-    // spelling), so re-deriving through it here -- exactly as d26aa67 did -- restores agreement
-    // without touching the scale lookup or the class it produces.
+    // The respelling is of the sounding pitch, the one getPitch() reports, so the result always
+    // describes the same pitch as getPitch(). A sounding pitch below the lowest representable
+    // pitch has no spelling to respell: getPitch() throws for it.
     const std::string pitch = getPitch();
     std::string pitchClass;
     std::string pitchStep;
@@ -377,12 +444,14 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnharmonicPitch) cons
     float alterValue = 0.0f;
     Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
 
-    const int midiNumber = Helper::pitch2midiNote(pitch);
-    // spellMidiNumber() below only enumerates the five integer-semitone accidentals
-    // ("bb","b","","#","x"); a quarter-tone alter has no spelling in that vocabulary.
     if (isQuarterToneValue(alterValue)) {
-        LOG_ERROR("Quarter-tone enharmonic spelling is not supported for pitch: " + pitch);
+        const auto [defaultPitch, alternativePitch] =
+            quarterToneEnharmonics(pitch, getQuarterToneSteps(), alterValue);
+        return alternativeEnharmonicPitch ? alternativePitch : defaultPitch;
     }
+
+    // A whole-semitone alter is respelled among the accidentals "bb", "b", natural, "#" and "x".
+    const int midiNumber = Helper::pitch2midiNote(pitch);
     const int ownAlter = static_cast<int>(alterValue);
 
     // Other spellings of the same MIDI number, indexed by 'alter + 2' (empty if unavailable)
