@@ -681,13 +681,26 @@ class QuarterToneComputedValues(unittest.TestCase):
         self.assertAlmostEqual(ml.Chord(["C4", "E4", "G4"]).getHarmonicDensity(), 0.375, places=4)
 
     def testGetIntervalsIsPinnedToTheIntervalGuard(self):
-        # Covered by Interval's guard since Task 9, but pinned by no test until now. The remedy
-        # named is Interval's, which is what identifies which of the two guards does the work.
+        # The interval family names the chord-level remedy, roundQuarterTones(): the
+        # Note.roundToSemitone() an Interval would name cannot be applied to a chord's own notes,
+        # since getNotes() returns copies.
         myChord = ml.Chord(["C4", "E1b4", "G4"])
-        with self.assertRaises(RuntimeError) as context:
-            myChord.getIntervals()
+        for method in ("getIntervals", "getIntervalsFromOriginalSortedNotes", "haveMajorInterval"):
+            with self.subTest(method=method):
+                with self.assertRaises(RuntimeError) as context:
+                    getattr(myChord, method)()
+                message = str(context.exception).splitlines()[0]
+                self.assertIn(
+                    "Cannot compute the intervals of a chord containing the quarter tone E1b4",
+                    message,
+                )
+                self.assertIn("Chord::roundQuarterTones()", message)
 
-        self.assertIn("roundToSemitone", str(context.exception))
+    def testTheIntervalFamilysRemedyWorks(self):
+        myChord = ml.Chord(["C4", "E1b4", "G4"])
+        self.assertEqual(myChord.roundQuarterTones(), 1)
+        self.assertEqual(len(myChord.getIntervals()), 2)
+        self.assertTrue(myChord.haveMajorInterval())
 
 
 class QuarterToneOrderingAndSpread(unittest.TestCase):

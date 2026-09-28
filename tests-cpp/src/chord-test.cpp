@@ -724,9 +724,8 @@ class CoutCapture {
 };
 }  // namespace
 
-// Asserts that 'statement' is rejected by a quarter-tone guard, identified by the remedy its
-// message names: "roundQuarterTones" for Chord's analysis chokepoint, "roundToSemitone" for
-// Interval's.
+// Asserts that 'statement' is rejected by a quarter-tone guard, identified by a part of its
+// message: the remedy "roundQuarterTones" that every Chord guard names, or a guard's own wording.
 //
 // Asserting merely that the call throws would NOT discriminate these guards. Measured: with the
 // Chord guard downgraded to a warning, every EXPECT_THROW below still passes, because the
@@ -840,22 +839,29 @@ TEST(quarterToneAnalysisGuard, coversEveryAnalysisEntryPoint) {
     EXPECT_REJECTED_NAMING(myChord.haveMajorThirdteenth(), "roundQuarterTones");
 }
 
+namespace {
+// The interval family's rejection, which names the chord-level remedy.
+const char* const kIntervalFamilyRejection =
+    "Cannot compute the intervals of a chord containing the quarter tone E1b4: interval analysis "
+    "is defined only over twelve-tone equal temperament. Call Chord::roundQuarterTones()";
+}  // namespace
+
 TEST(quarterToneAnalysisGuard, coversTheIntervalBasedHaveFamilyThroughTheIntervalGuard) {
     // These haveXxx() overloads do NOT reach stackInThirds(): they build Intervals from the
-    // original sorted notes instead. They are still covered, by the OTHER guard -- Interval
-    // rejects a quarter tone at construction -- so the two guards together cover more of the
-    // analysis surface than the chokepoint alone. Pinned here so that neither guard can be
-    // removed on the assumption that the other one covers these.
+    // original sorted notes instead, and are covered by the interval family's own guard, which
+    // names Chord::roundQuarterTones() -- the remedy a Chord caller can apply, unlike the
+    // Note::roundToSemitone() an Interval would name.
     Chord myChord({"C4", "E1b4", "G4"});
 
-    EXPECT_REJECTED_NAMING(myChord.haveThird(), "roundToSemitone");
-    EXPECT_REJECTED_NAMING(myChord.haveFifth(), "roundToSemitone");
-    EXPECT_REJECTED_NAMING(myChord.haveSeventh(), "roundToSemitone");
-    EXPECT_REJECTED_NAMING(myChord.haveMajorInterval(), "roundToSemitone");
-    EXPECT_REJECTED_NAMING(myChord.haveMinorInterval(), "roundToSemitone");
-    EXPECT_REJECTED_NAMING(myChord.havePerfectInterval(), "roundToSemitone");
-    EXPECT_REJECTED_NAMING(myChord.haveAnyOctaveMajorThird(), "roundToSemitone");
-    EXPECT_REJECTED_NAMING(myChord.haveAnyOctavePerfectFifth(), "roundToSemitone");
+    EXPECT_REJECTED_NAMING(myChord.haveThird(), kIntervalFamilyRejection);
+    EXPECT_REJECTED_NAMING(myChord.haveFifth(), kIntervalFamilyRejection);
+    EXPECT_REJECTED_NAMING(myChord.haveSeventh(), kIntervalFamilyRejection);
+    EXPECT_REJECTED_NAMING(myChord.haveMajorInterval(), kIntervalFamilyRejection);
+    EXPECT_REJECTED_NAMING(myChord.haveMinorInterval(), kIntervalFamilyRejection);
+    EXPECT_REJECTED_NAMING(myChord.havePerfectInterval(), kIntervalFamilyRejection);
+    EXPECT_REJECTED_NAMING(myChord.haveAnyOctaveMajorThird(), kIntervalFamilyRejection);
+    EXPECT_REJECTED_NAMING(myChord.haveAnyOctavePerfectFifth(), kIntervalFamilyRejection);
+    EXPECT_REJECTED_NAMING(myChord.havePerfectUnisson(), kIntervalFamilyRejection);
 }
 
 TEST(quarterToneAnalysisGuard, accessorsAndMutatorsKeepWorking) {
@@ -1060,15 +1066,31 @@ TEST(quarterToneMidiDomainGuard, semitoneChordsAreUntouchedByTheGuard) {
 }
 
 TEST(quarterToneAnalysisGuard, getIntervalsIsPinnedToTheIntervalGuard) {
-    // Task 9 covered getIntervals() through Interval's constructor guard but pinned it with no
-    // test at all, so that coverage could have been removed without anything going red. The remedy
-    // named is Interval's ("roundToSemitone"), not Chord's, which is what identifies WHICH of the
-    // two guards is doing the work here.
+    // getIntervals() builds its Intervals from the unsorted notes, apart from
+    // getIntervalsFromOriginalSortedNotes(), so both carry the interval family's guard.
     Chord myChord({"C4", "E1b4", "G4"});
 
-    EXPECT_REJECTED_NAMING(myChord.getIntervals(), "roundToSemitone");
-    EXPECT_REJECTED_NAMING(myChord.getIntervals(true), "roundToSemitone");
-    EXPECT_REJECTED_NAMING(myChord.getIntervalsFromOriginalSortedNotes(), "roundToSemitone");
+    EXPECT_REJECTED_NAMING(myChord.getIntervals(), kIntervalFamilyRejection);
+    EXPECT_REJECTED_NAMING(myChord.getIntervals(true), kIntervalFamilyRejection);
+    EXPECT_REJECTED_NAMING(myChord.getIntervalsFromOriginalSortedNotes(), kIntervalFamilyRejection);
+}
+
+// The remedy the interval family names is one a Chord caller can apply: after
+// roundQuarterTones(), the same calls answer.
+TEST(quarterToneAnalysisGuard, theIntervalFamilysRemedyWorks) {
+    Chord myChord({"C4", "E1b4", "G4"});
+    EXPECT_EQ(myChord.roundQuarterTones(), 1);
+
+    EXPECT_EQ(myChord.getIntervals().size(), 2u);
+    EXPECT_EQ(myChord.getIntervalsFromOriginalSortedNotes().size(), 2u);
+    EXPECT_TRUE(myChord.haveMajorInterval());
+}
+
+// A chord with fewer than two notes builds no interval, so a quarter tone in it is not rejected.
+TEST(quarterToneAnalysisGuard, aSingleQuarterToneBuildsNoIntervalAndIsNotRejected) {
+    const Chord myChord({"E1b4"});
+    EXPECT_TRUE(myChord.getIntervals().empty());
+    EXPECT_TRUE(myChord.getIntervalsFromOriginalSortedNotes().empty());
 }
 
 TEST(toCents, neutralThirdReadsThreeHundredAndFiftyCents) {

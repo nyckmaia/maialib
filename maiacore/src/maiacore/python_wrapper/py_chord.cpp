@@ -37,8 +37,8 @@ void ChordClass(const py::module& m) {
           pitch order: ``getIntervals``, ``getIntervalsFromOriginalSortedNotes``,
           ``haveMajorInterval`` and its four siblings, the three unison predicates,
           ``haveSecond`` to ``haveThirdteenth``, and every ``haveAnyOctave...`` predicate. The
-          message comes from ``Interval`` and names ``Note.roundToSemitone``; a chord with fewer
-          than two notes builds no interval, so a quarter tone in it is not rejected.
+          message names ``roundQuarterTones``; a chord with fewer than two notes builds no
+          interval, so a quarter tone in it is not rejected.
         - The MIDI-integer family, whose return type cannot express a quarter tone:
           ``getMidiIntervals``, ``getMeanMidiValue``, ``getMeanOfExtremesMidiValue``,
           ``getMeanPitch`` and ``getMeanOfExtremesPitch``. The message names

@@ -1250,13 +1250,20 @@ class Chord {
      * notes.
      * @param firstNoteAsReference If true, use the first note as the reference for all intervals.
      * @return Vector of Interval objects.
+     * @throws std::runtime_error If the chord has at least two notes and one is a quarter tone,
+     *         which interval analysis cannot represent; the message names the note and
+     *         roundQuarterTones().
      */
     std::vector<Interval> getIntervals(const bool firstNoteAsReference = false) const;
 
     /**
      * @brief Returns the intervals between the sorted original notes as Interval objects.
-     * @details Useful for intervallic analysis independent of note order.
+     * @details Useful for intervallic analysis independent of note order. The have*() interval
+     *          predicates measured between adjacent notes are computed from these.
      * @return Vector of Interval objects between sorted notes.
+     * @throws std::runtime_error If the chord has at least two notes and one is a quarter tone,
+     *         which interval analysis cannot represent; the message names the note and
+     *         roundQuarterTones().
      */
     std::vector<Interval> getIntervalsFromOriginalSortedNotes() const;
 

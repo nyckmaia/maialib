@@ -51,6 +51,23 @@ void rejectQuarterToneInMidiDomain(const Note* quarterToneNote, const std::strin
               "tone. Call Chord::roundQuarterTones() to round every quarter tone to the nearest "
               "semitone, then repeat the computation.");
 }
+
+// Rejects a quarter tone in the interval family: the methods that build an Interval from pairs of
+// the chord's notes, getIntervals() and getIntervalsFromOriginalSortedNotes(), through which every
+// have*() predicate measured between adjacent notes goes. Interval would reject the quarter tone
+// too, but its message names Note::roundToSemitone(), a remedy a Chord caller cannot apply to the
+// chord's own notes -- in Python, getNotes() returns copies -- so the chord names its own.
+void rejectQuarterToneInIntervals(const Note* quarterToneNote) {
+    if (quarterToneNote == nullptr) {
+        return;
+    }
+
+    LOG_ERROR("Cannot compute the intervals of a chord containing the quarter tone " +
+              quarterToneNote->getWrittenPitch() +
+              ": interval analysis is defined only over twelve-tone equal temperament. Call "
+              "Chord::roundQuarterTones() to round every quarter tone to the nearest semitone, "
+              "then repeat the computation.");
+}
 }  // namespace
 
 Chord::Chord() : _isStackedInThirds(false) {}
@@ -1043,6 +1060,12 @@ std::vector<Interval> Chord::getIntervalsFromOriginalSortedNotes() const {
     const int sortedNotesSize = sortedNotes.size();
     const int numIntervals = sortedNotesSize - 1;
 
+    // A chord with fewer than two notes builds no interval, so a quarter tone in it is not
+    // rejected.
+    if (numIntervals > 0) {
+        rejectQuarterToneInIntervals(findQuarterToneNote());
+    }
+
     std::vector<Interval> intervals;
     intervals.reserve(numIntervals);
 
@@ -1177,6 +1200,8 @@ std::vector<Interval> Chord::getIntervals(const bool firstNoteAsReference) const
     if (numIntervals <= 0) {
         return {};
     }
+
+    rejectQuarterToneInIntervals(findQuarterToneNote());
 
     std::vector<Interval> intervals(numIntervals);
 
