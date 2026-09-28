@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - `Pitch.fromFrequency()`, `Pitch.setFrequency()` and `Pitch.getFrequency()` raise when `freqA4` is not a finite number greater than 0
 - `Score(path)` reads a MusicXML `<alter>` with a `.` decimal point whatever the C or C++ locale, and only when it is exactly a multiple of 0.5 from -2 to 2: a value near a quarter tone, such as `0.46`, is read as natural with a warning instead of being rounded to it. When a note's `<accidental>` and `<alter>` disagree, the `<accidental>` is used and a warning is printed. `sharp-sharp`, MusicXML's double sharp drawn as two sharps, is read as a double sharp, and `Helper.alterName2symbol()` accepts it
 - `Helper.getSemitonesDifferenceBetweenMelodies()` measures quarter-tone intervals exactly, in halves of a semitone (a neutral third against a major third differs by 0.5), so melody pattern searches compare quarter-tone contours; `Score::findAnyMelodyPattern()` keeps two patterns a quarter tone apart as two patterns
+- `Pitch.fromFrequency()` and `Pitch.setFrequency()` print a warning, naming the accidental type, when the requested `accType` cannot spell the rounded pitch and the default spelling is used instead, as documented; a double accidental that cannot absorb a quarter-tone remainder is reported the same way, not as a clamp
 
 ### Fix
 

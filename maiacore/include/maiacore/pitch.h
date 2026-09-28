@@ -83,8 +83,8 @@ class Pitch {
      * @param frequency Frequency in Hz. A value <= 0 constructs a rest.
      * @param accType Preferred accidental type for the base semitone spelling: "" (natural for
      *        white keys, "#" for black keys, the default), "#", "b", "x" or "bb". Falls back to
-     *        the default spelling when the rounded pitch's base semitone cannot use the requested
-     *        accidental type.
+     *        the default spelling, with a warning (LOG_WARN), when the rounded pitch's base
+     *        semitone cannot use the requested accidental type.
      * @param freqA4 Reference frequency for A4, in Hz (default: 440.0).
      * @param enableQuarterToneRound When false (default), rounds to the nearest semitone; when
      *        true, rounds to the nearest quarter tone. Ties round upward.

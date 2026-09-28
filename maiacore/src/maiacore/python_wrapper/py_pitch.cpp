@@ -151,7 +151,8 @@ void PitchClass(const py::module& m) {
         --------
         >>> ml.Pitch.fromFrequency(440).getPitch()
         'A4'
-        >>> ml.Pitch.fromFrequency(449.0, "#", 440.0, True).getPitch()
+        >>> ml.Pitch.fromFrequency(449.0, "#", 440.0, True).getPitch()  # doctest: +ELLIPSIS
+        [WARN] Pitch::setFrequency: the accidental type '#' cannot spell ...; using A1x4 instead
         'A1x4'
         >>> ml.Pitch.fromFrequency(0).isRest()
         True

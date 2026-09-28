@@ -421,18 +421,16 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
     // applying, and (thanks to the clampToRepresentableMidi() clamp above) never needs more than
     // a handful of steps to find a spelling that fits. Guaranteed to terminate: the default
     // spelling is valid for every MIDI number at or below the top of octave 11.
-    // REVIEW ROUND 3 (task-3-review.md O5) — the "try preferredAccType, then fall back to the
-    // default spelling" pair used to be written out twice (once before the loop, once inside
-    // it); factored into trySpellPreferredThenDefault() so there is exactly one copy.
     //
-    // REVIEW ROUND 4 (task-3-review.md F4) — short-circuits the fallback when preferredAccType is
-    // already the default (""): without this, the empty-accType path (every caller that does not
-    // pass accType) called trySpell(baseMidi, "") twice in a row whenever the first attempt
-    // failed -- the same call, made redundantly, since {} and "" spell identically. O5 removed
-    // the source-level duplication but not this runtime one.
+    // accTypeIgnored records whether the spelling finally used had to fall back from a requested
+    // accType to the default one, which is reported below. Each attempt overwrites it, so it
+    // describes the last, used, spelling. When no accType was requested the fallback is skipped:
+    // {} and "" spell identically.
+    bool accTypeIgnored = false;
     auto trySpellPreferredThenDefault = [&](const std::string& preferredAccType) -> std::string {
         std::string pitch = trySpell(baseMidi, preferredAccType);
-        if (pitch.empty() && !preferredAccType.empty()) {
+        accTypeIgnored = pitch.empty() && !preferredAccType.empty();
+        if (accTypeIgnored) {
             pitch = trySpell(baseMidi, {});
         }
         return pitch;
@@ -480,42 +478,41 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
 
     float finalAlter = baseAlter + residual;
 
-    // REVIEW ROUND 1 (task-3-review.md C2) — accType is a preference, not a demand. A base
-    // spelling with its own accidental (e.g. accType "x" => alter +2.0) combined with a +0.5
-    // quarter-tone residual can leave a value Helper::alterValue2symbol() cannot express (+-2.5,
-    // outside this class's own [-2, 2] invariant), which previously escaped as an uncaught throw.
-    // When that happens, fall back to the default spelling for the base semitone -- whose alter
-    // is always 0 or +1 (Helper::midiNote2pitch()'s default branch never produces a double
-    // accidental), so combined with a 0 or 0.5 residual it always lands in range -- and warn.
-    //
-    // REVIEW ROUND 2 (task-3-review.md N1) — this fallback used to call
-    // Helper::midiNote2pitch(baseMidi, {}) directly instead of through spellWithClamp(). At
-    // baseMidi values only reachable with a specific non-default accType (e.g. 157, "Bx11" --
-    // this exact reproducer), the default spelling ALSO fails, that direct call returned "", and
-    // Helper::splitPitch("") took its empty-string rest branch: the C1 defect this method exists
-    // to fix, reopened at the other end by this exact fallback. Routing through spellWithClamp()
-    // here closes it: if the default spelling of the current baseMidi does not fit either, this
-    // now walks the same clamp-and-retry ceiling logic used above rather than ever handing
-    // splitPitch() an empty string.
+    // accType is a preference, not a demand. A base spelling with its own double accidental
+    // (accType "x" => alter +2.0, "bb" => -2.0) combined with a quarter-tone residual can leave a
+    // value Helper::alterValue2symbol() cannot express (+-2.5, outside this class's [-2, 2]
+    // invariant). Then the base semitone is spelled the default way instead -- its alter is
+    // always 0 or +1, since Helper::midiNote2pitch()'s default branch never produces a double
+    // accidental, so with a 0 or 0.5 residual it always lands in range. That is the same pitch,
+    // spelled without the requested accType, and reported as such. The default spelling goes
+    // through spellWithClamp(), so a baseMidi only a specific accType can spell (157 is only
+    // "Bx11") walks down to a spellable pitch instead of handing splitPitch() an empty string.
     try {
         alterSymbol = Helper::alterValue2symbol(finalAlter);
     } catch (const std::runtime_error&) {
         basePitch = spellWithClamp({});
+        accTypeIgnored = true;
         Helper::splitPitch(basePitch, pitchClass, pitchStep, octave, baseAlter, alterSymbol);
         // spellWithClamp() never hands splitPitch() an empty string (see the walk-down comments
         // above), so 'octave' is always populated here and below.
         finalAlter = baseAlter + residual;
         alterSymbol = Helper::alterValue2symbol(finalAlter);
-        clamped = true;
+    }
+
+    const std::string spelled = pitchStep + alterSymbol + std::to_string(octave.value());
+    if (accTypeIgnored) {
+        LOG_WARN("Pitch::setFrequency: the accidental type '" + accType + "' cannot spell the " +
+                 "pitch " + std::to_string(frequency) + " Hz rounds to; using " + spelled +
+                 " instead");
     }
 
     if (clamped) {
         LOG_WARN("Pitch::setFrequency: " + std::to_string(frequency) +
-                 " Hz could not be represented exactly as requested; using " + pitchStep +
-                 alterSymbol + std::to_string(octave.value()) + " instead");
+                 " Hz could not be represented exactly as requested; using " + spelled +
+                 " instead");
     }
 
-    setPitch(pitchStep + alterSymbol + std::to_string(octave.value()));
+    setPitch(spelled);
 }
 
 void Pitch::roundToSemitone() { _alter = roundTiesUpward(_alter); }

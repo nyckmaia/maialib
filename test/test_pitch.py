@@ -510,6 +510,24 @@ class PitchFrequency(unittest.TestCase):
         frequency = 440.0 * 2.0 ** ((62.5 - 69.0) / 12.0)
         self.assertEqual(ml.Pitch.fromFrequency(frequency, "x", 440.0, True).getPitch(), "D1x4")
 
+    # Mirrors PitchAccTypeFallback.warnsWhenTheAccidentalTypeCannotSpellTheRoundedPitch: the
+    # documented example. 449 Hz rounds to the quarter tone 69.5, whose base semitone has no "#"
+    # spelling, so the default spelling is used, with a warning.
+    def testFromFrequencyWarnsWhenTheAccidentalTypeCannotSpellTheRoundedPitch(self):
+        created = []
+        printed = capturedStdout(
+            lambda: created.append(ml.Pitch.fromFrequency(449.0, "#", 440.0, True))
+        )
+        self.assertEqual(created[0].getPitch(), "A1x4")
+        self.assertIn("[WARN] Pitch::setFrequency: the accidental type '#' cannot spell", printed)
+
+    # Mirrors PitchAccTypeFallback.anAccidentalTypeThatAppliesPrintsNothing.
+    def testFromFrequencyWithAnAccidentalTypeThatAppliesPrintsNothing(self):
+        created = []
+        printed = capturedStdout(lambda: created.append(ml.Pitch.fromFrequency(466.16, "b")))
+        self.assertEqual(created[0].getPitch(), "Bb4")
+        self.assertEqual(printed, "")
+
     # Mirrors Pitch.fromFrequencyClampsAboveCeilingWhenAccTypeAlsoOverflowsAlter.
     def testFromFrequencyClampsAboveCeilingWhenAccTypeAlsoOverflowsAlter(self):
         pitch = ml.Pitch.fromFrequency(73038.0, "x", 440.0, True)

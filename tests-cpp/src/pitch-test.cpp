@@ -585,3 +585,39 @@ TEST(PitchReferenceFrequency, getFrequencyRejectsAnInvalidFreqA4) {
     }
     EXPECT_FLOAT_EQ(Pitch("A4").getFrequency(442.0f), 442.0f);
 }
+
+// ===== setFrequency(): an accidental type that cannot spell the result is reported ===== //
+
+// accType is a preference, not a demand: when it cannot spell the rounded pitch, the default
+// spelling is used and a warning says so, naming the accidental type. 449 Hz rounds to the quarter
+// tone 69.5, whose base semitone, MIDI 69, has no "#" spelling.
+TEST(PitchAccTypeFallback, warnsWhenTheAccidentalTypeCannotSpellTheRoundedPitch) {
+    StdoutCapture capture;
+    const Pitch p(449.0f, "#", 440.0f, true);
+    EXPECT_EQ(p.getPitch(), "A1x4");
+    EXPECT_NE(
+        capture.str().find("[WARN] Pitch::setFrequency: the accidental type '#' cannot spell"),
+        std::string::npos)
+        << capture.str();
+}
+
+// A double accidental cannot absorb a quarter-tone residual (+2.5 has no spelling): the same pitch
+// is spelled the default way and reported as an accidental-type fallback -- not as a clamp, since
+// nothing about the pitch itself changed.
+TEST(PitchAccTypeFallback, aDoubleAccidentalThatCannotAbsorbTheResidualIsReportedAsSuch) {
+    StdoutCapture capture;
+    const float frequency = static_cast<float>(440.0 * std::pow(2.0, (62.5 - 69.0) / 12.0));
+    const Pitch p(frequency, "x", 440.0f, true);
+    EXPECT_EQ(p.getPitch(), "D1x4");
+    EXPECT_NE(capture.str().find("the accidental type 'x' cannot spell"), std::string::npos)
+        << capture.str();
+    EXPECT_EQ(capture.str().find("could not be represented exactly"), std::string::npos)
+        << capture.str();
+}
+
+TEST(PitchAccTypeFallback, anAccidentalTypeThatAppliesPrintsNothing) {
+    StdoutCapture capture;
+    EXPECT_EQ(Pitch(466.16f, "b").getPitch(), "Bb4");
+    EXPECT_EQ(Pitch(466.16f, "#").getPitch(), "A#4");
+    EXPECT_EQ(capture.str(), "");
+}
