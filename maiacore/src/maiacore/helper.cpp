@@ -1621,12 +1621,9 @@ const std::string Helper::steps2pitch(const float exactSteps, const std::string&
                   "' is above the representable range " + representablePitchRange());
     }
 
-    // Below MIDI note 0: the rest sentinel, deliberately parallel to midiNote2pitch()'s contract
-    // for a negative MIDI number, and relied on by Note::computeSoundingPitch() so that a note
-    // transposed below MIDI 0 stays constructible. "Below MIDI 0" means the position ROUNDS to a
-    // negative MIDI number: the test used to be `exactSteps < 0`, which also turned -0.5 into a
-    // rest although "C1b-1" is a pitch this library holds -- a written "C1x-1" on an instrument
-    // sounding a semitone lower answered the malformed sounding pitch "rest-1".
+    // Below MIDI note 0: the rest sentinel, parallel to midiNote2pitch()'s contract for a negative
+    // MIDI number. "Below MIDI 0" means the position ROUNDS, ties upward, to a negative MIDI
+    // number, so -0.5 is still "C1b-1", a pitch this library holds.
     if (isBelowMidiZero(exactSteps)) {
         return MUSIC_XML::PITCH::REST;
     }
@@ -1696,11 +1693,9 @@ const std::string Helper::transposePitch(const std::string& pitch, const float s
     const float targetSteps = source.getQuarterToneSteps() + semitones;
 
     // A real pitch transposed out of the representable range raises, checked here in floating
-    // point before steps2pitch() is called. Below MIDI 0 it used to answer steps2pitch()'s rest
-    // sentinel -- so Note::transpose() and Chord::transpose() silently deleted a note transposed
-    // too low -- and far enough above the top it failed with an unrelated message through an
-    // out-of-range int conversion. The rest sentinel is right for a SOUNDING pitch computed from
-    // a transposing instrument (see Note::computeSoundingPitch()), never for this operation.
+    // point before steps2pitch() is called: below MIDI 0, steps2pitch()'s rest sentinel would
+    // silently turn the note into a rest, and far above the top the position would be out of the
+    // range a MIDI number is converted in.
     if (isBelowMidiZero(targetSteps) || isAboveHighestPitch(targetSteps)) {
         LOG_ERROR("Transposing '" + pitch + "' by " + std::to_string(semitones) +
                   " semitones gives the pitch position " + std::to_string(targetSteps) +

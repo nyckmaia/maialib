@@ -46,17 +46,16 @@ class Note {
      * @brief Computes the sounding Pitch: the written pitch transposed by
      *        _transposeDiatonic/_transposeChromatic.
      * @details A rest, or an untransposed note, returns _writtenPitch itself: nothing is cached,
-     *          every "sounding" getter (getSoundingPitch(), getOctave(), getMidiNumber(),
-     *          getAlterSymbol(), getPitchClass(), ...) calls this on demand. Also called (result
-     *          discarded) by setTransposingInterval() to preserve its historical eager-validation
-     *          timing: an unspellable written pitch class under a nonzero transpose throws
-     *          immediately from setTransposingInterval(), not from a later getter call.
+     *          every "sounding" getter (getSoundingPitch(), getOctave(), getAlterSymbol(),
+     *          getPitchClass(), ...) calls this on demand. Also called (result discarded) by
+     *          setTransposingInterval(), so a sounding pitch that cannot be spelled throws there
+     *          rather than from a later getter call -- except one below the lowest representable
+     *          pitch, which leaves the note constructible.
      * @return The sounding Pitch.
-     * @throws std::runtime_error If this note is transposed and its sounding pitch lies above the
-     *         representable range or cannot be spelled within octaves -1..11 (see
-     *         Helper::steps2pitch()). A sounding pitch below MIDI 0 is NOT an error here -- it
-     *         answers a rest, so such a note stays constructible -- and getSoundingPitch()
-     *         reports that condition diagnosably instead.
+     * @throws std::runtime_error If this note is transposed and its sounding pitch lies below the
+     *         lowest representable pitch, C1b-1 (see getMidiNumber()), lies above the
+     *         representable range, or cannot be spelled within octaves -1..11 (see
+     *         Helper::steps2pitch()).
      */
     Pitch computeSoundingPitch() const;
 
@@ -297,16 +296,17 @@ class Note {
 
     /**
      * @brief Returns the sounding pitch class (after transposition).
-     * @return Sounding pitch class string.
+     * @return Sounding pitch class string, or "rest" for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     const std::string getSoundingPitchClass() const;
 
     /**
      * @brief Returns the full sounding pitch (after transposition).
-     * @return Sounding pitch string.
-     * @throws std::runtime_error If this note is sounding but transposition carries its
-     *         sounding pitch below the representable minimum C-1 / MIDI 0 (see
-     *         getSoundingOctave()'s @details) -- never for a rest, which returns "rest".
+     * @return Sounding pitch string, or "rest" for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     const std::string getSoundingPitch() const;
 
@@ -330,47 +330,47 @@ class Note {
 
     /**
      * @brief Returns the diatonic sounding pitch class (e.g., "C", "D").
-     * @return Diatonic sounding pitch class.
+     * @return Diatonic sounding pitch class, or "rest" for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     const std::string getDiatonicSoundingPitchClass() const;
 
     /**
      * @brief Returns the sounding octave (after transposition).
-     * @details Arithmetic (written MIDI + transposeChromatic), so the optional is empty in TWO
-     *          cases, not one: this note is a rest (isNoteOff() is the authoritative test for
-     *          that case), OR the note is sounding but transposition carries its sounding pitch
-     *          below the representable minimum C-1 / MIDI 0 (an ordinary, constructible,
-     *          non-rest note can do this, e.g. a written "C#-1" on a B-flat clarinet). Check
-     *          has_value() rather than assuming isNoteOff() covers every empty case.
-     * @return Sounding octave number, or an empty optional if this note is a rest or its
-     *         sounding pitch falls below MIDI 0.
+     * @details Arithmetic, from getMidiNumber(). An empty optional means this note is a rest,
+     *          which has no octave; isNoteOff() is the authoritative test.
+     * @return Sounding octave number, or an empty optional for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::optional<int> getSoundingOctave() const;
 
     /**
      * @brief Returns the written octave (as notated).
      * @details An empty optional means this note is a rest, which has no octave.
-     *          isNoteOff() is the authoritative test. Unlike getSoundingOctave(), this reads
-     *          the written pitch directly (no transposition arithmetic involved), so a rest is
-     *          the only case in which it is empty.
+     *          isNoteOff() is the authoritative test. This reads the written pitch directly, so
+     *          it never throws.
      * @return Written octave number, or an empty optional for a rest.
      */
     std::optional<int> getWrittenOctave() const;
 
     /**
      * @brief Returns the octave (sounding).
-     * @details An empty optional means this note is a rest, which has no octave.
-     *          isNoteOff() is the authoritative test. Unlike getSoundingOctave(), this derives
-     *          the octave from the (pre-existing, unfixed) transpose scale lookup, which either
-     *          succeeds with a real octave or throws for an unspellable result -- it does not
-     *          fall through to an empty optional for a non-rest note.
+     * @details The octave of the sounding spelling, which always agrees with
+     *          getSoundingOctave(). An empty optional means this note is a rest, which has no
+     *          octave; isNoteOff() is the authoritative test.
      * @return Octave number, or an empty optional for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::optional<int> getOctave() const;
 
     /**
      * @brief Returns the pitch class (sounding).
-     * @return Pitch class string.
+     * @return Pitch class string, or "rest" for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::string getPitchClass() const;
 
@@ -382,13 +382,17 @@ class Note {
 
     /**
      * @brief Returns the sounding pitch step (e.g., "C", "D").
-     * @return Sounding pitch step.
+     * @return Sounding pitch step, or "rest" for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::string getSoundingPitchStep() const;
 
     /**
      * @brief Returns the pitch step (sounding).
-     * @return Pitch step string.
+     * @return Pitch step string, or "rest" for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::string getPitchStep() const;
 
@@ -490,8 +494,19 @@ class Note {
     std::string getPitch() const;
 
     /**
-     * @brief Returns the MIDI note number.
-     * @return MIDI note number.
+     * @brief Returns the MIDI note number (sounding).
+     * @details The written MIDI number moved by the chromatic transposing interval. A quarter
+     *          tone rounds, ties upward, to the semitone above it (see getQuarterToneSteps() for
+     *          the exact position).
+     *
+     *          A transposing instrument can sound below the lowest pitch this library represents,
+     *          C1b-1 (-0.5, which rounds to MIDI note 0): e.g. a written "C#-1" on a B-flat
+     *          clarinet sounds at -1. Such a note is constructible and isNoteOn() is true, but it
+     *          has no sounding spelling, octave, MIDI number or frequency, so this method and
+     *          every other sounding getter throw the same error for it rather than answer a rest's
+     *          values. Its written pitch stays available through the written getters.
+     * @return MIDI note number, or -1 (MUSIC_XML::MIDI::NUMBER::MIDI_REST) for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below C1b-1.
      */
     int getMidiNumber() const;
 
@@ -505,6 +520,8 @@ class Note {
      *          ordering operators compare notes by this value.
      * @return The exact sounding position, or -1.0 (MUSIC_XML::MIDI::NUMBER::MIDI_REST) for a
      *         rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     float getQuarterToneSteps() const;
 
@@ -574,8 +591,10 @@ class Note {
     int getUnpitchedIndex() const;
 
     /**
-     * @brief Returns the accidental symbol for the note (e.g., "#", "b").
-     * @return Accidental symbol string.
+     * @brief Returns the accidental symbol of the sounding pitch (e.g., "#", "b").
+     * @return Accidental symbol string, or "" for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::string getAlterSymbol() const;
 
@@ -660,7 +679,9 @@ class Note {
     /**
      * @brief Returns the frequency of the note in Hz.
      * @param freqA4 Reference frequency for A4 (default: 440.0 Hz).
-     * @return Frequency in Hz.
+     * @return Frequency in Hz, or 0.0 for a rest.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     float getFrequency(const float freqA4 = 440.0f) const;
 

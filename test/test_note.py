@@ -344,25 +344,21 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getWrittenPitch(), "rest")
         self.assertEqual(note.getMidiNumber(), -1)
 
-    # Task 6b, fix round 1, Python parity (see note-test.cpp's
-    # NoteComposesPitch.GetPitchBelowMidiZeroFailsDiagnosablyNotWithBadOptionalAccess for the
-    # full reasoning): an ordinary, constructible, non-rest transposed note whose sounding pitch
-    # falls below MIDI 0 must fail with a diagnosable message, not an unexplained internal
-    # error, and must not be silently treated as a rest.
+    # A written "C#-1" on a B-flat clarinet sounds below the lowest representable pitch, C1b-1.
+    # The note is constructible and is a note, not a rest; its sounding pitch fails loudly and
+    # diagnosably, not as a rest and not with an unexplained internal error.
     def testGetPitchBelowMidiZeroFailsDiagnosably(self):
         note = ml.Note(
             "C#-1", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
         )
         self.assertTrue(note.isNoteOn())
         self.assertFalse(note.isNoteOff())
-        self.assertEqual(note.getMidiNumber(), -1)
-        self.assertIsNone(note.getSoundingOctave())
 
         with self.assertRaises(RuntimeError) as ctx:
             note.getPitch()
-        message = str(ctx.exception)
-        self.assertIn("C-1", message)
-        self.assertIn("MIDI 0", message)
+        message = str(ctx.exception).splitlines()[0]
+        self.assertIn("below the lowest representable pitch C1b-1", message)
+        self.assertIn("'C#-1'", message)
         self.assertNotIn("ptional access", message)
 
     # Task 6b, Python parity: a rest has no octave. Note's three octave getters used to
@@ -474,6 +470,51 @@ class NoteQuarterToneSteps(unittest.TestCase):
         note.setAlter(-0.0)
         self.assertEqual(note.getPitch(), "C4")
         self.assertNotIn("<alter>", note.toXML())
+
+
+class NoteSoundingPitchBelowFloor(unittest.TestCase):
+    # Mirrors NoteSoundingPitchBelowFloor.everySoundingGetterFailsTheSameWay.
+    GETTERS = (
+        "getPitch",
+        "getSoundingPitch",
+        "getPitchClass",
+        "getSoundingPitchClass",
+        "getPitchStep",
+        "getSoundingPitchStep",
+        "getDiatonicSoundingPitchClass",
+        "getAlterSymbol",
+        "getOctave",
+        "getSoundingOctave",
+        "getMidiNumber",
+        "getQuarterToneSteps",
+        "getFrequency",
+        "getEnharmonicPitch",
+        "getEnharmonicPitches",
+    )
+
+    def testEverySoundingGetterFailsTheSameWay(self):
+        for written, chromatic in (("C#-1", -2), ("C1b-1", -1), ("C1x-1", -2)):
+            note = ml.Note(written, transposeDiatonic=-1, transposeChromatic=chromatic)
+            for name in self.GETTERS:
+                with self.subTest(written=written, getter=name):
+                    with self.assertRaises(RuntimeError) as ctx:
+                        getattr(note, name)()
+                    message = firstLine(ctx.exception)
+                    self.assertIn("below the lowest representable pitch C1b-1", message)
+                    self.assertIn(f"'{written}'", message)
+
+    def testTheWrittenPitchStillAnswers(self):
+        note = ml.Note("C#-1", transposeDiatonic=-1, transposeChromatic=-2)
+        self.assertTrue(note.isNoteOn())
+        self.assertEqual(note.getWrittenPitch(), "C#-1")
+        self.assertEqual(note.getWrittenOctave(), -1)
+        self.assertIn("<step>C</step>", note.toXML())
+
+    def testAnIntervalWithSuchANoteFailsDiagnosably(self):
+        note = ml.Note("C#-1", transposeDiatonic=-1, transposeChromatic=-2)
+        with self.assertRaises(RuntimeError) as ctx:
+            ml.Interval(note, ml.Note("C4")).getNumOctaves()
+        self.assertIn("below the lowest representable pitch C1b-1", firstLine(ctx.exception))
 
 
 if __name__ == "__main__":

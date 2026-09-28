@@ -251,10 +251,11 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the note is sounding but its transposing interval carries it below the
-            representable minimum, C-1 (MIDI 0) -- e.g. a B-flat clarinet's written ``"C#-1"``.
-            The message names that condition, the written pitch and the interval.
-            ``getSoundingOctave()`` is None for such a note.
+            If the note's transposing interval carries its sounding pitch below the lowest
+            representable pitch, ``C1b-1`` (-0.5, MIDI 0) -- e.g. a B-flat clarinet's written
+            ``"C#-1"``. Every sounding getter raises the same error for such a note; its written
+            pitch is still available from ``getWrittenPitch()``. The message names the
+            written pitch and the interval.
 
         Examples
         --------
@@ -274,16 +275,20 @@ void NoteClass(const py::module& m) {
             R"pbdoc(
         Return the sounding octave (after transposition).
 
-        Arithmetic (written MIDI + transposeChromatic), so this is ``None`` in two cases: the
-        note is a rest, or the note is sounding but transposition carries its sounding pitch
-        below the representable minimum C-1 / MIDI 0. ``isNoteOff()`` alone does not cover the
-        second case.
+        Arithmetic, from the sounding MIDI number.
 
         Returns
         -------
         int or None
-            Sounding octave number, or ``None`` if this note is a rest or its sounding pitch
-            falls below MIDI 0.
+            Sounding octave number, or ``None`` for a rest.
+
+        Raises
+        ------
+        RuntimeError
+            If the note's transposing interval carries its sounding pitch below the lowest
+            representable pitch, ``C1b-1`` (-0.5, MIDI 0) -- e.g. a B-flat clarinet's written
+            ``"C#-1"``. Every sounding getter raises the same error for such a note; its written
+            pitch is still available from ``getWrittenPitch()``.
     )pbdoc");
     cls.def("getWrittenOctave", &Note::getWrittenOctave,
             R"pbdoc(
@@ -304,6 +309,14 @@ void NoteClass(const py::module& m) {
         -------
         int or None
             Octave number, or ``None`` for a rest.
+
+        Raises
+        ------
+        RuntimeError
+            If the note's transposing interval carries its sounding pitch below the lowest
+            representable pitch, ``C1b-1`` (-0.5, MIDI 0) -- e.g. a B-flat clarinet's written
+            ``"C#-1"``. Every sounding getter raises the same error for such a note; its written
+            pitch is still available from ``getWrittenPitch()``.
     )pbdoc");
 
     cls.def("getType", &Note::getType);
@@ -331,8 +344,8 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the note's transposing interval carries its sounding pitch below C-1 (MIDI 0);
-            see ``getSoundingPitch``.
+            If the note's transposing interval carries its sounding pitch below the lowest
+            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
 
         Examples
         --------
@@ -356,6 +369,12 @@ void NoteClass(const py::module& m) {
         -------
         float
             The exact sounding position, a multiple of 0.5; -1.0 for a rest.
+
+        Raises
+        ------
+        RuntimeError
+            If the note's transposing interval carries its sounding pitch below the lowest
+            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
 
         Examples
         --------
@@ -388,6 +407,12 @@ void NoteClass(const py::module& m) {
         str
             One of ``"bb"``, ``"3b"``, ``"b"``, ``"1b"``, ``""`` (natural), ``"1x"``, ``"#"``,
             ``"3x"`` and ``"x"``; ``""`` for a rest.
+
+        Raises
+        ------
+        RuntimeError
+            If the note's transposing interval carries its sounding pitch below the lowest
+            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
 
         Examples
         --------

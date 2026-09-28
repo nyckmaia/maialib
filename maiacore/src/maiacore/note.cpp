@@ -14,6 +14,31 @@
 #include "maiacore/utils.h"
 
 namespace {
+// True when a transposing instrument's sounding pitch falls below the lowest representable pitch,
+// "C1b-1" (-0.5): its sounding MIDI number, the written one moved by the whole-semitone chromatic
+// interval, is negative, which is the same "rounds, ties upward, to a negative MIDI number" rule
+// every pitch in this library is held to.
+bool isSoundingPitchBelowFloor(const Pitch& writtenPitch, const int transposeChromatic) {
+    return !writtenPitch.isRest() && writtenPitch.getMidiNumber() + transposeChromatic < 0;
+}
+
+// The one error every sounding getter raises for such a note. The note is real -- isNoteOn() is
+// true and its written pitch is intact -- but it has no sounding spelling, octave, MIDI number or
+// frequency, and answering a rest's values for them would pass it off as a rest.
+[[noreturn]] void throwSoundingPitchBelowFloor(const Pitch& writtenPitch,
+                                               const int transposeDiatonic,
+                                               const int transposeChromatic) {
+    LOG_ERROR("The sounding pitch of the written pitch '" + writtenPitch.getPitch() +
+              "' with transposeDiatonic=" + std::to_string(transposeDiatonic) +
+              " and transposeChromatic=" + std::to_string(transposeChromatic) + " is at position " +
+              std::to_string(writtenPitch.getQuarterToneSteps() +
+                             static_cast<float>(transposeChromatic)) +
+              ", below the lowest representable pitch C1b-1 (-0.5, MIDI note 0), so it has no "
+              "sounding spelling, octave, MIDI number or frequency. The written pitch is still "
+              "available from getWrittenPitch(); a transposing interval that keeps the sounding "
+              "pitch at or above C1b-1 makes it spellable.");
+}
+
 // Formats a pitch alter value for the MusicXML <alter> element: a whole-tone accidental with no
 // decimal part ("1", "-2"), a quarter tone with exactly one decimal place ("0.5", "-1.5"). The
 // text is looked up by accidental symbol rather than formatted through a stream, so it never
@@ -164,18 +189,8 @@ void Note::setOctave(const int octave) {
 }
 
 std::optional<int> Note::getOctave() const {
-    // Fix round 2: NOT an alias for getSoundingOctave() any more (that method is now arithmetic
-    // -- see its own comment). This is "the octave" (documented as the sounding octave) and,
-    // pre-Task-6, its body was `return _soundingOctave;`, a field tracked by the same
-    // sharp/flat/double-sharp/double-flat scale-lookup computeSoundingPitch() below reproduces
-    // verbatim; d26aa67's getOctave() and getSoundingOctave() were never the same value for a
-    // buggy transposition (measured: swept 1197 (pitch, transposeDiatonic, transposeChromatic)
-    // combinations against d26aa67 -- getOctave() matched in every single one; only
-    // getMidiNumber(), and the octave DIGIT embedded in getSoundingPitch()'s string, regressed).
-    // Task 6b: the `-2` sentinel is gone -- a rest now answers an empty optional instead of a
-    // fabricated numeric octave. computeSoundingPitch().getOctave() is already an empty optional
-    // for a rest, so this is a pure propagation; the non-rest scale-lookup behaviour above
-    // (including its known defect, owned by Task 10) is untouched.
+    // The octave of the sounding spelling: empty for a rest, whose Pitch has no octave. A sounding
+    // pitch below the lowest representable pitch throws from computeSoundingPitch().
     return computeSoundingPitch().getOctave();
 }
 
@@ -577,11 +592,14 @@ void Note::setTransposingInterval(const int diatonicInterval, const int chromati
     _transposeDiatonic = diatonicInterval;
     _transposeChromatic = chromaticInterval;
 
-    // Eagerly derive (and discard) the sounding pitch so an unspellable written pitch class
-    // under a nonzero transpose throws here, matching this method's historical timing, rather
-    // than from a later getter call. Nothing is cached: getSoundingPitch() and every other
-    // "sounding" getter recompute this on demand via computeSoundingPitch().
-    computeSoundingPitch();
+    // Eagerly derive (and discard) the sounding pitch, so one that cannot be spelled throws here
+    // rather than from a later getter call. The exception is a sounding pitch below the lowest
+    // representable pitch: such a note stays constructible, and each sounding getter reports the
+    // condition when asked. Nothing is cached: every "sounding" getter recomputes the sounding
+    // pitch on demand via computeSoundingPitch().
+    if (!isSoundingPitchBelowFloor(_writtenPitch, _transposeChromatic)) {
+        computeSoundingPitch();
+    }
 }
 
 Pitch Note::computeSoundingPitch() const {
@@ -611,15 +629,16 @@ Pitch Note::computeSoundingPitch() const {
     //      accident -- so a B-flat clarinet's written C#4 sounded "Bb" instead of "B".
     //   2. The octave-wrap check `tempIdx >= 0 && tempIdx <= 12` also took the no-wrap branch at
     //      exactly 12, so a piccolo's written C4 (chromatic +12) sounded in octave 4, not 5.
+    // A sounding pitch below the lowest representable pitch has no spelling. It is reported here,
+    // rather than answered with Helper::steps2pitch()'s rest sentinel, so that no sounding getter
+    // passes such a note off as a rest.
+    if (isSoundingPitchBelowFloor(_writtenPitch, _transposeChromatic)) {
+        throwSoundingPitchBelowFloor(_writtenPitch, _transposeDiatonic, _transposeChromatic);
+    }
+
     const float soundingSteps =
         _writtenPitch.getQuarterToneSteps() + static_cast<float>(_transposeChromatic);
 
-    // Helper::steps2pitch() answers the rest sentinel, rather than throwing, when the sounding
-    // pitch falls below MIDI 0. setTransposingInterval() calls this method eagerly, so such a note
-    // must stay constructible -- pinned by note-test.cpp's
-    // GetPitchBelowMidiZeroFailsDiagnosablyNotWithBadOptionalAccess -- and getSoundingPitch() is
-    // where that condition is reported diagnosably.
-    //
     // Accidental preference: flats going down, the default (natural/sharp-side) spelling going up.
     // That is the one sound convention the deleted lookup had, and it is what keeps a B-flat
     // clarinet's written C4 sounding "Bb3" rather than "A#3".
@@ -719,56 +738,22 @@ const std::string Note::getSoundingPitchClass() const {
 }
 
 const std::string Note::getSoundingPitch() const {
-    // Fix round 5 (F1): a rest has no sounding pitch, so answer the rest sentinel BEFORE the
-    // transposition branch below can concatenate anything. setIsNoteOn(false) turns a note into
-    // a rest but deliberately does NOT clear its transposing intervals, so isTransposed() stays
-    // true; without this guard that combination fell through to the concatenation below and
-    // produced "rest" + "-2" == the malformed string "rest-2", which is not a valid pitch and
-    // which no Note constructor would accept back. Measured against a d26aa67 worktree before
-    // fixing: the baseline produced no malformed pitch string anywhere (0 occurrences across an
-    // 864-cell probe, against 16 at HEAD), so this was a Task 6 regression, not pre-existing.
-    // The guard is placed here, not at the concatenation site, so every route into this method
-    // is covered at once.
+    // A rest has no sounding pitch: answer the rest sentinel before the transposition branch
+    // below can compose anything. setIsNoteOn(false) turns a note into a rest but keeps its
+    // transposing interval, so isTransposed() can be true for a rest.
     if (_writtenPitch.isRest()) {
         return MUSIC_XML::PITCH::REST;
     }
 
-    // Fix round 2: restored to the pre-Task-6 body exactly (was
-    // `computeSoundingPitch().getPitch()`, which glued the pitch CLASS to the SAME buggy
-    // scale-lookup octave getOctave() intentionally still reproduces -- see that method's
-    // comment). The pitch class here is still the pre-existing, unfixed lookup (Task 10's to
-    // fix, not this round's); only the octave digit is arithmetic again, matching d26aa67.
     if (!isTransposed()) {
         return getWrittenPitch();
     }
 
-    // Fix round 1 (Task 6b): NOT rest-guarded alone. getSoundingOctave() is arithmetic
-    // (written MIDI + transposeChromatic) and is empty whenever that sum is negative, which
-    // happens for an ordinary, constructible, non-rest transposed note whose sounding pitch
-    // falls below the system minimum C-1 (MIDI 0) -- e.g. a B-flat clarinet's written "C#-1"
-    // (transposeDiatonic=-1, transposeChromatic=-2) sounds MIDI -1. Calling .value() on that
-    // unconditionally let a raw std::bad_optional_access escape this public getter (measured:
-    // 162/4434 constructible non-rest transposed notes swept by the reviewer; corroborated
-    // independently here). getSoundingPitchClass() does NOT fail alongside it: it derives its
-    // answer from computeSoundingPitch()'s separate, pre-existing scale-lookup defect (Task
-    // 10's to fix, untouched here), which can land back in-range by coincidence of its own
-    // (unrelated) bug and so "succeeds" with a pitch class even when the arithmetic sounding
-    // MIDI is unrepresentable. The two were never meant to agree (see getOctave()'s comment);
-    // concatenating them when the arithmetic side is empty was never sound, sentinel or not.
-    // Do NOT resurrect the pre-6b `-2` sentinel here (e.g. via value_or(-2)) -- octave -2 does
-    // not exist in this library and round 5 of Task 6 was spent removing exactly that kind of
-    // malformed pitch string. Fail loudly and diagnosably instead.
-    const std::optional<int> soundingOctave = getSoundingOctave();
-    if (!soundingOctave.has_value()) {
-        LOG_ERROR(
-            "Note::getSoundingPitch: this note's sounding pitch falls below the representable "
-            "minimum C-1 (MIDI 0), so it has no sounding octave or sounding pitch string. "
-            "Written pitch: '" +
-            getWrittenPitch() + "', transposeDiatonic=" + std::to_string(_transposeDiatonic) +
-            ", transposeChromatic=" + std::to_string(_transposeChromatic) +
-            ", sounding MIDI=" + std::to_string(getMidiNumber()));
-    }
-    return getSoundingPitchClass() + std::to_string(soundingOctave.value());
+    // The pitch class and the octave come from the same sounding position: computeSoundingPitch()
+    // only keeps a flat spelling whose octave agrees with getSoundingOctave(). A sounding pitch
+    // below the lowest representable pitch throws from both, with the same error, so the
+    // octave is always engaged here -- never a sentinel glued onto the pitch class.
+    return getSoundingPitchClass() + std::to_string(getSoundingOctave().value());
 }
 
 const std::string Note::getDiatonicWrittenPitchClass() const {
@@ -786,14 +771,8 @@ const std::string Note::getDiatonicSoundingPitchClass() const {
 }
 
 std::optional<int> Note::getSoundingOctave() const {
-    // Fix round 2: arithmetic, derived from the (now again arithmetic) getMidiNumber() -- the
-    // pre-Task-6 body was `Helper::midiNote2octave(_midiNumber).value_or(-2)`; _midiNumber was
-    // itself always arithmetic, so this is that same formula through the new single source of
-    // truth. Deliberately NOT computeSoundingPitch().getOctave(): that tracks octave through the
-    // same pre-existing, unfixed scale-lookup defect getOctave() below still (correctly, by
-    // design) reproduces, and this method must not inherit it.
-    // Task 6b: Helper::midiNote2octave() already returns an empty optional for MIDI_REST, so the
-    // `-2` sentinel that used to replace it here is simply gone; nothing else changes.
+    // Arithmetic, from the sounding MIDI number: empty for a rest (MIDI_REST), and a sounding
+    // pitch below the lowest representable pitch throws from getMidiNumber().
     return Helper::midiNote2octave(getMidiNumber());
 }
 
@@ -974,14 +953,13 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
 }
 
 int Note::getMidiNumber() const {
-    // Fix round 2: arithmetic, decoupled from computeSoundingPitch()'s spelling lookup on
-    // purpose. That lookup (untouched, pre-existing) can pick the wrong pitch class for a
-    // transposed note; routing MIDI through the resulting (mis-spelled) Pitch string used to
-    // let that spelling defect corrupt the numeric answer too -- a Critical regression found in
-    // review. Written MIDI + the chromatic transpose interval is correct regardless of spelling
-    // and matches this method's pre-Task-6 behaviour exactly.
+    // Arithmetic, independent of any spelling: the written MIDI number moved by the chromatic
+    // interval, a whole number of semitones.
     if (_writtenPitch.isRest()) {
         return MUSIC_XML::MIDI::NUMBER::MIDI_REST;
+    }
+    if (isSoundingPitchBelowFloor(_writtenPitch, _transposeChromatic)) {
+        throwSoundingPitchBelowFloor(_writtenPitch, _transposeDiatonic, _transposeChromatic);
     }
     return _writtenPitch.getMidiNumber() + _transposeChromatic;
 }
@@ -989,6 +967,9 @@ int Note::getMidiNumber() const {
 float Note::getQuarterToneSteps() const {
     if (_writtenPitch.isRest()) {
         return static_cast<float>(MUSIC_XML::MIDI::NUMBER::MIDI_REST);
+    }
+    if (isSoundingPitchBelowFloor(_writtenPitch, _transposeChromatic)) {
+        throwSoundingPitchBelowFloor(_writtenPitch, _transposeDiatonic, _transposeChromatic);
     }
 
     // The transposing interval is a whole number of semitones, so the sounding position is the

@@ -155,7 +155,7 @@ class Helper {
      * @brief Converts an exact, unrounded pitch position in quarter-tone steps to a pitch string.
      * @details The fractional counterpart of midiNote2pitch(), and the single place a quarter tone
      *          is spelled from a numeric position. The position is split into the base semitone it
-     *          rounds to (ties upward, the rule spelling2midiNote() owns) and the remaining
+     *          rounds to (ties upward, roundTiesUpward() in utils.h) and the remaining
      *          quarter tone, which is always 0 or -0.5; the base semitone is spelled with
      *          midiNote2pitch() and the remainder is then folded into that spelling's accidental
      *          (e.g. 60.5 with accType "" gives "C1x4", since "C4" carries an alter of 0).

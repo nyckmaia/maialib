@@ -2,6 +2,12 @@
 
 #include <gtest/gtest.h>
 
+#include <functional>
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "maiacore/interval.h"
 #include "pitch-spelling-legacy-data.h"
 #include "test-capture.h"
 
@@ -1421,54 +1427,33 @@ TEST(NoteComposesPitch, GetPitchIsWellFormedRestForTransposedNoteTurnedOff) {
     EXPECT_EQ(control.getPitch(), "rest");
 }
 
-// Task 6b, fix round 1 -- reviewer finding: the `.value()` this task added to
-// getSoundingPitch() assumed "not a rest, therefore getSoundingOctave() is engaged". That
-// precondition is false. getSoundingOctave() is arithmetic (written MIDI + transposeChromatic)
-// and is empty whenever that sum is negative -- which an ordinary, constructible, non-rest
-// transposed note can reach, not just a rest. The reviewer swept 4434 constructible non-rest
-// transposed notes and found 162 that raised an unexplained std::bad_optional_access from
-// getPitch(); corroborated independently here with a smaller sweep (10/1704). Reachable with an
-// ordinary B-flat clarinet transpose: a written "C#-1" (transposeDiatonic=-1,
-// transposeChromatic=-2) sounds MIDI -1 (written MIDI 1, minus the chromatic interval of 2).
-// getSoundingPitchClass() does NOT fail alongside it -- it goes through the separate,
-// pre-existing scale-lookup defect (Task 10's, untouched here), which happens to land back
-// in-range for this case by coincidence of its own unrelated bug; the two halves of the
-// concatenation were never guaranteed to agree, sentinel or not (see getOctave()'s own
-// comment). Must NOT resurrect the pre-6b "-2" sentinel here -- octave -2 does not exist in
-// this library, and round 5 of Task 6 was spent removing exactly that kind of malformed pitch
-// string. Must fail loudly and diagnosably instead of with a raw bad_optional_access.
+// A written "C#-1" on a B-flat clarinet (transposeDiatonic=-1, transposeChromatic=-2) sounds at
+// -1, below the lowest representable pitch C1b-1 (-0.5). The note is constructible and is a note,
+// not a rest; every sounding getter fails loudly with the same diagnosable error, instead of a
+// rest's values or an unexplained std::bad_optional_access.
 TEST(NoteComposesPitch, GetPitchBelowMidiZeroFailsDiagnosablyNotWithBadOptionalAccess) {
     const Note n("C#-1", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
                  /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
     ASSERT_TRUE(n.isNoteOn());
-    ASSERT_EQ(n.getMidiNumber(), -1);
-    ASSERT_FALSE(n.getSoundingOctave().has_value());
 
-    try {
-        n.getPitch();
-        FAIL() << "Expected std::runtime_error for a sounding pitch below MIDI 0";
-    } catch (const std::runtime_error& e) {
-        const std::string what = e.what();
-        // Diagnosable: names the real condition (below the representable minimum).
-        EXPECT_NE(what.find("C-1"), std::string::npos) << "message: " << what;
-        EXPECT_NE(what.find("MIDI 0"), std::string::npos) << "message: " << what;
-        // NOT an unexplained standard-library exception escaping this public getter.
-        EXPECT_EQ(what.find("ptional access"), std::string::npos) << "message: " << what;
-    }
-
-    // getSoundingPitch() delegates the same failure through the same path.
-    EXPECT_THROW(n.getSoundingPitch(), std::runtime_error);
+    const std::string message = thrownFirstLine([&] { n.getPitch(); });
+    EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
+        << "message: " << message;
+    EXPECT_NE(message.find("'C#-1'"), std::string::npos) << "message: " << message;
+    EXPECT_NE(message.find("transposeChromatic=-2"), std::string::npos) << "message: " << message;
+    EXPECT_EQ(message.find("ptional access"), std::string::npos) << "message: " << message;
 }
 
-// The other half of the same fix: getSoundingOctave()'s contract (note.h) is now empty in TWO
-// cases, not one. Confirm the non-rest case is independently reachable and that isNoteOff()
-// does not (and must not be assumed to) cover it.
-TEST(NoteComposesPitch, GetSoundingOctaveEmptyWithoutBeingARest) {
+// isNoteOff() stays false: the note is real, its sounding octave simply does not exist, and asking
+// for it fails instead of answering a rest's empty optional.
+TEST(NoteComposesPitch, GetSoundingOctaveOfANoteBelowTheFloorThrowsInsteadOfAnsweringARest) {
     const Note n("C#-1", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
                  /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
     EXPECT_TRUE(n.isNoteOn());
     EXPECT_FALSE(n.isNoteOff());
-    EXPECT_FALSE(n.getSoundingOctave().has_value());
+    const std::string message = thrownFirstLine([&] { n.getSoundingOctave(); });
+    EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
+        << message;
 }
 
 // Task 11, section N: Helper::steps2pitch() treated every negative position as below MIDI 0,
@@ -1745,4 +1730,79 @@ TEST(NoteQuarterToneSteps, setAlterOfNegativeZeroLeavesAPlainNatural) {
     note.setAlter(-0.0f);
     EXPECT_EQ(note.getPitch(), "C4");
     EXPECT_EQ(note.toXML().find("<alter>"), std::string::npos);
+}
+
+// ===== A sounding pitch below the lowest representable pitch ===== //
+
+namespace {
+// Each sounding getter of a note, by name, as a call that discards its result.
+std::vector<std::pair<std::string, std::function<void(const Note&)>>> soundingGetters() {
+    return {
+        {"getPitch", [](const Note& n) { n.getPitch(); }},
+        {"getSoundingPitch", [](const Note& n) { n.getSoundingPitch(); }},
+        {"getPitchClass", [](const Note& n) { n.getPitchClass(); }},
+        {"getSoundingPitchClass", [](const Note& n) { n.getSoundingPitchClass(); }},
+        {"getPitchStep", [](const Note& n) { n.getPitchStep(); }},
+        {"getSoundingPitchStep", [](const Note& n) { n.getSoundingPitchStep(); }},
+        {"getDiatonicSoundingPitchClass", [](const Note& n) { n.getDiatonicSoundingPitchClass(); }},
+        {"getAlterSymbol", [](const Note& n) { n.getAlterSymbol(); }},
+        {"getOctave", [](const Note& n) { n.getOctave(); }},
+        {"getSoundingOctave", [](const Note& n) { n.getSoundingOctave(); }},
+        {"getMidiNumber", [](const Note& n) { n.getMidiNumber(); }},
+        {"getQuarterToneSteps", [](const Note& n) { n.getQuarterToneSteps(); }},
+        {"getFrequency", [](const Note& n) { n.getFrequency(); }},
+        {"getEnharmonicPitch", [](const Note& n) { n.getEnharmonicPitch(); }},
+        {"getEnharmonicPitches", [](const Note& n) { n.getEnharmonicPitches(); }},
+    };
+}
+}  // namespace
+
+// Semitone and quarter-tone written pitches whose sounding position falls below C1b-1 (-0.5).
+TEST(NoteSoundingPitchBelowFloor, everySoundingGetterFailsTheSameWay) {
+    for (const auto& [written, chromatic] :
+         std::vector<std::pair<std::string, int>>{{"C#-1", -2}, {"C1b-1", -1}, {"C1x-1", -2}}) {
+        const Note n(written, RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                     /*transposeDiatonic=*/-1, chromatic);
+        for (const auto& [name, getter] : soundingGetters()) {
+            const std::string message = thrownFirstLine([&] { getter(n); });
+            EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
+                << written << " " << name << ": " << message;
+            EXPECT_NE(message.find("'" + written + "'"), std::string::npos)
+                << written << " " << name << ": " << message;
+        }
+    }
+}
+
+// It is a note, not a rest, and everything about its written pitch still answers.
+TEST(NoteSoundingPitchBelowFloor, theWrittenPitchStillAnswers) {
+    const Note n("C#-1", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                 /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
+    EXPECT_TRUE(n.isNoteOn());
+    EXPECT_FALSE(n.isNoteOff());
+    EXPECT_EQ(n.getWrittenPitch(), "C#-1");
+    EXPECT_EQ(n.getWrittenPitchClass(), "C#");
+    EXPECT_EQ(n.getWrittenOctave().value_or(-99), -1);
+    EXPECT_FALSE(n.isQuarterTone());
+    EXPECT_NE(n.toXML().find("<step>C</step>"), std::string::npos);
+}
+
+// Setting such an interval on an existing note is accepted too: the eager evaluation in
+// setTransposingInterval() is skipped for it, and the condition is reported when asked.
+TEST(NoteSoundingPitchBelowFloor, setTransposingIntervalKeepsTheNoteConstructible) {
+    Note n("C#-1");
+    n.setTransposingInterval(-1, -2);
+    EXPECT_EQ(n.getTransposeChromatic(), -2);
+    const std::string message = thrownFirstLine([&] { n.getMidiNumber(); });
+    EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
+        << message;
+}
+
+// An Interval with such a note is refused, with the same error, when it is built -- before its
+// octave arithmetic, where an empty optional would raise a bare std::bad_optional_access.
+TEST(NoteSoundingPitchBelowFloor, anIntervalWithSuchANoteFailsDiagnosably) {
+    const Note n("C#-1", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                 /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
+    const std::string message = thrownFirstLine([&] { Interval(n, Note("C4")).getNumOctaves(); });
+    EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
+        << message;
 }
