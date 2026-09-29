@@ -153,11 +153,19 @@ void ScoreCollectionClass(const py::module& m) {
            const std::function<float(const std::vector<float>&)>& totalIntervalSimilarityCallback,
            const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback,
            const std::function<float(float, float)>& totalSimilarityCallback) {
-            auto allResults = collection.findMelodyPattern(
-                melodyPatterns, totalIntervalsSimilarityThreshold, totalRhythmSimilarityThreshold,
-                intervalsSimilarityCallback, rhythmSimilarityCallback,
-                totalIntervalSimilarityCallback, totalRhythmSimilarityCallback,
-                totalSimilarityCallback);
+            // Each score's search runs its patterns on worker threads, and a worker that calls,
+            // copies or destroys a Python callback takes the GIL to do it. Holding the GIL here
+            // while the workers run would deadlock, so it is released for the search alone, inside
+            // this lambda; it is held again when the lambda returns, before any record or
+            // DataFrame is built.
+            const auto allResults = [&] {
+                py::gil_scoped_release release;
+                return collection.findMelodyPattern(
+                    melodyPatterns, totalIntervalsSimilarityThreshold,
+                    totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
+                    rhythmSimilarityCallback, totalIntervalSimilarityCallback,
+                    totalRhythmSimilarityCallback, totalSimilarityCallback);
+            }();
 
             // Converte para uma lista de dicionários para compatibilidade com Pandas
             py::object pandas = py::module_::import("pandas");
@@ -201,7 +209,10 @@ void ScoreCollectionClass(const py::module& m) {
 
         Each score is searched as ``Score.findMelodyPatternDataFrame(melodyPatterns, ...)``
         searches it: every pattern, each on a worker thread, with the same thresholds and
-        callbacks.
+        callbacks. The search releases the GIL while it runs, so a Python callback is called
+        from the worker threads, one call at a time, each taking the GIL; other Python threads
+        may run meanwhile, and must not modify this collection or its scores until the search
+        returns.
 
         Parameters
         ----------

@@ -9,7 +9,10 @@ import contextlib
 import io
 import locale
 import os
+import subprocess
+import sys
 import tempfile
+import textwrap
 import unittest
 
 import maialib as ml
@@ -189,6 +192,56 @@ class ScoreQuarterToneReadTestCase(unittest.TestCase):
         self.assertNotIn("[WARN]", buffer.getvalue())
 
 
+# A melody search that calls Python callbacks from its worker threads. Run in a child process,
+# because a search that deadlocks cannot be interrupted from the thread that started it.
+CALLBACK_SEARCH = textwrap.dedent(
+    """
+    import maialib as ml
+
+    score = ml.Score("./xml_examples/Bach/cello_suite_1_violin.xml")
+    pattern = [ml.Note("G2"), ml.Note("D3"), ml.Note("B3")]
+    calls = []
+
+
+    def intervals(pattern, segment):
+        calls.append(1)
+        return ml.Helper.getSemitonesDifferenceBetweenMelodies(pattern, segment)
+
+
+    def total(differences):
+        return ml.Helper.calculateMelodyEuclideanSimilarity(differences)
+
+
+    single = len(score.findMelodyPatternDataFrame(pattern, 0.5, 0.5, intervals, None, total))
+    callsPerSearch = len(calls)
+    searcher = score
+    if COLLECTION:
+        searcher = ml.ScoreCollection([])
+        searcher.addScore(score)
+    listed = searcher.findMelodyPatternDataFrame([pattern, pattern], 0.5, 0.5, intervals, None, total)
+    print("RESULT", len(listed), 2 * single, len(calls) == 3 * callsPerSearch > 0)
+    """
+)
+
+
+def runCallbackSearch(collection, timeout=60):
+    """Run CALLBACK_SEARCH in a child process; return its RESULT line, or None on a timeout."""
+    code = f"COLLECTION = {collection}\n{CALLBACK_SEARCH}"
+    try:
+        completed = subprocess.run(
+            [sys.executable, "-c", code],
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+            capture_output=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=timeout,
+        )
+    except subprocess.TimeoutExpired:
+        return None
+    lines = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
+    return lines[-1] if lines else completed.stderr
+
+
 class ScoreMelodyPatternSearchTestCase(unittest.TestCase):
     """findMelodyPatternDataFrame's list overload searches each pattern on a worker thread."""
 
@@ -232,6 +285,23 @@ class ScoreMelodyPatternSearchTestCase(unittest.TestCase):
                 single = len(score.findMelodyPatternDataFrame(pattern))
                 self.assertGreater(single, 0)
                 self.assertEqual(int(counts.get(i, 0)), single)
+
+    def test_the_list_overload_calls_python_callbacks_without_deadlocking(self):
+        """The worker threads call the Python callbacks, each call taking the GIL, so the search
+        must not hold it while they run. Under a hard timeout, a deadlock fails this test."""
+        result = runCallbackSearch(collection=False)
+        self.assertIsNotNone(result, "the search did not finish within 60 s: a deadlock")
+        _, listed, expected, called = result.split()
+        self.assertEqual(listed, expected)
+        self.assertEqual(called, "True")
+
+    def test_the_collection_list_overload_calls_python_callbacks_without_deadlocking(self):
+        """ScoreCollection's list overload runs each score's patterns on worker threads too."""
+        result = runCallbackSearch(collection=True)
+        self.assertIsNotNone(result, "the search did not finish within 60 s: a deadlock")
+        _, listed, expected, called = result.split()
+        self.assertEqual(listed, expected)
+        self.assertEqual(called, "True")
 
 
 class ScorePropertiesTestCase(unittest.TestCase):

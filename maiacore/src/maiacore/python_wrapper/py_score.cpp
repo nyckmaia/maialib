@@ -246,14 +246,19 @@ void ScoreClass(const py::module& m) {
            const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
            const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
            const std::function<float(float, float)> totalSimilarityCallback) {
-            const auto& results =
-                score.findMelodyPattern(melodyPatterns, totalIntervalsSimilarityThreshold,
-                                        totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
-                                        rhythmSimilarityCallback, totalIntervalSimilarityCallback,
-                                        totalRhythmSimilarityCallback, totalSimilarityCallback);
+            // The search runs each pattern on a worker thread, and a worker that calls, copies or
+            // destroys a Python callback takes the GIL to do it. Holding the GIL here while the
+            // workers run would deadlock, so it is released for the search alone, inside this
+            // lambda; it is held again when the lambda returns, before any DataFrame is built.
+            const auto results = [&] {
+                py::gil_scoped_release release;
+                return score.findMelodyPattern(
+                    melodyPatterns, totalIntervalsSimilarityThreshold,
+                    totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
+                    rhythmSimilarityCallback, totalIntervalSimilarityCallback,
+                    totalRhythmSimilarityCallback, totalSimilarityCallback);
+            }();
 
-            // Converte os resultados para DataFrames no contexto principal (com o GIL adquirido)
-            py::gil_scoped_acquire acquire;
             py::object Pandas = py::module_::import("pandas");
             py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
             std::vector<py::object> dataframes;
@@ -302,7 +307,9 @@ void ScoreClass(const py::module& m) {
 
         Every pattern is searched exactly as the single-pattern overload searches it, however
         many patterns there are. Takes the same thresholds and callbacks, applied to every
-        pattern.
+        pattern. The search releases the GIL while it runs, so a Python callback is called from
+        the worker threads, one call at a time, each taking the GIL; other Python threads may
+        run meanwhile, and must not modify this score until the search returns.
 
         Parameters
         ----------
