@@ -67,9 +67,10 @@ class Note {
 
     /**
      * @brief Constructs a Note from a pitch string and rhythm figure.
-     * @param pitch Pitch string (e.g., "C4", "G#3", "Dbb-1", "Bx11"). Accidentals: "bb", "b",
-     *        "#", "x"; octaves -1..11 (a missing octave defaults to 4); the MIDI number must be
-     *        >= 0. An empty string or a string containing "rest" creates a rest.
+     * @param pitch Pitch string (e.g., "C4", "G#3", "Dbb-1", "Bx11", "C1x4"). Accidentals: "bb",
+     *        "b", "#", "x" and the quarter tones "3b", "1b", "1x", "3x"; octaves -1..11 (a missing
+     *        octave defaults to 4); the MIDI number, rounded ties upward for a quarter tone, must
+     *        be >= 0. An empty string or a string containing "rest" creates a rest.
      * @param rhythmFigure Rhythm figure (default: QUARTER).
      * @param isNoteOn True if sounding note, false for rest.
      * @param inChord True if part of a chord.

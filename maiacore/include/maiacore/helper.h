@@ -366,10 +366,11 @@ class Helper {
     /**
      * @brief Parses a pitch string into its components (the single pitch-string parser).
      * @details Accepted grammar: `step accidental? octave?`, where `step` is A-G, `accidental`
-     *          is one of "bb", "b", "#", "x", and `octave` is an integer in [-1, 11]
-     *          ("C-1" is MIDI 0). A missing octave defaults to 4. An empty string or any string
-     *          containing "rest" yields the rest components ("rest", "rest", empty optional,
-     *          0.0, ""): a rest has no octave.
+     *          is one of "bb", "3b", "b", "1b", "1x", "#", "3x" and "x" -- with no accidental,
+     *          the natural, these are the nine alters from -2 to 2 in steps of 0.5 -- and `octave`
+     *          is an integer in [-1, 11] ("C-1" is MIDI 0). A missing octave defaults to 4. An
+     *          empty string or any string containing "rest" yields the rest components ("rest",
+     *          "rest", empty optional, 0.0, ""): a rest has no octave.
      * @param pitch Input pitch string (e.g., "C4", "F#11", "Dbb-1", "Eb").
      * @param pitchClass Output: pitch class (e.g., "C#", "Bb").
      * @param pitchStep Output: diatonic step (e.g., "C", "D").

@@ -140,13 +140,13 @@ Because `setFrequency(0)` produces a rest, `Pitch` must be able to *be* a rest, 
 | `getAlterSymbol()` / `getAlter()` | `"1x"` / `0.5` | `""` / `0.0` |
 | `getOctave()` | `4` (as `std::optional<int>`) | empty optional (`None` in Python) |
 | `getMidiNumber()` | `61` | `MIDI_REST` (−1) |
-| `getFrequency()` | `277.18` | `0.0` |
+| `getFrequency()` | `269.29` (exact: 440 · 2^((60.5 − 69)/12)) | `0.0` |
 
 **A rest has no octave, and the type says so: `getOctave()` returns `std::optional<int>`, empty for a rest.** No numeric sentinel is used. This is the one place the class needs `#include <optional>`; pybind11 converts it to `None` automatically once `<pybind11/stl.h>` is included in the wrapper, which it already is.
 
-The reasoning matters, because an earlier draft of this spec chose −1 and was wrong. **A sentinel is only safe when it falls outside the value's domain.** `MIDI_REST = -1` satisfies that: MIDI is floored at 0, so −1 can never be a real MIDI number, and the sentinel is sound. **Octave −1 does not satisfy it**, because −1 is itself the lowest legitimate octave in this library — `C-1` is MIDI 0, the system's minimum pitch. A value that is simultaneously "the bottom of the range" and "no value at all" cannot be told apart from the thing it is supposed to exclude. The optional carries no magic number, cannot be silently ignored the way a sentinel can, and maps to `None` through pybind11, which is idiomatic on the Python side.
+The reasoning matters, because an earlier draft of this spec chose −1 and was wrong. **A sentinel is only safe when it falls outside the value's domain.** `MIDI_REST = -1` satisfies that: MIDI is floored at 0, so −1 can never be a real MIDI number, and the sentinel is sound. **Octave −1 does not satisfy it**, because −1 is itself the lowest legitimate octave in this library — `C-1` is MIDI 0, and the lowest pitch, `C1b-1` (−0.5), lies in octave −1 too. A value that is simultaneously "the bottom of the range" and "no value at all" cannot be told apart from the thing it is supposed to exclude. The optional carries no magic number, cannot be silently ignored the way a sentinel can, and maps to `None` through pybind11, which is idiomatic on the Python side.
 
-**The octave range is unchanged: `c_minPitchOctave = -1`, `c_maxPitchOctave = 11`** (`constants.h:109-110`), enforced at `helper.cpp:155`, `helper.cpp:1409` and `note.cpp:29`. `C-1` = MIDI 0 remains the system's minimum pitch, and SP1's rule that a MIDI number is always ≥ 0 stands. No implementer should widen the range as part of this work.
+**The octave range is unchanged: `c_minPitchOctave = -1`, `c_maxPitchOctave = 11`** (`constants.h:109-110`), enforced at `helper.cpp:155`, `helper.cpp:1409` and `note.cpp:29`. MIDI 0 remains the system's minimum MIDI number — the lowest pitch, `C1b-1` (−0.5), rounds to it, ties upward — and SP1's rule that a MIDI number is always ≥ 0 stands. No implementer should widen the range as part of this work.
 
 A rest therefore reports MIDI `-1` (`MIDI_REST`) and an empty octave — the two answers use different mechanisms because their domains differ, which is a fact about the domains rather than an inconsistency.
 
