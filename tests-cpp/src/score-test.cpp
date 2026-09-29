@@ -6,7 +6,10 @@
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <mutex>
 #include <sstream>
+#include <streambuf>
 #include <string>
 #include <thread>
 #include <utility>
@@ -1084,6 +1087,73 @@ TEST(ScoreMelodyPatternSearch, APatternStartingOnAQuarterToneIsRejectedByName) {
               "no interval name (interval names are defined only over twelve-tone equal "
               "temperament). Round it to the nearest semitone with Note::roundToSemitone(), then "
               "repeat the search.");
+}
+
+namespace {
+// Captures everything written to 'stream' for its lifetime and restores the stream's own buffer
+// in the destructor. Every write goes through overflow() or xsputn(), which a mutex serialises, so
+// text written from several threads at once is captured without a data race on the buffer.
+class ConcurrentStreamCapture : public std::streambuf {
+   public:
+    explicit ConcurrentStreamCapture(std::ostream& stream)
+        : _stream(stream), _previous(stream.rdbuf()) {
+        _stream.rdbuf(this);
+    }
+    ~ConcurrentStreamCapture() override { _stream.rdbuf(_previous); }
+    ConcurrentStreamCapture(const ConcurrentStreamCapture&) = delete;
+    ConcurrentStreamCapture& operator=(const ConcurrentStreamCapture&) = delete;
+
+    std::string str() const {
+        std::lock_guard<std::mutex> lock(_mutex);
+        return _text;
+    }
+
+   protected:
+    int_type overflow(int_type character) override {
+        if (!traits_type::eq_int_type(character, traits_type::eof())) {
+            std::lock_guard<std::mutex> lock(_mutex);
+            _text.push_back(traits_type::to_char_type(character));
+        }
+        return traits_type::not_eof(character);
+    }
+
+    std::streamsize xsputn(const char* text, std::streamsize count) override {
+        std::lock_guard<std::mutex> lock(_mutex);
+        _text.append(text, static_cast<size_t>(count));
+        return count;
+    }
+
+   private:
+    std::ostream& _stream;
+    std::streambuf* _previous;
+    mutable std::mutex _mutex;
+    std::string _text;
+};
+}  // namespace
+
+// The list overload's worker threads write nothing to std::cout or std::cerr. Several workers
+// writing at once would share the one stream buffer -- a single Python sys.stdout buffer when
+// std::cout is redirected into Python -- and garble what they wrote, or race on it.
+TEST(ScoreMelodyPatternSearch, TheListOverloadWritesNothingToTheConsole) {
+    Score score("./test/xml_examples/Bach/cello_suite_1_violin.xml");
+    const std::vector<std::vector<Note>> patterns(
+        8, std::vector<Note>{Note("G2"), Note("D3"), Note("B3")});
+
+    std::vector<Score::MelodyPatternTable> tables;
+    std::string printed;
+    std::string printedToStderr;
+    {
+        ConcurrentStreamCapture out(std::cout);
+        ConcurrentStreamCapture err(std::cerr);
+        tables = score.findMelodyPattern(patterns);
+        printed = out.str();
+        printedToStderr = err.str();
+    }
+
+    EXPECT_EQ(printed, "");
+    EXPECT_EQ(printedToStderr, "");
+    ASSERT_EQ(tables.size(), patterns.size());
+    EXPECT_FALSE(tables[0].empty());  // the search itself ran
 }
 
 // More patterns than hardware threads: every pattern is searched, and each finds exactly what it

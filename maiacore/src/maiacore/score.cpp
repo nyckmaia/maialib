@@ -1884,7 +1884,6 @@ std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
     std::atomic<size_t> nextPattern{0};
     auto worker = [&]() {
         for (size_t idx = nextPattern++; idx < numPatterns; idx = nextPattern++) {
-            std::cout << "Processando padrão de melodia: " << idx << std::endl;
             try {
                 results[idx] =
                     findMelodyPattern(melodyPatterns[idx], totalIntervalsSimilarityThreshold,
