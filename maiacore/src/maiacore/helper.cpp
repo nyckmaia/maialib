@@ -1578,10 +1578,8 @@ void Helper::validateTransposeSemitones(const float semitones) {
 
 const std::string Helper::steps2pitch(const float exactSteps, const std::string& accType) {
     // Every check below runs BEFORE the static_cast<int> further down: converting a float outside
-    // int's range -- a non-finite one included -- is undefined behaviour. It was reachable:
-    // transposePitch("C4", 3e9) failed with "Unknown accidental alter value: 5147483648.0", the
-    // visible symptom of that cast, and binding this function to Python would otherwise hand the
-    // same undefined behaviour to any caller passing nan, inf or a large number directly.
+    // int's range -- a non-finite one included -- is undefined behaviour, and this function is
+    // public and bound to Python, so any caller can pass it nan, inf or a large number directly.
     if (!std::isfinite(exactSteps)) {
         LOG_ERROR(
             "Helper::steps2pitch: a pitch position must be a finite number of semitones, but '" +
@@ -1657,7 +1655,7 @@ const std::string Helper::transposePitch(const std::string& pitch, const float s
     validateTransposeSemitones(semitones);
 
     // Parsed before either early return below, so an invalid pitch string is rejected whatever
-    // the interval: an interval of 0 used to hand it back unchanged.
+    // the interval, including an interval of 0, which would otherwise hand it back unchanged.
     const Pitch source(pitch);
 
     if (semitones == 0.0f) {
@@ -1665,8 +1663,8 @@ const std::string Helper::transposePitch(const std::string& pitch, const float s
     }
 
     // Asked of the parsed Pitch rather than by comparing the string with "rest": an empty string
-    // is a rest too, and used to fall through to the arithmetic below as MIDI_REST (-1), so
-    // transposing "" up two semitones answered "C#-1".
+    // is a rest too, and a string comparison would let it fall through to the arithmetic below as
+    // MIDI_REST (-1), so that transposing "" up two semitones would answer "C#-1".
     if (source.isRest()) {
         return MUSIC_XML::PITCH::REST;
     }
@@ -1683,24 +1681,21 @@ const std::string Helper::transposePitch(const std::string& pitch, const float s
                   ", outside the representable range " + representablePitchRange());
     }
 
-    // The single implementation of this operation. Chord::transpose() and
-    // Chord::transposeStackOnly() used to carry their own copy of
-    // "pitch2midiNote(...) + semitones, then midiNote2pitch(...)", which is why the defects
-    // diverged between entry points; both now route through here.
+    // The single implementation of this operation: Note::transpose(), Chord::transpose() and
+    // Chord::transposeStackOnly() all route through here, so the entry points cannot diverge.
     //
-    // Computed on exact positions rather than pitch2midiNote()'s rounded ones: rounding happened
-    // BEFORE the interval was applied, so a quarter tone was destroyed by the very first step
-    // ("C1x4" transposed by 2 landed on "D4"). Pitch::getQuarterToneSteps() is this library's one
+    // Computed on exact positions rather than pitch2midiNote()'s rounded ones: rounding BEFORE
+    // the interval is applied would destroy a quarter tone at the very first step ("C1x4"
+    // transposed by 2 would land on "D4"). Pitch::getQuarterToneSteps() is this library's one
     // unrounded pitch position.
     return steps2pitch(targetSteps, accType);
 }
 
 bool Helper::isEnharmonic(const std::string& pitch_A, const std::string& pitch_B) {
-    // Exact positions, not pitch2midiNote()'s rounded ones. Rounding collapsed "C1x4" (60.5) onto
-    // "C#4" (61) and reported two genuinely different pitches as enharmonic -- the whole defect.
-    // Every pitch position is a multiple of 0.5, which float represents exactly, so == compares
-    // these values exactly. Two rests compare equal through getQuarterToneSteps()'s own MIDI_REST
-    // sentinel.
+    // Exact positions, not pitch2midiNote()'s rounded ones: rounding would collapse "C1x4" (60.5)
+    // onto "C#4" (61) and report two genuinely different pitches as enharmonic. Every pitch
+    // position is a multiple of 0.5, which float represents exactly, so == compares these values
+    // exactly. Two rests compare equal through getQuarterToneSteps()'s own MIDI_REST sentinel.
     return Pitch(pitch_A).getQuarterToneSteps() == Pitch(pitch_B).getQuarterToneSteps();
 }
 

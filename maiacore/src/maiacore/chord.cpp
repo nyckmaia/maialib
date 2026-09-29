@@ -33,11 +33,12 @@ float densityOverRange(const int numNotes, const float lowestSteps, const float 
 // analysis chokepoint in stackInThirds() established: the message names the offending note and the
 // escape hatch, so a caller can act on it without consulting the documentation.
 //
-// These methods reach neither Task 9 guard: they never build an Interval and never stack the chord
-// in thirds, they just do integer arithmetic on MIDI numbers. That is precisely why they needed a
-// guard of their own -- a quarter tone was silently rounded to the semitone above, and the wrong
-// answer was indistinguishable from a right one (getMidiIntervals() returned [4, 3] for a triad
-// with a neutral third, exactly as for a plain major triad).
+// These methods reach neither of the two analysis guards (Interval's and stackInThirds()'s): they
+// never build an Interval and never stack the chord in thirds, they just do integer arithmetic on
+// MIDI numbers. That is precisely why they need a guard of their own -- without it a quarter tone
+// would be silently rounded to the semitone above, and the wrong answer would be
+// indistinguishable from a right one (getMidiIntervals() would return [4, 3] for a triad with a
+// neutral third, exactly as for a plain major triad).
 //
 // 'quantity' completes the sentence "Cannot compute <quantity> for a chord containing ...".
 void rejectQuarterToneInMidiDomain(const Note* quarterToneNote, const std::string& quantity) {
@@ -282,7 +283,7 @@ void Chord::setDuration(const Duration& duration) {
     // '_originalNotes' and '_openStack' are bounded separately: stackInThirds() dedups
     // '_openStack' down to one note per unique pitch class, so it can be strictly smaller than
     // '_originalNotes' (e.g. after Chord({"C4", "C5"}).getName()). Indexing both by
-    // '_originalNotes.size()' used to write past the end of '_openStack' once that happened.
+    // '_originalNotes.size()' would write past the end of '_openStack' once that happens.
     const int chordSize = static_cast<int>(_originalNotes.size());
     for (int i = 0; i < chordSize; i++) {
         _originalNotes[i].setDuration(duration);
@@ -361,8 +362,7 @@ void Chord::toInversion(int inversionNumber) {
 namespace {
 // The accidental type Chord::transpose() and Chord::transposeStackOnly() prefer when spelling a
 // transposed note: the note's own accidental, so a chord written with flats stays written with
-// flats. This preserves the behaviour both methods had when each carried its own copy of the
-// transposition.
+// flats.
 //
 // A quarter-tone accidental ("1x", "1b", "3x", "3b") is not one of the five spellings
 // Helper::midiNote2pitch() accepts, so those fall back to the default spelling of the base
@@ -387,8 +387,8 @@ std::string preferredAccType(const std::string& pitch) {
 
 // Transposes a COPY of 'notes' and returns it, so a rejection part-way through -- a note that
 // transposes outside the representable range raises -- leaves the caller's notes untouched.
-// Transposing in place used to leave a chord half-transposed when its second note raised:
-// {"C4", "B11"} transposed by 2 was left as {"D4", "B11"}.
+// Transposing in place would leave a chord half-transposed when a later note raised:
+// {"C4", "B11"} transposed by 2 would be left as {"D4", "B11"}.
 std::vector<Note> transposedCopy(const std::vector<Note>& notes, const float semitonesNumber) {
     std::vector<Note> transposed = notes;
     for (auto& note : transposed) {
@@ -408,11 +408,10 @@ void Chord::transpose(const float semitonesNumber) {
         return;
     }
 
-    // Task 10: this used to be its own copy of "pitch2midiNote(...) + semitones, then
-    // midiNote2pitch(...)" -- one of three copies of a single operation, which is why
-    // transposing a Chord and transposing a Note diverged. Both now route through
-    // Helper::transposePitch(), which computes on exact pitch positions and so no longer rounds
-    // a quarter tone away before applying the interval.
+    // Transposes through Helper::transposePitch(), the single implementation that
+    // Note::transpose() uses too, so transposing a Chord and transposing a Note cannot diverge.
+    // It computes on exact pitch positions, so a quarter tone is not rounded away before the
+    // interval is applied.
     //
     // Both halves are computed before either is committed, so a rejection leaves the whole chord
     // -- original notes and stack alike -- exactly as it was.
@@ -1590,10 +1589,10 @@ bool Chord::isInRootPosition() {
 
     // Both containers are checked directly because both are read directly below: '_closeStack[0]'
     // on the next line of this guard's caller, and 'tempNotes[0]' (a copy of '_originalNotes') a
-    // few lines down. Every _originalNotes mutator (clear(), removeNote(), ...) now calls
+    // few lines down. Every _originalNotes mutator (clear(), removeNote(), ...) calls
     // invalidateStackCache(), which keeps the two in sync -- clearing '_closeStack' and resetting
-    // '_isStackedInThirds' together -- so as things stand neither clause should be independently
-    // reachable through the public mutator API. Checking both explicitly, rather than checking
+    // '_isStackedInThirds' together -- so neither clause should be independently reachable
+    // through the public mutator API. Checking both explicitly, rather than checking
     // one and relying on the other to match it, keeps this function correct on its own even if
     // that invariant is ever violated elsewhere, instead of depending on a property this function
     // has no way to verify.
@@ -1611,16 +1610,15 @@ bool Chord::isSorted() const {
     // Ordering is a predicate, and a bool expresses the true answer for a quarter-tone chord
     // exactly, so this computes rather than rejects.
     //
-    // The exactness lives in Note's comparison operators, not in a lambda here. Fix round 1 found
-    // the two halves disagreeing: this method compared exact positions while Chord::sortNotes()
-    // still ordered by the rounded Note::operator<, so sorting {"E4", "E1b4"} left the pair
-    // untouched -- std::sort saw two equal notes -- and this method then called the result
-    // unsorted. That was a chord sortNotes() could not make sorted. Keeping one source of truth
-    // for pitch order removes the contradiction by construction rather than by agreement.
+    // The exactness lives in Note's comparison operators, not in a lambda here, so this method
+    // and Chord::sortNotes() share one source of truth for pitch order and agree by
+    // construction. With an exact lambda here and the rounded order in sortNotes(), sorting
+    // {"E4", "E1b4"} would leave the pair untouched -- std::sort would see two equal notes -- and
+    // this method would then call the result unsorted: a chord sortNotes() could not make sorted.
     //
-    // That '<=' is kept exactly as it was. With it, a chord holding the same pitch twice reports
-    // unsorted, which is a separate pre-existing defect about equal pitches rather than about
-    // quarter tones; changing it here would alter semitone chords this task does not touch.
+    // With the '<=', a chord holding the same pitch twice reports unsorted. That is a defect
+    // about equal pitches rather than about quarter tones, and changing it would change the
+    // answer for semitone chords too.
     return std::is_sorted(_originalNotes.begin(), _originalNotes.end(),
                           [](const Note& lh, const Note& rh) { return lh <= rh; });
 }
@@ -2816,19 +2814,14 @@ float Chord::getMeanOfExtremesFrequency(const float freqA4) const {
 }
 
 float Chord::getFrequencyStd(const float freqA4) const {
-    // Fix round 1: this carried the identical zero-padding defect getMidiValueStd() had. The vector
-    // was sized to the note count and then push_back()ed into, so it averaged a leading run of
-    // zeros: measured, a C major triad reported 168.144 -- the standard deviation of
-    // {0, 0, 0, 261.63, 329.63, 392.00} -- instead of the true 53.24.
+    // The population standard deviation of the notes' frequencies, accumulated over the notes
+    // themselves, so the sample holds exactly one value per note: a vector sized to the note
+    // count and then push_back()ed into would also hold a leading run of zeros.
     //
-    // This is NOT the frequency-rounding defect that belongs to the tuning work:
-    // Note::getFrequency() still derives its value from the rounded MIDI number, and repairing
-    // that would not have repaired this. The padding is arithmetic, independent of where the
-    // frequencies come from.
-    // That is why it is fixed here, beside its now-repaired sibling, rather than deferred.
+    // Note::getFrequency() derives each frequency from the rounded MIDI number, so a quarter tone
+    // contributes the frequency of the semitone above it.
     //
-    // An empty chord now returns 0.0f instead of the NaN the old route produced by dividing by a
-    // zero-length vector.
+    // An empty chord returns 0.0f rather than dividing by zero.
     const size_t numNotes = _originalNotes.size();
 
     if (numNotes == 0) {
@@ -2891,23 +2884,12 @@ int Chord::getMeanOfExtremesMidiValue() const {
 
 float Chord::getMidiValueStd() const {
     // Returns a float, which expresses the spread of a quarter-tone chord exactly, so this
-    // computes rather than rejects. Two defects had to go before it could compute anything
-    // correct at all.
+    // computes rather than rejects: it reads each note's exact position, getQuarterToneSteps(),
+    // not the rounded getMidiNumber(). The sample holds exactly one value per note (see
+    // getFrequencyStd()), and the running sum is a float: an int accumulator, such as
+    // std::accumulate() seeded with the literal 0, would truncate the .5 of every quarter tone.
     //
-    // First, the vector was built as `std::vector<int> midiVec(size, 0)` and then push_back()ed
-    // into, so it held 'size' leading zeros followed by the real MIDI values. Measured, a plain C
-    // major triad reported 31.8978 -- the standard deviation of {0, 0, 0, 60, 64, 67} -- instead
-    // of 2.8674, and the quarter-tone chord reported that very same 31.8978. Second, the values
-    // came from the rounded getMidiNumber().
-    //
-    // The standard deviation is computed inline rather than through the old shared
-    // computeStandardDeviation() helper, which seeded std::accumulate() with the integer literal 0
-    // -- making the running sum an int, which would have truncated the .5 of every quarter tone.
-    // Fix round 1 repaired getFrequencyStd() the same way, which left that helper with no callers
-    // at all, so it was removed rather than left as dead code.
-    //
-    // An empty chord now returns 0.0f instead of the NaN the old route produced by dividing by a
-    // zero-length vector.
+    // An empty chord returns 0.0f rather than dividing by zero.
     const size_t numNotes = _originalNotes.size();
 
     if (numNotes == 0) {
@@ -3145,8 +3127,8 @@ std::ostream& operator<<(std::ostream& os, const Chord& chord) {
 
     // A stream operator must not throw: gtest calls operator<< to format values in failure
     // messages, so a throwing operator<< can turn a clean test failure into a process abort.
-    // getNote(-1) on an empty chord now throws (it used to read out of bounds instead), so the
-    // empty case is handled here explicitly, matching __repr__'s "[]" for an empty chord.
+    // getNote(-1) on an empty chord throws, so the empty case is handled here explicitly,
+    // matching __repr__'s "[]" for an empty chord.
     if (chordSize == 0) {
         os << "[]";
         return os;

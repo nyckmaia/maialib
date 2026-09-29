@@ -1424,11 +1424,8 @@ class Chord {
      * @brief Calculates the standard deviation of the frequencies of all notes in the chord.
      * @details Useful for measuring the spectral spread or compactness of the chord. An empty chord
      *          returns 0.0f.
-     * @note The frequencies themselves are still derived from the rounded MIDI number by
-     *       Note::getFrequency(), so a quarter tone contributes the frequency of the semitone above
-     *       it. That is a separate, deliberately deferred tuning concern; it is not the arithmetic
-     *       defect (a zero-padded sample) that used to make this method report 168.14 for a C major
-     *       triad instead of 53.24.
+     * @note The frequencies are derived from the rounded MIDI number by Note::getFrequency(), so
+     *       a quarter tone contributes the frequency of the semitone above it.
      * @param freqA4 Reference frequency for A4 (default: 440.0 Hz).
      * @return Frequency standard deviation as a float.
      */
@@ -1439,8 +1436,8 @@ class Chord {
      * @details Useful for pitch center analysis.
      * @return Mean MIDI value as an integer.
      * @throws std::runtime_error If the chord contains a quarter tone: an int cannot express the
-     *         63.5 that {C4, E1b4, G4} averages to, and the 63 it used to return is the same value
-     *         a plain C major triad gives. Call roundQuarterTones() first.
+     *         63.5 that {C4, E1b4, G4} averages to, and answering 63 would give the same value as
+     *         a plain C major triad. Call roundQuarterTones() first.
      */
     int getMeanMidiValue() const;
 

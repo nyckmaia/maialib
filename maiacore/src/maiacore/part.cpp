@@ -339,11 +339,10 @@ void Part::appendNote(const Note& note, const int position, const int staveId) {
         if (diff < 0) {
             // The remainder would need to be tied into the next measure. Check that it exists
             // *before* writing anything, so a failure here leaves the Part untouched instead of
-            // holding an orphan tie-start note with no tie-stop partner. Auto-appending a blank
-            // measure was considered and deliberately deferred: it is a feature decision (what
-            // time signature/key/clef would it inherit, should getNumMeasures() silently change
-            // under the caller), not something a bugfix belongs deciding, and Part has no
-            // visibility into Score::addMeasure() to do it properly anyway.
+            // holding an orphan tie-start note with no tie-stop partner. A blank measure is not
+            // appended automatically: that is a feature decision (what time signature/key/clef
+            // would it inherit, should getNumMeasures() silently change under the caller), and
+            // Part has no visibility into Score::addMeasure() to do it properly anyway.
             if (m == numMeasures - 1) {
                 LOG_ERROR(
                     "Unable to append the note: it doesn't fit in the last measure and there "

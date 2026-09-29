@@ -133,30 +133,26 @@ class Pitch {
     /**
      * @brief Returns the highest MIDI number this class can spell.
      * @details A pure function -- it reads no instance state and has no side effects. "B" double-
-     *          sharp at the top octave (c_maxPitchOctave); e.g. "Bx11". Factored out of
-     *          clampToRepresentableMidi() (review round 4, task-3-review.md F1) so a caller that
-     *          only needs the ceiling *value* -- setFrequency()'s +infinity handling is the only
-     *          one today -- does not have to exercise the clamp *branch* to get it. Before this
-     *          split, the +infinity path obtained the ceiling via
-     *          `clampToRepresentableMidi(INT_MAX)`, which meant a single regression in that one
-     *          comparison could make both the ceiling clamp itself AND the +infinity path hang on
-     *          an unbounded walk, on every platform -- not the AArch64-specific concern round 2's
-     *          N2 guarded against, but a strictly worse, platform-independent version of it.
-     * @return The highest representable MIDI number (157 as of this writing: "Bx11").
+     *          sharp at the top octave (c_maxPitchOctave); e.g. "Bx11". Separate from
+     *          clampToRepresentableMidi() so that a caller needing only the ceiling *value* --
+     *          setFrequency()'s +infinity handling -- does not go through the clamp *branch* to
+     *          get it: one comparison then cannot break both the ceiling clamp and the +infinity
+     *          path at once.
+     * @return The highest representable MIDI number (157: "Bx11").
      */
     static int maxRepresentableMidi();
 
     /**
      * @brief Clamps an arbitrary MIDI number to the range this class can represent.
      * @details A pure function -- it reads no instance state and has no side effects -- used by
-     *          setFrequency() for both ends of its range clamp (review round 3, task-3-review.md
-     *          item 2): extracted out of that method so the clamp bound (maxRepresentableMidi())
-     *          can be tested directly and deterministically, without going through
-     *          setFrequency()'s frequency-to-steps pipeline or timing anything.
+     *          setFrequency() for both ends of its range clamp. It is a function of its own so
+     *          that the clamp bound (maxRepresentableMidi()) can be tested directly and
+     *          deterministically, without going through setFrequency()'s frequency-to-steps
+     *          pipeline.
      * @param midi MIDI number to clamp, of any magnitude (including values well outside any
      *        audible frequency's range).
-     * @return 0 (C-1, the lowest representable pitch) if midi is negative; maxRepresentableMidi()
-     *         if midi exceeds it; midi unchanged otherwise.
+     * @return 0 (the lowest representable MIDI number, spelled C-1) if midi is negative;
+     *         maxRepresentableMidi() if midi exceeds it; midi unchanged otherwise.
      */
     static int clampToRepresentableMidi(int midi);
 
@@ -356,9 +352,8 @@ class Pitch {
      *          +infinity, depend on `-ffast-math` (or an equivalent fast-math build flag) never
      *          being enabled for this translation unit: fast-math permits the compiler to assume
      *          no NaN or infinity value ever occurs and to remove the std::isfinite()/std::isnan()
-     *          checks this behaviour relies on. Absent from CMakeLists.txt and setup.py as of
-     *          this writing; must stay absent, or be re-verified against this method's non-finite
-     *          handling if ever introduced.
+     *          checks this behaviour relies on. No such flag is set in CMakeLists.txt or setup.py,
+     *          and pitch.cpp refuses to compile under one (#error).
      * @param frequency Frequency in Hz. A value <= 0 makes this Pitch a rest.
      * @param accType Preferred accidental type for the base semitone spelling: "" (natural for
      *        white keys, "#" for black keys, the default), "#", "b", "x" or "bb".

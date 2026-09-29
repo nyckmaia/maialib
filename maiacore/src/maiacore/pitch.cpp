@@ -9,9 +9,8 @@
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
 
-// REVIEW ROUND 4 (task-3-review.md, "enforce the fast-math constraint in code") — this project
-// has no CI test step at all (wheels.yml runs no C++ or Python tests), so this compile-time
-// guard is the only automated signal that can exist for this hazard: Pitch::setFrequency() below
+// The project's CI runs no C++ or Python tests (wheels.yml only builds the wheels), so this
+// compile-time guard is the only automated check for this hazard: Pitch::setFrequency() below
 // depends on std::isnan() and std::isfinite() to keep a non-finite frequency from reaching a
 // static_cast<int>(std::floor(...)) that is undefined behaviour for it. A fast-math build flag
 // (clang/GCC -ffast-math, or MSVC /fp:fast) permits the compiler to assume no NaN or infinity
@@ -178,23 +177,18 @@ float Pitch::getFrequency(float freqA4) const {
     }
 
     if (getTuningSystem() != TuningSystem::EQUAL_TEMPERAMENT) {
-        LOG_ERROR("Tuning system not implemented in SP2; only EQUAL_TEMPERAMENT is available");
+        LOG_ERROR("Tuning system is not implemented; only EQUAL_TEMPERAMENT is available");
     }
 
     // Uses the exact, unrounded quarter-tone step position (not getMidiNumber()) so a
-    // quarter-tone alter is never rounded away here -- see THE TRAP note in task-3-brief.md
-    // about Helper::freq2midiNote(), which is deliberately not used for this reason. Computed in
-    // double (review round 1, I3) and narrowed to float only in the return: keeps this symmetric
-    // with setFrequency()'s inverse, and removes any cross-platform libm imprecision this
-    // specific computation could otherwise introduce.
+    // quarter-tone alter is never rounded away here. Helper::freq2midiNote() is not used for the
+    // same reason: it rounds to an integer MIDI number first. Computed in double and narrowed to
+    // float only in the return: this keeps it symmetric with setFrequency()'s inverse, and removes
+    // any cross-platform libm imprecision a float32 computation could introduce.
     //
-    // REVIEW ROUND 2 (task-3-review.md N5) -- this comment previously claimed double precision
-    // makes setFrequency()'s rounding "reliably tie-exact across platforms". That was wrong, and
-    // setFrequency()'s own comment (on the granularity/roundedSteps computation) now says why in
-    // detail: no frequency-based computation can be tie-exact regardless of precision, because a
-    // tie requires an irrational ratio no finite float representation can hit exactly. This
-    // method's double-precision computation is worth keeping on its own merits -- see above --
-    // but it does not, and cannot, deliver that stronger guarantee.
+    // Double precision does not make setFrequency()'s rounding tie-exact, though: no frequency
+    // lands exactly on a tie, whatever the precision, because a tie needs an irrational ratio no
+    // finite float can hold (see setFrequency()).
     const double frequency = static_cast<double>(freqA4) *
                               std::pow(2.0, (static_cast<double>(getQuarterToneSteps()) - 69.0) /
                                                 12.0);
@@ -249,12 +243,11 @@ void Pitch::setAlter(float alter) {
 }
 
 void Pitch::setOctave(int octave) {
-    // Task 6b, section K: the rest check runs FIRST, ahead of the range check below. An
-    // operation that is inapplicable to a rest is inapplicable whatever the argument -- before
-    // this reordering, a rest handed an out-of-range octave hit the range check first and threw
-    // instead of warning (see pitch-test.cpp's setOctaveOutOfRangeOnRestIsRefusedAndWarnsNotThrows
-    // and note-test.cpp's SetOctaveOutOfRangeOnRestWarnsAndDoesNotThrow for the pinned
-    // round-trip this closes).
+    // The rest check runs FIRST, ahead of the range check below: an operation that is
+    // inapplicable to a rest is inapplicable whatever the argument, so a rest handed an
+    // out-of-range octave warns rather than throws (pinned by pitch-test.cpp's
+    // setOctaveOutOfRangeOnRestIsRefusedAndWarnsNotThrows and note-test.cpp's
+    // SetOctaveOutOfRangeOnRestWarnsAndDoesNotThrow).
     if (isRest()) {
         LOG_WARN("Pitch::setOctave: cannot set the octave of a rest; ignoring");
         return;
@@ -283,8 +276,8 @@ void Pitch::setPitch(const std::string& pitch) {
 
     _step = pitchStep;
     _alter = alterValue;
-    // splitPitch() now leaves 'octave' empty for a rest and populated otherwise, so it maps
-    // directly onto Pitch's own invariant; no separate rest check needed here any more.
+    // splitPitch() leaves 'octave' empty for a rest and populated otherwise, so it maps directly
+    // onto Pitch's own invariant; no separate rest check is needed here.
     _octave = octave;
 }
 
@@ -304,30 +297,29 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
     // A frequency <= 0 is a whole-state replacement into a rest (spec section 4.4.1), not a
     // caller error: this never throws for that reason alone.
     //
-    // REVIEW ROUND 4 (task-3-review.md F3) — this must stay spelled as `<= 0.0f`, not rewritten
-    // to the logically-tempting `!(frequency > 0.0f)`. They are NOT equivalent for NaN: every
-    // comparison against NaN is false under IEEE 754, so `frequency <= 0.0f` is false for NaN
-    // (falls through, as intended, to the NaN throw below) while `!(frequency > 0.0f)` would be
-    // true for NaN (`frequency > 0.0f` is false, negated to true) and route NaN into this rest
-    // branch instead -- silently reintroducing the exact bug the round 3 ruling exists to
-    // prevent. The NaN throw below is only reachable because this comparison is spelled this way.
+    // This must stay spelled as `<= 0.0f`, not rewritten to the logically-tempting
+    // `!(frequency > 0.0f)`. They are NOT equivalent for NaN: every comparison against NaN is
+    // false under IEEE 754, so `frequency <= 0.0f` is false for NaN (falls through, as intended,
+    // to the NaN throw below) while `!(frequency > 0.0f)` would be true for NaN
+    // (`frequency > 0.0f` is false, negated to true) and route NaN into this rest branch instead:
+    // a silent rest for what is a caller error. The NaN throw below is only reachable because this
+    // comparison is spelled this way.
     if (frequency <= 0.0f) {
         setPitch(MUSIC_XML::PITCH::REST);
         return;
     }
 
-    // REVIEW ROUND 1 (task-3-review.md I1) — mirrors getFrequency()'s guard. A tuning system
-    // other than EQUAL_TEMPERAMENT is a caller error (throws), not a boundary condition: the
-    // setter must not silently apply the 12-TET inverse while the getter refuses to use it.
+    // Mirrors getFrequency()'s guard. A tuning system other than EQUAL_TEMPERAMENT is a caller
+    // error (throws), not a boundary condition: the setter must not silently apply the 12-TET
+    // inverse while the getter refuses to use it.
     if (getTuningSystem() != TuningSystem::EQUAL_TEMPERAMENT) {
-        LOG_ERROR("Tuning system not implemented in SP2; only EQUAL_TEMPERAMENT is available");
+        LOG_ERROR("Tuning system is not implemented; only EQUAL_TEMPERAMENT is available");
     }
 
-    // REVIEW ROUND 1 (task-3-review.md I2) — validate accType up front, against the same five
-    // values Helper::midiNote2pitch() itself accepts. A malformed accType is a caller error (this
-    // now matches Pitch(int, accType), which already throws for it via midiNote2pitch()'s own
-    // check) rather than something the accType-applicability fallback below should absorb along
-    // with unrelated failures.
+    // accType is validated up front, against the same five values Helper::midiNote2pitch()
+    // itself accepts. A malformed accType is a caller error, as it is for Pitch(int, accType),
+    // which throws for it through midiNote2pitch()'s own check, rather than something the
+    // accType-applicability fallback below should absorb along with unrelated failures.
     if (!accType.empty() && accType != MUSIC_XML::ACCIDENT::SHARP &&
         accType != MUSIC_XML::ACCIDENT::FLAT && accType != MUSIC_XML::ACCIDENT::DOUBLE_SHARP &&
         accType != MUSIC_XML::ACCIDENT::DOUBLE_FLAT) {
@@ -336,7 +328,8 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
 
     // A helper that spells a MIDI number without throwing, so the fallbacks below can probe
     // spellability instead of relying on an exception that -- per Helper::midiNote2pitch()'s own
-    // negative-MIDI special case -- does not always come (see the C1 comment just below).
+    // negative-MIDI special case -- does not always come (see the negative-baseMidi comment
+    // below).
     auto trySpell = [](int midi, const std::string& type) -> std::string {
         try {
             return Helper::midiNote2pitch(midi, type);
@@ -349,30 +342,26 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
     float residual = 0.0f;
     bool clamped = false;
 
-    // REVIEW ROUND 2 (task-3-review.md N2) — a non-finite frequency (+infinity or NaN; -infinity
-    // is already caught by the `frequency <= 0.0f` rest check above) must never reach
-    // static_cast<int>(std::floor(...)) below: that cast is undefined behaviour for non-finite
-    // input. Measured (not assumed) against the real binary: on x86-64/MSVC it silently returns
-    // INT_MIN, which the floor-clamp then quietly turns into "C-1" -- the wrong end of the range,
-    // masked rather than crashing. On AArch64 (Apple Silicon; this library targets macOS --
-    // CLAUDE.md) the same cast saturates to INT_MAX instead, and the ceiling clamp below would
-    // need on the order of 2^31 iterations to walk down from it: a hang, not merely a wrong
-    // answer.
+    // A non-finite frequency (+infinity or NaN; -infinity is already caught by the
+    // `frequency <= 0.0f` rest check above) must never reach static_cast<int>(std::floor(...))
+    // below: that cast is undefined behaviour for non-finite input. In practice x86-64/MSVC
+    // returns INT_MIN, which the floor clamp would quietly turn into "C-1" -- the wrong end of
+    // the range, masked rather than crashing -- and AArch64 (the macOS wheels) saturates to
+    // INT_MAX instead.
     //
-    // REVIEW ROUND 3 (task-3-review.md ruling 1) — +infinity and NaN are NOT the same case, and
-    // round 2 conflated them. +infinity genuinely lies above the representable range, so it
-    // clamps to the ceiling and warns, same as any other out-of-range positive frequency. NaN
-    // satisfies neither half of spec section 4.3's dichotomy ("<= 0" or "positive") -- it is
-    // unordered under IEEE 754, so every comparison against it, including the frequency <= 0.0f
-    // check above, is false -- and fabricating a pitch from it would hand a caller a valid "B11"
-    // and a warning buried in the log for what is actually a caller error (e.g. an FFT result
-    // divided by zero). NaN is therefore on the same side of the line as a malformed accType or
-    // an unimplemented tuning system: it throws via LOG_ERROR.
+    // +infinity and NaN are NOT the same case. +infinity genuinely lies above the representable
+    // range, so it clamps to the ceiling and warns, same as any other out-of-range positive
+    // frequency. NaN satisfies neither half of spec section 4.3's dichotomy ("<= 0" or
+    // "positive") -- it is unordered under IEEE 754, so every comparison against it, including
+    // the frequency <= 0.0f check above, is false -- and fabricating a pitch from it would hand a
+    // caller a valid "B11" and a warning buried in the log for what is actually a caller error
+    // (e.g. an FFT result divided by zero). NaN is therefore on the same side of the line as a
+    // malformed accType or an unimplemented tuning system: it throws via LOG_ERROR.
     //
     // @warning Both branches below depend on -ffast-math (or an equivalent fast-math build flag)
     // never being enabled for this translation unit: fast-math permits the compiler to assume no
     // NaN or infinity value ever occurs and to remove std::isnan()/std::isfinite() checks
-    // outright. Absent from CMakeLists.txt and setup.py as of this writing; must stay absent.
+    // outright. The #error at the top of this file refuses such a build.
     if (std::isnan(frequency)) {
         LOG_ERROR("Frequency must not be NaN");
     }
@@ -380,12 +369,11 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
         // Only +infinity reaches here: NaN threw above, -infinity is already a rest, and every
         // other non-finite IEEE 754 value is one of those two.
         //
-        // REVIEW ROUND 4 (task-3-review.md F1) — reads the ceiling value directly via
-        // maxRepresentableMidi() rather than exercising clampToRepresentableMidi()'s clamp
-        // branch with a sentinel (the round 3 shape was clampToRepresentableMidi(INT_MAX)): a
-        // single comparison should not simultaneously gate this path, the finite ceiling clamp
-        // below, and the walk-down loop's starting point. Splitting the seam means a future
-        // regression in the clamp branch cannot also take this path down with it.
+        // Reads the ceiling value directly from maxRepresentableMidi() rather than exercising
+        // clampToRepresentableMidi()'s clamp branch with a sentinel such as INT_MAX: a single
+        // comparison should not simultaneously gate this path, the finite ceiling clamp below,
+        // and the walk-down loop's starting point, so an error in the clamp branch cannot also
+        // break this path.
         baseMidi = maxRepresentableMidi();
         clamped = true;
     } else {
@@ -414,12 +402,11 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
         baseMidi = static_cast<int>(std::floor(roundedSteps));
         residual = static_cast<float>(roundedSteps - baseMidi);
 
-        // REVIEW ROUND 1 (task-3-review.md C1) — a negative baseMidi is checked directly, rather
-        // than relying on Helper::midiNote2pitch() to throw for it: it does not. It returns the
-        // *string* "rest" for a negative MIDI number, which previously flowed straight through
-        // splitPitch()'s substring rest-detection to a silent rest for a valid positive
-        // frequency, indistinguishable from the one rest case spec section 4.3 actually sanctions
-        // (freq <= 0).
+        // A negative baseMidi is checked directly, rather than relying on
+        // Helper::midiNote2pitch() to throw for it: it does not. It returns the *string* "rest"
+        // for a negative MIDI number, which would flow straight through splitPitch()'s substring
+        // rest-detection to a silent rest for a valid positive frequency, indistinguishable from
+        // the one rest case spec section 4.3 actually sanctions (freq <= 0).
         //
         // When the residual is +0.5, the exact same pitch position also has a valid spelling one
         // semitone up with a flat-side residual instead (e.g. roundedSteps == -0.5 is
@@ -433,17 +420,14 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
             residual -= 1.0f;
         }
 
-        // Genuinely outside the representable range at either end. The controller's ruling: a
-        // positive frequency never produces a rest and never throws for being out of range --
-        // clamp to the nearest representable pitch (C-1 below, or the highest MIDI number this
-        // class can spell above) and warn instead.
+        // Genuinely outside the representable range at either end. A positive frequency never
+        // produces a rest and never throws for being out of range: it is clamped to MIDI note 0
+        // (C-1) below, or to the highest MIDI number this class can spell above, with a warning.
         //
-        // REVIEW ROUND 3 (task-3-review.md item 2) — clampToRepresentableMidi() is extracted out
-        // as a pure function (review round 2, N3's fix was this same logic inlined here) so both
-        // ends of the clamp -- including the ceiling jump that keeps the walk-down loop below at
-        // O(1) rather than O(baseMidi), the fix N3 required -- are testable directly and
-        // deterministically, without going through this method's frequency-to-steps pipeline or
-        // timing anything.
+        // clampToRepresentableMidi() is a pure function so that both ends of the clamp --
+        // including the ceiling jump that keeps the walk-down loop below at O(1) rather than
+        // O(baseMidi) -- are testable directly and deterministically, without going through this
+        // method's frequency-to-steps pipeline.
         const int clampedMidi = clampToRepresentableMidi(baseMidi);
         if (clampedMidi != baseMidi) {
             baseMidi = clampedMidi;
@@ -475,17 +459,15 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
         return pitch;
     };
 
-    // REVIEW ROUND 4 (task-3-review.md F1) — bounds the walk-down independently of
-    // clampToRepresentableMidi()'s and maxRepresentableMidi()'s own correctness:
-    // kMaxWalkDownSteps is a small constant, not derived from either of them or from anything
-    // else this loop already depends on, so a future regression in the clamp above cannot also
-    // make this loop run away (the failure mode round 4's re-review found: a single broken
-    // comparison could hang both the clamp itself and the +infinity path that used to route
-    // through it). The real bound is never more than 2-3 in practice -- natural spelling starts
-    // fitting again at MIDI 155, three below the ceiling of 157 -- so this is generous headroom,
-    // not a tuned value. If the loop is ever exhausted without a fitting spelling (unreachable
-    // today, but this must hold even if that changes), it falls back to the always-valid natural
-    // spelling of MIDI 0 rather than ever handing splitPitch() an empty string.
+    // kMaxWalkDownSteps bounds the walk-down independently of clampToRepresentableMidi()'s and
+    // maxRepresentableMidi()'s own correctness: it is a small constant, not derived from either
+    // of them or from anything else this loop already depends on, so an error in the clamp above
+    // cannot also make this loop run away. The walk never takes more than two steps -- the
+    // default spelling fits again at MIDI 155 (B11), two below the ceiling of 157 -- so this is
+    // generous headroom, not a tuned value. If the loop were ever exhausted without a fitting
+    // spelling (unreachable, but this must hold even if that changes), it falls back to the
+    // always-valid natural spelling of MIDI 0 rather than ever handing splitPitch() an empty
+    // string.
     constexpr int kMaxWalkDownSteps = 16;
     auto spellWithClamp = [&](const std::string& preferredAccType) -> std::string {
         std::string pitch = trySpellPreferredThenDefault(preferredAccType);

@@ -493,9 +493,9 @@ void Note::setIsNoteOn(bool isNoteOn) {
         return;
     }
 
-    // isNoteOn(false): make this note a rest. Same outcome as the constructor's
-    // isNoteOn=false branch; every getter (all of which now read _writtenPitch.isRest()) is
-    // consistent the moment this line runs.
+    // isNoteOn(false): make this note a rest. Unlike the constructor's isNoteOn=false branch,
+    // this keeps the transposing interval. Every pitch getter reads _writtenPitch.isRest(), so
+    // all of them are consistent the moment this line runs.
     _writtenPitch.setPitch(MUSIC_XML::PITCH::REST);
 }
 
@@ -873,8 +873,8 @@ const std::string Note::getWrittenPitchClass() const { return _writtenPitch.getP
 
 const std::string Note::getWrittenPitch() const { return _writtenPitch.getPitch(); }
 
-// Task 6b: propagates _writtenPitch's own optional instead of collapsing a rest to the `-2`
-// sentinel.
+// The written Pitch's own optional: empty for a rest, which has no octave, rather than a sentinel
+// value that a real octave could collide with.
 std::optional<int> Note::getWrittenOctave() const { return _writtenPitch.getOctave(); }
 
 std::string Note::getPitch() const { return getSoundingPitch(); }

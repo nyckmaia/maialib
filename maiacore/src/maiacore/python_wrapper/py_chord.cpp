@@ -239,7 +239,6 @@ void ChordClass(const py::module& m) {
 
     cls.def("removeDuplicateNotes", &Chord::removeDuplicateNotes);
 
-    // Task 11, section D: bound only now, although both predate this branch.
     cls.def("getStackedHeaps", &Chord::getStackedHeaps, py::arg("enharmonyNotes") = false,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
             R"pbdoc(
@@ -424,14 +423,13 @@ void ChordClass(const py::module& m) {
         RuntimeError
             If ``noteIndex`` is negative or out of range (e.g. on an empty chord).
     )pbdoc");
-    // Do not add a second `getNote` registration with `return_value_policy::reference_internal`
-    // (one existed here and was dead code: pybind11 always resolved to the copy-returning
-    // registration above, since both had the identical C++ signature `int -> Note&` and
-    // overloads are tried in registration order). A reference-returning binding would hand
-    // Python a live `Note&` into `_originalNotes`; mutating it (e.g. `chord.getNote(0).setPitch(
-    // "F#4")`) would desync the chord's cached stacked-in-thirds analysis without going through
-    // any mutator, silently reopening the staleness class invalidateStackCache() closes. Keep
-    // `getNote` copy-returning.
+    // Do not add a second `getNote` registration with `return_value_policy::reference_internal`.
+    // It would be dead code: both would have the identical C++ signature `int -> Note&`, and
+    // pybind11 tries overloads in registration order, so the copy-returning registration above
+    // would always win. And a reference-returning binding would hand Python a live `Note&` into
+    // `_originalNotes`; mutating it (e.g. `chord.getNote(0).setPitch("F#4")`) would desync the
+    // chord's cached stacked-in-thirds analysis without going through any mutator, the staleness
+    // invalidateStackCache() exists to prevent. Keep `getNote` copy-returning.
 
     cls.def("getRoot", &Chord::getRoot,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
@@ -810,10 +808,9 @@ void ChordClass(const py::module& m) {
 
         An empty chord returns ``0.0``.
 
-        Note that the frequencies are still derived from the rounded MIDI number by
+        Note that the frequencies are derived from the rounded MIDI number by
         ``Note.getFrequency()``, so a quarter tone contributes the frequency of the semitone above
-        it -- a separate, deferred tuning concern. It is not the arithmetic defect (a zero-padded
-        sample) that used to make this report ``168.14`` for a C major triad instead of ``53.24``.
+        it.
 
         Returns
         -------
@@ -834,8 +831,8 @@ void ChordClass(const py::module& m) {
         ------
         RuntimeError
             If the chord contains a quarter tone: an int cannot express the 63.5 that
-            ``["C4", "E1b4", "G4"]`` averages to, and the 63 it used to return is the same value a
-            plain C major triad gives. Call ``roundQuarterTones`` first.
+            ``["C4", "E1b4", "G4"]`` averages to, and answering 63 would give the same value as a
+            plain C major triad. Call ``roundQuarterTones`` first.
     )pbdoc");
     cls.def("getMeanOfExtremesMidiValue", &Chord::getMeanOfExtremesMidiValue,
             R"pbdoc(
@@ -1014,8 +1011,8 @@ void ChordClass(const py::module& m) {
     clsNoteData.def(py::init<>());
     clsNoteData.def(py::init<const Note&, const bool, const int>(), py::arg("note"),
                     py::arg("wasEnharmonized"), py::arg("enharmonicDiatonicDistance"));
-    // Task 11, section D: without these, the NoteData objects getStackedHeaps() returns carried
-    // no readable content at all.
+    // Without these, the NoteData objects getStackedHeaps() returns would carry no readable
+    // content at all.
     clsNoteData.def_readonly("note", &NoteData::note, "The note, as spelled in this stack.");
     clsNoteData.def_readonly("wasEnharmonized", &NoteData::wasEnharmonized,
                              "True if the note was respelled enharmonically for this stack.");
