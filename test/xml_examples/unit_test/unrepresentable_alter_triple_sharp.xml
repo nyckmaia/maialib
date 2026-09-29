@@ -23,11 +23,9 @@
         </clef>
       </attributes>
       <!-- <alter>3</alter> with no <accidental> at all. A triple sharp is outside the
-           nine values Helper::alterValue2symbol() can spell (-2..2 in 0.5 steps) -- a
-           known SP2 vocabulary limitation, not a bug to fix here. It must load as
-           natural, with a warning, rather than aborting; this is the pre-Task-7
-           outcome (the old four-case switch had no default case), now made audible
-           instead of silent. -->
+           nine values Helper::alterValue2symbol() can spell (-2..2 in 0.5 steps): a
+           limit of the accidental vocabulary. It must load as natural, with a warning,
+           rather than aborting. -->
       <note>
         <pitch>
           <step>C</step>

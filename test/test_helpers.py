@@ -414,8 +414,8 @@ class PitchSpelling(unittest.TestCase):
         self.assertTrue(ml.Helper.isEnharmonic(pitch_A="B#3", pitch_B="C4"))
         self.assertFalse(ml.Helper.isEnharmonic("C4", "D4"))
 
-    # Task 10, Python parity: isEnharmonic() compared rounded MIDI numbers, so a quarter tone and
-    # the semitone it rounds to collided on one integer and were reported as the same pitch.
+    # isEnharmonic() compares exact positions: by rounded MIDI numbers, a quarter tone and the
+    # semitone it rounds to would collide on one integer and be reported as the same pitch.
     # Mirrors the C++ PitchSpelling.IsEnharmonicComparesExactPitchNotRoundedMidi test.
     def testIsEnharmonicComparesExactPitchNotRoundedMidi(self):
         # The two spellings of one quarter tone, both exactly 60.5.
@@ -424,8 +424,8 @@ class PitchSpelling(unittest.TestCase):
         self.assertFalse(ml.Helper.isEnharmonic("C1x4", "C#4"))
         self.assertFalse(ml.Helper.isEnharmonic("C1x4", "C4"))
 
-    # Task 10, Python parity: transposePitch() rounded the pitch to a MIDI integer before applying
-    # the interval, and its semitones parameter was an int. Mirrors the C++
+    # transposePitch() takes a float interval and computes on exact positions, never rounding the
+    # pitch to a MIDI integer before applying the interval. Mirrors the C++
     # PitchSpelling.TransposePitchMovesByAndPreservesQuarterTones test.
     def testTransposePitchMovesByAndPreservesQuarterTones(self):
         self.assertEqual(ml.Helper.transposePitch("C4", 0.5, ""), "C1x4")
@@ -437,13 +437,14 @@ class PitchSpelling(unittest.TestCase):
             ml.Helper.transposePitch("C4", 0.3)
         self.assertIn("multiple of 0.5", str(ctx.exception))
 
-    # Fix round 1 (Minor 2), Python parity: an infinity passed the multiple-of-0.5 check, because
-    # inf * 2 == inf == floor(inf). +inf then failed far away with an unrelated message, and -inf
-    # SILENTLY returned "rest" -- an infinite transposition quietly turning a note into a rest.
-    # Mirrors the C++ PitchSpelling.TransposePitchRejectsNonFiniteIntervals test.
+    # An infinity must be rejected as non-finite: a multiple-of-0.5 check alone passes it
+    # (inf * 2 == inf == floor(inf)), after which +inf would fail far away with an unrelated
+    # message, and -inf would SILENTLY answer "rest" -- an infinite transposition quietly turning
+    # a note into a rest. Mirrors the C++ PitchSpelling.TransposePitchRejectsNonFiniteIntervals
+    # test.
     #
-    # Task 11, section N item 4: the message must also NAME the offending value, as the sibling
-    # off-grid test requires of 0.3. Only the first line is read: the rest is a stack trace.
+    # The message must also NAME the offending value, as the sibling off-grid test requires of
+    # 0.3. Only the first line is read: the rest is a stack trace.
     def testTransposePitchRejectsNonFiniteIntervals(self):
         for label, value, shown in (
             ("+inf", float("inf"), "'inf'"),
@@ -457,10 +458,8 @@ class PitchSpelling(unittest.TestCase):
                 self.assertIn("finite", message)
                 self.assertIn(shown, message)
 
-    # Task 11, section N, Python parity: a real pitch transposed below MIDI 0 answered "rest"
-    # (transposePitch("C4", -61) returned "rest"), and far above the top it failed with the
-    # unrelated "Unknown accidental alter value: 5147483648.0". Both ends now raise, naming the
-    # pitch and the range. Mirrors the C++
+    # A real pitch transposed out of the representable range raises at both ends, naming the
+    # pitch and the range, rather than answering "rest" below MIDI 0. Mirrors the C++
     # PitchSpelling.TransposePitchRejectsAResultOutsideTheRepresentableRange test.
     def testTransposePitchRejectsResultOutsideRepresentableRange(self):
         for pitch, semitones in (
@@ -483,9 +482,9 @@ class PitchSpelling(unittest.TestCase):
         self.assertEqual(ml.Helper.transposePitch("C-1", -0.5, ""), "C1b-1")
         self.assertEqual(ml.Helper.transposePitch("B11", 2, "x"), "Bx11")
 
-    # Task 11, section N, Python parity: an empty string is a rest, but transposePitch() compared
-    # the string with "rest", so "" transposed up two semitones answered "C#-1"; and an interval
-    # of 0 returned an invalid pitch string unchanged instead of raising.
+    # transposePitch() reads its input as a pitch first: an empty string is a rest (not "C#-1",
+    # two semitones above MIDI_REST), and an invalid pitch string raises even for an interval of
+    # 0.
     def testTransposePitchTreatsEveryRestSpellingAsARestAndParsesTheInputFirst(self):
         self.assertEqual(ml.Helper.transposePitch("", 2), "rest")
         self.assertEqual(ml.Helper.transposePitch("rest", 2), "rest")
@@ -503,7 +502,7 @@ class PitchSpelling(unittest.TestCase):
 
 
 class QuarterToneHelpers(unittest.TestCase):
-    """Task 11, section C: the Helper functions this sub-project added or changed, bound."""
+    """The quarter-tone Helper functions, through the bindings."""
 
     ALTERS = (
         # (value, symbol, Tartini or whole-tone name)

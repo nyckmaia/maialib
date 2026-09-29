@@ -78,9 +78,9 @@ class ScoreLoadingTestCase(unittest.TestCase):
 
 class ScoreQuarterToneReadTestCase(unittest.TestCase):
     """Tests that MusicXML quarter tones survive a real Score(path) load through the
-    Python bindings, not just the underlying C++ function. loadXMLFile() is the only
-    Python-reachable entry point Task 7 fixes; the C++ suite covers the same function
-    directly, this covers it through the actual binding surface end users call."""
+    Python bindings, not just the underlying C++ function: loadXMLFile() is the
+    Python-reachable entry point of the MusicXML reader. The C++ suite covers the same
+    function directly; this covers it through the actual binding surface end users call."""
 
     def _first_note_pitch(self, fileName):
         score = ml.Score(f"./xml_examples/unit_test/{fileName}")
@@ -108,8 +108,8 @@ class ScoreQuarterToneReadTestCase(unittest.TestCase):
     def test_unrepresentable_alter_falls_back_to_natural_instead_of_raising(self):
         """<alter>3</alter>, no <accidental> at all: a triple sharp is outside the nine
         values this library's accidental vocabulary can spell. The load must degrade to
-        natural (the pre-Task-7 outcome) rather than raising and aborting -- this is the
-        path a real ml.Score() user actually hits, not just the underlying C++ function."""
+        natural, with a warning, rather than raising and aborting -- this is the path a
+        real ml.Score() user actually hits, not just the underlying C++ function."""
         self.assertEqual(self._first_note_pitch("unrepresentable_alter_triple_sharp.xml"), "C4")
 
     def _pitches_and_output(self, fileName):

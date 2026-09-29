@@ -41,12 +41,11 @@ class GetName(unittest.TestCase):
         self.assertEqual(myChord.getName(), "Am7/G")
 
     def testEightDistinctPitchClassesRaises(self):
-        # A 10th out-of-bounds site the original audit missed: no enharmonic respelling of this
-        # chord's 8 distinct pitch classes can give every note a distinct letter (only 7 exist,
-        # A-G) and form a valid stacked-in-thirds heap, so the internal computation finds none at
-        # all. More than 8 distinct pitch classes throws earlier and unconditionally elsewhere;
-        # see testThreeNoteClusterRaises below for why "8 distinct pitch classes" is not itself a
-        # real threshold, just one sufficient case.
+        # No enharmonic respelling of this chord's 8 distinct pitch classes can give every note a
+        # distinct letter (only 7 exist, A-G) and form a valid stacked-in-thirds heap, so the
+        # internal computation finds none at all. More than 8 distinct pitch classes throws
+        # earlier and unconditionally elsewhere; see testThreeNoteClusterRaises below for why
+        # "8 distinct pitch classes" is not itself a real threshold, just one sufficient case.
         myChord = ml.Chord(["C4", "D4", "E4", "F4", "G4", "A4", "B4", "Db5"])
         with self.assertRaises(RuntimeError):
             myChord.getName()
@@ -182,11 +181,10 @@ class GetNote(unittest.TestCase):
             myChord.getNote(0)
 
     def testReturnsACopyNotAReference(self):
-        # getNote() must return a copy: py_chord.cpp used to register a second, dead
-        # `reference_internal` overload with an identical signature (final review, item 3). A
-        # reference-returning binding would let mutating the returned Note desync the chord's
-        # cached stacked-in-thirds analysis without going through any mutator (see chord.h's
-        # operator[] docs). Pinning copy semantics here guards against that binding coming back.
+        # getNote() must return a copy. A reference-returning binding would let mutating the
+        # returned Note desync the chord's cached stacked-in-thirds analysis without going
+        # through any mutator (see chord.h's operator[] docs, and the comment in py_chord.cpp
+        # after getNote's registration).
         myChord = ml.Chord(["C4", "E4", "G4"])
         note = myChord.getNote(0)
         note.setPitch("F#4")
@@ -201,10 +199,9 @@ class Info(unittest.TestCase):
 
 
 class Transpose(unittest.TestCase):
-    # Task 11, section N, Python parity: a note transposed below MIDI 0 was silently replaced by
-    # a rest ({"C4", "C-1"} transposed by -1 became {"B3", "rest"}), and a note that raised
-    # part-way through left the chord half-transposed. It now raises and changes nothing. Mirrors
-    # the C++ transpose.outOfRangeRaisesAndLeavesTheChordUnchanged test.
+    # A note transposed below MIDI 0 raises, and the chord is left as it was: neither
+    # half-transposed nor with the note turned into a rest ({"B3", "rest"}). Mirrors the C++
+    # transpose.outOfRangeRaisesAndLeavesTheChordUnchanged test.
     def testOutOfRangeRaisesAndLeavesTheChordUnchanged(self):
         myChord = ml.Chord(["C4", "C-1"])
         with self.assertRaises(RuntimeError) as context:
@@ -215,7 +212,7 @@ class Transpose(unittest.TestCase):
 
 
 class StackedHeapsAndDyads(unittest.TestCase):
-    """Task 11, section D: getStackedHeaps() and isDyad() existed in C++ but were never bound."""
+    """getStackedHeaps() and isDyad(), through the bindings."""
 
     def testIsDyadCountsThePitchClassesOfTheStack(self):
         self.assertTrue(ml.Chord(["C4", "E4"]).isDyad())
@@ -257,20 +254,16 @@ class IsInRootPosition(unittest.TestCase):
         self.assertEqual(myChord.isInRootPosition(), False)
 
     def testClearInvalidatesCacheReflectedByNextMutation(self):
-        # Renamed and rewritten: this used to be worded around the round-1 bug where clear()
-        # left _closeStack stale. Since chord.cpp's invalidateStackCache() fix, clear() clears
-        # it too, so that stale state is no longer reachable through the public API, and a bare
+        # clear() invalidates the stack cache (chord.cpp's invalidateStackCache()), so a stale
+        # _closeStack is not reachable through the public API, and a bare
         # isInRootPosition()==False check here would only duplicate testEmptyChordReturnsFalse.
         #
-        # Re-review found that first rewrite still didn't discriminate: addNote() calls
-        # invalidateStackCache() unconditionally, so the three addNote() calls further down
-        # would mask a broken clear() regardless of what clear() itself did. The assertion that
-        # actually pins clear()'s own invalidation is the one immediately below, BEFORE any
-        # further mutation runs: with the fix, getName() re-stacks on the now-empty chord and
-        # returns "" (no minor/major third); without it, getName() would skip re-stacking and
-        # return the STALE pre-clear() name "C" instead. Confirmed by deletion on the C++ side
-        # (see chord-test.cpp / the implementation report) that this assertion actually fails
-        # without clear()'s invalidateStackCache() call and passes with it restored.
+        # addNote() calls invalidateStackCache() unconditionally, so the three addNote() calls
+        # further down would mask a broken clear() regardless of what clear() itself did. The
+        # assertion that pins clear()'s own invalidation is the one immediately below, BEFORE any
+        # further mutation runs: getName() re-stacks on the now-empty chord and returns "" (no
+        # minor/major third); without the invalidation, getName() would skip re-stacking and
+        # return the STALE pre-clear() name "C" instead.
         myChord = ml.Chord(["C4", "E4", "G4"])
         myChord.getName()  # populate the stack cache for the 3-note chord
         myChord.clear()
@@ -286,9 +279,8 @@ class IsInRootPosition(unittest.TestCase):
         self.assertEqual(myChord.getName(), "Dm")  # reflects the new chord, not any pre-clear cache
 
     def testRemoveNoteToEmptyInvalidatesCacheReflectedByNextMutation(self):
-        # Renamed and rewritten for the same reason as the test above, via removeNote() instead
-        # of clear(): it now also invalidates the cache, so the old stale-_closeStack scenario
-        # this test used to set up is no longer reachable.
+        # The same check as the test above, via removeNote() instead of clear(): removeNote()
+        # invalidates the cache too, so a stale _closeStack is not reachable through it either.
         #
         # Unlike clear()'s test above, this one deliberately does NOT add a getName() == ""
         # check immediately after removeNote() -- that crashes the interpreter process, not just
@@ -296,13 +288,9 @@ class IsInRootPosition(unittest.TestCase):
         # invalidateStackCache() runs, which deliberately excludes _openStack). After
         # removeNote()-to-empty, _openStack is therefore stale (still the pre-removal size)
         # while _closeStack is correctly emptied; isTonal()'s loop, bounded by the stale
-        # stackSize()/_openStack, then reads the now-empty _closeStack out of bounds. This is a
-        # real, currently-reachable, pre-existing bug found incidentally while fixing this test
-        # (reported, not fixed here -- it is the _originalNotes/_openStack dual-representation
-        # drift this branch is explicitly not chartered to redesign). Confirmed on the C++ side
-        # (see chord-test.cpp) that the crash reproduces identically whether or not clear()'s own
-        # invalidation is present, proving it is unrelated to clear() and exists even with every
-        # fix on this branch applied.
+        # stackSize()/_openStack, then reads the now-empty _closeStack out of bounds. That is a
+        # known defect of the _originalNotes/_openStack dual representation, unrelated to
+        # clear()'s invalidation (see chord-test.cpp).
         #
         # removeNote()'s invalidation is independently and safely pinned by
         # ChordMutationCacheInvalidation.testGetNameAfterRemoveNoteReflectsNewChord, which
@@ -341,14 +329,14 @@ class ToCents(unittest.TestCase):
 class ChordMutationCacheInvalidation(unittest.TestCase):
     """Build -> query (populate the stack cache) -> mutate -> query again.
 
-    Re-review found stackInThirds() never cleared the internal '_stackedHeaps' cache, so a
-    mutated chord could reuse a stale, wrong-sized heap instead of recomputing -- silently
-    wrong answers on the grow side, an out-of-bounds read on the shrink side. Fixed with a
-    private invalidation helper called from every mutator. These pin the sequence.
+    A mutated chord must recompute its stacked heaps rather than reuse a stale, wrong-sized one
+    from the internal '_stackedHeaps' cache: that would give silently wrong answers on the grow
+    side and an out-of-bounds read on the shrink side. Every mutator calls a private
+    invalidation helper. These pin the sequence.
     """
 
     def testGetNameAfterAddNoteReflectsNewChord(self):
-        # The reviewer's exact repro sequence, which aborted the process before this fix.
+        # Stack, grow, stack again: the second getName() must describe the grown chord.
         myChord = ml.Chord(["C4", "E4", "G4"])
         self.assertEqual(myChord.getName(), "C")
 
@@ -363,8 +351,8 @@ class ChordMutationCacheInvalidation(unittest.TestCase):
         self.assertEqual(myChord.getName(), "C")
 
     def testGrowingPastValidHeapAfterStackingStillThrows(self):
-        # A chord stacked once, then grown to 8 distinct pitch classes, used to keep the stale
-        # 3-note heap and skip the "no valid heap" guard entirely.
+        # A chord stacked once, then grown to 8 distinct pitch classes, must raise from the "no
+        # valid heap" guard, not keep the stale 3-note heap and skip the guard.
         myChord = ml.Chord(["C4", "E4", "G4"])
         myChord.getName()
 
@@ -400,15 +388,15 @@ class ChordMutationCacheInvalidation(unittest.TestCase):
 
 
 class SetDuration(unittest.TestCase):
-    """Final review found a real, Python-reachable out-of-bounds WRITE: setDuration() indexed
-    both _originalNotes and _openStack by _originalNotes.size(), but _openStack can be
-    strictly smaller after stackInThirds() dedups by pitch class."""
+    """_openStack can be strictly smaller than _originalNotes after stackInThirds() dedups
+    by pitch class, so setDuration() must bound each by its own size: indexing both by
+    _originalNotes.size() would be a Python-reachable out-of-bounds WRITE."""
 
     def testFloatOverloadSafeAfterPitchClassDedupShrinksOpenStack(self):
-        # Exact 3-line repro from the final review. (The Duration& overload is not reachable
-        # from Python at all -- Duration has no Python binding -- so only this overload, the
-        # one actually reachable from Python, needs a Python-side test; the Duration& overload
-        # is covered in chord-test.cpp.)
+        # Stack, then set the duration: the open stack is smaller than the chord. (The Duration&
+        # overload is not reachable from Python at all -- Duration has no Python binding -- so
+        # only this overload, the one actually reachable from Python, needs a Python-side test;
+        # the Duration& overload is covered in chord-test.cpp.)
         myChord = ml.Chord(["C4", "C5"])
         myChord.getName()
         myChord.setDuration(1.0, 256)
@@ -467,7 +455,8 @@ class QuarterToneAnalysisGuard(unittest.TestCase):
     """Harmonic analysis rejects quarter tones; roundQuarterTones() is the escape hatch.
 
     Every answer the stacked-in-thirds analysis computes is defined over twelve-tone equal
-    temperament, so a quarter tone did not make it fail, it made it answer wrongly.
+    temperament, so without the guard a quarter tone would not make it fail, it would make it
+    answer wrongly.
     """
 
     def testGetNameRaises(self):
@@ -589,7 +578,7 @@ class QuarterToneMidiDomainGuard(unittest.TestCase):
     """
 
     def testGetMidiIntervalsRaises(self):
-        # Before this guard, the measured result was [4, 3] -- identical to a plain C major triad.
+        # Without the guard the result would be [4, 3] -- identical to a plain C major triad.
         myChord = ml.Chord(["C4", "E1b4", "G4"])
         with self.assertRaises(RuntimeError) as context:
             myChord.getMidiIntervals()
@@ -648,13 +637,13 @@ class QuarterToneComputedValues(unittest.TestCase):
     """
 
     def testToCentsReadsANeutralThirdAs350(self):
-        # toCents() runs opposite to everything else here: it used to reject, through the Interval
-        # guard, and should not. Not a raise, and not 300 or 400.
+        # toCents() computes rather than rejects: cents express a quarter tone exactly. Not a
+        # raise, and not 300 or 400.
         myChord = ml.Chord(["C4", "E1b4", "G4"])
         self.assertEqual(myChord.toCents(), [350, 350])
 
     def testToCentsSemitoneIntervalsAreExactHundreds(self):
-        # The frequency route this replaced measured [400, 299], truncating 299.9999.
+        # Exact hundreds: a frequency route would truncate 299.9999 to 299.
         myChord = ml.Chord(["C4", "E4", "G4"])
         self.assertEqual(myChord.toCents(), [400, 300])
 
@@ -664,14 +653,14 @@ class QuarterToneComputedValues(unittest.TestCase):
         self.assertEqual(ml.Chord(["E1b4", "C4"]).toCents(), [-350])
 
     def testIsSortedOrdersAQuarterToneExactly(self):
-        # Both of these returned False before the change, because E1b4 (63.5) and E4 (64) both
-        # rounded to 64 and the comparator reads equal values as unsorted.
+        # By rounded MIDI numbers both of these would be False: E1b4 (63.5) and E4 (64) both round
+        # to 64, and the comparator reads equal values as unsorted.
         self.assertTrue(ml.Chord(["E1b4", "E4"]).isSorted())
         self.assertFalse(ml.Chord(["E4", "E1b4"]).isSorted())
 
     def testMidiValueStdIsTheRealStandardDeviation(self):
-        # Both chords reported 31.8978 before the change: the standard deviation of the padded
-        # list {0, 0, 0, 60, 64, 67}.
+        # The standard deviation of each chord's own positions, with no zero padding (that of
+        # {0, 0, 0, 60, 64, 67} would be 31.8978).
         self.assertAlmostEqual(ml.Chord(["C4", "E4", "G4"]).getMidiValueStd(), 2.8674, places=3)
         self.assertAlmostEqual(ml.Chord(["C4", "E1b4", "G4"]).getMidiValueStd(), 2.8577, places=3)
 
@@ -704,12 +693,12 @@ class QuarterToneComputedValues(unittest.TestCase):
 
 
 class QuarterToneOrderingAndSpread(unittest.TestCase):
-    """Fix round 1: pitch ordering, and the two spread/density defects beside it."""
+    """Exact pitch ordering, and exact spread and density."""
 
     def testSortNotesAgreesWithIsSorted(self):
-        # The round trip that was broken: sortNotes() ordered by the rounded MIDI number, so this
-        # pair looked equal and was left untouched, after which isSorted() -- which compares exact
-        # positions -- called the result unsorted. A chord sortNotes() could not make sorted.
+        # sortNotes() and isSorted() must agree: ordered by the rounded MIDI number, this pair
+        # would look equal and be left untouched, after which isSorted() -- which compares exact
+        # positions -- would call the result unsorted, a chord sortNotes() could not make sorted.
         myChord = ml.Chord(["E4", "E1b4"])
         myChord.sortNotes()
 
@@ -726,14 +715,14 @@ class QuarterToneOrderingAndSpread(unittest.TestCase):
         self.assertTrue(myChord.isSorted())
 
     def testNoteComparisonsUseExactPitchPositions(self):
-        # Bound straight to Note's C++ operators. E1b4 is 63.5, E4 is 64; before the fix both
-        # rounded to 64 and the first assertion below was False.
+        # Bound straight to Note's C++ operators. E1b4 is 63.5, E4 is 64; by rounded MIDI numbers
+        # both would be 64 and the first assertion below would fail.
         self.assertTrue(ml.Note("E1b4") < ml.Note("E4"))
         self.assertFalse(ml.Note("E4") < ml.Note("E1b4"))
         self.assertTrue(ml.Note("E4") > ml.Note("E1b4"))
         self.assertTrue(ml.Note("E1b4") <= ml.Note("E4"))
 
-        # __eq__/__ne__ compare pitch strings and were always correct.
+        # __eq__/__ne__ compare pitch strings, so they tell the two apart too.
         self.assertNotEqual(ml.Note("E1b4"), ml.Note("E4"))
 
     def testNoteComparisonsUnchangedForSemitones(self):
@@ -741,19 +730,19 @@ class QuarterToneOrderingAndSpread(unittest.TestCase):
         self.assertFalse(ml.Note("G4") < ml.Note("E4"))
 
     def testFrequencyStdIsNotZeroPadded(self):
-        # Reported 168.14 before the fix: the standard deviation of the padded sample
-        # {0, 0, 0, 261.63, 329.63, 392.00}.
+        # The standard deviation of the three frequencies themselves, with no zero padding (that
+        # of {0, 0, 0, 261.63, 329.63, 392.00} would be 168.14).
         self.assertAlmostEqual(ml.Chord(["C4", "E4", "G4"]).getFrequencyStd(), 53.24, places=1)
 
     def testFrequencyStdEmptyChordIsZero(self):
         self.assertEqual(ml.Chord().getFrequencyStd(), 0.0)
 
     def testHarmonicDensityStringBoundsAreExact(self):
-        # "C1x4" is 60.5; rounding it to 61 gave 2/7 instead of the true 2/7.5.
+        # "C1x4" is 60.5; rounding it to 61 would give 2/7 instead of the true 2/7.5.
         myChord = ml.Chord(["C1x4", "G4"])
 
         self.assertAlmostEqual(myChord.getHarmonicDensity("C1x4", "G4"), 2.0 / 7.5, places=4)
-        # The two overloads now agree about the same span.
+        # The two overloads agree about the same span.
         self.assertAlmostEqual(
             myChord.getHarmonicDensity("C1x4", "G4"), myChord.getHarmonicDensity(), places=4
         )

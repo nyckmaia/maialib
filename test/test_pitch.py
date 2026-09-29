@@ -8,9 +8,9 @@ import maialib as ml
 
 # ===== TEST PITCH CLASS ===== #
 #
-# Task 11: Python parity for the C++ Pitch class (tests-cpp/src/pitch-test.cpp), exercised through
-# the real binding. Each test names the C++ test it mirrors. Three C++ tests have no Python
-# counterpart, on purpose: Characterization.semitoneBehaviourIsUnchanged characterises
+# Python parity for the C++ Pitch class (tests-cpp/src/pitch-test.cpp), exercised through the
+# real binding. A test that mirrors a C++ test of another name says which. Some C++ tests have no
+# Python counterpart, on purpose: Characterization.semitoneBehaviourIsUnchanged characterises
 # Helper.pitch2midiNote() and Note.getEnharmonicPitch() against a 453-entry C++ data table rather
 # than Pitch, and the two *ThrowsForNonEqualTemperament tests need a tuning system other than equal
 # temperament, which Python cannot select (the tuning system is not bound).
@@ -36,10 +36,10 @@ def float32(value):
 
 
 class PitchConstruction(unittest.TestCase):
-    # The user's decision (Task 11, section A): the pitch string is the ONLY constructor. The
-    # int (MIDI) and float (frequency) C++ constructors are the named factories fromMidi() and
-    # fromFrequency(), because as __init__ overloads pybind11 would pick between them by
-    # int-versus-float alone, and ml.Pitch(110) meant as 110 Hz would silently become MIDI 110.
+    # The pitch string is the ONLY constructor. The int (MIDI) and float (frequency) C++
+    # constructors are the named factories fromMidi() and fromFrequency(), because as __init__
+    # overloads pybind11 would pick between them by int-versus-float alone, and ml.Pitch(110)
+    # meant as 110 Hz would silently become MIDI 110.
     def testNumericConstructorIsRejected(self):
         for value in (60, 110, 440.0):
             with self.subTest(value=value), self.assertRaises(TypeError):
@@ -85,7 +85,7 @@ class PitchConstruction(unittest.TestCase):
 
 class PitchBindingSurface(unittest.TestCase):
     # Every public member of maiacore/pitch.h is bound, and each carries a numpydoc docstring with
-    # an Examples section (Task 11, section B).
+    # an Examples section.
     EXPECTED = {
         "fromMidi",
         "fromFrequency",
@@ -251,8 +251,8 @@ class PitchSetAlter(unittest.TestCase):
         pitch.setAlter(0.5)
         self.assertEqual(pitch.getPitch(), "C1x4")
 
-    # Mirrors Pitch.setAlterOnRestIsRefusedAndWarns: before this was guarded, a rest given an
-    # alter reported the pitch class "rest1x".
+    # Mirrors Pitch.setAlterOnRestIsRefusedAndWarns: unguarded, a rest given an alter would
+    # report the pitch class "rest1x".
     def testSetAlterOnRestIsRefusedAndWarns(self):
         rest = ml.Pitch("rest")
         printed = capturedStdout(lambda: rest.setAlter(0.5))  # must not raise

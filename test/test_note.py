@@ -254,15 +254,14 @@ class NoteQuarterToneEnharmonic(unittest.TestCase):
 
 
 class NoteComposesPitch(unittest.TestCase):
-    # Step 1 bug fix, through the bindings: setPitchClass() used to leave getMidiNumber()
-    # reporting the note's previous pitch.
+    # setPitchClass() changes the MIDI number together with the accidental, through the bindings.
     def testSetPitchClassUpdatesAccidentalAndMidi(self):
         note = ml.Note("C4")
         note.setPitchClass("Eb")
         self.assertEqual(note.getAlterSymbol(), "b")
         self.assertEqual(note.getMidiNumber(), 63)
 
-    # T5 (Python parity for T1): Note(pitch, isNoteOn=False) is a fully consistent rest.
+    # Note(pitch, isNoteOn=False) is a fully consistent rest.
     def testConstructorIsNoteOnFalseIsAFullyConsistentRest(self):
         note = ml.Note("C4", isNoteOn=False)
         self.assertFalse(note.isNoteOn())
@@ -271,13 +270,9 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getPitch(), "rest")
         self.assertEqual(note.getMidiNumber(), -1)
         self.assertEqual(note.getPitchStep(), "rest")
-        # Task 6b: was self.assertEqual(note.getOctave(), -2); getOctave() now returns
-        # int | None, None for a rest instead of the -2 sentinel.
-        self.assertIsNone(note.getOctave())
+        self.assertIsNone(note.getOctave())  # a rest has no octave: None, not a sentinel
 
-    # T5 (Python parity for T2): setIsNoteOn(False) makes every getter report a rest, not just
-    # isNoteOn(). Before this task, getPitchClass()/getMidiNumber() kept reporting the note's
-    # previous sounding pitch ("C#"/60) after this call.
+    # setIsNoteOn(False) makes every getter report a rest, not just isNoteOn().
     def testSetIsNoteOnFalseReportsRestEverywhere(self):
         note = ml.Note("C#4")
         note.setIsNoteOn(False)
@@ -287,11 +282,9 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getPitch(), "rest")
         self.assertEqual(note.getMidiNumber(), -1)
         self.assertEqual(note.getPitchStep(), "rest")
-        # Task 6b: was self.assertEqual(note.getOctave(), -2).
         self.assertIsNone(note.getOctave())
 
-    # T5 (Python parity for T3): setIsNoteOn(True) on a rest refuses (warns, does not throw)
-    # instead of flipping the flag under a still-empty pitch.
+    # setIsNoteOn(True) on a rest refuses (warns, does not throw) and leaves the rest a rest.
     def testSetIsNoteOnTrueOnRestRefusesAndWarns(self):
         note = ml.Note("")
         self.assertTrue(note.isNoteOff())
@@ -301,16 +294,11 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getWrittenPitchStep(), "rest")
         self.assertEqual(note.getPitchClass(), "rest")
 
-    # Fix round 1 (controller ruling on Task 6 concern 2), Python parity: getAlterSymbol()
-    # forwards to the sounding pitch, not the written one. B-flat clarinet: written "C4"
-    # (alter symbol "") transposed by (transposeDiatonic=-1, transposeChromatic=-2) sounds
-    # "Bb3" (alter symbol "b") -- the same construction and measured values pinned in
-    # note-test.cpp's NoteComposesPitch.GetAlterSymbolForwardsToSoundingPitchOnTransposedNote.
-    #
-    # TASK 10 RESTORED THE DISCARDED CASE. This comment used to end by saying the controller's
-    # suggested "written C#4" case was discarded because "it triggers an unrelated, pre-existing
-    # bug in the transpose scale lookup". That bug is the scale lookup Task 10 deleted, so the
-    # case works now and is asserted below.
+    # getAlterSymbol() reads the sounding pitch, not the written one. B-flat clarinet: written
+    # "C4" (alter symbol "") transposed by (transposeDiatonic=-1, transposeChromatic=-2) sounds
+    # "Bb3" (alter symbol "b") -- the same construction and values pinned in note-test.cpp's
+    # NoteComposesPitch.GetAlterSymbolForwardsToSoundingPitchOnTransposedNote. Written "C#4" shows
+    # the same in the opposite direction.
     def testGetAlterSymbolForwardsToSoundingPitchOnTransposedNote(self):
         written = ml.Note("C4")
         self.assertEqual(written.getAlterSymbol(), "")
@@ -323,9 +311,7 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(transposed.getAlterSymbol(), "b")
         self.assertNotEqual(transposed.getAlterSymbol(), written.getAlterSymbol())
 
-        # The restored case, forwarding in the opposite direction: written "C#4" (alter symbol
-        # "#") sounds "B3" (alter symbol ""). Before Task 10 the scale lookup mis-spelled this
-        # sounding pitch as "Bb3" and getAlterSymbol() answered "b".
+        # The opposite direction: written "C#4" (alter symbol "#") sounds "B3" (alter symbol "").
         sharpWritten = ml.Note("C#4")
         self.assertEqual(sharpWritten.getAlterSymbol(), "#")
 
@@ -339,15 +325,12 @@ class NoteComposesPitch(unittest.TestCase):
             sharpTransposed.getAlterSymbol(), sharpWritten.getAlterSymbol()
         )
 
-    # Fix round 2 (I2), Python parity for T7's sibling on the C++ side: setStep()/setAlter()
-    # were new public methods added by Task 6 with no pybind11 wrapper. Now bound; mirror the
-    # C++ NoteComposesPitch.SetAlterOnRestRefusesAndWarns (T8) and
-    # .SetStepResurrectsRestToOctave4 (T9) tests.
+    # Mirror the C++ NoteComposesPitch.SetAlterOnRestRefusesAndWarns and
+    # .SetStepResurrectsRestToOctave4 tests through the bindings.
     def testSetAlterOnRestRefusesAndWarns(self):
         note = ml.Note("rest")
         note.setAlter(0.5)  # must not raise
         self.assertTrue(note.isNoteOff())
-        # Task 6b: was self.assertEqual(note.getOctave(), -2).
         self.assertIsNone(note.getOctave())
         self.assertEqual(note.getPitchClass(), "rest")
 
@@ -359,9 +342,8 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getPitch(), "C4")
         self.assertEqual(note.getOctave(), 4)
 
-    # Task 10, Python parity: Note.transpose() took an int, so a quarter-tone interval could not
-    # be expressed, and it rounded the pitch to a MIDI integer before applying the interval, so a
-    # quarter tone was destroyed by the first step. Mirrors the C++ NoteTransposition
+    # Note.transpose() takes a float interval and computes on exact positions, so it transposes by
+    # a quarter tone and keeps a quarter tone it transposes. Mirrors the C++ NoteTransposition
     # .TransposeByQuarterTone family.
     def testTransposeByQuarterTone(self):
         note = ml.Note("C4")
@@ -376,7 +358,7 @@ class NoteComposesPitch(unittest.TestCase):
     def testTransposePreservesQuarterToneAcrossWholeToneInterval(self):
         note = ml.Note("C1x4")
         note.transpose(2)
-        self.assertEqual(note.getPitch(), "D1x4")  # rounded to "D4" before Task 10
+        self.assertEqual(note.getPitch(), "D1x4")  # not rounded to "D4"
         self.assertTrue(note.isQuarterTone())
 
     def testTransposeRejectsIntervalOffTheQuarterToneGrid(self):
@@ -386,9 +368,9 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertIn("multiple of 0.5", str(ctx.exception))
         self.assertEqual(note.getPitch(), "C4")  # the refused call changed nothing
 
-    # Task 11, section N, Python parity: Note.transpose() silently turned a note transposed below
-    # MIDI 0 into a rest. Mirrors the C++
-    # NoteTransposition.TransposeOutOfRangeRaisesAndLeavesTheNoteUnchanged test.
+    # A note transposed below MIDI 0 raises and is left as it was, never silently turned into a
+    # rest. Mirrors the C++ NoteTransposition.TransposeOutOfRangeRaisesAndLeavesTheNoteUnchanged
+    # test.
     def testTransposeOutOfRangeRaisesAndLeavesTheNoteUnchanged(self):
         note = ml.Note("C4")
         with self.assertRaises(RuntimeError) as ctx:
@@ -397,13 +379,10 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getPitch(), "C4")
         self.assertTrue(note.isNoteOn())
 
-    # Fix round 5 (F1), Python parity: silencing a TRANSPOSING instrument with
-    # setIsNoteOn(False) makes it a rest but deliberately keeps its transposing interval, so
-    # isTransposed() stays True. getSoundingPitch() therefore used to take its transposition
-    # branch and concatenate the pitch class "rest" with the octave -2, returning the malformed
-    # string "rest-2" -- not a valid pitch, and rejected by the Note constructor. Measured
-    # against a d26aa67 worktree, which never produced a malformed pitch string, so this was a
-    # Task 6 regression rather than pre-existing. Mirrors the C++
+    # Silencing a TRANSPOSING instrument with setIsNoteOn(False) makes it a rest but deliberately
+    # keeps its transposing interval, so isTransposed() stays True. getSoundingPitch() must still
+    # answer the well-formed "rest", never compose the pitch class "rest" with an octave into a
+    # malformed string such as "rest-2", which the Note constructor rejects. Mirrors the C++
     # NoteComposesPitch.GetPitchIsWellFormedRestForTransposedNoteTurnedOff test.
     def testSilencedTransposedNoteReportsWellFormedRest(self):
         note = ml.Note(
@@ -434,9 +413,7 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertIn("'C#-1'", message)
         self.assertNotIn("ptional access", message)
 
-    # Task 6b, Python parity: a rest has no octave. Note's three octave getters used to
-    # collapse that absence to the numeric sentinel -2; they now return int | None, None for a
-    # rest, unchanged for every non-rest input.
+    # A rest has no octave: Note's three octave getters return int | None, None for a rest.
     def testRestHasNoOctave(self):
         rest = ml.Note("", isNoteOn=False)
         self.assertIsNone(rest.getOctave())
@@ -444,9 +421,8 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertIsNone(rest.getSoundingOctave())
         self.assertEqual(ml.Note("C#4").getOctave(), 4)
 
-    # Task 6b, section K, Python parity: the rest check in Pitch::setOctave() (reached through
-    # Note::setOctave()) now runs before the range check, so a rest given an out-of-range
-    # octave -- including the literal old -2 sentinel -- warns and does not mutate, instead of
+    # The rest check in Pitch::setOctave() (reached through Note::setOctave()) runs before the
+    # range check, so a rest given an out-of-range octave warns and does not mutate, instead of
     # throwing. A genuine out-of-range octave on a real (non-rest) note still throws.
     def testSetOctaveOutOfRangeOnRestWarnsAndDoesNotThrow(self):
         note = ml.Note("rest")
@@ -463,12 +439,10 @@ class NoteComposesPitch(unittest.TestCase):
             sounding.setOctave(-2)
         self.assertEqual(sounding.getOctave(), 4)
 
-    # Task 6b, section L, fix round 1: pins the round trip the C++ side can no longer even
-    # express (Note.setOctave(int) has no overload accepting the None getOctave() now returns
-    # for a rest, so the equivalent C++ call is a compile error, not a runtime one -- this is
-    # the Python-only half of closing fix round 5's finding F2). setOctave(getOctave()) on a
-    # rest raises TypeError from the pybind11 argument conversion (None cannot become int),
-    # never the old std::runtime_error round-trip hazard, and mutates nothing.
+    # The round trip setOctave(getOctave()) on a rest, which C++ cannot even express
+    # (Note::setOctave(int) has no overload accepting the empty optional getOctave() returns for
+    # a rest, so the equivalent C++ call is a compile error). In Python it raises TypeError from
+    # the pybind11 argument conversion (None cannot become int), and mutates nothing.
     def testSetOctaveOfGetOctaveRoundTripOnRestRaisesTypeError(self):
         note = ml.Note("rest")
         self.assertIsNone(note.getOctave())
@@ -477,13 +451,12 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertTrue(note.isNoteOff())
         self.assertIsNone(note.getOctave())
 
-    # Task 6b, finding N1, Python parity (see note-test.cpp's
-    # NoteComposesPitch.SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval for the full
-    # reasoning, including fix round 1's rebuild at C5 so the pin actually discriminates --
-    # C4 could not tell "octave preserved" from "octave defaulted to 4" by setStep()). Pinned
-    # finding: the revived note is SELF-CONSISTENT (freshly derived from its current, defaulted
-    # written pitch and the surviving interval), not a stale-leftover defect. Not "revived
-    # equals a note that already carries the interval" -- that would assume the answer.
+    # See note-test.cpp's NoteComposesPitch.SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval
+    # for the full reasoning, including why the note starts at C5: from C4, "octave preserved"
+    # and "octave defaulted to 4" by setStep() would look the same. What is pinned: the revived
+    # note is SELF-CONSISTENT (freshly derived from its current, defaulted written pitch and the
+    # surviving interval), not a stale leftover. Not "revived equals a note that already carries
+    # the interval" -- that would assume the answer.
     def testSetStepAfterSetIsNoteOnFalseKeepsTransposingInterval(self):
         note = ml.Note(
             "C5", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
