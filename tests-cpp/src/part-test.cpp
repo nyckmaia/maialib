@@ -381,8 +381,8 @@ TEST(PartAppend, AppendNoteOverflowingLastMeasureThrows) {
     EXPECT_THROW(part.append(noteVariant, -1, 0), std::runtime_error);
 
     // The guard must fire before any write lands: the Part must not be left holding an orphan
-    // tie-start note with no tie-stop partner (the guard used to run after '_measure[m].addNote'
-    // already committed the first half of the split note).
+    // tie-start note with no tie-stop partner, which a guard running after '_measure[m].addNote'
+    // had committed the first half of the split note would leave.
     EXPECT_EQ(part.getNumNotes(), 0);
 }
 

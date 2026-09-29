@@ -194,15 +194,13 @@ TEST(transpose, throwsWhenPastTopOfSupportedRange) {
     EXPECT_THROW(myChord.transpose(2), std::runtime_error);
 }
 
-// Task 10: Chord::transpose() and Chord::transposeStackOnly() each carried their OWN copy of
-// "pitch2midiNote(...) + semitones, then midiNote2pitch(...)" and neither called
-// Helper::transposePitch(). Three copies of one operation is why the defects diverged between
-// entry points: both Chord copies rounded a quarter tone away before applying the interval, and
-// `int semitonesNumber` could not express a quarter-tone interval at all. All three now share
-// Helper::transposePitch().
+// Chord::transpose() and Chord::transposeStackOnly() share Helper::transposePitch() with
+// Note::transpose(), which computes on exact pitch positions: a chord keeps its quarter tones when
+// transposed by whole semitones, and can be transposed BY a quarter tone (the interval is a
+// float).
 TEST(transpose, preservesQuarterTonesAndMovesByThem) {
-    // Transposing a chord that CONTAINS a quarter tone by whole semitones: the quarter tone used
-    // to be silently rounded away, so this answered "D4" for the first note.
+    // Transposing a chord that CONTAINS a quarter tone by whole semitones keeps the quarter tone:
+    // "D1x4" for the first note, not "D4".
     const std::vector<std::string> quarterTonePitches = {"C1x4", "E4", "G4"};
     Chord quarterToneChord(quarterTonePitches);
     quarterToneChord.transpose(2);
@@ -210,7 +208,7 @@ TEST(transpose, preservesQuarterTonesAndMovesByThem) {
     EXPECT_EQ(quarterToneChord.getNote(1).getPitch(), "F#4");
     EXPECT_EQ(quarterToneChord.getNote(2).getPitch(), "A4");
 
-    // Transposing BY a quarter tone, which the old int parameter could not express.
+    // Transposing BY a quarter tone.
     const std::vector<std::string> semitonePitches = {"C4", "G4"};
     Chord semitoneChord(semitonePitches);
     semitoneChord.transpose(0.5f);
@@ -242,11 +240,9 @@ TEST(transpose, rejectsAnIntervalOffTheQuarterToneGrid) {
     }
 }
 
-// Task 11, section N: both transposition methods stored each transposed note as they went, so a
-// note that raised part-way through left the chord half-transposed. Rejecting an out-of-range
-// result, instead of answering a rest, made that reachable at the bottom of the range, where the
-// note used to be silently deleted instead -- measured at HEAD 9051bb8: {"C4", "C-1"} transposed
-// by -1 became {"B3", "rest"}. Every note is now transposed before any is stored.
+// A note transposed out of the representable range raises, and every note is transposed before
+// any is stored, so the chord is left exactly as it was: neither half-transposed ({"B3", "C-1"})
+// nor with the out-of-range note turned into a rest ({"B3", "rest"}).
 TEST(transpose, outOfRangeRaisesAndLeavesTheChordUnchanged) {
     const std::vector<std::string> pitches = {"C4", "C-1"};
     Chord chord(pitches);
@@ -265,8 +261,8 @@ TEST(transpose, outOfRangeRaisesAndLeavesTheChordUnchanged) {
     EXPECT_EQ(chord.getNote(1).getPitch(), "C-1");  // not "rest"
 }
 
-// The stack half of the same fix, at the top of the range. Measured at HEAD 9051bb8: this open
-// stack was left as {"F4", "A4", "G11"} after the raise.
+// The open stack, at the top of the range: a raise part-way through leaves it exactly as it was,
+// not half-transposed ({"F4", "A4", "G11"}).
 TEST(transposeStackOnly, aFailureLeavesTheStackUnchanged) {
     const std::vector<std::string> pitches = {"C4", "E4", "G11"};
     Chord chord(pitches);
@@ -289,9 +285,9 @@ TEST(transposeStackOnly, aFailureLeavesTheStackUnchanged) {
     EXPECT_EQ(stack[2].getPitch(), "G11");
 }
 
-// Task 10, section D: toInversion() needs no transposition of its own -- its body calls
-// _originalNotes[0].transpose(12), so repairing Note::transpose() covers it. Pinned so nobody
-// later gives the inversion a private copy of the operation again.
+// toInversion() needs no transposition of its own -- its body calls
+// _originalNotes[0].transpose(12), so it shares Note::transpose()'s exact arithmetic. Pinned so
+// the inversion is not given a private copy of the operation.
 TEST(toInversion, movesTheLowestNoteUpOneOctaveThroughNoteTranspose) {
     const std::vector<std::string> pitches = {"C4", "E4", "G4"};
     Chord myChord(pitches);
@@ -302,12 +298,12 @@ TEST(toInversion, movesTheLowestNoteUpOneOctaveThroughNoteTranspose) {
     EXPECT_EQ(myChord.getNote(1).getPitch(), "G4");
     EXPECT_EQ(myChord.getNote(2).getPitch(), "C5");
 
-    // Fix round 1, Minor 1: the semitone case above DEMONSTRATES the delegation but does not GUARD
-    // the quarter tone -- it would pass unchanged if a later change rounded the inverted note back
-    // to a semitone. This half guards it: the note moved up an octave keeps its quarter tone,
-    // because toInversion() goes through Note::transpose() and so through the exact arithmetic
-    // rather than a MIDI integer. C1x4 is exactly 60.5, so an octave up is 72.5, spelled from the
-    // base semitone it rounds up to (C#5, alter +1) as C1x5.
+    // The semitone case above DEMONSTRATES the delegation but does not GUARD the quarter tone --
+    // it would pass unchanged if the inverted note were rounded back to a semitone. This half
+    // guards it: the note moved up an octave keeps its quarter tone, because toInversion() goes
+    // through Note::transpose() and so through the exact arithmetic rather than a MIDI integer.
+    // C1x4 is exactly 60.5, so an octave up is 72.5, spelled from the base semitone it rounds up
+    // to (C#5, alter +1) as C1x5.
     const std::vector<std::string> quarterTonePitches = {"C1x4", "E4", "G4"};
     Chord quarterToneChord(quarterTonePitches);
     quarterToneChord.toInversion(1);
@@ -320,8 +316,8 @@ TEST(toInversion, movesTheLowestNoteUpOneOctaveThroughNoteTranspose) {
 }
 
 TEST(stackInThirds, throwsOnEightDistinctPitchClassChord) {
-    // A 10th out-of-bounds site the original audit missed: Chord::computeBestOpenStackHeap()
-    // reads stackedHeaps[0] unconditionally. Every note has at most 3 enharmonic spellings
+    // Chord::computeBestOpenStackHeap() reads stackedHeaps[0], so it must throw when no heap
+    // survives. Every note has at most 3 enharmonic spellings
     // (itself + 2 alternates), all drawn from only 7 possible pitch letters (A-G), and
     // removeHeapsWithDuplicatedPitchSteps() rejects any respelling where two notes land on the
     // same letter. A chord with more than 8 distinct pitch classes already throws earlier and
@@ -329,8 +325,7 @@ TEST(stackInThirds, throwsOnEightDistinctPitchClassChord) {
     // has cases 2..8). This 8-distinct-pitch-class chord (one per natural letter, plus Db5 to
     // force an 8th distinct pitch class) is one concrete case that reaches this guard --
     // see 'throwsOnThreeNoteClusterChord' below for a much smaller one: there is no simple
-    // "N distinct pitch classes" threshold (an earlier version of this comment claimed one; it
-    // was wrong -- see that test for why).
+    // "N distinct pitch classes" threshold (see that test for why).
     const std::vector<std::string> pitches = {"C4", "D4", "E4", "F4", "G4", "A4", "B4", "Db5"};
     Chord myChord(pitches);
     EXPECT_EQ(myChord.size(), 8);
@@ -344,8 +339,7 @@ TEST(stackInThirds, throwsOnThreeNoteClusterChord) {
     // just {B, C, D}. Even a 3-note chord this closely clustered can fail to find any respelling
     // that both (a) gives every note a distinct letter and (b) forms a valid stacked-in-thirds
     // heap (STEP 5 additionally requires the first interval, after respelling, to be an exact
-    // third) -- so "8 distinct pitch classes" was never a real threshold, just one sufficient
-    // case found first.
+    // third) -- so "8 distinct pitch classes" is not a threshold, just one sufficient case.
     const std::vector<std::string> pitches = {"C4", "C#4", "Db4"};
     Chord myChord(pitches);
     EXPECT_EQ(myChord.size(), 3);
@@ -403,23 +397,18 @@ TEST(isInRootPosition, emptyChordReturnsFalse) {
 }
 
 TEST(isInRootPosition, clearInvalidatesCacheReflectedByNextMutation) {
-    // Renamed and rewritten: this used to be named/worded around the round-1 bug where clear()
-    // left '_closeStack' stale (chord.cpp:36-39, before 4158b63). Since 4158b63, clear() calls
-    // invalidateStackCache(), so that stale state is no longer reachable through the public
-    // mutator API, and a bare 'EXPECT_FALSE(isInRootPosition())' here would only duplicate
+    // clear() calls invalidateStackCache(), so a stale '_closeStack' is not reachable through the
+    // public mutator API, and a bare 'EXPECT_FALSE(isInRootPosition())' here would only duplicate
     // 'emptyChordReturnsFalse' above.
     //
-    // Re-review found that first rewrite still didn't discriminate: addNote() calls
-    // invalidateStackCache() unconditionally (chord.cpp), so the three addNote() calls further
-    // down would mask a broken clear() regardless of what clear() itself did. The assertion that
-    // actually pins clear()'s own invalidation is the one immediately below, BEFORE any further
-    // mutation runs. With the fix, clear() leaves '_isStackedInThirds' false and '_closeStack'
-    // empty, so getName() re-enters stackInThirds(), early-returns on the now-empty
-    // '_originalNotes', finds no minor/major third, and returns "". Without the fix,
-    // '_isStackedInThirds' would stay true, getName() would skip re-stacking entirely, and it
-    // would return the STALE pre-clear() name "C" instead. Confirmed by deletion: removing
-    // clear()'s invalidateStackCache() call made this exact assertion fail (returned "C" instead
-    // of ""), and restoring it made it pass again -- see the implementation report for both runs.
+    // addNote() calls invalidateStackCache() unconditionally (chord.cpp), so the three addNote()
+    // calls further down would mask a broken clear() regardless of what clear() itself did. The
+    // assertion that pins clear()'s own invalidation is the one immediately below, BEFORE any
+    // further mutation runs: clear() leaves '_isStackedInThirds' false and '_closeStack' empty, so
+    // getName() re-enters stackInThirds(), early-returns on the now-empty '_originalNotes', finds
+    // no minor/major third, and returns "". Without that invalidation, '_isStackedInThirds' would
+    // stay true, getName() would skip re-stacking entirely, and it would return the STALE
+    // pre-clear() name "C" instead.
     Chord myChord({"C4", "E4", "G4"});
     myChord.getName();  // populate the stack cache for the 3-note chord
     myChord.clear();
@@ -437,10 +426,9 @@ TEST(isInRootPosition, clearInvalidatesCacheReflectedByNextMutation) {
 }
 
 TEST(isInRootPosition, removeNoteToEmptyInvalidatesCacheReflectedByNextMutation) {
-    // Renamed and rewritten for the same reason as the test above, via removeNote() instead of
-    // clear(): removeNote() now calls invalidateStackCache() (4158b63), so the old "stale
-    // _closeStack survives stackInThirds()'s empty-chord early return" scenario this test used
-    // to set up is no longer reachable.
+    // The same check as the test above, via removeNote() instead of clear(): removeNote() calls
+    // invalidateStackCache(), so a stale '_closeStack' cannot survive stackInThirds()'s
+    // empty-chord early return.
     //
     // Unlike clear()'s test above, this one deliberately does NOT add a getName() == "" check
     // immediately after removeNote() -- that would crash, not fail: clear() explicitly clears
@@ -448,19 +436,15 @@ TEST(isInRootPosition, removeNoteToEmptyInvalidatesCacheReflectedByNextMutation)
     // runs, which deliberately excludes '_openStack' -- see its own doc comment). After
     // removeNote()-to-empty, '_openStack' is therefore stale (still the pre-removal size) while
     // '_closeStack' is correctly emptied; isTonal()'s loop, bounded by the stale
-    // stackSize()/_openStack, then reads the now-empty '_closeStack' out of bounds. This is a
-    // real, currently-reachable, pre-existing bug (found incidentally while fixing this test,
-    // reported rather than fixed here: it is the '_originalNotes'/'_openStack' dual-
-    // representation drift this branch is explicitly not chartered to redesign). Confirmed by
-    // running this exact sequence with clear()'s invalidation both removed and restored: the
-    // crash reproduces identically either way, proving it is unrelated to clear() and would
-    // exist even with every fix on this branch applied.
+    // stackSize()/_openStack, then reads the now-empty '_closeStack' out of bounds. That is a
+    // known defect of the '_originalNotes'/'_openStack' dual representation, unrelated to
+    // clear()'s invalidation.
     //
     // removeNote()'s invalidation is independently and safely pinned by
     // chordMutation.getNameAfterRemoveNoteReflectsNewChord, which shrinks a chord from 4 notes to
     // 3 (not to empty) and queries getName() directly afterward with no intervening mutator to
-    // mask a regression -- that path rebuilds '_openStack' via stackInThirds()'s normal (not
-    // empty-chord-early-return) path, so it does not hit this crash.
+    // mask a broken invalidation -- that path rebuilds '_openStack' via stackInThirds()'s normal
+    // (not empty-chord-early-return) path, so it does not hit this crash.
     Chord myChord({"C4", "E4", "G4"});
     myChord.getName();  // populate the stack cache for the 3-note chord
     myChord.removeNote(0);
@@ -497,18 +481,17 @@ TEST(toCents, singleNoteChordReturnsEmptyVector) {
 // ====================
 // Stack cache invalidation tests (build -> query -> mutate -> query again)
 //
-// Re-review found stackInThirds() never clears the member '_stackedHeaps': a chord re-stacked
-// after a mutation kept appending to the previous run's heaps instead of starting fresh, so
-// computeBestOpenStackHeap() could pick a heap sized for the OLD note count. That both let a
-// grown chord bypass the "no valid heap" guard (leaving _closeStack undersized relative to the
-// new _openStack -- a live out-of-bounds read through getCloseStackIntervals/isTonal) and, on
-// the shrink side, indexed _originalNotes past its new, smaller size. Fixed with a private
-// invalidateStackCache() helper called from every mutator, plus clearing '_stackedHeaps' inside
-// stackInThirds() itself. These tests pin the sequence, not just the end state.
+// A chord re-stacked after a mutation must start from fresh heaps: appending to the previous
+// run's '_stackedHeaps' would let computeBestOpenStackHeap() pick a heap sized for the OLD note
+// count. That would both let a grown chord bypass the "no valid heap" guard (leaving _closeStack
+// undersized relative to the new _openStack -- an out-of-bounds read through
+// getCloseStackIntervals/isTonal) and, on the shrink side, index _originalNotes past its new,
+// smaller size. Every mutator calls the private invalidateStackCache(), and stackInThirds() also
+// clears '_stackedHeaps' itself. These tests pin the sequence, not just the end state.
 // ====================
 
 TEST(chordMutation, getNameAfterAddNoteReflectsNewChord) {
-    // The reviewer's exact repro sequence, which aborted the process before this fix.
+    // Stack, grow, stack again: the second getName() must describe the grown chord.
     Chord myChord({"C4", "E4", "G4"});
     EXPECT_EQ(myChord.getName(), "C");
 
@@ -525,10 +508,9 @@ TEST(chordMutation, getNameAfterRemoveNoteReflectsNewChord) {
 }
 
 TEST(chordMutation, growingPastValidHeapAfterStackingStillThrows) {
-    // Reviewer's Probe group F: a chord stacked once (populating _stackedHeaps for 3 notes),
-    // then grown to 8 distinct pitch classes, used to keep the stale 3-note heap and skip the
-    // "no valid heap" guard entirely -- unlike an identical freshly-built 8-note chord, which
-    // correctly threw.
+    // A chord stacked once (populating _stackedHeaps for 3 notes), then grown to 8 distinct
+    // pitch classes, must throw from the "no valid heap" guard exactly as an identical
+    // freshly-built 8-note chord does, not keep the stale 3-note heap and skip the guard.
     Chord myChord({"C4", "E4", "G4"});
     myChord.getName();  // populate the stack cache at size 3
 
@@ -543,10 +525,10 @@ TEST(chordMutation, growingPastValidHeapAfterStackingStillThrows) {
 }
 
 TEST(chordMutation, shrinkingAfterStackingDoesNotReadStaleHeap) {
-    // Reviewer's Probe group E: a chord stacked once, then shrunk via removeNote(), used to
-    // index _originalNotes with a heap size from before the shrink -- past the end of the
-    // (now smaller) vector -- degrading into "THREW: string too long" (std::length_error from
-    // garbage) instead of a correct, deterministic answer.
+    // A chord stacked once, then shrunk via removeNote(), must not index _originalNotes with a
+    // heap size from before the shrink -- past the end of the (now smaller) vector, which reads
+    // garbage (e.g. a std::length_error, "string too long") instead of giving a correct,
+    // deterministic answer.
     Chord myChord({"C4", "E4", "G4", "B4", "D5"});  // C major ninth
     myChord.getName();                              // populate the stack cache at size 5
 
@@ -558,10 +540,9 @@ TEST(chordMutation, shrinkingAfterStackingDoesNotReadStaleHeap) {
 }
 
 TEST(chordMutation, getCloseStackIntervalsAfterGrowingMatchesNewSize) {
-    // The specific live out-of-bounds read the re-review demonstrated: getCloseStackIntervals()
-    // bounds its loop by stackSize() (i.e. _openStack.size()) but indexes _closeStack. Before
-    // this fix, a stale, undersized _closeStack (left behind by the _stackedHeaps bug) made this
-    // read past the end of _closeStack once the chord had grown.
+    // getCloseStackIntervals() bounds its loop by stackSize() (i.e. _openStack.size()) but
+    // indexes _closeStack, so a stale, undersized _closeStack, left behind by stale heaps, would
+    // make it read past the end of _closeStack once the chord had grown.
     Chord myChord({"C4", "E4", "G4"});
     myChord.getName();  // populate the stack cache at size 3
 
@@ -577,10 +558,10 @@ TEST(chordMutation, getCloseStackIntervalsAfterGrowingMatchesNewSize) {
 // ====================
 
 TEST(chordStreamOperator, emptyChordDoesNotThrow) {
-    // getNote(-1) on an empty chord now throws instead of reading out of bounds; operator<< must
-    // not let that propagate, since gtest itself calls operator<< to format values in failure
-    // messages, and a throwing stream operator can turn a clean test failure into a process
-    // abort. Mirrors __repr__'s "[]" for an empty chord.
+    // getNote(-1) on an empty chord throws; operator<< must not let that propagate, since gtest
+    // itself calls operator<< to format values in failure messages, and a throwing stream
+    // operator can turn a clean test failure into a process abort. Mirrors __repr__'s "[]" for an
+    // empty chord.
     Chord myChord;
     std::ostringstream out;
     EXPECT_NO_THROW(out << myChord);
@@ -597,17 +578,15 @@ TEST(chordStreamOperator, nonEmptyChordPrintsPitches) {
 // ====================
 // setDuration out-of-bounds write tests
 //
-// Final review found a real, Python-reachable out-of-bounds WRITE (more severe than the reads
-// this branch had fixed so far): setDuration() indexed both '_originalNotes' and '_openStack'
-// by '_originalNotes.size()', but stackInThirds() dedups '_openStack' down to one note per
-// unique pitch class, so it can be strictly smaller. Fixed by bounding each container's loop by
-// its own size instead of assuming they match.
+// stackInThirds() dedups '_openStack' down to one note per unique pitch class, so it can be
+// strictly smaller than '_originalNotes'. setDuration() bounds each container's loop by its own
+// size: indexing both by '_originalNotes.size()' would be a Python-reachable out-of-bounds WRITE.
 // ====================
 
 TEST(setDuration, floatOverloadSafeAfterPitchClassDedupShrinksOpenStack) {
-    // Exact repro from the final review: Chord(["C4","C5"]); getName(); setDuration(...).
+    // Chord(["C4","C5"]); getName(); setDuration(...): the open stack is smaller than the chord.
     // A typed intermediate vector (not a bare 2-element braced-init-list) sidesteps a
-    // pre-existing Chord(vector<Note>) / Chord(vector<string>) overload-resolution ambiguity
+    // Chord(vector<Note>) / Chord(vector<string>) overload-resolution ambiguity
     // Clang hits for exactly-2-element lists here; the 3+-element lists used everywhere else in
     // this file don't trigger it. Same pattern already used by the 'transpose' test above.
     const std::vector<std::string> pitches = {"C4", "C5"};
@@ -641,11 +620,11 @@ TEST(setDuration, durationOverloadSafeAfterPitchClassDedupShrinksOpenStack) {
 // ====================
 // removeTopNote / insertNote / removeNote bounds guard tests
 //
-// Final review found these three had no bounds checks at all, despite sitting inside the very
-// functions round 2 (4158b63) edited to add cache invalidation: removeTopNote() popped an empty
-// vector (UB), insertNote() inserted at an unchecked index (UB for noteIndex < 0 or > size()),
-// removeNote() erased at an unchecked index (UB for noteIndex < 0 or >= size()). All three are
-// Python-bound. Guarded with LOG_ERROR, matching this file's own convention (e.g. getNote).
+// Each of these three checks its index before touching the vector: unchecked, removeTopNote()
+// would pop an empty vector (UB), insertNote() would insert at an invalid index (UB for
+// noteIndex < 0 or > size()), and removeNote() would erase at one (UB for noteIndex < 0 or
+// >= size()). All three are Python-bound. The guards throw with LOG_ERROR, as chord.cpp's other
+// index checks do (e.g. getNote).
 // ====================
 
 TEST(removeTopNote, throwsOnEmptyChord) {
@@ -938,9 +917,10 @@ TEST(roundQuarterTones, enablesAnalysis) {
 }
 
 TEST(roundQuarterTones, roundsTiesUpwardOnBothSides) {
-    // Delegates to Pitch::roundToSemitone(), the single implementation of the ties-upward rule
-    // (std::floor(alter + 0.5f)). The flat-side cases are the ones that discriminate it from
-    // ties-away-from-zero: std::round(-0.5) would give Eb4 here, and std::round(-1.5) Ebb4.
+    // Delegates to Pitch::roundToSemitone(), which rounds with roundTiesUpward() (utils.h), the
+    // library's single implementation of the ties-upward rule, floor(alter + 0.5). The flat-side
+    // cases are the ones that discriminate it from ties-away-from-zero: std::round(-0.5) would
+    // give Eb4 here, and std::round(-1.5) Ebb4.
     // Spelled out rather than braced: a TWO-element braced list of string literals is ambiguous
     // between Chord's vector<string> and vector<Note> constructors, because std::vector's
     // iterator-pair constructor also matches two const char*. Three-element lists elsewhere in
@@ -984,7 +964,7 @@ TEST(roundQuarterTones, emptyChordReturnsZero) {
     EXPECT_EQ(myChord.roundQuarterTones(), 0);
 }
 
-// ===== Task 9b: the MIDI-domain family, which reaches neither Task 9 guard ===== //
+// ===== The MIDI-domain family, which reaches neither analysis guard ===== //
 //
 // These methods never build an Interval and never stack the chord in thirds, so neither the
 // Interval constructor guard nor the stackInThirds() chokepoint can see them. They answer in the
@@ -995,10 +975,10 @@ TEST(roundQuarterTones, emptyChordReturnsZero) {
 // would destroy functionality that works.
 
 TEST(quarterToneMidiDomainGuard, getMidiIntervalsIsRejected) {
-    // The measurement that opened this task: before the guard this returned [4, 3], byte for byte
-    // what a plain C major triad returns, because getMidiNumber() rounds E1b4 (63.5) up to E4
-    // (64). A vector<int> of semitone counts cannot hold the 3.5 semitones of a neutral third, so
-    // there is no honest value to return.
+    // Without the guard this would return [4, 3], byte for byte what a plain C major triad
+    // returns, because getMidiNumber() rounds E1b4 (63.5) up to E4 (64). A vector<int> of
+    // semitone counts cannot hold the 3.5 semitones of a neutral third, so there is no honest
+    // value to return.
     Chord myChord({"C4", "E1b4", "G4"});
 
     EXPECT_REJECTED_NAMING(myChord.getMidiIntervals(), "roundQuarterTones");
@@ -1006,23 +986,18 @@ TEST(quarterToneMidiDomainGuard, getMidiIntervalsIsRejected) {
 }
 
 TEST(quarterToneMidiDomainGuard, meanMidiValueFamilyIsRejected) {
-    // An int cannot express 63.5, the true mean of {60, 63.5, 67}. Measured before the guard:
-    // getMeanMidiValue() returned 63 and getMeanPitch() "D#4" -- the same answers a C major triad
-    // gives.
+    // An int cannot express 63.5, the true mean of {60, 63.5, 67}: answering 63 and "D#4" would
+    // give the same answers as a C major triad.
     Chord myChord({"C4", "E1b4", "G4"});
 
     EXPECT_REJECTED_NAMING(myChord.getMeanMidiValue(), "roundQuarterTones");
     EXPECT_REJECTED_NAMING(myChord.getMeanOfExtremesMidiValue(), "roundQuarterTones");
 
     // These two spell whatever the int mean above produced, so they inherit that rejection rather
-    // than carrying a guard of their own.
-    //
-    // The reason is NOT that the mean rarely lands on a quarter tone: a string CAN spell one
-    // ("D3x4"), and this very chord averages to exactly 63.5, which IS spellable. The decisive
-    // obstacle is the spelling route -- getMeanPitch() spells through Helper::midiNote2pitch(),
-    // whose parameter is an int, so a half step cannot be expressed through it at all, and adding
-    // a fractional-input speller would be new public API. Rejecting is the only honest answer even
-    // for the means that would have been spellable.
+    // than carrying a guard of their own. The mean of a quarter-tone chord's exact positions is
+    // generally not on the quarter-tone grid, so there is generally no exact spelling to return.
+    // This chord's mean, 63.5, happens to be spellable ("D3x4"), but the rejection does not
+    // depend on the particular mean.
     EXPECT_REJECTED_NAMING(myChord.getMeanPitch(), "roundQuarterTones");
     EXPECT_REJECTED_NAMING(myChord.getMeanOfExtremesPitch(), "roundQuarterTones");
 }
@@ -1054,8 +1029,8 @@ TEST(quarterToneMidiDomainGuard, everyRejectedMethodWorksAfterRoundQuarterTones)
 }
 
 TEST(quarterToneMidiDomainGuard, semitoneChordsAreUntouchedByTheGuard) {
-    // The counterpart of the rejections: a chord with no quarter tone must answer exactly as it
-    // did before this task.
+    // The counterpart of the rejections: a chord with no quarter tone is not affected by the
+    // guard.
     Chord myChord({"C4", "E4", "G4"});
 
     EXPECT_EQ(myChord.getMidiIntervals(), (std::vector<int>{4, 3}));
@@ -1094,9 +1069,9 @@ TEST(quarterToneAnalysisGuard, aSingleQuarterToneBuildsNoIntervalAndIsNotRejecte
 }
 
 TEST(toCents, neutralThirdReadsThreeHundredAndFiftyCents) {
-    // toCents() runs opposite to every other method in this task: it used to REJECT, through the
-    // Interval guard, and should not. Cents are the one unit in this library that expresses a
-    // quarter tone exactly, so an int loses nothing and rejecting destroyed working functionality.
+    // toCents() computes rather than rejects: cents are the one unit in this library that
+    // expresses a quarter tone exactly, so an int loses nothing, and rejecting would destroy
+    // working functionality.
     //
     // 350 is the whole point -- not a throw, and not 300 or 400, which is what any route through
     // the rounded getMidiNumber() produces.
@@ -1106,9 +1081,9 @@ TEST(toCents, neutralThirdReadsThreeHundredAndFiftyCents) {
 }
 
 TEST(toCents, semitoneIntervalsAreExactHundreds) {
-    // The frequency route this replaced measured [400, 299]: Interval::toCents() compares two
-    // frequencies and Helper::frequencies2cents() truncates 299.9999 rather than rounding it.
-    // Integer arithmetic on doubled step positions cannot drift like that.
+    // Integer arithmetic on doubled step positions gives exact hundreds. A frequency route cannot
+    // guarantee them: Interval::toCents() compares two frequencies, and
+    // Helper::frequencies2cents() truncates 299.9999 to 299 rather than rounding it.
     Chord myChord({"C4", "E4", "G4"});
 
     EXPECT_EQ(myChord.toCents(), (std::vector<int>{400, 300}));
@@ -1130,8 +1105,8 @@ TEST(toCents, quarterAndThreeQuarterToneStepsAndDescendingIntervals) {
 
 TEST(isSorted, quarterToneOrderingIsComputedExactly) {
     // A bool expresses the true answer for a quarter tone exactly, so this computes rather than
-    // rejects. Measured before the change: BOTH of these returned false, because E1b4 (63.5) and
-    // E4 (64) both rounded to 64, and the comparator reads equal values as unsorted.
+    // rejects. Compared by rounded MIDI numbers, BOTH of these would be false: E1b4 (63.5) and E4
+    // (64) both round to 64, and the comparator reads equal values as unsorted.
     Chord ascending(std::vector<std::string>{"E1b4", "E4"});
     EXPECT_TRUE(ascending.isSorted());
 
@@ -1148,12 +1123,10 @@ TEST(isSorted, semitoneChordsAreUnchanged) {
 }
 
 TEST(getMidiValueStd, isTheRealStandardDeviationAndSeparatesAQuarterTone) {
-    // A float expresses this spread exactly, so it computes rather than rejects.
-    //
-    // Measured before the change: BOTH chords reported 31.8978 -- the standard deviation of
-    // {0, 0, 0, 60, 64, 67}, because the method sized its vector with a leading run of zeros and
-    // then push_back()ed the real values after them. The quarter tone was invisible behind a
-    // number that was wrong for every chord.
+    // A float expresses this spread exactly, so it computes rather than rejects, and the quarter
+    // tone separates the two chords. Each value is the population standard deviation of the
+    // chord's own positions, with no zero padding (that of {0, 0, 0, 60, 64, 67} would be
+    // 31.8978).
     Chord semitone({"C4", "E4", "G4"});  // {60, 64, 67}
     EXPECT_NEAR(semitone.getMidiValueStd(), 2.8674f, 0.001f);
 
@@ -1162,7 +1135,7 @@ TEST(getMidiValueStd, isTheRealStandardDeviationAndSeparatesAQuarterTone) {
 }
 
 TEST(getMidiValueStd, emptyChordReturnsZero) {
-    // The old route divided by a zero-length vector and produced NaN.
+    // Not a division by zero: no NaN.
     Chord myChord;
     EXPECT_FLOAT_EQ(myChord.getMidiValueStd(), 0.0f);
 }
@@ -1177,19 +1150,18 @@ TEST(getHarmonicDensity, aQuarterToneExtremeWidensTheRangeByHalfASemitone) {
     Chord quarterTone(std::vector<std::string>{"C1x4", "G4"});
     EXPECT_NEAR(quarterTone.getHarmonicDensity(-1, -1), 2.0f / 7.5f, 0.0001f);
 
-    // Unchanged for a chord with no quarter tone.
+    // A chord with no quarter tone, for comparison.
     Chord semitone({"C4", "E4", "G4"});
     EXPECT_NEAR(semitone.getHarmonicDensity(-1, -1), 0.375f, 0.0001f);
 }
 
-// ===== Fix round 1 ===== //
+// ===== Exact ordering, spread and density ===== //
 
 TEST(sortNotes, sortsAQuarterToneChordAndAgreesWithIsSorted) {
-    // The round trip that was broken: this task fixed the measurer and left the sorter. sortNotes()
-    // ordered through the rounded Note::operator<, so std::sort saw E4 (64) and E1b4 (rounded to
-    // 64) as equal and left the pair untouched -- after which isSorted(), comparing exact
-    // positions, called the result unsorted. Measured before the fix: note(0) stayed "E4" and
-    // isSorted() was false. A chord sortNotes() could not make sorted.
+    // sortNotes() and isSorted() must agree. A sorter ordering by the rounded MIDI number would see
+    // E4 (64) and E1b4 (rounded to 64) as equal and leave the pair untouched, after which
+    // isSorted(), comparing exact positions, would call the result unsorted: a chord sortNotes()
+    // could not make sorted.
     Chord myChord(std::vector<std::string>{"E4", "E1b4"});
 
     myChord.sortNotes();
@@ -1200,7 +1172,7 @@ TEST(sortNotes, sortsAQuarterToneChordAndAgreesWithIsSorted) {
 }
 
 TEST(sortNotes, semitoneChordRoundTripIsUnchanged) {
-    // The fix must not disturb ordinary chords.
+    // An ordinary chord sorts, and reads as sorted afterwards.
     Chord myChord({"G4", "E4", "C4"});
 
     myChord.sortNotes();
@@ -1212,9 +1184,9 @@ TEST(sortNotes, semitoneChordRoundTripIsUnchanged) {
 }
 
 TEST(noteOrdering, comparesExactPitchPositionsNotRoundedMidiNumbers) {
-    // The root of the sorter/measurer contradiction, and user-visible in its own right: these
-    // operators are bound straight to Python. Measured before the fix, `quarterTone < semitone`
-    // was false, because 63.5 and 64 both rounded to 64.
+    // The operators sortNotes() and isSorted() both go through, and user-visible in their own
+    // right: they are bound straight to Python. By rounded MIDI numbers, `quarterTone < semitone`
+    // would be false: 63.5 and 64 both round to 64.
     const Note quarterTone("E1b4");  // 63.5
     const Note semitone("E4");       // 64
 
@@ -1227,8 +1199,7 @@ TEST(noteOrdering, comparesExactPitchPositionsNotRoundedMidiNumbers) {
     EXPECT_TRUE(semitone >= quarterTone);
     EXPECT_FALSE(quarterTone >= semitone);
 
-    // operator==/!= compare pitch strings, so they could always tell these two apart and are
-    // deliberately left alone.
+    // operator==/!= compare pitch strings, so they tell these two apart too.
     EXPECT_FALSE(quarterTone == semitone);
     EXPECT_TRUE(quarterTone != semitone);
 }
@@ -1243,38 +1214,37 @@ TEST(noteOrdering, semitoneComparisonsAreUnchanged) {
 }
 
 TEST(getFrequencyStd, isTheRealStandardDeviationNotAZeroPaddedOne) {
-    // The identical zero-padding defect getMidiValueStd() had: the vector was sized to the note
-    // count and then appended to. Measured before the fix: 168.144, the standard deviation of
-    // {0, 0, 0, 261.63, 329.63, 392.00}, rather than of the three frequencies themselves.
+    // The population standard deviation of the three frequencies themselves, with no zero padding
+    // (that of {0, 0, 0, 261.63, 329.63, 392.00} would be 168.144).
     //
-    // This does NOT assert anything about quarter tones: the frequencies still come from the
-    // rounded MIDI number, which is a separate deferred tuning concern.
+    // This does NOT assert anything about quarter tones: Note::getFrequency() derives each
+    // frequency from the rounded MIDI number.
     Chord myChord({"C4", "E4", "G4"});
 
     EXPECT_NEAR(myChord.getFrequencyStd(), 53.24f, 0.05f);
 }
 
 TEST(getFrequencyStd, emptyChordReturnsZero) {
-    // The old route divided by a zero-length vector and produced NaN.
+    // Not a division by zero: no NaN.
     Chord myChord;
 
     EXPECT_FLOAT_EQ(myChord.getFrequencyStd(), 0.0f);
 }
 
 TEST(getHarmonicDensity, stringBoundsAreExactLikeTheNumericOverload) {
-    // The string overload converted its bounds with Helper::pitch2midiNote(), which rounds, so
-    // "C1x4" (60.5) became 61: measured 2/7 = 0.2857, while the numeric overload's auto-detected
-    // path already measured the true 2/7.5 = 0.2667.
+    // The string overload reads its bounds' exact positions. Converting them with
+    // Helper::pitch2midiNote(), which rounds, would make "C1x4" (60.5) 61 and give 2/7 = 0.2857,
+    // while the numeric overload's auto-detected path gives the true 2/7.5 = 0.2667.
     Chord myChord(std::vector<std::string>{"C1x4", "G4"});
 
     EXPECT_NEAR(myChord.getHarmonicDensity(std::string("C1x4"), std::string("G4")), 2.0f / 7.5f,
                 0.0001f);
 
-    // The two overloads now agree about the same span, which is the property that was violated.
+    // The two overloads agree about the same span.
     EXPECT_NEAR(myChord.getHarmonicDensity(std::string("C1x4"), std::string("G4")),
                 myChord.getHarmonicDensity(-1, -1), 0.0001f);
 
-    // Unchanged for semitone bounds.
+    // Semitone bounds.
     EXPECT_NEAR(myChord.getHarmonicDensity(std::string("C4"), std::string("G4")), 2.0f / 8.0f,
                 0.0001f);
 }

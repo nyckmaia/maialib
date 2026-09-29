@@ -399,8 +399,8 @@ TEST(PitchSpelling, SplitPitchComponents) {
     Helper::splitPitch("rest", pitchClass, pitchStep, octave, alterValue, alterSymbol);
     EXPECT_EQ(pitchClass, "rest");
     EXPECT_EQ(pitchStep, "rest");
-    // Deliberate expectation change (spec section 4.4/12.1): a rest has no octave any more --
-    // the old sentinel value 0 is replaced by an empty optional.
+    // A rest has no octave (spec section 4.4/12.1): an empty optional, not a sentinel value such
+    // as 0, which is a real octave.
     EXPECT_FALSE(octave.has_value());
     EXPECT_FLOAT_EQ(alterValue, 0.0f);
     EXPECT_EQ(alterSymbol, "");
@@ -569,35 +569,35 @@ TEST(PitchSpelling, IsEnharmonic) {
     }
 }
 
-// Task 10: isEnharmonic() compared pitch2midiNote()'s ROUNDED MIDI numbers, so a quarter tone and
-// the semitone it rounds to collided on one integer and were reported as the same pitch. It now
-// compares exact pitch positions.
+// isEnharmonic() compares exact pitch positions: by pitch2midiNote()'s ROUNDED MIDI numbers, a
+// quarter tone and the semitone it rounds to would collide on one integer and be reported as the
+// same pitch.
 TEST(PitchSpelling, IsEnharmonicComparesExactPitchNotRoundedMidi) {
     // The two spellings of a single quarter tone: "C1x4" and "D3b4" are both exactly 60.5.
     EXPECT_TRUE(Helper::isEnharmonic("C1x4", "D3b4"));
     EXPECT_TRUE(Helper::isEnharmonic("E1b4", "D3x4"));  // both exactly 63.5
 
-    // A quarter tone is NOT the semitone it rounds to. This is the pair that used to collide:
-    // pitch2midiNote() rounds 60.5 up to 61, which is C#4's own value.
+    // A quarter tone is NOT the semitone it rounds to, although pitch2midiNote() rounds 60.5 up
+    // to 61, which is C#4's own value.
     EXPECT_FALSE(Helper::isEnharmonic("C1x4", "C#4"));
     EXPECT_FALSE(Helper::isEnharmonic("C1x4", "C4"));
     EXPECT_FALSE(Helper::isEnharmonic("E1b4", "E4"));
 
-    // Semitone behaviour is unchanged.
+    // Semitone pairs, for comparison.
     EXPECT_TRUE(Helper::isEnharmonic("E#4", "F4"));
     EXPECT_FALSE(Helper::isEnharmonic("C4", "D4"));
 }
 
-// Task 10: transposePitch() rounded the pitch to a MIDI integer BEFORE applying the interval, so
-// a quarter tone was destroyed by the very first step, and `int semitones` could not express half
-// a semitone at all.
+// transposePitch() takes a float interval and computes on exact positions, so it can transpose BY
+// half a semitone and keeps a quarter tone it transposes: rounding the pitch to a MIDI integer
+// BEFORE applying the interval would destroy the quarter tone at the very first step.
 TEST(PitchSpelling, TransposePitchMovesByAndPreservesQuarterTones) {
     // Transposing BY a quarter tone.
     EXPECT_EQ(Helper::transposePitch("C4", 0.5f, ""), "C1x4");
     EXPECT_EQ(Helper::transposePitch("C1x4", 0.5f, ""), "C#4");
 
-    // Transposing a quarter tone BY whole semitones keeps the quarter tone: this used to answer
-    // "D4", silently rounded. The spelling follows the base semitone the exact position rounds
+    // Transposing a quarter tone BY whole semitones keeps the quarter tone ("D1x4", not "D4").
+    // The spelling follows the base semitone the exact position rounds
     // up to, so 62.5 is spelled from "D#4" (alter +1) as "D1x4", and 58.5 from "B3" (alter 0) as
     // "B1b3" -- two spellings of the same rule, not two rules.
     EXPECT_EQ(Helper::transposePitch("C1x4", 2.0f, ""), "D1x4");
@@ -620,20 +620,19 @@ TEST(PitchSpelling, TransposePitchRejectsAnIntervalOffTheQuarterToneGrid) {
     }
 }
 
-// Fix round 1, Minor 2: an infinity SLIPPED THROUGH the multiple-of-0.5 check, because
-// inf * 2 == inf and std::floor(inf) == inf, so the inequality that rejects 0.3 was false for it.
-// The two consequences differed and both were bad: "+inf" failed far away with the unrelated
-// message "Unknown accidental alter value: inf", and "-inf" SILENTLY returned "rest" -- an
-// infinite transposition quietly turning a note into a rest, exactly the class of silent
-// wrongness this sub-project exists to remove. Both are now rejected by the validator itself.
+// An infinity must be rejected as non-finite by the validator itself: a multiple-of-0.5 check of
+// the form `x * 2 != floor(x * 2)` is false for it (inf * 2 == inf and std::floor(inf) == inf),
+// and past the validator "+inf" would fail far away with the unrelated message "Unknown accidental
+// alter value: inf", while "-inf" would SILENTLY answer "rest" -- an infinite transposition
+// quietly turning a note into a rest.
 //
 // The "got '<result>'" branch is what pins the -inf case specifically: a returned value fails the
 // test and prints what came back, so a silent "rest" is reported as the wrong ANSWER it is, rather
 // than being indistinguishable from a wrong error message.
 //
-// Task 11, section N item 4: the message must also NAME the offending value, as the sibling
-// off-grid test above requires of '0.3'. Asserting "finite" alone let the value drop out of the
-// message unnoticed. "nan" is matched without its quotes because std::to_string() writes a NaN
+// The message must also NAME the offending value, as the sibling off-grid test above requires of
+// '0.3': asserting "finite" alone would let the value drop out of the message unnoticed. "nan" is
+// matched without its quotes because std::to_string() writes a NaN
 // with its sign bit set as "-nan(ind)" on this platform's C runtime.
 TEST(PitchSpelling, TransposePitchRejectsNonFiniteIntervals) {
     const auto expectRejected = [](const char* label, const float interval, const char* value) {
@@ -655,11 +654,10 @@ TEST(PitchSpelling, TransposePitchRejectsNonFiniteIntervals) {
     expectRejected("nan", std::numeric_limits<float>::quiet_NaN(), "nan");
 }
 
-// Task 11, section N item 2: a real pitch transposed below MIDI 0 answered steps2pitch()'s rest
-// sentinel, so transposePitch("C4", -61) returned "rest" -- and through Note::transpose() and
-// Chord::transpose() a note transposed too low was silently deleted (also true on main). Far above
-// the top, an out-of-range int conversion failed with the unrelated "Unknown accidental alter
-// value: 5147483648.0". Both ends now raise, naming the pitch, the interval and the range.
+// A real pitch transposed out of the representable range raises at both ends, naming the pitch,
+// the interval and the range. Below MIDI 0 it must not answer steps2pitch()'s rest sentinel:
+// through Note::transpose() and Chord::transpose(), a note transposed too low would be silently
+// deleted. Far above the top, the position must not reach an out-of-range int conversion.
 // Transposing a REST still answers "rest" (pinned in
 // TransposePitchMovesByAndPreservesQuarterTones).
 TEST(PitchSpelling, TransposePitchRejectsAResultOutsideTheRepresentableRange) {
@@ -670,11 +668,11 @@ TEST(PitchSpelling, TransposePitchRejectsAResultOutsideTheRepresentableRange) {
         const char* interval;
     };
     const Case cases[] = {
-        {"C4", -61.0f, "'C4'", "-61"},           // position -1: was "rest"
-        {"C4", -3e9f, "'C4'", "-3000000000"},    // far below: was "rest"
-        {"C1b-1", -0.5f, "'C1b-1'", "-0.5"},     // one quarter tone below the lowest pitch
-        {"C4", 3e9f, "'C4'", "3000000000"},      // far above: was "Unknown accidental ..."
-        {"B11", 2.5f, "'B11'", "2.5"},           // 157.5: one quarter tone above "Bx11"
+        {"C4", -61.0f, "'C4'", "-61"},         // position -1, not "rest"
+        {"C4", -3e9f, "'C4'", "-3000000000"},  // far below, not "rest"
+        {"C1b-1", -0.5f, "'C1b-1'", "-0.5"},   // one quarter tone below the lowest pitch
+        {"C4", 3e9f, "'C4'", "3000000000"},    // far above
+        {"B11", 2.5f, "'B11'", "2.5"},         // 157.5: one quarter tone above "Bx11"
     };
 
     for (const auto& c : cases) {
@@ -699,16 +697,17 @@ TEST(PitchSpelling, TransposePitchRejectsAResultOutsideTheRepresentableRange) {
     EXPECT_EQ(Helper::transposePitch("B11", 2.0f, "x"), "Bx11");
 }
 
-// Task 11, section N: two more ways transposePitch() said something other than what it does.
+// transposePitch() reads its input as a Pitch before anything else, so every rest spelling is a
+// rest and an invalid pitch string is rejected whatever the interval.
 TEST(PitchSpelling, TransposePitchTreatsEveryRestSpellingAsARestAndParsesTheInputFirst) {
-    // An empty string is a rest (splitPitch()'s rule), but transposePitch() compared the string
-    // with "rest", so "" fell through to the arithmetic as MIDI_REST (-1): transposed up two
-    // semitones it answered "C#-1", a pitch conjured out of a rest.
+    // An empty string is a rest (splitPitch()'s rule): comparing the string with "rest" would let
+    // "" fall through to the arithmetic as MIDI_REST (-1), and transposed up two semitones it
+    // would answer "C#-1", a pitch conjured out of a rest.
     EXPECT_EQ(Helper::transposePitch("", 2.0f), "rest");
     EXPECT_EQ(Helper::transposePitch("", -2.0f), "rest");
 
-    // An interval of 0 returned the input unchanged without parsing it, so an invalid pitch
-    // string passed straight through although the documentation promised a throw.
+    // An interval of 0 still parses the input: returning it unchanged without parsing would let an
+    // invalid pitch string pass straight through, although the documentation promises a throw.
     try {
         const std::string result = Helper::transposePitch("H4", 0.0f);
         ADD_FAILURE() << "expected std::runtime_error for 'H4', got '" << result << "'";
@@ -719,11 +718,10 @@ TEST(PitchSpelling, TransposePitchTreatsEveryRestSpellingAsARestAndParsesTheInpu
     EXPECT_EQ(Helper::transposePitch("Eb", 0.0f), "Eb");  // a valid input is still returned as is
 }
 
-// Task 11, section N item 1: steps2pitch() converted its argument with static_cast<int> after
-// checking only the negative side, so a non-finite position was undefined behaviour -- reachable
-// from Python the moment this function is bound. It is now rejected before any cast, naming the
-// value and the representable range. Without the check, +inf and nan throw with a different
-// message and -inf silently answers "rest".
+// steps2pitch() converts its argument with static_cast<int>, which is undefined behaviour for a
+// non-finite position, and it is bound to Python, so such a position is rejected before any cast,
+// naming the value and the representable range. Without the check, +inf and nan would throw with
+// a different message and -inf would silently answer "rest".
 TEST(PitchSpelling, Steps2PitchRejectsANonFinitePositionBeforeAnyCast) {
     const auto expectRejected = [](const char* label, const float position, const char* value) {
         try {
@@ -744,9 +742,9 @@ TEST(PitchSpelling, Steps2PitchRejectsANonFinitePositionBeforeAnyCast) {
     expectRejected("nan", std::numeric_limits<float>::quiet_NaN(), "nan");
 }
 
-// Task 11, section N item 1: the positive side had no check at all -- a position above int's range
-// was an undefined-behaviour cast, and one merely above "Bx11" failed with midiNote2pitch()'s
-// unrelated octave message. Both now name the value and the range.
+// Above the range too: a position above int's range would be an undefined-behaviour cast, and one
+// merely above "Bx11" would fail with midiNote2pitch()'s unrelated octave message. Both are
+// rejected, naming the value and the range.
 TEST(PitchSpelling, Steps2PitchRejectsAPositionAboveTheRepresentableRange) {
     EXPECT_EQ(Helper::steps2pitch(157.0f, "x"), "Bx11");  // the ceiling itself is spellable
 
@@ -880,7 +878,7 @@ TEST(MelodyContour, QuarterToneIntervalsAreComputedExactly) {
                 1.0f / (1.0f + std::sqrt(0.5f)), 1e-6f);
 }
 
-// A pair that includes a rest counts as an interval of 0, as before.
+// A pair that includes a rest counts as an interval of 0.
 TEST(MelodyContour, APairWithARestCountsAsNoInterval) {
     const std::vector<Note> reference = {Note("C4"), Note("E4"), Note("G4")};
     const std::vector<Note> withRest = {Note("C4"), Note("rest"), Note("G1x4")};

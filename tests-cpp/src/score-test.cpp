@@ -538,17 +538,16 @@ TEST(ScoreNoteCount, GetNumNotesFromLoadedXML) {
 // ====================
 
 TEST(InstrumentFragmentation, SucceedsWhenSectionHasNoNotesButAttributesArePresent) {
-    // Regression test for the OOB guard at score.cpp ('maxNotes > 0 && get_sign[maxNotes - 1]').
+    // Pins the OOB guard at score.cpp ('maxNotes > 0 && get_sign[maxNotes - 1]').
     // 'maxNotes' -- the number of notes the section's XPath query matches -- can legitimately be
     // 0, and 'get_sign'/'activations_vec' are then empty vectors.
     //
-    // A prior version of this test used a purely programmatic Score (no XML loaded). That also
-    // has 'maxNotes == 0', but its pugixml document is entirely empty, so the function throws
-    // moments later on the unrelated, pre-existing "beatNumber is empty" check regardless of
-    // whether the guard is present -- giving the test no regression value: it would pass against
-    // the unfixed code too, since 'get_sign[maxNotes - 1]' with 'maxNotes == 0' is undefined
-    // behavior (not a guaranteed trap), and control can appear to "fall through" to that same
-    // later throw either way.
+    // A purely programmatic Score (no XML loaded) would not do. It also has 'maxNotes == 0', but
+    // its pugixml document is entirely empty, so the function throws moments later on the
+    // unrelated "beatNumber is empty" check whether or not the guard is present: such a test would
+    // pass against unguarded code too, since 'get_sign[maxNotes - 1]' with 'maxNotes == 0' is
+    // undefined behavior (not a guaranteed trap), and control can appear to "fall through" to that
+    // same later throw either way.
     //
     // 'zero_notes_measure.xml' is hand-authored to separate the two cases: a single measure
     // with a complete <attributes> block (divisions/time/clef) but zero <note> children. maiacore
@@ -557,7 +556,7 @@ TEST(InstrumentFragmentation, SucceedsWhenSectionHasNoNotesButAttributesArePrese
     // 'maxNotes == 0' while still letting 'beatNumber'/'divisions'/'beatType' (which read
     // part[1]/measure[1] unconditionally) resolve successfully. That lets execution run all the
     // way to a normal return, so this test actually distinguishes guarded from unguarded code:
-    // fixed code returns cleanly; unguarded code reads 'get_sign[-1]' -- index -1 into a
+    // guarded code returns cleanly; unguarded code reads 'get_sign[-1]' -- index -1 into a
     // default-constructed, zero-size std::vector<int>, whose data() is null on every standard
     // library this project targets, i.e. a near-guaranteed segfault, not a maybe -- right here.
     Score score("./test/xml_examples/unit_test/zero_notes_measure.xml");

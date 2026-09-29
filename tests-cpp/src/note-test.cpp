@@ -720,10 +720,9 @@ TEST(NoteTransposition, TransposeDownAcrossOctave) {
     EXPECT_EQ(note.getMidiNumber(), 58);
 }
 
-// Task 10: Note::transpose() took `const int`, so half a semitone could not even be expressed as
-// an argument; and it delegated to Helper::transposePitch(), which rounded the pitch to a MIDI
-// integer BEFORE applying the interval, destroying any quarter tone it was given. Both are fixed
-// by computing on exact pitch positions.
+// Note::transpose() takes a float, so half a semitone is an interval it accepts, and it computes
+// on exact pitch positions: rounding the pitch to a MIDI integer BEFORE applying the interval
+// would destroy any quarter tone it was given.
 TEST(NoteTransposition, TransposeByQuarterTone) {
     Note note("C4");
 
@@ -742,7 +741,7 @@ TEST(NoteTransposition, TransposePreservesAQuarterToneAcrossAWholeToneInterval) 
     Note note("C1x4");
 
     note.transpose(2.0f);
-    EXPECT_EQ(note.getPitch(), "D1x4");  // rounded to "D4" before Task 10
+    EXPECT_EQ(note.getPitch(), "D1x4");  // not rounded to "D4"
     EXPECT_TRUE(note.isQuarterTone());
 }
 
@@ -761,10 +760,9 @@ TEST(NoteTransposition, TransposeRejectsAnIntervalOffTheQuarterToneGrid) {
     EXPECT_EQ(note.getPitch(), "C4");  // the refused call changed nothing
 }
 
-// Task 11, section N: Helper::transposePitch() answered "rest" for a result below MIDI 0, and
-// Note::transpose() stored it, so a note transposed too low was silently turned into a rest --
-// measured at HEAD 9051bb8: Note("C4").transpose(-61) left a rest behind. It now raises, and the
-// note is left exactly as it was.
+// A note transposed below the representable range raises, and is left exactly as it was: it
+// must never be silently turned into a rest, which storing Helper::steps2pitch()'s rest sentinel
+// for a position below MIDI 0 would do.
 TEST(NoteTransposition, TransposeOutOfRangeRaisesAndLeavesTheNoteUnchanged) {
     Note note("C4");
 
@@ -904,7 +902,7 @@ TEST(NoteType, GetTypeStrings) {
 }
 
 // ===================================================================================================
-// PITCH SPELLING (SP1)
+// PITCH SPELLING
 // ===================================================================================================
 
 TEST(PitchSpellingLegacy, EnharmonicTableMatches) {
@@ -1100,13 +1098,12 @@ TEST(QuarterToneEnharmonic, everyRespellingDescribesTheSamePitch) {
 }
 
 // =====================================================================================
-// NOTE COMPOSES PITCH (Task 6)
+// NOTE COMPOSES PITCH
 // =====================================================================================
 
-// Step 1: the defect this transplant closes. Before this task, setPitchClass() updated the
-// written pitch-class string and accidental symbol but never recomputed the MIDI number, so
-// getMidiNumber() kept reporting the note's *previous* pitch. Now that Note holds a single
-// Pitch and getMidiNumber() derives from it on demand, this is correct with no special-casing.
+// setPitchClass() changes the accidental and the MIDI number together: Note holds a single Pitch
+// and derives getMidiNumber() from it on demand, so no stored MIDI number can keep reporting the
+// note's previous pitch.
 TEST(Note, setPitchClassUpdatesAccidentalAndMidi) {
     Note n("C4");
     n.setPitchClass("Eb");
@@ -1114,10 +1111,8 @@ TEST(Note, setPitchClassUpdatesAccidentalAndMidi) {
     EXPECT_EQ(n.getMidiNumber(), 63);
 }
 
-// Task 6b: a rest has no octave. Note's three octave getters used to collapse that absence to
-// the numeric sentinel -2 (0 and -1 are both legitimate octaves, so no int value is safe to use
-// as a stand-in). They now return std::optional<int>, empty for a rest, unchanged for every
-// non-rest input.
+// A rest has no octave. Note's three octave getters return std::optional<int>, empty for a rest:
+// 0 and -1 are both legitimate octaves, so no int value is safe to use as a stand-in.
 TEST(Note, restHasNoOctaveAnywhere) {
     const Note rest("");
     EXPECT_FALSE(rest.getOctave().has_value());
@@ -1129,7 +1124,7 @@ TEST(Note, restHasNoOctaveAnywhere) {
     EXPECT_EQ(note.getWrittenOctave().value(), 4);
 }
 
-// T1: Note(pitch, isNoteOn=false) is a fully consistent rest -- every getter agrees, not just
+// Note(pitch, isNoteOn=false) is a fully consistent rest -- every getter agrees, not just
 // isNoteOn(). The "C4" is deliberately discarded (see the constructor's rest guard).
 TEST(NoteComposesPitch, ConstructorIsNoteOnFalseIsAFullyConsistentRest) {
     const Note n("C4", RhythmFigure::QUARTER, /*isNoteOn=*/false);
@@ -1139,15 +1134,12 @@ TEST(NoteComposesPitch, ConstructorIsNoteOnFalseIsAFullyConsistentRest) {
     EXPECT_EQ(n.getPitch(), "rest");
     EXPECT_EQ(n.getMidiNumber(), -1);
     EXPECT_EQ(n.getPitchStep(), "rest");
-    // Task 6b: was EXPECT_EQ(n.getOctave(), -2); getOctave() now returns std::optional<int>,
-    // empty for a rest instead of the -2 sentinel.
-    EXPECT_FALSE(n.getOctave().has_value());
+    EXPECT_FALSE(n.getOctave().has_value());  // a rest has no octave: empty, not a sentinel
 }
 
-// T2: setIsNoteOn(false) used to only flip a bool, leaving the pitch string/MIDI fields stale
-// (getPitchClass() kept reporting "C#" and getMidiNumber() kept reporting 60). Deriving
-// isNoteOn() from _writtenPitch.isRest() and driving setIsNoteOn(false) through
-// _writtenPitch.setPitch("rest") closes that: every getter is consistent immediately.
+// setIsNoteOn(false) makes the note a rest everywhere at once: isNoteOn() derives from
+// _writtenPitch.isRest(), and setIsNoteOn(false) goes through _writtenPitch.setPitch("rest"), so no
+// getter can keep reporting the pitch the note had.
 TEST(NoteComposesPitch, SetIsNoteOnFalseReportsRestEverywhere) {
     Note n("C#4");
     n.setIsNoteOn(false);
@@ -1157,15 +1149,11 @@ TEST(NoteComposesPitch, SetIsNoteOnFalseReportsRestEverywhere) {
     EXPECT_EQ(n.getPitch(), "rest");
     EXPECT_EQ(n.getMidiNumber(), -1);
     EXPECT_EQ(n.getPitchStep(), "rest");
-    // Task 6b: was EXPECT_EQ(n.getOctave(), -2); see
-    // ConstructorIsNoteOnFalseIsAFullyConsistentRest.
     EXPECT_FALSE(n.getOctave().has_value());
 }
 
-// T3: setIsNoteOn(true) on a rest carries no pitch to resurrect one with, so it must refuse
-// (LOG_WARN, no throw) rather than flip the flag under a still-empty pitch. Before this guard,
-// Note(""); n.setIsNoteOn(true); made getWrittenPitchStep()'s unconditional substr(0, 1) return
-// the literal string "r" (the first character of "rest").
+// setIsNoteOn(true) on a rest carries no pitch to resurrect one with, so it must refuse (LOG_WARN,
+// no throw) and leave the rest a rest.
 TEST(NoteComposesPitch, SetIsNoteOnTrueOnRestRefusesAndWarns) {
     Note n("");
     ASSERT_TRUE(n.isNoteOff());
@@ -1176,11 +1164,9 @@ TEST(NoteComposesPitch, SetIsNoteOnTrueOnRestRefusesAndWarns) {
     EXPECT_EQ(n.getPitchClass(), "rest");
 }
 
-// T4: getOctave()/getWrittenOctave() used to return 0 for a rest while getSoundingOctave()
-// returned -2 (then, after Task 6, all three agreed on -2) -- pre-Task-6b, three different
-// answers to "what octave is a rest" collapsed onto a numeric sentinel that was itself unsound
-// (0 and -1 are both legitimate octaves). Task 6b removes the sentinel: all three now derive
-// from Pitch's std::optional<int> octave and agree on an EMPTY optional for a rest.
+// All three octave getters derive from Pitch's std::optional<int> octave, so they agree that a
+// rest has no octave: an EMPTY optional, never a numeric sentinel (0 and -1 are both legitimate
+// octaves).
 TEST(NoteComposesPitch, AllOctaveGettersAgreeRestHasNoOctave) {
     const Note n("rest");
     EXPECT_FALSE(n.getOctave().has_value());
@@ -1188,32 +1174,28 @@ TEST(NoteComposesPitch, AllOctaveGettersAgreeRestHasNoOctave) {
     EXPECT_FALSE(n.getSoundingOctave().has_value());
 }
 
-// T7: setOctave() used to write the caller's octave straight into a rest's fields
-// (Note("rest").setOctave(5) left getOctave() == 0). Delegating to Pitch::setOctave() inherits
-// its refuse-on-rest policy: a bare octave carries no pitch to resurrect one with.
+// setOctave() delegates to Pitch::setOctave() and inherits its refuse-on-rest policy: a bare
+// octave carries no pitch to resurrect a rest with.
 TEST(NoteComposesPitch, SetOctaveOnRestRefusesAndWarns) {
     Note n("rest");
     n.setOctave(5);  // must not throw
     EXPECT_TRUE(n.isNoteOff());
-    // Task 6b: was EXPECT_EQ(n.getOctave(), -2);
     EXPECT_FALSE(n.getOctave().has_value());
     EXPECT_EQ(n.getPitchClass(), "rest");
 }
 
-// T8: setAlter() is new on Note (delegating to Pitch::setAlter()) and inherits the same
-// refuse-on-rest policy as setOctave(): neither carries enough information to resurrect one.
+// setAlter() delegates to Pitch::setAlter() and inherits the same refuse-on-rest policy as
+// setOctave(): neither carries enough information to resurrect a rest.
 TEST(NoteComposesPitch, SetAlterOnRestRefusesAndWarns) {
     Note n("rest");
     n.setAlter(0.5f);  // must not throw
     EXPECT_TRUE(n.isNoteOff());
-    // Task 6b: was EXPECT_EQ(n.getOctave(), -2);
     EXPECT_FALSE(n.getOctave().has_value());
     EXPECT_EQ(n.getPitchClass(), "rest");
 }
 
-// T9: setStep() is new on Note (delegating to Pitch::setStep()) and is permissive on a rest,
-// unlike setOctave()/setAlter(): a diatonic step is enough to resurrect one, defaulting the
-// octave to 4.
+// setStep() delegates to Pitch::setStep() and is permissive on a rest, unlike
+// setOctave()/setAlter(): a diatonic step is enough to resurrect one, defaulting the octave to 4.
 TEST(NoteComposesPitch, SetStepResurrectsRestToOctave4) {
     Note n("rest");
     n.setStep("C");
@@ -1223,29 +1205,20 @@ TEST(NoteComposesPitch, SetStepResurrectsRestToOctave4) {
     EXPECT_EQ(n.getOctave(), 4);
 }
 
-// Task 6b, finding N1 -- MEASURED, and pinned as DEFENSIBLE (not a bug).
-//
-// setIsNoteOn(false) deliberately keeps a note's transposing interval (see the CHANGELOG entry
-// for fix round 5/F1 and the constructor comment on _writtenPitch): silencing a transposing
+// setIsNoteOn(false) deliberately keeps a note's transposing interval: silencing a transposing
 // instrument's note is temporary, and the instrument it belongs to does not stop transposing
-// while it is quiet. setStep() is permissive on a rest (T9 above) and resurrects it at octave 4
-// -- but it only touches _writtenPitch; it has no reason to touch _transposeDiatonic/
-// _transposeChromatic; and it should not guess whether the caller wants the note to keep
-// belonging to the same transposing instrument. So the dead interval survives resurrection too.
-// The conclusion rests on that instrument-ownership argument, not on numeric coincidence (see
-// fix round 1 below).
+// while it is quiet. setStep() is permissive on a rest (SetStepResurrectsRestToOctave4 above) and
+// resurrects it at octave 4 -- but it only touches _writtenPitch; it has no reason to touch
+// _transposeDiatonic/_transposeChromatic; and it should not guess whether the caller wants the
+// note to keep belonging to the same transposing instrument. So the interval survives
+// resurrection too. That rests on the instrument-ownership argument, not on numeric coincidence.
 //
-// Fix round 1: the original pin started from C4. T9 already establishes that setStep() revives
-// ANY rest at a HARDCODED octave 4, regardless of what octave it had before becoming a rest --
-// so starting from C4 made "the octave survived silencing" and "the octave was just reset to
-// the resurrection default" look identical; the pin could not tell them apart. Rebuilt starting
-// from C5 (octave 5, so the pre-silence octave and the post-revival default differ) to make it
-// discriminate. This also narrows the claim: what is pinned is not "revived == a note that
-// already carries the interval" (that assumes the very thing N1 asks, since such a fresh note
-// is only the right comparison if the interval SHOULD have survived); it is SELF-CONSISTENCY --
-// the revived note's sounding pitch is freshly derived from its (defaulted) written pitch and
-// the surviving interval, not a stale leftover of the pre-silence sounding pitch. That is not
-// the T2 stale-field defect Task 6 closed.
+// The note starts from C5, not C4: setStep() revives ANY rest at a HARDCODED octave 4, so from C4
+// "the octave survived silencing" and "the octave was just reset to the resurrection default"
+// would look identical. What is pinned is SELF-CONSISTENCY -- the revived note's sounding pitch is
+// freshly derived from its (defaulted) written pitch and the surviving interval, not a stale
+// leftover of the pre-silence sounding pitch -- not that a revived note equals a fresh note
+// carrying the interval, which would assume the interval SHOULD survive.
 TEST(NoteComposesPitch, SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval) {
     Note n("C5", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
            /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
@@ -1254,7 +1227,7 @@ TEST(NoteComposesPitch, SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval) {
 
     n.setIsNoteOn(false);
     ASSERT_TRUE(n.isNoteOff());
-    // the dead interval survives silencing (documented, fix round 5)
+    // the interval survives silencing (documented on setIsNoteOn())
     ASSERT_TRUE(n.isTransposed());
 
     n.setStep("C");
@@ -1263,7 +1236,8 @@ TEST(NoteComposesPitch, SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval) {
     EXPECT_EQ(n.getTransposeDiatonic(), -1);
     EXPECT_EQ(n.getTransposeChromatic(), -2);
     // Discriminates octave handling: NOT preserved from before silencing (that would be "C5");
-    // this is setStep()'s ordinary hardcoded-4 default (T9), unaffected by the interval.
+    // this is setStep()'s ordinary hardcoded-4 default (SetStepResurrectsRestToOctave4),
+    // unaffected by the interval.
     EXPECT_EQ(n.getWrittenPitch(), "C4");
     // Discriminates staleness: freshly derived from the CURRENT written pitch ("C4") and the
     // surviving interval, giving "Bb3" -- never the pre-silence sounding pitch "Bb4", which
@@ -1272,27 +1246,13 @@ TEST(NoteComposesPitch, SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval) {
     EXPECT_NE(n.getSoundingPitch(), "Bb4");
 }
 
-// Fix round 1 (controller ruling on Task 6 concern 2): getAlterSymbol() forwarding to the
-// sounding pitch instead of the written one is a genuine behaviour change the brief introduced
-// (its "preserves today's semantics" claim was wrong: the pre-Task-6 body was
-// `return _alterSymbol;`, populated from the WRITTEN pitch only). Pin it with a transposing
-// instrument case where the two genuinely diverge.
-//
-// B-flat clarinet: written C sounds a major second lower (concert Bb). Measured via this exact
-// construction, not assumed -- and cross-checked against the pre-existing, already-passing
-// NoteSetPitch.WrittenAndSoundingPitchTypesAndOctave_TransposeInstrumentChangeOctave test, which
-// pins the same (pitch="C4", transposeDiatonic=-1, transposeChromatic=-2) construction producing
-// getSoundingPitch() == "Bb3":
+// getAlterSymbol() reads the sounding pitch, like every unqualified Note getter, not the written
+// one. A transposing instrument shows the two diverging. B-flat clarinet: written C sounds a
+// major second lower (concert Bb). The same (pitch="C4", transposeDiatonic=-1,
+// transposeChromatic=-2) construction sounds "Bb3" in
+// NoteSetPitch.WrittenAndSoundingPitchTypesAndOctave_TransposeInstrumentChangeOctave too:
 //   written "C4"  -> alter symbol ""  (natural)
 //   sounding "Bb3" -> alter symbol "b" (flat), MIDI 58
-//
-// The controller's suggested case -- written "C#4" under the same transpose -- was tried first
-// and discarded: it lands in a different branch of the pre-existing (untouched by Task 6)
-// sharp/flat scale-lookup in computeSoundingPitch(), where a written sharp-side pitch class
-// transposed downward is not found in either lookup scale (only in the sharp one), and produces
-// a musically wrong "Bb4" / MIDI 70 (a fourth higher, not a major second lower). That is a
-// latent, pre-existing bug unrelated to this getAlterSymbol() question, not something to build a
-// pinning test on top of.
 TEST(NoteComposesPitch, GetAlterSymbolForwardsToSoundingPitchOnTransposedNote) {
     // Untransposed stand-in for "the written pitch's own accidental symbol": Note has no
     // getWrittenAlterSymbol() getter, and for an untransposed note sounding == written.
@@ -1307,69 +1267,45 @@ TEST(NoteComposesPitch, GetAlterSymbolForwardsToSoundingPitchOnTransposedNote) {
     EXPECT_NE(transposed.getAlterSymbol(), written.getAlterSymbol());
 }
 
-// Fix round 2 (controller ruling on the reviewer's Critical finding): getMidiNumber() used to
-// route through computeSoundingPitch()'s spelling lookup for a transposed note, letting that
-// lookup's pre-existing spelling defect corrupt the numeric MIDI answer too. All three values
-// below were measured against a d26aa67 worktree, not assumed -- and cross-checked with a
-// 1197-combination sweep ((pitch x transposeDiatonic x transposeChromatic), spanning naturals,
-// sharps, flats and double accidentals) that found zero divergence between this fixed HEAD and
-// d26aa67 on getMidiNumber(), getOctave() and getPitch(), everywhere.
-//
-// TASK 10 REWROTE THE THREE TESTS BELOW. They previously pinned the scale lookup's DEFECTIVE
-// spellings and octaves as current behaviour, each with a comment recording the correct value and
-// naming Task 10 as its owner. That lookup is now deleted (see computeSoundingPitch() in
-// note.cpp), so each assertion below carries the correct value, and the old one is recorded
-// beside it so the change is auditable:
-//   case                        getPitch() before   after     getOctave() before   after
-//   B-flat clarinet C#4 -1/-2   "Bb3"               "B3"      4                    3
-//   horn in F       F#4 -4/-7   "F3"                "B3"      4                    3
-//   piccolo         C4  +7/+12  "C5"                "C5"      4                    5
-//
-// The two spelling defects were separate. The clarinet and the horn both sound MIDI 59, which is
-// B3: the lookup answered "Bb" and "F" because a pitch class found only in its sharp scale still
-// indexed its flat array, at end(). The piccolo's pitch CLASS was already right; its OCTAVE was
-// not, because the lookup's octave-wrap check did not fire at exactly +/-12 semitones.
-//
-// getMidiNumber() is unchanged in all three: it has been arithmetic since Task 6 (fix round 2,
-// below), which is precisely why it was already correct while the spellings around it were not.
+// A transposing instrument's sounding pitch is the written pitch's exact position moved by the
+// chromatic interval, spelled from there (see computeSoundingPitch() in note.cpp). getMidiNumber()
+// is that arithmetic, and getPitch() and getOctave() spell the same position:
+//   case                        getPitch()   getOctave()   getMidiNumber()
+//   B-flat clarinet C#4 -1/-2   "B3"         3             59
+//   horn in F       F#4 -4/-7   "B3"         3             59
+//   piccolo         C4  +7/+12  "C5"         5             72
+// The clarinet and the horn both sound MIDI 59, spelled B3. The piccolo sounds an octave above the
+// written pitch: an interval of exactly +12 semitones moves the octave too.
 TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForBFlatClarinet) {
     // B-flat clarinet: written C#4 sounds a major second lower.
     const Note n("C#4", RhythmFigure::QUARTER, true, false, -1, -2);
     EXPECT_EQ(n.getMidiNumber(), 59);
-    EXPECT_EQ(n.getOctave(), 3);     // Task 10: was 4
-    EXPECT_EQ(n.getPitch(), "B3");   // Task 10: was "Bb3"; MIDI 59 is B3
+    EXPECT_EQ(n.getOctave(), 3);
+    EXPECT_EQ(n.getPitch(), "B3");  // MIDI 59 is B3
 }
 
 TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForHornInF) {
     // Horn in F: written F#4 sounds a perfect fifth lower.
     const Note n("F#4", RhythmFigure::QUARTER, true, false, -4, -7);
     EXPECT_EQ(n.getMidiNumber(), 59);
-    EXPECT_EQ(n.getOctave(), 3);     // Task 10: was 4
-    EXPECT_EQ(n.getPitch(), "B3");   // Task 10: was "F3"; MIDI 59 is B3, not F3
+    EXPECT_EQ(n.getOctave(), 3);
+    EXPECT_EQ(n.getPitch(), "B3");  // MIDI 59 is B3
 }
 
 TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForPiccolo) {
     // Piccolo: written C4 sounds an octave higher.
     const Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
     EXPECT_EQ(n.getMidiNumber(), 72);
-    // Task 10: was 4. An exact +12 transpose now increments the octave, so the sounding octave is
-    // one above the written one, and getOctave() agrees with getSoundingOctave() below.
+    // An exact +12 transpose moves the octave, so the sounding octave is one above the written
+    // one, and getOctave() agrees with getSoundingOctave() below.
     EXPECT_EQ(n.getOctave(), 5);
     EXPECT_EQ(n.getSoundingOctave(), 5);
     EXPECT_EQ(n.getPitch(), "C5");
 }
 
-// N1 (controller ruling on the re-review's Important finding): getEnharmonicPitch() used to
-// derive its own MIDI number from computeSoundingPitch() directly -- the same buggy
-// scale-lookup-tracked octave getOctave() intentionally still reproduces -- while getPitch()
-// (fixed in round 2) used the arithmetic octave. The two disagreed: for this exact
-// construction, getPitch() returned "C5" while getEnharmonicPitch(false) returned "Dbb4", the
-// same note spelled a full octave apart -- HEAD contradicting itself, no baseline needed to see
-// it. Fixed by re-deriving getEnharmonicPitch()'s MIDI number from getPitch() (exactly as
-// d26aa67 did, via Helper::pitch2midiNote()), which is correct again since round 2. Measured
-// against a d26aa67 worktree for four cases (untransposed control plus these three transposing
-// instruments) and matched exactly in every one; only the Piccolo case is pinned here since the
-// other two are already covered by the getMidiNumber() tests above.
+// getEnharmonicPitch() respells the sounding pitch getPitch() reports, so the two agree on the
+// octave: for the piccolo, getPitch() is "C5" and the respellings are "Dbb5" and "B#4" -- the same
+// pitch, never one spelled a full octave apart ("Dbb4").
 TEST(NoteComposesPitch, GetEnharmonicPitchAgreesWithGetPitchOnTransposedNote) {
     // Piccolo: written C4 sounds an octave higher.
     const Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
@@ -1381,20 +1317,14 @@ TEST(NoteComposesPitch, GetEnharmonicPitchAgreesWithGetPitchOnTransposedNote) {
     // comparing two live calls rather than a hard-coded literal, so a future legitimate change
     // of spelling moves both sides together and a genuine regression is still caught.
     //
-    // TASK 10 PROMOTED THIS TO THE OTHER TWO CASES, in the test below. It used to hold only for
-    // the Piccolo, whose sounding pitch CLASS happened to be spelled correctly, and FAILED for
-    // the B-flat clarinet (59 vs 58) and the horn in F (59 vs 53), where the scale lookup picked
-    // the wrong spelling. Deleting that lookup is what makes "an enharmonic respelling describes
-    // the same pitch as the note it was spelled from" true everywhere.
+    // The test below checks the same for every transposing instrument.
     EXPECT_EQ(Note(n.getEnharmonicPitch(false)).getMidiNumber(), n.getMidiNumber());
     EXPECT_EQ(Note(n.getEnharmonicPitch(true)).getMidiNumber(), n.getMidiNumber());
 }
 
-// Task 10: the promotion the test above could not make before the scale lookup was deleted. An
-// enharmonic respelling must describe the same pitch as the note it was spelled from, for EVERY
-// transposing instrument -- not just the one whose spelling happened to come out right. Measured
-// before the rewrite: the clarinet respelled MIDI 59 as 58 and the horn as 53, because
-// getEnharmonicPitch() re-derives from getPitch(), which carried the lookup's wrong pitch class.
+// An enharmonic respelling must describe the same pitch as the note it was spelled from, for
+// EVERY transposing instrument: getEnharmonicPitch() re-derives from getPitch(), so a wrongly
+// spelled sounding pitch class would move the respelling to another pitch.
 TEST(NoteComposesPitch, GetEnharmonicPitchDescribesTheSamePitchForEveryTransposingInstrument) {
     const std::vector<std::pair<std::string, std::pair<int, int>>> instruments = {
         {"C#4", {-1, -2}},  // B-flat clarinet
@@ -1411,37 +1341,29 @@ TEST(NoteComposesPitch, GetEnharmonicPitchDescribesTheSamePitchForEveryTransposi
     }
 }
 
-// TASK 10 REWROTE THIS TEST. It previously pinned getOctave() as KNOWN-DEFECTIVE on the
-// setOctave() mutation path: getOctave() was the last method taking a NUMBER out of
-// computeSoundingPitch()'s scale lookup, and that lookup's octave-wrap check never fired for
-// these transpositions, so all three cases answered "the written octave, unchanged".
+// getOctave() is the sounding octave: one BELOW the written octave for the clarinet and the horn,
+// one ABOVE for the piccolo, and in each case it agrees with getSoundingOctave(), which is
+// arithmetic:
 //
-//   case                         getOctave() before   after (correct)
-//   B-flat clarinet  C#4 -1/-2           4                   3
-//   horn in F        F#4 -4/-7           4                   3
-//   piccolo          C4  +7/+12          4                   5
+//   case                         getOctave()
+//   B-flat clarinet  C#4 -1/-2       3
+//   horn in F        F#4 -4/-7       3
+//   piccolo          C4  +7/+12      5
 //
-// The correct answer is the sounding octave: one BELOW written for the clarinet and the horn, one
-// ABOVE for the piccolo. That is what getSoundingOctave() (arithmetic since Task 6) has returned
-// all along, and it is asserted alongside each case here -- the two now agree, which is the point
-// of the fix. The old comment recorded the correct values and named Task 10 as the owner; this is
-// that correction.
-//
-// What this test still guards is CONSISTENCY ACROSS THE MUTATION PATH: setOctave() called with
-// the note's OWN current octave (4) is a no-op value, so getOctave() must answer the same thing
-// before and after it. d26aa67 was history-dependent exactly here -- constructing a transposed
-// note reported one octave, then re-setting that same octave reported another -- and nothing may
-// reintroduce that.
+// What this test guards is CONSISTENCY ACROSS THE MUTATION PATH: setOctave() called with the
+// note's OWN current written octave (4) is a no-op value, so getOctave() must answer the same thing
+// before and after it. A transposed note must never report one octave when constructed and
+// another once that same octave is set again.
 TEST(NoteComposesPitch, GetOctaveIsUnchangedByASetOctaveNoOpOnATransposedNote) {
     // B-flat clarinet: written C#4 sounds a major second lower.
     {
         Note n("C#4", RhythmFigure::QUARTER, true, false, -1, -2);
         ASSERT_EQ(n.getOctave(), 3);  // construction path
         n.setOctave(4);               // no-op value: the note's own current WRITTEN octave
-        EXPECT_EQ(n.getOctave(), 3);  // Task 10: was 4
-        EXPECT_EQ(n.getSoundingOctave(), 3);  // arithmetic; now agrees with getOctave()
+        EXPECT_EQ(n.getOctave(), 3);
+        EXPECT_EQ(n.getSoundingOctave(), 3);  // arithmetic; agrees with getOctave()
         EXPECT_EQ(n.getMidiNumber(), 59);
-        EXPECT_EQ(n.getPitch(), "B3");  // Task 10: was "Bb3"
+        EXPECT_EQ(n.getPitch(), "B3");
     }
 
     // Horn in F: written F#4 sounds a perfect fifth lower.
@@ -1449,10 +1371,10 @@ TEST(NoteComposesPitch, GetOctaveIsUnchangedByASetOctaveNoOpOnATransposedNote) {
         Note n("F#4", RhythmFigure::QUARTER, true, false, -4, -7);
         ASSERT_EQ(n.getOctave(), 3);
         n.setOctave(4);
-        EXPECT_EQ(n.getOctave(), 3);  // Task 10: was 4
+        EXPECT_EQ(n.getOctave(), 3);
         EXPECT_EQ(n.getSoundingOctave(), 3);
         EXPECT_EQ(n.getMidiNumber(), 59);
-        EXPECT_EQ(n.getPitch(), "B3");  // Task 10: was "F3"
+        EXPECT_EQ(n.getPitch(), "B3");
     }
 
     // Piccolo: written C4 sounds an octave higher.
@@ -1460,19 +1382,15 @@ TEST(NoteComposesPitch, GetOctaveIsUnchangedByASetOctaveNoOpOnATransposedNote) {
         Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
         ASSERT_EQ(n.getOctave(), 5);
         n.setOctave(4);
-        EXPECT_EQ(n.getOctave(), 5);  // Task 10: was 4
+        EXPECT_EQ(n.getOctave(), 5);
         EXPECT_EQ(n.getSoundingOctave(), 5);
         EXPECT_EQ(n.getMidiNumber(), 72);
         EXPECT_EQ(n.getPitch(), "C5");
     }
 }
 
-// Task 10, section H: a quarter-tone written pitch on a transposing instrument used to throw a
-// bare LOG_ERROR("Unknown note type") -- loud, but naming neither the pitch class nor the interval
-// -- because computeSoundingPitch()'s four twelve-entry scales had no entry for "C1x" and the
-// lookup fell through every branch. With the lookup deleted the case simply works: the sounding
-// position is the written position plus the chromatic interval, quarter tone and all. Verifies
-// that no throw remains on that path, which is what section H asked for.
+// A quarter-tone written pitch on a transposing instrument sounds like any other: the sounding
+// position is the written position plus the chromatic interval, quarter tone and all.
 TEST(NoteComposesPitch, QuarterTonePitchOnATransposingInstrumentSoundsInsteadOfThrowing) {
     // B-flat clarinet: written C1x4 (exactly 60.5) sounds a major second lower, 58.5.
     const Note n("C1x4", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
@@ -1487,28 +1405,19 @@ TEST(NoteComposesPitch, QuarterTonePitchOnATransposingInstrumentSoundsInsteadOfT
     EXPECT_EQ(n.getMidiNumber(), 59);
 }
 
-// Fix round 5, finding F1 -- a Task 6 REGRESSION, therefore FIXED here (not backlog).
-//
 // setIsNoteOn(false) turns a note into a rest but deliberately does not clear its transposing
-// intervals, so isTransposed() stays true. Before the fix, getSoundingPitch() still took its
-// transposition branch and concatenated the pitch CLASS ("rest") with the octave (-2), yielding
-// the malformed string "rest-2" -- not a valid pitch, and rejected by every Note constructor.
+// intervals, so isTransposed() stays true. getSoundingPitch() answers "rest" for it through a rest
+// guard at its top, ahead of the transposition branch, which would otherwise compose the pitch
+// CLASS ("rest") with an octave into a malformed string such as "rest-2", not a valid pitch and
+// rejected by every Note constructor. The sibling getters are covered too:
+// computeSoundingPitch() returns early for a rest, toXML() emits its pitch block only under
+// isNoteOn(), and getWrittenPitch() delegates to Pitch::getPitch(), which guards rest itself.
 //
-// Baseline measurement that made this ours: a d26aa67 worktree produced NO malformed pitch
-// string anywhere (0 occurrences across an 864-cell probe; HEAD had 16), so Task 6 introduced
-// it. Fixed by a rest guard at the top of getSoundingPitch(), ahead of the transposition
-// branch, so every route in is covered rather than just the concatenation site. An audit of the
-// sibling getters found no second hole: computeSoundingPitch() returns early for a rest,
-// toXML() emits its pitch block only under isNoteOn(), and getWrittenPitch() delegates to
-// Pitch::getPitch(), which guards rest itself.
-//
-// The fix deliberately does NOT restore d26aa67's value. The baseline answered the note's STALE
-// sounding pitch here ("Bb3" for the clarinet, "C5" for the piccolo) because its
-// setIsNoteOn(false) only flipped a bool and left the pitch fields behind -- exactly the
-// staleness Task 6 exists to close, already pinned by T2. "rest" is the correct answer, and is
-// what the untransposed case and setPitch("rest") have always returned on both sides.
+// "rest" is the correct answer, and what the untransposed case and setPitch("rest") return. It is
+// not the note's former sounding pitch ("Bb3" for the clarinet, "C5" for the piccolo): a rest has
+// none.
 TEST(NoteComposesPitch, GetPitchIsWellFormedRestForTransposedNoteTurnedOff) {
-    // B-flat clarinet, horn in F and piccolo: every transposing case produced "rest-2" before.
+    // B-flat clarinet, horn in F and piccolo.
     const std::vector<std::pair<std::string, std::pair<int, int>>> transposed = {
         {"C#4", {-1, -2}}, {"F#4", {-4, -7}}, {"C4", {7, 12}}};
 
@@ -1526,7 +1435,7 @@ TEST(NoteComposesPitch, GetPitchIsWellFormedRestForTransposedNoteTurnedOff) {
         EXPECT_EQ(n.getMidiNumber(), -1) << "pitch: " << c.first;
     }
 
-    // Untransposed control: unchanged by the fix, and already correct on both sides.
+    // Untransposed control.
     Note control("C4");
     control.setIsNoteOn(false);
     EXPECT_FALSE(control.isTransposed());
@@ -1562,43 +1471,35 @@ TEST(NoteComposesPitch, GetSoundingOctaveOfANoteBelowTheFloorThrowsInsteadOfAnsw
         << message;
 }
 
-// Task 11, section N: Helper::steps2pitch() treated every negative position as below MIDI 0,
-// including -0.5 -- which rounds, ties upward, to MIDI 0 and is "C1b-1". A written "C1x-1" (0.5)
-// on an instrument sounding a semitone lower sounds exactly -0.5, so its sounding pitch CLASS came
-// back as "rest" while its MIDI number was 0, and getSoundingPitch() glued the two into the
-// malformed string "rest-1" (measured at HEAD 9051bb8) -- the shape Task 6's fix round 5 removed.
+// A written "C1x-1" (0.5) on an instrument sounding a semitone lower sounds exactly -0.5, which
+// rounds, ties upward, to MIDI 0 and is "C1b-1": a real pitch, not one below MIDI 0. Its sounding
+// pitch class, octave and MIDI number must all describe it; a sounding pitch class of "rest"
+// beside MIDI 0 would compose the malformed string "rest-1".
 TEST(NoteComposesPitch, SoundingPitchOnTheLowestQuarterToneIsWellFormedNotRestMinus1) {
     const Note n("C1x-1", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
                  /*transposeDiatonic=*/-1, /*transposeChromatic=*/-1);
     EXPECT_EQ(n.getMidiNumber(), 0);
-    EXPECT_EQ(n.getSoundingPitch(), "C1b-1");  // was "rest-1"
+    EXPECT_EQ(n.getSoundingPitch(), "C1b-1");  // not "rest-1"
     EXPECT_EQ(n.getSoundingPitchClass(), "C1b");
-    EXPECT_EQ(n.getOctave().value_or(-99), -1);  // was empty, disagreeing with the line below
+    EXPECT_EQ(n.getOctave().value_or(-99), -1);  // agrees with the line below
     EXPECT_EQ(n.getSoundingOctave().value_or(-99), -1);
 }
 
-// Fix round 5, finding F2 -- was PINNED AS DEFECTIVE; Task 6b closes it, on both halves the
-// controller identified (section L of the Task 6b brief):
-//   1. THE SENTINEL: getOctave() on a rest used to answer the numeric -2 sentinel, which is
-//      itself outside Pitch's valid octave range (-1..11), so writing it straight back into
-//      setOctave() hit the range check and threw. That sentinel is gone: getOctave() now
-//      answers an empty std::optional<int>, which cannot be fed to setOctave(int) at all --
-//      the round trip this test used to pin is no longer expressible, let alone hazardous.
-//   2. THE CHECK ORDER (section K): independently of (1), Pitch::setOctave() ran its
-//      throwing range check BEFORE its refuse-on-rest warning, so a rest handed ANY
-//      out-of-range octave -- not just the old -2 sentinel -- was validated as though it had
-//      one and threw. The rest check now runs first: an operation that is inapplicable to a
-//      rest is inapplicable whatever the argument.
-// This test now pins the CORRECTED behaviour: a rest given an out-of-range octave (including
-// the literal old sentinel value, -2) warns and does not mutate, on both Note and its own
-// terms, while a genuine out-of-range octave on a real (non-rest) pitch still throws --
-// unchanged, and still exercised independently by Pitch.setOctaveRejectsOutOfRange /
-// note-test.cpp's own in-range-on-rest test (T7).
+// A rest given an out-of-range octave warns and does not mutate, while a genuine out-of-range
+// octave on a real (non-rest) pitch still throws. Two properties make that so:
+//   1. getOctave() on a rest answers an empty std::optional<int>, not a numeric sentinel, so
+//      there is no out-of-range value to write straight back into setOctave(int).
+//   2. Pitch::setOctave() runs its refuse-on-rest check BEFORE its throwing range check: an
+//      operation that is inapplicable to a rest is inapplicable whatever the argument, so a rest
+//      handed ANY out-of-range octave warns.
+// The in-range case on a rest is SetOctaveOnRestRefusesAndWarns; an out-of-range octave on a real
+// pitch is also Pitch.setOctaveRejectsOutOfRange.
 TEST(NoteComposesPitch, SetOctaveOutOfRangeOnRestWarnsAndDoesNotThrow) {
     Note n("rest");
-    ASSERT_FALSE(n.getOctave().has_value());  // no sentinel to round-trip any more
+    ASSERT_FALSE(n.getOctave().has_value());  // no sentinel to round-trip
 
-    // The literal old sentinel value, handed directly to setOctave(): must warn, not throw.
+    // -2, the nearest out-of-range octave below, handed directly to setOctave(): must warn, not
+    // throw.
     EXPECT_NO_THROW(n.setOctave(-2));
     EXPECT_TRUE(n.isNoteOff());  // nothing was mutated by the refused call
     EXPECT_FALSE(n.getOctave().has_value());
@@ -1609,14 +1510,15 @@ TEST(NoteComposesPitch, SetOctaveOutOfRangeOnRestWarnsAndDoesNotThrow) {
     EXPECT_TRUE(n.isNoteOff());
     EXPECT_FALSE(n.getOctave().has_value());
 
-    // Control 1: an in-range octave on the same rest also refuses with a warning (T7's pinned
-    // policy) -- rest-ness alone is sufficient to refuse, regardless of range.
+    // Control 1: an in-range octave on the same rest also refuses with a warning
+    // (SetOctaveOnRestRefusesAndWarns's policy) -- rest-ness alone is sufficient to refuse,
+    // regardless of range.
     EXPECT_NO_THROW(n.setOctave(5));
     EXPECT_FALSE(n.getOctave().has_value());
 
     // Control 2: the range check is still alive and still throws for a genuine out-of-range
-    // octave on a real (non-rest) pitch -- section K only reorders the two checks, it does not
-    // remove or weaken either one.
+    // octave on a real (non-rest) pitch: the rest check runs first, but neither check is removed
+    // or weakened.
     Note sounding("C4");
     EXPECT_THROW(sounding.setOctave(-2), std::runtime_error);
     EXPECT_EQ(sounding.getOctave(), 4);
@@ -1625,14 +1527,12 @@ TEST(NoteComposesPitch, SetOctaveOutOfRangeOnRestWarnsAndDoesNotThrow) {
 }
 
 // =====================================================================================
-// MUSICXML WRITE -- ALTER AND ACCIDENTAL (Task 8)
+// MUSICXML WRITE -- ALTER AND ACCIDENTAL
 // =====================================================================================
 
-// The round trip this task exists to fix: before it, Note::toXML() truncated the written
-// alter to an int, so a quarter tone silently lost its accidental on write
-// (<alter>0</alter>, no <accidental> element at all). It now writes the real float alter and
-// the matching Tartini <accidental> name (the name itself was already wired up in Task 7;
-// this pins it reaching the live write path).
+// Note::toXML() writes a quarter tone's alter with its decimal part and adds the matching Tartini
+// <accidental> name, so the quarter tone survives the write: an alter truncated to an int would
+// write <alter>0</alter>, a natural.
 TEST(NoteToXML, QuarterSharpWritesFractionalAlterAndTartiniAccidental) {
     const std::string xml = Note("C1x4").toXML();
     EXPECT_NE(xml.find("<alter>0.5</alter>"), std::string::npos) << xml;
@@ -1665,22 +1565,17 @@ TEST(NoteToXML, AllFourQuarterTonesWriteMatchingAlterAndAccidental) {
     }
 }
 
-// Whole-tone (integer) alters must NOT gain the decimal formatting a naive fractional
-// formatter would apply universally (e.g. "1.0"/"-2.0"), and must never regress to
-// std::to_string(float)'s six decimals either ("1.000000"). Addendum section D: without this
-// rule, the first re-export of any existing score produces a false diff on every integer
-// alter in the file. Measured against genuine accidentals (sharp, double-flat) so <alter> is
-// actually emitted -- a natural has no accidental symbol and emits no <alter> at all (see
+// Integer alters must NOT gain the decimal formatting a naive fractional formatter would apply
+// universally (e.g. "1.0"/"-2.0"), nor std::to_string(float)'s six decimals ("1.000000"): the
+// first re-export of any existing score would then produce a false diff on every integer alter in
+// the file. Checked with genuine accidentals (sharp, double-flat) so <alter> is actually emitted
+// -- a natural has no accidental symbol and emits no <alter> at all (see
 // NoAccidentalPitchWritesNeitherAlterNorAccidental below).
 //
-// Fix round 1: this test used to also assert <accidental> WAS present for these two notes.
-// That was wrong -- a controller review caught it (see the note.cpp comment at the
-// <accidental> guard): a semitone accidental can be implied entirely by the key signature
-// (e.g. an F# in D major needs only <alter>1</alter>, no glyph), so <accidental> must be
-// reserved for alters a key signature cannot express -- i.e. quarter tones only. This now
-// pins the corrected behaviour: <alter> unchanged, <accidental> ABSENT for a whole-tone
-// accidental. This is also the "plain #" case the fix-round-1 instruction asked to pin
-// explicitly.
+// <accidental> is ABSENT for these two notes: a semitone accidental can be implied entirely by the
+// key signature (e.g. an F# in D major needs only <alter>1</alter>, no glyph), so <accidental> is
+// reserved for alters a key signature cannot express -- quarter tones only (see the note.cpp
+// comment at the <accidental> guard).
 TEST(NoteToXML, IntegerAlterWritesWithoutDecimalPart) {
     const std::string sharp = Note("C#4").toXML();
     EXPECT_NE(sharp.find("<alter>1</alter>"), std::string::npos) << sharp;
@@ -1694,9 +1589,8 @@ TEST(NoteToXML, IntegerAlterWritesWithoutDecimalPart) {
 }
 
 // A natural pitch carries no accidental symbol (Pitch::getAlterSymbol() == ""), and its alter
-// (0.0) is also not fractional, so it must continue to emit neither <alter> nor <accidental>
-// -- unchanged from before this task under either guard. Measured here so a future change to
-// either guard condition cannot silently start writing a spurious natural.
+// (0.0) is not fractional, so it emits neither <alter> nor <accidental>. Pinned so that a change
+// to either guard condition cannot silently start writing a spurious natural.
 TEST(NoteToXML, NoAccidentalPitchWritesNeitherAlterNorAccidental) {
     const std::string xml = Note("C4").toXML();
     EXPECT_EQ(xml.find("<alter>"), std::string::npos) << xml;
@@ -1704,8 +1598,8 @@ TEST(NoteToXML, NoAccidentalPitchWritesNeitherAlterNorAccidental) {
 }
 
 // The unpitched (percussion) branch is a separate code path in Note::toXML() from the pitched
-// one and nothing previously exercised its <alter>/<accidental> output. Same fractional-alter
-// and Tartini-accidental fix, measured independently.
+// one, so its <alter>/<accidental> output is checked on its own: the same decimal alter and
+// Tartini accidental.
 TEST(NoteToXML, UnpitchedBranchWritesFractionalAlterAndAccidental) {
     Note note("C1x4");
     note.setIsPitched(false);
@@ -1717,13 +1611,11 @@ TEST(NoteToXML, UnpitchedBranchWritesFractionalAlterAndAccidental) {
     EXPECT_NE(xml.find("<display-octave>4</display-octave>"), std::string::npos) << xml;
 }
 
-// <accidental> lands where addendum section E requires: immediately after <type> and before
-// <time-modification>. This also MEASURES (without fixing -- section F, not this task's to
-// fix) the pre-existing inversion of <dot> and <time-modification>: the MusicXML schema wants
-// `type?, dot*, accidental?, time-modification?, stem?`, but this library emits
-// type, [accidental], time-modification, dot, stem. That inversion predates this task; this
-// test only pins where <accidental> sits relative to it, not that the relative order of the
-// other two is correct.
+// <accidental> lands immediately after <type> and before <time-modification>. The library emits
+// <time-modification> before <dot>, although the MusicXML schema wants
+// `type?, dot*, accidental?, time-modification?, stem?`: a known inversion of those two elements.
+// This test pins where <accidental> sits relative to them, not that their relative order is
+// correct.
 TEST(NoteToXML, AccidentalPositionedAfterTypeAndBeforeTimeModification) {
     Note note("C1x4");
     note.setDuration(1.5f);  // adds one augmentation dot
@@ -1744,18 +1636,17 @@ TEST(NoteToXML, AccidentalPositionedAfterTypeAndBeforeTimeModification) {
 
     EXPECT_LT(typePos, accidentalPos) << xml;
     EXPECT_LT(accidentalPos, timeModPos) << xml;
-    // Pre-existing, not this task's to fix (addendum section F): <time-modification> still
-    // precedes <dot> here, though the schema orders dot* before time-modification?. Recorded,
-    // not corrected.
+    // The known inversion: <time-modification> precedes <dot> here, though the schema orders
+    // dot* before time-modification?. Recorded, not corrected.
     EXPECT_LT(timeModPos, dotPos) << xml;
 }
 
 // ===================================================================================================
-// TASK 9: QUARTER-TONE PREDICATE AND ROUNDING ON Note
+// QUARTER-TONE PREDICATE AND ROUNDING ON Note
 //
-// Thin delegations to the already-tested Pitch behaviour, added so that the Chord and Interval
-// analysis guards, and Chord::roundQuarterTones(), can ask a Note about its accidental without
-// re-implementing the rounding rule (or re-parsing the pitch string) at each site.
+// Thin delegations to the Pitch behaviour, so that the Chord and Interval analysis guards, and
+// Chord::roundQuarterTones(), can ask a Note about its accidental without re-implementing the
+// rounding rule (or re-parsing the pitch string) at each site.
 // ===================================================================================================
 
 TEST(NoteIsQuarterTone, TrueOnlyForFractionalAlters) {

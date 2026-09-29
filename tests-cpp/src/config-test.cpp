@@ -2,13 +2,11 @@
 
 #include <gtest/gtest.h>
 
-// REVIEW ROUND 1 (task-3-review.md I4) — this suite has no fixture and no TearDown, and 10 of
-// its 14 tests end on a non-default tuning system; the global tuning system is process-wide
-// state (config.cpp), and tests-cpp/CMakeLists.txt links this file immediately before
-// pitch-test.cpp, so whatever this suite leaves behind was silently inherited there. The fixture
-// below resets EQUAL_TEMPERAMENT after every test in this suite, regardless of execution or
-// --gtest_shuffle order, so no later test file (this one, or a future one -- Task 6 makes
-// Note::getFrequency() read this same global) can observe a state this suite changed.
+// The global tuning system is process-wide state (config.cpp), and most tests in this suite end
+// on a non-default tuning system. The fixture below resets EQUAL_TEMPERAMENT after every test in
+// this suite, regardless of execution or --gtest_shuffle order, so no other test in the binary
+// can observe a state this suite changed: Pitch::getFrequency() and Pitch::setFrequency(), for
+// one, refuse any tuning system but EQUAL_TEMPERAMENT.
 class ConfigTuningSystem : public ::testing::Test {
    protected:
     void TearDown() override { setTuningSystem(TuningSystem::EQUAL_TEMPERAMENT); }
@@ -18,12 +16,11 @@ class ConfigTuningSystem : public ::testing::Test {
 // Initial State Tests
 // ============================================================================
 
-// REVIEW ROUND 1 (task-3-review.md I4) — this used to call setTuningSystem(EQUAL_TEMPERAMENT)
-// immediately before asserting it, so it could not detect a wrong default; it always passed
-// regardless of what config.cpp actually initialises _tuningSystem to. The fixture's TearDown
-// above now guarantees every test in this suite starts from EQUAL_TEMPERAMENT (reset by
-// whichever test ran before it, or by config.cpp's own static initialiser if this is the first),
-// so asserting the current value directly, with no reset of its own, is a meaningful check again.
+// Asserts the current value directly, with no reset of its own, so a wrong default in config.cpp
+// is detectable (setting EQUAL_TEMPERAMENT just before asserting it would pass whatever the
+// default is). The fixture's TearDown above guarantees every test in this suite starts from
+// EQUAL_TEMPERAMENT: reset by whichever test ran before it, or by config.cpp's own static
+// initialiser if this is the first.
 TEST_F(ConfigTuningSystem, DefaultIsEqualTemperament) {
     EXPECT_EQ(getTuningSystem(), TuningSystem::EQUAL_TEMPERAMENT);
 }
