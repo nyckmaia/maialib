@@ -101,6 +101,19 @@ void checkSoundingPitch(const Pitch& writtenPitch, const int transposeDiatonic,
     }
 }
 
+// Applies 'change' to a copy of 'writtenPitch' and checks the resulting sounding pitch with the
+// transposing interval before storing it, as Note::setPitch() does for a whole pitch: a change
+// whose sounding pitch cannot be spelled throws with the note unchanged. A change the Pitch setter
+// refuses with a warning leaves the copy, and so the note, as it was.
+template <typename Change>
+void changeWrittenPitch(Pitch& writtenPitch, const int transposeDiatonic,
+                        const int transposeChromatic, Change change) {
+    Pitch changed = writtenPitch;
+    change(changed);
+    checkSoundingPitch(changed, transposeDiatonic, transposeChromatic);
+    writtenPitch = changed;
+}
+
 // Formats a pitch alter value for the MusicXML <alter> element: a whole-tone accidental with no
 // decimal part ("1", "-2"), a quarter tone with exactly one decimal place ("0.5", "-1.5"). The
 // text is looked up by accidental symbol rather than formatted through a stream, so it never
@@ -296,17 +309,24 @@ void Note::setUnpitchedIndex(const int unpitchedIndex) { _unpitchedIndex = unpit
 
 int Note::getUnpitchedIndex() const { return _unpitchedIndex; }
 
+// The partial pitch setters delegate to Pitch's and inherit their policies, on a copy of the
+// written pitch whose sounding pitch is checked before it is stored (changeWrittenPitch()).
+// Nothing derived from the pitch is stored: the MIDI number and every sounding getter follow it.
 void Note::setPitchClass(const std::string& pitchClass) {
-    // Delegates to Pitch::setPitchClass() and inherits its policy: replaces step + alter,
-    // keeping the current octave (or defaulting it to 4 if this note was a rest). The MIDI
-    // number is no longer a stored field, so it is automatically correct on the next
-    // getMidiNumber() call -- closing the stale-MIDI defect this used to carry (Step 1's test).
-    _writtenPitch.setPitchClass(pitchClass);
+    // Replaces the step and alter, keeping the octave (or defaulting it to 4 on a rest).
+    changeWrittenPitch(_writtenPitch, _transposeDiatonic, _transposeChromatic,
+                       [&pitchClass](Pitch& pitch) { pitch.setPitchClass(pitchClass); });
 }
 
-void Note::setStep(const std::string& step) { _writtenPitch.setStep(step); }
+void Note::setStep(const std::string& step) {
+    changeWrittenPitch(_writtenPitch, _transposeDiatonic, _transposeChromatic,
+                       [&step](Pitch& pitch) { pitch.setStep(step); });
+}
 
-void Note::setAlter(const float alter) { _writtenPitch.setAlter(alter); }
+void Note::setAlter(const float alter) {
+    changeWrittenPitch(_writtenPitch, _transposeDiatonic, _transposeChromatic,
+                       [alter](Pitch& pitch) { pitch.setAlter(alter); });
+}
 
 void Note::roundToSemitone() { _writtenPitch.roundToSemitone(); }
 
@@ -317,9 +337,10 @@ bool Note::isPitched() const { return _isPitched; }
 std::string Note::getPitchClass() const { return getSoundingPitchClass(); }
 
 void Note::setOctave(const int octave) {
-    // Delegates to Pitch::setOctave() and inherits its policy: refuses on a rest (LOG_WARN, no
-    // mutation) instead of writing a fabricated octave onto one.
-    _writtenPitch.setOctave(octave);
+    // Pitch::setOctave() refuses on a rest (LOG_WARN, no change) instead of writing a fabricated
+    // octave onto one.
+    changeWrittenPitch(_writtenPitch, _transposeDiatonic, _transposeChromatic,
+                       [octave](Pitch& pitch) { pitch.setOctave(octave); });
 }
 
 std::optional<int> Note::getOctave() const {

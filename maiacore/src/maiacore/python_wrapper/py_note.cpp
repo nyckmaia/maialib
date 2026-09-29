@@ -103,6 +103,11 @@ void NoteClass(const py::module& m) {
         A rest has no octave to keep, so it becomes a note in octave 4. The transposing interval
         is kept, and the MIDI number and every other getter follow the new pitch.
 
+        On a transposing instrument the change is checked the way ``setPitch`` checks a whole
+        pitch: if the written pitch it gives would sound above ``"Bx11"``, or where it cannot be
+        spelled within octaves -1 to 11, it raises and the note is left unchanged. A sounding
+        pitch below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
+
         Parameters
         ----------
         pitchClass : str
@@ -113,7 +118,9 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If the pitch class is invalid, or the pitch it gives lies below MIDI note 0 (e.g.
-            ``"Cb"`` on a ``C-1``).
+            ``"Cb"`` on a ``C-1``), or if its sounding pitch lies above the representable range
+            or cannot be spelled -- the error ``setPitch`` raises for that pitch. The note is
+            then left unchanged.
 
         Examples
         --------
@@ -138,6 +145,11 @@ void NoteClass(const py::module& m) {
         ``getOctave()`` afterwards reports the same octave a note constructed with that pitch
         would.
 
+        On a transposing instrument the change is checked the way ``setPitch`` checks a whole
+        pitch: if the written pitch it gives would sound above ``"Bx11"``, or where it cannot be
+        spelled within octaves -1 to 11, it raises and the note is left unchanged. A sounding
+        pitch below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
+
         Parameters
         ----------
         octave : int
@@ -148,7 +160,9 @@ void NoteClass(const py::module& m) {
         TypeError
             If ``octave`` is not an int -- e.g. None, which ``getOctave()`` returns for a rest.
         RuntimeError
-            If the note is not a rest and ``octave`` lies outside -1 to 11.
+            If the note is not a rest and ``octave`` lies outside -1 to 11, or if the sounding
+            pitch the change gives lies above the representable range or cannot be spelled --
+            the error ``setPitch`` raises for that pitch. The note is then left unchanged.
 
         Examples
         --------
@@ -167,6 +181,11 @@ void NoteClass(const py::module& m) {
         that would move it below MIDI note 0 is refused: a warning is printed and the note is
         left unchanged.
 
+        On a transposing instrument the change is checked the way ``setPitch`` checks a whole
+        pitch: if the written pitch it gives would sound above ``"Bx11"``, or where it cannot be
+        spelled within octaves -1 to 11, it raises and the note is left unchanged. A sounding
+        pitch below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
+
         Parameters
         ----------
         step : str
@@ -175,7 +194,9 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If step is not one of "A" to "G".
+            If step is not one of "A" to "G", or if the sounding pitch the change gives lies
+            above the representable range or cannot be spelled -- the error ``setPitch`` raises
+            for that pitch. The note is then left unchanged.
     )pbdoc");
     cls.def("setAlter", &Note::setAlter, py::arg("alter"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
@@ -188,6 +209,11 @@ void NoteClass(const py::module& m) {
         left unchanged. The value must be exactly a multiple of 0.5: one merely close to it,
         such as 0.99996, is rejected rather than rounded.
 
+        On a transposing instrument the change is checked the way ``setPitch`` checks a whole
+        pitch: if the written pitch it gives would sound above ``"Bx11"``, or where it cannot be
+        spelled within octaves -1 to 11, it raises and the note is left unchanged. A sounding
+        pitch below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
+
         Parameters
         ----------
         alter : float
@@ -198,7 +224,9 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If alter is NaN or infinite, is not exactly a multiple of 0.5, or is outside
-            [-2, 2].
+            [-2, 2], or if the sounding pitch the change gives lies above the representable
+            range or cannot be spelled -- the error ``setPitch`` raises for that pitch. The note
+            is then left unchanged.
     )pbdoc");
     cls.def("setDuration", py::overload_cast<const Duration&>(&Note::setDuration),
             py::arg("duration"));

@@ -109,14 +109,41 @@ class Note {
     // ===== SETTERS ===== //
 
     /**
-     * @brief Sets the pitch class (e.g., "C", "D#", "Bb") for the note.
+     * @brief Sets the pitch class (e.g., "C", "D#", "Bb") of the written pitch, keeping its
+     *        octave.
+     * @details Delegates to Pitch::setPitchClass() and inherits its policy: on a rest, which has
+     *          no octave to keep, the octave defaults to 4.
+     *
+     *          The change is made on a copy of the written pitch, whose sounding pitch is checked
+     *          with the transposing interval before it is stored, as setPitch() checks a whole
+     *          pitch: a sounding pitch above the representable range, or one that cannot be
+     *          spelled within octaves -1..11, throws with the note unchanged. A sounding pitch
+     *          below the lowest representable pitch, C1b-1, is accepted, as setPitch() accepts
+     *          it.
      * @param pitchClass The pitch class string.
+     * @throws std::runtime_error If the pitch class is invalid or the pitch lies below MIDI note 0
+     *         (see Helper::splitPitch()), or if the sounding pitch the change gives lies above the
+     *         representable range or cannot be spelled within octaves -1..11 (the same error
+     *         setPitch() raises for that pitch). The note is then left unchanged.
      */
     void setPitchClass(const std::string& pitchClass);
 
     /**
-     * @brief Sets the octave for the note.
-     * @param octave Octave number.
+     * @brief Sets the octave of the written pitch, keeping its step and accidental.
+     * @details Delegates to Pitch::setOctave() and inherits its policy: refuses on a rest, and
+     *          when the pitch would fall below MIDI note 0 (LOG_WARN, no change).
+     *
+     *          The change is made on a copy of the written pitch, whose sounding pitch is checked
+     *          with the transposing interval before it is stored, as setPitch() checks a whole
+     *          pitch: a sounding pitch above the representable range, or one that cannot be
+     *          spelled within octaves -1..11, throws with the note unchanged. A sounding pitch
+     *          below the lowest representable pitch, C1b-1, is accepted, as setPitch() accepts
+     *          it.
+     * @param octave Octave number, within [-1, 11].
+     * @throws std::runtime_error If octave is outside [-1, 11] on a note, or if the sounding pitch
+     *         the change gives lies above the representable range or cannot be spelled within
+     *         octaves -1..11 (the same error setPitch() raises for that pitch). The note is then
+     *         left unchanged.
      */
     void setOctave(int octave);
 
@@ -124,22 +151,42 @@ class Note {
      * @brief Sets the diatonic step of the written pitch, keeping the current accidental and
      *        octave.
      * @details Delegates to Pitch::setStep() and inherits its policy: permissive on a rest,
-     *          resurrecting it into a note with the octave defaulted to 4.
+     *          resurrecting it into a note with the octave defaulted to 4, and refusing a step
+     *          that would move the pitch below MIDI note 0 (LOG_WARN, no change).
+     *
+     *          The change is made on a copy of the written pitch, whose sounding pitch is checked
+     *          with the transposing interval before it is stored, as setPitch() checks a whole
+     *          pitch: a sounding pitch above the representable range, or one that cannot be
+     *          spelled within octaves -1..11, throws with the note unchanged. A sounding pitch
+     *          below the lowest representable pitch, C1b-1, is accepted, as setPitch() accepts
+     *          it.
      * @param step Diatonic step ("A".."G").
-     * @throws std::runtime_error If step is not one of "A".."G".
+     * @throws std::runtime_error If step is not one of "A".."G", or if the sounding pitch the
+     *         change gives lies above the representable range or cannot be spelled within octaves
+     *         -1..11 (the same error setPitch() raises for that pitch). The note is then left
+     *         unchanged.
      */
     void setStep(const std::string& step);
 
     /**
      * @brief Sets the accidental value (in semitones) of the written pitch.
-     * @details Delegates to Pitch::setAlter() and inherits its policy: refuses on a rest
-     *          (LOG_WARN, no mutation) since a bare alter value carries no octave to resurrect
-     *          one with. The alter must be exactly on the grid: a value near a multiple of 0.5,
-     *          such as 0.99996, is rejected rather than rounded.
+     * @details Delegates to Pitch::setAlter() and inherits its policy: refuses on a rest, since
+     *          a bare alter value carries no octave to resurrect one with, and when the pitch would
+     *          fall below MIDI note 0 (LOG_WARN, no change). The alter must be exactly on the grid:
+     *          a value near a multiple of 0.5, such as 0.99996, is rejected rather than rounded.
+     *
+     *          The change is made on a copy of the written pitch, whose sounding pitch is checked
+     *          with the transposing interval before it is stored, as setPitch() checks a whole
+     *          pitch: a sounding pitch above the representable range, or one that cannot be
+     *          spelled within octaves -1..11, throws with the note unchanged. A sounding pitch
+     *          below the lowest representable pitch, C1b-1, is accepted, as setPitch() accepts
+     *          it.
      * @param alter Alter value; must be a multiple of 0.5 (a semitone or quarter-tone step),
      *        within [-2, 2].
      * @throws std::runtime_error If alter is NaN or infinite, is not a multiple of 0.5, or is
-     *         outside [-2, 2].
+     *         outside [-2, 2], or if the sounding pitch the change gives lies above the
+     *         representable range or cannot be spelled within octaves -1..11 (the same error
+     *         setPitch() raises for that pitch). The note is then left unchanged.
      */
     void setAlter(float alter);
 

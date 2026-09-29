@@ -2075,3 +2075,119 @@ TEST(NoteMutatorThatThrows, setTupleValuesLeavesTheNoteUnchanged) {
     EXPECT_EQ(note.getDuration().getTimeModificationActualNotes(), 3);
     EXPECT_EQ(note.getDuration().getTimeModificationNormalNotes(), 2);
 }
+
+// ===== The partial pitch setters check the sounding pitch as setPitch() does ===== //
+
+namespace {
+// The first line of what setPitch(pitch) throws on a copy of 'note': the error a partial setter
+// giving the same written pitch must raise.
+std::string setPitchRejection(const Note& note, const std::string& pitch) {
+    Note copy = note;
+    return thrownFirstLine([&] { copy.setPitch(pitch); });
+}
+
+// The error for a sounding pitch at 'midiNumber', which no default spelling within octaves -1..11
+// reaches.
+std::string cannotSpell(const int midiNumber) {
+    return "[maiacore] The MIDI Note '" + std::to_string(midiNumber) +
+           "' cannot be written using '' accident type within octaves -1..11";
+}
+
+// A note whose sounding pitch is below the lowest representable pitch: every sounding getter
+// raises, naming the condition.
+void expectSoundingBelowTheFloor(const Note& note) {
+    const std::string message = thrownFirstLine([&] { note.getPitch(); });
+    EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
+        << message;
+}
+}  // namespace
+
+// C11 on a (1, 3) instrument sounds D#11; as A11 it would sound at 156, which has no spelling.
+TEST(NoteMutatorThatThrows, setStepChecksTheSoundingPitchLikeSetPitch) {
+    Note note = transposedNote("C11", 1, 3);
+    const NoteState before = stateOf(note);
+    const std::string message = thrownFirstLine([&] { note.setStep("A"); });
+    EXPECT_EQ(message, cannotSpell(156));
+    EXPECT_EQ(message, setPitchRejection(note, "A11"));
+    EXPECT_EQ(stateOf(note), before);
+    EXPECT_EQ(note.getPitch(), "D#11");
+}
+
+TEST(NoteMutatorThatThrows, setPitchClassChecksTheSoundingPitchLikeSetPitch) {
+    Note note = transposedNote("C11", 1, 3);
+    const NoteState before = stateOf(note);
+    const std::string message = thrownFirstLine([&] { note.setPitchClass("A"); });
+    EXPECT_EQ(message, cannotSpell(156));
+    EXPECT_EQ(message, setPitchRejection(note, "A11"));
+    EXPECT_EQ(stateOf(note), before);
+    EXPECT_EQ(note.getPitch(), "D#11");
+}
+
+// B4 on a (1, 3) instrument sounds D5; as B11 it would sound at 158, above Bx11.
+TEST(NoteMutatorThatThrows, setOctaveChecksTheSoundingPitchLikeSetPitch) {
+    Note note = transposedNote("B4", 1, 3);
+    const NoteState before = stateOf(note);
+    const std::string message = thrownFirstLine([&] { note.setOctave(11); });
+    EXPECT_EQ(message, aboveTheRange("158.000000"));
+    EXPECT_EQ(message, setPitchRejection(note, "B11"));
+    EXPECT_EQ(stateOf(note), before);
+    EXPECT_EQ(note.getPitch(), "D5");
+}
+
+// A11 on a (1, 2) instrument sounds B11; as A#11 it would sound at 156, which has no spelling.
+TEST(NoteMutatorThatThrows, setAlterChecksTheSoundingPitchLikeSetPitch) {
+    Note note = transposedNote("A11", 1, 2);
+    const NoteState before = stateOf(note);
+    const std::string message = thrownFirstLine([&] { note.setAlter(1.0f); });
+    EXPECT_EQ(message, cannotSpell(156));
+    EXPECT_EQ(message, setPitchRejection(note, "A#11"));
+    EXPECT_EQ(stateOf(note), before);
+    EXPECT_EQ(note.getPitch(), "B11");
+}
+
+// A sounding pitch below the lowest representable pitch is still accepted, as setPitch() accepts
+// it: each setter stores the pitch, the note stays constructible, and its sounding getters report
+// the condition.
+TEST(NoteMutatorThatThrows, thePartialSettersStillAcceptASoundingPitchBelowTheFloor) {
+    Note byStep = transposedNote("D#-1", -1, -3);  // sounds C-1
+    byStep.setStep("C");                           // C#-1 sounds at -2
+    EXPECT_EQ(byStep.getWrittenPitch(), "C#-1");
+    expectSoundingBelowTheFloor(byStep);
+
+    Note byPitchClass = transposedNote("D#-1", -1, -3);
+    byPitchClass.setPitchClass("C#");
+    EXPECT_EQ(byPitchClass.getWrittenPitch(), "C#-1");
+    expectSoundingBelowTheFloor(byPitchClass);
+
+    Note byOctave = transposedNote("C#0", -7, -12);  // sounds Db-1
+    byOctave.setOctave(-1);                          // C#-1 sounds at -11
+    EXPECT_EQ(byOctave.getWrittenPitch(), "C#-1");
+    expectSoundingBelowTheFloor(byOctave);
+
+    Note byAlter = transposedNote("D-1", -1, -2);  // sounds C-1
+    byAlter.setAlter(-1.0f);                       // Db-1 sounds at -1
+    EXPECT_EQ(byAlter.getWrittenPitch(), "Db-1");
+    expectSoundingBelowTheFloor(byAlter);
+}
+
+// A rest keeps its transposing interval (setIsNoteOn(false) does not clear it), so the pitch that
+// setStep() or setPitchClass() gives it is checked with that interval too: B4 on a (0, 90)
+// instrument would sound at 161, above Bx11, so the rest stays a rest.
+TEST(NoteMutatorThatThrows, aRestIsNotGivenAPitchThatCannotSound) {
+    for (const bool byStep : {true, false}) {
+        Note rest = transposedNote("C4", 0, 90);  // sounds F#11
+        rest.setIsNoteOn(false);
+        const NoteState before = stateOf(rest);
+        const std::string message = thrownFirstLine([&] {
+            if (byStep) {
+                rest.setStep("B");
+            } else {
+                rest.setPitchClass("B");
+            }
+        });
+        EXPECT_EQ(message, aboveTheRange("161.000000")) << "byStep " << byStep;
+        EXPECT_EQ(stateOf(rest), before) << "byStep " << byStep;
+        EXPECT_TRUE(rest.isNoteOff());
+        EXPECT_EQ(rest.getTransposeChromatic(), 90);
+    }
+}

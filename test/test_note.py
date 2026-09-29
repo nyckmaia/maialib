@@ -668,6 +668,10 @@ ABOVE_THE_RANGE = (
     "range -0.5 (C1b-1) to 157 (Bx11)"
 )
 
+CANNOT_SPELL_156 = (
+    "[maiacore] The MIDI Note '156' cannot be written using '' accident type within octaves -1..11"
+)
+
 
 class NoteMutatorThatRaises(unittest.TestCase):
     """A Note mutator that raises leaves the note exactly as it was. Mirrors the C++
@@ -735,6 +739,91 @@ class NoteMutatorThatRaises(unittest.TestCase):
             note, "[maiacore] Unknown note type: garbage", note.setTupleValues, 5, 4, "garbage"
         )
         self.assertIn("<actual-notes>3</actual-notes>", note.toXML())
+
+    # The partial pitch setters check the resulting sounding pitch as setPitch() checks a whole
+    # pitch, and raise the error setPitch() raises for that pitch. Mirrors the C++
+    # NoteMutatorThatThrows.*ChecksTheSoundingPitchLikeSetPitch tests.
+    def assertChecksLikeSetPitch(self, make, pitch, message, mutator, *arguments):
+        reference = make()
+        with self.assertRaises(RuntimeError) as context:
+            reference.setPitch(pitch)
+        self.assertEqual(firstLine(context.exception), message)
+        note = make()
+        self.assertRaisesLeavingTheNote(note, message, getattr(note, mutator), *arguments)
+        return note
+
+    def testSetStepChecksTheSoundingPitchLikeSetPitch(self):
+        note = self.assertChecksLikeSetPitch(
+            lambda: ml.Note("C11", transposeDiatonic=1, transposeChromatic=3),
+            "A11",
+            CANNOT_SPELL_156,
+            "setStep",
+            "A",
+        )
+        self.assertEqual(note.getPitch(), "D#11")
+
+    def testSetPitchClassChecksTheSoundingPitchLikeSetPitch(self):
+        note = self.assertChecksLikeSetPitch(
+            lambda: ml.Note("C11", transposeDiatonic=1, transposeChromatic=3),
+            "A11",
+            CANNOT_SPELL_156,
+            "setPitchClass",
+            "A",
+        )
+        self.assertEqual(note.getPitch(), "D#11")
+
+    def testSetOctaveChecksTheSoundingPitchLikeSetPitch(self):
+        note = self.assertChecksLikeSetPitch(
+            lambda: ml.Note("B4", transposeDiatonic=1, transposeChromatic=3),
+            "B11",
+            ABOVE_THE_RANGE,
+            "setOctave",
+            11,
+        )
+        self.assertEqual(note.getPitch(), "D5")
+
+    def testSetAlterChecksTheSoundingPitchLikeSetPitch(self):
+        note = self.assertChecksLikeSetPitch(
+            lambda: ml.Note("A11", transposeDiatonic=1, transposeChromatic=2),
+            "A#11",
+            CANNOT_SPELL_156,
+            "setAlter",
+            1,
+        )
+        self.assertEqual(note.getPitch(), "B11")
+
+    def testThePartialSettersStillAcceptASoundingPitchBelowTheFloor(self):
+        for written, diatonic, chromatic, mutator, argument, result in (
+            ("D#-1", -1, -3, "setStep", "C", "C#-1"),
+            ("D#-1", -1, -3, "setPitchClass", "C#", "C#-1"),
+            ("C#0", -7, -12, "setOctave", -1, "C#-1"),
+            ("D-1", -1, -2, "setAlter", -1, "Db-1"),
+        ):
+            with self.subTest(mutator=mutator):
+                note = ml.Note(written, transposeDiatonic=diatonic, transposeChromatic=chromatic)
+                getattr(note, mutator)(argument)
+                self.assertEqual(note.getWrittenPitch(), result)
+                with self.assertRaises(RuntimeError) as context:
+                    note.getPitch()
+                self.assertIn(
+                    "below the lowest representable pitch C1b-1", firstLine(context.exception)
+                )
+
+    def testARestIsNotGivenAPitchThatCannotSound(self):
+        # A rest keeps its transposing interval: B4 on a (0, 90) instrument would sound at 161.
+        for mutator in ("setStep", "setPitchClass"):
+            with self.subTest(mutator=mutator):
+                rest = ml.Note("C4", transposeDiatonic=0, transposeChromatic=90)
+                rest.setIsNoteOn(False)
+                self.assertRaisesLeavingTheNote(
+                    rest,
+                    "[maiacore] Helper::steps2pitch: the pitch position '161.000000' is above "
+                    "the representable range -0.5 (C1b-1) to 157 (Bx11)",
+                    getattr(rest, mutator),
+                    "B",
+                )
+                self.assertTrue(rest.isNoteOff())
+                self.assertEqual(rest.getTransposeChromatic(), 90)
 
 
 if __name__ == "__main__":
