@@ -96,6 +96,41 @@ class Pitch {
                    bool enableQuarterToneRound = false);
 
     /**
+     * @brief Constructs a Pitch from its three components.
+     * @details Each component is validated the way setStep(), setAlter() and setOctave() reject
+     *          a malformed argument, and the pitch they spell must lie at or above the lowest
+     *          representable pitch, C1b-1 (MIDI note 0). The alter must be exactly on the
+     *          quarter-tone grid (isOnQuarterToneGrid(), utils.h): 0.99996 is rejected, not
+     *          rounded. It is stored canonically: -0.0 as +0.0.
+     * @param step Diatonic step ("A".."G").
+     * @param alter Accidental value in semitones: a multiple of 0.5 within [-2, 2] (e.g. 0.5 for
+     *        a quarter-tone sharp, -1.5 for three quarter tones flat).
+     * @param octave Octave number, within [-1, 11].
+     * @throws std::runtime_error If step is not one of "A".."G"; if alter is NaN or infinite, is
+     *         not a multiple of 0.5, or is outside [-2, 2]; if octave is outside [-1, 11]; or if
+     *         the pitch lies below MIDI note 0 (e.g. "C", -1, -1, which spells Cb-1). The
+     *         conditions are checked in that order.
+     */
+    explicit Pitch(const std::string& step, float alter, int octave);
+
+    /**
+     * @brief Compares two pitches by spelling: step, alter and octave.
+     * @details Spelling equality, not enharmonic equality: C#4 != Db4 although both are MIDI
+     *          note 61, and C1x4 != D3b4 although both lie at 60.5. Helper::isEnharmonic()
+     *          compares exact positions instead. Two rests are equal.
+     * @param other The pitch to compare with.
+     * @return True if both pitches have the same step, alter and octave, or both are rests.
+     */
+    bool operator==(const Pitch& other) const;
+
+    /**
+     * @brief Negation of operator==().
+     * @param other The pitch to compare with.
+     * @return True if the pitches differ in step, alter or octave, or only one is a rest.
+     */
+    bool operator!=(const Pitch& other) const;
+
+    /**
      * @brief Returns the highest MIDI number this class can spell.
      * @details A pure function -- it reads no instance state and has no side effects. "B" double-
      *          sharp at the top octave (c_maxPitchOctave); e.g. "Bx11". Factored out of
@@ -261,13 +296,19 @@ class Pitch {
     void setPitchClass(const std::string& pitchClass);
 
     /**
-     * @brief Replaces this Pitch's full state from a MIDI note number.
-     * @details Delegates to Helper::midiNote2pitch(), spelled with the natural/sharp default
-     *          accidental type.
+     * @brief Replaces this Pitch's full state from a MIDI note number, with an explicit
+     *        accidental type.
+     * @details Delegates to Helper::midiNote2pitch(), exactly as Pitch(int, accType) does, so the
+     *          requested accType must be a valid spelling for that specific MIDI note (e.g. "b"
+     *          is rejected for MIDI note 60, which has no flat spelling). When it throws, this
+     *          Pitch is left unchanged.
      * @param midiNumber MIDI note number (negative values make this Pitch a rest).
-     * @throws std::runtime_error If midiNumber cannot be spelled within octaves -1..11.
+     * @param accType Accidental type: "" (natural for white keys, "#" for black keys, the
+     *        default), "#", "b", "x" or "bb".
+     * @throws std::runtime_error If accType is unknown, if midiNumber cannot be spelled using
+     *         accType, or if the spelling falls outside octaves -1..11.
      */
-    void setMidiNumber(int midiNumber);
+    void setMidiNumber(int midiNumber, const std::string& accType = {});
 
     /**
      * @brief Replaces this Pitch's full state from a frequency in Hz.

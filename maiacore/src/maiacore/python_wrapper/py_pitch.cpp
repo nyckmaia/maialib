@@ -158,6 +158,53 @@ void PitchClass(const py::module& m) {
         True
     )pbdoc");
 
+    cls.def_static(
+        "fromComponents",
+        [](const std::string& step, const float alter, const int octave) {
+            return Pitch(step, alter, octave);
+        },
+        py::arg("step"), py::arg("alter"), py::arg("octave"),
+        R"pbdoc(
+        Create a pitch from its three components: step, accidental and octave.
+
+        The accidental is a number of semitones, so a quarter tone is given directly:
+        ``Pitch.fromComponents("C", 0.5, 4)`` is ``"C1x4"``. It must be exactly a multiple of 0.5:
+        one merely close to it, such as 0.99996, is rejected rather than rounded. ``-0.0`` is
+        stored as ``0.0``.
+
+        Parameters
+        ----------
+        step : str
+            ``"A"`` to ``"G"``.
+        alter : float
+            A multiple of 0.5 from -2.0 to 2.0, e.g. 0.5 for a quarter-tone sharp or -1.5 for
+            three quarter tones flat.
+        octave : int
+            Octave from -1 to 11.
+
+        Returns
+        -------
+        Pitch
+            The new pitch.
+
+        Raises
+        ------
+        TypeError
+            If ``octave`` is not an int (a float such as ``4.0`` is rejected, not truncated).
+        RuntimeError
+            If ``step`` is not one of ``"A"`` to ``"G"``; if ``alter`` is NaN or infinite, is not
+            exactly a multiple of 0.5, or lies outside [-2, 2]; if ``octave`` lies outside -1 to
+            11; or if the pitch lies below MIDI note 0 (e.g. ``("C", -1, -1)``, ``"Cb-1"``). The
+            conditions are checked in that order.
+
+        Examples
+        --------
+        >>> ml.Pitch.fromComponents("C", 0.5, 4).getPitch()
+        'C1x4'
+        >>> ml.Pitch.fromComponents("D", -1.5, 4) == ml.Pitch("D3b4")
+        True
+    )pbdoc");
+
     cls.def_static("maxRepresentableMidi", &Pitch::maxRepresentableMidi,
                    R"pbdoc(
         Return the highest MIDI note number a pitch can have.
@@ -522,24 +569,29 @@ void PitchClass(const py::module& m) {
         'D1x5'
     )pbdoc");
 
-    cls.def("setMidiNumber", &Pitch::setMidiNumber, py::arg("midiNumber"),
+    cls.def("setMidiNumber", &Pitch::setMidiNumber, py::arg("midiNumber"), py::arg("accType") = "",
             R"pbdoc(
-        Replace the whole pitch from a MIDI note number, with the default spelling.
+        Replace the whole pitch from a MIDI note number, spelled with ``accType``.
+
+        The spelling rules are ``Pitch.fromMidi``'s. When this raises, the pitch is left
+        unchanged.
 
         Parameters
         ----------
         midiNumber : int
-            MIDI note number, spelled with the default accidental (natural for a white key,
-            ``#`` for a black key). A negative number makes this pitch a rest.
+            MIDI note number. A negative number makes this pitch a rest.
+        accType : str, default ""
+            Accidental of the spelling: ``""`` (natural for a white key, ``#`` for a black key),
+            ``"#"``, ``"b"``, ``"x"`` or ``"bb"``.
 
         Raises
         ------
         TypeError
             If ``midiNumber`` is not an int.
         RuntimeError
-            If the MIDI number cannot be spelled within octaves -1 to 11 with the default
-            accidental (anything above 155, ``"B11"``; ``Pitch.fromMidi`` reaches 157 with
-            ``"x"``).
+            If ``accType`` is unknown or cannot spell this MIDI number (e.g. ``"b"`` for MIDI
+            60, which has no flat spelling), or the spelling falls outside octaves -1 to 11
+            (with the default ``accType``, anything above 155, ``"B11"``; ``"x"`` reaches 157).
 
         Examples
         --------
@@ -547,6 +599,9 @@ void PitchClass(const py::module& m) {
         >>> p.setMidiNumber(61)
         >>> p.getPitch()
         'C#4'
+        >>> p.setMidiNumber(61, "b")
+        >>> p.getPitch()
+        'Db4'
     )pbdoc");
 
     cls.def("setFrequency", &Pitch::setFrequency, py::arg("frequency"), py::arg("accType") = "",
@@ -602,4 +657,33 @@ void PitchClass(const py::module& m) {
     )pbdoc");
 
     cls.def("__repr__", [](const Pitch& pitch) { return "<Pitch " + pitch.getPitch() + ">"; });
+
+    cls.def(py::self == py::self,
+            R"pbdoc(
+        Compare two pitches by spelling: step, accidental and octave.
+
+        Spelling equality, not enharmonic equality: ``Pitch("C#4") != Pitch("Db4")`` although
+        both are MIDI 61 (``Helper.isEnharmonic`` compares sounding positions). Two rests are
+        equal. Anything that is not a ``Pitch`` compares unequal.
+
+        Examples
+        --------
+        >>> ml.Pitch("C1x4") == ml.Pitch.fromComponents("C", 0.5, 4)
+        True
+        >>> ml.Pitch("C#4") == ml.Pitch("Db4")
+        False
+    )pbdoc");
+    cls.def(py::self != py::self,
+            R"pbdoc(
+        Negation of ``==``: True if the pitches differ in step, accidental or octave.
+    )pbdoc");
+
+    // Defining __eq__ makes pybind11 set __hash__ to None, which would make Pitch unhashable. The
+    // hash is the pitch string's: equal pitches have equal spellings, so equal hashes.
+    cls.def(
+        "__hash__", [](const Pitch& pitch) { return std::hash<std::string>{}(pitch.getPitch()); },
+        R"pbdoc(
+        Hash consistent with ``==``: equal pitches hash equally, so a ``Pitch`` can be a set
+        member or a dict key.
+    )pbdoc");
 }

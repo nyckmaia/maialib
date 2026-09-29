@@ -43,6 +43,22 @@ void validateFreqA4(const float freqA4) {
             std::to_string(freqA4) + "' is not");
     }
 }
+
+// An alter is malformed unless it is finite, exactly on the quarter-tone grid and within the
+// [-2, 2] a double accidental reaches.
+void validateAlter(const float alter) {
+    if (!std::isfinite(alter)) {
+        LOG_ERROR("Alter value must be a finite number of semitones, but '" +
+                  std::to_string(alter) + "' is not");
+    }
+    if (!isOnQuarterToneGrid(alter)) {
+        LOG_ERROR("Alter value must be a multiple of 0.5 (a semitone or quarter-tone step): " +
+                  std::to_string(alter));
+    }
+    if (alter < -2.0f || alter > 2.0f) {
+        LOG_ERROR("Alter value out of range [-2, 2]: " + std::to_string(alter));
+    }
+}
 }  // namespace
 
 Pitch::Pitch(const std::string& pitch) : _step("rest"), _alter(0.0f), _octave(std::nullopt) {
@@ -59,6 +75,38 @@ Pitch::Pitch(float frequency, const std::string& accType, float freqA4,
     : _step("rest"), _alter(0.0f), _octave(std::nullopt) {
     setFrequency(frequency, accType, freqA4, enableQuarterToneRound);
 }
+
+Pitch::Pitch(const std::string& step, float alter, int octave)
+    : _step("rest"), _alter(0.0f), _octave(std::nullopt) {
+    if (std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), step) ==
+        c_C_diatonicScale.end()) {
+        LOG_ERROR("Unknown diatonic pitch step: " + step);
+    }
+    validateAlter(alter);
+    if (octave < c_minPitchOctave || octave > c_maxPitchOctave) {
+        LOG_ERROR("Invalid octave value: " + std::to_string(octave));
+    }
+
+    // Stored canonically, as setAlter() stores it: -0.0 becomes +0.0.
+    const float canonicalAlter = alter + 0.0f;
+    if (Helper::spelling2midiNote(step, canonicalAlter, octave) < 0) {
+        LOG_ERROR("The pitch '" + step + Helper::alterValue2symbol(canonicalAlter) +
+                  std::to_string(octave) +
+                  "' is below MIDI note 0; the lowest representable pitch is C1b-1");
+    }
+
+    _step = step;
+    _alter = canonicalAlter;
+    _octave = octave;
+}
+
+bool Pitch::operator==(const Pitch& other) const {
+    // The canonical triple: a rest is "rest", 0 and no octave, so two rests are equal. Every
+    // stored alter is exactly on the grid, so == compares it exactly.
+    return _step == other._step && _alter == other._alter && _octave == other._octave;
+}
+
+bool Pitch::operator!=(const Pitch& other) const { return !(*this == other); }
 
 int Pitch::maxRepresentableMidi() {
     // The highest quarter-tone step position this class can ever hold: B, double-sharp, at the
@@ -180,18 +228,7 @@ void Pitch::setStep(const std::string& step) {
 }
 
 void Pitch::setAlter(float alter) {
-    if (!std::isfinite(alter)) {
-        LOG_ERROR("Alter value must be a finite number of semitones, but '" +
-                  std::to_string(alter) + "' is not");
-    }
-    if (!isOnQuarterToneGrid(alter)) {
-        LOG_ERROR(
-            "Alter value must be a multiple of 0.5 (a semitone or quarter-tone step): " +
-            std::to_string(alter));
-    }
-    if (alter < -2.0f || alter > 2.0f) {
-        LOG_ERROR("Alter value out of range [-2, 2]: " + std::to_string(alter));
-    }
+    validateAlter(alter);
 
     // Stored canonically: adding +0.0f turns -0.0 into +0.0 and leaves every other value on the
     // grid unchanged, so a natural always reads back as the one value +0.0.
@@ -256,7 +293,9 @@ void Pitch::setPitchClass(const std::string& pitchClass) {
     setPitch(pitchClass + octaveSuffix);
 }
 
-void Pitch::setMidiNumber(int midiNumber) { setPitch(Helper::midiNote2pitch(midiNumber)); }
+void Pitch::setMidiNumber(int midiNumber, const std::string& accType) {
+    setPitch(Helper::midiNote2pitch(midiNumber, accType));
+}
 
 void Pitch::setFrequency(float frequency, const std::string& accType, float freqA4,
                           bool enableQuarterToneRound) {

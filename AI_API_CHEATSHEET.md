@@ -489,6 +489,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 
 #### Class `Pitch`
 - `clampToRepresentableMidi(midi: int) -> int`
+- `fromComponents(step: str, alter: float, octave: int) -> Pitch`
 - `fromFrequency(frequency: float, accType: str = '', freqA4: float = 440.0, enableQuarterToneRound: bool = False) -> Pitch`
 - `fromMidi(midiNumber: int, accType: str = '') -> Pitch`
 - `maxRepresentableMidi() -> int`
@@ -506,7 +507,7 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 - `roundToSemitone() -> None`
 - `setAlter(alter: float) -> None`
 - `setFrequency(frequency: float, accType: str = '', freqA4: float = 440.0, enableQuarterToneRound: bool = False) -> None`
-- `setMidiNumber(midiNumber: int) -> None`
+- `setMidiNumber(midiNumber: int, accType: str = '') -> None`
 - `setOctave(octave: int) -> None`
 - `setPitch(pitch: str) -> None`
 - `setPitchClass(pitchClass: str) -> None`

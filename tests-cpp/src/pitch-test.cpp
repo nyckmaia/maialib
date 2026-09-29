@@ -4,6 +4,9 @@
 
 #include <cmath>
 #include <limits>
+#include <string>
+#include <utility>
+#include <vector>
 
 #include "maiacore/config.h"
 #include "maiacore/helper.h"
@@ -620,4 +623,128 @@ TEST(PitchAccTypeFallback, anAccidentalTypeThatAppliesPrintsNothing) {
     EXPECT_EQ(Pitch(466.16f, "b").getPitch(), "Bb4");
     EXPECT_EQ(Pitch(466.16f, "#").getPitch(), "A#4");
     EXPECT_EQ(capture.str(), "");
+}
+
+// ===== Equality: the canonical (step, alter, octave) spelling ===== //
+
+TEST(PitchEquality, comparesTheSpellingNotThePosition) {
+    EXPECT_TRUE(Pitch("C1x4") == Pitch("C1x4"));
+    EXPECT_FALSE(Pitch("C1x4") != Pitch("C1x4"));
+
+    // Enharmonic spellings of one position are different pitches here.
+    EXPECT_FALSE(Pitch("C#4") == Pitch("Db4"));
+    EXPECT_TRUE(Pitch("C#4") != Pitch("Db4"));
+    EXPECT_FALSE(Pitch("C1x4") == Pitch("D3b4"));
+
+    // Each component on its own tells two pitches apart.
+    EXPECT_TRUE(Pitch("C4") != Pitch("D4"));
+    EXPECT_TRUE(Pitch("C4") != Pitch("C1x4"));
+    EXPECT_TRUE(Pitch("C4") != Pitch("C5"));
+}
+
+TEST(PitchEquality, twoRestsAreEqualAndARestIsNoNote) {
+    EXPECT_TRUE(Pitch() == Pitch("rest"));
+    EXPECT_TRUE(Pitch("") == Pitch(-1));
+    EXPECT_TRUE(Pitch("rest") != Pitch("C4"));
+    EXPECT_TRUE(Pitch("C4") != Pitch("rest"));
+}
+
+// The alter is stored canonically, so a pitch reached through a setter equals the one parsed
+// from its string.
+TEST(PitchEquality, holdsForAPitchReachedThroughASetter) {
+    Pitch p("C#4");
+    p.setAlter(-0.0f);
+    EXPECT_TRUE(p == Pitch("C4"));
+    p.setAlter(0.5f);
+    EXPECT_TRUE(p == Pitch("C1x4"));
+}
+
+// ===== Pitch(step, alter, octave) ===== //
+
+TEST(PitchComponentsConstructor, spellsTheComponents) {
+    EXPECT_EQ(Pitch("C", 0.5f, 4).getPitch(), "C1x4");
+    EXPECT_EQ(Pitch("D", -1.5f, 4).getPitch(), "D3b4");
+    EXPECT_EQ(Pitch("A", 0.0f, 4).getPitch(), "A4");
+    EXPECT_EQ(Pitch("B", 2.0f, 11).getPitch(), "Bx11");    // the highest representable pitch
+    EXPECT_EQ(Pitch("C", -0.5f, -1).getPitch(), "C1b-1");  // the lowest
+    EXPECT_EQ(Pitch("E", -1.0f, 4).getQuarterToneSteps(), 63.0f);
+
+    const Pitch natural("C", -0.0f, 4);
+    EXPECT_FALSE(std::signbit(natural.getAlter()));
+    EXPECT_TRUE(natural == Pitch("C4"));
+}
+
+TEST(PitchComponentsConstructor, rejectsAnUnknownStep) {
+    for (const std::string step : {"H", "c", "rest", ""}) {
+        const std::string message = thrownFirstLine([&] { Pitch p(step, 0.0f, 4); });
+        EXPECT_EQ(message, "[maiacore] Unknown diatonic pitch step: " + step) << step;
+    }
+
+    // The components are checked in order, the step first.
+    EXPECT_EQ(thrownFirstLine([] { Pitch p("H", std::numeric_limits<float>::quiet_NaN(), 12); }),
+              "[maiacore] Unknown diatonic pitch step: H");
+}
+
+TEST(PitchComponentsConstructor, rejectsAMalformedAlter) {
+    for (const float alter :
+         {std::numeric_limits<float>::quiet_NaN(), std::numeric_limits<float>::infinity()}) {
+        const std::string message = thrownFirstLine([&] { Pitch p("C", alter, 4); });
+        EXPECT_NE(message.find("must be a finite number"), std::string::npos) << message;
+    }
+    for (const float alter : {0.99996f, 0.25f, 0.46f}) {
+        const std::string message = thrownFirstLine([&] { Pitch p("C", alter, 4); });
+        EXPECT_NE(message.find("multiple of 0.5"), std::string::npos)
+            << "alter " << alter << ": " << message;
+    }
+    for (const float alter : {2.5f, -2.5f}) {
+        const std::string message = thrownFirstLine([&] { Pitch p("C", alter, 4); });
+        EXPECT_NE(message.find("out of range [-2, 2]"), std::string::npos)
+            << "alter " << alter << ": " << message;
+    }
+}
+
+TEST(PitchComponentsConstructor, rejectsAnOctaveOutsideTheRange) {
+    EXPECT_EQ(thrownFirstLine([] { Pitch p("C", 0.0f, 12); }),
+              "[maiacore] Invalid octave value: 12");
+    EXPECT_EQ(thrownFirstLine([] { Pitch p("C", 0.0f, -2); }),
+              "[maiacore] Invalid octave value: -2");
+}
+
+// Every component is valid, but together they spell a pitch below MIDI note 0.
+TEST(PitchComponentsConstructor, rejectsAPitchBelowTheLowestRepresentablePitch) {
+    for (const auto& [alter, spelling] :
+         std::vector<std::pair<float, std::string>>{{-1.0f, "Cb-1"}, {-1.5f, "C3b-1"}}) {
+        const std::string message = thrownFirstLine([&] { Pitch p("C", alter, -1); });
+        EXPECT_EQ(message, "[maiacore] The pitch '" + spelling +
+                               "' is below MIDI note 0; the lowest representable pitch is C1b-1")
+            << message;
+    }
+}
+
+// ===== setMidiNumber(midiNumber, accType) ===== //
+
+TEST(PitchSetMidiNumber, honoursTheAccidentalType) {
+    Pitch p;
+    p.setMidiNumber(61, "b");
+    EXPECT_EQ(p.getPitch(), "Db4");
+    p.setMidiNumber(61, "#");
+    EXPECT_EQ(p.getPitch(), "C#4");
+    p.setMidiNumber(61);
+    EXPECT_EQ(p.getPitch(), "C#4");
+    p.setMidiNumber(157, "x");
+    EXPECT_EQ(p.getPitch(), "Bx11");
+    p.setMidiNumber(-1, "b");
+    EXPECT_TRUE(p.isRest());
+}
+
+// An accidental type that cannot spell the MIDI number is rejected as Pitch(int, accType) rejects
+// it, and the pitch is left as it was.
+TEST(PitchSetMidiNumber, rejectsAnAccidentalTypeThatCannotSpellTheNumberAndLeavesThePitch) {
+    Pitch p("E1b4");
+    EXPECT_EQ(thrownFirstLine([&] { p.setMidiNumber(60, "b"); }),
+              "[maiacore] The MIDI Note '60' cannot be wrote using 'b' accident type");
+    EXPECT_EQ(p.getPitch(), "E1b4");
+    EXPECT_EQ(thrownFirstLine([&] { p.setMidiNumber(60, "q"); }),
+              "[maiacore] Unknown accident type: q");
+    EXPECT_EQ(p.getPitch(), "E1b4");
 }

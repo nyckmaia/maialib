@@ -89,6 +89,7 @@ class PitchBindingSurface(unittest.TestCase):
     EXPECTED = {
         "fromMidi",
         "fromFrequency",
+        "fromComponents",
         "maxRepresentableMidi",
         "clampToRepresentableMidi",
         "getPitch",
@@ -385,6 +386,27 @@ class PitchWholeStateSetters(unittest.TestCase):
         pitch.setMidiNumber(-1)
         self.assertTrue(pitch.isRest())
 
+    # Mirrors PitchSetMidiNumber.honoursTheAccidentalType.
+    def testSetMidiNumberHonoursTheAccidentalType(self):
+        pitch = ml.Pitch()
+        pitch.setMidiNumber(61, "b")
+        self.assertEqual(pitch.getPitch(), "Db4")
+        pitch.setMidiNumber(61, accType="#")
+        self.assertEqual(pitch.getPitch(), "C#4")
+        pitch.setMidiNumber(157, "x")
+        self.assertEqual(pitch.getPitch(), "Bx11")
+
+    # Mirrors PitchSetMidiNumber.rejectsAnAccidentalTypeThatCannotSpellTheNumberAndLeavesThePitch.
+    def testSetMidiNumberRejectsAnAccidentalTypeThatCannotSpellTheNumberAndLeavesThePitch(self):
+        pitch = ml.Pitch("E1b4")
+        with self.assertRaises(RuntimeError) as context:
+            pitch.setMidiNumber(60, "b")
+        self.assertEqual(
+            firstLine(context.exception),
+            "[maiacore] The MIDI Note '60' cannot be wrote using 'b' accident type",
+        )
+        self.assertEqual(pitch.getPitch(), "E1b4")
+
     def testSetFrequencyReplacesTheWholePitch(self):
         pitch = ml.Pitch("C4")
         pitch.setFrequency(466.16)
@@ -567,6 +589,91 @@ class PitchFrequency(unittest.TestCase):
         pitch = ml.Pitch.fromFrequency(frequency, "b", 440.0, True)
         self.assertEqual(pitch.getPitch(), "A1b4")
         self.assertEqual(pitch.getMidiNumber(), 69)  # ties upward
+
+
+class PitchEquality(unittest.TestCase):
+    """Pitches compare by spelling: step, accidental and octave. Mirrors PitchEquality."""
+
+    def testComparesTheSpellingNotThePosition(self):
+        self.assertTrue(ml.Pitch("C1x4") == ml.Pitch("C1x4"))
+        self.assertFalse(ml.Pitch("C1x4") != ml.Pitch("C1x4"))
+        self.assertFalse(ml.Pitch("C#4") == ml.Pitch("Db4"))
+        self.assertTrue(ml.Pitch("C#4") != ml.Pitch("Db4"))
+        self.assertFalse(ml.Pitch("C1x4") == ml.Pitch("D3b4"))
+        self.assertNotEqual(ml.Pitch("C4"), ml.Pitch("C5"))
+
+    def testTwoRestsAreEqual(self):
+        self.assertEqual(ml.Pitch(), ml.Pitch("rest"))
+        self.assertNotEqual(ml.Pitch("rest"), ml.Pitch("C4"))
+
+    def testIsHashableConsistentlyWithEquality(self):
+        self.assertEqual(hash(ml.Pitch("C1x4")), hash(ml.Pitch.fromComponents("C", 0.5, 4)))
+        self.assertEqual(len({ml.Pitch("C4"), ml.Pitch("C4"), ml.Pitch("Db4")}), 2)
+        names = {ml.Pitch("C1x4"): "quarter-tone sharp C"}
+        self.assertEqual(names[ml.Pitch("C1x4")], "quarter-tone sharp C")
+
+    def testANonPitchIsNeverEqual(self):
+        self.assertFalse(ml.Pitch("C4") == "C4")
+        self.assertTrue(ml.Pitch("C4") != "C4")
+        self.assertFalse(ml.Pitch("C4") == ml.Note("C4"))
+
+
+class PitchFromComponents(unittest.TestCase):
+    """Pitch.fromComponents(step, alter, octave). Mirrors PitchComponentsConstructor."""
+
+    def testSpellsTheComponents(self):
+        self.assertEqual(ml.Pitch.fromComponents("C", 0.5, 4).getPitch(), "C1x4")
+        self.assertEqual(ml.Pitch.fromComponents("D", -1.5, 4).getPitch(), "D3b4")
+        self.assertEqual(ml.Pitch.fromComponents("B", 2, 11).getPitch(), "Bx11")
+        self.assertEqual(
+            ml.Pitch.fromComponents(step="C", alter=-0.5, octave=-1).getPitch(), "C1b-1"
+        )
+        natural = ml.Pitch.fromComponents("C", -0.0, 4)
+        self.assertEqual(math.copysign(1.0, natural.getAlter()), 1.0)
+        self.assertEqual(natural, ml.Pitch("C4"))
+
+    def testRejectsAnUnknownStep(self):
+        for step in ("H", "c", "rest"):
+            with self.subTest(step=step), self.assertRaises(RuntimeError) as context:
+                ml.Pitch.fromComponents(step, 0.0, 4)
+            self.assertEqual(
+                firstLine(context.exception), f"[maiacore] Unknown diatonic pitch step: {step}"
+            )
+
+        # The components are checked in order, the step first.
+        with self.assertRaises(RuntimeError) as context:
+            ml.Pitch.fromComponents("H", math.nan, 12)
+        self.assertEqual(firstLine(context.exception), "[maiacore] Unknown diatonic pitch step: H")
+
+    def testRejectsAMalformedAlter(self):
+        for alter, fragment in (
+            (math.nan, "must be a finite number"),
+            (math.inf, "must be a finite number"),
+            (0.99996, "multiple of 0.5"),
+            (0.25, "multiple of 0.5"),
+            (2.5, "out of range [-2, 2]"),
+        ):
+            with self.subTest(alter=alter), self.assertRaises(RuntimeError) as context:
+                ml.Pitch.fromComponents("C", alter, 4)
+            self.assertIn(fragment, firstLine(context.exception))
+
+    def testRejectsAnOctaveOutsideTheRange(self):
+        with self.assertRaises(RuntimeError) as context:
+            ml.Pitch.fromComponents("C", 0.0, 12)
+        self.assertEqual(firstLine(context.exception), "[maiacore] Invalid octave value: 12")
+
+    def testRejectsAnOctaveThatIsNotAnInt(self):
+        with self.assertRaises(TypeError):
+            ml.Pitch.fromComponents("C", 0.0, 4.0)
+
+    def testRejectsAPitchBelowTheLowestRepresentablePitch(self):
+        with self.assertRaises(RuntimeError) as context:
+            ml.Pitch.fromComponents("C", -1, -1)
+        self.assertEqual(
+            firstLine(context.exception),
+            "[maiacore] The pitch 'Cb-1' is below MIDI note 0; the lowest representable pitch "
+            "is C1b-1",
+        )
 
 
 if __name__ == "__main__":
