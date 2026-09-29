@@ -50,7 +50,9 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the pitch string is invalid.
+            If the pitch string is invalid, or if the note is transposed and its sounding pitch
+            lies above ``"B11"`` (MIDI note 155), the highest sounding pitch that can be spelled
+            within octaves -1 to 11.
 
         Examples
         --------
@@ -92,7 +94,9 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the MIDI number cannot be spelled with ``accType`` within octaves -1 to 11.
+            If the MIDI number cannot be spelled with ``accType`` within octaves -1 to 11, or if
+            the note is transposed and its sounding pitch lies above ``"B11"`` (MIDI note 155),
+            the highest sounding pitch that can be spelled within octaves -1 to 11.
     )pbdoc");
 
     // ====== Methods SETTERS for class Note ===== //
@@ -104,9 +108,10 @@ void NoteClass(const py::module& m) {
         is kept, and the MIDI number and every other getter follow the new pitch.
 
         On a transposing instrument the change is checked the way ``setPitch`` checks a whole
-        pitch: if the written pitch it gives would sound above ``"Bx11"``, or where it cannot be
-        spelled within octaves -1 to 11, it raises and the note is left unchanged. A sounding
-        pitch below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
+        pitch: if the written pitch it gives would sound above ``"B11"`` (MIDI note 155), the
+        highest sounding pitch that can be spelled within octaves -1 to 11, it raises and the
+        note is left unchanged. A sounding pitch below ``C1b-1`` is accepted, as ``setPitch``
+        accepts it.
 
         Parameters
         ----------
@@ -118,9 +123,8 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If the pitch class is invalid, or the pitch it gives lies below MIDI note 0 (e.g.
-            ``"Cb"`` on a ``C-1``), or if its sounding pitch lies above the representable range
-            or cannot be spelled -- the error ``setPitch`` raises for that pitch. The note is
-            then left unchanged.
+            ``"Cb"`` on a ``C-1``), or if its sounding pitch lies above ``"B11"`` -- the error
+            ``setPitch`` raises for that pitch. The note is then left unchanged.
 
         Examples
         --------
@@ -146,9 +150,10 @@ void NoteClass(const py::module& m) {
         would.
 
         On a transposing instrument the change is checked the way ``setPitch`` checks a whole
-        pitch: if the written pitch it gives would sound above ``"Bx11"``, or where it cannot be
-        spelled within octaves -1 to 11, it raises and the note is left unchanged. A sounding
-        pitch below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
+        pitch: if the written pitch it gives would sound above ``"B11"`` (MIDI note 155), the
+        highest sounding pitch that can be spelled within octaves -1 to 11, it raises and the
+        note is left unchanged. A sounding pitch below ``C1b-1`` is accepted, as ``setPitch``
+        accepts it.
 
         Parameters
         ----------
@@ -161,8 +166,8 @@ void NoteClass(const py::module& m) {
             If ``octave`` is not an int -- e.g. None, which ``getOctave()`` returns for a rest.
         RuntimeError
             If the note is not a rest and ``octave`` lies outside -1 to 11, or if the sounding
-            pitch the change gives lies above the representable range or cannot be spelled --
-            the error ``setPitch`` raises for that pitch. The note is then left unchanged.
+            pitch the change gives lies above ``"B11"`` -- the error ``setPitch`` raises for that
+            pitch. The note is then left unchanged.
 
         Examples
         --------
@@ -182,9 +187,10 @@ void NoteClass(const py::module& m) {
         left unchanged.
 
         On a transposing instrument the change is checked the way ``setPitch`` checks a whole
-        pitch: if the written pitch it gives would sound above ``"Bx11"``, or where it cannot be
-        spelled within octaves -1 to 11, it raises and the note is left unchanged. A sounding
-        pitch below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
+        pitch: if the written pitch it gives would sound above ``"B11"`` (MIDI note 155), the
+        highest sounding pitch that can be spelled within octaves -1 to 11, it raises and the
+        note is left unchanged. A sounding pitch below ``C1b-1`` is accepted, as ``setPitch``
+        accepts it.
 
         Parameters
         ----------
@@ -195,8 +201,8 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If step is not one of "A" to "G", or if the sounding pitch the change gives lies
-            above the representable range or cannot be spelled -- the error ``setPitch`` raises
-            for that pitch. The note is then left unchanged.
+            above ``"B11"`` -- the error ``setPitch`` raises for that pitch. The note is then left
+            unchanged.
     )pbdoc");
     cls.def("setAlter", &Note::setAlter, py::arg("alter"),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
@@ -210,9 +216,10 @@ void NoteClass(const py::module& m) {
         such as 0.99996, is rejected rather than rounded.
 
         On a transposing instrument the change is checked the way ``setPitch`` checks a whole
-        pitch: if the written pitch it gives would sound above ``"Bx11"``, or where it cannot be
-        spelled within octaves -1 to 11, it raises and the note is left unchanged. A sounding
-        pitch below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
+        pitch: if the written pitch it gives would sound above ``"B11"`` (MIDI note 155), the
+        highest sounding pitch that can be spelled within octaves -1 to 11, it raises and the
+        note is left unchanged. A sounding pitch below ``C1b-1`` is accepted, as ``setPitch``
+        accepts it.
 
         Parameters
         ----------
@@ -224,9 +231,8 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If alter is NaN or infinite, is not exactly a multiple of 0.5, or is outside
-            [-2, 2], or if the sounding pitch the change gives lies above the representable
-            range or cannot be spelled -- the error ``setPitch`` raises for that pitch. The note
-            is then left unchanged.
+            [-2, 2], or if the sounding pitch the change gives lies above ``"B11"`` -- the error
+            ``setPitch`` raises for that pitch. The note is then left unchanged.
     )pbdoc");
     cls.def("setDuration", py::overload_cast<const Duration&>(&Note::setDuration),
             py::arg("duration"));
@@ -313,9 +319,9 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If the pitch string is invalid, or if its sounding pitch with the note's transposing
-            interval lies above the representable range, ``"Bx11"``, or cannot be spelled within
-            octaves -1 to 11. The note is then left unchanged. A sounding pitch below ``C1b-1``
-            is accepted, as ``setTransposingInterval`` accepts it.
+            interval lies above ``"B11"`` (MIDI note 155), the highest sounding pitch that can be
+            spelled within octaves -1 to 11. The note is then left unchanged. A sounding pitch
+            below ``C1b-1`` is accepted, as ``setTransposingInterval`` accepts it.
     )pbdoc");
     cls.def("setIsInChord", &Note::setIsInChord, py::arg("inChord"));
     cls.def("setTransposingInterval", &Note::setTransposingInterval, py::arg("diatonicInterval"),
@@ -341,11 +347,11 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the sounding pitch lies above the representable range, ``"Bx11"``, or cannot be
-            spelled within octaves -1 to 11; the note is then left unchanged. A sounding pitch
-            below the lowest representable pitch, ``C1b-1``, is not raised here: the interval is
-            stored, the note stays constructible and each sounding getter raises instead (see
-            ``getSoundingPitch``).
+            If the sounding pitch lies above ``"B11"`` (MIDI note 155), the highest sounding pitch
+            that can be spelled within octaves -1 to 11; the note is then left unchanged. A
+            sounding pitch below the lowest representable pitch, ``C1b-1``, is not raised here:
+            the interval is stored, the note stays constructible and each sounding getter raises
+            instead (see ``getSoundingPitch``).
 
         Examples
         --------

@@ -1855,10 +1855,17 @@ Note transposedNote(const std::string& writtenPitch, const int diatonic, const i
                 chromatic);
 }
 
-// The error for a sounding pitch at 'position' (as std::to_string() writes it), above Bx11.
-std::string aboveTheRange(const std::string& position) {
-    return "[maiacore] Helper::steps2pitch: the pitch position '" + position +
-           "' is above the representable range -0.5 (C1b-1) to 157 (Bx11)";
+// The error for 'writtenPitch' on a (diatonic, chromatic) instrument, whose sounding pitch lies at
+// 'position' (as std::to_string() writes it), above B11, the highest sounding pitch that can be
+// spelled within octaves -1..11.
+std::string aboveTheCeiling(const std::string& writtenPitch, const int diatonic,
+                            const int chromatic, const std::string& position) {
+    return "[maiacore] The sounding pitch of the written pitch '" + writtenPitch +
+           "' with transposeDiatonic=" + std::to_string(diatonic) +
+           " and transposeChromatic=" + std::to_string(chromatic) + " is at position " + position +
+           ", above B11 (MIDI note 155), the highest sounding pitch that can be spelled within "
+           "octaves -1..11, so it has no sounding spelling. A lower written pitch or a smaller "
+           "transposing interval keeps the sounding pitch at or below B11.";
 }
 }  // namespace
 
@@ -1868,14 +1875,14 @@ TEST(NoteMutatorThatThrows, setTransposingIntervalLeavesTheNoteUnchanged) {
     Note note("B11");
     const NoteState before = stateOf(note);
     EXPECT_EQ(thrownFirstLine([&] { note.setTransposingInterval(1, 3); }),
-              aboveTheRange("158.000000"));
+              aboveTheCeiling("B11", 1, 3, "158.000000"));
     EXPECT_EQ(stateOf(note), before);
     EXPECT_EQ(note.getPitch(), "B11");
 
     Note clarinet = transposedNote("C4", -1, -2);
     const NoteState clarinetBefore = stateOf(clarinet);
     EXPECT_EQ(thrownFirstLine([&] { clarinet.setTransposingInterval(0, 200); }),
-              aboveTheRange("260.000000"));
+              aboveTheCeiling("C4", 0, 200, "260.000000"));
     EXPECT_EQ(stateOf(clarinet), clarinetBefore);
     EXPECT_EQ(clarinet.getTransposeChromatic(), -2);
     EXPECT_EQ(clarinet.getPitch(), "Bb3");
@@ -1895,7 +1902,8 @@ TEST(NoteMutatorThatThrows, setTransposingIntervalOnARestIsIgnored) {
 TEST(NoteMutatorThatThrows, setPitchLeavesTheNoteUnchanged) {
     Note note = transposedNote("C4", 1, 3);
     const NoteState before = stateOf(note);
-    EXPECT_EQ(thrownFirstLine([&] { note.setPitch("B11"); }), aboveTheRange("158.000000"));
+    EXPECT_EQ(thrownFirstLine([&] { note.setPitch("B11"); }),
+              aboveTheCeiling("B11", 1, 3, "158.000000"));
     EXPECT_EQ(stateOf(note), before);
     EXPECT_EQ(note.getPitch(), "D#4");
 
@@ -1908,26 +1916,25 @@ TEST(NoteMutatorThatThrows, setPitchLeavesTheNoteUnchanged) {
 }
 
 // transpose() stores its result through setPitch(), which on a transposing instrument moves it by
-// the interval again: A11 plus 3 semitones sounds at 156, which cannot be spelled.
+// the interval again: A11 plus 3 semitones sounds at 156, above B11.
 TEST(NoteMutatorThatThrows, transposeLeavesTheNoteUnchanged) {
     Note note = transposedNote("C4", 1, 3);
     const NoteState before = stateOf(note);
     EXPECT_EQ(thrownFirstLine([&] { note.transpose(90); }),
-              "[maiacore] The MIDI Note '156' cannot be written using '' accident type within "
-              "octaves -1..11");
+              aboveTheCeiling("A11", 1, 3, "156.000000"));
     EXPECT_EQ(stateOf(note), before);
     EXPECT_EQ(note.getPitch(), "D#4");
 }
 
 // toEnharmonicPitch() stores the respelling of the sounding B11 through setPitch(), where it is
-// moved by the interval again: B11 or Ax11 plus 2 semitones sounds at 157, which cannot be spelled.
+// moved by the interval again: B11 (the default, which has no flat partner within octave 11) or
+// Ax11 (the alternative) plus 2 semitones sounds at 157, above B11.
 TEST(NoteMutatorThatThrows, toEnharmonicPitchLeavesTheNoteUnchanged) {
     for (const bool alternative : {false, true}) {
         Note note = transposedNote("A11", 1, 2);
         const NoteState before = stateOf(note);
         EXPECT_EQ(thrownFirstLine([&] { note.toEnharmonicPitch(alternative); }),
-                  "[maiacore] The MIDI Note '157' cannot be written using '' accident type within "
-                  "octaves -1..11")
+                  aboveTheCeiling(alternative ? "Ax11" : "B11", 1, 2, "157.000000"))
             << "alternative " << alternative;
         EXPECT_EQ(stateOf(note), before) << "alternative " << alternative;
         EXPECT_EQ(note.getPitch(), "B11");
@@ -1977,13 +1984,6 @@ std::string setPitchRejection(const Note& note, const std::string& pitch) {
     return thrownFirstLine([&] { copy.setPitch(pitch); });
 }
 
-// The error for a sounding pitch at 'midiNumber', which no default spelling within octaves -1..11
-// reaches.
-std::string cannotSpell(const int midiNumber) {
-    return "[maiacore] The MIDI Note '" + std::to_string(midiNumber) +
-           "' cannot be written using '' accident type within octaves -1..11";
-}
-
 // A note whose sounding pitch is below the lowest representable pitch: every sounding getter
 // raises, naming the condition.
 void expectSoundingBelowTheFloor(const Note& note) {
@@ -1993,12 +1993,12 @@ void expectSoundingBelowTheFloor(const Note& note) {
 }
 }  // namespace
 
-// C11 on a (1, 3) instrument sounds D#11; as A11 it would sound at 156, which has no spelling.
+// C11 on a (1, 3) instrument sounds D#11; as A11 it would sound at 156, above B11.
 TEST(NoteMutatorThatThrows, setStepChecksTheSoundingPitchLikeSetPitch) {
     Note note = transposedNote("C11", 1, 3);
     const NoteState before = stateOf(note);
     const std::string message = thrownFirstLine([&] { note.setStep("A"); });
-    EXPECT_EQ(message, cannotSpell(156));
+    EXPECT_EQ(message, aboveTheCeiling("A11", 1, 3, "156.000000"));
     EXPECT_EQ(message, setPitchRejection(note, "A11"));
     EXPECT_EQ(stateOf(note), before);
     EXPECT_EQ(note.getPitch(), "D#11");
@@ -2008,29 +2008,29 @@ TEST(NoteMutatorThatThrows, setPitchClassChecksTheSoundingPitchLikeSetPitch) {
     Note note = transposedNote("C11", 1, 3);
     const NoteState before = stateOf(note);
     const std::string message = thrownFirstLine([&] { note.setPitchClass("A"); });
-    EXPECT_EQ(message, cannotSpell(156));
+    EXPECT_EQ(message, aboveTheCeiling("A11", 1, 3, "156.000000"));
     EXPECT_EQ(message, setPitchRejection(note, "A11"));
     EXPECT_EQ(stateOf(note), before);
     EXPECT_EQ(note.getPitch(), "D#11");
 }
 
-// B4 on a (1, 3) instrument sounds D5; as B11 it would sound at 158, above Bx11.
+// B4 on a (1, 3) instrument sounds D5; as B11 it would sound at 158, above B11.
 TEST(NoteMutatorThatThrows, setOctaveChecksTheSoundingPitchLikeSetPitch) {
     Note note = transposedNote("B4", 1, 3);
     const NoteState before = stateOf(note);
     const std::string message = thrownFirstLine([&] { note.setOctave(11); });
-    EXPECT_EQ(message, aboveTheRange("158.000000"));
+    EXPECT_EQ(message, aboveTheCeiling("B11", 1, 3, "158.000000"));
     EXPECT_EQ(message, setPitchRejection(note, "B11"));
     EXPECT_EQ(stateOf(note), before);
     EXPECT_EQ(note.getPitch(), "D5");
 }
 
-// A11 on a (1, 2) instrument sounds B11; as A#11 it would sound at 156, which has no spelling.
+// A11 on a (1, 2) instrument sounds B11; as A#11 it would sound at 156, above B11.
 TEST(NoteMutatorThatThrows, setAlterChecksTheSoundingPitchLikeSetPitch) {
     Note note = transposedNote("A11", 1, 2);
     const NoteState before = stateOf(note);
     const std::string message = thrownFirstLine([&] { note.setAlter(1.0f); });
-    EXPECT_EQ(message, cannotSpell(156));
+    EXPECT_EQ(message, aboveTheCeiling("A#11", 1, 2, "156.000000"));
     EXPECT_EQ(message, setPitchRejection(note, "A#11"));
     EXPECT_EQ(stateOf(note), before);
     EXPECT_EQ(note.getPitch(), "B11");
@@ -2063,7 +2063,7 @@ TEST(NoteMutatorThatThrows, thePartialSettersStillAcceptASoundingPitchBelowTheFl
 
 // A rest keeps its transposing interval (setIsNoteOn(false) does not clear it), so the pitch that
 // setStep() or setPitchClass() gives it is checked with that interval too: B4 on a (0, 90)
-// instrument would sound at 161, above Bx11, so the rest stays a rest.
+// instrument would sound at 161, above B11, so the rest stays a rest.
 TEST(NoteMutatorThatThrows, aRestIsNotGivenAPitchThatCannotSound) {
     for (const bool byStep : {true, false}) {
         Note rest = transposedNote("C4", 0, 90);  // sounds F#11
@@ -2076,7 +2076,7 @@ TEST(NoteMutatorThatThrows, aRestIsNotGivenAPitchThatCannotSound) {
                 rest.setPitchClass("B");
             }
         });
-        EXPECT_EQ(message, aboveTheRange("161.000000")) << "byStep " << byStep;
+        EXPECT_EQ(message, aboveTheCeiling("B4", 0, 90, "161.000000")) << "byStep " << byStep;
         EXPECT_EQ(stateOf(rest), before) << "byStep " << byStep;
         EXPECT_TRUE(rest.isNoteOff());
         EXPECT_EQ(rest.getTransposeChromatic(), 90);

@@ -636,14 +636,17 @@ def noteState(note):
     )
 
 
-ABOVE_THE_RANGE = (
-    "[maiacore] Helper::steps2pitch: the pitch position '158.000000' is above the representable "
-    "range -0.5 (C1b-1) to 157 (Bx11)"
-)
-
-CANNOT_SPELL_156 = (
-    "[maiacore] The MIDI Note '156' cannot be written using '' accident type within octaves -1..11"
-)
+def aboveTheCeiling(written, diatonic, chromatic, position):
+    """The error for 'written' on a (diatonic, chromatic) instrument, whose sounding pitch lies at
+    'position' (as C++'s std::to_string() writes it), above B11, the highest sounding pitch that
+    can be spelled within octaves -1..11."""
+    return (
+        f"[maiacore] The sounding pitch of the written pitch '{written}' with "
+        f"transposeDiatonic={diatonic} and transposeChromatic={chromatic} is at position "
+        f"{position}, above B11 (MIDI note 155), the highest sounding pitch that can be spelled "
+        "within octaves -1..11, so it has no sounding spelling. A lower written pitch or a "
+        "smaller transposing interval keeps the sounding pitch at or below B11."
+    )
 
 
 class NoteMutatorThatRaises(unittest.TestCase):
@@ -660,22 +663,22 @@ class NoteMutatorThatRaises(unittest.TestCase):
 
     def testSetTransposingIntervalLeavesTheNoteUnchanged(self):
         note = ml.Note("B11")
-        self.assertRaisesLeavingTheNote(note, ABOVE_THE_RANGE, note.setTransposingInterval, 1, 3)
+        self.assertRaisesLeavingTheNote(
+            note, aboveTheCeiling("B11", 1, 3, "158.000000"), note.setTransposingInterval, 1, 3
+        )
         self.assertEqual(note.getPitch(), "B11")
 
     def testSetPitchLeavesTheNoteUnchanged(self):
         note = ml.Note("C4", transposeDiatonic=1, transposeChromatic=3)
-        self.assertRaisesLeavingTheNote(note, ABOVE_THE_RANGE, note.setPitch, "B11")
+        self.assertRaisesLeavingTheNote(
+            note, aboveTheCeiling("B11", 1, 3, "158.000000"), note.setPitch, "B11"
+        )
         self.assertEqual(note.getPitch(), "D#4")
 
     def testTransposeLeavesTheNoteUnchanged(self):
         note = ml.Note("C4", transposeDiatonic=1, transposeChromatic=3)
         self.assertRaisesLeavingTheNote(
-            note,
-            "[maiacore] The MIDI Note '156' cannot be written using '' accident type within "
-            "octaves -1..11",
-            note.transpose,
-            90,
+            note, aboveTheCeiling("A11", 1, 3, "156.000000"), note.transpose, 90
         )
         self.assertEqual(note.getPitch(), "D#4")
 
@@ -683,10 +686,11 @@ class NoteMutatorThatRaises(unittest.TestCase):
         for alternative in (False, True):
             with self.subTest(alternative=alternative):
                 note = ml.Note("A11", transposeDiatonic=1, transposeChromatic=2)
+                # The default respelling of the sounding B11 is B11 itself (no flat partner
+                # within octave 11), the alternative Ax11; each sounds at 157 once written.
                 self.assertRaisesLeavingTheNote(
                     note,
-                    "[maiacore] The MIDI Note '157' cannot be written using '' accident type "
-                    "within octaves -1..11",
+                    aboveTheCeiling("Ax11" if alternative else "B11", 1, 2, "157.000000"),
                     note.toEnharmonicPitch,
                     alternative,
                 )
@@ -729,7 +733,7 @@ class NoteMutatorThatRaises(unittest.TestCase):
         note = self.assertChecksLikeSetPitch(
             lambda: ml.Note("C11", transposeDiatonic=1, transposeChromatic=3),
             "A11",
-            CANNOT_SPELL_156,
+            aboveTheCeiling("A11", 1, 3, "156.000000"),
             "setStep",
             "A",
         )
@@ -739,7 +743,7 @@ class NoteMutatorThatRaises(unittest.TestCase):
         note = self.assertChecksLikeSetPitch(
             lambda: ml.Note("C11", transposeDiatonic=1, transposeChromatic=3),
             "A11",
-            CANNOT_SPELL_156,
+            aboveTheCeiling("A11", 1, 3, "156.000000"),
             "setPitchClass",
             "A",
         )
@@ -749,7 +753,7 @@ class NoteMutatorThatRaises(unittest.TestCase):
         note = self.assertChecksLikeSetPitch(
             lambda: ml.Note("B4", transposeDiatonic=1, transposeChromatic=3),
             "B11",
-            ABOVE_THE_RANGE,
+            aboveTheCeiling("B11", 1, 3, "158.000000"),
             "setOctave",
             11,
         )
@@ -759,7 +763,7 @@ class NoteMutatorThatRaises(unittest.TestCase):
         note = self.assertChecksLikeSetPitch(
             lambda: ml.Note("A11", transposeDiatonic=1, transposeChromatic=2),
             "A#11",
-            CANNOT_SPELL_156,
+            aboveTheCeiling("A#11", 1, 2, "156.000000"),
             "setAlter",
             1,
         )
@@ -790,8 +794,7 @@ class NoteMutatorThatRaises(unittest.TestCase):
                 rest.setIsNoteOn(False)
                 self.assertRaisesLeavingTheNote(
                     rest,
-                    "[maiacore] Helper::steps2pitch: the pitch position '161.000000' is above "
-                    "the representable range -0.5 (C1b-1) to 157 (Bx11)",
+                    aboveTheCeiling("B4", 0, 90, "161.000000"),
                     getattr(rest, mutator),
                     "B",
                 )

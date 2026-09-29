@@ -54,9 +54,8 @@ class Note {
      *          which leaves the note constructible.
      * @return The sounding Pitch.
      * @throws std::runtime_error If this note is transposed and its sounding pitch lies below the
-     *         lowest representable pitch, C1b-1 (see getMidiNumber()), lies above the
-     *         representable range, or cannot be spelled within octaves -1..11 (see
-     *         Helper::steps2pitch()).
+     *         lowest representable pitch, C1b-1 (see getMidiNumber()), or above B11 (MIDI note
+     *         155), the highest sounding pitch that can be spelled within octaves -1..11.
      */
     Pitch computeSoundingPitch() const;
 
@@ -77,7 +76,10 @@ class Note {
      * @param transposeDiatonic Diatonic transposition interval.
      * @param transposeChromatic Chromatic transposition interval.
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
-     * @throws std::runtime_error If the pitch string is invalid (see Helper::splitPitch()).
+     * @throws std::runtime_error If the pitch string is invalid (see Helper::splitPitch()), or if
+     *         the note is transposed and its sounding pitch lies above B11 (MIDI note 155), the
+     *         highest sounding pitch that can be spelled within octaves -1..11 (see
+     *         setTransposingInterval()).
      */
     explicit Note(const std::string& pitch, const RhythmFigure rhythmFigure = RhythmFigure::QUARTER,
                   bool isNoteOn = true, bool inChord = false, const int transposeDiatonic = 0,
@@ -94,7 +96,9 @@ class Note {
      * @param transposeChromatic Chromatic transposition interval.
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
      * @throws std::runtime_error If the MIDI number cannot be spelled with accType within
-     *         octaves -1..11.
+     *         octaves -1..11, or if the note is transposed and its sounding pitch lies above B11
+     *         (MIDI note 155), the highest sounding pitch that can be spelled within octaves
+     *         -1..11 (see setTransposingInterval()).
      */
     explicit Note(const int midiNumber, const std::string& accType = "",
                   const RhythmFigure rhythmFigure = RhythmFigure::QUARTER, bool isNoteOn = true,
@@ -116,15 +120,14 @@ class Note {
      *
      *          The change is made on a copy of the written pitch, whose sounding pitch is checked
      *          with the transposing interval before it is stored, as setPitch() checks a whole
-     *          pitch: a sounding pitch above the representable range, or one that cannot be
-     *          spelled within octaves -1..11, throws with the note unchanged. A sounding pitch
-     *          below the lowest representable pitch, C1b-1, is accepted, as setPitch() accepts
-     *          it.
+     *          pitch: a sounding pitch above B11 (MIDI note 155), the highest sounding pitch that
+     *          can be spelled within octaves -1..11, throws with the note unchanged. A sounding
+     *          pitch below the lowest representable pitch, C1b-1, is accepted, as setPitch()
+     *          accepts it.
      * @param pitchClass The pitch class string.
      * @throws std::runtime_error If the pitch class is invalid or the pitch lies below MIDI note 0
-     *         (see Helper::splitPitch()), or if the sounding pitch the change gives lies above the
-     *         representable range or cannot be spelled within octaves -1..11 (the same error
-     *         setPitch() raises for that pitch). The note is then left unchanged.
+     *         (see Helper::splitPitch()), or if the sounding pitch the change gives lies above B11
+     *         (the same error setPitch() raises for that pitch). The note is then left unchanged.
      */
     void setPitchClass(const std::string& pitchClass);
 
@@ -135,15 +138,14 @@ class Note {
      *
      *          The change is made on a copy of the written pitch, whose sounding pitch is checked
      *          with the transposing interval before it is stored, as setPitch() checks a whole
-     *          pitch: a sounding pitch above the representable range, or one that cannot be
-     *          spelled within octaves -1..11, throws with the note unchanged. A sounding pitch
-     *          below the lowest representable pitch, C1b-1, is accepted, as setPitch() accepts
-     *          it.
+     *          pitch: a sounding pitch above B11 (MIDI note 155), the highest sounding pitch that
+     *          can be spelled within octaves -1..11, throws with the note unchanged. A sounding
+     *          pitch below the lowest representable pitch, C1b-1, is accepted, as setPitch()
+     *          accepts it.
      * @param octave Octave number, within [-1, 11].
      * @throws std::runtime_error If octave is outside [-1, 11] on a note, or if the sounding pitch
-     *         the change gives lies above the representable range or cannot be spelled within
-     *         octaves -1..11 (the same error setPitch() raises for that pitch). The note is then
-     *         left unchanged.
+     *         the change gives lies above B11 (the same error setPitch() raises for that pitch).
+     *         The note is then left unchanged.
      */
     void setOctave(int octave);
 
@@ -156,15 +158,14 @@ class Note {
      *
      *          The change is made on a copy of the written pitch, whose sounding pitch is checked
      *          with the transposing interval before it is stored, as setPitch() checks a whole
-     *          pitch: a sounding pitch above the representable range, or one that cannot be
-     *          spelled within octaves -1..11, throws with the note unchanged. A sounding pitch
-     *          below the lowest representable pitch, C1b-1, is accepted, as setPitch() accepts
-     *          it.
+     *          pitch: a sounding pitch above B11 (MIDI note 155), the highest sounding pitch that
+     *          can be spelled within octaves -1..11, throws with the note unchanged. A sounding
+     *          pitch below the lowest representable pitch, C1b-1, is accepted, as setPitch()
+     *          accepts it.
      * @param step Diatonic step ("A".."G").
      * @throws std::runtime_error If step is not one of "A".."G", or if the sounding pitch the
-     *         change gives lies above the representable range or cannot be spelled within octaves
-     *         -1..11 (the same error setPitch() raises for that pitch). The note is then left
-     *         unchanged.
+     *         change gives lies above B11 (the same error setPitch() raises for that pitch). The
+     *         note is then left unchanged.
      */
     void setStep(const std::string& step);
 
@@ -177,16 +178,15 @@ class Note {
      *
      *          The change is made on a copy of the written pitch, whose sounding pitch is checked
      *          with the transposing interval before it is stored, as setPitch() checks a whole
-     *          pitch: a sounding pitch above the representable range, or one that cannot be
-     *          spelled within octaves -1..11, throws with the note unchanged. A sounding pitch
-     *          below the lowest representable pitch, C1b-1, is accepted, as setPitch() accepts
-     *          it.
+     *          pitch: a sounding pitch above B11 (MIDI note 155), the highest sounding pitch that
+     *          can be spelled within octaves -1..11, throws with the note unchanged. A sounding
+     *          pitch below the lowest representable pitch, C1b-1, is accepted, as setPitch()
+     *          accepts it.
      * @param alter Alter value; must be a multiple of 0.5 (a semitone or quarter-tone step),
      *        within [-2, 2].
      * @throws std::runtime_error If alter is NaN or infinite, is not a multiple of 0.5, or is
-     *         outside [-2, 2], or if the sounding pitch the change gives lies above the
-     *         representable range or cannot be spelled within octaves -1..11 (the same error
-     *         setPitch() raises for that pitch). The note is then left unchanged.
+     *         outside [-2, 2], or if the sounding pitch the change gives lies above B11 (the same
+     *         error setPitch() raises for that pitch). The note is then left unchanged.
      */
     void setAlter(float alter);
 
@@ -237,11 +237,10 @@ class Note {
      * @param pitch Pitch string. An empty string or a string containing "rest" turns the note
      *        into a rest.
      * @throws std::runtime_error If the pitch string is invalid (see Helper::splitPitch()), or if
-     *         its sounding pitch with the current transposing interval lies above the
-     *         representable range or cannot be spelled within octaves -1..11 (see
-     *         Helper::steps2pitch()). The note is then left unchanged. A sounding pitch below the
-     *         lowest representable pitch, C1b-1, is accepted, as setTransposingInterval() accepts
-     *         it.
+     *         its sounding pitch with the current transposing interval lies above B11 (MIDI note
+     *         155), the highest sounding pitch that can be spelled within octaves -1..11. The note
+     *         is then left unchanged. A sounding pitch below the lowest representable pitch, C1b-1,
+     *         is accepted, as setTransposingInterval() accepts it.
      */
     void setPitch(const std::string& pitch);
 
@@ -263,9 +262,9 @@ class Note {
      *          ignores the call.
      * @param diatonicInterval Diatonic interval.
      * @param chromaticInterval Chromatic interval.
-     * @throws std::runtime_error If the sounding pitch with this interval lies above the
-     *         representable range or cannot be spelled within octaves -1..11 (see
-     *         Helper::steps2pitch()); the note is then left unchanged.
+     * @throws std::runtime_error If the sounding pitch with this interval lies above B11 (MIDI note
+     *         155), the highest sounding pitch that can be spelled within octaves -1..11; the note
+     *         is then left unchanged.
      */
     void setTransposingInterval(const int diatonicInterval, const int chromaticInterval);
 

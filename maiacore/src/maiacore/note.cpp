@@ -41,6 +41,23 @@ bool isSoundingPitchBelowFloor(const Pitch& writtenPitch, const int transposeChr
               "pitch at or above C1b-1 makes it spellable.");
 }
 
+// The error for a transposed note whose sounding pitch lies above B11 (MIDI note 155):
+// soundingPitchOf() spells a sounding pitch with naturals and sharps, and above B11 that spelling
+// would need octave 12. The constructor and every mutator that could store such a pitch check it
+// before storing anything, so this is raised there, naming the written pitch and the interval.
+[[noreturn]] void throwSoundingPitchAboveCeiling(const Pitch& writtenPitch,
+                                                 const int transposeDiatonic,
+                                                 const int transposeChromatic) {
+    LOG_ERROR("The sounding pitch of the written pitch '" + writtenPitch.getPitch() +
+              "' with transposeDiatonic=" + std::to_string(transposeDiatonic) +
+              " and transposeChromatic=" + std::to_string(transposeChromatic) + " is at position " +
+              std::to_string(writtenPitch.getQuarterToneSteps() +
+                             static_cast<float>(transposeChromatic)) +
+              ", above B11 (MIDI note 155), the highest sounding pitch that can be spelled within "
+              "octaves -1..11, so it has no sounding spelling. A lower written pitch or a smaller "
+              "transposing interval keeps the sounding pitch at or below B11.");
+}
+
 // The sounding pitch of 'writtenPitch' on an instrument transposing by 'transposeDiatonic' and
 // 'transposeChromatic': what Note::computeSoundingPitch() answers for a note holding them, for any
 // written pitch and interval, so that a mutator can check a new state before storing it.
@@ -48,7 +65,8 @@ bool isSoundingPitchBelowFloor(const Pitch& writtenPitch, const int transposeChr
 // It is the written pitch's exact position moved by the chromatic interval, a whole number of
 // semitones, and spelled from there. A position below the lowest representable pitch has no
 // spelling: it throws here, rather than answering Helper::steps2pitch()'s rest sentinel, so that
-// no sounding getter passes such a note off as a rest.
+// no sounding getter passes such a note off as a rest. A position above B11 has none either, and
+// throws naming the note.
 Pitch soundingPitchOf(const Pitch& writtenPitch, const int transposeDiatonic,
                       const int transposeChromatic) {
     // A rest has no sounding pitch, and an untransposed note sounds as written.
@@ -65,7 +83,20 @@ Pitch soundingPitchOf(const Pitch& writtenPitch, const int transposeDiatonic,
 
     // Accidental preference: flats going down, the default (natural/sharp-side) spelling going up,
     // which keeps a B-flat clarinet's written C4 sounding "Bb3" rather than "A#3".
-    const Pitch defaultSpelling(Helper::steps2pitch(soundingSteps, MUSIC_XML::ACCIDENT::NONE));
+    //
+    // The default spelling reaches no higher than B11 (MIDI note 155): above it, a position would
+    // need octave 12 ("C12" for 156) or lies above the representable range. Helper::steps2pitch()
+    // refuses such a position, and that refusal is the only one it can raise here -- the
+    // position is finite, on the quarter-tone grid and at or above the floor -- so it is rethrown
+    // naming the note rather than a bare MIDI number.
+    std::string defaultSpelled;
+    try {
+        defaultSpelled = Helper::steps2pitch(soundingSteps, MUSIC_XML::ACCIDENT::NONE);
+    } catch (const std::runtime_error& error) {
+        ignore(error);
+        throwSoundingPitchAboveCeiling(writtenPitch, transposeDiatonic, transposeChromatic);
+    }
+    const Pitch defaultSpelling(defaultSpelled);
 
     if (transposeChromatic > 0) {
         return defaultSpelling;
