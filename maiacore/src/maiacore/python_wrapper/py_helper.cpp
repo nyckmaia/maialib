@@ -367,9 +367,11 @@ void HelperClass(const py::module& m) {
                    R"pbdoc(
         Convert an accidental value in semitones to its symbol.
 
-        The value must be exactly one of the nine accepted values: one merely close to them,
-        such as 0.46, raises rather than being rounded. ``-0.0`` is the natural. The result does
-        not depend on the process locale.
+        The value reaches the library as a 32-bit float, which must be exactly one of the nine
+        accepted values: one merely close to them, such as 0.46, raises rather than being
+        rounded, but a Python float within float32 precision of one becomes that value on the
+        way in and is accepted. ``-0.0`` is the natural. The result does not depend on the
+        process locale.
 
         Parameters
         ----------
@@ -400,9 +402,9 @@ void HelperClass(const py::module& m) {
         Convert an accidental value in semitones to its MusicXML accidental name.
 
         The quarter tones get their Tartini names (``"quarter-sharp"``, ``"three-quarters-flat"``,
-        ...), the names ``Note.toXML`` writes. As in ``alterValue2symbol``, the value must be
-        exactly one of the nine accepted values (``-0.0`` is the natural), and the result does
-        not depend on the process locale.
+        ...), the names ``Note.toXML`` writes. As in ``alterValue2symbol``, the value, a 32-bit
+        float once it reaches the library, must be exactly one of the nine accepted values
+        (``-0.0`` is the natural), and the result does not depend on the process locale.
 
         Parameters
         ----------

@@ -252,6 +252,49 @@ def runCallbackSearch(collection, timeout=60):
     return None if completed is None else resultLine(completed)
 
 
+# A melody search whose Python callback raises, called from the search's worker threads. Run in a
+# child process, because an exception mishandled on a worker thread would kill the interpreter or
+# hang it.
+RAISING_CALLBACK_SEARCH = textwrap.dedent(
+    """
+    import maialib as ml
+
+
+    class CallbackError(Exception):
+        pass
+
+
+    def intervals(pattern, segment):
+        raise CallbackError("raised by the callback", len(segment))
+
+
+    def total(differences):
+        return 1.0
+
+
+    score = ml.Score("./xml_examples/Bach/cello_suite_1_violin.xml")
+    searcher = score
+    if COLLECTION:
+        searcher = ml.ScoreCollection([])
+        searcher.addScore(score)
+    pattern = [ml.Note("G2"), ml.Note("D3"), ml.Note("B3")]
+    try:
+        searcher.findMelodyPatternDataFrame([pattern, pattern], 0.5, 0.5, intervals, None, total)
+        print("RESULT nothing-raised")
+    except Exception as error:
+        usable = len(score.findMelodyPatternDataFrame([pattern])) > 0
+        print("RESULT", type(error).__name__, error.args == ("raised by the callback", 3), usable)
+    """
+)
+
+
+def runRaisingCallbackSearch(collection, timeout=60):
+    """Run RAISING_CALLBACK_SEARCH in a child process; return its RESULT line, or None on a
+    timeout."""
+    completed = runChild(f"COLLECTION = {collection}\n{RAISING_CALLBACK_SEARCH}", timeout)
+    return None if completed is None else resultLine(completed)
+
+
 # Several threads search one freshly loaded score at once, round after round, and every thread's
 # table is compared with a serial search's. The list overload releases the GIL, so the searches
 # really do overlap. Run in a child process, because a search that corrupted the heap would kill
@@ -376,6 +419,20 @@ class ScoreMelodyPatternSearchTestCase(unittest.TestCase):
         _, listed, expected, called = result.split()
         self.assertEqual(listed, expected)
         self.assertEqual(called, "True")
+
+    def test_a_callback_that_raises_on_a_worker_thread_raises_to_the_caller(self):
+        """A Python callback's exception, raised on a worker thread, reaches the caller as itself
+        -- the same type and arguments, not a RuntimeError describing it -- once every pattern
+        has been searched, and the interpreter stays usable."""
+        result = runRaisingCallbackSearch(collection=False)
+        self.assertIsNotNone(result, "the search did not finish within 60 s: a deadlock")
+        self.assertEqual(result, "RESULT CallbackError True True")
+
+    def test_a_callback_that_raises_raises_through_the_collection_list_overload_too(self):
+        """ScoreCollection's list overload propagates it the same way."""
+        result = runRaisingCallbackSearch(collection=True)
+        self.assertIsNotNone(result, "the search did not finish within 60 s: a deadlock")
+        self.assertEqual(result, "RESULT CallbackError True True")
 
     def test_several_threads_can_search_one_score_at_once(self):
         """The list overload releases the GIL while it searches, so searches of one score from

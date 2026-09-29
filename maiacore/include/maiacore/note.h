@@ -779,7 +779,12 @@ class Note {
     void toEnharmonicPitch(const bool alternativeEnharmonicPitch = false);
 
     /**
-     * @brief Returns the frequency of the note in Hz.
+     * @brief Returns the frequency of the note's sounding pitch in Hz, in twelve-tone equal
+     * temperament.
+     * @details Computed from the rounded MIDI number, getMidiNumber(), so a quarter tone is
+     *          rounded to the nearest semitone, ties upward -- the semitone above it: a note
+     *          "A1x4" gets the frequency of A#4, about 466.16 Hz. Pitch::getFrequency() gives the
+     *          exact frequency, about 452.89 Hz.
      * @param freqA4 Reference frequency for A4 (default: 440.0 Hz).
      * @return Frequency in Hz, or 0.0 for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest

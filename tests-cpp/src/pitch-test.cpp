@@ -384,12 +384,14 @@ TEST(Pitch, setFrequencyRejectsMalformedAccType) {
 
 // setFrequency() must guard the tuning system exactly like getFrequency() does (see
 // getFrequencyThrowsForNonEqualTemperament below), not silently apply the 12-TET inverse while
-// the getter refuses to use a tuning system it does not implement. Resets EQUAL_TEMPERAMENT
-// afterward regardless of whether EXPECT_THROW passes.
+// the getter refuses to use a tuning system it does not implement. EQUAL_TEMPERAMENT is restored
+// before the message is checked, so no later test observes the change.
 TEST(Pitch, setFrequencyThrowsForNonEqualTemperament) {
     setTuningSystem(TuningSystem::MEANTONE_TEMPERAMENT);
-    EXPECT_THROW(Pitch(277.18f), std::runtime_error);
+    const std::string message = thrownFirstLine([] { Pitch(277.18f); });
     setTuningSystem(TuningSystem::EQUAL_TEMPERAMENT);
+    EXPECT_EQ(message,
+              "[maiacore] Tuning system is not implemented; only EQUAL_TEMPERAMENT is available");
 }
 
 // A flat-side quarter-tone spelling case. Every other frequency-rounding test above requests (or
@@ -417,14 +419,16 @@ TEST(Pitch, getFrequencyUsesExactQuarterToneSteps) {
     EXPECT_NE(p.getFrequency(), Pitch("C#4").getFrequency());  // midi 61, ties-up neighbor
 }
 
-// A tuning system other than EQUAL_TEMPERAMENT is a caller error. Resets the global tuning system
-// back to EQUAL_TEMPERAMENT afterward (config.h's getTuningSystem()/setTuningSystem() are
-// process-global state) so no later test observes it changed, regardless of whether EXPECT_THROW
-// passes or fails.
+// A tuning system other than EQUAL_TEMPERAMENT is a caller error. The global tuning system is
+// restored to EQUAL_TEMPERAMENT before the message is checked (config.h's
+// getTuningSystem()/setTuningSystem() are process-global state), so no later test observes it
+// changed.
 TEST(Pitch, getFrequencyThrowsForNonEqualTemperament) {
     setTuningSystem(TuningSystem::JUST_INTONATION);
-    EXPECT_THROW(Pitch("A4").getFrequency(), std::runtime_error);
+    const std::string message = thrownFirstLine([] { Pitch("A4").getFrequency(); });
     setTuningSystem(TuningSystem::EQUAL_TEMPERAMENT);
+    EXPECT_EQ(message,
+              "[maiacore] Tuning system is not implemented; only EQUAL_TEMPERAMENT is available");
 }
 
 // Pitch(int, accType) forwards accType to Helper::midiNote2pitch() (spelling MIDI 61 as "Db4"),

@@ -1081,8 +1081,8 @@ TEST(toCents, neutralThirdReadsThreeHundredAndFiftyCents) {
 }
 
 TEST(toCents, semitoneIntervalsAreExactHundreds) {
-    // Integer arithmetic on doubled step positions gives exact hundreds. A frequency route cannot
-    // guarantee them: Interval::toCents() compares two frequencies, and
+    // Differences of exact sounding positions, which a float holds exactly, give exact hundreds.
+    // A frequency route cannot guarantee them: Interval::toCents() compares two frequencies, and
     // Helper::frequencies2cents() truncates 299.9999 to 299 rather than rounding it.
     Chord myChord({"C4", "E4", "G4"});
 

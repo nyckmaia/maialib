@@ -1377,9 +1377,12 @@ class Chord {
      *          Cents are the one unit in this library that expresses a quarter tone exactly -- 50
      *          cents to the quarter tone, 350 to the neutral third -- so this method accepts a
      *          quarter-tone chord and computes the true value, unlike the MIDI-semitone methods,
-     *          which reject one. Computed as integer arithmetic on exact step positions (100 cents
-     *          to the semitone in twelve-tone equal temperament), not from the notes' frequencies,
-     *          so the result carries no floating-point error and does not depend on freqA4.
+     *          which reject one. Computed from the notes' exact sounding positions,
+     *          Note::getQuarterToneSteps() (100 cents to the semitone in twelve-tone equal
+     *          temperament), not from their frequencies, so it does not depend on freqA4. Every
+     *          position is a multiple of 0.5, which a float holds exactly, so each difference
+     *          times 100 is an exact whole number of cents, and converting it to int loses
+     *          nothing.
      * @return Vector of integer values representing the interval in cents between each note pair.
      */
     std::vector<int> toCents() const;

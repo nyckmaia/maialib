@@ -212,8 +212,10 @@ void NoteClass(const py::module& m) {
         Delegates to the underlying pitch's alter setter and inherits its policy: refused on a
         rest, since a bare alter value carries no octave to resurrect one with, and when the
         result would lie below MIDI note 0 -- in both cases a warning is printed and the note is
-        left unchanged. The value must be exactly a multiple of 0.5: one merely close to it,
-        such as 0.99996, is rejected rather than rounded.
+        left unchanged. The value reaches the library as a 32-bit float, which must be exactly
+        a multiple of 0.5: a value merely close to one, such as 0.99996, is rejected rather than
+        rounded, but a Python float within float32 precision of one becomes that multiple on
+        the way in and is accepted (``setAlter(0.9999999999)`` sets 1.0).
 
         On a transposing instrument the change is checked the way ``setPitch`` checks a whole
         pitch: if the written pitch it gives would sound above ``"B11"`` (MIDI note 155), the

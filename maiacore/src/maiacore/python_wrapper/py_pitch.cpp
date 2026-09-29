@@ -173,9 +173,12 @@ void PitchClass(const py::module& m) {
         Create a pitch from its three components: step, accidental and octave.
 
         The accidental is a number of semitones, so a quarter tone is given directly:
-        ``Pitch.fromComponents("C", 0.5, 4)`` is ``"C1x4"``. It must be exactly a multiple of 0.5:
-        one merely close to it, such as 0.99996, is rejected rather than rounded. ``-0.0`` is
-        stored as ``0.0``.
+        ``Pitch.fromComponents("C", 0.5, 4)`` is ``"C1x4"``. It reaches the library as a 32-bit
+        float, which must be exactly a multiple of 0.5: a value merely close to one, such as
+        0.99996, is rejected rather than rounded, but a Python float within float32 precision
+        of one becomes that multiple on the way in and is accepted
+        (``Pitch.fromComponents("C", 0.9999999999, 4)`` is ``"C#4"``). ``-0.0`` is stored as
+        ``0.0``.
 
         Parameters
         ----------
@@ -475,8 +478,10 @@ void PitchClass(const py::module& m) {
 
         Refused on a rest, and when the result would lie below MIDI note 0: in both cases a
         warning is printed and the pitch is left unchanged. A malformed value is an error. The
-        value must be exactly a multiple of 0.5: one merely close to it, such as 0.99996, is
-        rejected rather than rounded. ``-0.0`` is stored as ``0.0``.
+        value reaches the library as a 32-bit float, which must be exactly a multiple of 0.5: a
+        value merely close to one, such as 0.99996, is rejected rather than rounded, but a
+        Python float within float32 precision of one becomes that multiple on the way in and is
+        accepted (``setAlter(0.5000000001)`` sets 0.5). ``-0.0`` is stored as ``0.0``.
 
         Parameters
         ----------
