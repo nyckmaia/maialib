@@ -176,8 +176,8 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 
 #### Class `ClefSign`
 - `__init__(value: int) -> None`
-- `name() -> str`
-- `value() -> int`
+- `name: str`  *(read-only property)*
+- `value: int`  *(read-only property)*
 
 #### Class `Helper`
 - `alterName2symbol(alterName: str) -> str`
@@ -452,9 +452,9 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 
 #### Class `NoteData`
 - `__init__() -> None`  *(overloaded)*
-- `enharmonicDiatonicDistance() -> int`
-- `note() -> Note`
-- `wasEnharmonized() -> bool`
+- `enharmonicDiatonicDistance: int`  *(read-only property)*
+- `note: Note`  *(read-only property)*
+- `wasEnharmonized: bool`  *(read-only property)*
 
 #### Class `Part`
 - `__init__(partName: str, numStaves: int = 1, isPitched: bool = True, divisionsPerQuarterNote: int = 256) -> None`
@@ -515,8 +515,8 @@ score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
 
 #### Class `RhythmFigure`
 - `__init__(value: int) -> None`
-- `name() -> str`
-- `value() -> int`
+- `name: str`  *(read-only property)*
+- `value: int`  *(read-only property)*
 
 #### Class `Score`
 - `__init__(partsName: list[str], numMeasures: int = 20) -> None`  *(overloaded)*
