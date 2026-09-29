@@ -1599,45 +1599,6 @@ bool Score::getPartIndex(const std::string& partName, int* index) const {
     return foundIndex;
 }
 
-std::vector<Score::NoteEvent> Score::collectNoteEvents() const {
-    // Verifica se o cache já foi preenchido
-    if (_isNoteEventsCached) {
-        return _cachedNoteEvents;
-    }
-
-    _cachedNoteEvents.clear();  // Garante que esteja vazio antes de preencher
-    for (int partIdx = 0; partIdx < getNumParts(); partIdx++) {
-        const int NUM_NOTES_PER_MEASURE = 16;
-        _cachedNoteEvents.reserve(_cachedNoteEvents.size() +
-                                  _part[partIdx].getNumMeasures() * NUM_NOTES_PER_MEASURE);
-
-        const Part& currentPart = _part[partIdx];
-        const std::string& currentPartName = currentPart.getName();
-        for (int measureIdx = 0; measureIdx < currentPart.getNumMeasures(); measureIdx++) {
-            const Measure& currentMeasure = currentPart.getMeasure(measureIdx);
-            const int numStaves = currentMeasure.getNumStaves();
-            for (int staveIdx = 0; staveIdx < numStaves; staveIdx++) {
-                const int numNotes = currentMeasure.getNumNotes(staveIdx);
-                for (int noteIdx = 0; noteIdx < numNotes; noteIdx++) {
-                    const Note& currentNote = currentMeasure.getNote(noteIdx, staveIdx);
-
-                    // Skip all chords and multiple voices! To fix in the future
-                    // Get only the top melody of each instrument/stave
-                    if (currentNote.inChord() || currentNote.getVoice() != 1) {
-                        continue;
-                    }
-                    const std::string& currentKeyName = currentMeasure.getKey().getName();
-                    _cachedNoteEvents.push_back({currentPartName, measureIdx, staveIdx, noteIdx,
-                                                 currentKeyName, &currentNote});
-                }
-            }
-        }
-    }
-
-    _isNoteEventsCached = true;  // Marca o cache como preenchido
-    return _cachedNoteEvents;
-}
-
 std::vector<std::vector<Score::NoteEvent>> Score::collectNoteEventsPerPart() const {
     // Verifica se o cache já foi preenchido
     if (_isNoteEventsPerPartCached) {
@@ -1703,8 +1664,11 @@ Score::MelodyPatternTable Score::findMelodyPattern(
         return resultTable;
     }
 
-    const auto& noteEvents = collectNoteEvents();  // Obtém o cache de eventos de nota
-    resultTable.reserve(noteEvents.size() - melodyPattern.size());
+    // The search reads the score and writes nothing but its own locals, so any number of threads
+    // may search one score at once. Each window of a part's melody gives at most one row, so there
+    // are at most as many rows as the score has notes beyond the pattern's length -- never
+    // negative, as checked above.
+    resultTable.reserve(static_cast<size_t>(totalNumNotes - melodyPatternSize));
 
     // ===== STEP 1: COLETAR TODAS AS NOTAS DA PARTITURA ===== //
     for (int partIdx = 0; partIdx < getNumParts(); partIdx++) {
@@ -1868,7 +1832,6 @@ std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
     const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
     const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
     const std::function<float(float, float)> totalSimilarityCallback) const {
-    const auto& noteEvents = collectNoteEvents();  // Obtém o cache de eventos de nota uma única vez
     const size_t numPatterns = melodyPatterns.size();
     std::vector<Score::MelodyPatternTable> results(numPatterns);
 
@@ -1880,7 +1843,8 @@ std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
 
     // Each worker takes the next pattern nobody has claimed until none is left, so every pattern
     // is searched however many there are; the thread count only bounds how many run at once.
-    // Workers write distinct elements of 'results' and 'errors', so no lock is needed.
+    // Workers write distinct elements of 'results' and 'errors', and the single-pattern search
+    // each of them runs only reads the score, so no lock is needed.
     std::atomic<size_t> nextPattern{0};
     auto worker = [&]() {
         for (size_t idx = nextPattern++; idx < numPatterns; idx = nextPattern++) {

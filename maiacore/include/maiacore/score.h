@@ -55,14 +55,6 @@ class Score {
         const Note* notePtr;
     };
 
-    mutable std::vector<NoteEvent> _cachedNoteEvents;  ///< Cache for note events.
-    mutable bool _isNoteEventsCached = false;          ///< True if note events cache is filled.
-    /**
-     * @brief Collects all note events in the score for fast access and analysis.
-     * @return Vector of NoteEvent structures.
-     */
-    std::vector<NoteEvent> collectNoteEvents() const;
-
     mutable std::vector<std::vector<NoteEvent>>
         _cachedNoteEventsPerPart;  ///< Cache for note events per part.
     mutable bool _isNoteEventsPerPartCached =
@@ -488,10 +480,8 @@ class Score {
         // Deep copy of XML document
         _doc.reset(other._doc);
 
-        // Invalidate caches - they will be rebuilt when needed
-        _isNoteEventsCached = false;
+        // Invalidate the per-part note-event cache - it is rebuilt when needed
         _isNoteEventsPerPartCached = false;
-        _cachedNoteEvents.clear();
         _cachedNoteEventsPerPart.clear();
     }
 
@@ -521,10 +511,8 @@ class Score {
         // Deep copy of XML document
         _doc.reset(other._doc);
 
-        // Invalidate caches - they will be rebuilt when needed
-        _isNoteEventsCached = false;
+        // Invalidate the per-part note-event cache - it is rebuilt when needed
         _isNoteEventsPerPartCached = false;
-        _cachedNoteEvents.clear();
         _cachedNoteEventsPerPart.clear();
 
         return *this;
@@ -601,6 +589,9 @@ class Score {
      *
      * @note Computational complexity is O(n × m) where n = total notes in score, m = pattern
      * length. For large scores, consider restricting search to specific parts or measure ranges.
+     * @note The search reads the score and writes nothing another thread shares, so any number of
+     * threads may search the same score at once. Modifying the score, its parts, measures or notes
+     * while a search runs is not safe.
      */
     MelodyPatternTable findMelodyPattern(
         const std::vector<Note>& melodyPattern, const float totalIntervalsSimilarityThreshold = 0.5,
@@ -631,6 +622,9 @@ class Score {
      * @throws std::runtime_error Or std::bad_function_call, as the single-pattern overload throws
      *         them, for any pattern: the first such exception, in pattern order, is rethrown once
      *         every pattern has been searched.
+     * @note Each pattern is searched on a worker thread by the single-pattern overload, which only
+     * reads the score, so any number of threads may search the same score at once. Modifying the
+     * score, its parts, measures or notes while a search runs is not safe.
      */
     std::vector<MelodyPatternTable> findMelodyPattern(
         const std::vector<std::vector<Note>>& melodyPatterns,
@@ -658,6 +652,7 @@ class Score {
      * @param totalRhythmSimilarityCallback Function to aggregate rhythm similarity.
      * @param totalSimilarityCallback Function to combine total similarities.
      * @return Vector of result tables for each found pattern.
+     * @note Not safe to run concurrently on one Score: its first call fills a cache without a lock.
      */
     std::vector<MelodyPatternTable> findAnyMelodyPattern(
         const int patternNumNotes = 5, const float totalIntervalsSimilarityThreshold = 1.0f,

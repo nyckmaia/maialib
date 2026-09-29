@@ -252,6 +252,7 @@ void ScoreClass(const py::module& m) {
             // destroys a Python callback takes the GIL to do it. Holding the GIL here while the
             // workers run would deadlock, so it is released for the search alone, inside this
             // lambda; it is held again when the lambda returns, before any DataFrame is built.
+            // The search only reads the score, so other threads may search it meanwhile.
             const auto results = [&] {
                 py::gil_scoped_release release;
                 return score.findMelodyPattern(
@@ -310,8 +311,10 @@ void ScoreClass(const py::module& m) {
         Every pattern is searched exactly as the single-pattern overload searches it, however
         many patterns there are. Takes the same thresholds and callbacks, applied to every
         pattern. The search releases the GIL while it runs, so a Python callback is called from
-        the worker threads, one call at a time, each taking the GIL; other Python threads may
-        run meanwhile, and must not modify this score until the search returns.
+        the worker threads, one call at a time, each taking the GIL, and other Python threads run
+        meanwhile. The search only reads the score, so any number of threads may search the same
+        score at once; no thread may modify the score, its parts, measures or notes while a
+        search of it runs.
 
         Parameters
         ----------

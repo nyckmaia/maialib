@@ -224,11 +224,11 @@ CALLBACK_SEARCH = textwrap.dedent(
 )
 
 
-def runCallbackSearch(collection, timeout=60):
-    """Run CALLBACK_SEARCH in a child process; return its RESULT line, or None on a timeout."""
-    code = f"COLLECTION = {collection}\n{CALLBACK_SEARCH}"
+def runChild(code, timeout=60):
+    """Run the Python source 'code' in a child process, from this directory, under a hard timeout.
+    Return the completed process, or None when the timeout expired."""
     try:
-        completed = subprocess.run(
+        return subprocess.run(
             [sys.executable, "-c", code],
             cwd=os.path.dirname(os.path.abspath(__file__)),
             capture_output=True,
@@ -238,8 +238,58 @@ def runCallbackSearch(collection, timeout=60):
         )
     except subprocess.TimeoutExpired:
         return None
+
+
+def resultLine(completed):
+    """The last line the child printed that starts with RESULT, or its standard error."""
     lines = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
     return lines[-1] if lines else completed.stderr
+
+
+def runCallbackSearch(collection, timeout=60):
+    """Run CALLBACK_SEARCH in a child process; return its RESULT line, or None on a timeout."""
+    completed = runChild(f"COLLECTION = {collection}\n{CALLBACK_SEARCH}", timeout)
+    return None if completed is None else resultLine(completed)
+
+
+# Several threads search one freshly loaded score at once, round after round, and every thread's
+# table is compared with a serial search's. The list overload releases the GIL, so the searches
+# really do overlap. Run in a child process, because a search that corrupted the heap would kill
+# the interpreter running it.
+CONCURRENT_SEARCH = textwrap.dedent(
+    """
+    import threading
+
+    import maialib as ml
+
+    path = ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1)
+    patterns = [[ml.Note("C4"), ml.Note("D4")], [ml.Note("G3"), ml.Note("D4"), ml.Note("B4")]]
+    expected = ml.Score(path).findMelodyPatternDataFrame(patterns)
+    numThreads = 4
+
+
+    def search(score, barrier, tables, i):
+        barrier.wait()
+        tables[i] = score.findMelodyPatternDataFrame(patterns)
+
+
+    differing = 0
+    for _ in range(ROUNDS):
+        score = ml.Score(path)
+        barrier = threading.Barrier(numThreads)
+        tables = [None] * numThreads
+        threads = [
+            threading.Thread(target=search, args=(score, barrier, tables, i))
+            for i in range(numThreads)
+        ]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        differing += sum(table is None or not table.equals(expected) for table in tables)
+    print("RESULT", len(expected), differing)
+    """
+)
 
 
 class ScoreMelodyPatternSearchTestCase(unittest.TestCase):
@@ -326,6 +376,36 @@ class ScoreMelodyPatternSearchTestCase(unittest.TestCase):
         _, listed, expected, called = result.split()
         self.assertEqual(listed, expected)
         self.assertEqual(called, "True")
+
+    def test_several_threads_can_search_one_score_at_once(self):
+        """The list overload releases the GIL while it searches, so searches of one score from
+        several Python threads run at the same time. A search only reads the score, so each finds
+        exactly what a serial search finds, and the interpreter survives, however the threads
+        interleave: four threads, released together by a barrier, search a freshly loaded score
+        in each of ten rounds."""
+        completed = runChild(CONCURRENT_SEARCH.replace("ROUNDS", "10"), timeout=120)
+        self.assertIsNotNone(completed, "the searches did not finish within 120 s")
+        self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
+        _, rows, differing = resultLine(completed).split()
+        self.assertGreater(int(rows), 0)
+        self.assertEqual(differing, "0")
+
+    def test_a_pattern_longer_than_every_melody_finds_no_match(self):
+        """Only each part's first-voice melody is searched -- chords and other voices are
+        skipped -- so a pattern can be longer than every melody without being longer than the
+        score. No window of a melody fits it, and neither overload finds a match."""
+        score = ml.Score(["Flute"], 1)
+        measure = score.getPart(0).getMeasure(0)
+        measure.addNote(ml.Note("C4"))
+        for pitch in ("D4", "E4"):
+            note = ml.Note(pitch)
+            note.setVoice(2)
+            measure.addNote(note)
+        pattern = [ml.Note("C4"), ml.Note("D4")]
+        self.assertEqual(score.getNumNotes(), 3)
+
+        self.assertEqual(len(score.findMelodyPatternDataFrame(pattern)), 0)
+        self.assertEqual(len(score.findMelodyPatternDataFrame([pattern])), 0)
 
 
 class ScorePropertiesTestCase(unittest.TestCase):

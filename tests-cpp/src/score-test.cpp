@@ -1194,3 +1194,24 @@ TEST(ScoreMelodyPatternSearch, PatternsAQuarterToneApartAreNotMergedAsDuplicates
     const auto tables = score.findAnyMelodyPattern(2);
     EXPECT_EQ(tables.size(), 3u);  // C4-D4, D4-C4 and C4-D1b4
 }
+
+// Only each part's first-voice melody is searched -- chords and other voices are skipped -- so a
+// pattern can be longer than every melody without being longer than the score. No window of a
+// melody fits it, and neither overload finds a match.
+TEST(ScoreMelodyPatternSearch, APatternLongerThanEveryMelodyFindsNoMatch) {
+    Score score({"Flute"}, 1);
+    Measure& measure = score.getPart(0).getMeasure(0);
+    measure.addNote(Note("C4"));
+    for (const char* pitch : {"D4", "E4"}) {
+        Note secondVoice(pitch);
+        secondVoice.setVoice(2);
+        measure.addNote(secondVoice);
+    }
+    const std::vector<Note> pattern = {Note("C4"), Note("D4")};
+    ASSERT_EQ(score.getNumNotes(), 3);
+
+    EXPECT_TRUE(score.findMelodyPattern(pattern).empty());
+    const auto tables = score.findMelodyPattern(std::vector<std::vector<Note>>{pattern});
+    ASSERT_EQ(tables.size(), 1u);
+    EXPECT_TRUE(tables[0].empty());
+}

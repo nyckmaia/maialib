@@ -157,7 +157,8 @@ void ScoreCollectionClass(const py::module& m) {
             // copies or destroys a Python callback takes the GIL to do it. Holding the GIL here
             // while the workers run would deadlock, so it is released for the search alone, inside
             // this lambda; it is held again when the lambda returns, before any record or
-            // DataFrame is built.
+            // DataFrame is built. The search only reads the collection and its scores, so other
+            // threads may search them meanwhile.
             const auto allResults = [&] {
                 py::gil_scoped_release release;
                 return collection.findMelodyPattern(
@@ -210,9 +211,10 @@ void ScoreCollectionClass(const py::module& m) {
         Each score is searched as ``Score.findMelodyPatternDataFrame(melodyPatterns, ...)``
         searches it: every pattern, each on a worker thread, with the same thresholds and
         callbacks. The search releases the GIL while it runs, so a Python callback is called
-        from the worker threads, one call at a time, each taking the GIL; other Python threads
-        may run meanwhile, and must not modify this collection or its scores until the search
-        returns.
+        from the worker threads, one call at a time, each taking the GIL, and other Python
+        threads run meanwhile. The search only reads the collection and its scores, so any
+        number of threads may search them at once; no thread may modify the collection, its
+        scores, or their parts, measures or notes while a search of them runs.
 
         Parameters
         ----------
