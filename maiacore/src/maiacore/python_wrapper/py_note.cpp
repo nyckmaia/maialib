@@ -204,7 +204,31 @@ void NoteClass(const py::module& m) {
             py::arg("duration"));
     cls.def("setDuration", py::overload_cast<const float, const int>(&Note::setDuration),
             py::arg("quarterDuration"), py::arg("divisionsPerQuarterNote") = 256,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Set the duration in quarter notes: 1.0 is a quarter note, 0.5 an eighth, 1.5 a dotted
+        quarter.
+
+        Parameters
+        ----------
+        quarterDuration : float
+            Duration in quarter notes.
+        divisionsPerQuarterNote : int, default 256
+            Ticks per quarter note, used to convert the duration.
+
+        Raises
+        ------
+        RuntimeError
+            If the duration cannot be converted to a rhythm figure (e.g. 0 or a negative
+            value); the note is then left unchanged.
+
+        Examples
+        --------
+        >>> note = ml.Note("C4")
+        >>> note.setDuration(0.5)
+        >>> note.getType()
+        'eighth'
+    )pbdoc");
 
     //     cls.def("setDuration", py::overload_cast<const RhythmFigure, const
     //     int>(&Note::setDuration),
@@ -248,7 +272,7 @@ void NoteClass(const py::module& m) {
 
         Replaces the step, accidental and octave. A transposing interval is kept, so the
         sounding pitch, ``getPitch()``, is this pitch moved by it. Setting a rest also clears the
-        transposing interval.
+        transposing interval and the in-chord and grace-note flags.
 
         Parameters
         ----------
@@ -260,7 +284,10 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the pitch string is invalid.
+            If the pitch string is invalid, or if its sounding pitch with the note's transposing
+            interval lies above the representable range, ``"Bx11"``, or cannot be spelled within
+            octaves -1 to 11. The note is then left unchanged. A sounding pitch below ``C1b-1``
+            is accepted, as ``setTransposingInterval`` accepts it.
     )pbdoc");
     cls.def("setIsInChord", &Note::setIsInChord, py::arg("inChord"));
     cls.def("setTransposingInterval", &Note::setTransposingInterval, py::arg("diatonicInterval"),
@@ -271,7 +298,9 @@ void NoteClass(const py::module& m) {
 
         Every sounding getter derives the sounding pitch from the written pitch and
         ``chromaticInterval`` when asked, so a second call replaces the interval rather than
-        applying it again. On a rest this does nothing: a rest keeps no interval.
+        applying it again. The sounding pitch is also derived here, before the interval is
+        stored, so one that cannot be spelled raises now, with the note unchanged. On a rest this
+        does nothing: a rest has no pitch to transpose.
 
         Parameters
         ----------
@@ -284,10 +313,10 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the sounding pitch lies above the representable range, ``"Bx11"``. The interval
-            is stored even so, and every sounding getter then raises the same error. A sounding
-            pitch below the lowest representable pitch, ``C1b-1``, is not raised here: the note
-            stays constructible and each sounding getter raises instead (see
+            If the sounding pitch lies above the representable range, ``"Bx11"``, or cannot be
+            spelled within octaves -1 to 11; the note is then left unchanged. A sounding pitch
+            below the lowest representable pitch, ``C1b-1``, is not raised here: the interval is
+            stored, the note stays constructible and each sounding getter raises instead (see
             ``getSoundingPitch``).
 
         Examples
@@ -314,7 +343,33 @@ void NoteClass(const py::module& m) {
     cls.def("addBeam", &Note::addBeam, py::arg("beam"));
     cls.def("setIsTuplet", &Note::setIsTuplet, py::arg("isTuplet") = false);
     cls.def("setTupleValues", &Note::setTupleValues, py::arg("actualNotes"), py::arg("normalNotes"),
-            py::arg("normalType") = "eighth");
+            py::arg("normalType") = "eighth",
+            R"pbdoc(
+        Set the tuplet ratio: ``actualNotes`` notes in the time of ``normalNotes`` notes of
+        ``normalType``. They are written to MusicXML when the note is a tuplet (``setIsTuplet``).
+
+        Parameters
+        ----------
+        actualNotes : int
+            Number of notes in the tuplet, e.g. 3 for a triplet.
+        normalNotes : int
+            Number of normal notes they take the time of, e.g. 2 for a triplet.
+        normalType : str, default "eighth"
+            Note type of the normal notes.
+
+        Raises
+        ------
+        RuntimeError
+            If ``normalType`` is not a note type; the note is then left unchanged.
+
+        Examples
+        --------
+        >>> note = ml.Note("C4")
+        >>> note.setIsTuplet(True)
+        >>> note.setTupleValues(3, 2, "eighth")
+        >>> "<actual-notes>3</actual-notes>" in note.toXML()
+        True
+    )pbdoc");
     cls.def("info", &Note::info,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
             R"pbdoc(
@@ -897,7 +952,8 @@ void NoteClass(const py::module& m) {
             R"pbdoc(
         Respell the note in place with ``getEnharmonicPitch(alternativeEnharmonicPitch)``.
 
-        The respelling is set as the written pitch, through ``setPitch``.
+        The respelling is set as the written pitch, through ``setPitch``. When this raises, the
+        note is left unchanged.
 
         Parameters
         ----------
@@ -908,7 +964,9 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
+            representable pitch, ``C1b-1`` (see ``getSoundingPitch``), or if ``setPitch`` raises
+            for the respelling: on a transposing instrument, when the respelling moved by the
+            transposing interval cannot be spelled.
 
         Warnings
         --------
@@ -1050,8 +1108,10 @@ void NoteClass(const py::module& m) {
             If ``semitones`` is not finite or not a multiple of 0.5; if the result would lie
             outside the representable range, ``"C1b-1"`` to ``"Bx11"`` -- the note never silently
             becomes a rest; if the result cannot be spelled with ``accType`` within octaves -1
-            to 11; or if the note's transposing interval carries its sounding pitch below
-            ``C1b-1``, so that it has none to transpose (see ``getSoundingPitch``).
+            to 11; if the note's transposing interval carries its sounding pitch below
+            ``C1b-1``, so that it has none to transpose (see ``getSoundingPitch``); or, on a
+            transposing instrument, if the result, stored as the written pitch, sounds where it
+            cannot be spelled (see ``setPitch``). The note is left unchanged when this raises.
 
         Warnings
         --------

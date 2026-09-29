@@ -644,5 +644,98 @@ class NoteQuarterToneRoundingDocumentation(unittest.TestCase):
         self.assertEqual(ml.Note("A1x4").getFrequency(), ml.Note("A#4").getFrequency())
 
 
+def noteState(note):
+    """Everything a mutator can change: the written pitch, the transposing interval, the sounding
+    pitch (or the first line of the error a sounding getter raises), the duration, and the
+    MusicXML the note writes, which also carries its tuplet values."""
+    try:
+        sounding = note.getPitch()
+    except RuntimeError as error:
+        sounding = "raises: " + firstLine(error)
+    return (
+        note.getWrittenPitch(),
+        note.getTransposeDiatonic(),
+        note.getTransposeChromatic(),
+        sounding,
+        note.getDurationTicks(),
+        note.getLongType(),
+        note.toXML(),
+    )
+
+
+ABOVE_THE_RANGE = (
+    "[maiacore] Helper::steps2pitch: the pitch position '158.000000' is above the representable "
+    "range -0.5 (C1b-1) to 157 (Bx11)"
+)
+
+
+class NoteMutatorThatRaises(unittest.TestCase):
+    """A Note mutator that raises leaves the note exactly as it was. Mirrors the C++
+    NoteMutatorThatThrows tests."""
+
+    def assertRaisesLeavingTheNote(self, note, message, mutator, *arguments):
+        """mutator(*arguments) raises RuntimeError with this message, and the note is as before."""
+        before = noteState(note)
+        with self.assertRaises(RuntimeError) as context:
+            mutator(*arguments)
+        self.assertEqual(firstLine(context.exception), message)
+        self.assertEqual(noteState(note), before)
+
+    def testSetTransposingIntervalLeavesTheNoteUnchanged(self):
+        note = ml.Note("B11")
+        self.assertRaisesLeavingTheNote(note, ABOVE_THE_RANGE, note.setTransposingInterval, 1, 3)
+        self.assertEqual(note.getPitch(), "B11")
+
+    def testSetPitchLeavesTheNoteUnchanged(self):
+        note = ml.Note("C4", transposeDiatonic=1, transposeChromatic=3)
+        self.assertRaisesLeavingTheNote(note, ABOVE_THE_RANGE, note.setPitch, "B11")
+        self.assertEqual(note.getPitch(), "D#4")
+
+    def testTransposeLeavesTheNoteUnchanged(self):
+        note = ml.Note("C4", transposeDiatonic=1, transposeChromatic=3)
+        self.assertRaisesLeavingTheNote(
+            note,
+            "[maiacore] The MIDI Note '156' cannot be written using '' accident type within "
+            "octaves -1..11",
+            note.transpose,
+            90,
+        )
+        self.assertEqual(note.getPitch(), "D#4")
+
+    def testToEnharmonicPitchLeavesTheNoteUnchanged(self):
+        for alternative in (False, True):
+            with self.subTest(alternative=alternative):
+                note = ml.Note("A11", transposeDiatonic=1, transposeChromatic=2)
+                self.assertRaisesLeavingTheNote(
+                    note,
+                    "[maiacore] The MIDI Note '157' cannot be written using '' accident type "
+                    "within octaves -1..11",
+                    note.toEnharmonicPitch,
+                    alternative,
+                )
+                self.assertEqual(note.getPitch(), "B11")
+
+    def testSetDurationLeavesTheNoteUnchanged(self):
+        for duration in (0.0, -1.0):
+            with self.subTest(duration=duration):
+                note = ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2)
+                self.assertRaisesLeavingTheNote(
+                    note,
+                    "[maiacore] Unable to convert durationTick to RhythmFigure",
+                    note.setDuration,
+                    duration,
+                )
+                self.assertEqual(note.getDurationTicks(), 256)
+
+    def testSetTupleValuesLeavesTheNoteUnchanged(self):
+        note = ml.Note("C4")
+        note.setIsTuplet(True)
+        note.setTupleValues(3, 2, "eighth")
+        self.assertRaisesLeavingTheNote(
+            note, "[maiacore] Unknown note type: garbage", note.setTupleValues, 5, 4, "garbage"
+        )
+        self.assertIn("<actual-notes>3</actual-notes>", note.toXML())
+
+
 if __name__ == "__main__":
     unittest.main()

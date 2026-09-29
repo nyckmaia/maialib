@@ -3,7 +3,9 @@
 #include <gtest/gtest.h>
 
 #include <functional>
+#include <ostream>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -1909,4 +1911,167 @@ TEST(NoteSoundingPitchBelowFloor, anIntervalWithSuchANoteFailsDiagnosably) {
     const std::string message = thrownFirstLine([&] { Interval(n, Note("C4")).getNumOctaves(); });
     EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
         << message;
+}
+
+// ===== A mutator that throws leaves the note exactly as it was ===== //
+
+namespace {
+// Everything a Note mutator can change, as one comparable snapshot: the written pitch, the
+// transposing interval, the sounding pitch (or the first line of the error a sounding getter
+// raises), the duration, and the MusicXML the note writes, which also carries its tuplet values.
+struct NoteState {
+    std::string writtenPitch;
+    int transposeDiatonic;
+    int transposeChromatic;
+    std::string soundingPitch;
+    int durationTicks;
+    std::string type;
+    std::string xml;
+
+    bool operator==(const NoteState& other) const {
+        return std::tie(writtenPitch, transposeDiatonic, transposeChromatic, soundingPitch,
+                        durationTicks, type, xml) ==
+               std::tie(other.writtenPitch, other.transposeDiatonic, other.transposeChromatic,
+                        other.soundingPitch, other.durationTicks, other.type, other.xml);
+    }
+};
+
+std::ostream& operator<<(std::ostream& stream, const NoteState& state) {
+    return stream << "{written " << state.writtenPitch << ", interval (" << state.transposeDiatonic
+                  << ", " << state.transposeChromatic << "), sounding " << state.soundingPitch
+                  << ", ticks " << state.durationTicks << ", type " << state.type << "}";
+}
+
+NoteState stateOf(const Note& note) {
+    std::string soundingPitch;
+    try {
+        soundingPitch = note.getPitch();
+    } catch (const std::runtime_error& error) {
+        const std::string what = error.what();
+        soundingPitch = "raises: " + what.substr(0, what.find('\n'));
+    }
+    return {note.getWrittenPitch(),
+            note.getTransposeDiatonic(),
+            note.getTransposeChromatic(),
+            soundingPitch,
+            note.getDurationTicks(),
+            note.getLongType(),
+            note.toXML()};
+}
+
+Note transposedNote(const std::string& writtenPitch, const int diatonic, const int chromatic) {
+    return Note(writtenPitch, RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false, diatonic,
+                chromatic);
+}
+
+// The error for a sounding pitch at 'position' (as std::to_string() writes it), above Bx11.
+std::string aboveTheRange(const std::string& position) {
+    return "[maiacore] Helper::steps2pitch: the pitch position '" + position +
+           "' is above the representable range -0.5 (C1b-1) to 157 (Bx11)";
+}
+}  // namespace
+
+// The interval is checked before it is stored: one whose sounding pitch cannot be spelled throws
+// without leaving the note holding it, and every sounding getter still answers.
+TEST(NoteMutatorThatThrows, setTransposingIntervalLeavesTheNoteUnchanged) {
+    Note note("B11");
+    const NoteState before = stateOf(note);
+    EXPECT_EQ(thrownFirstLine([&] { note.setTransposingInterval(1, 3); }),
+              aboveTheRange("158.000000"));
+    EXPECT_EQ(stateOf(note), before);
+    EXPECT_EQ(note.getPitch(), "B11");
+
+    Note clarinet = transposedNote("C4", -1, -2);
+    const NoteState clarinetBefore = stateOf(clarinet);
+    EXPECT_EQ(thrownFirstLine([&] { clarinet.setTransposingInterval(0, 200); }),
+              aboveTheRange("260.000000"));
+    EXPECT_EQ(stateOf(clarinet), clarinetBefore);
+    EXPECT_EQ(clarinet.getTransposeChromatic(), -2);
+    EXPECT_EQ(clarinet.getPitch(), "Bb3");
+}
+
+// A rest has no pitch to transpose, so it ignores the call and keeps no interval.
+TEST(NoteMutatorThatThrows, setTransposingIntervalOnARestIsIgnored) {
+    Note rest("rest");
+    rest.setTransposingInterval(1, 3);
+    EXPECT_FALSE(rest.isTransposed());
+    EXPECT_EQ(rest.getTransposeChromatic(), 0);
+}
+
+// The new written pitch is checked with the current interval before it is stored. A sounding
+// pitch below the lowest representable pitch is still accepted, as setTransposingInterval()
+// accepts it: the note stays constructible.
+TEST(NoteMutatorThatThrows, setPitchLeavesTheNoteUnchanged) {
+    Note note = transposedNote("C4", 1, 3);
+    const NoteState before = stateOf(note);
+    EXPECT_EQ(thrownFirstLine([&] { note.setPitch("B11"); }), aboveTheRange("158.000000"));
+    EXPECT_EQ(stateOf(note), before);
+    EXPECT_EQ(note.getPitch(), "D#4");
+
+    Note clarinet = transposedNote("C4", -1, -2);
+    clarinet.setPitch("C#-1");
+    EXPECT_EQ(clarinet.getWrittenPitch(), "C#-1");
+    const std::string message = thrownFirstLine([&] { clarinet.getPitch(); });
+    EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
+        << message;
+}
+
+// transpose() stores its result through setPitch(), which on a transposing instrument moves it by
+// the interval again: A11 plus 3 semitones sounds at 156, which cannot be spelled.
+TEST(NoteMutatorThatThrows, transposeLeavesTheNoteUnchanged) {
+    Note note = transposedNote("C4", 1, 3);
+    const NoteState before = stateOf(note);
+    EXPECT_EQ(thrownFirstLine([&] { note.transpose(90); }),
+              "[maiacore] The MIDI Note '156' cannot be written using '' accident type within "
+              "octaves -1..11");
+    EXPECT_EQ(stateOf(note), before);
+    EXPECT_EQ(note.getPitch(), "D#4");
+}
+
+// toEnharmonicPitch() stores the respelling of the sounding B11 through setPitch(), where it is
+// moved by the interval again: B11 or Ax11 plus 2 semitones sounds at 157, which cannot be spelled.
+TEST(NoteMutatorThatThrows, toEnharmonicPitchLeavesTheNoteUnchanged) {
+    for (const bool alternative : {false, true}) {
+        Note note = transposedNote("A11", 1, 2);
+        const NoteState before = stateOf(note);
+        EXPECT_EQ(thrownFirstLine([&] { note.toEnharmonicPitch(alternative); }),
+                  "[maiacore] The MIDI Note '157' cannot be written using '' accident type within "
+                  "octaves -1..11")
+            << "alternative " << alternative;
+        EXPECT_EQ(stateOf(note), before) << "alternative " << alternative;
+        EXPECT_EQ(note.getPitch(), "B11");
+    }
+}
+
+// A duration that cannot be converted to a rhythm figure throws without storing its tick count,
+// through either numeric overload.
+TEST(NoteMutatorThatThrows, setDurationLeavesTheNoteUnchanged) {
+    for (const float quarterDuration : {0.0f, -1.0f}) {
+        Note note = transposedNote("C4", -1, -2);
+        const NoteState before = stateOf(note);
+        EXPECT_EQ(thrownFirstLine([&] { note.setDuration(quarterDuration); }),
+                  "[maiacore] Unable to convert durationTick to RhythmFigure")
+            << quarterDuration;
+        EXPECT_EQ(stateOf(note), before) << quarterDuration;
+        EXPECT_EQ(note.getDurationTicks(), 256);
+    }
+
+    Note note("C4");
+    const NoteState before = stateOf(note);
+    EXPECT_EQ(thrownFirstLine([&] { note.setDuration(0, 256); }),
+              "[maiacore] Unable to convert durationTick to RhythmFigure");
+    EXPECT_EQ(stateOf(note), before);
+}
+
+// An unknown note type throws without storing the new note counts.
+TEST(NoteMutatorThatThrows, setTupleValuesLeavesTheNoteUnchanged) {
+    Note note("C4");
+    note.setIsTuplet(true);
+    note.setTupleValues(3, 2, "eighth");
+    const NoteState before = stateOf(note);
+    EXPECT_EQ(thrownFirstLine([&] { note.setTupleValues(5, 4, "garbage"); }),
+              "[maiacore] Unknown note type: garbage");
+    EXPECT_EQ(stateOf(note), before);
+    EXPECT_EQ(note.getDuration().getTimeModificationActualNotes(), 3);
+    EXPECT_EQ(note.getDuration().getTimeModificationNormalNotes(), 2);
 }

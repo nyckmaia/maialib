@@ -41,6 +41,66 @@ bool isSoundingPitchBelowFloor(const Pitch& writtenPitch, const int transposeChr
               "pitch at or above C1b-1 makes it spellable.");
 }
 
+// The sounding pitch of 'writtenPitch' on an instrument transposing by 'transposeDiatonic' and
+// 'transposeChromatic': what Note::computeSoundingPitch() answers for a note holding them, for any
+// written pitch and interval, so that a mutator can check a new state before storing it.
+//
+// It is the written pitch's exact position moved by the chromatic interval, a whole number of
+// semitones, and spelled from there. A position below the lowest representable pitch has no
+// spelling: it throws here, rather than answering Helper::steps2pitch()'s rest sentinel, so that
+// no sounding getter passes such a note off as a rest.
+Pitch soundingPitchOf(const Pitch& writtenPitch, const int transposeDiatonic,
+                      const int transposeChromatic) {
+    // A rest has no sounding pitch, and an untransposed note sounds as written.
+    if (writtenPitch.isRest() || (transposeDiatonic == 0 && transposeChromatic == 0)) {
+        return writtenPitch;
+    }
+
+    if (isSoundingPitchBelowFloor(writtenPitch, transposeChromatic)) {
+        throwSoundingPitchBelowFloor(writtenPitch, transposeDiatonic, transposeChromatic);
+    }
+
+    const float soundingSteps =
+        writtenPitch.getQuarterToneSteps() + static_cast<float>(transposeChromatic);
+
+    // Accidental preference: flats going down, the default (natural/sharp-side) spelling going up,
+    // which keeps a B-flat clarinet's written C4 sounding "Bb3" rather than "A#3".
+    const Pitch defaultSpelling(Helper::steps2pitch(soundingSteps, MUSIC_XML::ACCIDENT::NONE));
+
+    if (transposeChromatic > 0) {
+        return defaultSpelling;
+    }
+
+    // Going down, the flat spelling is preferred -- but only when it agrees with the default about
+    // the OCTAVE. Note::getSoundingPitch() composes its string from this pitch CLASS and
+    // Note::getSoundingOctave()'s arithmetic octave, so a spelling that crosses the octave
+    // boundary ("Cb4" rather than "B3" for MIDI 59) would compose "Cb3": a different note
+    // entirely, a full octave off. Dropping the preference in that case is what keeps the two
+    // halves consistent.
+    try {
+        const Pitch flatSpelling(Helper::steps2pitch(soundingSteps, MUSIC_XML::ACCIDENT::FLAT));
+        if (flatSpelling.getOctave() == defaultSpelling.getOctave()) {
+            return flatSpelling;
+        }
+    } catch (const std::runtime_error& error) {
+        // This MIDI note has no flat spelling at all (e.g. MIDI 60, a natural "C"). The default
+        // spelling always exists, so the preference is simply dropped.
+        ignore(error);
+    }
+
+    return defaultSpelling;
+}
+
+// Throws, as the sounding getters would, if 'writtenPitch' with this transposing interval has a
+// sounding pitch that cannot be spelled. A sounding pitch below the lowest representable pitch is
+// accepted: a note holding it stays constructible, and each sounding getter reports it when asked.
+void checkSoundingPitch(const Pitch& writtenPitch, const int transposeDiatonic,
+                        const int transposeChromatic) {
+    if (!isSoundingPitchBelowFloor(writtenPitch, transposeChromatic)) {
+        soundingPitchOf(writtenPitch, transposeDiatonic, transposeChromatic);
+    }
+}
+
 // Formats a pitch alter value for the MusicXML <alter> element: a whole-tone accidental with no
 // decimal part ("1", "-2"), a quarter tone with exactly one decimal place ("0.5", "-1.5"). The
 // text is looked up by accidental symbol rather than formatted through a stream, so it never
@@ -275,7 +335,11 @@ int Note::getTransposeChromatic() const { return _transposeChromatic; }
 void Note::setDuration(const Duration& duration) { _duration = duration; }
 
 void Note::setDuration(const float quarterDuration, const int divisionsPerQuarterNote) {
-    _duration.setQuarterDuration(quarterDuration, divisionsPerQuarterNote);
+    // Duration::setQuarterDuration() stores the new tick count before converting it to a rhythm
+    // figure, so it runs on a copy: a duration it cannot convert throws with this note unchanged.
+    Duration duration = _duration;
+    duration.setQuarterDuration(quarterDuration, divisionsPerQuarterNote);
+    _duration = duration;
 }
 
 void Note::setDuration(const int durationTicks, const int divisionsPerQuarterNote) {
@@ -643,97 +707,32 @@ void Note::setPitch(const std::string& pitch) {
         return;
     }
 
-    // The rest case already returned above, so this cannot take Pitch::setPitch()'s own rest
-    // branch; see the constructor's identical comment.
-    _writtenPitch.setPitch(pitch);
-
-    // Update the sounding Pitch/PitchClass and MIDI number
-    setTransposingInterval(_transposeDiatonic, _transposeChromatic);
+    // Parsed, and checked with the current transposing interval, before anything is stored: an
+    // invalid pitch string, or one whose sounding pitch cannot be spelled, throws with this note
+    // unchanged. The rest case already returned above, so this is a note.
+    const Pitch writtenPitch(pitch);
+    checkSoundingPitch(writtenPitch, _transposeDiatonic, _transposeChromatic);
+    _writtenPitch = writtenPitch;
 }
 
 void Note::setTransposingInterval(const int diatonicInterval, const int chromaticInterval) {
-    // Error checking for rest
+    // A rest ignores the call: it has no pitch to transpose.
     if (!isNoteOn()) {
         return;
     }
 
-    // Set internal Note members
+    // The sounding pitch with the new interval is derived (and discarded) before the interval is
+    // stored, so one that cannot be spelled throws here, with this note unchanged, rather than
+    // from a later getter call. Nothing is cached: every sounding getter recomputes the sounding
+    // pitch on demand, through computeSoundingPitch().
+    checkSoundingPitch(_writtenPitch, diatonicInterval, chromaticInterval);
+
     _transposeDiatonic = diatonicInterval;
     _transposeChromatic = chromaticInterval;
-
-    // Eagerly derive (and discard) the sounding pitch, so one that cannot be spelled throws here
-    // rather than from a later getter call. The exception is a sounding pitch below the lowest
-    // representable pitch: such a note stays constructible, and each sounding getter reports the
-    // condition when asked. Nothing is cached: every "sounding" getter recomputes the sounding
-    // pitch on demand via computeSoundingPitch().
-    if (!isSoundingPitchBelowFloor(_writtenPitch, _transposeChromatic)) {
-        computeSoundingPitch();
-    }
 }
 
 Pitch Note::computeSoundingPitch() const {
-    if (_writtenPitch.isRest()) {
-        return _writtenPitch;
-    }
-
-    // Not a transposing instrument: the written pitch IS the sounding pitch.
-    if (!isTransposed()) {
-        return _writtenPitch;
-    }
-
-    // Task 10: the sounding pitch is derived arithmetically from the written pitch and the
-    // chromatic interval, exactly as getMidiNumber() has done since Task 6.
-    //
-    // This replaced four twelve-entry arrays of semitone spellings (sharp, flat, double-sharp and
-    // double-flat), indexed by written pitch class. They were DELETED rather than repaired: with
-    // twelve entries per octave there is no index for a quarter tone, so the structure could not
-    // represent "C1x4" at all -- such a pitch class matched none of the four scales and fell
-    // through to LOG_ERROR("Unknown note type"), a message naming neither the pitch class nor the
-    // interval. Both of those throws went with the arrays; there is no longer a spelling this
-    // method can fail to look up.
-    //
-    // The index arithmetic carried two further defects, both fixed by deleting it:
-    //   1. A pitch class found only in the SHARP scale (e.g. "C#") still indexed the FLAT array,
-    //      at end() -- an index of 12 on a 12-element array, which only stayed in bounds by
-    //      accident -- so a B-flat clarinet's written C#4 sounded "Bb" instead of "B".
-    //   2. The octave-wrap check `tempIdx >= 0 && tempIdx <= 12` also took the no-wrap branch at
-    //      exactly 12, so a piccolo's written C4 (chromatic +12) sounded in octave 4, not 5.
-    // A sounding pitch below the lowest representable pitch has no spelling. It is reported here,
-    // rather than answered with Helper::steps2pitch()'s rest sentinel, so that no sounding getter
-    // passes such a note off as a rest.
-    if (isSoundingPitchBelowFloor(_writtenPitch, _transposeChromatic)) {
-        throwSoundingPitchBelowFloor(_writtenPitch, _transposeDiatonic, _transposeChromatic);
-    }
-
-    const float soundingSteps =
-        _writtenPitch.getQuarterToneSteps() + static_cast<float>(_transposeChromatic);
-
-    // Accidental preference: flats going down, the default (natural/sharp-side) spelling going up.
-    // That is the one sound convention the deleted lookup had, and it is what keeps a B-flat
-    // clarinet's written C4 sounding "Bb3" rather than "A#3".
-    const Pitch defaultSpelling(Helper::steps2pitch(soundingSteps, MUSIC_XML::ACCIDENT::NONE));
-
-    if (_transposeChromatic > 0) {
-        return defaultSpelling;
-    }
-
-    // Going down, the flat spelling is preferred -- but only when it agrees with the default about
-    // the OCTAVE. getSoundingPitch() composes its string from this method's pitch CLASS and
-    // getSoundingOctave()'s arithmetic octave, so a spelling that crosses the octave boundary
-    // ("Cb4" rather than "B3" for MIDI 59) would compose "Cb3": a different note entirely, a full
-    // octave off. Dropping the preference in that case is what keeps the two halves consistent.
-    try {
-        const Pitch flatSpelling(Helper::steps2pitch(soundingSteps, MUSIC_XML::ACCIDENT::FLAT));
-        if (flatSpelling.getOctave() == defaultSpelling.getOctave()) {
-            return flatSpelling;
-        }
-    } catch (const std::runtime_error& error) {
-        // This MIDI note has no flat spelling at all (e.g. MIDI 60, a natural "C"). The default
-        // spelling always exists, so the preference is simply dropped.
-        ignore(error);
-    }
-
-    return defaultSpelling;
+    return soundingPitchOf(_writtenPitch, _transposeDiatonic, _transposeChromatic);
 }
 
 void Note::setVoice(const int voice) { _voice = voice; }
@@ -746,7 +745,11 @@ void Note::setIsTuplet(const bool isTuplet) { _isTuplet = isTuplet; }
 
 void Note::setTupleValues(const int actualNotes, const int normalNotes,
                           const std::string& normalType) {
-    _duration.setTupleValues(actualNotes, normalNotes, normalType);
+    // Duration::setTupleValues() stores the note counts before reading the note type, so it runs on
+    // a copy: an unknown note type throws with this note unchanged.
+    Duration duration = _duration;
+    duration.setTupleValues(actualNotes, normalNotes, normalType);
+    _duration = duration;
 }
 
 bool Note::isTuplet() const { return _isTuplet; }

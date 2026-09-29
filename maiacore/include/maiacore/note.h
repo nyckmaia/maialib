@@ -47,10 +47,11 @@ class Note {
      *        _transposeDiatonic/_transposeChromatic.
      * @details A rest, or an untransposed note, returns _writtenPitch itself: nothing is cached,
      *          every "sounding" getter (getSoundingPitch(), getOctave(), getAlterSymbol(),
-     *          getPitchClass(), ...) calls this on demand. Also called (result discarded) by
-     *          setTransposingInterval(), so a sounding pitch that cannot be spelled throws there
-     *          rather than from a later getter call -- except one below the lowest representable
-     *          pitch, which leaves the note constructible.
+     *          getPitchClass(), ...) calls this on demand. setTransposingInterval() and
+     *          setPitch() derive it for the new interval or written pitch before storing it, so a
+     *          sounding pitch that cannot be spelled throws there, with the note unchanged, rather
+     *          than from a later getter call -- except one below the lowest representable pitch,
+     *          which leaves the note constructible.
      * @return The sounding Pitch.
      * @throws std::runtime_error If this note is transposed and its sounding pitch lies below the
      *         lowest representable pitch, C1b-1 (see getMidiNumber()), lies above the
@@ -162,6 +163,8 @@ class Note {
      * @brief Sets the duration for the note using quarter note value.
      * @param quarterDuration Duration in quarter notes.
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
+     * @throws std::runtime_error If the duration cannot be converted to a rhythm figure (e.g. 0 or
+     *         a negative value); the note is then left unchanged.
      */
     void setDuration(const float quarterDuration, const int divisionsPerQuarterNote = 256);
 
@@ -181,10 +184,17 @@ class Note {
     /**
      * @brief Sets the pitch (e.g., "C4", "G#3", "Bb-1", "C10") for the note.
      * @details Replaces the pitch class, octave, accidental symbol and MIDI number. Accepts the
-     *          same spellings as the pitch-string constructor.
+     *          same spellings as the pitch-string constructor. The transposing interval is kept,
+     *          so the note then sounds this pitch moved by it; setting a rest also clears the
+     *          interval and the in-chord and grace-note flags.
      * @param pitch Pitch string. An empty string or a string containing "rest" turns the note
      *        into a rest.
-     * @throws std::runtime_error If the pitch string is invalid (see Helper::splitPitch()).
+     * @throws std::runtime_error If the pitch string is invalid (see Helper::splitPitch()), or if
+     *         its sounding pitch with the current transposing interval lies above the
+     *         representable range or cannot be spelled within octaves -1..11 (see
+     *         Helper::steps2pitch()). The note is then left unchanged. A sounding pitch below the
+     *         lowest representable pitch, C1b-1, is accepted, as setTransposingInterval() accepts
+     *         it.
      */
     void setPitch(const std::string& pitch);
 
@@ -196,8 +206,19 @@ class Note {
 
     /**
      * @brief Sets the transposing interval for the note.
+     * @details The note is written at its written pitch and sounds that pitch moved by the
+     *          interval; every sounding getter derives the sounding pitch on demand, so a second
+     *          call replaces the interval rather than adding to it. The sounding pitch is derived
+     *          here too, before the interval is stored, so one that cannot be spelled throws now,
+     *          with the note unchanged, rather than from a later getter call. A sounding pitch
+     *          below the lowest representable pitch, C1b-1, is accepted: the note stays
+     *          constructible, and each sounding getter reports the condition when asked. A rest
+     *          ignores the call.
      * @param diatonicInterval Diatonic interval.
      * @param chromaticInterval Chromatic interval.
+     * @throws std::runtime_error If the sounding pitch with this interval lies above the
+     *         representable range or cannot be spelled within octaves -1..11 (see
+     *         Helper::steps2pitch()); the note is then left unchanged.
      */
     void setTransposingInterval(const int diatonicInterval, const int chromaticInterval);
 
@@ -236,6 +257,8 @@ class Note {
      * @param actualNotes Number of actual notes in tuplet.
      * @param normalNotes Number of normal notes in tuplet.
      * @param normalType Note type for normal notes (default: "eighth").
+     * @throws std::runtime_error If normalType is not a note type; the note is then left
+     *         unchanged.
      */
     void setTupleValues(const int actualNotes, const int normalNotes,
                         const std::string& normalType = "eighth");
@@ -702,7 +725,9 @@ class Note {
      *          a written Cb4, sounding A3.
      * @param alternativeEnharmonicPitch If true, uses alternative enharmonic.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
-     *         representable pitch, C1b-1 (see getMidiNumber()).
+     *         representable pitch, C1b-1 (see getMidiNumber()), or if setPitch() throws for the
+     *         respelling -- on a transposing instrument, when the respelling moved by the
+     *         transposing interval cannot be spelled. The note is then left unchanged.
      */
     void toEnharmonicPitch(const bool alternativeEnharmonicPitch = false);
 
@@ -735,10 +760,12 @@ class Note {
      * @param semitones Number of semitones; must be a multiple of 0.5 (e.g. 0.5 for one quarter
      *        tone up, -2 for a whole tone down).
      * @param accType Accidental type (e.g., "#", "b").
-     * @throws std::runtime_error If semitones is not finite or not a multiple of 0.5, or if the
+     * @throws std::runtime_error If semitones is not finite or not a multiple of 0.5; if the
      *         transposed pitch falls outside the representable range or cannot be spelled within
-     *         octaves -1..11 (see Helper::transposePitch()). The note is left unchanged when this
-     *         throws: a note transposed too low no longer silently becomes a rest.
+     *         octaves -1..11 (see Helper::transposePitch()); or, on a transposing instrument, if
+     *         setPitch() throws for the result, which it stores as the written pitch. The note is
+     *         left unchanged when this throws: a note transposed too low never silently becomes a
+     *         rest.
      */
     void transpose(const float semitones, const std::string& accType = MUSIC_XML::ACCIDENT::NONE);
 
