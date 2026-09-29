@@ -99,6 +99,26 @@ def _is_overload(func: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
     return False
 
 
+def _is_property(func: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    return any(_annotation(d) in ("property", "builtins.property") for d in func.decorator_list)
+
+
+def _is_property_accessor(func: ast.FunctionDef | ast.AsyncFunctionDef) -> bool:
+    """True for a property's setter or deleter (`@name.setter`, `@name.deleter`), which is
+    rendered with the property itself rather than as a method of its own."""
+    return any(
+        _annotation(d) in (f"{func.name}.setter", f"{func.name}.deleter")
+        for d in func.decorator_list
+    )
+
+
+def _format_property(func: ast.FunctionDef | ast.AsyncFunctionDef, writable: bool) -> str:
+    # A property is read as an attribute, `obj.name`, never called: rendering it as
+    # `name() -> T` would make generated code call it and raise TypeError.
+    kind = "property" if writable else "read-only property"
+    return f"- `{func.name}: {_annotation(func.returns) or 'typing.Any'}`  *({kind})*"
+
+
 def _public(name: str) -> bool:
     return not name.startswith("_") or name == "__init__"
 
@@ -119,9 +139,23 @@ def render_module(path: Path) -> str:
         if isinstance(node, ast.ClassDef):
             methods: list[str] = []
             seen_overload: set[str] = set()
-            for item in node.body:
-                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef)) and _public(item.name):
-                    if _is_overload(item):
+            functions = [
+                item
+                for item in node.body
+                if isinstance(item, (ast.FunctionDef, ast.AsyncFunctionDef))
+            ]
+            writable = {
+                item.name
+                for item in functions
+                if any(_annotation(d) == f"{item.name}.setter" for d in item.decorator_list)
+            }
+            for item in functions:
+                if _public(item.name):
+                    if _is_property_accessor(item):
+                        continue
+                    if _is_property(item):
+                        methods.append(_format_property(item, item.name in writable))
+                    elif _is_overload(item):
                         if item.name in seen_overload:
                             continue
                         seen_overload.add(item.name)
