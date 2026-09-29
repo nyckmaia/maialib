@@ -1,8 +1,9 @@
-# The interpreter that runs every script; override with e.g. `make PYTHON=py\ -3.12`.
+# The interpreter that runs every script. Override it on the command line, e.g.
+# `make "PYTHON=py -3.12"`; a PYTHON environment variable does not change it.
 ifeq ($(OS),Windows_NT)
-PYTHON ?= python
+PYTHON = python
 else
-PYTHON ?= python3
+PYTHON = python3
 endif
 
 all: dev

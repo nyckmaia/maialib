@@ -5,6 +5,7 @@ binary or tool stops the script with that command's exit code, and `make`
 reports the failure instead of printing success.
 """
 
+import os
 import subprocess
 import sys
 from typing import NoReturn, Optional, Sequence, Union
@@ -24,7 +25,19 @@ def run_step(
     A string runs through the shell (for commands that need shell syntax); a
     sequence runs directly, so arguments need no shell quoting. A command that
     exceeds ``timeout`` seconds is reported and ends the script with code 124.
+    A missing working directory ends the script with code 2, a missing program
+    with 127, and any other failure to start the command with 126.
     """
+    if cwd is not None and not os.path.isdir(cwd):
+        where = os.path.abspath(cwd)
+        print(
+            f"{color.FAIL}Step failed: {step_name} (working directory not found: {where}){color.ENDC}"
+        )
+        sys.exit(2)
+    # The child writes straight to the inherited handles, so this script's own buffered
+    # messages must be flushed first to precede the child's output in a redirected log.
+    sys.stdout.flush()
+    sys.stderr.flush()
     try:
         result = subprocess.run(command, shell=isinstance(command, str), cwd=cwd, timeout=timeout)
     except subprocess.TimeoutExpired:
@@ -35,6 +48,9 @@ def run_step(
         program = error.filename or (command if isinstance(command, str) else command[0])
         print(f"{color.FAIL}Step failed: {step_name} (command not found: {program}){color.ENDC}")
         sys.exit(127)
+    except OSError as error:
+        print(f"{color.FAIL}Step failed: {step_name} (could not start: {error}){color.ENDC}")
+        sys.exit(126)
     if result.returncode != 0:
         print(f"{color.FAIL}Step failed: {step_name} (exit code {result.returncode}){color.ENDC}")
         sys.exit(result.returncode)
