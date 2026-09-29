@@ -133,6 +133,9 @@ if(SHARED_LIB)
     add_definitions(-DMAIACORE_SHARED_LIB)
     add_library(${PROJECT_NAME} SHARED ${maiacore_src})
     target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBS})
+    # maiacore declares no export macros: on Windows the DLL exports every symbol of its own
+    # objects, or it would export nothing to link against.
+    set_target_properties(${PROJECT_NAME} PROPERTIES WINDOWS_EXPORT_ALL_SYMBOLS ON)
 endif()
 
 # Generate python module library
@@ -172,8 +175,6 @@ if(PYBIND_LIB)
 
             set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} /MT")
             set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MT")
-
-            add_definitions(-DCMAKE_WINDOWS_EXPORT_ALL_SYMBOLS=TRUE)
 
             target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
         else()
