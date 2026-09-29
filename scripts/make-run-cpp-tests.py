@@ -1,16 +1,13 @@
-import os
 import platform
 from pathlib import Path
 
-from terminal_colors import *
+from build_utils import run_step
+from terminal_colors import color
 
 print(f"{color.OKGREEN}Running C++ Unit Tests...{color.ENDC}")
 
-# Get the Operational System
 myOS = platform.system()
+testBinary = Path.cwd() / "build" / myOS / "cpp-tests" / "cpp-tests"
 
-# Create a 'build' folder (if not exists)
-path = Path.cwd() / "build" / myOS / "cpp-tests"
-
-runCommand = f"{path}/cpp-tests"
-os.system(runCommand)
+# The tests open their fixtures by relative path, so they run from the repository root.
+run_step([str(testBinary)], "C++ unit tests")

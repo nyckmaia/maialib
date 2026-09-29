@@ -1,3 +1,10 @@
+# The interpreter that runs every script; override with e.g. `make PYTHON=py\ -3.12`.
+ifeq ($(OS),Windows_NT)
+PYTHON ?= python
+else
+PYTHON ?= python3
+endif
+
 all: dev
 
 .PHONY: dev
@@ -39,84 +46,84 @@ all: dev
 SCRIPTS_DIR = ./scripts
 
 dev:
-#	@make clean
-	@make uninstall
-	@make module-release
-	@make install
+#	@$(MAKE) --no-print-directory clean
+	@$(MAKE) --no-print-directory uninstall
+	@$(MAKE) --no-print-directory module-release
+	@$(MAKE) --no-print-directory install
 
 clean:
-	@python $(SCRIPTS_DIR)/make-clean.py all
+	@$(PYTHON) $(SCRIPTS_DIR)/make-clean.py all
 
 dist-clean:
-	@python $(SCRIPTS_DIR)/make-clean.py dist
+	@$(PYTHON) $(SCRIPTS_DIR)/make-clean.py dist
 
 static-clean:
-	@python $(SCRIPTS_DIR)/make-clean.py static
+	@$(PYTHON) $(SCRIPTS_DIR)/make-clean.py static
 
 shared-clean:
-	@python $(SCRIPTS_DIR)/make-clean.py shared
+	@$(PYTHON) $(SCRIPTS_DIR)/make-clean.py shared
 
 module-clean:
-	@python $(SCRIPTS_DIR)/make-clean.py module
+	@$(PYTHON) $(SCRIPTS_DIR)/make-clean.py module
 
 static-debug:
-	@python $(SCRIPTS_DIR)/make-library.py static Debug
+	@$(PYTHON) $(SCRIPTS_DIR)/make-library.py static Debug
 
 static-release:
-	@python $(SCRIPTS_DIR)/make-library.py static release
+	@$(PYTHON) $(SCRIPTS_DIR)/make-library.py static release
 
 shared-debug:
-	@python $(SCRIPTS_DIR)/make-library.py shared debug
+	@$(PYTHON) $(SCRIPTS_DIR)/make-library.py shared debug
 
 shared-relase:
-	@python $(SCRIPTS_DIR)/make-library.py shared release
+	@$(PYTHON) $(SCRIPTS_DIR)/make-library.py shared release
 
 static:
-	@make static-release
+	@$(MAKE) --no-print-directory static-release
 
 shared:
-	@make shared-release
+	@$(MAKE) --no-print-directory shared-release
 
 cmake:
-	@python $(SCRIPTS_DIR)/make-cmake.py
+	@$(PYTHON) $(SCRIPTS_DIR)/make-cmake.py
 
 module-debug:
-	@python $(SCRIPTS_DIR)/make-module.py Debug
+	@$(PYTHON) $(SCRIPTS_DIR)/make-module.py Debug
 
 module-release:
-	@python $(SCRIPTS_DIR)/make-module.py Release
+	@$(PYTHON) $(SCRIPTS_DIR)/make-module.py Release
 
 module:
-	@make module-release
+	@$(MAKE) --no-print-directory module-release
 
 build-cpp-tests:
-	@make static-debug
-	@python $(SCRIPTS_DIR)/make-cpp-tests.py Debug
+	@$(MAKE) --no-print-directory static-debug
+	@$(PYTHON) $(SCRIPTS_DIR)/make-cpp-tests.py Debug
 
 coverage:
-	@make cpp-tests
-	@python $(SCRIPTS_DIR)/run-code-coverage.py
+	@$(MAKE) --no-print-directory cpp-tests
+	@$(PYTHON) $(SCRIPTS_DIR)/run-code-coverage.py
 
 cpp-tests:
-	@make build-cpp-tests
-	@python $(SCRIPTS_DIR)/make-run-cpp-tests.py
+	@$(MAKE) --no-print-directory build-cpp-tests
+	@$(PYTHON) $(SCRIPTS_DIR)/make-run-cpp-tests.py
 
 py-tests:
-	@python $(SCRIPTS_DIR)/make-py-tests.py
+	@$(PYTHON) $(SCRIPTS_DIR)/make-py-tests.py
 
 tests:
-	@make cpp-tests
-	@make py-tests
+	@$(MAKE) --no-print-directory cpp-tests
+	@$(MAKE) --no-print-directory py-tests
 
 dist:
-	@python $(SCRIPTS_DIR)/make-dist.py
+	@$(PYTHON) $(SCRIPTS_DIR)/make-dist.py
 
 install:
-	@make dist
-	@python $(SCRIPTS_DIR)/make-install.py
+	@$(MAKE) --no-print-directory dist
+	@$(PYTHON) $(SCRIPTS_DIR)/make-install.py
 
 uninstall:
-	@python $(SCRIPTS_DIR)/make-uninstall.py
+	@$(PYTHON) $(SCRIPTS_DIR)/make-uninstall.py
 
 doc:
 	@doxygen
@@ -126,7 +133,7 @@ doc:
 # ====================
 
 format-cpp:
-	@python $(SCRIPTS_DIR)/make-format.py
+	@$(PYTHON) $(SCRIPTS_DIR)/make-format.py
 
 format-python:
 	@echo "Formatting Python code with Ruff..."
@@ -155,17 +162,17 @@ validate:
 #	errors must not stop 'make validate' from reaching the C++ static analysis
 #	below. The standalone 'lint-python' target stays strict when invoked directly.
 	-@$(MAKE) --no-print-directory lint-python
-	@python $(SCRIPTS_DIR)/make-validate.py
+	@$(PYTHON) $(SCRIPTS_DIR)/make-validate.py
 
 # ====================
 # AI-friendly docs
 # ====================
 
 build-cheatsheet:
-	@python $(SCRIPTS_DIR)/build-cheatsheet.py
+	@$(PYTHON) $(SCRIPTS_DIR)/build-cheatsheet.py
 
 build-llms-full:
-	@python $(SCRIPTS_DIR)/build-llms-full.py
+	@$(PYTHON) $(SCRIPTS_DIR)/build-llms-full.py
 
 build-ai-docs: build-cheatsheet build-llms-full
 	@echo "AI-friendly docs regenerated."

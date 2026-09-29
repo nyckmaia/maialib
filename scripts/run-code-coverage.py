@@ -1,8 +1,8 @@
-import os
 import platform
 from pathlib import Path
 
-from terminal_colors import *
+from build_utils import run_step
+from terminal_colors import color
 
 print(f"{color.OKGREEN}Generating C++ Maiacore Code Coverage...{color.ENDC}")
 
@@ -39,8 +39,11 @@ covInfoFileFilteredFullPath = f"{path02}/{covInfoFileFiltered}"
 
 outputDir = "code-coverage"
 
-excludedDirs = "'/usr/*' '*/external/*' '*/v1/*' '/Library/*'"
+excludedPatterns = ["/usr/*", "*/external/*", "*/v1/*", "/Library/*"]
 
-os.system(f"lcov -c -d {path01} -o {covInfoFullPath}")
-os.system(f"lcov --remove {covInfoFullPath} -o {covInfoFileFilteredFullPath} {excludedDirs}")
-os.system(f"genhtml -o {outputDir} {covInfoFileFilteredFullPath}")
+run_step(["lcov", "-c", "-d", str(path01), "-o", covInfoFullPath], "lcov capture")
+run_step(
+    ["lcov", "--remove", covInfoFullPath, "-o", covInfoFileFilteredFullPath, *excludedPatterns],
+    "lcov remove excluded files",
+)
+run_step(["genhtml", "-o", outputDir, covInfoFileFilteredFullPath], "genhtml")

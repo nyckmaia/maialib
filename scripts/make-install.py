@@ -1,20 +1,11 @@
 import platform
-import subprocess
 import sys
+import tempfile
 from pathlib import Path
 from shutil import copytree
 
-from terminal_colors import *
-
-
-def run_step(command: str, step_name: str) -> None:
-    """Run a shell command, printing its output as it runs, and abort the script with a
-    clear message if the command fails."""
-    result = subprocess.run(command, shell=True)
-    if result.returncode != 0:
-        print(f"{color.FAIL}Step failed: {step_name} (exit code {result.returncode}){color.ENDC}")
-        sys.exit(result.returncode)
-
+from build_utils import run_step
+from terminal_colors import color
 
 print(
     f"""{color.OKGREEN}Installing Maialib module on Python Kernel v{platform.python_version()}...{
@@ -25,22 +16,48 @@ print(
 distDir = "dist"
 
 # Link the install directory in the Python 'site-packages' folder
-run_step(f"pip install {distDir}/", "pip install dist/")
+run_step([sys.executable, "-m", "pip", "install", f"{distDir}/"], "pip install dist/")
 
 stubsPath = Path.cwd() / "stubs"
 print(f"{color.OKGREEN}Generating Python Module Stubs from Maiacore...{color.ENDC}")
 
-genStubsCommand = f"""pybind11-stubgen maialib.maiacore --output-dir={
-    stubsPath
-} --ignore-invalid-expressions \".*\" --ignore-all-errors"""
-run_step(genStubsCommand, "pybind11-stubgen (maiacore stubs)")
+# `python -m` puts the working directory first on sys.path, where the repository's own
+# 'maialib' folder (sources only, no compiled module) would shadow the installed package,
+# so the stub generator runs from an empty directory.
+with tempfile.TemporaryDirectory() as emptyDir:
+    run_step(
+        [
+            sys.executable,
+            "-m",
+            "pybind11_stubgen",
+            "maialib.maiacore",
+            f"--output-dir={stubsPath}",
+            "--ignore-invalid-expressions",
+            ".*",
+            "--ignore-all-errors",
+        ],
+        "pybind11-stubgen (maiacore stubs)",
+        cwd=emptyDir,
+    )
 
 print(f"{color.OKGREEN}Generating Python Module Stubs from Maiapy...{color.ENDC}")
 maiapyPath = Path.cwd() / "maialib" / "maiapy"
-genStubsCommand = (
-    f"""stubgen --no-analysis  {maiapyPath} -o {stubsPath} --include-docstrings --ignore-errors"""
+# mypy's wheels compile stubgen with mypyc, and `python -m` cannot run a compiled module
+# ("No code object available for mypy.stubgen"), so its entry point is called directly.
+run_step(
+    [
+        sys.executable,
+        "-c",
+        "from mypy.stubgen import main; main()",
+        "--no-analysis",
+        str(maiapyPath),
+        "-o",
+        str(stubsPath),
+        "--include-docstrings",
+        "--ignore-errors",
+    ],
+    "stubgen (maiapy stubs)",
 )
-run_step(genStubsCommand, "stubgen (maiapy stubs)")
 
 print(f"{color.OKGREEN}Copy stubs to dist folder...{color.ENDC}")
 
@@ -53,16 +70,21 @@ copytree("./stubs/maialib/", "./maialib/", dirs_exist_ok=True)
 # earlier (e.g. right after stub generation into './stubs') reads stale/empty stubs
 # from './maialib/' and silently wipes out the generated docs.
 print(f"{color.OKGREEN}Building AI_API_CHEATSHEET.md from stubs...{color.ENDC}")
-run_step(f"python {Path.cwd() / 'scripts' / 'build-cheatsheet.py'}", "build AI_API_CHEATSHEET.md")
+run_step(
+    [sys.executable, str(Path.cwd() / "scripts" / "build-cheatsheet.py")],
+    "build AI_API_CHEATSHEET.md",
+)
 
 print(f"{color.OKGREEN}Building llms-full.txt...{color.ENDC}")
-run_step(f"python {Path.cwd() / 'scripts' / 'build-llms-full.py'}", "build llms-full.txt")
+run_step(
+    [sys.executable, str(Path.cwd() / "scripts" / "build-llms-full.py")], "build llms-full.txt"
+)
 
 # Uninstall maialib
-run_step("pip uninstall --yes maialib", "pip uninstall maialib")
+run_step([sys.executable, "-m", "pip", "uninstall", "--yes", "maialib"], "pip uninstall maialib")
 
 # Re - install maialib, now with Python stubs
-run_step(f"pip install {distDir}/", "pip install dist/ (final)")
+run_step([sys.executable, "-m", "pip", "install", f"{distDir}/"], "pip install dist/ (final)")
 
 print(
     f"""{color.OKGREEN}Maialib Installed on Python kernel v{platform.python_version()} {

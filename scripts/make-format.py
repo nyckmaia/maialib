@@ -16,7 +16,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-from terminal_colors import *
+from build_utils import run_step
+from terminal_colors import color
 
 # Well-known LLVM install locations, tried only if the 'clang-format' found on
 # PATH is missing or non-functional (e.g. a broken pip-installed wrapper).
@@ -28,14 +29,6 @@ FALLBACK_CANDIDATES = [
     "/usr/local/bin/clang-format",
     "/usr/bin/clang-format",
 ]
-
-
-def run_step(command: list, step_name: str) -> None:
-    """Run a subprocess command, and abort the script with a clear message if it fails."""
-    result = subprocess.run(command)
-    if result.returncode != 0:
-        print(f"{color.FAIL}Step failed: {step_name} (exit code {result.returncode}){color.ENDC}")
-        sys.exit(result.returncode)
 
 
 def is_working_clang_format(executable: str) -> bool:

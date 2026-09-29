@@ -1,8 +1,8 @@
-import os
-import platform
+import sys
 from shutil import rmtree
 
-from terminal_colors import *
+from build_utils import run_step
+from terminal_colors import color
 
 
 def isInstalled():
@@ -23,11 +23,10 @@ isMaialibInstalled = isInstalled()
 if isMaialibInstalled == True:
     print(f"{color.OKGREEN}Uninstalling Maialib Python Module...{color.ENDC}")
 
-    # Get the Operational System
-    myOS = platform.system()
-
     # Uninstall directory in the Python 'site-packages' folder
-    os.system("pip uninstall --yes maialib")
+    run_step(
+        [sys.executable, "-m", "pip", "uninstall", "--yes", "maialib"], "pip uninstall maialib"
+    )
 
     distDir = "dist"
 

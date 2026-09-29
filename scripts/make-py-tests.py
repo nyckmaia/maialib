@@ -1,17 +1,10 @@
-import os
-import platform
+import sys
 
-from terminal_colors import *
+from build_utils import run_step
+from terminal_colors import color
 
 print(f"{color.OKGREEN}Running Python Unit Tests...{color.ENDC}")
 
-# Get the Operational System
-myOS = platform.system()
-
-# If 'Windows'
-if myOS == "Windows":
-    os.system("cd test && python -m unittest")
-else:
-    os.system("cd test && python3 -m unittest")
+run_step([sys.executable, "-m", "unittest"], "Python unit tests", cwd="test")
 
 print(f"{color.OKGREEN}Python Unit Tests: Done!{color.ENDC}")

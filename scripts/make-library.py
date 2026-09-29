@@ -3,52 +3,40 @@ import platform
 import sys
 from pathlib import Path
 
-from terminal_colors import *
+from build_utils import normalize_build_type, run_step, usage_error
+from terminal_colors import color
 
-numArgs = len(sys.argv)
+LIB_OPTIONS = {"static": "-DSTATIC_LIB=ON", "shared": "-DSHARED_LIB=ON"}
 
-if numArgs != 3:
-    print(f"{color.FAIL}[ERROR] You MUST pass 2 arguments: 'libType' and 'buildType'!{color.ENDC}")
+if len(sys.argv) != 3 or sys.argv[1] not in LIB_OPTIONS:
+    usage_error("usage: make-library.py <static|shared> <Debug|Release>")
 
-# Get input command line arguments
 libType = sys.argv[1]
-buildType = sys.argv[2]
-
-# ===== VALIDATE INPUT ARGUMENTS ===== #
-
+buildType = normalize_build_type(sys.argv[2])
 print(f"{color.OKGREEN}Building a {libType} library in {buildType} mode...{color.ENDC}")
 
-# Get the Operational System
 myOS = platform.system()
-
-# Create a 'build' folder (if not exists)
-path = Path.cwd() / "build" / myOS / "static" / buildType
+path = Path.cwd() / "build" / myOS / libType / buildType
 path.mkdir(parents=True, exist_ok=True)
 
-# Set the C++ compiler
-CppCompiler = "clang++" if myOS == "Windows" else "g++"
-
-# Base CMake command to build the python module
-cmakeCommand = f'cmake -G "Unix Makefiles" -B {path} -S . -DPYBIND_LIB=OFF -DCMAKE_BUILD_TYPE={buildType} -DCMAKE_CXX_COMPILER={CppCompiler} -DSQLITECPP_RUN_CPPLINT=OFF'
+cppCompiler = "clang++" if myOS == "Windows" else "g++"
+cmakeCommand = [
+    "cmake",
+    "-G",
+    "Unix Makefiles",
+    "-B",
+    str(path),
+    "-S",
+    ".",
+    LIB_OPTIONS[libType],
+    "-DPYBIND_LIB=OFF",
+    f"-DCMAKE_BUILD_TYPE={buildType}",
+    f"-DCMAKE_CXX_COMPILER={cppCompiler}",
+    "-DSQLITECPP_RUN_CPPLINT=OFF",
+]
 if myOS == "Windows":
-    cmakeCommand += ' -DCMAKE_MAKE_PROGRAM="C:/msys64/clang64/bin/mingw32-make.exe"'
+    cmakeCommand.append("-DCMAKE_MAKE_PROGRAM=C:/msys64/clang64/bin/mingw32-make.exe")
 
-# if (buildType == "Debug"):
-#     cmakeCommand += " -DPROFILING=ON"
-
-# Get CPU num threads
-numThreads = os.cpu_count()
-
-# Run CMake and Make commands
-os.system(cmakeCommand)
-
-os.system(f"make -j {numThreads} -C {path} --no-print-directory")
-
-# ===== COMPILAÇÃO COM VS 2022 ===== #
-# if myOS == "Windows":
-# Na raiz do maialib
-# cmake -G "Visual Studio 17 2022" -A x64 -S . -B ./build -DPYBIND_LIB=OFF -DSQLITECPP_RUN_CPPLINT=OFF
-# msbuild ./build/maiacore.sln /p:Configuration=RelWithDebInfo /p:Platform=x64
-# ================================== #
-
+run_step(cmakeCommand, "CMake configure")
+run_step(["make", "-j", str(os.cpu_count()), "-C", str(path), "--no-print-directory"], "build")
 print(f"{color.OKGREEN}Done!{color.ENDC}")

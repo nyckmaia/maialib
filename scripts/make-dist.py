@@ -1,9 +1,10 @@
 import platform
+import sys
 from glob import glob
 from pathlib import Path
 from shutil import copy2, rmtree
 
-from terminal_colors import *
+from terminal_colors import color
 
 print(f"{color.OKGREEN}Generating 'dist' folder...{color.ENDC}", end="")
 
@@ -24,6 +25,14 @@ elif myOS == "Linux" or myOS == "Darwin":
     binaryModuleList = glob(f"{buildDir}/*.so")
 else:
     print(f"{color.FAIL}[ERROR] Unknown OS!{color.ENDC}")
+
+if not binaryModuleList:
+    # The progress message above ends without a newline.
+    print(
+        f"\n{color.FAIL}[ERROR] No built maiacore module found in '{buildDir}': "
+        f"build it first with 'make module'.{color.ENDC}"
+    )
+    sys.exit(1)
 
 # Maialib module file path
 modulePath = binaryModuleList[0]
