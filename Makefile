@@ -98,7 +98,6 @@ module:
 	@$(MAKE) --no-print-directory module-release
 
 build-cpp-tests:
-	@$(MAKE) --no-print-directory static-debug
 	@$(PYTHON) $(SCRIPTS_DIR)/make-cpp-tests.py Debug
 
 coverage:

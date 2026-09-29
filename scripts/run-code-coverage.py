@@ -13,13 +13,12 @@ if myOS == "Windows":
     print(f"{color.OKGREEN}The code coverage can run only in Linux and Mac OSX{color.ENDC}")
     exit(0)
 
-# Maiacore raw covarage files folder
+# Maiacore raw coverage files folder: the maiacore objects of the C++ test build
 path01 = (
     Path.cwd()
     / "build"
     / myOS
-    / "static"
-    / "Debug"
+    / "cpp-tests"
     / "CMakeFiles"
     / "maiacore.dir"
     / "maiacore"
@@ -28,7 +27,7 @@ path01 = (
 )
 path01.mkdir(parents=True, exist_ok=True)
 
-# Maiacore raw covarage files folder
+# Maiacore raw coverage files folder
 path02 = path01 / "output"
 path02.mkdir(parents=True, exist_ok=True)
 

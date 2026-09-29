@@ -40,6 +40,7 @@ endif()
 option(STATIC_LIB "Generate a static libray" OFF)
 option(SHARED_LIB "Generate a shared libray" OFF)
 option(PYBIND_LIB "Generate a pybind libray" OFF)
+option(MAIACORE_BUILD_TESTS "Build the C++ unit tests in tests-cpp (requires STATIC_LIB)" OFF)
 
 if(NOT STATIC_LIB AND NOT SHARED_LIB AND NOT PYBIND_LIB)
     set(STATIC_LIB ON)
@@ -102,10 +103,6 @@ set(MAIALIB_ROOT_DIR ".")
 set(MAIACORE_ROOT_DIR ${MAIALIB_ROOT_DIR}/maiacore)
 set(MAIACORE_INCLUDE_DIR ${MAIACORE_ROOT_DIR}/include)
 
-set(MAIACORE_LIB_DIR ${MAIALIB_ROOT_DIR}/build/${OS}/static/Debug)
-set(SQLITECPP_LIB_DIR ${MAIACORE_LIB_DIR}/maiacore/external/sqlitecpp)
-set(SQLITE_LIB_DIR ${SQLITECPP_LIB_DIR}/sqlite3)
-
 # Add all maiacore source files
 file(GLOB maiacore_src
     ${MAIACORE_ROOT_DIR}/src/maiacore/*.cpp
@@ -119,12 +116,15 @@ set(LIBS
     cpptrace::cpptrace
 )
 
+# The public headers include cpptrace (log.h) and SQLiteCpp (score.h), so the static and
+# shared libraries pass both on to whatever links them.
+
 # Generate static library
 if(STATIC_LIB)
     message("=====> GENERATING STATIC LIBRARY <=====")
     add_definitions(-DMAIACORE_STATIC_LIB)
     add_library(${PROJECT_NAME} STATIC ${maiacore_src})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBS})
 endif()
 
 # Generate shared library
@@ -132,7 +132,7 @@ if(SHARED_LIB)
     message("=====> GENERATING SHARED LIBRARY <=====")
     add_definitions(-DMAIACORE_SHARED_LIB)
     add_library(${PROJECT_NAME} SHARED ${maiacore_src})
-    target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
+    target_link_libraries(${PROJECT_NAME} PUBLIC ${LIBS})
 endif()
 
 # Generate python module library
@@ -177,7 +177,7 @@ if(PYBIND_LIB)
 
             target_link_libraries(${PROJECT_NAME} PRIVATE ${LIBS})
         else()
-            message(FALTAL "===> UNABLE TO FIND A WINDOWS COMPILER")
+            message(FATAL_ERROR "===> UNABLE TO FIND A WINDOWS COMPILER")
         endif()
     else()
         # Linux e MacOSX
@@ -188,5 +188,12 @@ endif()
 target_include_directories(${PROJECT_NAME} PUBLIC ${MAIACORE_INCLUDE_DIR})
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MAIACORE_INCLUDE_DIR}/external)
 target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MAIACORE_INCLUDE_DIR}/external/pugi)
-target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC ${MAIACORE_INCLUDE_DIR}/external/cpptrace/include)
 add_subdirectory(maiacore/external/sqlitecpp SYSTEM)
+
+if(MAIACORE_BUILD_TESTS)
+    if(NOT STATIC_LIB)
+        message(FATAL_ERROR "MAIACORE_BUILD_TESTS requires STATIC_LIB=ON: the tests link the static maiacore library.")
+    endif()
+    enable_testing()
+    add_subdirectory(tests-cpp)
+endif()
