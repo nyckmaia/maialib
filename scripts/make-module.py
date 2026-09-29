@@ -17,6 +17,9 @@ path = Path.cwd() / "build" / myOS / "module"
 path.mkdir(parents=True, exist_ok=True)
 
 cppCompiler = "clang++" if myOS == "Windows" else "g++"
+# The module is built for the interpreter running this script, the one `make install` then
+# installs it into; without the flag, CMake would keep the interpreter cached by an earlier
+# configure, even one from another (or deleted) virtual environment.
 cmakeCommand = [
     "cmake",
     "-G",
@@ -26,6 +29,7 @@ cmakeCommand = [
     "-S",
     ".",
     "-DPYBIND_LIB=ON",
+    f"-DPYTHON_EXECUTABLE={sys.executable}",
     f"-DCMAKE_BUILD_TYPE={buildType}",
     f"-DCMAKE_CXX_COMPILER={cppCompiler}",
     "-DSQLITECPP_RUN_CPPLINT=OFF",
