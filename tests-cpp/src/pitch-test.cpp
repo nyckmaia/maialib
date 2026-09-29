@@ -642,7 +642,8 @@ TEST(PitchComponentsConstructor, rejectsAnOctaveOutsideTheRange) {
 TEST(PitchComponentsConstructor, rejectsAPitchBelowTheLowestRepresentablePitch) {
     for (const auto& [alter, spelling] :
          std::vector<std::pair<float, std::string>>{{-1.0f, "Cb-1"}, {-1.5f, "C3b-1"}}) {
-        const std::string message = thrownFirstLine([&] { Pitch p("C", alter, -1); });
+        // A C++17 lambda cannot capture a structured binding, hence the init-capture.
+        const std::string message = thrownFirstLine([alter = alter] { Pitch p("C", alter, -1); });
         EXPECT_EQ(message, "[maiacore] The pitch '" + spelling +
                                "' is below MIDI note 0; the lowest representable pitch is C1b-1")
             << message;

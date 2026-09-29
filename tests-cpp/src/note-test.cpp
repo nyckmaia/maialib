@@ -1761,7 +1761,8 @@ TEST(NoteSoundingPitchBelowFloor, everySoundingGetterFailsTheSameWay) {
         const Note n(written, RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
                      /*transposeDiatonic=*/-1, chromatic);
         for (const auto& [name, getter] : soundingGetters()) {
-            const std::string message = thrownFirstLine([&] { getter(n); });
+            // A C++17 lambda cannot capture a structured binding, hence the init-capture.
+            const std::string message = thrownFirstLine([&n, &getter = getter] { getter(n); });
             EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
                 << written << " " << name << ": " << message;
             EXPECT_NE(message.find("'" + written + "'"), std::string::npos)
