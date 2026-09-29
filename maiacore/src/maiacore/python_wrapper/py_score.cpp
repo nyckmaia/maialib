@@ -221,7 +221,9 @@ void ScoreClass(const py::module& m) {
             If the pattern has more notes than the score; if ``intervalsSimilarityCallback`` or
             ``rhythmSimilarityCallback`` is given without its total callback ("bad function
             call"); or if the pattern or a segment starts on a quarter tone, whose transposition
-            has no interval name.
+            has no interval name -- melody-pattern search does not support that, and the message
+            names the note and, for a segment, its ``partName``, ``measureId`` and ``staveId``.
+            A quarter tone elsewhere in a segment is compared exactly.
 
         Examples
         --------

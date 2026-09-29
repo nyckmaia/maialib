@@ -46,6 +46,38 @@ std::optional<float> spellableAlterValue(const std::string& text) {
     }
     return static_cast<float>(value);
 }
+
+// Rejects a melody-pattern search whose pattern, or whose segment of the score, starts on a quarter
+// tone. The search names each segment's transposition from the pattern with an Interval between
+// their first sounding notes, and interval names are defined only over twelve-tone equal
+// temperament, so such a transposition has none. The Interval would reject it too, but its message
+// names Note::roundToSemitone() on a note a Score caller never held; this names the note and where
+// it is. 'partName', 'measureIdx' and 'staveIdx' locate the segment's first sounding note, as the
+// search results locate a match.
+void rejectQuarterToneTransposition(const Note& patternFirstNote, const Note& segmentFirstNote,
+                                    const std::string& partName, const int measureIdx,
+                                    const int staveIdx) {
+    if (patternFirstNote.isQuarterTone()) {
+        LOG_ERROR(
+            "Melody-pattern search does not support quarter tones: the melody pattern starts "
+            "on the quarter tone " +
+            patternFirstNote.getWrittenPitch() +
+            ", so its transposition to a segment of the score has no interval name "
+            "(interval names are defined only over twelve-tone equal temperament). Round it "
+            "to the nearest semitone with Note::roundToSemitone(), then repeat the search.");
+    }
+
+    if (segmentFirstNote.isQuarterTone()) {
+        LOG_ERROR("Melody-pattern search does not support quarter tones: a segment of part '" +
+                  partName + "' starts on the quarter tone " + segmentFirstNote.getWrittenPitch() +
+                  " at measureId " + std::to_string(measureIdx) + ", staveId " +
+                  std::to_string(staveIdx) +
+                  ", so its transposition from the pattern has no interval name (interval names "
+                  "are defined only over twelve-tone equal temperament). Round the score's quarter "
+                  "tones to the nearest semitone first, e.g. by calling Note::roundToSemitone() on "
+                  "every note through Score::forEachNote(), then repeat the search.");
+    }
+}
 }  // namespace
 
 Score::Score(const std::initializer_list<std::string>& partsName, const int numMeasures)
@@ -1727,6 +1759,7 @@ Score::MelodyPatternTable Score::findMelodyPattern(
             }
 
             const Note* segmentFirstNoteOn = nullptr;
+            int segmentFirstNoteOnOffset = 0;
             bool segmentContainANoteOn = false;
             for (int i = 0; i < melodyPatternSize; i++) {
                 if (segment[i].isNoteOff()) {
@@ -1735,6 +1768,7 @@ Score::MelodyPatternTable Score::findMelodyPattern(
 
                 segmentContainANoteOn = true;
                 segmentFirstNoteOn = &segment[i];
+                segmentFirstNoteOnOffset = i;
                 break;
             }
 
@@ -1744,6 +1778,11 @@ Score::MelodyPatternTable Score::findMelodyPattern(
 
             std::string intervalName;
             if (melodyContainANoteOn && segmentContainANoteOn) {
+                const NoteEvent& segmentFirstEvent = noteEvents[i + segmentFirstNoteOnOffset];
+                rejectQuarterToneTransposition(*patternFirstNoteOn, *segmentFirstNoteOn,
+                                               currentPartName, segmentFirstEvent.measureIdx,
+                                               segmentFirstEvent.staveIdx);
+
                 const std::string& patternFirstSoundingPitch =
                     patternFirstNoteOn->getSoundingPitch();
                 const std::string& segmentFirstSoundingPitch =

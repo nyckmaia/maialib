@@ -556,6 +556,12 @@ class Score {
      * @param totalRhythmSimilarityCallback Function to aggregate rhythm similarity.
      * @param totalSimilarityCallback Function to combine total similarities.
      * @return Table of results with detailed information about found patterns.
+     * @throws std::runtime_error If the pattern has more notes than the score, or if the pattern
+     *         or a segment of the score starts on a quarter tone: each segment's transposition
+     *         from the pattern is named by an Interval, which has no name for a quarter tone. The
+     *         message names the note and, for a segment, its part, measure and stave.
+     * @throws std::bad_function_call If intervalsSimilarityCallback or rhythmSimilarityCallback
+     *         is given without its total callback.
      * @details Performs comprehensive melodic pattern matching across all parts and measures of the
      * score, supporting flexible similarity metrics for both intervallic contour and rhythmic
      * structure. This function enables motivic analysis, thematic transformation studies, and
@@ -622,6 +628,9 @@ class Score {
      * @param totalRhythmSimilarityCallback Function to aggregate rhythm similarity.
      * @param totalSimilarityCallback Function to combine total similarities.
      * @return Vector of result tables, one for each pattern.
+     * @throws std::runtime_error Or std::bad_function_call, as the single-pattern overload throws
+     *         them, for any pattern: the first such exception, in pattern order, is rethrown once
+     *         every pattern has been searched.
      */
     std::vector<MelodyPatternTable> findMelodyPattern(
         const std::vector<std::vector<Note>>& melodyPatterns,

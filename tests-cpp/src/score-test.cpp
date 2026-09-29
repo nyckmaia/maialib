@@ -1025,20 +1025,65 @@ TEST(ScoreQuarterToneRoundTrip, AQuarterToneScoreWrittenByMaialibReadsBackUnchan
 // Melody Pattern Search
 // ====================
 
+namespace {
+// The rejection of a segment that starts on a quarter tone, naming the note and where it is.
+std::string segmentRejection(const std::string& partName, const std::string& quarterTone,
+                             const int measureId, const int staveId) {
+    return "[maiacore] Melody-pattern search does not support quarter tones: a segment of part '" +
+           partName + "' starts on the quarter tone " + quarterTone + " at measureId " +
+           std::to_string(measureId) + ", staveId " + std::to_string(staveId) +
+           ", so its transposition from the pattern has no interval name (interval names are "
+           "defined only over twelve-tone equal temperament). Round the score's quarter tones to "
+           "the nearest semitone first, e.g. by calling Note::roundToSemitone() on every note "
+           "through Score::forEachNote(), then repeat the search.";
+}
+}  // namespace
+
 // The list overload searches each pattern on a worker thread. A pattern whose search raises -- here
-// every segment that starts on a quarter tone, whose transposition has no interval name -- fails
-// the whole call with that error, exactly as the single-pattern overload does, instead of leaving
-// an empty table behind.
+// at the first segment that starts on a quarter tone, whose transposition has no interval name --
+// fails the whole call with that error, exactly as the single-pattern overload does, instead of
+// leaving an empty table behind. The error names the note and where it is in the score.
 TEST(ScoreMelodyPatternSearch, AFailingPatternFailsTheListOverloadToo) {
     Score score("./test/xml_examples/unit_test/test_quarter_tones.musicxml");
     const std::vector<std::vector<Note>> patterns = {{Note("C4"), Note("D4")}};
 
     const std::string single = thrownFirstLine([&] { score.findMelodyPattern(patterns[0]); });
-    ASSERT_NE(single.find("Cannot compute an interval with the quarter tone"), std::string::npos)
-        << single;
+    ASSERT_EQ(single, segmentRejection("Piano", "C1x4", 0, 0));
 
     const std::string list = thrownFirstLine([&] { score.findMelodyPattern(patterns); });
     EXPECT_EQ(list, single);
+}
+
+// The note named is the segment's first sounding note, wherever the segment itself starts: the
+// segment [rest, C1x4] starts in measure 0, and its quarter tone is in measure 1.
+TEST(ScoreMelodyPatternSearch, AQuarterToneAfterARestIsLocatedWhereItIs) {
+    Score score({"Flute"}, 2);
+    Measure& first = score.getPart(0).getMeasure(0);
+    first.addNote(Note("C4"));
+    first.addNote(Note("rest"));
+    Measure& second = score.getPart(0).getMeasure(1);
+    second.addNote(Note("C1x4"));
+    second.addNote(Note("D4"));
+    second.addNote(Note("E4"));
+
+    const std::string message = thrownFirstLine(
+        [&] { score.findMelodyPattern(std::vector<Note>{Note("C4"), Note("D4")}); });
+    EXPECT_EQ(message, segmentRejection(score.getPartName(0), "C1x4", 1, 0));
+}
+
+// A pattern that starts on a quarter tone has no named transposition to any segment. The caller
+// holds the pattern's notes, so the remedy is to round that note.
+TEST(ScoreMelodyPatternSearch, APatternStartingOnAQuarterToneIsRejectedByName) {
+    Score score("./test/xml_examples/Bach/cello_suite_1_violin.xml");
+
+    const std::string message = thrownFirstLine(
+        [&] { score.findMelodyPattern(std::vector<Note>{Note("G1x2"), Note("D3"), Note("B3")}); });
+    EXPECT_EQ(message,
+              "[maiacore] Melody-pattern search does not support quarter tones: the melody pattern "
+              "starts on the quarter tone G1x2, so its transposition to a segment of the score has "
+              "no interval name (interval names are defined only over twelve-tone equal "
+              "temperament). Round it to the nearest semitone with Note::roundToSemitone(), then "
+              "repeat the search.");
 }
 
 // More patterns than hardware threads: every pattern is searched, and each finds exactly what it

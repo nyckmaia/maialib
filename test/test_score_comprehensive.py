@@ -248,7 +248,7 @@ class ScoreMelodyPatternSearchTestCase(unittest.TestCase):
     def test_a_failing_pattern_fails_the_list_overload_too(self):
         """A segment that starts on a quarter tone has no interval name for its transposition, so
         the search raises -- through the list overload exactly as through the single-pattern one,
-        instead of answering an empty DataFrame."""
+        instead of answering an empty DataFrame -- naming the note and where it is."""
         score = ml.Score("./xml_examples/unit_test/test_quarter_tones.musicxml")
         pattern = [ml.Note("C4"), ml.Note("D4")]
 
@@ -258,8 +258,32 @@ class ScoreMelodyPatternSearchTestCase(unittest.TestCase):
             score.findMelodyPatternDataFrame([pattern])
 
         message = str(listed.exception).splitlines()[0]
-        self.assertIn("Cannot compute an interval with the quarter tone", message)
+        self.assertEqual(
+            message,
+            "[maiacore] Melody-pattern search does not support quarter tones: a segment of part "
+            "'Piano' starts on the quarter tone C1x4 at measureId 0, staveId 0, so its "
+            "transposition from the pattern has no interval name (interval names are defined "
+            "only over twelve-tone equal temperament). Round the score's quarter tones to the "
+            "nearest semitone first, e.g. by calling Note::roundToSemitone() on every note "
+            "through Score::forEachNote(), then repeat the search.",
+        )
         self.assertEqual(message, str(single.exception).splitlines()[0])
+
+    def test_a_pattern_starting_on_a_quarter_tone_is_rejected_by_name(self):
+        """The pattern's own first note has no named transposition to any segment either."""
+        score = ml.Score("./xml_examples/Bach/cello_suite_1_violin.xml")
+        pattern = [ml.Note("G1x2"), ml.Note("D3"), ml.Note("B3")]
+
+        with self.assertRaises(RuntimeError) as context:
+            score.findMelodyPatternDataFrame(pattern)
+        self.assertEqual(
+            str(context.exception).splitlines()[0],
+            "[maiacore] Melody-pattern search does not support quarter tones: the melody pattern "
+            "starts on the quarter tone G1x2, so its transposition to a segment of the score has "
+            "no interval name (interval names are defined only over twelve-tone equal "
+            "temperament). Round it to the nearest semitone with Note::roundToSemitone(), then "
+            "repeat the search.",
+        )
 
     def test_every_pattern_is_searched_whatever_the_thread_count(self):
         """More patterns than processors: each is searched, and finds as many rows as when it is
