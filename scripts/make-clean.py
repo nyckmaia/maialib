@@ -1,59 +1,89 @@
+"""Remove build artifacts.
+
+Usage: make-clean.py <all|dist|static|shared|module|cpp-tests>
+
+Read-only files (e.g. the git pack files of fetched dependencies under build/)
+are made writable and removed; anything that still cannot be removed is listed
+and the script exits with code 1.
+"""
+
 import glob
 import os
+import platform
+import stat
 import sys
+from pathlib import Path
 from shutil import rmtree
+from typing import List
 
-from terminal_colors import *
+from build_utils import usage_error
+from terminal_colors import color
 
-numArgs = len(sys.argv)
+osBuildDir = Path("build") / platform.system()
+pythonCaches = [
+    Path(p)
+    for p in glob.glob("__pycache__")
+    + glob.glob("maialib/**/__pycache__", recursive=True)
+    + glob.glob("test/**/__pycache__", recursive=True)
+    + glob.glob("scripts/__pycache__")
+]
+stubFiles = [Path(p) for p in glob.glob("maialib/**/*.pyi", recursive=True)]
 
-if numArgs != 2:
-    print(
-        f"{color.FAIL}[ERROR] You MUST pass 1 argument: 'all', 'static', 'shared', 'module' or 'dist'!{color.ENDC}"
-    )
+TARGETS = {
+    "static": [osBuildDir / "static"],
+    "shared": [osBuildDir / "shared"],
+    "module": [osBuildDir / "module"],
+    "cpp-tests": [osBuildDir / "cpp-tests"],
+    "dist": [Path("dist"), Path("stubs"), Path("code-coverage"), Path(".coverage")],
+    "all": [
+        Path("build"),
+        Path("dist"),
+        Path("stubs"),
+        Path("code-coverage"),
+        Path("wheelhouse"),
+        Path("maialib.egg-info"),
+        Path("profile.json"),
+        Path(".coverage"),
+    ]
+    + pythonCaches
+    + stubFiles,
+}
 
-cleanOption = sys.argv[1]
+if len(sys.argv) != 2 or sys.argv[1] not in TARGETS:
+    usage_error("usage: make-clean.py <" + "|".join(TARGETS) + ">")
 
-# ===== VALIDATE INPUT ARGUMENTS ===== #
+failures: List[str] = []
 
 
-if cleanOption == "all":
-    print(f"{color.OKGREEN}Deleting 'build' and 'dist' folders...{color.ENDC}", end="")
+def makeWritableAndRetry(function, path, _excinfo):
+    os.chmod(path, stat.S_IWRITE)
+    function(path)
 
-    rmtree("./build", True)
-    rmtree("./dist", True)
-    rmtree("./maialib.egg-info", True)
-    rmtree("__pycache__", True)
-    rmtree("tests/__pycache__", True)
-    rmtree("maiapy/__pycache__", True)
-    rmtree("scripts/__pycache__", True)
-    rmtree("./stubs", True)
-    rmtree("./code-coverage", True)
-    rmtree("./wheelhouse", True)
 
-    if os.path.exists("profile.json"):
-        os.remove("profile.json")
+def remove(path: Path) -> None:
+    if not path.exists():
+        return
+    try:
+        if path.is_dir():
+            if sys.version_info >= (3, 12):
+                rmtree(path, onexc=makeWritableAndRetry)
+            else:
+                rmtree(path, onerror=makeWritableAndRetry)
+        else:
+            os.chmod(path, stat.S_IWRITE)
+            path.unlink()
+    except OSError as error:
+        failures.append(f"{path}: {error}")
 
-    if os.path.exists(".coverage"):
-        os.remove(".coverage")
 
-    # Delete *.pyi files
-    files = glob.glob("./maialib/**/*.pyi", recursive=True)
+target = sys.argv[1]
+print(f"{color.OKGREEN}Cleaning '{target}'...{color.ENDC}")
+for path in TARGETS[target]:
+    remove(path)
 
-    for f in files:
-        try:
-            os.remove(f)
-        except OSError as e:
-            print("Error: %s : %s" % (f, e.strerror))
-
-    print(f"{color.OKGREEN}Done!{color.ENDC}")
-    sys.exit()
-
-if cleanOption == "dist":
-    print(f"{color.OKGREEN}Deleting 'dist' folder...{color.ENDC}", end="")
-    rmtree("./dist", True)
-    rmtree("./stubs", True)
-    rmtree("./.coverage", True)
-    rmtree("./code-coverage", True)
-    print(f"{color.OKGREEN}Done!{color.ENDC}")
-    sys.exit()
+if failures:
+    print(f"{color.FAIL}Could not remove:{color.ENDC}")
+    for failure in failures:
+        print(f"  {failure}")
+    sys.exit(1)
+print(f"{color.OKGREEN}Done!{color.ENDC}")

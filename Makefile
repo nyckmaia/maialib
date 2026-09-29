@@ -14,13 +14,13 @@ all: dev
 .PHONY: static-clean
 .PHONY: shared-clean
 .PHONY: module-clean
+.PHONY: cpp-tests-clean
 .PHONY: static-debug
 .PHONY: static-release
 .PHONY: shared-debug
-.PHONY: shared-relase
+.PHONY: shared-release
 .PHONY: static
 .PHONY: shared
-.PHONY: cmake
 .PHONY: module-debug
 .PHONY: module-release
 .PHONY: module
@@ -67,6 +67,9 @@ shared-clean:
 module-clean:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-clean.py module
 
+cpp-tests-clean:
+	@$(PYTHON) $(SCRIPTS_DIR)/make-clean.py cpp-tests
+
 static-debug:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-library.py static Debug
 
@@ -76,7 +79,7 @@ static-release:
 shared-debug:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-library.py shared debug
 
-shared-relase:
+shared-release:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-library.py shared release
 
 static:
@@ -84,9 +87,6 @@ static:
 
 shared:
 	@$(MAKE) --no-print-directory shared-release
-
-cmake:
-	@$(PYTHON) $(SCRIPTS_DIR)/make-cmake.py
 
 module-debug:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-module.py Debug
