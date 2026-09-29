@@ -25,6 +25,7 @@ all: dev
 .PHONY: module-release
 .PHONY: module
 .PHONY: validate
+.PHONY: validate-update-baseline
 .PHONY: coverage
 .PHONY: build-cpp-tests
 .PHONY: cpp-tests
@@ -163,6 +164,9 @@ validate:
 #	below. The standalone 'lint-python' target stays strict when invoked directly.
 	-@$(MAKE) --no-print-directory lint-python
 	@$(PYTHON) $(SCRIPTS_DIR)/make-validate.py
+
+validate-update-baseline:
+	@$(PYTHON) $(SCRIPTS_DIR)/make-validate.py --update-baseline
 
 # ====================
 # AI-friendly docs
