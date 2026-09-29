@@ -117,9 +117,14 @@ void PitchClass(const py::module& m) {
         Create a pitch from a frequency in Hz.
 
         The frequency is rounded to the nearest semitone -- or to the nearest quarter tone,
-        with ``enableQuarterToneRound`` -- ties upward. A positive frequency always yields a
-        pitch: one outside the representable range is clamped to the nearest representable
-        pitch and a warning is printed. Zero or a negative frequency creates a rest.
+        with ``enableQuarterToneRound`` -- ties upward, and spelled with ``accType``. A positive
+        frequency always yields a pitch, with a warning whenever it is not the rounded one: a
+        pitch below MIDI note 0 becomes MIDI note 0 (``"C-1"``, or ``"Dbb-1"`` with ``"bb"``),
+        and a pitch neither ``accType`` nor the default spelling can spell within octave 11 is
+        moved down, by whole semitones and without its quarter tone, until one of them can. So
+        with the default ``accType`` everything from MIDI 156 up becomes ``"B11"`` (155),
+        although ``"B#11"`` (156), ``"B3x11"`` (156.5) and ``"Bx11"`` (157) exist: ``"#"``
+        reaches the first two and ``"x"`` the last. Zero or a negative frequency creates a rest.
 
         Parameters
         ----------
@@ -611,8 +616,11 @@ void PitchClass(const py::module& m) {
         Replace the whole pitch from a frequency in Hz.
 
         The rules are ``Pitch.fromFrequency``'s: rounded to the nearest semitone, or quarter
-        tone with ``enableQuarterToneRound``, ties upward; clamped with a warning outside the
-        representable range; zero or a negative frequency makes this pitch a rest.
+        tone with ``enableQuarterToneRound``, ties upward, and spelled with ``accType``; a pitch
+        below MIDI note 0, or one that neither ``accType`` nor the default spelling can spell
+        within octave 11, is moved to one they can, with a warning (with the default
+        ``accType``, everything from MIDI 156 up becomes ``"B11"``); zero or a negative
+        frequency makes this pitch a rest.
 
         Parameters
         ----------

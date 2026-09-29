@@ -32,8 +32,8 @@ void IntervalClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If either pitch is a quarter tone -- the message names it and the remedy,
-            ``Note.roundToSemitone`` -- or if a pitch string is invalid.
+            If either pitch is a rest; if either pitch is a quarter tone -- the message names it
+            and the remedy, ``Note.roundToSemitone``; or if a pitch string is invalid.
 
         Examples
         --------
@@ -56,8 +56,10 @@ void IntervalClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If either note is a quarter tone; the message names it and the remedy,
-            ``Note.roundToSemitone``.
+            If either note is a rest; if either note is a quarter tone -- the message names it and
+            the remedy, ``Note.roundToSemitone``; or if a note's transposing interval carries its
+            sounding pitch below the lowest representable pitch, ``C1b-1`` (see
+            ``Note.getSoundingPitch``).
 
         Examples
         --------
@@ -81,8 +83,8 @@ void IntervalClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If either pitch is a quarter tone -- the message names it and the remedy,
-            ``Note.roundToSemitone`` -- or if a pitch string is invalid.
+            If either pitch is a rest; if either pitch is a quarter tone -- the message names it
+            and the remedy, ``Note.roundToSemitone``; or if a pitch string is invalid.
 
         Examples
         --------
@@ -106,8 +108,10 @@ void IntervalClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If either note is a quarter tone; the message names it and the remedy,
-            ``Note.roundToSemitone``.
+            If either note is a rest; if either note is a quarter tone -- the message names it and
+            the remedy, ``Note.roundToSemitone``; or if a note's transposing interval carries its
+            sounding pitch below the lowest representable pitch, ``C1b-1`` (see
+            ``Note.getSoundingPitch``).
 
         Examples
         --------

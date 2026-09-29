@@ -51,7 +51,8 @@ class Interval {
      *          first.
      * @param note_A First Note.
      * @param note_B Second Note.
-     * @throws std::runtime_error If either note is a rest, or carries a quarter-tone accidental.
+     * @throws std::runtime_error If either note is a rest, carries a quarter-tone accidental, or
+     *         sounds below the lowest representable pitch, C1b-1 (see Note::getMidiNumber()).
      */
     Interval(const Note& note_A, const Note& note_B);
 
@@ -70,7 +71,8 @@ class Interval {
      *          @details.
      * @param note_A First Note.
      * @param note_B Second Note.
-     * @throws std::runtime_error If either note is a rest, or carries a quarter-tone accidental.
+     * @throws std::runtime_error If either note is a rest, carries a quarter-tone accidental, or
+     *         sounds below the lowest representable pitch, C1b-1 (see Note::getMidiNumber()).
      */
     void setNotes(const Note& note_A, const Note& note_B);
 

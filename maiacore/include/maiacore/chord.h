@@ -1471,15 +1471,9 @@ class Chord {
      * @param accType Optional: specify accidental type for pitch spelling.
      * @return String with the pitch name (e.g., "C4", "F#3").
      * @throws std::runtime_error If the chord contains a quarter tone, inherited from
-     *         getMeanMidiValue(), which this method spells.
-     *
-     *         The reason is NOT that the mean rarely lands on a quarter tone: a pitch string can
-     *         spell one ("D3x4"), and {C4, E1b4, G4} averages to exactly 63.5, which is spellable.
-     *         The decisive obstacle is the spelling route. This method spells through
-     *         Helper::midiNote2pitch(), whose parameter is an int, so a half step cannot be
-     *         expressed through it at all, and adding a fractional-input speller would be new
-     *         public API. Rejecting is therefore the only honest answer here, even for the means
-     *         that would have been spellable. Call roundQuarterTones() first.
+     *         getMeanMidiValue(), whose mean this method spells. The mean of a quarter-tone
+     *         chord's exact pitch positions is generally not on the quarter-tone grid, so there is
+     *         no exact spelling to return. Call roundQuarterTones() first.
      */
     std::string getMeanPitch(const std::string& accType = {}) const;
 

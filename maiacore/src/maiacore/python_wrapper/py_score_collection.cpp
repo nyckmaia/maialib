@@ -95,7 +95,51 @@ void ScoreCollectionClass(const py::module& m) {
         py::arg("rhythmSimilarityCallback") = nullptr,
         py::arg("totalIntervalSimilarityCallback") = nullptr,
         py::arg("totalRhythmSimilarityCallback") = nullptr,
-        py::arg("totalSimilarityCallback") = nullptr);
+        py::arg("totalSimilarityCallback") = nullptr,
+        R"pbdoc(
+        Search every score of the collection for a melodic pattern.
+
+        Each score is searched as ``Score.findMelodyPatternDataFrame(melodyPattern, ...)``
+        searches it, with the same thresholds and callbacks.
+
+        Parameters
+        ----------
+        melodyPattern : list of Note
+            The pattern.
+        totalIntervalsSimilarityThreshold : float, default 0.5
+            Minimum interval similarity of a match, from 0 to 1.
+        totalRhythmSimilarityThreshold : float, default 0.5
+            Minimum rhythm similarity of a match, from 0 to 1.
+        intervalsSimilarityCallback : callable, optional
+        rhythmSimilarityCallback : callable, optional
+        totalIntervalSimilarityCallback : callable, optional
+        totalRhythmSimilarityCallback : callable, optional
+        totalSimilarityCallback : callable, optional
+            The callbacks of ``Score.findMelodyPatternDataFrame``, with the same pairing rules.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The matches in every score, with ``Score.findMelodyPatternDataFrame``'s columns
+            preceded by ``filename``, ``composerName`` and ``scoreTitle``, sorted by
+            ``scoreTitle``.
+
+        Raises
+        ------
+        RuntimeError
+            If the search of any score raises, for the reasons
+            ``Score.findMelodyPatternDataFrame`` gives.
+        KeyError
+            If no score has a match: the empty result has no ``scoreTitle`` column to sort by.
+
+        Examples
+        --------
+        >>> collection = ml.ScoreCollection([])
+        >>> collection.addScore(ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1)))
+        >>> table = collection.findMelodyPatternDataFrame([ml.Note("G2"), ml.Note("D3")], 1.0, 1.0)
+        >>> list(table.columns[:4])
+        ['filename', 'composerName', 'scoreTitle', 'partName']
+    )pbdoc");
 
     // Wrapper para a segunda versão de findMelodyPatternDataFrame, que aceita múltiplos padrões
     cls.def(
@@ -151,7 +195,57 @@ void ScoreCollectionClass(const py::module& m) {
         py::arg("rhythmSimilarityCallback") = nullptr,
         py::arg("totalIntervalSimilarityCallback") = nullptr,
         py::arg("totalRhythmSimilarityCallback") = nullptr,
-        py::arg("totalSimilarityCallback") = nullptr);
+        py::arg("totalSimilarityCallback") = nullptr,
+        R"pbdoc(
+        Search every score of the collection for several melodic patterns.
+
+        Each score is searched as ``Score.findMelodyPatternDataFrame(melodyPatterns, ...)``
+        searches it: every pattern, each on a worker thread, with the same thresholds and
+        callbacks.
+
+        Parameters
+        ----------
+        melodyPatterns : list of list of Note
+            The patterns.
+        totalIntervalsSimilarityThreshold : float, default 0.5
+            Minimum interval similarity of a match, from 0 to 1.
+        totalRhythmSimilarityThreshold : float, default 0.5
+            Minimum rhythm similarity of a match, from 0 to 1.
+        intervalsSimilarityCallback : callable, optional
+        rhythmSimilarityCallback : callable, optional
+        totalIntervalSimilarityCallback : callable, optional
+        totalRhythmSimilarityCallback : callable, optional
+        totalSimilarityCallback : callable, optional
+            The callbacks of ``Score.findMelodyPatternDataFrame``, with the same pairing rules.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The matches of every pattern in every score, with the columns ``patternIdx`` (the
+            pattern's index in ``melodyPatterns``), ``filename``, ``composerName`` and
+            ``scoreTitle``, followed by ``Score.findMelodyPatternDataFrame``'s, sorted by
+            ``scoreTitle``.
+
+        Raises
+        ------
+        RuntimeError
+            If the search for any pattern in any score raises, for the reasons
+            ``Score.findMelodyPatternDataFrame`` gives, never leaving an empty result in its
+            place.
+        KeyError
+            If no score has a match: the empty result has no ``scoreTitle`` column to sort by.
+        ValueError
+            If the collection holds no score.
+
+        Examples
+        --------
+        >>> collection = ml.ScoreCollection([])
+        >>> collection.addScore(ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1)))
+        >>> patterns = [[ml.Note("G2"), ml.Note("D3")], [ml.Note("D3"), ml.Note("B3")]]
+        >>> table = collection.findMelodyPatternDataFrame(patterns, 1.0, 1.0)
+        >>> sorted(table["patternIdx"].unique().tolist())
+        [0, 1]
+    )pbdoc");
 
     // Default Python 'print' function:
     cls.def("__repr__", [](const ScoreCollection& scoreCollection) {

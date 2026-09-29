@@ -562,7 +562,38 @@ void HelperClass(const py::module& m) {
     cls.def_static("noteType2RhythmFigure", &Helper::noteType2RhythmFigure, py::arg("noteType"));
     //--------------------- //
     cls.def_static("pitch2freq", &Helper::pitch2freq, py::arg("pitch"),
-                   py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+                   py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+                   R"pbdoc(
+        Return the approximate equal-tempered frequency of a pitch, in Hz.
+
+        Looked up in a table of octave-0 frequencies rounded to 0.01 Hz and scaled by octave, so
+        ``"C4"`` gives 261.6 where the exact value is about 261.63. Only pitches with a whole-tone
+        accidental, or none, have an entry: a quarter tone is refused rather than approximated.
+        ``Pitch(pitch).getFrequency()`` computes the exact frequency of any pitch, a quarter tone
+        included.
+
+        Parameters
+        ----------
+        pitch : str
+            Pitch string, e.g. ``"A4"``.
+
+        Returns
+        -------
+        float
+            Frequency in Hz.
+
+        Raises
+        ------
+        RuntimeError
+            If the pitch string is invalid, or is a rest or a quarter tone ("Pitch not found!").
+
+        Examples
+        --------
+        >>> ml.Helper.pitch2freq("A4")
+        440.0
+        >>> round(ml.Pitch("C1x4").getFrequency(), 2)
+        269.29
+    )pbdoc");
     //--------------------- //
     cls.def_static("freq2pitch", &Helper::freq2pitch, py::arg("freq"), py::arg("accType") = "");
     //--------------------- //
@@ -602,17 +633,107 @@ void HelperClass(const py::module& m) {
 
     cls.def_static("getSemitonesDifferenceBetweenMelodies",
                    &Helper::getSemitonesDifferenceBetweenMelodies, py::arg("referenceMelody"),
-                   py::arg("otherMelody"));
+                   py::arg("otherMelody"),
+                   R"pbdoc(
+        Compare two melodies' contours, interval by interval.
+
+        At each position the interval from one note to the next is taken in each melody, as the
+        difference of the two notes' exact sounding positions (``Note.getQuarterToneSteps``), so
+        a quarter tone counts as half a semitone; a pair that includes a rest counts as an
+        interval of 0. Only intervals are compared, so a transposed copy of a melody gives all
+        zeros. If the melodies differ in length, only the first
+        ``min(len(referenceMelody), len(otherMelody))`` notes of each are compared.
+
+        Parameters
+        ----------
+        referenceMelody : list of Note
+            The reference melody.
+        otherMelody : list of Note
+            The melody compared with it.
+
+        Returns
+        -------
+        list of float
+            One value per pair of consecutive notes: the reference melody's interval minus the
+            other melody's, in semitones.
+
+        Raises
+        ------
+        RuntimeError
+            If either melody has fewer than 2 notes, or holds a note whose transposing interval
+            carries its sounding pitch below the lowest representable pitch, ``C1b-1`` (see
+            ``Note.getSoundingPitch``).
+
+        Examples
+        --------
+        >>> reference = [ml.Note(p) for p in ("C4", "E4", "G4")]
+        >>> transposed = [ml.Note(p) for p in ("D4", "F#4", "A4")]
+        >>> ml.Helper.getSemitonesDifferenceBetweenMelodies(reference, transposed)
+        [0.0, 0.0]
+        >>> neutralThird = [ml.Note(p) for p in ("C4", "E1b4", "G4")]
+        >>> ml.Helper.getSemitonesDifferenceBetweenMelodies(reference, neutralThird)
+        [0.5, -0.5]
+    )pbdoc");
 
     cls.def_static("calculateMelodyEuclideanSimilarity",
                    py::overload_cast<const std::vector<Note>&, const std::vector<Note>&>(
                        &Helper::calculateMelodyEuclideanSimilarity),
-                   py::arg("melodyPattern"), py::arg("otherMelody"));
+                   py::arg("melodyPattern"), py::arg("otherMelody"),
+                   R"pbdoc(
+        Score how alike two melodies' contours are: ``1 / (1 + d)``, where ``d`` is the Euclidean
+        norm of ``getSemitonesDifferenceBetweenMelodies(melodyPattern, otherMelody)``.
+
+        1.0 means the same contour -- a transposed copy included -- and the score falls toward 0
+        as the intervals diverge; a quarter tone counts as half a semitone.
+
+        Parameters
+        ----------
+        melodyPattern : list of Note
+            The reference melody.
+        otherMelody : list of Note
+            The melody compared with it.
+
+        Returns
+        -------
+        float
+            The similarity, in (0, 1].
+
+        Raises
+        ------
+        RuntimeError
+            As ``getSemitonesDifferenceBetweenMelodies`` raises.
+
+        Examples
+        --------
+        >>> reference = [ml.Note(p) for p in ("C4", "E4", "G4")]
+        >>> neutralThird = [ml.Note(p) for p in ("C4", "E1b4", "G4")]
+        >>> round(ml.Helper.calculateMelodyEuclideanSimilarity(reference, neutralThird), 4)
+        0.5858
+    )pbdoc");
 
     cls.def_static(
         "calculateMelodyEuclideanSimilarity",
         py::overload_cast<const std::vector<float>&>(&Helper::calculateMelodyEuclideanSimilarity),
-        py::arg("semitonesDifference"));
+        py::arg("semitonesDifference"),
+        R"pbdoc(
+        Score precomputed interval differences: ``1 / (1 + d)``, where ``d`` is their Euclidean
+        norm.
+
+        Parameters
+        ----------
+        semitonesDifference : list of float
+            Interval differences, as ``getSemitonesDifferenceBetweenMelodies`` returns them.
+
+        Returns
+        -------
+        float
+            The similarity, in (0, 1].
+
+        Examples
+        --------
+        >>> round(ml.Helper.calculateMelodyEuclideanSimilarity([0.5, -0.5]), 4)
+        0.5858
+    )pbdoc");
 
     cls.def_static("getDurationDifferenceBetweenRhythms",
                    &Helper::getDurationDifferenceBetweenRhythms, py::arg("referenceRhythm"),

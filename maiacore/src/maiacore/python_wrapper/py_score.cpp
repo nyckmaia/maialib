@@ -173,7 +173,64 @@ void ScoreClass(const py::module& m) {
         py::arg("totalIntervalSimilarityCallback") = nullptr,
         py::arg("totalRhythmSimilarityCallback") = nullptr,
         py::arg("totalSimilarityCallback") = nullptr,
-        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+        R"pbdoc(
+        Search the score for a melodic pattern, comparing interval contours and rhythms.
+
+        Each part's first-voice melody -- chords and other voices are skipped -- is scanned with
+        a window as long as the pattern. For each window the interval differences
+        (``Helper.getSemitonesDifferenceBetweenMelodies``, where a quarter tone counts as half a
+        semitone) and the duration differences are reduced to two similarities, and the window is
+        a match when both reach their thresholds.
+
+        Parameters
+        ----------
+        melodyPattern : list of Note
+            The pattern.
+        totalIntervalsSimilarityThreshold : float, default 0.5
+            Minimum interval similarity of a match, from 0 to 1.
+        totalRhythmSimilarityThreshold : float, default 0.5
+            Minimum rhythm similarity of a match, from 0 to 1.
+        intervalsSimilarityCallback : callable, optional
+            ``f(pattern, segment) -> list of float``, replacing the interval differences. Give
+            ``totalIntervalSimilarityCallback`` with it.
+        rhythmSimilarityCallback : callable, optional
+            ``f(pattern, segment) -> list of float``, replacing the duration differences. Give
+            ``totalRhythmSimilarityCallback`` with it.
+        totalIntervalSimilarityCallback : callable, optional
+            ``f(differences) -> float``, reducing the interval differences to a similarity; used
+            only with ``intervalsSimilarityCallback``.
+        totalRhythmSimilarityCallback : callable, optional
+            ``f(differences) -> float``, reducing the duration differences to a similarity; used
+            only with ``rhythmSimilarityCallback``.
+        totalSimilarityCallback : callable, optional
+            ``f(intervalSimilarity, rhythmSimilarity) -> float``; the default is their mean.
+
+        Returns
+        -------
+        pandas.DataFrame
+            One row per match, in score order, with the columns ``partName``, ``measureId``,
+            ``staveId``, ``writtenClefKey`` (the measure's key), ``transposeInterval`` (from the
+            pattern's first sounding note to the segment's), ``segmentWrittenPitch``,
+            ``semitonesDiff``, ``rhythmDiff``, ``totalIntervalSimilarity``,
+            ``totalRhythmSimilarity`` and ``totalSimilarity``.
+
+        Raises
+        ------
+        RuntimeError
+            If the pattern has more notes than the score; if ``intervalsSimilarityCallback`` or
+            ``rhythmSimilarityCallback`` is given without its total callback ("bad function
+            call"); or if the pattern or a segment starts on a quarter tone, whose transposition
+            has no interval name.
+
+        Examples
+        --------
+        >>> score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
+        >>> pattern = [ml.Note("G2"), ml.Note("D3"), ml.Note("B3")]
+        >>> table = score.findMelodyPatternDataFrame(pattern, 1.0, 1.0)
+        >>> len(table) > 0, float(table["totalSimilarity"].min())
+        (True, 1.0)
+    )pbdoc");
 
     // Overload para multiplos padrões em paralelo
     cls.def(
@@ -239,7 +296,50 @@ void ScoreClass(const py::module& m) {
         py::arg("rhythmSimilarityCallback") = nullptr,
         py::arg("totalIntervalSimilarityCallback") = nullptr,
         py::arg("totalRhythmSimilarityCallback") = nullptr,
-        py::arg("totalSimilarityCallback") = nullptr);
+        py::arg("totalSimilarityCallback") = nullptr,
+        R"pbdoc(
+        Search the score for several melodic patterns, each on a worker thread.
+
+        Every pattern is searched exactly as the single-pattern overload searches it, however
+        many patterns there are. Takes the same thresholds and callbacks, applied to every
+        pattern.
+
+        Parameters
+        ----------
+        melodyPatterns : list of list of Note
+            The patterns.
+        intervalSimilarityThreshold : float, default 0.5
+            Minimum interval similarity of a match, from 0 to 1.
+        rhythmSimilarityThreshold : float, default 0.5
+            Minimum rhythm similarity of a match, from 0 to 1.
+        intervalsSimilarityCallback : callable, optional
+        rhythmSimilarityCallback : callable, optional
+        totalIntervalSimilarityCallback : callable, optional
+        totalRhythmSimilarityCallback : callable, optional
+        totalSimilarityCallback : callable, optional
+            The callbacks of the single-pattern overload, with the same pairing rules.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The matches of every pattern, with the single-pattern overload's columns plus
+            ``patternIdx``, the pattern's index in ``melodyPatterns``, sorted by ``measureId``.
+
+        Raises
+        ------
+        RuntimeError
+            If the search for any pattern raises, for the reasons the single-pattern overload
+            gives: the first such error, in pattern order, once every pattern has been searched
+            -- never an empty result in its place.
+
+        Examples
+        --------
+        >>> score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
+        >>> patterns = [[ml.Note("G2"), ml.Note("D3")], [ml.Note("D3"), ml.Note("B3")]]
+        >>> table = score.findMelodyPatternDataFrame(patterns, 1.0, 1.0)
+        >>> sorted(table["patternIdx"].unique().tolist())
+        [0, 1]
+    )pbdoc");
 
     // cls.def(
     // "findAnyMelodyPatternDataFrame",

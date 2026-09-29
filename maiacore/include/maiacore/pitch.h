@@ -331,14 +331,20 @@ class Pitch {
      *            it does not apply to that specific chromatic degree, or when the base spelling
      *            it produces cannot combine with the quarter-tone residual into a representable
      *            alter, this falls back to the default spelling and logs a warning (LOG_WARN).
-     *          - A frequency below the lowest representable pitch (C-1), or above the highest,
-     *            is clamped to that extreme and logs a warning (LOG_WARN) -- never a silent rest
-     *            (indistinguishable from the one sanctioned rest case, frequency <= 0) and never
-     *            a throw.
-     *          - +infinity genuinely lies above the representable range, so it is treated the
-     *            same as a finite frequency above the highest representable pitch: clamped to
-     *            the ceiling and logged with LOG_WARN, never passed to a cast that would be
-     *            undefined behaviour for it. -infinity is already a rest, being <= 0.
+     *          - A rounded pitch below MIDI note 0 becomes MIDI note 0 (C-1, or Dbb-1 with "bb"),
+     *            also with enableQuarterToneRound, where C1b-1 (-0.5) may be nearer. A rounded
+     *            pitch that neither accType nor the default spelling can spell within octave 11
+     *            is moved down by whole semitones, without its quarter-tone residual, until one
+     *            of them can: with the default accType everything from MIDI 156 up becomes B11
+     *            (155), although B#11, B3x11 and Bx11 exist ("#" reaches the first two, "x" the
+     *            last). Both log a warning (LOG_WARN), and neither is ever a silent rest
+     *            (indistinguishable from the one sanctioned rest case, frequency <= 0) or a
+     *            throw.
+     *          - +infinity genuinely lies above the representable range, so it is treated as a
+     *            finite frequency above the highest representable pitch is: moved down from
+     *            maxRepresentableMidi() as above and logged with LOG_WARN, never passed to a cast
+     *            that would be undefined behaviour for it. -infinity is already a rest, being
+     *            <= 0.
      *          - NaN satisfies neither half of spec section 4.3's dichotomy ("<= 0" or
      *            "positive"), being unordered under IEEE 754: every comparison against it is
      *            false. It is therefore a caller error, not a boundary condition -- the same

@@ -33,8 +33,10 @@ void ChordClass(const py::module& m) {
           ``isSus``, the ``is...Chord`` predicates, and the interval predicates measured from
           the root, ``haveMinorSecond`` to ``haveMajorThirdteenth``. The message names
           ``roundQuarterTones``; a single quarter-tone note is enough.
-        - The interval family, which builds an ``Interval`` from each pair of adjacent notes in
-          pitch order: ``getIntervals``, ``getIntervalsFromOriginalSortedNotes``,
+        - The interval family, which builds an ``Interval`` from pairs of the chord's notes:
+          ``getIntervals``, from each pair of adjacent notes in the order they were added (or
+          from the first note to each other one, with ``firstNoteAsReference``); and, from each
+          pair of adjacent notes in pitch order, ``getIntervalsFromOriginalSortedNotes``,
           ``haveMajorInterval`` and its four siblings, the three unison predicates,
           ``haveSecond`` to ``haveThirdteenth``, and every ``haveAnyOctave...`` predicate. The
           message names ``roundQuarterTones``; a chord with fewer than two notes builds no
@@ -876,15 +878,10 @@ void ChordClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the chord contains a quarter tone, inherited from ``getMeanMidiValue``, which this
-            method spells.
-
-            The reason is NOT that the mean rarely lands on a quarter tone: a pitch string can
-            spell one (``"D3x4"``), and ``["C4", "E1b4", "G4"]`` averages to exactly 63.5, which is
-            spellable. The decisive obstacle is the spelling route -- this method spells through
-            ``Helper.midiNote2pitch()``, whose parameter is an int, so a half step cannot be
-            expressed through it at all, and adding a fractional-input speller would be new public
-            API. Call ``roundQuarterTones`` first.
+            If the chord contains a quarter tone, inherited from ``getMeanMidiValue``, whose
+            mean this method spells. The mean of a quarter-tone chord's exact pitch positions is
+            generally not on the quarter-tone grid, so there is no exact spelling to return. Call
+            ``roundQuarterTones`` first.
     )pbdoc");
     cls.def("getMeanOfExtremesPitch", &Chord::getMeanOfExtremesPitch, py::arg("accType") = "",
             R"pbdoc(

@@ -1,3 +1,5 @@
+import contextlib
+import io
 import unittest
 
 import maialib as ml
@@ -586,6 +588,60 @@ class NoteSoundingPitchBelowFloor(unittest.TestCase):
         with self.assertRaises(RuntimeError) as ctx:
             ml.Interval(note, ml.Note("C4")).getNumOctaves()
         self.assertIn("below the lowest representable pitch C1b-1", firstLine(ctx.exception))
+
+    # Each of them says so in its docstring.
+    def testEverySoundingGetterDocumentsTheRaise(self):
+        for name in self.GETTERS:
+            with self.subTest(getter=name):
+                self.assertIn("C1b-1", getattr(ml.Note, name).__doc__)
+
+
+def capturedStdout(action):
+    """Run action() and return what it printed on sys.stdout."""
+    buffer = io.StringIO()
+    with contextlib.redirect_stdout(buffer):
+        action()
+    return buffer.getvalue()
+
+
+class NoteSetterWarnings(unittest.TestCase):
+    """The setters that refuse a value print their warning on sys.stdout, as Pitch's do."""
+
+    def testSetOctaveOnARestWarns(self):
+        rest = ml.Note("rest")
+        printed = capturedStdout(lambda: rest.setOctave(4))
+        self.assertIn("[WARN] Pitch::setOctave: cannot set the octave of a rest", printed)
+        self.assertTrue(rest.isNoteOff())
+
+    def testSetStepBelowMidiZeroWarns(self):
+        note = ml.Note("Db-1")
+        printed = capturedStdout(lambda: note.setStep("C"))
+        self.assertIn("[WARN] Pitch::setStep: step 'C' would move this pitch below MIDI", printed)
+        self.assertEqual(note.getPitch(), "Db-1")
+
+    def testSetAlterOnARestWarns(self):
+        rest = ml.Note("rest")
+        printed = capturedStdout(lambda: rest.setAlter(0.5))
+        self.assertIn("[WARN] Pitch::setAlter: cannot set the alter of a rest", printed)
+        self.assertTrue(rest.isNoteOff())
+
+    def testSetIsNoteOnTrueOnARestWarns(self):
+        rest = ml.Note("rest")
+        printed = capturedStdout(lambda: rest.setIsNoteOn(True))
+        self.assertIn("[WARN] Cannot turn a rest into a sounding note without a pitch", printed)
+        self.assertTrue(rest.isNoteOff())
+
+
+class NoteQuarterToneRoundingDocumentation(unittest.TestCase):
+    """getMidiNumber() and getFrequency() round a quarter tone, and say so."""
+
+    def testTheRoundingIsDocumented(self):
+        for name in ("getMidiNumber", "getFrequency"):
+            with self.subTest(method=name):
+                doc = " ".join(getattr(ml.Note, name).__doc__.split())
+                self.assertIn("rounded, ties upward", doc)
+        self.assertEqual(ml.Note("A1x4").getMidiNumber(), ml.Note("A#4").getMidiNumber())
+        self.assertEqual(ml.Note("A1x4").getFrequency(), ml.Note("A#4").getFrequency())
 
 
 if __name__ == "__main__":
