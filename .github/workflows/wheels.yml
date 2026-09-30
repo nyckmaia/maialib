@@ -100,6 +100,9 @@ jobs:
   upload_all:
     name: Upload All
     needs: build_wheels
+    # Publish to PyPI only when a GitHub release is published; pushes to main and
+    # manual runs still build the wheels but never upload them.
+    if: github.event_name == 'release' && github.event.action == 'published'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
