@@ -31,6 +31,7 @@ all: dev
 .PHONY: cpp-tests
 .PHONY: py-tests
 .PHONY: tests
+.PHONY: msvc-gate
 .PHONY: dist
 .PHONY: install
 .PHONY: uninstall
@@ -115,6 +116,11 @@ py-tests:
 tests:
 	@$(MAKE) --no-print-directory cpp-tests
 	@$(MAKE) --no-print-directory py-tests
+
+# Windows only: maiacore and its C++ tests compiled by MSVC (Visual Studio 2022) in Debug and
+# Release, then the package built by `pip install .` as CI builds it, with the Python tests.
+msvc-gate:
+	@$(PYTHON) $(SCRIPTS_DIR)/make-msvc-gate.py --python
 
 dist:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-dist.py
