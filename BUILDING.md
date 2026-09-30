@@ -22,7 +22,7 @@ This guide is for developers who want to build Maialib from C++ source code.
 
 - **Doxygen** - For generating C++ documentation
 - **Buildcache** - Speeds up compilation significantly
-- **CppCheck** - C++ static analyzer for code quality
+- **CppCheck** - C++ static analyzer for code quality; `make validate` needs it on PATH
 
 ### Python Development Dependencies
 
@@ -88,11 +88,13 @@ make tests            # Run both C++ and Python tests
 make cpp-tests        # Build and run C++ tests (GoogleTest)
 make py-tests         # Run Python unit tests
 make coverage         # Linux: run C++ tests with lcov coverage (HTML report in code-coverage/)
-make msvc-gate        # Windows: build and test with Visual Studio 2022 (MSVC), as CI does
+make msvc-gate        # Windows: build with Visual Studio 2022 (MSVC) and run both test suites
 make linux-gate       # Build and test the committed HEAD with GCC on Linux (in WSL on Windows)
 ```
 
-Every command exits with a non-zero code when a step fails. `make linux-gate` exports the
+Every command exits with a non-zero code when a step fails. `make msvc-gate` builds the C++ tests
+with MSVC in Debug and Release and runs them, then builds the package with `pip install .`, the
+way CI builds its Windows wheels, and runs the Python tests. `make linux-gate` exports the
 committed `HEAD` (uncommitted changes are not tested) to a temporary directory and runs
 `make cpp-tests`, then `make dev` and `make py-tests` in a fresh virtual environment there. When
 Linux lacks a tool it needs, it lists the `apt` packages to install and exits with code 2.
@@ -114,8 +116,10 @@ make validate                  # Ruff (report only), then cpplint and cppcheck o
 make validate-update-baseline  # Accept the current cpplint and cppcheck findings
 ```
 
-`make validate` fails only on cpplint and cppcheck findings that are not in the committed
-baseline, `scripts/validate-baseline.json`.
+`make validate` fails when cpplint or cppcheck reports a finding that is not in the committed
+baseline, `scripts/validate-baseline.json`, and when a check cannot run: cpplint is not installed
+for the Makefile's `PYTHON` (`requirements-dev.txt` installs it), cppcheck is not on PATH
+(`requirements-dev.txt` does not install it), or the baseline is missing.
 
 #### Documentation
 
@@ -245,9 +249,9 @@ cmake --build . --config Release
 make validate
 ```
 
-It fails when cpplint or cppcheck reports a finding that is not in `scripts/validate-baseline.json`.
-Once findings are fixed, or when new ones are accepted deliberately, rewrite the baseline with
-`make validate-update-baseline` and commit it.
+It fails when cpplint or cppcheck reports a finding that is not in `scripts/validate-baseline.json`,
+or cannot run. Once findings are fixed, or when new ones are accepted deliberately, rewrite the
+baseline with `make validate-update-baseline` and commit it.
 
 ### Testing Requirements
 

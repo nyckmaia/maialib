@@ -4,11 +4,12 @@ inside WSL (its default distribution).
 Usage: make-linux-gate.py
 
 HEAD is exported with `git archive` into a new directory in /var/tmp (or $TMPDIR) on Linux, so
-uncommitted changes are not tested, as in CI. After checking the tools it needs, the gate runs
-in the exported tree: `make cpp-tests`; `python3 -m venv .venv`; `.venv/bin/python -m pip
-install -r requirements-dev.txt`; `make dev PYTHON=.venv/bin/python`; `make py-tests
-PYTHON=.venv/bin/python`; and an import of maialib from outside the tree. The tree is removed
-when every step passes and kept for inspection when one fails.
+the gate tests what is committed, the tree CI builds, and not uncommitted changes. After
+checking the tools it needs, the gate runs in the exported tree: `make cpp-tests`;
+`python3 -m venv .venv`; `.venv/bin/python -m pip install -r requirements-dev.txt`;
+`make dev PYTHON=.venv/bin/python`; `make py-tests PYTHON=.venv/bin/python`; and an import of
+maialib from outside the tree. The tree is removed when every step passes and kept for
+inspection when one fails.
 
 The exit code is 0 when every step passes; otherwise it is the failing command's code, 1 when one
 of the gate's own checks fails, or 2 for a usage error, another operating system, a missing WSL
@@ -238,7 +239,7 @@ def export_head() -> Tuple[str, bytes]:
 
     git archive writes line endings as a checkout would, so on Windows (core.autocrlf=true, the
     Git for Windows default) the Linux build would get CRLF files. The gate asks for LF, as a
-    Linux checkout, and CI, has them.
+    Linux checkout, CI's included, has them.
     """
     commit = git_output(["rev-parse", "--short", "HEAD"], "git rev-parse HEAD").strip()
     if git_output(["status", "--porcelain"], "git status").strip():
@@ -314,12 +315,21 @@ def gtest_result(report: str) -> str:
 
 
 def unittest_result(log: str) -> str:
-    """Summarise the unittest output saved in ``log``, e.g. "472 tests, OK (skipped=2)"."""
+    """Summarise the unittest output saved in ``log``, e.g. "472 tests, OK (skipped=2)"; fail
+    unless it records at least one test and an OK result.
+
+    The exit code of `make py-tests` is not enough: before Python 3.12, unittest exits with 0
+    when it finds no test at all ("Ran 0 tests", then "OK").
+    """
     text = linux_output(f"cat {shlex.quote(log)}", "read the Python test output")
+    # Python 3.14 colours the result line when FORCE_COLOR or PYTHON_COLORS asks for colour.
+    text = re.sub(r"\x1b\[[0-9;]*m", "", text)
     ran = re.findall(r"^Ran (\d+) tests? in ", text, re.M)
-    status = re.findall(r"^((?:OK|FAILED)\b.*?)\s*$", text, re.M)
+    status = re.findall(r"^((?:OK|FAILED|NO TESTS RAN)\b.*?)\s*$", text, re.M)
     if not ran or not status:
         check_failed(f"{log} holds no unittest summary")
+    if int(ran[-1]) == 0 or not status[-1].startswith("OK"):
+        check_failed(f"{log} records {ran[-1]} tests run and the result {status[-1]}")
     return f"{ran[-1]} tests, {status[-1]}"
 
 
