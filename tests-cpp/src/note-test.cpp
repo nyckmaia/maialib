@@ -14,6 +14,7 @@
 #include "maiacore/interval.h"
 #include "pitch-spelling-legacy-data.h"
 #include "test-capture.h"
+#include "transposing-instruments.h"
 
 using namespace testing;
 
@@ -1851,11 +1852,6 @@ NoteState stateOf(const Note& note) {
             note.toXML()};
 }
 
-Note transposedNote(const std::string& writtenPitch, const int diatonic, const int chromatic) {
-    return Note(writtenPitch, RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false, diatonic,
-                chromatic);
-}
-
 // The error for 'writtenPitch' on a (diatonic, chromatic) instrument, whose sounding pitch lies at
 // 'position' (as std::to_string() writes it), above B11, the highest sounding pitch that can be
 // spelled within octaves -1..11.
@@ -1880,7 +1876,7 @@ TEST(NoteMutatorThatThrows, setTransposingIntervalLeavesTheNoteUnchanged) {
     EXPECT_EQ(stateOf(note), before);
     EXPECT_EQ(note.getPitch(), "B11");
 
-    Note clarinet = transposedNote("C4", -1, -2);
+    Note clarinet = transposingNote("C4", -1, -2);
     const NoteState clarinetBefore = stateOf(clarinet);
     EXPECT_EQ(thrownFirstLine([&] { clarinet.setTransposingInterval(0, 200); }),
               aboveTheCeiling("C4", 0, 200, "260.000000"));
@@ -1894,7 +1890,7 @@ TEST(NoteMutatorThatThrows, setTransposingIntervalLeavesTheNoteUnchanged) {
 // and the largest downward one leaves a constructible note whose sounding pitch lies below C1b-1.
 TEST(NoteMutatorThatThrows, anIntervalAtTheLimitsOfIntIsCheckedOnItsOwnSide) {
     const int up = std::numeric_limits<int>::max();
-    EXPECT_EQ(thrownFirstLine([&] { transposedNote("C4", 1, up); }),
+    EXPECT_EQ(thrownFirstLine([&] { transposingNote("C4", 1, up); }),
               aboveTheCeiling("C4", 1, up, "2147483648.000000"));
 
     Note note("C4");
@@ -1902,7 +1898,7 @@ TEST(NoteMutatorThatThrows, anIntervalAtTheLimitsOfIntIsCheckedOnItsOwnSide) {
               aboveTheCeiling("C4", 1, up, "2147483648.000000"));
     EXPECT_FALSE(note.isTransposed());
 
-    const Note low = transposedNote("C4", -1, std::numeric_limits<int>::min());
+    const Note low = transposingNote("C4", -1, std::numeric_limits<int>::min());
     const std::string message = thrownFirstLine([&] { low.getMidiNumber(); });
     EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
         << message;
@@ -1920,14 +1916,14 @@ TEST(NoteMutatorThatThrows, setTransposingIntervalOnARestIsIgnored) {
 // pitch below the lowest representable pitch is still accepted, as setTransposingInterval()
 // accepts it: the note stays constructible.
 TEST(NoteMutatorThatThrows, setPitchLeavesTheNoteUnchanged) {
-    Note note = transposedNote("C4", 1, 3);
+    Note note = transposingNote("C4", 1, 3);
     const NoteState before = stateOf(note);
     EXPECT_EQ(thrownFirstLine([&] { note.setPitch("B11"); }),
               aboveTheCeiling("B11", 1, 3, "158.000000"));
     EXPECT_EQ(stateOf(note), before);
     EXPECT_EQ(note.getPitch(), "D#4");
 
-    Note clarinet = transposedNote("C4", -1, -2);
+    Note clarinet = transposingNote("C4", -1, -2);
     clarinet.setPitch("C#-1");
     EXPECT_EQ(clarinet.getWrittenPitch(), "C#-1");
     const std::string message = thrownFirstLine([&] { clarinet.getPitch(); });
@@ -1938,7 +1934,7 @@ TEST(NoteMutatorThatThrows, setPitchLeavesTheNoteUnchanged) {
 // transpose() stores its result through setPitch(), which on a transposing instrument moves it by
 // the interval again: A11 plus 3 semitones sounds at 156, above B11.
 TEST(NoteMutatorThatThrows, transposeLeavesTheNoteUnchanged) {
-    Note note = transposedNote("C4", 1, 3);
+    Note note = transposingNote("C4", 1, 3);
     const NoteState before = stateOf(note);
     EXPECT_EQ(thrownFirstLine([&] { note.transpose(90); }),
               aboveTheCeiling("A11", 1, 3, "156.000000"));
@@ -1951,7 +1947,7 @@ TEST(NoteMutatorThatThrows, transposeLeavesTheNoteUnchanged) {
 // Ax11 (the alternative) plus 2 semitones sounds at 157, above B11.
 TEST(NoteMutatorThatThrows, toEnharmonicPitchLeavesTheNoteUnchanged) {
     for (const bool alternative : {false, true}) {
-        Note note = transposedNote("A11", 1, 2);
+        Note note = transposingNote("A11", 1, 2);
         const NoteState before = stateOf(note);
         EXPECT_EQ(thrownFirstLine([&] { note.toEnharmonicPitch(alternative); }),
                   aboveTheCeiling(alternative ? "Ax11" : "B11", 1, 2, "157.000000"))
@@ -1965,7 +1961,7 @@ TEST(NoteMutatorThatThrows, toEnharmonicPitchLeavesTheNoteUnchanged) {
 // through either numeric overload.
 TEST(NoteMutatorThatThrows, setDurationLeavesTheNoteUnchanged) {
     for (const float quarterDuration : {0.0f, -1.0f}) {
-        Note note = transposedNote("C4", -1, -2);
+        Note note = transposingNote("C4", -1, -2);
         const NoteState before = stateOf(note);
         EXPECT_EQ(thrownFirstLine([&] { note.setDuration(quarterDuration); }),
                   "[maiacore] Unable to convert durationTick to RhythmFigure")
@@ -2015,7 +2011,7 @@ void expectSoundingBelowTheFloor(const Note& note) {
 
 // C11 on a (1, 3) instrument sounds D#11; as A11 it would sound at 156, above B11.
 TEST(NoteMutatorThatThrows, setStepChecksTheSoundingPitchLikeSetPitch) {
-    Note note = transposedNote("C11", 1, 3);
+    Note note = transposingNote("C11", 1, 3);
     const NoteState before = stateOf(note);
     const std::string message = thrownFirstLine([&] { note.setStep("A"); });
     EXPECT_EQ(message, aboveTheCeiling("A11", 1, 3, "156.000000"));
@@ -2025,7 +2021,7 @@ TEST(NoteMutatorThatThrows, setStepChecksTheSoundingPitchLikeSetPitch) {
 }
 
 TEST(NoteMutatorThatThrows, setPitchClassChecksTheSoundingPitchLikeSetPitch) {
-    Note note = transposedNote("C11", 1, 3);
+    Note note = transposingNote("C11", 1, 3);
     const NoteState before = stateOf(note);
     const std::string message = thrownFirstLine([&] { note.setPitchClass("A"); });
     EXPECT_EQ(message, aboveTheCeiling("A11", 1, 3, "156.000000"));
@@ -2036,7 +2032,7 @@ TEST(NoteMutatorThatThrows, setPitchClassChecksTheSoundingPitchLikeSetPitch) {
 
 // B4 on a (1, 3) instrument sounds D5; as B11 it would sound at 158, above B11.
 TEST(NoteMutatorThatThrows, setOctaveChecksTheSoundingPitchLikeSetPitch) {
-    Note note = transposedNote("B4", 1, 3);
+    Note note = transposingNote("B4", 1, 3);
     const NoteState before = stateOf(note);
     const std::string message = thrownFirstLine([&] { note.setOctave(11); });
     EXPECT_EQ(message, aboveTheCeiling("B11", 1, 3, "158.000000"));
@@ -2047,7 +2043,7 @@ TEST(NoteMutatorThatThrows, setOctaveChecksTheSoundingPitchLikeSetPitch) {
 
 // A11 on a (1, 2) instrument sounds B11; as A#11 it would sound at 156, above B11.
 TEST(NoteMutatorThatThrows, setAlterChecksTheSoundingPitchLikeSetPitch) {
-    Note note = transposedNote("A11", 1, 2);
+    Note note = transposingNote("A11", 1, 2);
     const NoteState before = stateOf(note);
     const std::string message = thrownFirstLine([&] { note.setAlter(1.0f); });
     EXPECT_EQ(message, aboveTheCeiling("A#11", 1, 2, "156.000000"));
@@ -2060,23 +2056,23 @@ TEST(NoteMutatorThatThrows, setAlterChecksTheSoundingPitchLikeSetPitch) {
 // it: each setter stores the pitch, the note stays constructible, and its sounding getters report
 // the condition.
 TEST(NoteMutatorThatThrows, thePartialSettersStillAcceptASoundingPitchBelowTheFloor) {
-    Note byStep = transposedNote("D#-1", -1, -3);  // sounds C-1
-    byStep.setStep("C");                           // C#-1 sounds at -2
+    Note byStep = transposingNote("D#-1", -1, -3);  // sounds C-1
+    byStep.setStep("C");                            // C#-1 sounds at -2
     EXPECT_EQ(byStep.getWrittenPitch(), "C#-1");
     expectSoundingBelowTheFloor(byStep);
 
-    Note byPitchClass = transposedNote("D#-1", -1, -3);
+    Note byPitchClass = transposingNote("D#-1", -1, -3);
     byPitchClass.setPitchClass("C#");
     EXPECT_EQ(byPitchClass.getWrittenPitch(), "C#-1");
     expectSoundingBelowTheFloor(byPitchClass);
 
-    Note byOctave = transposedNote("C#0", -7, -12);  // sounds Db-1
-    byOctave.setOctave(-1);                          // C#-1 sounds at -11
+    Note byOctave = transposingNote("C#0", -7, -12);  // sounds Db-1
+    byOctave.setOctave(-1);                           // C#-1 sounds at -11
     EXPECT_EQ(byOctave.getWrittenPitch(), "C#-1");
     expectSoundingBelowTheFloor(byOctave);
 
-    Note byAlter = transposedNote("D-1", -1, -2);  // sounds C-1
-    byAlter.setAlter(-1.0f);                       // Db-1 sounds at -1
+    Note byAlter = transposingNote("D-1", -1, -2);  // sounds C-1
+    byAlter.setAlter(-1.0f);                        // Db-1 sounds at -1
     EXPECT_EQ(byAlter.getWrittenPitch(), "Db-1");
     expectSoundingBelowTheFloor(byAlter);
 }
@@ -2086,7 +2082,7 @@ TEST(NoteMutatorThatThrows, thePartialSettersStillAcceptASoundingPitchBelowTheFl
 // instrument would sound at 161, above B11, so the rest stays a rest.
 TEST(NoteMutatorThatThrows, aRestIsNotGivenAPitchThatCannotSound) {
     for (const bool byStep : {true, false}) {
-        Note rest = transposedNote("C4", 0, 90);  // sounds F#11
+        Note rest = transposingNote("C4", 0, 90);  // sounds F#11
         rest.setIsNoteOn(false);
         const NoteState before = stateOf(rest);
         const std::string message = thrownFirstLine([&] {

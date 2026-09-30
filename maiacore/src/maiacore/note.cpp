@@ -92,8 +92,8 @@ std::string spellFromWhiteKey(const int whiteKeySteps, const float alter) {
 // spelling: it throws here, rather than answering a rest, so that no sounding getter passes such
 // a note off as a rest. A position above B11 has none either, and throws naming the note.
 //
-// This chromatic rule is also detail::concertSpelling()'s fallback, for an interval whose
-// diatonic part cannot spell the position.
+// This chromatic rule is also maiacore::detail::concertSpelling()'s fallback, for an interval
+// whose diatonic part cannot spell the position.
 Pitch soundingPitchOf(const Pitch& writtenPitch, const int transposeDiatonic,
                       const int transposeChromatic) {
     // A rest has no sounding pitch, and an untransposed note sounds as written.
@@ -331,7 +331,7 @@ std::optional<Pitch> diatonicSpelling(const Pitch& written, const int transposeD
 }
 }  // namespace
 
-namespace detail {
+namespace maiacore::detail {
 
 Pitch concertSpelling(const Pitch& written, const int transposeDiatonic,
                       const int transposeChromatic) {
@@ -391,7 +391,7 @@ Pitch simplestSpelling(const Pitch& pitch) {
 
 Pitch concertPitch(const Note& note) { return note.computeConcertPitch(); }
 
-}  // namespace detail
+}  // namespace maiacore::detail
 
 Note::Note() : Note("A4") {}
 
@@ -906,7 +906,8 @@ Pitch Note::computeSoundingPitch() const {
 }
 
 Pitch Note::computeConcertPitch() const {
-    return detail::concertSpelling(_writtenPitch, _transposeDiatonic, _transposeChromatic);
+    return maiacore::detail::concertSpelling(_writtenPitch, _transposeDiatonic,
+                                             _transposeChromatic);
 }
 
 void Note::setVoice(const int voice) { _voice = voice; }

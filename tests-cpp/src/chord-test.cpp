@@ -9,6 +9,8 @@
 #include <vector>
 
 #include "maiacore/note.h"
+#include "transposing-instruments.h"
+
 using namespace testing;
 
 TEST(getName, majorTriad01) {
@@ -1254,22 +1256,6 @@ TEST(getHarmonicDensity, stringBoundsAreExactLikeTheNumericOverload) {
 // ===== Notes of transposing instruments ===== //
 
 namespace {
-// A note written 'written' in the part of an instrument that sounds 'transposeDiatonic' letters
-// and 'transposeChromatic' semitones away from what it reads.
-Note transposingNote(const std::string& written, const int transposeDiatonic,
-                     const int transposeChromatic) {
-    return Note(written, RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
-                transposeDiatonic, transposeChromatic);
-}
-
-Note bFlatClarinet(const std::string& written) { return transposingNote(written, -1, -2); }
-
-Note hornInF(const std::string& written) { return transposingNote(written, -4, -7); }
-
-Note hornInE(const std::string& written) { return transposingNote(written, -5, -8); }
-
-Note bassClarinet(const std::string& written) { return transposingNote(written, -8, -14); }
-
 // The chord of 'notes', added one at a time, as a score's chord extraction adds them.
 Chord chordOf(const std::vector<Note>& notes) {
     Chord chord;

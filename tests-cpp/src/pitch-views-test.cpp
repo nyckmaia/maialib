@@ -21,8 +21,8 @@
 #include "maiacore/pitch.h"
 #include "test-capture.h"
 
-using detail::concertSpelling;
-using detail::simplestSpelling;
+using maiacore::detail::concertSpelling;
+using maiacore::detail::simplestSpelling;
 
 namespace {
 // A pitch string, the transposing interval it is read with, and the expected pitch string.

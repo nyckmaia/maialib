@@ -21,6 +21,7 @@
 #include "maiacore/part.h"
 #include "test-capture.h"
 #include "test-locale.h"
+#include "transposing-instruments.h"
 
 using namespace testing;
 
@@ -1218,13 +1219,6 @@ TEST(ScoreMelodyPatternSearch, APatternLongerThanEveryMelodyFindsNoMatch) {
 }
 
 // ===== Parts of transposing instruments ===== //
-
-namespace {
-Note hornInF(const std::string& written, const RhythmFigure rhythmFigure = RhythmFigure::QUARTER) {
-    return Note(written, rhythmFigure, /*isNoteOn=*/true, /*inChord=*/false,
-                /*transposeDiatonic=*/-4, /*transposeChromatic=*/-7);
-}
-}  // namespace
 
 // A horn in F's written B4, C#5 and D#5 sound E4, F#4 and G#4, the pattern itself: the segment is
 // the pattern at a unison. The segment's pitches are listed as its part writes them.

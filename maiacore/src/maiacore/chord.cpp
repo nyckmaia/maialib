@@ -16,9 +16,11 @@
 #include "maiacore/utils.h"
 #include "pitch-views.h"
 
+using maiacore::detail::concertPitch;
+
 namespace {
 // An untransposed copy of 'note' at the pitch it sounds, spelled as the analyses relate it
-// (detail::concertPitch()), with the note's other attributes -- duration, voice, ties and so on --
+// (concertPitch()), with the note's other attributes -- duration, voice, ties and so on --
 // kept. An untransposed note, or a rest, is its own copy.
 //
 // The harmonic analysis stacks such copies, so every getter it reads on a stacked note -- and on
@@ -30,7 +32,7 @@ Note concertCopy(const Note& note) {
     }
 
     // The interval is cleared first: setPitch() checks the new pitch with the note's interval.
-    const Pitch concert = detail::concertPitch(note);
+    const Pitch concert = concertPitch(note);
     Note copy = note;
     copy.setTransposingInterval(0, 0);
     copy.setPitch(concert.getPitch());
@@ -98,7 +100,7 @@ Chord::Chord(const std::vector<Note>& notes, const RhythmFigure rhythmFigure)
     : _isStackedInThirds(false) {
     // Each note is held untransposed at the pitch it sounds, spelled as the analyses relate it.
     for (const auto& n : notes) {
-        const Note& note = Note(detail::concertPitch(n).getPitch(), rhythmFigure);
+        const Note& note = Note(concertPitch(n).getPitch(), rhythmFigure);
         addNote(note);
     }
 }
@@ -466,7 +468,7 @@ void Chord::removeDuplicateNotes() {
     // Two notes are duplicates when they sound the same pitch, spelled as the analyses relate it:
     // a B-flat clarinet's written D4 duplicates a violin's C4.
     const auto sameConcertPitch = [](const Note& a, const Note& b) {
-        return detail::concertPitch(a) == detail::concertPitch(b);
+        return concertPitch(a) == concertPitch(b);
     };
     _originalNotes.erase(
         std::unique(_originalNotes.begin(), _originalNotes.end(), sameConcertPitch),
@@ -993,7 +995,7 @@ std::vector<Note> Chord::computeBestOpenStackHeap(std::vector<HeapData>& stacked
     // with them by their concert spellings too.
     std::vector<std::string> originalNotesPitchClass(heapSize);
     for (int i = 0; i < heapSize; i++) {
-        originalNotesPitchClass[i] = detail::concertPitch(_originalNotes[i]).getPitchClass();
+        originalNotesPitchClass[i] = concertPitch(_originalNotes[i]).getPitchClass();
     }
 
     for (const auto& heapData : stackedHeaps) {
@@ -1639,7 +1641,7 @@ bool Chord::isInRootPosition() {
 
     // The root is a concert copy, so the lowest of the chord's own notes is read by its concert
     // spelling too.
-    return _closeStack[0].getPitchClass() == detail::concertPitch(tempNotes[0]).getPitchClass();
+    return _closeStack[0].getPitchClass() == concertPitch(tempNotes[0]).getPitchClass();
 }
 
 bool Chord::isSorted() const {
@@ -2699,7 +2701,7 @@ Chord Chord::getCloseChord(const bool enharmonyNotes) {
 
     const auto rootNoteWithOriginalOct =
         std::find_if(originalNotes.begin(), originalNotes.end(), [rootNote](const Note& note) {
-            return detail::concertPitch(note).getPitchClass() == rootNote.getPitchClass();
+            return concertPitch(note).getPitchClass() == rootNote.getPitchClass();
         });
 
     const int closeChordSize = closeChord.size();
@@ -2715,11 +2717,11 @@ Chord Chord::getCloseChord(const bool enharmonyNotes) {
 
         const auto extendedNoteWithOriginalOct =
             std::find_if(originalNotes.begin(), originalNotes.end(), [closeNote](const Note& note) {
-                return detail::concertPitch(note).getPitchClass() == closeNote.getPitchClass();
+                return concertPitch(note).getPitchClass() == closeNote.getPitchClass();
             });
 
-        if (detail::concertPitch(*extendedNoteWithOriginalOct).getOctave().value() ==
-            detail::concertPitch(*rootNoteWithOriginalOct).getOctave().value()) {
+        if (concertPitch(*extendedNoteWithOriginalOct).getOctave().value() ==
+            concertPitch(*rootNoteWithOriginalOct).getOctave().value()) {
             closeNote.setOctave(rootNoteOctave);
         }
     }

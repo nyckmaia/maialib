@@ -16,9 +16,9 @@ class Note;
 
 // The spelling the analyses relate a note by. Declared, with its documentation, in the private
 // header pitch-views.h next to the sources; not part of the public API.
-namespace detail {
+namespace maiacore::detail {
 Pitch concertPitch(const Note& note);
-}  // namespace detail
+}  // namespace maiacore::detail
 /// @endcond
 
 /**
@@ -71,9 +71,10 @@ class Note {
 
     /**
      * @brief Computes the concert Pitch: the written pitch moved by the transposing interval, with
-     *        the letter the diatonic interval reaches (detail::concertSpelling()).
+     *        the letter the diatonic interval reaches (maiacore::detail::concertSpelling()).
      * @details A rest, or an untransposed note, returns _writtenPitch itself. Nothing is cached.
-     *          The analyses that relate pitches read it through detail::concertPitch().
+     *          The analyses that relate pitches read it through
+     *          maiacore::detail::concertPitch().
      * @return The concert Pitch.
      * @throws std::runtime_error If this note's sounding pitch lies below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
@@ -81,7 +82,7 @@ class Note {
     Pitch computeConcertPitch() const;
 
     /// @cond IGNORE_DOXYGEN
-    friend Pitch detail::concertPitch(const Note& note);
+    friend Pitch maiacore::detail::concertPitch(const Note& note);
     /// @endcond
 
    public:

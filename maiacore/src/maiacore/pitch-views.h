@@ -8,7 +8,7 @@ class Note;
 // the sources, is not among the public headers, and nothing here is bound to Python. Everything
 // here is defined in note.cpp, next to the chromatic spelling rule and the white-key speller the
 // spellings share with Note.
-namespace detail {
+namespace maiacore::detail {
 
 /**
  * @brief The concert spelling of a written pitch on an instrument that transposes by
@@ -69,4 +69,4 @@ Pitch simplestSpelling(const Pitch& pitch);
  */
 Pitch concertPitch(const Note& note);
 
-}  // namespace detail
+}  // namespace maiacore::detail

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "test-capture.h"
+#include "transposing-instruments.h"
 
 using namespace testing;
 
@@ -2244,20 +2245,6 @@ TEST(IntervalQuarterToneGuard, WholeToneIntervalsAreUnaffectedAndTheRemedyWorks)
 // ===== Notes of transposing instruments ===== //
 
 namespace {
-// A note written 'written' in the part of an instrument that sounds 'transposeDiatonic' letters
-// and 'transposeChromatic' semitones away from what it reads.
-Note transposingNote(const std::string& written, const int transposeDiatonic,
-                     const int transposeChromatic) {
-    return Note(written, RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
-                transposeDiatonic, transposeChromatic);
-}
-
-Note bFlatClarinet(const std::string& written) { return transposingNote(written, -1, -2); }
-
-Note hornInF(const std::string& written) { return transposingNote(written, -4, -7); }
-
-Note piccolo(const std::string& written) { return transposingNote(written, 7, 12); }
-
 // Every answer an Interval gives about its two notes, as one string.
 std::string describe(const Interval& interval) {
     return interval.getName() + " " + interval.getDirection() + " | semitones " +

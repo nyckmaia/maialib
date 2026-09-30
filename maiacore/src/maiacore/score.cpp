@@ -24,6 +24,8 @@
 #include "nlohmann/json.hpp"
 #include "pitch-views.h"
 
+using maiacore::detail::concertPitch;
+
 namespace {
 // The value of a MusicXML <alter> element, if its text is one of the nine alters this library can
 // spell: a decimal number, exactly a multiple of 0.5 from -2 to 2. std::nullopt otherwise.
@@ -2736,7 +2738,7 @@ std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChords(nlohmann:
                     const Note& currentNote = currentMeasure.getNote(noteIdx, staveIdx);
                     const int voiceIdx = currentNote.getVoice();
                     // The event's pitch as the chord extraction relates it: its concert spelling.
-                    const std::string& pitch = detail::concertPitch(currentNote).getPitch();
+                    const std::string& pitch = concertPitch(currentNote).getPitch();
                     const float duration = currentNote.getQuarterDuration();
                     const Fraction& fractionDuration =
                         currentNote.getDuration().getFractionDuration();

@@ -10,8 +10,10 @@
 #include "maiacore/utils.h"
 #include "pitch-views.h"
 
+using maiacore::detail::concertPitch;
+
 // Every spelling this class relates -- the notes' steps and octaves, and the pitches its errors
-// name -- is the notes' concert spelling, detail::concertPitch(): an untransposed note's written
+// name -- is the notes' concert spelling, concertPitch(): an untransposed note's written
 // pitch, and for a note of a transposing instrument the pitch it sounds, spelled with its written
 // letter moved by the diatonic interval. The semitone count comes from the notes' sounding MIDI
 // numbers. getNotes() returns the notes as they were given.
@@ -80,7 +82,7 @@ void Interval::setNotes(const Note& note_A, const Note& note_B) {
 int Interval::whiteKeyDistance() const {
     // Diatonic index: step index (C=0 ... B=6) + 7 * octave, valid for every supported octave
     const auto diatonicIndex = [](const Note& note) {
-        const Pitch concert = detail::concertPitch(note);
+        const Pitch concert = concertPitch(note);
         const auto stepIt =
             std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), concert.getPitchStep());
         const int stepIdx = static_cast<int>(std::distance(c_C_diatonicScale.begin(), stepIt));
@@ -369,8 +371,8 @@ std::pair<std::string, bool> Interval::analyse() const {
     }
 
     std::stringstream err;
-    err << "Unable to compute the interval [" << detail::concertPitch(_note[0]).getPitch() << ", "
-        << detail::concertPitch(_note[1]).getPitch() << "]" << std::endl;
+    err << "Unable to compute the interval [" << concertPitch(_note[0]).getPitch() << ", "
+        << concertPitch(_note[1]).getPitch() << "]" << std::endl;
     err << "WrittenPitch: [" << _note[0].getWrittenPitch() << ", " << _note[1].getWrittenPitch()
         << "]" << std::endl;
     err << "diatonicInterval: " << diatonicInterval << std::endl;
@@ -394,8 +396,8 @@ int Interval::getNumSemitones(const bool absoluteValue) const {
 int Interval::getNumOctaves(const bool absoluteValue) const {
     // Rests are rejected up front by the constructor/setNotes(), so both octaves are always
     // engaged.
-    const int diff = detail::concertPitch(_note[1]).getOctave().value() -
-                     detail::concertPitch(_note[0]).getOctave().value();
+    const int diff =
+        concertPitch(_note[1]).getOctave().value() - concertPitch(_note[0]).getOctave().value();
 
     return (absoluteValue) ? abs(diff) : diff;
 }
@@ -420,8 +422,8 @@ int Interval::getDiatonicSteps(const bool useSingleOctave, const bool absoluteVa
                                                   : static_cast<int>(c_C_diatonicScale.size()) * -1;
 
     // Get the diatonic values of each interval note
-    const std::string diatonic_A = detail::concertPitch(_note[0]).getPitchStep();
-    const std::string diatonic_B = detail::concertPitch(_note[1]).getPitchStep();
+    const std::string diatonic_A = concertPitch(_note[0]).getPitchStep();
+    const std::string diatonic_B = concertPitch(_note[1]).getPitchStep();
 
     // Get the iterator of each diatonic note
     const auto& itA = std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), diatonic_A);
@@ -438,8 +440,8 @@ int Interval::getDiatonicSteps(const bool useSingleOctave, const bool absoluteVa
 
 int Interval::getPitchStepInterval() const {
     // Get the diatonic values of each interval note
-    const std::string diatonic_A = detail::concertPitch(_note[0]).getPitchStep();
-    const std::string diatonic_B = detail::concertPitch(_note[1]).getPitchStep();
+    const std::string diatonic_A = concertPitch(_note[0]).getPitchStep();
+    const std::string diatonic_B = concertPitch(_note[1]).getPitchStep();
 
     const std::array<std::string, 7>* diatonicScale = nullptr;
     switch (hash(diatonic_A.c_str())) {
