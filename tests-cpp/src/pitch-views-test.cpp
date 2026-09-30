@@ -293,12 +293,13 @@ TEST(ConcertSpelling, aPositionBelowTheFloorIsRejected) {
 
 // The floor is checked on the written MIDI number and the chromatic interval added in 64 bits, so
 // an interval at the limits of int cannot wrap the position around to the other end of the range:
-// the largest upward interval is rejected as above B11, the largest downward one as below C1b-1.
+// the largest upward interval is rejected as above B11, the largest downward one as below C1b-1,
+// each reporting the exact position (C4 is 60: 60 + 2147483647 and 60 - 2147483648).
 TEST(ConcertSpelling, anIntervalAtTheLimitsOfIntIsRejectedOnItsOwnSide) {
     const int up = std::numeric_limits<int>::max();
     const int down = std::numeric_limits<int>::min();
-    EXPECT_EQ(concert("C4", 1, up), aboveTheCeiling("C4", 1, up, "2147483648.000000"));
-    EXPECT_EQ(concert("C4", -1, down), belowTheFloor("C4", -1, down, "-2147483648.000000"));
+    EXPECT_EQ(concert("C4", 1, up), aboveTheCeiling("C4", 1, up, "2147483707.000000"));
+    EXPECT_EQ(concert("C4", -1, down), belowTheFloor("C4", -1, down, "-2147483588.000000"));
 }
 
 // Every pitch this library can hold, with transposing intervals of every size and direction:

@@ -1891,11 +1891,11 @@ TEST(NoteMutatorThatThrows, setTransposingIntervalLeavesTheNoteUnchanged) {
 TEST(NoteMutatorThatThrows, anIntervalAtTheLimitsOfIntIsCheckedOnItsOwnSide) {
     const int up = std::numeric_limits<int>::max();
     EXPECT_EQ(thrownFirstLine([&] { transposingNote("C4", 1, up); }),
-              aboveTheCeiling("C4", 1, up, "2147483648.000000"));
+              aboveTheCeiling("C4", 1, up, "2147483707.000000"));
 
     Note note("C4");
     EXPECT_EQ(thrownFirstLine([&] { note.setTransposingInterval(1, up); }),
-              aboveTheCeiling("C4", 1, up, "2147483648.000000"));
+              aboveTheCeiling("C4", 1, up, "2147483707.000000"));
     EXPECT_FALSE(note.isTransposed());
 
     const Note low = transposingNote("C4", -1, std::numeric_limits<int>::min());

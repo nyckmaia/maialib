@@ -28,6 +28,15 @@ bool isSoundingPitchBelowFloor(const Pitch& writtenPitch, const int transposeChr
            std::int64_t{writtenPitch.getMidiNumber()} + transposeChromatic < 0;
 }
 
+// The sounding position the two errors below report: the written pitch's exact position moved by
+// the chromatic interval, as std::to_string() writes a double. Every such position is a multiple
+// of 0.5 within 2^31 + 157 of zero, which a double holds exactly; a float rounds one moved by an
+// interval near the limits of int to a multiple of 128 or 256.
+std::string soundingPositionText(const Pitch& writtenPitch, const int transposeChromatic) {
+    return std::to_string(static_cast<double>(writtenPitch.getQuarterToneSteps()) +
+                          static_cast<double>(transposeChromatic));
+}
+
 // The one error every sounding getter raises for such a note. The note is real -- isNoteOn() is
 // true and its written pitch is intact -- but it has no sounding spelling, octave, MIDI number or
 // frequency, and answering a rest's values for them would pass it off as a rest.
@@ -37,8 +46,7 @@ bool isSoundingPitchBelowFloor(const Pitch& writtenPitch, const int transposeChr
     LOG_ERROR("The sounding pitch of the written pitch '" + writtenPitch.getPitch() +
               "' with transposeDiatonic=" + std::to_string(transposeDiatonic) +
               " and transposeChromatic=" + std::to_string(transposeChromatic) + " is at position " +
-              std::to_string(writtenPitch.getQuarterToneSteps() +
-                             static_cast<float>(transposeChromatic)) +
+              soundingPositionText(writtenPitch, transposeChromatic) +
               ", below the lowest representable pitch C1b-1 (-0.5, MIDI note 0), so it has no "
               "sounding spelling, octave, MIDI number or frequency. The written pitch is still "
               "available from getWrittenPitch(); a transposing interval that keeps the sounding "
@@ -55,8 +63,7 @@ bool isSoundingPitchBelowFloor(const Pitch& writtenPitch, const int transposeChr
     LOG_ERROR("The sounding pitch of the written pitch '" + writtenPitch.getPitch() +
               "' with transposeDiatonic=" + std::to_string(transposeDiatonic) +
               " and transposeChromatic=" + std::to_string(transposeChromatic) + " is at position " +
-              std::to_string(writtenPitch.getQuarterToneSteps() +
-                             static_cast<float>(transposeChromatic)) +
+              soundingPositionText(writtenPitch, transposeChromatic) +
               ", above B11 (MIDI note 155), the highest sounding pitch that can be spelled within "
               "octaves -1..11, so it has no sounding spelling. A lower written pitch or a smaller "
               "transposing interval keeps the sounding pitch at or below B11.");
