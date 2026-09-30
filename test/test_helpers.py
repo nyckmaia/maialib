@@ -149,19 +149,18 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(-1, "x"), "rest")
 
     def testTwelveTonesOctave4(self):
-        # Just to remeber how to redirect C++ Stderr
-        # buf = io.StringIO()
-        # with redirect_stderr(buf):
-        #     self.assertEqual(ml.Helper.midiNote2pitch(60, "b"),  "")
-        # self.assertIn("[ERROR] The MIDI Note '60' cannot be wrote using 'b' accident type\n", buf.getvalue())
+        # A spelling the note cannot take raises RuntimeError. Each pattern leaves the verb of the
+        # message open ("cannot be .* using"), so the test does not depend on how it is worded.
 
         # ===== MIDI Note 60 - C4 ===== #
         # Double Flat
         self.assertEqual(ml.Helper.midiNote2pitch(60, "bb"), "Dbb4")
 
         # Flat
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(60, "b"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '60' cannot be .* using 'b' accident type"
+        ):
+            ml.Helper.midiNote2pitch(60, "b")
 
         # Natural
         self.assertEqual(ml.Helper.midiNote2pitch(60), "C4")
@@ -170,13 +169,17 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(60, "#"), "B#3")
 
         # Double Sharp
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(60, "x"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '60' cannot be .* using 'x' accident type"
+        ):
+            ml.Helper.midiNote2pitch(60, "x")
 
         # ===== MIDI Note 61 - C#4 ===== #
         # Double Flat
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(61, "bb"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '61' cannot be .* using 'bb' accident type"
+        ):
+            ml.Helper.midiNote2pitch(61, "bb")
 
         # Flat
         self.assertEqual(ml.Helper.midiNote2pitch(61, "b"), "Db4")
@@ -195,15 +198,19 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(62, "bb"), "Ebb4")
 
         # Flat
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(62, "b"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '62' cannot be .* using 'b' accident type"
+        ):
+            ml.Helper.midiNote2pitch(62, "b")
 
         # Natural
         self.assertEqual(ml.Helper.midiNote2pitch(62), "D4")
 
         # Sharp
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(62, "#"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '62' cannot be .* using '#' accident type"
+        ):
+            ml.Helper.midiNote2pitch(62, "#")
 
         # Double Sharp
         self.assertEqual(ml.Helper.midiNote2pitch(62, "x"), "Cx4")
@@ -222,13 +229,17 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(63, "#"), "D#4")
 
         # Double Sharp
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(63, "x"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '63' cannot be .* using 'x' accident type"
+        ):
+            ml.Helper.midiNote2pitch(63, "x")
 
         # ===== MIDI Note 64 - E4 ===== #
         # Double Flat
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(64, "bb"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '64' cannot be .* using 'bb' accident type"
+        ):
+            ml.Helper.midiNote2pitch(64, "bb")
 
         # Flat
         self.assertEqual(ml.Helper.midiNote2pitch(64, "b"), "Fb4")
@@ -237,8 +248,10 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(64), "E4")
 
         # Sharp
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(64, "#"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '64' cannot be .* using '#' accident type"
+        ):
+            ml.Helper.midiNote2pitch(64, "#")
 
         # Double Sharp
         self.assertEqual(ml.Helper.midiNote2pitch(64, "x"), "Dx4")
@@ -248,8 +261,10 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(65, "bb"), "Gbb4")
 
         # Flat
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(65, "b"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '65' cannot be .* using 'b' accident type"
+        ):
+            ml.Helper.midiNote2pitch(65, "b")
 
         # Natural
         self.assertEqual(ml.Helper.midiNote2pitch(65), "F4")
@@ -258,13 +273,17 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(65, "#"), "E#4")
 
         # Double Sharp
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(65, "x"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '65' cannot be .* using 'x' accident type"
+        ):
+            ml.Helper.midiNote2pitch(65, "x")
 
         # ===== MIDI Note 66 - F#4 ===== #
         # Double Flat
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(66, "bb"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '66' cannot be .* using 'bb' accident type"
+        ):
+            ml.Helper.midiNote2pitch(66, "bb")
 
         # Flat
         self.assertEqual(ml.Helper.midiNote2pitch(66, "b"), "Gb4")
@@ -283,23 +302,29 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(67, "bb"), "Abb4")
 
         # Flat
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(67, "b"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '67' cannot be .* using 'b' accident type"
+        ):
+            ml.Helper.midiNote2pitch(67, "b")
 
         # Natural
         self.assertEqual(ml.Helper.midiNote2pitch(67), "G4")
 
         # Sharp
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(67, "#"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '67' cannot be .* using '#' accident type"
+        ):
+            ml.Helper.midiNote2pitch(67, "#")
 
         # Double Sharp
         self.assertEqual(ml.Helper.midiNote2pitch(67, "x"), "Fx4")
 
         # ===== MIDI Note 68 - G#4 ===== #
         # Double Flat
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(68, "bb"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '68' cannot be .* using 'bb' accident type"
+        ):
+            ml.Helper.midiNote2pitch(68, "bb")
 
         # Flat
         self.assertEqual(ml.Helper.midiNote2pitch(68, "b"), "Ab4")
@@ -311,23 +336,29 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(68, "#"), "G#4")
 
         # Double Sharp
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(68, "x"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '68' cannot be .* using 'x' accident type"
+        ):
+            ml.Helper.midiNote2pitch(68, "x")
 
         # ===== MIDI Note 69 - A4 ===== #
         # Double Flat
         self.assertEqual(ml.Helper.midiNote2pitch(69, "bb"), "Bbb4")
 
         # Flat
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(69, "b"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '69' cannot be .* using 'b' accident type"
+        ):
+            ml.Helper.midiNote2pitch(69, "b")
 
         # Natural
         self.assertEqual(ml.Helper.midiNote2pitch(69), "A4")
 
         # Sharp
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(69, "#"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '69' cannot be .* using '#' accident type"
+        ):
+            ml.Helper.midiNote2pitch(69, "#")
 
         # Double Sharp
         self.assertEqual(ml.Helper.midiNote2pitch(69, "x"), "Gx4")
@@ -346,13 +377,17 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(70, "#"), "A#4")
 
         # Double Sharp
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(70, "x"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '70' cannot be .* using 'x' accident type"
+        ):
+            ml.Helper.midiNote2pitch(70, "x")
 
         # ===== MIDI Note 71 - B4 ===== #
         # Double Flat
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(71, "bb"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '71' cannot be .* using 'bb' accident type"
+        ):
+            ml.Helper.midiNote2pitch(71, "bb")
 
         # Flat
         self.assertEqual(ml.Helper.midiNote2pitch(71, "b"), "Cb5")
@@ -361,8 +396,10 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(71), "B4")
 
         # Sharp
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(71, "#"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '71' cannot be .* using '#' accident type"
+        ):
+            ml.Helper.midiNote2pitch(71, "#")
 
         # Double Sharp
         self.assertEqual(ml.Helper.midiNote2pitch(71, "x"), "Ax4")
@@ -372,8 +409,10 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(72, "bb"), "Dbb5")
 
         # Flat
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(72, "b"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '72' cannot be .* using 'b' accident type"
+        ):
+            ml.Helper.midiNote2pitch(72, "b")
 
         # Natural
         self.assertEqual(ml.Helper.midiNote2pitch(72), "C5")
@@ -382,8 +421,10 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(72, "#"), "B#4")
 
         # Double Sharp
-        with self.assertRaises(Exception):
-            self.assertRaises(ml.Helper.midiNote2pitch(72, "x"), "")
+        with self.assertRaisesRegex(
+            RuntimeError, r"MIDI Note '72' cannot be .* using 'x' accident type"
+        ):
+            ml.Helper.midiNote2pitch(72, "x")
 
 
 class PitchSpelling(unittest.TestCase):
