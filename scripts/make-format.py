@@ -6,9 +6,8 @@ Makefile that did so, while every other target delegates to a
 `scripts/make-*.py` script. That made `format-cpp` the one target that broke
 if `make` fell back to `cmd.exe` on Windows, where `find` resolves to
 Microsoft's unrelated `find.exe` instead of the POSIX one. This script
-preserves the exact old behavior (same files, same exclusion, same style
-file) using pathlib instead, so it works identically regardless of which
-shell invokes `make`.
+collects the files with pathlib instead, so it works identically regardless
+of which shell invokes `make`.
 """
 
 import shutil
@@ -107,14 +106,16 @@ print(f"{color.OKGREEN}Formatting C++ code with clang-format ({clangFormatExe}).
 repoRoot = Path.cwd()
 styleFile = repoRoot / ".clang-format"
 
-# pitch-spelling-legacy-data.h is generated, column-aligned data: left unformatted.
+# The two excluded tests-cpp headers are generated characterisation tables: the tests compare
+# the library against them, and their exact bytes are verified by git blob hash, so they are
+# left unformatted.
 targets = [
     (repoRoot / "maiacore" / "include" / "maiacore", ["*.h"], frozenset()),
     (repoRoot / "maiacore" / "src" / "maiacore", ["*.cpp", "*.h"], frozenset()),
     (
         repoRoot / "tests-cpp" / "src",
         ["*.cpp", "*.h"],
-        frozenset({"pitch-spelling-legacy-data.h"}),
+        frozenset({"pitch-spelling-legacy-data.h", "quarter-tone-characterization-data.h"}),
     ),
 ]
 
