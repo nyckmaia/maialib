@@ -47,7 +47,8 @@ pip install -r requirements-dev.txt
 
 `setup.py`'s `install_requires` only sets version floors (no upper caps, to avoid resolution
 conflicts downstream); `requirements-dev.txt` exact-pins everything so `make tests` behaves the
-same from one machine or month to the next.
+same from one machine or month to the next. It needs Python 3.12 or newer, which its pinned
+`numpy` 2.5.3 requires, although maialib itself supports Python 3.8 to 3.14.
 
 **Linux/macOS only:**
 ```bash
@@ -96,10 +97,14 @@ make linux-gate       # Build and test the committed HEAD with GCC on Linux (in 
 
 Every command exits with a non-zero code when a step fails. `make msvc-gate` builds the C++ tests
 with MSVC in Debug and Release and runs them, then builds the package with `pip install .`, the
-way CI builds its Windows wheels, and runs the Python tests. `make linux-gate` exports the
-committed `HEAD` (uncommitted changes are not tested) to a temporary directory and runs
-`make cpp-tests`, then `make dev` and `make py-tests` in a fresh virtual environment there. When
-Linux lacks a tool it needs, it lists the `apt` packages to install and exits with code 2.
+way CI builds its Windows wheels, and runs the Python tests. It builds the working tree,
+uncommitted changes included, and needs Visual Studio 2022 with the C++ x64 tools and Python 3.12
+through the Python launcher (`py -3.12`). `make linux-gate` exports the committed `HEAD`
+(uncommitted changes are not tested) to a temporary directory and runs `make cpp-tests`, then
+`make dev` and `make py-tests` in a fresh virtual environment there. When Linux lacks a tool it
+needs, it lists the `apt` packages to install and exits with code 2. It needs CMake 3.25 or newer
+on Linux, which the build's `add_subdirectory(... SYSTEM)` requires: Ubuntu 22.04's `apt` CMake,
+3.22, fails at configure.
 
 #### Library Building (Advanced)
 
@@ -181,7 +186,7 @@ setuptools (Python Package Distribution)
 
 ### C++ Tests (GoogleTest)
 
-Located in `tests-cpp/src/`, currently **754 tests** covering:
+Located in `tests-cpp/src/`, covering:
 
 - Note class (100+ tests)
 - Chord class (200+ tests)
@@ -401,11 +406,15 @@ The project uses a single `VERSION` file as the source of truth.
 
 ## 🌐 Continuous Integration
 
-Maialib uses GitHub Actions for CI/CD:
+Maialib uses GitHub Actions to build and publish its wheels:
 
-- **Wheel Building:** Automated builds for multiple platforms and Python versions
-- **Testing:** All tests run on every commit
-- **Code Quality:** Automatic linting and static analysis
+- **Wheel Building:** on every push to `main`, on every manual run and for every published
+  release, cibuildwheel builds the wheels on Linux, Windows and macOS
+- **Publishing:** the wheels are uploaded to PyPI only for a published GitHub release
+- **Tests and code quality:** CI runs no tests and no linters yet. Run `make tests` and
+  `make validate` before a pull request, and the gates, which build with the compilers of CI's
+  Windows and Linux wheels: `make msvc-gate` (MSVC) on Windows and `make linux-gate` (GCC) on
+  Linux or in WSL
 
 See `.github/workflows/wheels.yml` for pipeline configuration.
 

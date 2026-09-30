@@ -1,7 +1,7 @@
 import platform
 from pathlib import Path
 
-from build_utils import run_step
+from build_utils import run_step, usage_error
 from terminal_colors import color
 
 print(f"{color.OKGREEN}Generating C++ Maiacore Code Coverage...{color.ENDC}")
@@ -9,9 +9,10 @@ print(f"{color.OKGREEN}Generating C++ Maiacore Code Coverage...{color.ENDC}")
 # Get the Operational System
 myOS = platform.system()
 
-if myOS == "Windows":
-    print(f"{color.OKGREEN}The code coverage can run only in Linux and Mac OSX{color.ENDC}")
-    exit(0)
+# Only the Linux Debug build is compiled with --coverage (see the root CMakeLists.txt), so the
+# C++ tests leave coverage data for lcov only there.
+if myOS != "Linux":
+    usage_error(f"code coverage runs only on Linux, not on {myOS}")
 
 # Maiacore raw coverage files folder: the maiacore objects of the C++ test build
 path01 = (

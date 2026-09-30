@@ -13,7 +13,8 @@ if(WIN32)
 endif()
 
 # GoogleTest must use the static C runtime that the root CMakeLists.txt selects.
-set(gtest_force_shared_crt OFF CACHE BOOL "Use the static C runtime" FORCE)
+set(gtest_force_shared_crt OFF CACHE BOOL
+    "Use shared (DLL) run-time lib even when Google Test is built as static lib." FORCE)
 add_subdirectory(googletest-1.14.0)
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")

@@ -72,7 +72,8 @@ All notable changes to this project will be documented in this file.
 - `make msvc-gate` (Windows) builds maiacore and the C++ tests with Visual Studio 2022 in Debug and Release and runs them, then builds the package with `pip install .`, as CI does, and runs the Python tests. `make linux-gate` exports the committed `HEAD` to a temporary directory on Linux (natively, or in WSL on Windows) and runs `make cpp-tests` there with GCC, then `make dev` and `make py-tests` in a fresh virtual environment; it lists the apt packages that are missing instead of installing them
 - The Windows shared library built by `make shared` exports its symbols; it exported none, so no program could link against it
 - MSVC Debug builds keep CMake's own Debug flags (`/Zi /Ob0 /Od /RTC1`): they were given the GCC and Clang flags `-g -O0`, which cl ignores with warning D9002
-- Test fixtures named `test_*.xml` are no longer ignored by Git: the rule meant for the files the test suites write matched them in every directory, so `git status` did not list a new fixture
+- Test fixtures named `test_*.xml` in any other directory are no longer ignored by Git: the rule meant for the files the test suites write into the repository root and `test/` matched them in every directory, so `git status` did not list a new fixture
+- `make coverage` stops with a message on any operating system other than Linux, the only one whose Debug build records coverage: on Windows it printed a note and exited 0, and on macOS it ran lcov without coverage data
 - The C++ tests are valid C++17: two lambdas captured structured bindings, a C++20 feature that Clang before 16 rejects
 - The wheel workflow publishes to PyPI only for a published GitHub release; every push to `main` and every manual run tried to publish as well
 - **Breaking:** `tests-cpp` can no longer be configured as a standalone CMake project; configure the root project with `-DSTATIC_LIB=ON -DMAIACORE_BUILD_TESTS=ON`, as `make cpp-tests` does
