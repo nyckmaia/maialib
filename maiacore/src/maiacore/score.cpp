@@ -22,6 +22,7 @@
 #include "maiacore/utils.h"
 #include "miniz-cpp/zip_file.hpp"
 #include "nlohmann/json.hpp"
+#include "pitch-views.h"
 
 namespace {
 // The value of a MusicXML <alter> element, if its text is one of the nine alters this library can
@@ -1747,13 +1748,9 @@ Score::MelodyPatternTable Score::findMelodyPattern(
                                                currentPartName, segmentFirstEvent.measureIdx,
                                                segmentFirstEvent.staveIdx);
 
-                const std::string& patternFirstSoundingPitch =
-                    patternFirstNoteOn->getSoundingPitch();
-                const std::string& segmentFirstSoundingPitch =
-                    segmentFirstNoteOn->getSoundingPitch();
-
-                const Interval transposeInterval(patternFirstSoundingPitch,
-                                                 segmentFirstSoundingPitch);
+                // The Interval relates the two notes by their concert spellings, so a segment of a
+                // transposing part is transposed from the pattern by the pitches it sounds.
+                const Interval transposeInterval(*patternFirstNoteOn, *segmentFirstNoteOn);
                 intervalName = transposeInterval.getName() + " " + transposeInterval.getDirection();
             }
 
@@ -2738,7 +2735,8 @@ std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChords(nlohmann:
                 for (int noteIdx = 0; noteIdx < numNotes; noteIdx++) {
                     const Note& currentNote = currentMeasure.getNote(noteIdx, staveIdx);
                     const int voiceIdx = currentNote.getVoice();
-                    const std::string& pitch = currentNote.getPitch();
+                    // The event's pitch as the chord extraction relates it: its concert spelling.
+                    const std::string& pitch = detail::concertPitch(currentNote).getPitch();
                     const float duration = currentNote.getQuarterDuration();
                     const Fraction& fractionDuration =
                         currentNote.getDuration().getFractionDuration();

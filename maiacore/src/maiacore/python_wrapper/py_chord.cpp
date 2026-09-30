@@ -51,6 +51,14 @@ void ChordClass(const py::module& m) {
         ``getMidiValueStd`` compute the exact value for a quarter-tone chord instead, and
         ``info`` degrades rather than raising.
 
+        Notes of transposing instruments are analysed at concert pitch: at the pitch each one
+        sounds, spelled with its written letter moved by the diatonic transposing interval. A
+        horn in F's written ``B4`` is an ``E4``, so with ``C4`` and ``G4`` it makes a C major
+        chord. The notes the analysis returns -- ``getRoot``, ``getBassNote``, the open and close
+        stacks, their heaps and the chords built from them -- are untransposed notes at those
+        pitches, and so are the notes of a chord built from a list of notes. ``getNotes`` returns
+        the notes as they were added.
+
         Examples
         --------
         >>> chord = ml.Chord(["C4", "E1b4", "G4"])
@@ -237,7 +245,23 @@ void ChordClass(const py::module& m) {
         ['D4', 'F#4', 'A4']
     )pbdoc");
 
-    cls.def("removeDuplicateNotes", &Chord::removeDuplicateNotes);
+    cls.def("removeDuplicateNotes", &Chord::removeDuplicateNotes, R"pbdoc(
+        Remove the notes that repeat a pitch, keeping one of each.
+
+        The notes are sorted (as ``sortNotes`` sorts them), then each note spelled, at concert
+        pitch, exactly as the note before it is removed: a B-flat clarinet's written ``D4``
+        duplicates a violin's ``C4``, while ``C#4`` and ``Db4`` are both kept.
+
+        Examples
+        --------
+        >>> clarinet = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> chord = ml.Chord()
+        >>> for note in [ml.Note("C4"), clarinet, ml.Note("E4"), ml.Note("G4")]:
+        ...     chord.addNote(note)
+        >>> chord.removeDuplicateNotes()
+        >>> chord.size()
+        3
+    )pbdoc");
 
     cls.def("getStackedHeaps", &Chord::getStackedHeaps, py::arg("enharmonyNotes") = false,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),

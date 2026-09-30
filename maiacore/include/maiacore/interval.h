@@ -12,6 +12,11 @@
  * The Interval class provides methods for constructing, analyzing, and classifying musical
  * intervals. It supports both pitch string and Note object input, and offers detailed intervallic
  * queries for music analysis and computational musicology.
+ *
+ * A note of a transposing instrument is related at concert pitch: by the pitch it sounds, spelled
+ * with its written letter moved by the diatonic transposing interval. A B-flat clarinet's written
+ * D4 against a violin's C4 is a perfect unison, and its written F#4 against C4 a major third (it
+ * sounds E4). getNotes() returns the notes as they were given.
  */
 class Interval {
    private:
@@ -48,7 +53,8 @@ class Interval {
      *          twelve-tone equal temperament, so an Interval carrying a quarter tone is never
      *          constructed rather than being allowed to return a wrong answer later. Call
      *          Note::roundToSemitone() on the offending note to round it to the nearest semitone
-     *          first.
+     *          first. A note of a transposing instrument is related at concert pitch (see the
+     *          class description).
      * @param note_A First Note.
      * @param note_B Second Note.
      * @throws std::runtime_error If either note is a rest, carries a quarter-tone accidental, or

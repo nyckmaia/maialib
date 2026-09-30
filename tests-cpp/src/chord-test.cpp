@@ -5,6 +5,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <tuple>
+#include <vector>
 
 #include "maiacore/note.h"
 using namespace testing;
@@ -1247,4 +1249,169 @@ TEST(getHarmonicDensity, stringBoundsAreExactLikeTheNumericOverload) {
     // Semitone bounds.
     EXPECT_NEAR(myChord.getHarmonicDensity(std::string("C4"), std::string("G4")), 2.0f / 8.0f,
                 0.0001f);
+}
+
+// ===== Notes of transposing instruments ===== //
+
+namespace {
+// A note written 'written' in the part of an instrument that sounds 'transposeDiatonic' letters
+// and 'transposeChromatic' semitones away from what it reads.
+Note transposingNote(const std::string& written, const int transposeDiatonic,
+                     const int transposeChromatic) {
+    return Note(written, RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                transposeDiatonic, transposeChromatic);
+}
+
+Note bFlatClarinet(const std::string& written) { return transposingNote(written, -1, -2); }
+
+Note hornInF(const std::string& written) { return transposingNote(written, -4, -7); }
+
+Note hornInE(const std::string& written) { return transposingNote(written, -5, -8); }
+
+Note bassClarinet(const std::string& written) { return transposingNote(written, -8, -14); }
+
+// The chord of 'notes', added one at a time, as a score's chord extraction adds them.
+Chord chordOf(const std::vector<Note>& notes) {
+    Chord chord;
+    for (const Note& note : notes) {
+        chord.addNote(note);
+    }
+    return chord;
+}
+
+std::vector<std::string> writtenPitchesOf(const std::vector<Note>& notes) {
+    std::vector<std::string> pitches;
+    for (const Note& note : notes) {
+        pitches.push_back(note.getWrittenPitch());
+    }
+    return pitches;
+}
+
+std::vector<std::string> namesOf(const std::vector<Interval>& intervals) {
+    std::vector<std::string> names;
+    for (const Interval& interval : intervals) {
+        names.push_back(interval.getName());
+    }
+    return names;
+}
+}  // namespace
+
+// A horn in F's written B4 sounds E4, so with C4 and G4 it makes a C major chord.
+TEST(ChordOfTransposingInstruments, aHornInFsWrittenB4WithC4AndG4IsCMajor) {
+    Chord chord = chordOf({Note("C4"), hornInF("B4"), Note("G4")});
+    EXPECT_EQ(chord.getName(), "C");
+    EXPECT_EQ(chord.getQuality(), "major");
+    EXPECT_TRUE(chord.isMajorChord());
+    EXPECT_TRUE(chord.haveMajorThird());
+    EXPECT_TRUE(chord.havePerfectFifth());
+}
+
+// A chord with notes of transposing instruments is analysed as the chord of the pitches they
+// sound, each spelled with its written letter moved by the diatonic transposing interval.
+TEST(ChordOfTransposingInstruments, isAnalysedAsTheChordOfThePitchesItsNotesSound) {
+    // The notes, the pitches they sound, and the chord's name.
+    using Case = std::tuple<std::vector<Note>, std::vector<std::string>, std::string>;
+    const std::vector<Case> cases = {
+        {{Note("C4"), bFlatClarinet("F#4"), Note("G4")}, {"C4", "E4", "G4"}, "C"},
+        {{Note("D4"), bFlatClarinet("G#4"), Note("A4")}, {"D4", "F#4", "A4"}, "D"},
+        {{hornInF("B4"), Note("G#4"), Note("B4")}, {"E4", "G#4", "B4"}, "E"},
+        {{Note("C4"), hornInE("C5"), Note("G#4")}, {"C4", "E4", "G#4"}, "Caug"},
+        {{bFlatClarinet("A#3"), Note("B3"), Note("D4"), Note("F4")},
+         {"G#3", "B3", "D4", "F4"},
+         "G#º"},
+    };
+    for (const auto& [notes, sounds, name] : cases) {
+        const std::string where = "the chord of " + testing::PrintToString(sounds);
+        Chord chord = chordOf(notes);
+        Chord concert(sounds);
+
+        EXPECT_EQ(chord.getName(), name) << where;
+        EXPECT_EQ(chord.getName(), concert.getName()) << where;
+        EXPECT_EQ(chord.getQuality(), concert.getQuality()) << where;
+        EXPECT_EQ(chord.getRoot().getWrittenPitch(), concert.getRoot().getWrittenPitch()) << where;
+        EXPECT_EQ(chord.getBassNote().getWrittenPitch(), concert.getBassNote().getWrittenPitch())
+            << where;
+        EXPECT_EQ(chord.isInRootPosition(), concert.isInRootPosition()) << where;
+        EXPECT_EQ(chord.getDegree(Key()), concert.getDegree(Key())) << where;
+        EXPECT_EQ(writtenPitchesOf(chord.getOpenStackNotes()),
+                  writtenPitchesOf(concert.getOpenStackNotes()))
+            << where;
+        EXPECT_EQ(writtenPitchesOf(chord.getCloseStackChord().getNotes()),
+                  writtenPitchesOf(concert.getCloseStackChord().getNotes()))
+            << where;
+        EXPECT_EQ(writtenPitchesOf(chord.getCloseChord().getNotes()),
+                  writtenPitchesOf(concert.getCloseChord().getNotes()))
+            << where;
+        EXPECT_EQ(namesOf(chord.getIntervals()), namesOf(concert.getIntervals())) << where;
+        EXPECT_EQ(namesOf(chord.getIntervalsFromOriginalSortedNotes()),
+                  namesOf(concert.getIntervalsFromOriginalSortedNotes()))
+            << where;
+        EXPECT_EQ(chord.haveMajorInterval(), concert.haveMajorInterval()) << where;
+        EXPECT_EQ(chord.haveAnyOctaveMajorThird(), concert.haveAnyOctaveMajorThird()) << where;
+        EXPECT_FLOAT_EQ(chord.getCloseStackHarmonicComplexity(),
+                        concert.getCloseStackHarmonicComplexity())
+            << where;
+    }
+}
+
+// The close chord brings an extension down to the root's octave when the chord's own notes hold
+// them in the same octave, and it finds those notes and compares their octaves at concert pitch:
+// a bass clarinet's written G#5 sounds F#4, in the octave of the root E4, so the ninth closes to
+// F#4, whatever the F#5 the chord also holds.
+TEST(ChordOfTransposingInstruments, getCloseChordPlacesAnExtensionByThePitchItSounds) {
+    Chord chord = chordOf({Note("E4"), bassClarinet("G#5"), Note("G#4"), Note("B4"), Note("F#5")});
+    EXPECT_EQ(chord.getName(), "E9");
+    EXPECT_EQ(writtenPitchesOf(chord.getCloseChord().getNotes()),
+              (std::vector<std::string>{"E4", "F#4", "G#4", "B4"}));
+}
+
+// The notes the analysis returns -- the root, the bass note, the stacks and the heaps they are
+// chosen from -- are untransposed notes at the pitches the chord's notes sound. The chord's own
+// notes keep their written pitches and transposing intervals.
+TEST(ChordOfTransposingInstruments, theNotesTheAnalysisReturnsAreUntransposedAtConcertPitch) {
+    Chord chord = chordOf({bFlatClarinet("D4"), Note("E4"), Note("G4")});
+
+    EXPECT_EQ(chord.getRoot().getWrittenPitch(), "C4");
+    EXPECT_FALSE(chord.getRoot().isTransposed());
+    EXPECT_EQ(chord.getBassNote().getWrittenPitch(), "C4");
+    EXPECT_FALSE(chord.getBassNote().isTransposed());
+
+    const std::vector<std::string> cMajor = {"C4", "E4", "G4"};
+    EXPECT_EQ(writtenPitchesOf(chord.getOpenStackNotes()), cMajor);
+    EXPECT_EQ(writtenPitchesOf(chord.getCloseStackChord().getNotes()), cMajor);
+    for (const Note& note : chord.getOpenStackNotes()) {
+        EXPECT_FALSE(note.isTransposed()) << note.getWrittenPitch();
+    }
+    for (const HeapData& heapData : chord.getStackedHeaps()) {
+        for (const NoteData& noteData : std::get<0>(heapData)) {
+            EXPECT_FALSE(noteData.note.isTransposed()) << noteData.note.getWrittenPitch();
+        }
+    }
+
+    const Note& clarinet = chord.getNote(0);
+    EXPECT_EQ(clarinet.getWrittenPitch(), "D4");
+    EXPECT_EQ(clarinet.getTransposeDiatonic(), -1);
+    EXPECT_EQ(clarinet.getTransposeChromatic(), -2);
+}
+
+// A violin's E4 and a horn in F's written B4 sound the same pitch, so one of them is a duplicate.
+TEST(ChordOfTransposingInstruments, removeDuplicateNotesComparesThePitchesTheNotesSound) {
+    Chord chord = chordOf({Note("E4"), hornInF("B4"), Note("G#4"), Note("B4")});
+    chord.removeDuplicateNotes();
+
+    ASSERT_EQ(chord.size(), 3);
+    EXPECT_EQ(chord.getNote(0).getMidiNumber(), 64);  // the violin's E4 or the horn's B4
+    EXPECT_EQ(chord.getNote(1).getWrittenPitch(), "G#4");
+    EXPECT_EQ(chord.getNote(2).getWrittenPitch(), "B4");
+}
+
+// A chord built from notes holds each one untransposed, at the pitch it sounds: a B-flat
+// clarinet's written F#4 becomes an E4, and with C4 and G4 the chord is C major.
+TEST(ChordOfTransposingInstruments, aChordBuiltFromNotesHoldsThePitchesTheySound) {
+    Chord chord(std::vector<Note>{bFlatClarinet("F#4"), Note("C4"), Note("G4")});
+
+    EXPECT_EQ(chord.getNote(0).getWrittenPitch(), "E4");
+    EXPECT_FALSE(chord.getNote(0).isTransposed());
+    EXPECT_EQ(chord.getNote(0).getMidiNumber(), 64);
+    EXPECT_EQ(chord.getName(), "C");
 }

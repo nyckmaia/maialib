@@ -691,7 +691,8 @@ class Score {
      *              note onsets (homophonic texture, block chord analysis)
      *          - `includeDuplicates` (boolean): Octave doubling handling
      *            - **true**: Preserve pitch-class duplications (["C4", "C4", "E4", "G4"])
-     *            - **false**: Remove duplicate pitch classes (["C4", "E4", "G4"])
+     *            - **false**: Remove duplicate pitch classes (["C4", "E4", "G4"]); notes of
+     *              transposing parts are compared at concert pitch (Chord::removeDuplicateNotes())
      *          - `includeUnpitched` (boolean): Include percussion/unpitched elements
      *
      *          **Example Configuration**:

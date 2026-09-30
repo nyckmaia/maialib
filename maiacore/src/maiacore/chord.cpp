@@ -14,8 +14,29 @@
 #include "maiacore/interval.h"
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
+#include "pitch-views.h"
 
 namespace {
+// An untransposed copy of 'note' at the pitch it sounds, spelled as the analyses relate it
+// (detail::concertPitch()), with the note's other attributes -- duration, voice, ties and so on --
+// kept. An untransposed note, or a rest, is its own copy.
+//
+// The harmonic analysis stacks such copies, so every getter it reads on a stacked note -- and on
+// every note it returns: the root, the bass note, the stacks and their heaps -- answers with the
+// concert spelling, whatever instrument the chord's own note was written for.
+Note concertCopy(const Note& note) {
+    if (!note.isTransposed() || note.isNoteOff()) {
+        return note;
+    }
+
+    // The interval is cleared first: setPitch() checks the new pitch with the note's interval.
+    const Pitch concert = detail::concertPitch(note);
+    Note copy = note;
+    copy.setTransposingInterval(0, 0);
+    copy.setPitch(concert.getPitch());
+    return copy;
+}
+
 // The note count divided by the span it occupies, in semitones, between two exact sounding
 // positions (Note::getQuarterToneSteps()). Positions are multiples of 0.5, which float holds
 // exactly, so the span is exact. The '+ 1' keeps the inclusive-semitone-slot convention of the
@@ -75,8 +96,9 @@ Chord::Chord() : _isStackedInThirds(false) {}
 
 Chord::Chord(const std::vector<Note>& notes, const RhythmFigure rhythmFigure)
     : _isStackedInThirds(false) {
+    // Each note is held untransposed at the pitch it sounds, spelled as the analyses relate it.
     for (const auto& n : notes) {
-        const Note& note = Note(n.getPitch(), rhythmFigure);
+        const Note& note = Note(detail::concertPitch(n).getPitch(), rhythmFigure);
         addNote(note);
     }
 }
@@ -440,8 +462,15 @@ void Chord::transposeStackOnly(const float semitonesNumber) {
 
 void Chord::removeDuplicateNotes() {
     sortNotes();  // also invalidates the stack cache; the erase() below only shrinks further
-    _originalNotes.erase(std::unique(_originalNotes.begin(), _originalNotes.end()),
-                         _originalNotes.end());
+
+    // Two notes are duplicates when they sound the same pitch, spelled as the analyses relate it:
+    // a B-flat clarinet's written D4 duplicates a violin's C4.
+    const auto sameConcertPitch = [](const Note& a, const Note& b) {
+        return detail::concertPitch(a) == detail::concertPitch(b);
+    };
+    _originalNotes.erase(
+        std::unique(_originalNotes.begin(), _originalNotes.end(), sameConcertPitch),
+        _originalNotes.end());
 }
 
 std::vector<HeapData> Chord::getStackedHeaps(const bool enharmonyNotes) {
@@ -578,9 +607,12 @@ void Chord::stackInThirds(const bool enharmonyNotes) {
     }
 
     // ===== STEP 1: COMPUTE THE OPEN STACK ===== //
-    // Copy the orginal chord to a stack vector
+    // The stack holds an untransposed copy of each note at the pitch it sounds (concertCopy()).
     _openStack.clear();
-    _openStack = _originalNotes;
+    _openStack.reserve(_originalNotes.size());
+    for (const Note& note : _originalNotes) {
+        _openStack.push_back(concertCopy(note));
+    }
 
     // '_stackedHeaps' is a member, populated by push_back() further down (STEP 5). It must start
     // empty on every run: without this, a chord re-stacked after a mutation (addNote, removeNote,
@@ -957,9 +989,11 @@ std::vector<Note> Chord::computeBestOpenStackHeap(std::vector<HeapData>& stacked
     int swapHeapDataIdx = 0;
     bool foundHeapMatch = false;
 
+    // The heaps are spelled from the stack's concert copies, so the chord's own notes are compared
+    // with them by their concert spellings too.
     std::vector<std::string> originalNotesPitchClass(heapSize);
     for (int i = 0; i < heapSize; i++) {
-        originalNotesPitchClass[i] = _originalNotes[i].getPitchClass();
+        originalNotesPitchClass[i] = detail::concertPitch(_originalNotes[i]).getPitchClass();
     }
 
     for (const auto& heapData : stackedHeaps) {
@@ -1603,7 +1637,9 @@ bool Chord::isInRootPosition() {
     std::vector<Note> tempNotes = _originalNotes;
     std::sort(tempNotes.begin(), tempNotes.end());
 
-    return _closeStack[0].getPitchClass() == tempNotes[0].getPitchClass();
+    // The root is a concert copy, so the lowest of the chord's own notes is read by its concert
+    // spelling too.
+    return _closeStack[0].getPitchClass() == detail::concertPitch(tempNotes[0]).getPitchClass();
 }
 
 bool Chord::isSorted() const {
@@ -2657,11 +2693,14 @@ Chord Chord::getCloseChord(const bool enharmonyNotes) {
     // getWrittenOctave() is always engaged here.
     const int rootNoteOctave = rootNote.getWrittenOctave().value();
 
+    // The root and the close chord's notes are concert copies, so the chord's own notes are looked
+    // up, and their octaves compared, by their concert spellings too.
     const std::vector<Note> originalNotes = getNotes();
 
-    const auto rootNoteWithOriginalOct = std::find_if(
-        originalNotes.begin(), originalNotes.end(),
-        [rootNote](const Note& note) { return note.getPitchClass() == rootNote.getPitchClass(); });
+    const auto rootNoteWithOriginalOct =
+        std::find_if(originalNotes.begin(), originalNotes.end(), [rootNote](const Note& note) {
+            return detail::concertPitch(note).getPitchClass() == rootNote.getPitchClass();
+        });
 
     const int closeChordSize = closeChord.size();
 
@@ -2676,11 +2715,11 @@ Chord Chord::getCloseChord(const bool enharmonyNotes) {
 
         const auto extendedNoteWithOriginalOct =
             std::find_if(originalNotes.begin(), originalNotes.end(), [closeNote](const Note& note) {
-                return note.getPitchClass() == closeNote.getPitchClass();
+                return detail::concertPitch(note).getPitchClass() == closeNote.getPitchClass();
             });
 
-        if (extendedNoteWithOriginalOct->getOctave().value() ==
-            rootNoteWithOriginalOct->getOctave().value()) {
+        if (detail::concertPitch(*extendedNoteWithOriginalOct).getOctave().value() ==
+            detail::concertPitch(*rootNoteWithOriginalOct).getOctave().value()) {
             closeNote.setOctave(rootNoteOctave);
         }
     }

@@ -211,7 +211,8 @@ void ScoreClass(const py::module& m) {
         pandas.DataFrame
             One row per match, in score order, with the columns ``partName``, ``measureId``,
             ``staveId``, ``writtenClefKey`` (the measure's key), ``transposeInterval`` (from the
-            pattern's first sounding note to the segment's), ``segmentWrittenPitch``,
+            pattern's first sounding note to the segment's, at concert pitch: see ``Interval``),
+            ``segmentWrittenPitch`` (the segment's pitches as its part writes them),
             ``semitonesDiff``, ``rhythmDiff``, ``totalIntervalSimilarity``,
             ``totalRhythmSimilarity`` and ``totalSimilarity``.
 

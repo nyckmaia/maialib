@@ -12,6 +12,7 @@
 #include <streambuf>
 #include <string>
 #include <thread>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -1214,4 +1215,47 @@ TEST(ScoreMelodyPatternSearch, APatternLongerThanEveryMelodyFindsNoMatch) {
     const auto tables = score.findMelodyPattern(std::vector<std::vector<Note>>{pattern});
     ASSERT_EQ(tables.size(), 1u);
     EXPECT_TRUE(tables[0].empty());
+}
+
+// ===== Parts of transposing instruments ===== //
+
+namespace {
+Note hornInF(const std::string& written, const RhythmFigure rhythmFigure = RhythmFigure::QUARTER) {
+    return Note(written, rhythmFigure, /*isNoteOn=*/true, /*inChord=*/false,
+                /*transposeDiatonic=*/-4, /*transposeChromatic=*/-7);
+}
+}  // namespace
+
+// A horn in F's written B4, C#5 and D#5 sound E4, F#4 and G#4, the pattern itself: the segment is
+// the pattern at a unison. The segment's pitches are listed as its part writes them.
+TEST(ScoreMelodyPatternSearch, ATransposingPartIsComparedByThePitchesItSounds) {
+    Score score({"Horn in F"}, 1);
+    Measure& measure = score.getPart(0).getMeasure(0);
+    for (const char* written : {"B4", "C#5", "D#5", "B4"}) {
+        measure.addNote(hornInF(written));
+    }
+
+    const auto table = score.findMelodyPattern(
+        std::vector<Note>{Note("E4"), Note("F#4"), Note("G#4")}, 1.0f, 1.0f);
+    ASSERT_EQ(table.size(), 1u);
+    EXPECT_EQ(std::get<4>(table[0]), "P1 ");  // the transposition from the pattern: a unison
+    EXPECT_EQ(std::get<5>(table[0]), (std::vector<std::string>{"B4", "C#5", "D#5"}));
+    EXPECT_FLOAT_EQ(std::get<10>(table[0]), 1.0f);
+}
+
+// A score's chords are named by the pitches its parts sound: a horn in F's written B4 sounds E4,
+// which with a violin's C4 and a viola's G4 is a C major chord, and which a second violin's E4
+// doubles, so the duplicate is removed.
+TEST(ScoreGetChords, ATransposingPartIsAnalysedByThePitchesItSounds) {
+    Score score({"Violin", "Horn in F", "Viola", "Violin II"}, 1);
+    score.getPart(0).getMeasure(0).addNote(Note("C4", RhythmFigure::WHOLE));
+    score.getPart(1).getMeasure(0).addNote(hornInF("B4", RhythmFigure::WHOLE));
+    score.getPart(2).getMeasure(0).addNote(Note("G4", RhythmFigure::WHOLE));
+    score.getPart(3).getMeasure(0).addNote(Note("E4", RhythmFigure::WHOLE));
+
+    const auto chords = score.getChords();
+    ASSERT_EQ(chords.size(), 1u);
+    Chord chord = std::get<3>(chords[0]);
+    EXPECT_EQ(chord.size(), 3);
+    EXPECT_EQ(chord.getName(), "C");
 }

@@ -66,6 +66,13 @@ typedef std::vector<SetharesDissonanceTableRow> SetharesDissonanceTable;
  * @details The Chord class encapsulates a collection of musical notes, allowing for operations such
  * as stacking in thirds, transposing, and computing harmonic properties. It supports both open and
  * closed stack representations, as well as enharmonic transformations of notes.
+ *
+ * Notes of transposing instruments are analysed at concert pitch: at the pitch each one sounds,
+ * spelled with its written letter moved by the diatonic transposing interval. A horn in F's written
+ * B4 is an E4, so with C4 and G4 it makes a C major chord. The notes the analysis returns -- the
+ * root, the bass note, the open and close stacks, their heaps and the chords built from them --
+ * are untransposed notes at those pitches; getNotes() returns the chord's own notes as they were
+ * added.
  */
 class Chord {
    private:
@@ -76,6 +83,8 @@ class Chord {
 
     /**
      * @brief Stores the notes stacked in thirds in open position (may include enharmonic notes).
+     * @details stackInThirds() fills it with untransposed copies of the chord's notes at concert
+     *          pitch, so the close stack, the bass note and the heaps hold untransposed notes too.
      */
     std::vector<Note> _openStack;
 
@@ -207,6 +216,8 @@ class Chord {
 
     /**
      * @brief Construct a Chord from a vector of Note objects.
+     * @details Each note is held untransposed, at concert pitch, with the given rhythm figure: a
+     *          B-flat clarinet's written F#4 is held as an E4. Rests are skipped.
      * @param notes Vector of Note objects to initialize the chord.
      * @param rhythmFigure The rhythm figure to assign to each note (default: QUARTER).
      */
@@ -336,6 +347,9 @@ class Chord {
 
     /**
      * @brief Remove duplicate notes (by pitch) from the chord.
+     * @details Sorts the notes (see sortNotes()), then removes each note spelled, at concert
+     *          pitch, exactly as the note before it: a B-flat clarinet's written D4 duplicates a
+     *          violin's C4, while C#4 and Db4 are both kept.
      */
     void removeDuplicateNotes();
 

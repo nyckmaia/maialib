@@ -46,6 +46,11 @@ void IntervalClass(const py::module& m) {
             R"pbdoc(
         Create the interval between two notes.
 
+        A note of a transposing instrument is related at concert pitch: by the pitch it sounds,
+        spelled with its written letter moved by the diatonic transposing interval. A B-flat
+        clarinet's written ``D4`` against a violin's ``C4`` is a perfect unison. ``getNotes``
+        returns the notes as they were given.
+
         Parameters
         ----------
         note_A : Note
@@ -65,6 +70,9 @@ void IntervalClass(const py::module& m) {
         --------
         >>> ml.Interval(ml.Note("C4"), ml.Note("G4")).getName()
         'P5'
+        >>> clarinet = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> ml.Interval(clarinet, ml.Note("C4")).getName()
+        'P1'
     )pbdoc");
 
     cls.def("setNotes",
@@ -97,6 +105,8 @@ void IntervalClass(const py::module& m) {
             py::arg("note_A"), py::arg("note_B"),
             R"pbdoc(
         Replace both notes of the interval.
+
+        A note of a transposing instrument is related at concert pitch, as in the constructor.
 
         Parameters
         ----------

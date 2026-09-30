@@ -2,10 +2,12 @@
 
 #include "maiacore/pitch.h"
 
+class Note;
+
 // The pitch spellings behind Note's pitch views. Internal to maiacore: this header lives next to
-// the sources, is not among the public headers, and nothing here is bound to Python. Both
-// functions are defined in note.cpp, next to the chromatic spelling rule and the white-key
-// speller they share with Note.
+// the sources, is not among the public headers, and nothing here is bound to Python. Everything
+// here is defined in note.cpp, next to the chromatic spelling rule and the white-key speller the
+// spellings share with Note.
 namespace detail {
 
 /**
@@ -48,5 +50,23 @@ Pitch concertSpelling(const Pitch& written, int transposeDiatonic, int transpose
  * @return The simplest spelling of the same exact position.
  */
 Pitch simplestSpelling(const Pitch& pitch);
+
+/**
+ * @brief The concert spelling of a note: concertSpelling() of its written pitch and its
+ *        transposing interval.
+ * @details The spelling every analysis that relates pitches reads -- Chord, Interval, and the
+ *          chord extraction and melody-pattern search of Score -- so that a note of a
+ *          transposing instrument is related by the pitch it sounds, spelled with its written
+ *          letter moved by the diatonic interval: a B-flat clarinet's written D4 is C4, a unison
+ *          with a violin's C4. For an untransposed note it is the written pitch itself, so the
+ *          analyses relate untransposed notes exactly as they are written; for a rest, a rest.
+ *          Note declares this function its friend, so it reads the written pitch and the
+ *          interval without copying them through the public getters.
+ * @param note The note.
+ * @return Its concert spelling.
+ * @throws std::runtime_error If the note's sounding pitch lies below the lowest representable
+ *         pitch, C1b-1 (see Note::getMidiNumber()).
+ */
+Pitch concertPitch(const Note& note);
 
 }  // namespace detail

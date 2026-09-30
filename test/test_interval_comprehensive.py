@@ -416,5 +416,17 @@ class IntervalQuarterToneGuardTestCase(unittest.TestCase):
         self.assertEqual(ml.Interval(ml.Note("C4"), note).getName(), "M3")
 
 
+class IntervalOfTransposingInstrumentsTestCase(unittest.TestCase):
+    """Mirrors IntervalOfTransposingInstruments in interval-test.cpp"""
+
+    def test_a_b_flat_clarinets_written_f_sharp_4_against_e4_is_a_unison(self):
+        """A B-flat clarinet's written F#4 sounds E4, not Fb4"""
+        clarinet = ml.Note("F#4", transposeDiatonic=-1, transposeChromatic=-2)
+        interval = ml.Interval(clarinet, ml.Note("E4"))
+        self.assertEqual(interval.getName(), "P1")
+        self.assertEqual(interval.getDirection(), "")
+        self.assertEqual(ml.Interval(ml.Note("C4"), clarinet).getName(), "M3")
+
+
 if __name__ == "__main__":
     unittest.main()

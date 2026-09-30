@@ -2,6 +2,12 @@
 
 #include <gtest/gtest.h>
 
+#include <string>
+#include <tuple>
+#include <vector>
+
+#include "test-capture.h"
+
 using namespace testing;
 
 TEST(getNumSemitones, absoluteValue_False_asc) {
@@ -2233,4 +2239,87 @@ TEST(IntervalQuarterToneGuard, WholeToneIntervalsAreUnaffectedAndTheRemedyWorks)
     rounded.roundToSemitone();
     EXPECT_NO_THROW(Interval(Note("C4"), rounded));
     EXPECT_EQ(Interval(Note("C4"), rounded).getNumSemitones(false), 4);
+}
+
+// ===== Notes of transposing instruments ===== //
+
+namespace {
+// A note written 'written' in the part of an instrument that sounds 'transposeDiatonic' letters
+// and 'transposeChromatic' semitones away from what it reads.
+Note transposingNote(const std::string& written, const int transposeDiatonic,
+                     const int transposeChromatic) {
+    return Note(written, RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                transposeDiatonic, transposeChromatic);
+}
+
+Note bFlatClarinet(const std::string& written) { return transposingNote(written, -1, -2); }
+
+Note hornInF(const std::string& written) { return transposingNote(written, -4, -7); }
+
+Note piccolo(const std::string& written) { return transposingNote(written, 7, 12); }
+
+// Every answer an Interval gives about its two notes, as one string.
+std::string describe(const Interval& interval) {
+    return interval.getName() + " " + interval.getDirection() + " | semitones " +
+           std::to_string(interval.getNumSemitones()) + " | octaves " +
+           std::to_string(interval.getNumOctaves()) + " | diatonic interval " +
+           std::to_string(interval.getDiatonicInterval(false, false)) + " | diatonic steps " +
+           std::to_string(interval.getDiatonicSteps(false, false)) + " | pitch-step interval " +
+           std::to_string(interval.getPitchStepInterval());
+}
+}  // namespace
+
+// A B-flat clarinet's written D4 sounds C4: against a violin's C4 it is a unison, not the major
+// second the two parts show.
+TEST(IntervalOfTransposingInstruments, aBFlatClarinetsWrittenD4AgainstAViolinsC4IsAUnison) {
+    const Interval interval(bFlatClarinet("D4"), Note("C4"));
+    EXPECT_EQ(interval.getName(), "P1");
+    EXPECT_EQ(interval.getDirection(), "");
+    EXPECT_EQ(interval.getNumSemitones(), 0);
+    EXPECT_EQ(interval.getNumOctaves(), 0);
+    EXPECT_EQ(interval.getPitchStepInterval(), 1);
+}
+
+// A transposed note is related by the pitch it sounds, spelled with its written letter moved by
+// the diatonic transposing interval: every answer is the one the untransposed notes at those
+// pitches give.
+TEST(IntervalOfTransposingInstruments, isTheIntervalOfThePitchesTheNotesSound) {
+    // The two notes, the pitches they sound, and the interval's name and direction.
+    const std::vector<std::tuple<Note, Note, std::string, std::string, std::string>> cases = {
+        {Note("C4"), bFlatClarinet("F#4"), "C4", "E4", "M3 asc"},
+        {Note("C4"), hornInF("B4"), "C4", "E4", "M3 asc"},
+        {Note("F#4"), bFlatClarinet("G#4"), "F#4", "F#4", "P1 "},
+        {hornInF("C#5"), Note("E4"), "F#4", "E4", "M2 desc"},
+        {Note("Bb5"), piccolo("Bb4"), "Bb5", "Bb5", "P1 "},
+        {bFlatClarinet("Db4"), Note("Cb5"), "Cb4", "Cb5", "P8 asc"},
+        {bFlatClarinet("F#4"), hornInF("B4"), "E4", "E4", "P1 "},
+    };
+    for (const auto& [noteA, noteB, soundsA, soundsB, name] : cases) {
+        const std::string where = noteA.getWrittenPitch() + " (" +
+                                  std::to_string(noteA.getTransposeChromatic()) + ") to " +
+                                  noteB.getWrittenPitch() + " (" +
+                                  std::to_string(noteB.getTransposeChromatic()) + ")";
+        const Interval interval(noteA, noteB);
+        EXPECT_EQ(interval.getName() + " " + interval.getDirection(), name) << where;
+        EXPECT_EQ(describe(interval), describe(Interval(soundsA, soundsB))) << where;
+    }
+}
+
+// The interval keeps the notes it was given, with their written pitches and transposing
+// intervals: only what it computes from them is taken at the pitches they sound.
+TEST(IntervalOfTransposingInstruments, keepsTheNotesItWasGiven) {
+    const std::vector<Note> notes = Interval(bFlatClarinet("D4"), Note("C4")).getNotes();
+    ASSERT_EQ(notes.size(), 2u);
+    EXPECT_EQ(notes[0].getWrittenPitch(), "D4");
+    EXPECT_EQ(notes[0].getTransposeDiatonic(), -1);
+    EXPECT_EQ(notes[0].getTransposeChromatic(), -2);
+    EXPECT_EQ(notes[1].getWrittenPitch(), "C4");
+}
+
+// An interval this class has no name for is reported with the pitches it related: a B-flat
+// clarinet's written A#4 sounds G#4, and Gb4 to G#4 has no name.
+TEST(IntervalOfTransposingInstruments, anIntervalWithoutANameIsReportedWithThePitchesItRelated) {
+    const std::string message =
+        thrownFirstLine([] { Interval(Note("Gb4"), bFlatClarinet("A#4")).getName(); });
+    EXPECT_EQ(message, "[maiacore] Unable to compute the interval [Gb4, G#4]");
 }

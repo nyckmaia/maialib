@@ -749,5 +749,20 @@ class QuarterToneOrderingAndSpread(unittest.TestCase):
         self.assertAlmostEqual(myChord.getHarmonicDensity("C4", "G4"), 0.25, places=4)
 
 
+# Mirrors ChordOfTransposingInstruments in chord-test.cpp.
+class ChordOfTransposingInstruments(unittest.TestCase):
+    def testAHornInFsWrittenB4WithC4AndG4IsCMajor(self):
+        # A horn in F's written B4 sounds E4; the root the analysis returns is an untransposed C4.
+        horn = ml.Note("B4", transposeDiatonic=-4, transposeChromatic=-7)
+        chord = ml.Chord()
+        for note in (ml.Note("C4"), horn, ml.Note("G4")):
+            chord.addNote(note)
+
+        self.assertEqual(chord.getName(), "C")
+        self.assertEqual(chord.getQuality(), "major")
+        self.assertEqual(chord.getRoot().getWrittenPitch(), "C4")
+        self.assertFalse(chord.getRoot().isTransposed())
+
+
 if __name__ == "__main__":
     unittest.main()

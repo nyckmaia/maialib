@@ -389,6 +389,8 @@ Pitch simplestSpelling(const Pitch& pitch) {
     return simplest;
 }
 
+Pitch concertPitch(const Note& note) { return note.computeConcertPitch(); }
+
 }  // namespace detail
 
 Note::Note() : Note("A4") {}
@@ -901,6 +903,10 @@ void Note::setTransposingInterval(const int diatonicInterval, const int chromati
 
 Pitch Note::computeSoundingPitch() const {
     return soundingPitchOf(_writtenPitch, _transposeDiatonic, _transposeChromatic);
+}
+
+Pitch Note::computeConcertPitch() const {
+    return detail::concertSpelling(_writtenPitch, _transposeDiatonic, _transposeChromatic);
 }
 
 void Note::setVoice(const int voice) { _voice = voice; }

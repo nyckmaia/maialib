@@ -11,6 +11,16 @@
 #include "maiacore/pitch.h"
 #include "maiacore/time-signature.h"
 
+/// @cond IGNORE_DOXYGEN
+class Note;
+
+// The spelling the analyses relate a note by. Declared, with its documentation, in the private
+// header pitch-views.h next to the sources; not part of the public API.
+namespace detail {
+Pitch concertPitch(const Note& note);
+}  // namespace detail
+/// @endcond
+
 /**
  * @brief Represents a musical note, including pitch, duration, articulation, and MusicXML-related
  * attributes.
@@ -58,6 +68,21 @@ class Note {
      *         155), the highest sounding pitch that can be spelled within octaves -1..11.
      */
     Pitch computeSoundingPitch() const;
+
+    /**
+     * @brief Computes the concert Pitch: the written pitch moved by the transposing interval, with
+     *        the letter the diatonic interval reaches (detail::concertSpelling()).
+     * @details A rest, or an untransposed note, returns _writtenPitch itself. Nothing is cached.
+     *          The analyses that relate pitches read it through detail::concertPitch().
+     * @return The concert Pitch.
+     * @throws std::runtime_error If this note's sounding pitch lies below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
+     */
+    Pitch computeConcertPitch() const;
+
+    /// @cond IGNORE_DOXYGEN
+    friend Pitch detail::concertPitch(const Note& note);
+    /// @endcond
 
    public:
     /**
