@@ -52,11 +52,15 @@ if(PROFILING)
   add_definitions(-DPROFILING)
 endif()
 
-# Set debug flags - only enable coverage on Linux (causes linking issues on Windows with Clang)
-if(UNIX AND NOT APPLE)
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 --coverage")
-else()
-    set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+# Debug flags for GCC and Clang, with coverage only on Linux (it causes linking issues on
+# Windows with Clang). MSVC-style compilers keep CMake's own Debug flags (/Zi /Ob0 /Od /RTC1):
+# cl does not know -g or -O0 (warning D9002).
+if(NOT MSVC)
+    if(UNIX AND NOT APPLE)
+        set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 --coverage")
+    else()
+        set(CMAKE_CXX_FLAGS_DEBUG "-g -O0")
+    endif()
 endif()
 
 if(WIN32)
