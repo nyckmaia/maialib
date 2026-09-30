@@ -1,5 +1,6 @@
 import platform
 import sys
+import sysconfig
 from shutil import copy2
 
 from build_utils import REPO_ROOT, build_dir, remove_trees
@@ -7,34 +8,23 @@ from terminal_colors import color
 
 print(f"{color.OKGREEN}Generating 'dist' folder...{color.ENDC}")
 
-# Get the Operational System
-myOS = platform.system()
-buildDir = build_dir("module")
-distDir = REPO_ROOT / "dist"
-
-# Clear the 'dist' folder
-remove_trees([distDir])
-
-binaryModuleList = []
-
-# Get the module file and set the install directory
-if myOS == "Windows":
-    binaryModuleList = sorted(buildDir.glob("*.pyd"))
-elif myOS == "Linux" or myOS == "Darwin":
-    binaryModuleList = sorted(buildDir.glob("*.so"))
-else:
-    print(f"{color.FAIL}[ERROR] Unknown OS!{color.ENDC}")
-
-if not binaryModuleList:
+# The module built for the interpreter that runs this script, which `make install` installs
+# into. pybind11 names it maiacore plus that interpreter's extension suffix (for example
+# maiacore.cp312-win_amd64.pyd), so a module built for another Python version is never taken.
+modulePath = build_dir("module") / f"maiacore{sysconfig.get_config_var('EXT_SUFFIX')}"
+if not modulePath.is_file():
     print(
-        f"{color.FAIL}[ERROR] No built maiacore module found in '{buildDir}': "
-        f"build it first with 'make module'.{color.ENDC}"
+        f"{color.FAIL}[ERROR] {modulePath} not found: that is the maiacore module for this "
+        f"Python ({platform.python_version()}, {sys.executable}); build it first with "
+        f"'make module'.{color.ENDC}"
     )
     sys.exit(1)
 
-# Maialib module file path
-modulePath = binaryModuleList[0]
+distDir = REPO_ROOT / "dist"
 maialibDir = REPO_ROOT / "maialib"
+
+# Clear the 'dist' folder
+remove_trees([distDir])
 
 # Create the dist directory, if it not exists
 (distDir / "maialib" / "maiapy").mkdir(parents=True, exist_ok=True)
