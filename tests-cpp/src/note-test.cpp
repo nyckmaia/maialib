@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <functional>
+#include <limits>
 #include <ostream>
 #include <string>
 #include <tuple>
@@ -1886,6 +1887,25 @@ TEST(NoteMutatorThatThrows, setTransposingIntervalLeavesTheNoteUnchanged) {
     EXPECT_EQ(stateOf(clarinet), clarinetBefore);
     EXPECT_EQ(clarinet.getTransposeChromatic(), -2);
     EXPECT_EQ(clarinet.getPitch(), "Bb3");
+}
+
+// An interval at the limits of int cannot wrap the sounding pitch around to the other end of the
+// representable range: the largest upward interval is rejected as above B11 before it is stored,
+// and the largest downward one leaves a constructible note whose sounding pitch lies below C1b-1.
+TEST(NoteMutatorThatThrows, anIntervalAtTheLimitsOfIntIsCheckedOnItsOwnSide) {
+    const int up = std::numeric_limits<int>::max();
+    EXPECT_EQ(thrownFirstLine([&] { transposedNote("C4", 1, up); }),
+              aboveTheCeiling("C4", 1, up, "2147483648.000000"));
+
+    Note note("C4");
+    EXPECT_EQ(thrownFirstLine([&] { note.setTransposingInterval(1, up); }),
+              aboveTheCeiling("C4", 1, up, "2147483648.000000"));
+    EXPECT_FALSE(note.isTransposed());
+
+    const Note low = transposedNote("C4", -1, std::numeric_limits<int>::min());
+    const std::string message = thrownFirstLine([&] { low.getMidiNumber(); });
+    EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
+        << message;
 }
 
 // A rest has no pitch to transpose, so it ignores the call and keeps no interval.

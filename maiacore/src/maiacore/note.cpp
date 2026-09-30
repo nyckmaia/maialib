@@ -21,9 +21,11 @@ namespace {
 // True when a transposing instrument's sounding pitch falls below the lowest representable pitch,
 // "C1b-1" (-0.5): its sounding MIDI number, the written one moved by the whole-semitone chromatic
 // interval, is negative, which is the same "rounds, ties upward, to a negative MIDI number" rule
-// every pitch in this library is held to.
+// every pitch in this library is held to. The sum is taken in 64 bits, so an interval at the
+// limits of int cannot wrap it around to the other sign.
 bool isSoundingPitchBelowFloor(const Pitch& writtenPitch, const int transposeChromatic) {
-    return !writtenPitch.isRest() && writtenPitch.getMidiNumber() + transposeChromatic < 0;
+    return !writtenPitch.isRest() &&
+           std::int64_t{writtenPitch.getMidiNumber()} + transposeChromatic < 0;
 }
 
 // The one error every sounding getter raises for such a note. The note is real -- isNoteOn() is
@@ -304,11 +306,11 @@ std::optional<Pitch> diatonicSpelling(const Pitch& written, const int transposeD
     // any int interval from overflowing.
     const auto writtenStep =
         std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), written.getPitchStep());
-    const int64_t diatonicNumber = int64_t{7} * written.getOctave().value() +
-                                   std::distance(c_C_diatonicScale.begin(), writtenStep) +
-                                   transposeDiatonic;
-    const int64_t stepIdx = ((diatonicNumber % 7) + 7) % 7;
-    const int64_t octave = (diatonicNumber - stepIdx) / 7;
+    const std::int64_t diatonicNumber = std::int64_t{7} * written.getOctave().value() +
+                                        std::distance(c_C_diatonicScale.begin(), writtenStep) +
+                                        transposeDiatonic;
+    const std::int64_t stepIdx = ((diatonicNumber % 7) + 7) % 7;
+    const std::int64_t octave = (diatonicNumber - stepIdx) / 7;
     if (octave < c_minPitchOctave || octave > c_maxPitchOctave) {
         return std::nullopt;
     }

@@ -10,8 +10,8 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <limits>
 #include <map>
-#include <stdexcept>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -39,12 +39,10 @@ std::string describe(const std::string& pitch, const int diatonic, const int chr
 
 // concertSpelling() as text: the pitch string, or "raises: " and the first line of its error.
 std::string concertOrError(const Pitch& written, const int diatonic, const int chromatic) {
-    try {
-        return concertSpelling(written, diatonic, chromatic).getPitch();
-    } catch (const std::runtime_error& error) {
-        const std::string what = error.what();
-        return "raises: " + what.substr(0, what.find('\n'));
-    }
+    std::string pitch;
+    const std::string error =
+        thrownFirstLine([&] { pitch = concertSpelling(written, diatonic, chromatic).getPitch(); });
+    return error.empty() ? pitch : "raises: " + error;
 }
 
 std::string concert(const std::string& written, const int diatonic, const int chromatic) {
@@ -291,6 +289,16 @@ TEST(ConcertSpelling, aPositionBelowTheFloorIsRejected) {
     EXPECT_EQ(concert("C#-1", -1, -2), belowTheFloor("C#-1", -1, -2, "-1.000000"));
     EXPECT_EQ(concert("C1b-1", -1, -1), belowTheFloor("C1b-1", -1, -1, "-1.500000"));
     EXPECT_EQ(concert("C1x-1", -1, -2), belowTheFloor("C1x-1", -1, -2, "-1.500000"));
+}
+
+// The floor is checked on the written MIDI number and the chromatic interval added in 64 bits, so
+// an interval at the limits of int cannot wrap the position around to the other end of the range:
+// the largest upward interval is rejected as above B11, the largest downward one as below C1b-1.
+TEST(ConcertSpelling, anIntervalAtTheLimitsOfIntIsRejectedOnItsOwnSide) {
+    const int up = std::numeric_limits<int>::max();
+    const int down = std::numeric_limits<int>::min();
+    EXPECT_EQ(concert("C4", 1, up), aboveTheCeiling("C4", 1, up, "2147483648.000000"));
+    EXPECT_EQ(concert("C4", -1, down), belowTheFloor("C4", -1, down, "-2147483648.000000"));
 }
 
 // Every pitch this library can hold, with transposing intervals of every size and direction:
