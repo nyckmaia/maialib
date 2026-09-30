@@ -6,6 +6,7 @@
 #include <array>
 #include <cctype>
 #include <cmath>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <utility>
@@ -14,6 +15,7 @@
 #include "maiacore/helper.h"
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
+#include "pitch-views.h"
 
 namespace {
 // True when a transposing instrument's sounding pitch falls below the lowest representable pitch,
@@ -58,15 +60,38 @@ bool isSoundingPitchBelowFloor(const Pitch& writtenPitch, const int transposeChr
               "transposing interval keeps the sounding pitch at or below B11.");
 }
 
+// Returns the spelling of the pitch 'alter' semitones from the white key at the whole-semitone
+// position 'whiteKeySteps', in that white key's own octave (59 and +1.5 give "B3x3"), or an empty
+// string if 'whiteKeySteps' is a black key or its octave falls outside the supported range
+std::string spellFromWhiteKey(const int whiteKeySteps, const float alter) {
+    const int pitchClassIdx = ((whiteKeySteps % 12) + 12) % 12;
+    const auto stepIt =
+        std::find(c_diatonicStepSemitones.begin(), c_diatonicStepSemitones.end(), pitchClassIdx);
+    if (stepIt == c_diatonicStepSemitones.end()) {
+        return {};
+    }
+
+    const int octave = (whiteKeySteps - pitchClassIdx) / 12 - 1;
+    if (octave < c_minPitchOctave || octave > c_maxPitchOctave) {
+        return {};
+    }
+
+    const auto stepIdx =
+        static_cast<size_t>(std::distance(c_diatonicStepSemitones.begin(), stepIt));
+    return c_C_diatonicScale[stepIdx] + Helper::alterValue2symbol(alter) + std::to_string(octave);
+}
+
 // The sounding pitch of 'writtenPitch' on an instrument transposing by 'transposeDiatonic' and
 // 'transposeChromatic': what Note::computeSoundingPitch() answers for a note holding them, for any
 // written pitch and interval, so that a mutator can check a new state before storing it.
 //
 // It is the written pitch's exact position moved by the chromatic interval, a whole number of
 // semitones, and spelled from there. A position below the lowest representable pitch has no
-// spelling: it throws here, rather than answering Helper::steps2pitch()'s rest sentinel, so that
-// no sounding getter passes such a note off as a rest. A position above B11 has none either, and
-// throws naming the note.
+// spelling: it throws here, rather than answering a rest, so that no sounding getter passes such
+// a note off as a rest. A position above B11 has none either, and throws naming the note.
+//
+// This chromatic rule is also detail::concertSpelling()'s fallback, for an interval whose
+// diatonic part cannot spell the position.
 Pitch soundingPitchOf(const Pitch& writtenPitch, const int transposeDiatonic,
                       const int transposeChromatic) {
     // A rest has no sounding pitch, and an untransposed note sounds as written.
@@ -81,42 +106,51 @@ Pitch soundingPitchOf(const Pitch& writtenPitch, const int transposeDiatonic,
     const float soundingSteps =
         writtenPitch.getQuarterToneSteps() + static_cast<float>(transposeChromatic);
 
-    // Accidental preference: flats going down, the default (natural/sharp-side) spelling going up,
-    // which keeps a B-flat clarinet's written C4 sounding "Bb3" rather than "A#3".
-    //
     // The default spelling reaches no higher than B11 (MIDI note 155): above it, a position would
-    // need octave 12 ("C12" for 156) or lies above the representable range. Helper::steps2pitch()
-    // refuses such a position, and that refusal is the only one it can raise here -- the
-    // position is finite, on the quarter-tone grid and at or above the floor -- so it is rethrown
-    // naming the note rather than a bare MIDI number.
-    std::string defaultSpelled;
-    try {
-        defaultSpelled = Helper::steps2pitch(soundingSteps, MUSIC_XML::ACCIDENT::NONE);
-    } catch (const std::runtime_error& error) {
-        ignore(error);
+    // need octave 12 ("C12" for 156) or lies above the representable range. Such a position is
+    // rejected naming the note, before it is converted to a whole number of semitones below.
+    const float highestDefaultSpelling = 12.0f * static_cast<float>(c_maxPitchOctave + 1) +
+                                         static_cast<float>(c_diatonicStepSemitones.back());
+    if (soundingSteps > highestDefaultSpelling) {
         throwSoundingPitchAboveCeiling(writtenPitch, transposeDiatonic, transposeChromatic);
+    }
+
+    // The position is spelled from the semitone it rounds to, ties upward, as
+    // Helper::steps2pitch() spells a position, and a quarter tone left over goes into the alter.
+    // The default spelling is that semitone's natural, or the sharp of the white key below a
+    // black key. Every semitone from MIDI note 0 to B11 has one, and spellFromWhiteKey() answers
+    // an empty string only for a black key here.
+    const int semitone = static_cast<int>(roundTiesUpward(soundingSteps));
+    std::string defaultSpelled =
+        spellFromWhiteKey(semitone, soundingSteps - static_cast<float>(semitone));
+    if (defaultSpelled.empty()) {
+        defaultSpelled =
+            spellFromWhiteKey(semitone - 1, soundingSteps - static_cast<float>(semitone - 1));
     }
     const Pitch defaultSpelling(defaultSpelled);
 
+    // Accidental preference: flats going down, the default (natural/sharp-side) spelling going up,
+    // which keeps a B-flat clarinet's written C4 sounding "Bb3" rather than "A#3".
     if (transposeChromatic > 0) {
         return defaultSpelling;
     }
 
+    // The flat spelling is the white key above the semitone, lowered: it exists when that key is
+    // white and within octaves -1..11 (MIDI note 60, a natural "C", has none).
+    //
     // Going down, the flat spelling is preferred -- but only when it agrees with the default about
     // the OCTAVE. Note::getSoundingPitch() composes its string from this pitch CLASS and
     // Note::getSoundingOctave()'s arithmetic octave, so a spelling that crosses the octave
     // boundary ("Cb4" rather than "B3" for MIDI 59) would compose "Cb3": a different note
     // entirely, a full octave off. Dropping the preference in that case is what keeps the two
     // halves consistent.
-    try {
-        const Pitch flatSpelling(Helper::steps2pitch(soundingSteps, MUSIC_XML::ACCIDENT::FLAT));
+    const std::string flatSpelled =
+        spellFromWhiteKey(semitone + 1, soundingSteps - static_cast<float>(semitone + 1));
+    if (!flatSpelled.empty()) {
+        const Pitch flatSpelling(flatSpelled);
         if (flatSpelling.getOctave() == defaultSpelling.getOctave()) {
             return flatSpelling;
         }
-    } catch (const std::runtime_error& error) {
-        // This MIDI note has no flat spelling at all (e.g. MIDI 60, a natural "C"). The default
-        // spelling always exists, so the preference is simply dropped.
-        ignore(error);
     }
 
     return defaultSpelling;
@@ -202,27 +236,6 @@ std::string spellMidiNumber(const int midiNumber, const int alter) {
            std::to_string(octave);
 }
 
-// Returns the spelling of the pitch 'alter' semitones from the white key at the whole-semitone
-// position 'whiteKeySteps', in that white key's own octave (59 and +1.5 give "B3x3"), or an empty
-// string if 'whiteKeySteps' is a black key or its octave falls outside the supported range
-std::string spellFromWhiteKey(const int whiteKeySteps, const float alter) {
-    const int pitchClassIdx = ((whiteKeySteps % 12) + 12) % 12;
-    const auto stepIt =
-        std::find(c_diatonicStepSemitones.begin(), c_diatonicStepSemitones.end(), pitchClassIdx);
-    if (stepIt == c_diatonicStepSemitones.end()) {
-        return {};
-    }
-
-    const int octave = (whiteKeySteps - pitchClassIdx) / 12 - 1;
-    if (octave < c_minPitchOctave || octave > c_maxPitchOctave) {
-        return {};
-    }
-
-    const auto stepIdx =
-        static_cast<size_t>(std::distance(c_diatonicStepSemitones.begin(), stepIt));
-    return c_C_diatonicScale[stepIdx] + Helper::alterValue2symbol(alter) + std::to_string(octave);
-}
-
 // The default and alternative enharmonic spellings of the quarter-tone pitch 'pitch', whose exact
 // position is 'steps' and whose own alter is 'ownAlter'.
 //
@@ -273,7 +286,108 @@ std::pair<std::string, std::string> quarterToneEnharmonics(const std::string& pi
     return firstIsDefault ? std::make_pair(partners[0].first, partners[1].first)
                           : std::make_pair(partners[1].first, partners[0].first);
 }
+
+// The concert spelling of 'written' moved by a transposing interval when the diatonic interval
+// can spell it: the letter moved by 'transposeDiatonic', the alter taken from the exact position
+// 'transposeChromatic' semitones away. Empty when there is no diatonic interval (a MusicXML
+// <transpose> without <diatonic>), when the alter would pass a double accidental, or when the
+// octave would leave -1..11. The caller has already rejected a position below the lowest
+// representable pitch, so the Pitch built here always exists.
+std::optional<Pitch> diatonicSpelling(const Pitch& written, const int transposeDiatonic,
+                                      const int transposeChromatic) {
+    if (transposeDiatonic == 0) {
+        return std::nullopt;
+    }
+
+    // Letters are counted on the diatonic number, 7 * octave + step index (C4 is 28, B3 is 27):
+    // its floor division by 7 carries whole octaves across C in either direction. 64 bits keep
+    // any int interval from overflowing.
+    const auto writtenStep =
+        std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), written.getPitchStep());
+    const int64_t diatonicNumber = int64_t{7} * written.getOctave().value() +
+                                   std::distance(c_C_diatonicScale.begin(), writtenStep) +
+                                   transposeDiatonic;
+    const int64_t stepIdx = ((diatonicNumber % 7) + 7) % 7;
+    const int64_t octave = (diatonicNumber - stepIdx) / 7;
+    if (octave < c_minPitchOctave || octave > c_maxPitchOctave) {
+        return std::nullopt;
+    }
+
+    // The alter separates that letter's natural from the exact position, so a quarter tone keeps
+    // its fraction. The written position is on the quarter-tone grid and the interval is a whole
+    // number of semitones, so the alter is on the grid too: only its range needs checking.
+    const auto step = static_cast<size_t>(stepIdx);
+    const float natural =
+        12.0f * static_cast<float>(octave + 1) + static_cast<float>(c_diatonicStepSemitones[step]);
+    const float alter =
+        written.getQuarterToneSteps() + static_cast<float>(transposeChromatic) - natural;
+    if (alter < -2.0f || alter > 2.0f) {
+        return std::nullopt;
+    }
+
+    return Pitch(c_C_diatonicScale[step], alter, static_cast<int>(octave));
+}
 }  // namespace
+
+namespace detail {
+
+Pitch concertSpelling(const Pitch& written, const int transposeDiatonic,
+                      const int transposeChromatic) {
+    // A rest has no pitch to move, and an untransposed note sounds as written.
+    if (written.isRest() || (transposeDiatonic == 0 && transposeChromatic == 0)) {
+        return written;
+    }
+
+    // Below the lowest representable pitch no spelling exists. This is checked first, with the
+    // chromatic rule's error, so that no spelling below MIDI note 0 is ever built.
+    if (isSoundingPitchBelowFloor(written, transposeChromatic)) {
+        throwSoundingPitchBelowFloor(written, transposeDiatonic, transposeChromatic);
+    }
+
+    const std::optional<Pitch> concert =
+        diatonicSpelling(written, transposeDiatonic, transposeChromatic);
+    if (concert.has_value()) {
+        return concert.value();
+    }
+
+    // The fallback, the chromatic rule, rejects a position above B11.
+    return soundingPitchOf(written, transposeDiatonic, transposeChromatic);
+}
+
+Pitch simplestSpelling(const Pitch& pitch) {
+    if (pitch.isRest()) {
+        return pitch;
+    }
+
+    // Every spelling of the position is a white key at most a double accidental away from it,
+    // spelled by spellFromWhiteKey(), which skips black keys and octaves outside -1..11. A
+    // spelling replaces the one kept so far when its alter is smaller, or as small and on the
+    // side of the pitch's own accidental, so of a sharp and a flat equally close the pitch's side
+    // wins. The search starts from the pitch itself, one of the spellings, so it always has an
+    // answer.
+    const float position = pitch.getQuarterToneSteps();
+    const bool ownSideIsSharp = pitch.getAlter() > 0.0f;
+    const auto lowestWhiteKey = static_cast<int>(std::ceil(position - 2.0f));
+    const auto highestWhiteKey = static_cast<int>(std::floor(position + 2.0f));
+
+    Pitch simplest = pitch;
+    for (int whiteKeySteps = lowestWhiteKey; whiteKeySteps <= highestWhiteKey; whiteKeySteps++) {
+        const float alter = position - static_cast<float>(whiteKeySteps);
+        const float distance = std::fabs(alter);
+        const float simplestDistance = std::fabs(simplest.getAlter());
+        const bool onOwnSide = (alter > 0.0f) == ownSideIsSharp;
+        if (distance < simplestDistance || (distance == simplestDistance && onOwnSide)) {
+            const std::string spelling = spellFromWhiteKey(whiteKeySteps, alter);
+            if (!spelling.empty()) {
+                simplest = Pitch(spelling);
+            }
+        }
+    }
+
+    return simplest;
+}
+
+}  // namespace detail
 
 Note::Note() : Note("A4") {}
 

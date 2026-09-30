@@ -40,7 +40,12 @@ add_executable(cpp-tests
     src/utils-test.cpp
     src/config-test.cpp
     src/pitch-test.cpp
+    src/pitch-views-test.cpp
 )
+
+# Tests of maiacore's internal functions include their private headers, which live next to the
+# library's sources rather than among its public headers.
+target_include_directories(cpp-tests PRIVATE ${CMAKE_SOURCE_DIR}/maiacore/src/maiacore)
 
 # The test sources are also checked for extensions to ISO C++.
 if(NOT MSVC)
