@@ -5,9 +5,9 @@ Usage: make-clean.py <all|dist|static|shared|module|cpp-tests>
 Every path is in the repository this script belongs to, whatever the working
 directory. A link (a symbolic link or a Windows junction) is removed itself, and
 what it points to is left alone. Read-only files (e.g. the git pack files of
-fetched dependencies under build/) are made writable and removed. Every entry that
-still cannot be removed is listed, the rest is removed anyway, and the script
-exits with code 1.
+fetched dependencies under build/) and read-only directories are removed too.
+Every entry that still cannot be removed is listed, the rest is removed anyway,
+and the script exits with code 1.
 """
 
 import os

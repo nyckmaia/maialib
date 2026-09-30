@@ -5,13 +5,13 @@ Findings are counted per (tool, file, category), so moving code does not create
 fails the run. Pass --update-baseline to accept the current findings.
 
 Both tools come from the Python that runs this script, which should have the
-versions that requirements-dev.txt pins: their findings change from one version
-to the next. They run from the repository root on a relative path, every path is
-written with forward slashes, and cppcheck analyses the sources for one fixed
-platform, so the same sources give the same baseline on every operating system.
-Exit codes: 0 no new findings, 1 new findings, 2 the check could not run (bad
-arguments, a baseline that is missing or not valid, or a tool that is not
-installed, fails or prints something that is not a finding).
+versions that requirements-dev.txt pins: their findings can change from one
+version to the next. They run from the repository root on a relative path, every
+path is written with forward slashes, and cppcheck analyses the sources for one
+fixed platform, so the same sources give the same baseline on every operating
+system. Exit codes: 0 no new findings, 1 new findings, 2 the check could not
+run (bad arguments, a baseline that is missing or not valid, or a tool that is
+not installed, fails or prints something that is not a finding).
 """
 
 import importlib.util

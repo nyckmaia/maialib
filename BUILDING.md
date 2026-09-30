@@ -128,7 +128,7 @@ baseline, `scripts/validate-baseline.json`, and when the check cannot run: cppli
 not installed for the Makefile's `PYTHON`, a tool fails or prints output that is not a finding,
 or the baseline is missing or is not a JSON object of finding counts. Both tools run with the
 Makefile's `PYTHON`, so install them with `pip install -r requirements-dev.txt`: the baseline
-holds the findings of the versions pinned there, and another cppcheck version reports others.
+holds the findings of the versions pinned there, and another cppcheck version can report others.
 cppcheck analyses the sources for the same platform (`unix64`) on every operating system, so the
 baseline does not depend on where it runs.
 

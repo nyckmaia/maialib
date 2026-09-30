@@ -4,8 +4,9 @@ Every command whose failure must stop the script runs through run_step(), so a
 failing compiler, test binary or tool stops the script with that command's exit
 code, and `make` reports the failure instead of printing success.
 
-Every path a script deletes is resolved against REPO_ROOT, never against the
-working directory, and is deleted with remove_tree(), which never follows a link.
+Scripts that delete from the repository resolve the paths against REPO_ROOT,
+never against the working directory, and remove directory trees there with
+remove_tree(), which never follows a link.
 """
 
 import os
@@ -153,8 +154,9 @@ def _remove(path: str, is_top: bool, failures: List[str]) -> bool:
             emptied = _remove(os.path.join(path, name), False, failures) and emptied
         # A directory that still holds an entry cannot be removed; that entry is reported.
         return emptied and _remove_entry(path, os.rmdir, status, is_top, failures)
-    # A link to a directory is a directory to os.lstat() on Windows (a junction), and
-    # os.rmdir() removes the link there; os.unlink() removes every other link and file.
+    # os.lstat() reports a Windows junction as a directory, and os.rmdir() removes the junction
+    # itself; os.unlink() removes every other link, a Windows directory symlink included, and
+    # every file.
     remove = os.rmdir if stat.S_ISDIR(status.st_mode) else os.unlink
     return _remove_entry(path, remove, status, is_top, failures)
 
