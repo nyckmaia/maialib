@@ -207,7 +207,7 @@ float getCloseStackHarmonicComplexity(const bool useEnharmony = false);
 
 **Run code validation:**
 ```bash
-make validate  # Runs cpplint and cppcheck
+make validate  # Runs cpplint and cppcheck; fails on findings not in scripts/validate-baseline.json
 ```
 
 ### Python Code Style
@@ -261,7 +261,7 @@ make format-python   # Format only Python code
 #### Code Linting
 
 ```bash
-make validate        # Run cpplint (C++) and Ruff linting (Python)
+make validate        # Ruff (report only), then cpplint and cppcheck (C++), failing on new findings
 make lint-python     # Run Ruff linter on Python code
 make lint-python-fix # Auto-fix Python linting issues
 ```

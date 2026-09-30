@@ -60,6 +60,24 @@ All notable changes to this project will be documented in this file.
 - **Breaking:** `Helper::semitonesBetweenPitches()` (C++), which had no caller; `Pitch::getQuarterToneSteps()` gives exact differences, quarter tones included. It was never bound to Python
 - **Breaking:** `Score::getNote()` (three overloads) and `Score::getNoteNodeData()` (C++), which had no callers, together with the `Helper::getNoteNodeData()` declaration, which had no definition. None was bound to Python
 
+### Build and tooling
+
+- Build and test commands exit with a non-zero code when a step fails. The scripts behind `make` ignored their commands' exit codes, so `make cpp-tests`, `make py-tests` and `make tests` exited 0 with failing tests, and a failed compilation looked like a success. `make tests` stops at the first failing suite
+- Every script runs its Python tools (pip, the stub generators, the tests) with the interpreter it runs under, the Makefile's `PYTHON`, and `make dev` builds the module for that interpreter: CMake kept the interpreter of the first configure, even one from a deleted virtual environment
+- The C++ tests are built by the root CMake project and link the `maiacore` target, so every library change relinks them; a library-only change used to leave a stale test binary. The library and the tests use one cpptrace, v0.8.2 from FetchContent; the vendored v0.6.2 headers are removed
+- `make clean` also removes the read-only files that FetchContent leaves in the build directories; `make static-clean`, `make shared-clean` and `make module-clean` remove their build directories, where they did nothing; `make cpp-tests-clean` is new; and `make cmake`, which ran a script that does not exist, is removed
+- `make validate` fails on cpplint and cppcheck findings that are not in `scripts/validate-baseline.json`, where it always passed; `make validate-update-baseline` accepts the current findings. cpplint does not check line length (`maiacore/CPPLINT.cfg` filters `whitespace/*`): clang-format applies the 100-column limit
+- `make msvc-gate` (Windows) builds maiacore and the C++ tests with Visual Studio 2022 in Debug and Release and runs them, then builds the package with `pip install .`, as CI does, and runs the Python tests. `make linux-gate` exports the committed `HEAD` to a temporary directory on Linux (natively, or in WSL on Windows) and runs `make cpp-tests` there with GCC, then `make dev` and `make py-tests` in a fresh virtual environment; it lists the apt packages that are missing instead of installing them
+- The Windows shared library built by `make shared` exports its symbols; it exported none, so no program could link against it
+- MSVC Debug builds keep CMake's own Debug flags (`/Zi /Ob0 /Od /RTC1`): they were given the GCC and Clang flags `-g -O0`, which cl ignores with warning D9002
+- Test fixtures named `test_*.xml` are no longer ignored by Git: the rule meant for the files the test suites write matched them in every directory, so `git status` did not list a new fixture
+- The C++ tests are valid C++17: two lambdas captured structured bindings, a C++20 feature that Clang before 16 rejects
+- The wheel workflow publishes to PyPI only for a published GitHub release; every push to `main` and every manual run tried to publish as well
+- **Breaking:** `tests-cpp` can no longer be configured as a standalone CMake project; configure the root project with `-DSTATIC_LIB=ON -DMAIACORE_BUILD_TESTS=ON`, as `make cpp-tests` does
+- **Breaking:** `make shared`, `make shared-debug` and `make shared-release` build a shared library into `build/<OS>/shared/<Debug|Release>/`. `make shared-debug` built a static library into `build/<OS>/static/`, and the other two stopped with "No rule to make target"
+- **Breaking:** `make validate` fails when cpplint or cppcheck reports a finding that is not in the baseline, or cannot run
+- **Breaking:** The Makefile ignores an environment variable named `PYTHON`; pass the interpreter on the command line instead, e.g. `make "PYTHON=py -3.12"`
+
 ---
 
 ## [v1.10.0] - 2025-11-18

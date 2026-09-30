@@ -87,8 +87,15 @@ make module-debug     # Build Python module (debug symbols)
 make tests            # Run both C++ and Python tests
 make cpp-tests        # Build and run C++ tests (GoogleTest)
 make py-tests         # Run Python unit tests
-make coverage         # Run C++ tests with code coverage analysis
+make coverage         # Linux: run C++ tests with lcov coverage (HTML report in code-coverage/)
+make msvc-gate        # Windows: build and test with Visual Studio 2022 (MSVC), as CI does
+make linux-gate       # Build and test the committed HEAD with GCC on Linux (in WSL on Windows)
 ```
+
+Every command exits with a non-zero code when a step fails. `make linux-gate` exports the
+committed `HEAD` (uncommitted changes are not tested) to a temporary directory and runs
+`make cpp-tests`, then `make dev` and `make py-tests` in a fresh virtual environment there. When
+Linux lacks a tool it needs, it lists the `apt` packages to install and exits with code 2.
 
 #### Library Building (Advanced)
 
@@ -98,11 +105,17 @@ make shared           # Build shared library (release)
 make static-debug     # Build static library (debug)
 ```
 
+Each builds into `build/<OS>/<static|shared>/<Debug|Release>/`.
+
 #### Code Quality
 
 ```bash
-make validate         # Run cpplint and cppcheck on C++ source
+make validate                  # Ruff (report only), then cpplint and cppcheck on maiacore
+make validate-update-baseline  # Accept the current cpplint and cppcheck findings
 ```
+
+`make validate` fails only on cpplint and cppcheck findings that are not in the committed
+baseline, `scripts/validate-baseline.json`.
 
 #### Documentation
 
@@ -115,6 +128,10 @@ make doc              # Generate Doxygen documentation (HTML)
 ```bash
 make clean            # Clean all build artifacts
 make dist-clean       # Clean distribution files only
+make static-clean     # Remove build/<OS>/static only
+make shared-clean     # Remove build/<OS>/shared only
+make module-clean     # Remove build/<OS>/module only
+make cpp-tests-clean  # Remove build/<OS>/cpp-tests only
 ```
 
 #### Installation Management
@@ -199,6 +216,8 @@ The CMakeLists.txt provides several build modes:
 - **STATIC_LIB** - Build static library (`.a` / `.lib`)
 - **SHARED_LIB** - Build shared library (`.so` / `.dylib` / `.dll`)
 - **PYBIND_LIB** - Build Python module (default for `make`)
+- **MAIACORE_BUILD_TESTS** - Build the C++ unit tests in `tests-cpp/` (requires `STATIC_LIB`;
+  `tests-cpp` cannot be configured on its own)
 - **PROFILING** - Enable function profiling
 
 **Direct CMake usage:**
@@ -216,14 +235,19 @@ cmake --build . --config Release
 ### C++ Style Guidelines
 
 - **Standard:** C++17
-- **Line Length:** 100 characters maximum
-- **Linter:** cpplint
+- **Line Length:** 100 characters maximum, applied by clang-format (`make format-cpp`)
+- **Linter:** cpplint, configured by `maiacore/CPPLINT.cfg` (which filters out `whitespace/*`,
+  so cpplint does not check line length)
 - **Static Analyzer:** cppcheck
 
 **Run validation:**
 ```bash
 make validate
 ```
+
+It fails when cpplint or cppcheck reports a finding that is not in `scripts/validate-baseline.json`.
+Once findings are fixed, or when new ones are accepted deliberately, rewrite the baseline with
+`make validate-update-baseline` and commit it.
 
 ### Testing Requirements
 
@@ -289,7 +313,10 @@ where.exe python
 where.exe python3
 ```
 
-**Solution:** Activate the correct Python environment before building.
+**Solution:** Activate the correct Python environment before building. `make` runs every script,
+and builds the module, with `python` (Windows) or `python3` (Linux, macOS) from PATH. To use
+another interpreter, pass it on the command line, e.g. `make "PYTHON=py -3.12"`; an environment
+variable named `PYTHON` is ignored.
 
 ### Autocomplete Not Working in VS Code
 
@@ -332,7 +359,7 @@ make
 
 ## 🔗 External Dependencies
 
-Maialib includes these third-party libraries in `external/`:
+Maialib builds these third-party libraries:
 
 - **pugixml** - XML parsing (MIT License)
 - **SQLiteCpp + sqlite3** - Database functionality (MIT License)
@@ -341,7 +368,9 @@ Maialib includes these third-party libraries in `external/`:
 - **nlohmann/json** - JSON handling (MIT License)
 - **GoogleTest** - Unit testing framework (BSD License)
 
-All dependencies are vendored and built automatically.
+All are vendored in the repository except cpptrace, which CMake fetches (FetchContent, v0.8.2)
+when it configures a build directory, so the first configure needs network access. All are built
+automatically.
 
 ---
 
@@ -393,10 +422,8 @@ make module-debug
 
 ```bash
 make coverage
-# Open coverage report in browser
-firefox coverage_html/index.html  # Linux
-open coverage_html/index.html     # macOS
-start coverage_html/index.html    # Windows
+# Open the coverage report in a browser (Linux only: the Debug build has coverage only there)
+firefox code-coverage/index.html
 ```
 
 ### Profiling
