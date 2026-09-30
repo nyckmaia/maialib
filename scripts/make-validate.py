@@ -29,6 +29,9 @@ BASELINE = Path(__file__).with_name("validate-baseline.json")
 # cpplint writes each finding to stderr as "<file>:<line>:  <message>  [<category>] [<confidence>]"
 # and its progress to stdout. It exits with 1 both when it finds something and when it cannot
 # run at all (bad arguments, cpplint not installed), so any other line on stderr is an error.
+# Python prints its own warnings to stderr as well (Python 3.14 deprecates the codecs.open()
+# calls in cpplint 2.0.2), so cpplint runs with -W ignore, which overrides PYTHONWARNINGS and
+# the development mode (-X dev, PYTHONDEVMODE).
 CPPLINT_LINE = re.compile(r"^(?P<file>.+?):\d+:\s.*\[(?P<category>[\w/+-]+)\] \[\d\]$")
 # cppcheck writes findings to stderr in this format and its own errors to stdout. It exits with
 # 0 whether or not it finds anything, and with 1 when it cannot run.
@@ -59,7 +62,8 @@ def cpplint_findings() -> List[Finding]:
     # maiacore/CPPLINT.cfg filters out every whitespace/* category, so --linelength has no
     # effect there: the 100-column limit is applied by clang-format (make format-cpp).
     result = run(
-        [sys.executable, "-m", "cpplint", "--quiet", "--linelength=100", "--recursive", SOURCE_DIR]
+        [sys.executable, "-W", "ignore", "-m", "cpplint"]
+        + ["--quiet", "--linelength=100", "--recursive", SOURCE_DIR]
     )
     lines = [line.strip() for line in result.stderr.splitlines() if line.strip()]
     matches = [CPPLINT_LINE.match(line) for line in lines]
