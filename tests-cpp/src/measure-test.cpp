@@ -958,7 +958,7 @@ TEST(MeasureBarline, RemoveRepeatStart) {
 TEST(MeasureBarline, SetEnding) {
     Measure measure;
 
-    Barline& barline = measure.getBarlineRight();
+    measure.getBarlineRight();
 }
 
 // ====================

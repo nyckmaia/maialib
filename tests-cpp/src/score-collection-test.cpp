@@ -75,7 +75,6 @@ TEST(ScoreCollectionDirectories, SetDirectoriesPaths) {
 
 TEST(ScoreCollectionDirectories, SetDirectoriesReloads) {
     ScoreCollection collection(BACH_DIR);
-    int initial_count = collection.getNumScores();
 
     // Set new directories - should replace and reload
     std::vector<std::string> new_dirs = {BEETHOVEN_DIR};

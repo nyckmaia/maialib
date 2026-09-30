@@ -443,7 +443,7 @@ TEST(ScoreNoteIteration, ForEachNoteAllNotes) {
     Score score("./test/xml_examples/unit_test/test_musical_scale.xml");
 
     int noteCount = 0;
-    score.forEachNote([&noteCount](Part* part, Measure* measure, int staveId, Note* note) {
+    score.forEachNote([&noteCount](Part*, Measure*, int, Note* note) {
         noteCount++;
         EXPECT_NE(note, nullptr);
     });
@@ -456,9 +456,8 @@ TEST(ScoreNoteIteration, ForEachNoteMeasureRange) {
     Score score("./test/xml_examples/unit_test/test_multiples_measures.xml");
 
     int noteCount = 0;
-    score.forEachNote(
-        [&noteCount](Part* part, Measure* measure, int staveId, Note* note) { noteCount++; }, 0,
-        2);  // Only measures 0, 1, 2
+    score.forEachNote([&noteCount](Part*, Measure*, int, Note*) { noteCount++; }, 0,
+                      2);  // Only measures 0, 1, 2
 
     EXPECT_GT(noteCount, 0);
 }
@@ -473,7 +472,7 @@ TEST(ScoreNoteIteration, ForEachNoteModifyPitch) {
     part.getMeasure(1).addNote(Note("G4"), 0);
 
     // Transpose all notes up one octave
-    score.forEachNote([](Part* part, Measure* measure, int staveId, Note* note) {
+    score.forEachNote([](Part*, Measure*, int, Note* note) {
         if (note->isNoteOn()) {
             int currentOctave = note->getOctave().value();  // guarded by isNoteOn() above
             note->setOctave(currentOctave + 1);
@@ -504,7 +503,7 @@ TEST(ScoreValidation, IsValidAfterLoadingXML) {
 TEST(ScoreValidation, HaveTypeTag) {
     Score score("./test/xml_examples/unit_test/test_musical_scale.xml");
     // Just verify the method doesn't crash
-    bool hasTypeTag = score.haveTypeTag();
+    score.haveTypeTag();
 }
 
 // ====================
@@ -773,8 +772,9 @@ TEST(ScoreCopySemantics, AssignmentOperatorSelfAssignment) {
     Score score({"Piano"}, 4);
     score.setTitle("Self Test");
 
-    // Self-assignment should be safe
-    score = score;
+    // Self-assignment should be safe. The cast changes nothing; it only keeps clang's
+    // -Wself-assign-overloaded from reporting this intended self-assignment.
+    score = static_cast<const Score&>(score);
 
     // Verify score is unchanged
     EXPECT_EQ(score.getTitle(), "Self Test");
