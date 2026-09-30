@@ -149,8 +149,9 @@ class midiNote2pitch(unittest.TestCase):
         self.assertEqual(ml.Helper.midiNote2pitch(-1, "x"), "rest")
 
     def testTwelveTonesOctave4(self):
-        # A spelling the note cannot take raises RuntimeError. Each pattern leaves the verb of the
-        # message open ("cannot be .* using"), so the test does not depend on how it is worded.
+        # A spelling the note cannot take raises RuntimeError. Each pattern pins the MIDI number
+        # and the accidental but leaves the verb open ("cannot be .* using"), so the test does not
+        # depend on how that verb is spelled.
 
         # ===== MIDI Note 60 - C4 ===== #
         # Double Flat
