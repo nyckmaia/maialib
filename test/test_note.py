@@ -66,6 +66,39 @@ class NoteEqualsOperator(unittest.TestCase):
         self.assertEqual(a == b, False)
         self.assertEqual(a.getMidiNumber() == b.getMidiNumber(), True)
 
+    # Mirrors NoteEqualsOperator.aTransposedNoteIsComparedAtConcertPitch.
+    def testATransposedNoteIsComparedAtConcertPitch(self):
+        clarinet_d4 = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        self.assertTrue(clarinet_d4 == ml.Note("C4"))
+        self.assertFalse(clarinet_d4 != ml.Note("C4"))
+        self.assertFalse(clarinet_d4 == ml.Note("D4"))
+
+        clarinet_db4 = ml.Note("Db4", transposeDiatonic=-1, transposeChromatic=-2)
+        self.assertTrue(clarinet_db4 == ml.Note("Cb4"))
+        self.assertFalse(clarinet_db4 == ml.Note("B3"))
+        self.assertTrue(clarinet_db4 != ml.Note("B3"))
+
+
+class NoteHash(unittest.TestCase):
+    """Notes that compare equal hash equally, as Python requires."""
+
+    def testEqualNotesHashEqually(self):
+        clarinet_d4 = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        for a, b in (
+            (ml.Note("C4"), ml.Note("C4", ml.RhythmFigure.HALF)),
+            (ml.Note("C4"), ml.Note("C4", inChord=True)),
+            (clarinet_d4, ml.Note("C4")),
+            (ml.Note("rest"), ml.Note("C4", isNoteOn=False)),
+        ):
+            with self.subTest(a=repr(a), b=repr(b)):
+                self.assertTrue(a == b)
+                self.assertEqual(hash(a), hash(b))
+
+    def testASetKeepsOneOfEqualNotes(self):
+        clarinet_d4 = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        notes = {ml.Note("C4"), clarinet_d4, ml.Note("C4", ml.RhythmFigure.HALF)}
+        self.assertEqual(len(notes), 1)
+
 
 class NoteSetPitch(unittest.TestCase):
     def testWrittenAndSoundingPitchTypesAndOctave(self):

@@ -749,6 +749,14 @@ class QuarterToneOrderingAndSpread(unittest.TestCase):
         self.assertAlmostEqual(myChord.getHarmonicDensity("C4", "G4"), 0.25, places=4)
 
 
+def chordOf(*notes):
+    """The chord of the given notes, added one at a time as a score's chord extraction adds them."""
+    chord = ml.Chord()
+    for note in notes:
+        chord.addNote(note)
+    return chord
+
+
 # Mirrors ChordOfTransposingInstruments in chord-test.cpp.
 class ChordOfTransposingInstruments(unittest.TestCase):
     def testAHornInFsWrittenB4WithC4AndG4IsCMajor(self):
@@ -762,6 +770,38 @@ class ChordOfTransposingInstruments(unittest.TestCase):
         self.assertEqual(chord.getQuality(), "major")
         self.assertEqual(chord.getRoot().getWrittenPitch(), "C4")
         self.assertFalse(chord.getRoot().isTransposed())
+
+    # Mirrors ChordOfTransposingInstruments.equalityComparesTheNotesAtConcertPitch.
+    def testEqualityComparesTheNotesAtConcertPitch(self):
+        clarinet = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        chord = chordOf(clarinet, ml.Note("E4"), ml.Note("G4"))
+        self.assertTrue(chord == ml.Chord(["C4", "E4", "G4"]))
+        self.assertFalse(chord != ml.Chord(["C4", "E4", "G4"]))
+        self.assertTrue(chord != ml.Chord(["D4", "E4", "G4"]))
+
+        # A B-flat clarinet's written Db4 is the Cb4 of a C-flat major chord, not a B3.
+        flat = ml.Note("Db4", transposeDiatonic=-1, transposeChromatic=-2)
+        chord = chordOf(flat, ml.Note("Eb4"), ml.Note("Gb4"))
+        self.assertTrue(chord == ml.Chord(["Cb4", "Eb4", "Gb4"]))
+        self.assertTrue(chord != ml.Chord(["B3", "Eb4", "Gb4"]))
+
+    # Chords that compare equal hash equally, as Python requires.
+    def testEqualChordsHashEqually(self):
+        clarinet = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        for a, b in (
+            (ml.Chord(["C4", "E4"]), ml.Chord(["C4", "E4"], ml.RhythmFigure.HALF)),
+            (chordOf(clarinet, ml.Note("E4")), ml.Chord(["C4", "E4"])),
+        ):
+            with self.subTest(a=repr(a), b=repr(b)):
+                self.assertTrue(a == b)
+                self.assertEqual(hash(a), hash(b))
+
+    # Mirrors ChordOfTransposingInstruments.isShownWithItsNotesAtConcertPitch: a B-flat
+    # clarinet's written Db5 is the Cb5 of an A-flat minor chord.
+    def testIsShownWithItsNotesAtConcertPitch(self):
+        clarinet = ml.Note("Db5", transposeDiatonic=-1, transposeChromatic=-2)
+        chord = chordOf(ml.Note("Eb5"), clarinet, ml.Note("Ab4"))
+        self.assertEqual(repr(chord), "<Chord [Eb5, Cb5, Ab4]>")
 
 
 if __name__ == "__main__":

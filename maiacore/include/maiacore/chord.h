@@ -1324,19 +1324,24 @@ class Chord {
 
     /**
      * @brief Prints the pitches of all notes in the chord to the log.
-     * @details Useful for debugging and inspection.
+     * @details Each note is shown at concert pitch, as the analysis relates it: a note of a
+     *          transposing instrument at the pitch it sounds, spelled with its written letter moved
+     *          by the diatonic transposing interval (a B-flat clarinet's written Db5 is shown Cb5),
+     *          an untransposed note as written. Useful for debugging and inspection.
      */
     void print() const;
 
     /**
      * @brief Prints the pitches of all notes in the open stack to the log.
-     * @details Useful for debugging and inspection of the stacked chord.
+     * @details Each note is shown at concert pitch, as print() shows it. Useful for debugging and
+     *          inspection of the stacked chord.
      */
     void printStack() const;
 
     /**
      * @brief Prints detailed information about the chord, including name, size, notes, and stack.
-     * @details Useful for analysis and debugging.
+     * @details The notes and the stack are shown at concert pitch, as print() shows them. Useful
+     *          for analysis and debugging.
      *
      *          On a chord containing a quarter tone this degrades rather than throwing, unlike
      *          every analysis method: it still prints the size and the note list, replaces the
@@ -1626,7 +1631,10 @@ class Chord {
      * @details Performs pitch-wise equality comparison using the original (unsorted) note sequence.
      *          Two chords are considered equal if and only if:
      *          1. They contain the same number of notes (cardinality equality)
-     *          2. Each corresponding note pair is identical (Note::operator==)
+     *          2. Each corresponding note pair is equal (Note::operator==): the same pitch,
+     *             spelled alike, a note of a transposing instrument taken at the pitch it sounds,
+     *             spelled with its written letter moved by the diatonic transposing interval, so a
+     *             chord holding a B-flat clarinet's written D4 equals one holding a C4 in its place
      *
      *          This is a strict pitch-space comparison that preserves registral and voice-leading
      *          relationships. It does NOT compare:
@@ -1637,7 +1645,9 @@ class Chord {
      *          For harmonic function equivalence analysis (e.g., comparing C-E-G vs. E-G-C as
      *          both being C major triads), use getPitchClassSet() or getChordName() instead.
      * @note Enharmonic notes (e.g., C# vs. Db) are NOT considered equal by this operator,
-     *       as Note::operator== performs exact pitch-class comparison.
+     *       as Note::operator== compares spellings.
+     * @throws std::runtime_error If a note's sounding pitch lies below the lowest representable
+     *         pitch, C1b-1 (see Note::getMidiNumber()).
      */
     bool operator==(const Chord& otherChord) const {
         size_t sizeA = this->size();
@@ -1663,7 +1673,7 @@ class Chord {
      * @details Logical negation of operator==. Returns true if chords are not pitch-wise identical
      *          in their original note ordering. Inequality holds if:
      *          1. Chord cardinalities differ (different number of notes), OR
-     *          2. Any corresponding note pair differs (Note::operator!=)
+     *          2. Any corresponding note pair differs (Note::operator!=, see operator==())
      *
      *          This is a strict pitch-space inequality preserving registral distinctions.
      *          Does NOT account for:
@@ -1674,6 +1684,8 @@ class Chord {
      *          For functional harmonic analysis, use chord quality/root comparison methods instead.
      * @note Two chords may be harmonically equivalent but still return true for inequality
      *       if their voicings differ (e.g., C4-E4-G4 vs. E4-G4-C5).
+     * @throws std::runtime_error If a note's sounding pitch lies below the lowest representable
+     *         pitch, C1b-1 (see Note::getMidiNumber()).
      */
     bool operator!=(const Chord& otherChord) const {
         size_t sizeA = this->size();
@@ -1749,7 +1761,7 @@ class Chord {
 
     /**
      * @brief Output stream operator for Chord.
-     * Prints the chord as a list of pitches.
+     * Prints the chord as a list of pitches, each at concert pitch, as print() shows it.
      * @param os Output stream.
      * @param chord Chord to print.
      * @return Reference to the output stream.

@@ -4,13 +4,17 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
-#include <bitset>
+#include <functional>
+#include <string>
 #include <unordered_map>
 
+#include "../pitch-views.h"
 #include "maiacore/note.h"
 #include "pybind11_json/pybind11_json.hpp"
 
 namespace py = pybind11;
+
+using maiacore::detail::concertPitch;
 
 void NoteClass(const py::module& m) {
     m.doc() = "Note class binding";
@@ -1204,28 +1208,23 @@ void NoteClass(const py::module& m) {
         note whose sounding pitch lies below ``C1b-1``; see ``getSoundingPitch``.
     )pbdoc");
 
+    // The hash of exactly what == compares, the concert spelling, so that equal notes hash equally
+    // as Python requires.
     cls.def(
         "__hash__",
-        [](const Note& note) {
-            const std::string temp01 = note.getSoundingPitch() + note.getType();
-            const int temp02 = (int)note.isNoteOn() | ((int)note.inChord() << 1) |
-                               ((int)note.isGraceNote() << 2) | ((int)note.isTuplet() << 3) |
-                               ((int)note.isPitched() << 4);
-
-            const std::string temp02Str = std::bitset<8>(temp02).to_string();
-
-            return std::hash<std::string>{}(temp01 + temp02Str);
-        },
+        [](const Note& note) { return std::hash<std::string>{}(concertPitch(note).getPitch()); },
         R"pbdoc(
-        Hash of the sounding pitch, the note type and the note's flags. Raises ``RuntimeError``
-        for a note whose sounding pitch lies below ``C1b-1``; see ``getSoundingPitch``.
+        Hash of what ``==`` compares: the pitch, spelled as ``==`` spells it, so equal notes hash
+        equally whatever their duration or other attributes -- a B-flat clarinet's written
+        ``D4`` and ``Note("C4")`` land in the same set entry. Raises ``RuntimeError`` for a note
+        whose sounding pitch lies below ``C1b-1``; see ``getSoundingPitch``.
     )pbdoc");
 
     cls.def("__sizeof__", [](const Note& note) { return sizeof(note); });
 
     // The ordering operators compare exact sounding positions, getQuarterToneSteps(); == and !=
-    // compare sounding pitch strings. Every one of them raises for a note whose sounding pitch lies
-    // below the lowest representable pitch.
+    // compare spellings, a transposed note's at concert pitch. Every one of them raises for a note
+    // whose sounding pitch lies below the lowest representable pitch.
     cls.def(py::self < py::self,
             R"pbdoc(
         Compare the exact sounding positions, ``getQuarterToneSteps()``: ``Note("E1b4") <
@@ -1246,13 +1245,25 @@ void NoteClass(const py::module& m) {
     )pbdoc");
     cls.def(py::self == py::self,
             R"pbdoc(
-        Compare the sounding pitch strings, ``getPitch()``: equal spellings only, so
-        ``Note("C#4") == Note("Db4")`` and ``Note("E1b4") == Note("E4")`` are both False. Raises
-        ``RuntimeError`` for a note whose sounding pitch lies below ``C1b-1``; see
+        Compare the pitches, spelled alike; duration and every other attribute are ignored.
+
+        A note of a transposing instrument is compared at the pitch it sounds, spelled with its
+        written letter moved by the diatonic transposing interval, as ``Chord`` and ``Interval``
+        relate it: a B-flat clarinet's written ``D4`` equals ``Note("C4")``, and its written
+        ``Db4`` equals ``Note("Cb4")``, not ``Note("B3")``. An untransposed note is compared as
+        written, so ``Note("C#4") == Note("Db4")`` and ``Note("E1b4") == Note("E4")`` are both
+        False. Raises ``RuntimeError`` for a note whose sounding pitch lies below ``C1b-1``; see
         ``getSoundingPitch``.
+
+        Examples
+        --------
+        >>> ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2) == ml.Note("C4")
+        True
+        >>> ml.Note("C#4") == ml.Note("Db4")
+        False
     )pbdoc");
     cls.def(py::self != py::self,
             R"pbdoc(
-        Negation of ``==``: True if the sounding pitch strings, ``getPitch()``, differ.
+        Negation of ``==``: True if the pitches differ, compared as ``==`` compares them.
     )pbdoc");
 }

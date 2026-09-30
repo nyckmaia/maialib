@@ -1410,3 +1410,44 @@ TEST(ChordOfTransposingInstruments, aChordBuiltFromNotesHoldsThePitchesTheySound
     EXPECT_EQ(chord.getNote(0).getMidiNumber(), 64);
     EXPECT_EQ(chord.getName(), "C");
 }
+
+// Chords are compared note by note, each note as Note::operator== compares it: at concert pitch.
+TEST(ChordOfTransposingInstruments, equalityComparesTheNotesAtConcertPitch) {
+    const Chord withClarinet = chordOf({bFlatClarinet("D4"), Note("E4"), Note("G4")});
+    const Chord concert(std::vector<std::string>{"C4", "E4", "G4"});
+    const Chord asWritten(std::vector<std::string>{"D4", "E4", "G4"});
+
+    EXPECT_TRUE(withClarinet == concert);
+    EXPECT_FALSE(withClarinet != concert);
+    EXPECT_FALSE(withClarinet == asWritten);
+    EXPECT_TRUE(withClarinet != asWritten);
+
+    // A B-flat clarinet's written Db4 is the Cb4 of a C-flat major chord, not a B3.
+    const Chord cFlatMajor = chordOf({bFlatClarinet("Db4"), Note("Eb4"), Note("Gb4")});
+    EXPECT_TRUE(cFlatMajor == Chord(std::vector<std::string>{"Cb4", "Eb4", "Gb4"}));
+    EXPECT_TRUE(cFlatMajor != Chord(std::vector<std::string>{"B3", "Eb4", "Gb4"}));
+}
+
+// A chord is shown as it is analysed, each note at concert pitch: a B-flat clarinet's written Db5
+// is the Cb5 of an A-flat minor chord -- neither the Db5 it reads nor the B4 that position is also
+// spelled.
+TEST(ChordOfTransposingInstruments, isShownWithItsNotesAtConcertPitch) {
+    Chord chord = chordOf({Note("Eb5"), bFlatClarinet("Db5"), Note("Ab4")});
+
+    std::ostringstream stream;
+    stream << chord;
+    EXPECT_EQ(stream.str(), "[Eb5,Cb5,Ab4]");
+
+    std::string printed;
+    {
+        CoutCapture capture;
+        chord.print();
+        chord.printStack();  // before stacking: the notes as added
+        chord.info();        // stacks the chord
+        printed = capture.str();
+    }
+    EXPECT_NE(printed.find("note[1] = Cb5"), std::string::npos) << printed;
+    EXPECT_NE(printed.find("openStack[1] = Cb5"), std::string::npos) << printed;
+    EXPECT_NE(printed.find("[Eb5, Cb5, Ab4]"), std::string::npos) << printed;  // info(): notes
+    EXPECT_NE(printed.find("[Ab4, Cb5, Eb5]"), std::string::npos) << printed;  // info(): stack
+}

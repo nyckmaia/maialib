@@ -269,6 +269,42 @@ TEST(NoteEqualsOperator, SameNoteDifferentOctaves) {
     EXPECT_NE(c4.getMidiNumber(), c5.getMidiNumber());
 }
 
+// A note of a transposing instrument is compared at the pitch it sounds, spelled with its written
+// letter moved by the diatonic transposing interval, as the analyses relate it: a B-flat
+// clarinet's written D4 equals a C4, and its written Db4 a Cb4 -- neither the pitch it reads nor
+// the B3 that position is also spelled.
+TEST(NoteEqualsOperator, aTransposedNoteIsComparedAtConcertPitch) {
+    EXPECT_TRUE(bFlatClarinet("D4") == Note("C4"));
+    EXPECT_FALSE(bFlatClarinet("D4") != Note("C4"));
+    EXPECT_FALSE(bFlatClarinet("D4") == Note("D4"));
+    EXPECT_TRUE(bFlatClarinet("D4") != Note("D4"));
+
+    EXPECT_TRUE(bFlatClarinet("F#4") == Note("E4"));
+    EXPECT_FALSE(bFlatClarinet("F#4") != Note("E4"));
+    EXPECT_TRUE(bFlatClarinet("F#4") == hornInF("B4"));
+
+    EXPECT_TRUE(bFlatClarinet("Db4") == Note("Cb4"));
+    EXPECT_FALSE(bFlatClarinet("Db4") == Note("B3"));
+    EXPECT_TRUE(bFlatClarinet("Db4") != Note("B3"));
+
+    EXPECT_TRUE(piccolo("Bb4") == Note("Bb5"));
+}
+
+// Two equal notes lie at the same exact position, so neither is ordered before the other. An
+// untransposed note is compared as written: its enharmonic spellings differ from it. Duration is
+// not compared.
+TEST(NoteEqualsOperator, equalNotesLieAtTheSamePosition) {
+    const Note clarinet = bFlatClarinet("D4");
+    const Note violin("C4");
+    ASSERT_TRUE(clarinet == violin);
+    EXPECT_FALSE(clarinet < violin);
+    EXPECT_FALSE(violin < clarinet);
+
+    EXPECT_FALSE(Note("C#4") == Note("Db4"));
+    EXPECT_FALSE(Note("Cb4") == Note("B3"));
+    EXPECT_TRUE(Note("C4", RhythmFigure::HALF) == Note("C4"));
+}
+
 // ===================================================================================================
 // COMPARISON OPERATORS
 // ===================================================================================================

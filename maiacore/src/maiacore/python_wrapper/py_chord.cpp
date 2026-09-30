@@ -4,11 +4,17 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <functional>
+#include <string>
+
+#include "../pitch-views.h"
 #include "maiacore/chord.h"
 #include "pybind11_json/pybind11_json.hpp"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
+
+using maiacore::detail::concertPitch;
 
 void ChordClass(const py::module& m) {
     m.doc() = "Chord class binding";
@@ -989,44 +995,83 @@ void ChordClass(const py::module& m) {
         py::arg("amplCallback") = nullptr, py::arg("partialsDecayExpRate") = 0.88f,
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def(py::self == py::self);
-    cls.def(py::self != py::self);
+    cls.def(py::self == py::self,
+            R"pbdoc(
+        Compare the chords note by note, in the order the notes were added, as ``Note.__eq__``
+        compares notes: the same pitches, spelled alike, a note of a transposing instrument taken
+        at the pitch it sounds, spelled with its written letter moved by the diatonic transposing
+        interval. Chords of different sizes differ, and so do the same notes in another order.
+
+        Examples
+        --------
+        >>> clarinet = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> chord = ml.Chord()
+        >>> for note in [clarinet, ml.Note("E4"), ml.Note("G4")]:
+        ...     chord.addNote(note)
+        >>> chord == ml.Chord(["C4", "E4", "G4"])
+        True
+    )pbdoc");
+    cls.def(py::self != py::self,
+            R"pbdoc(
+        Negation of ``==``: True if the chords differ in size or in any note, compared as ``==``
+        compares them.
+    )pbdoc");
     cls.def(py::self + py::self);
 
     cls.def("__getitem__", [](const Chord& self, const size_t index) { return self[index]; });
     cls.def("__setitem__", [](Chord& self, const size_t index) { return self[index]; });
 
-    // Default Python 'print' function:
-    cls.def("__repr__", [](const Chord& chord) {
-        const int chordSize = chord.size();
+    // Default Python 'print' function. A chord is shown as it is analysed: each note at its
+    // concert spelling.
+    cls.def(
+        "__repr__",
+        [](const Chord& chord) {
+            const int chordSize = chord.size();
 
-        if (chordSize == 0) {
-            return std::string("<Chord []>");
-        }
+            if (chordSize == 0) {
+                return std::string("<Chord []>");
+            }
 
-        std::string noteNames = "<Chord [";
+            std::string noteNames = "<Chord [";
 
-        for (int i = 0; i < chordSize - 1; i++) {
-            noteNames.append(chord[i].getSoundingPitch() + ", ");
-        }
+            for (int i = 0; i < chordSize - 1; i++) {
+                noteNames.append(concertPitch(chord[i]).getPitch() + ", ");
+            }
 
-        // Add the last note without the semicomma in the end
-        noteNames.append(chord[chordSize - 1].getSoundingPitch());
+            // Add the last note without the semicomma in the end
+            noteNames.append(concertPitch(chord[chordSize - 1]).getPitch());
 
-        noteNames.append("]>");
+            noteNames.append("]>");
 
-        return noteNames;
-    });
+            return noteNames;
+        },
+        R"pbdoc(
+        ``<Chord [P1, P2, ...]>``, the notes in the order they were added, each at concert pitch
+        as the harmonic analysis relates it: a note of a transposing instrument at the pitch it
+        sounds, spelled with its written letter moved by the diatonic transposing interval (a
+        B-flat clarinet's written ``Db5`` is shown ``Cb5``), an untransposed note as written.
+        Raises ``RuntimeError`` for a note whose sounding pitch lies below ``C1b-1``; see
+        ``Note.getSoundingPitch``.
+    )pbdoc");
 
-    cls.def("__hash__", [](const Chord& chord) {
-        std::string temp;
+    // The hash of exactly what == compares, the notes' concert spellings in order, so that equal
+    // chords hash equally as Python requires.
+    cls.def(
+        "__hash__",
+        [](const Chord& chord) {
+            std::string pitches;
+            for (const auto& note : chord.getNotes()) {
+                pitches += concertPitch(note).getPitch() + ",";
+            }
 
-        for (const auto& n : chord.getNotes()) {
-            temp += n.getPitch() + n.getLongType();
-        }
-
-        return std::hash<std::string>{}(temp);
-    });
+            return std::hash<std::string>{}(pitches);
+        },
+        R"pbdoc(
+        Hash of what ``==`` compares: the notes' pitches, in order, spelled as ``Note.__eq__``
+        spells them, so equal chords hash equally whatever their notes' durations or other
+        attributes. Raises ``RuntimeError`` for a note whose sounding pitch lies below ``C1b-1``;
+        see ``Note.getSoundingPitch``.
+    )pbdoc");
 
     cls.def("__sizeof__", [](const Chord& chord) { return sizeof(chord); });
 

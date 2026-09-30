@@ -39,6 +39,10 @@ Note concertCopy(const Note& note) {
     return copy;
 }
 
+// The pitch string a chord shows for 'note': its concert spelling, the one the analysis relates
+// it by, so a chord is shown as it is analysed. An untransposed note is shown as written.
+std::string concertName(const Note& note) { return concertPitch(note).getPitch(); }
+
 // The note count divided by the span it occupies, in semitones, between two exact sounding
 // positions (Note::getQuarterToneSteps()). Positions are multiples of 0.5, which float holds
 // exactly, so the span is exact. The '+ 1' keeps the inclusive-semitone-slot convention of the
@@ -190,11 +194,11 @@ void Chord::info() {
     std::string noteNames = "[";
 
     for (int i = 0; i < chordSize - 1; i++) {
-        noteNames.append(_originalNotes[i].getPitch() + ", ");
+        noteNames.append(concertName(_originalNotes[i]) + ", ");
     }
 
     // Add the last note without the semicomma in the end
-    noteNames.append(_originalNotes[chordSize - 1].getPitch());
+    noteNames.append(concertName(_originalNotes[chordSize - 1]));
 
     noteNames.append("]");
 
@@ -227,11 +231,11 @@ void Chord::info() {
     std::string stackNames = "[";
 
     for (int i = 0; i < chordStackSize - 1; i++) {
-        stackNames.append(_openStack[i].getPitch() + ", ");
+        stackNames.append(concertName(_openStack[i]) + ", ");
     }
 
     // Add the last note without the semicomma in the end
-    stackNames.append(_openStack[chordStackSize - 1].getPitch());
+    stackNames.append(concertName(_openStack[chordStackSize - 1]));
 
     stackNames.append("]");
 
@@ -561,7 +565,7 @@ void Chord::print() const {
     const int chordSize = _originalNotes.size();
 
     for (int i = 0; i < chordSize; i++) {
-        LOG_INFO("note[" << i << "] = " << _originalNotes[i].getPitch());
+        LOG_INFO("note[" << i << "] = " << concertName(_originalNotes[i]));
     }
 }
 
@@ -569,7 +573,7 @@ void Chord::printStack() const {
     const int stackSize = _openStack.size();
 
     for (int i = 0; i < stackSize; i++) {
-        LOG_INFO("openStack[" << i << "] = " << _openStack[i].getPitch());
+        LOG_INFO("openStack[" << i << "] = " << concertName(_openStack[i]));
     }
 }
 
@@ -3177,8 +3181,8 @@ std::ostream& operator<<(std::ostream& os, const Chord& chord) {
 
     os << "[";
     for (int i = 0; i < chordSize - 1; i++) {
-        os << chord.getNote(i).getPitch() << ",";
+        os << concertName(chord.getNote(i)) << ",";
     }
-    os << chord.getNote(chordSize - 1).getPitch() + "]";
+    os << concertName(chord.getNote(chordSize - 1)) + "]";
     return os;
 }

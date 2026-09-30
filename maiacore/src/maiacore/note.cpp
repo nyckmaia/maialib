@@ -1241,7 +1241,10 @@ float Note::getQuarterToneSteps() const {
 // Chord::isSorted() and every internal std::sort over Notes go through it, as do Python's
 // Note comparisons, which are bound directly to these operators.
 //
-// operator==/!= compare pitch strings instead, which distinguish "E1b4" from "E4" too.
+// operator==/!= compare spellings instead, which distinguish "C#4" from "Db4" and "E1b4" from
+// "E4" too: the concert spellings, as the analyses relate notes, so a B-flat clarinet's written
+// D4 equals a C4. Equal concert spellings lie at the same exact position, so two equal notes are
+// never ordered one before the other.
 bool Note::operator<(const Note& otherNote) const {
     return getQuarterToneSteps() < otherNote.getQuarterToneSteps();
 }
@@ -1258,6 +1261,8 @@ bool Note::operator>=(const Note& otherNote) const {
     return getQuarterToneSteps() >= otherNote.getQuarterToneSteps();
 }
 
-bool Note::operator==(const Note& otherNote) const { return getPitch() == otherNote.getPitch(); }
+bool Note::operator==(const Note& otherNote) const {
+    return computeConcertPitch() == otherNote.computeConcertPitch();
+}
 
-bool Note::operator!=(const Note& otherNote) const { return getPitch() != otherNote.getPitch(); }
+bool Note::operator!=(const Note& otherNote) const { return !(*this == otherNote); }

@@ -892,12 +892,23 @@ class Note {
     bool operator>=(const Note& otherNote) const;
 
     /**
-     * @brief Equality operator for comparing notes by pitch.
+     * @brief Equality operator: true when both notes are the same pitch, spelled alike.
+     * @details A note of a transposing instrument is compared at the pitch it sounds, spelled with
+     *          its written letter moved by the diatonic transposing interval, as Chord and Interval
+     *          relate it: a B-flat clarinet's written D4 equals a C4, and its written Db4 equals a
+     *          Cb4, not a B3. An untransposed note is compared as written, so C#4 and Db4 differ,
+     *          as do E1b4 and E4. Duration, voice and every other attribute are ignored. Two equal
+     *          notes lie at the same exact position, so neither is ordered before the other
+     *          (operator<()).
+     * @throws std::runtime_error If either note's sounding pitch lies below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     bool operator==(const Note& otherNote) const;
 
     /**
-     * @brief Inequality operator for comparing notes by pitch.
+     * @brief Inequality operator: the negation of operator==().
+     * @throws std::runtime_error If either note's sounding pitch lies below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     bool operator!=(const Note& otherNote) const;
 };
