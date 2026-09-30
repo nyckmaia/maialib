@@ -407,7 +407,9 @@ TEST(PitchSpelling, SplitPitchComponents) {
 }
 
 TEST(splitPitch, acceptsQuarterTones) {
-    std::string pc, step, sym; std::optional<int> oct; float alter;
+    std::string pc, step, sym;
+    std::optional<int> oct;
+    float alter;
     Helper::splitPitch("C1x4", pc, step, oct, alter, sym);
     EXPECT_EQ(sym, "1x");
     EXPECT_FLOAT_EQ(alter, 0.5f);

@@ -33,7 +33,7 @@ class Pitch {
    private:
     std::string _step;           ///< Diatonic step ("A".."G"), or "rest" for a rest.
     float _alter;                ///< Accidental value in semitones; may be a quarter-tone fraction
-                                  ///< (a multiple of 0.5) within [-2, 2].
+                                 ///< (a multiple of 0.5) within [-2, 2].
     std::optional<int> _octave;  ///< Octave number, or an empty optional for a rest.
 
     /**
@@ -366,7 +366,7 @@ class Pitch {
      *         frequency is NaN.
      */
     void setFrequency(float frequency, const std::string& accType = {}, float freqA4 = 440.0f,
-                       bool enableQuarterToneRound = false);
+                      bool enableQuarterToneRound = false);
 
     /**
      * @brief Rounds a quarter-tone alter to the nearest semitone, ties upward.

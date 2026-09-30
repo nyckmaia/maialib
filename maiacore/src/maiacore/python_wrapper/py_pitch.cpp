@@ -67,9 +67,7 @@ void PitchClass(const py::module& m) {
 
     cls.def_static(
         "fromMidi",
-        [](const int midiNumber, const std::string& accType) {
-            return Pitch(midiNumber, accType);
-        },
+        [](const int midiNumber, const std::string& accType) { return Pitch(midiNumber, accType); },
         py::arg("midiNumber"), py::arg("accType") = "",
         R"pbdoc(
         Create a pitch from a MIDI note number.

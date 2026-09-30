@@ -377,10 +377,10 @@ std::string preferredAccType(const std::string& pitch) {
     Helper::splitPitch(pitch, pitchClass, pitchStep, octave, alterValue, alterSymbol);
 
     const bool isSpellableAccType = alterSymbol == MUSIC_XML::ACCIDENT::NONE ||
-                                     alterSymbol == MUSIC_XML::ACCIDENT::SHARP ||
-                                     alterSymbol == MUSIC_XML::ACCIDENT::FLAT ||
-                                     alterSymbol == MUSIC_XML::ACCIDENT::DOUBLE_SHARP ||
-                                     alterSymbol == MUSIC_XML::ACCIDENT::DOUBLE_FLAT;
+                                    alterSymbol == MUSIC_XML::ACCIDENT::SHARP ||
+                                    alterSymbol == MUSIC_XML::ACCIDENT::FLAT ||
+                                    alterSymbol == MUSIC_XML::ACCIDENT::DOUBLE_SHARP ||
+                                    alterSymbol == MUSIC_XML::ACCIDENT::DOUBLE_FLAT;
 
     return isSpellableAccType ? alterSymbol : MUSIC_XML::ACCIDENT::NONE;
 }

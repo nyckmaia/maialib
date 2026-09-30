@@ -69,8 +69,7 @@ Pitch::Pitch(int midiNumber, const std::string& accType)
     setPitch(Helper::midiNote2pitch(midiNumber, accType));
 }
 
-Pitch::Pitch(float frequency, const std::string& accType, float freqA4,
-             bool enableQuarterToneRound)
+Pitch::Pitch(float frequency, const std::string& accType, float freqA4, bool enableQuarterToneRound)
     : _step("rest"), _alter(0.0f), _octave(std::nullopt) {
     setFrequency(frequency, accType, freqA4, enableQuarterToneRound);
 }
@@ -189,16 +188,15 @@ float Pitch::getFrequency(float freqA4) const {
     // Double precision does not make setFrequency()'s rounding tie-exact, though: no frequency
     // lands exactly on a tie, whatever the precision, because a tie needs an irrational ratio no
     // finite float can hold (see setFrequency()).
-    const double frequency = static_cast<double>(freqA4) *
-                              std::pow(2.0, (static_cast<double>(getQuarterToneSteps()) - 69.0) /
-                                                12.0);
+    const double frequency =
+        static_cast<double>(freqA4) *
+        std::pow(2.0, (static_cast<double>(getQuarterToneSteps()) - 69.0) / 12.0);
     return static_cast<float>(frequency);
 }
 
 void Pitch::setStep(const std::string& step) {
-    const bool isValidStep =
-        std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), step) !=
-        c_C_diatonicScale.end();
+    const bool isValidStep = std::find(c_C_diatonicScale.begin(), c_C_diatonicScale.end(), step) !=
+                             c_C_diatonicScale.end();
     if (!isValidStep) {
         LOG_ERROR("Unknown diatonic pitch step: " + step);
     }
@@ -291,7 +289,7 @@ void Pitch::setMidiNumber(int midiNumber, const std::string& accType) {
 }
 
 void Pitch::setFrequency(float frequency, const std::string& accType, float freqA4,
-                          bool enableQuarterToneRound) {
+                         bool enableQuarterToneRound) {
     validateFreqA4(freqA4);
 
     // A frequency <= 0 is a whole-state replacement into a rest (spec section 4.4.1), not a
@@ -380,8 +378,7 @@ void Pitch::setFrequency(float frequency, const std::string& accType, float freq
         // Exact inverse of getFrequency()'s formula, in quarter-tone-step space. Computed in
         // double to remove the cross-platform libm risk a float32 computation would carry here.
         const double steps =
-            12.0 * std::log2(static_cast<double>(frequency) / static_cast<double>(freqA4)) +
-            69.0;
+            12.0 * std::log2(static_cast<double>(frequency) / static_cast<double>(freqA4)) + 69.0;
 
         // Ties round upward (spec section 4.5), at the rounding granularity, through
         // roundTiesUpward() -- never std::round()/std::lround(), which round half away from zero

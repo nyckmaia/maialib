@@ -27,7 +27,7 @@ TEST(Pitch, quarterToneStringRoundTrip) {
     EXPECT_FLOAT_EQ(p.getAlter(), 0.5f);
     EXPECT_EQ(p.getOctave().value(), 4);
     EXPECT_EQ(p.getPitch(), "C1x4");
-    EXPECT_EQ(p.getMidiNumber(), 61);          // ties round up
+    EXPECT_EQ(p.getMidiNumber(), 61);  // ties round up
     EXPECT_FLOAT_EQ(p.getQuarterToneSteps(), 60.5f);
 }
 
@@ -53,9 +53,9 @@ TEST(Pitch, roundToSemitoneTiesUp) {
 // Flat-side cases. Every test above uses a positive alter, where rounding ties upward and
 // rounding ties away from zero agree; only a negative alter tells them apart.
 TEST(Pitch, midiNumberRoundsHalfUpOnFlatSide) {
-    EXPECT_EQ(Pitch("D1b4").getMidiNumber(), 62);   // 61.5 -> 62, not 61
-    EXPECT_EQ(Pitch("D3b4").getMidiNumber(), 61);   // 60.5 -> 61, not 60
-    EXPECT_EQ(Pitch("C1x-1").getMidiNumber(), 1);   // negative octave, sharp side
+    EXPECT_EQ(Pitch("D1b4").getMidiNumber(), 62);  // 61.5 -> 62, not 61
+    EXPECT_EQ(Pitch("D3b4").getMidiNumber(), 61);  // 60.5 -> 61, not 60
+    EXPECT_EQ(Pitch("C1x-1").getMidiNumber(), 1);  // negative octave, sharp side
     EXPECT_FLOAT_EQ(Pitch("D1b4").getQuarterToneSteps(), 61.5f);
 }
 
@@ -141,8 +141,8 @@ TEST(Pitch, setStepRejectsInvalidStep) {
 // the step would become "C" and p.getMidiNumber() would return -1, colliding with
 // MUSIC_XML::MIDI::NUMBER::MIDI_REST, for a non-rest Pitch.
 TEST(Pitch, setStepBelowMidiZeroIsRefusedAndWarns) {
-    Pitch p("Db-1");  // MIDI 1: D(2) + alter(-1) at octave -1
-    p.setStep("C");   // must not throw; C(0) + (-1) at octave -1 == -1
+    Pitch p("Db-1");                   // MIDI 1: D(2) + alter(-1) at octave -1
+    p.setStep("C");                    // must not throw; C(0) + (-1) at octave -1 == -1
     EXPECT_EQ(p.getPitchStep(), "D");  // unchanged
     EXPECT_EQ(p.getMidiNumber(), 1);
 }
@@ -164,8 +164,8 @@ TEST(Pitch, setOctaveRejectsOutOfRange) {
 // Moving below MIDI note 0 is a boundary condition: Pitch("Cbb4").setOctave(-1), which would
 // spell MIDI -2, must neither throw nor store it. It warns and leaves the object unchanged.
 TEST(Pitch, setOctaveBelowMidiZeroIsRefusedAndWarns) {
-    Pitch p("Cbb4");   // valid: MIDI 58
-    p.setOctave(-1);   // must not throw; C(0) + (-2) at octave -1 == -2
+    Pitch p("Cbb4");                      // valid: MIDI 58
+    p.setOctave(-1);                      // must not throw; C(0) + (-2) at octave -1 == -2
     EXPECT_EQ(p.getOctave().value(), 4);  // unchanged
     EXPECT_EQ(p.getMidiNumber(), 58);
 }
@@ -183,7 +183,7 @@ TEST(Pitch, setAlterRejectsOutOfRange) {
 // section 4.4 relies on for that sentinel.
 TEST(Pitch, setAlterBelowMidiZeroIsRefusedAndWarns) {
     Pitch p("C-1");
-    p.setAlter(-1.0f);  // must not throw
+    p.setAlter(-1.0f);                    // must not throw
     EXPECT_FLOAT_EQ(p.getAlter(), 0.0f);  // unchanged
     EXPECT_EQ(p.getMidiNumber(), 0);      // still C-1
     EXPECT_FALSE(p.isRest());
@@ -259,9 +259,7 @@ TEST(Pitch, fromFrequencyRoundsToQuarterToneWhenEnabled) {
 
 // enableQuarterToneRound's default, on its own terms: 449 Hz gives "A1x4" with the flag (above)
 // and "A4" without it, so the default is false.
-TEST(Pitch, enableQuarterToneRoundDefaultsToFalse) {
-    EXPECT_EQ(Pitch(449.0f).getPitch(), "A4");
-}
+TEST(Pitch, enableQuarterToneRoundDefaultsToFalse) { EXPECT_EQ(Pitch(449.0f).getPitch(), "A4"); }
 
 TEST(Pitch, nonPositiveFrequencyIsARest) {
     EXPECT_TRUE(Pitch(0.0f).isRest());

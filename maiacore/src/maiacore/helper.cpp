@@ -1325,8 +1325,7 @@ float Helper::pitchRatio(const std::string& pitch_A, const std::string& pitch_B)
 }
 
 void Helper::splitPitch(const std::string& pitch, std::string& pitchClass, std::string& pitchStep,
-                        std::optional<int>& octave, float& alterValue,
-                        std::string& alterSymbol) {
+                        std::optional<int>& octave, float& alterValue, std::string& alterSymbol) {
     // Rest case: This is necessary to prevent: empty pitchClass + alterSymbol
     if (pitch.empty() || (pitch.find(MUSIC_XML::PITCH::REST) != std::string::npos)) {
         pitchClass = "rest";

@@ -927,8 +927,8 @@ const std::string Note::toXML(const size_t instrumentId, const int identSize) co
         if (_isPitched) {
             std::string pitch =
                 std::string(Helper::generateIdentation(4, identSize) + "<pitch>\n") +
-                Helper::generateIdentation(5, identSize) + "<step>" +
-                _writtenPitch.getPitchStep() + "</step>\n";
+                Helper::generateIdentation(5, identSize) + "<step>" + _writtenPitch.getPitchStep() +
+                "</step>\n";
 
             if (!_writtenPitch.getAlterSymbol().empty()) {
                 const float alterValue = _writtenPitch.getAlter();

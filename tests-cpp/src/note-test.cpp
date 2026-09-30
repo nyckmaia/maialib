@@ -1260,7 +1260,7 @@ TEST(NoteComposesPitch, GetAlterSymbolForwardsToSoundingPitchOnTransposedNote) {
     ASSERT_EQ(written.getAlterSymbol(), "");
 
     const Note transposed("C4", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
-                           /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
+                          /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
     ASSERT_EQ(transposed.getSoundingPitch(), "Bb3");
     ASSERT_EQ(transposed.getMidiNumber(), 58);
     EXPECT_EQ(transposed.getAlterSymbol(), "b");
@@ -1559,8 +1559,7 @@ TEST(NoteToXML, AllFourQuarterTonesWriteMatchingAlterAndAccidental) {
         const std::string xml = Note(c.pitch).toXML();
         EXPECT_NE(xml.find("<alter>" + c.alterStr + "</alter>"), std::string::npos)
             << "pitch: " << c.pitch << " xml: " << xml;
-        EXPECT_NE(xml.find("<accidental>" + c.accidentalName + "</accidental>"),
-                  std::string::npos)
+        EXPECT_NE(xml.find("<accidental>" + c.accidentalName + "</accidental>"), std::string::npos)
             << "pitch: " << c.pitch << " xml: " << xml;
     }
 }
