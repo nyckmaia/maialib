@@ -21,7 +21,7 @@ def jobBlock(text: str, job: str) -> str:
 class WheelWorkflowTestCase(unittest.TestCase):
     def test_upload_job_runs_only_for_a_published_release(self):
         block = jobBlock(WORKFLOW.read_text(encoding="utf-8"), "upload_all")
-        self.assertIn(GUARD, block)
+        self.assertIn("    " + GUARD, block.splitlines())
         self.assertIn("pypa/gh-action-pypi-publish", block)
 
 
