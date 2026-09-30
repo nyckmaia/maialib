@@ -107,7 +107,7 @@ repoRoot = Path.cwd()
 styleFile = repoRoot / ".clang-format"
 
 # The two excluded tests-cpp headers are generated characterisation tables: the tests compare
-# the library against them, and their exact bytes are verified by git blob hash, so they are
+# the library against them, so they must stay byte-identical to what was generated and are
 # left unformatted.
 targets = [
     (repoRoot / "maiacore" / "include" / "maiacore", ["*.h"], frozenset()),

@@ -27,3 +27,6 @@ repos:
         language: system
         types: [c++]
         args: [-i]
+        # Generated characterisation tables the tests compare the library against: they must
+        # stay byte-identical to what was generated (make format-cpp skips them too).
+        exclude: ^tests-cpp/src/(pitch-spelling-legacy-data|quarter-tone-characterization-data)\.h$
