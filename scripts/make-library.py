@@ -33,6 +33,7 @@ cmakeCommand = [
     f"-DCMAKE_BUILD_TYPE={buildType}",
     f"-DCMAKE_CXX_COMPILER={cppCompiler}",
     "-DSQLITECPP_RUN_CPPLINT=OFF",
+    "-DSQLITECPP_RUN_CPPCHECK=OFF",
 ]
 if myOS == "Windows":
     cmakeCommand.append("-DCMAKE_MAKE_PROGRAM=C:/msys64/clang64/bin/mingw32-make.exe")

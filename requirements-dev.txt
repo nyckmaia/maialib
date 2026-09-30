@@ -12,7 +12,7 @@
 #   pip install -r requirements-dev.txt
 #   make dev   # only inside a brand-new clean venv, per the project's testing workflow
 #
-# Verified 2026-09-16 in a clean Python 3.12.5 venv. Re-verify and update this file (with the
+# Verified 2026-09-30 in a clean Python 3.12.5 venv. Re-verify and update this file (with the
 # date above) whenever the pinned set is deliberately refreshed.
 
 # Runtime dependencies (see setup.py's install_requires for the floors these must satisfy).
@@ -28,4 +28,7 @@ wheel==0.48.0
 pybind11-stubgen==2.5.5
 mypy==2.3.1
 cpplint==2.0.2
+# Cppcheck 2.17.1. `make validate` runs it and compares its findings with
+# scripts/validate-baseline.json, which another Cppcheck version would not match.
+cppcheck==1.5.1
 ruff==0.16.8

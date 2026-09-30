@@ -89,6 +89,7 @@ pip install pathlib cpplint wheel mypy pybind11-stubgen
 
 For an environment pinned to this project's known-good, reproducible test versions, use
 `pip install -r requirements-dev.txt` instead — see [BUILDING.md](BUILDING.md#python-development-dependencies).
+`make validate` needs it: it runs the cpplint and cppcheck versions pinned there.
 
 **Build from source:**
 ```bash
@@ -207,7 +208,7 @@ float getCloseStackHarmonicComplexity(const bool useEnharmony = false);
 
 **Run code validation:**
 ```bash
-make validate  # Runs cpplint and cppcheck; fails on findings not in scripts/validate-baseline.json
+make validate  # cpplint and cppcheck from requirements-dev.txt; fails on findings not in scripts/validate-baseline.json
 ```
 
 ### Python Code Style

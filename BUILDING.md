@@ -22,7 +22,8 @@ This guide is for developers who want to build Maialib from C++ source code.
 
 - **Doxygen** - For generating C++ documentation
 - **Buildcache** - Speeds up compilation significantly
-- **CppCheck** - C++ static analyzer for code quality; `make validate` needs it on PATH
+- **CppCheck** - C++ static analyzer for code quality; `make validate` runs the version that
+  `requirements-dev.txt` pins, installed with pip (see below)
 
 ### Python Development Dependencies
 
@@ -36,8 +37,9 @@ pip install pybind11-stubgen
 
 For a reproducible environment that matches the exact versions this project's test workflow is
 known to work with (runtime deps plus `setuptools`, `wheel`, `pybind11-stubgen`, `mypy`,
-`cpplint`, `ruff`), install from the pinned [`requirements-dev.txt`](requirements-dev.txt)
-instead:
+`cpplint`, `cppcheck`, `ruff`), install from the pinned
+[`requirements-dev.txt`](requirements-dev.txt) instead. `make validate` needs the cpplint and
+cppcheck versions pinned there:
 
 ```bash
 pip install -r requirements-dev.txt
@@ -117,9 +119,13 @@ make validate-update-baseline  # Accept the current cpplint and cppcheck finding
 ```
 
 `make validate` fails when cpplint or cppcheck reports a finding that is not in the committed
-baseline, `scripts/validate-baseline.json`, and when a check cannot run: cpplint is not installed
-for the Makefile's `PYTHON` (`requirements-dev.txt` installs it), cppcheck is not on PATH
-(`requirements-dev.txt` does not install it), or the baseline is missing.
+baseline, `scripts/validate-baseline.json`, and when the check cannot run: cpplint or cppcheck is
+not installed for the Makefile's `PYTHON`, a tool fails or prints output that is not a finding,
+or the baseline is missing or is not a JSON object of finding counts. Both tools run with the
+Makefile's `PYTHON`, so install them with `pip install -r requirements-dev.txt`: the baseline
+holds the findings of the versions pinned there, and another cppcheck version reports others.
+cppcheck analyses the sources for the same platform (`unix64`) on every operating system, so the
+baseline does not depend on where it runs.
 
 #### Documentation
 
@@ -242,7 +248,8 @@ cmake --build . --config Release
 - **Line Length:** 100 characters maximum, applied by clang-format (`make format-cpp`)
 - **Linter:** cpplint, configured by `maiacore/CPPLINT.cfg` (which filters out `whitespace/*`,
   so cpplint does not check line length)
-- **Static Analyzer:** cppcheck
+- **Static Analyzer:** cppcheck 2.17.1 (the `cppcheck` 1.5.1 package that `requirements-dev.txt`
+  pins)
 
 **Run validation:**
 ```bash
@@ -250,8 +257,9 @@ make validate
 ```
 
 It fails when cpplint or cppcheck reports a finding that is not in `scripts/validate-baseline.json`,
-or cannot run. Once findings are fixed, or when new ones are accepted deliberately, rewrite the
-baseline with `make validate-update-baseline` and commit it.
+or when the check cannot run (see [Code Quality](#code-quality)). Once findings are fixed, or when
+new ones are accepted deliberately, rewrite the baseline with `make validate-update-baseline`,
+with the tool versions that `requirements-dev.txt` pins, and commit it.
 
 ### Testing Requirements
 
