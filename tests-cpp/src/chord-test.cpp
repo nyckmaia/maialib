@@ -1363,6 +1363,15 @@ TEST(ChordOfTransposingInstruments, getCloseChordPlacesAnExtensionByThePitchItSo
     EXPECT_EQ(chord.getName(), "E9");
     EXPECT_EQ(writtenPitchesOf(chord.getCloseChord().getNotes()),
               (std::vector<std::string>{"E4", "F#4", "G#4", "B4"}));
+
+    // A B-flat clarinet's written Db4 sounds Cb4, whose octave is 4 although it lies just above
+    // the root Bb3: the ninth is placed as that of an untransposed Cb4 is.
+    Chord flatNinth =
+        chordOf({Note("Bb3"), bFlatClarinet("Db4"), Note("D4"), Note("F4"), Note("Ab4")});
+    Chord concert(std::vector<std::string>{"Bb3", "Cb4", "D4", "F4", "Ab4"});
+    EXPECT_EQ(flatNinth.getName(), concert.getName());
+    EXPECT_EQ(writtenPitchesOf(flatNinth.getCloseChord().getNotes()),
+              writtenPitchesOf(concert.getCloseChord().getNotes()));
 }
 
 // The notes the analysis returns -- the root, the bass note, the stacks and the heaps they are
