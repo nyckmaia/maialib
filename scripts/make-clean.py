@@ -1,49 +1,66 @@
-"""Remove build artifacts.
+"""Remove build artifacts from the repository.
 
 Usage: make-clean.py <all|dist|static|shared|module|cpp-tests>
 
-Read-only files (e.g. the git pack files of fetched dependencies under build/)
-are made writable and removed; anything that still cannot be removed is listed
-and the script exits with code 1.
+Every path is in the repository this script belongs to, whatever the working
+directory. A link (a symbolic link or a Windows junction) is removed itself, and
+what it points to is left alone. Read-only files (e.g. the git pack files of
+fetched dependencies under build/) are made writable and removed. Every entry that
+still cannot be removed is listed, the rest is removed anyway, and the script
+exits with code 1.
 """
 
-import glob
 import os
-import platform
-import stat
 import sys
 from pathlib import Path
-from shutil import rmtree
-from typing import List
+from typing import Callable, List
 
-from build_utils import usage_error
+from build_utils import REPO_ROOT, build_dir, is_link, remove_trees, usage_error
 from terminal_colors import color
 
-osBuildDir = Path("build") / platform.system()
-pythonCaches = [
-    Path(p)
-    for p in glob.glob("__pycache__")
-    + glob.glob("maialib/**/__pycache__", recursive=True)
-    + glob.glob("test/**/__pycache__", recursive=True)
-    + glob.glob("scripts/__pycache__")
-]
-stubFiles = [Path(p) for p in glob.glob("maialib/**/*.pyi", recursive=True)]
+
+def find(top: Path, wanted: Callable[[str], bool]) -> List[Path]:
+    """Return the entries below ``top`` whose names ``wanted`` accepts, without entering links."""
+    found = []
+    for directory, subdirectories, files in os.walk(top):
+        found += [Path(directory, name) for name in subdirectories + files if wanted(name)]
+        subdirectories[:] = [name for name in subdirectories if not is_link(Path(directory, name))]
+    return found
+
+
+def is_python_cache(name: str) -> bool:
+    return name == "__pycache__"
+
+
+def is_stub(name: str) -> bool:
+    return name.endswith(".pyi")
+
+
+pythonCaches = (
+    [REPO_ROOT / "__pycache__", REPO_ROOT / "scripts" / "__pycache__"]
+    + find(REPO_ROOT / "maialib", is_python_cache)
+    + find(REPO_ROOT / "test", is_python_cache)
+)
+stubFiles = find(REPO_ROOT / "maialib", is_stub)
 
 TARGETS = {
-    "static": [osBuildDir / "static"],
-    "shared": [osBuildDir / "shared"],
-    "module": [osBuildDir / "module"],
-    "cpp-tests": [osBuildDir / "cpp-tests"],
-    "dist": [Path("dist"), Path("stubs"), Path("code-coverage"), Path(".coverage")],
+    "static": [build_dir("static")],
+    "shared": [build_dir("shared")],
+    "module": [build_dir("module")],
+    "cpp-tests": [build_dir("cpp-tests")],
+    "dist": [REPO_ROOT / name for name in ("dist", "stubs", "code-coverage", ".coverage")],
     "all": [
-        Path("build"),
-        Path("dist"),
-        Path("stubs"),
-        Path("code-coverage"),
-        Path("wheelhouse"),
-        Path("maialib.egg-info"),
-        Path("profile.json"),
-        Path(".coverage"),
+        REPO_ROOT / name
+        for name in (
+            "build",
+            "dist",
+            "stubs",
+            "code-coverage",
+            "wheelhouse",
+            "maialib.egg-info",
+            "profile.json",
+            ".coverage",
+        )
     ]
     + pythonCaches
     + stubFiles,
@@ -52,38 +69,7 @@ TARGETS = {
 if len(sys.argv) != 2 or sys.argv[1] not in TARGETS:
     usage_error("usage: make-clean.py <" + "|".join(TARGETS) + ">")
 
-failures: List[str] = []
-
-
-def makeWritableAndRetry(function, path, _excinfo):
-    os.chmod(path, stat.S_IWRITE)
-    function(path)
-
-
-def remove(path: Path) -> None:
-    if not path.exists():
-        return
-    try:
-        if path.is_dir():
-            if sys.version_info >= (3, 12):
-                rmtree(path, onexc=makeWritableAndRetry)
-            else:
-                rmtree(path, onerror=makeWritableAndRetry)
-        else:
-            os.chmod(path, stat.S_IWRITE)
-            path.unlink()
-    except OSError as error:
-        failures.append(f"{path}: {error}")
-
-
 target = sys.argv[1]
 print(f"{color.OKGREEN}Cleaning '{target}'...{color.ENDC}")
-for path in TARGETS[target]:
-    remove(path)
-
-if failures:
-    print(f"{color.FAIL}Could not remove:{color.ENDC}")
-    for failure in failures:
-        print(f"  {failure}")
-    sys.exit(1)
+remove_trees(TARGETS[target])
 print(f"{color.OKGREEN}Done!{color.ENDC}")

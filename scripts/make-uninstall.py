@@ -1,7 +1,6 @@
 import sys
-from shutil import rmtree
 
-from build_utils import run_step
+from build_utils import REPO_ROOT, remove_trees, run_step
 from terminal_colors import color
 
 
@@ -28,10 +27,8 @@ if isMaialibInstalled == True:
         [sys.executable, "-m", "pip", "uninstall", "--yes", "maialib"], "pip uninstall maialib"
     )
 
-    distDir = "dist"
-
     # Delete dist directory
-    rmtree(distDir, True)
+    remove_trees([REPO_ROOT / "dist"])
 
     print(f"{color.OKGREEN}Maialib uninstalled!{color.ENDC}")
 else:

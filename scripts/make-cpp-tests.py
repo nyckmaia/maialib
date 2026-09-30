@@ -4,7 +4,14 @@ import sys
 from pathlib import Path
 from typing import Optional
 
-from build_utils import normalize_build_type, run_step, usage_error
+from build_utils import (
+    REPO_ROOT,
+    build_dir,
+    normalize_build_type,
+    remove_trees,
+    run_step,
+    usage_error,
+)
 from terminal_colors import color
 
 if len(sys.argv) != 2:
@@ -13,9 +20,8 @@ if len(sys.argv) != 2:
 buildType = normalize_build_type(sys.argv[1])
 print(f"{color.OKGREEN}Building C++ Unit Tests on {buildType} mode...{color.ENDC}")
 
-repoRoot = Path(__file__).resolve().parent.parent
 myOS = platform.system()
-path = repoRoot / "build" / myOS / "cpp-tests"
+path = build_dir("cpp-tests")
 
 
 def cmake_home_directory(cache: Path) -> Optional[str]:
@@ -31,16 +37,12 @@ def cmake_home_directory(cache: Path) -> Optional[str]:
 # removed before the root project is configured into it.
 cache = path / "CMakeCache.txt"
 home = cmake_home_directory(cache) if cache.is_file() else None
-if home is not None and Path(home).resolve() != repoRoot:
+if home is not None and Path(home).resolve() != REPO_ROOT:
     print(
-        f"{color.WARNING}{path} was configured from {home}, not from {repoRoot}: "
+        f"{color.WARNING}{path} was configured from {home}, not from {REPO_ROOT}: "
         f"removing it.{color.ENDC}"
     )
-    run_step(
-        [sys.executable, str(Path(__file__).with_name("make-clean.py")), "cpp-tests"],
-        "remove the C++ test build directory",
-        cwd=str(repoRoot),
-    )
+    remove_trees([path])
 path.mkdir(parents=True, exist_ok=True)
 
 cppCompiler = "clang++" if myOS == "Windows" else "g++"
@@ -51,7 +53,7 @@ cmakeCommand = [
     "-B",
     str(path),
     "-S",
-    str(repoRoot),
+    str(REPO_ROOT),
     "-DSTATIC_LIB=ON",
     "-DPYBIND_LIB=OFF",
     "-DMAIACORE_BUILD_TESTS=ON",

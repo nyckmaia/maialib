@@ -14,8 +14,6 @@ import json
 import os
 import platform
 import re
-import shutil
-import stat
 import subprocess
 import sys
 import tempfile
@@ -23,10 +21,9 @@ import time
 from pathlib import Path
 from typing import Dict, List, NoReturn, Tuple
 
-from build_utils import normalize_build_type, run_step, usage_error
+from build_utils import REPO_ROOT, normalize_build_type, remove_trees, run_step, usage_error
 from terminal_colors import color
 
-REPO_ROOT = Path(__file__).resolve().parent.parent
 # Kept short: MSVC's compiler checks fail (C1083) when the build tree exceeds MAX_PATH.
 BUILD_DIR = REPO_ROOT / "build" / "Windows" / "msvc-gate"
 VENV_DIR = BUILD_DIR / "venv"
@@ -96,22 +93,6 @@ def same_path(first: str, second: str) -> bool:
 def is_inside(path: str, directory: str) -> bool:
     inner = os.path.normcase(os.path.abspath(path))
     return inner.startswith(os.path.normcase(os.path.abspath(directory)).rstrip(os.sep) + os.sep)
-
-
-def remove_tree(path: Path) -> None:
-    """Delete a directory tree, read-only files included (the git packs of fetched sources)."""
-
-    def make_writable_and_retry(function, target, _error):
-        os.chmod(target, stat.S_IWRITE)
-        function(target)
-
-    try:
-        if sys.version_info >= (3, 12):
-            shutil.rmtree(path, onexc=make_writable_and_retry)
-        else:
-            shutil.rmtree(path, onerror=make_writable_and_retry)
-    except OSError as error:
-        check_failed(f"could not remove {path}: {error}")
 
 
 def ignore_environment_overrides() -> None:
@@ -237,7 +218,7 @@ def configure(instance: str) -> None:
                 f"{color.WARNING}{BUILD_DIR} was configured for another source tree, generator, "
                 f"platform or Visual Studio instance: removing it.{color.ENDC}"
             )
-            remove_tree(BUILD_DIR)
+            remove_trees([BUILD_DIR])
     # An argument list, not a shell command, so no shell rewrites the /-style MSVC options.
     run_step(
         [
@@ -302,9 +283,10 @@ def build_and_test(config: str, instance: str) -> None:
 
 def remove_setuptools_build_dirs() -> None:
     """Delete setuptools' build directories in the source tree (build/temp.*, lib.*, bdist.*)."""
-    for pattern in ("temp.*", "lib.*", "bdist.*"):
-        for path in (REPO_ROOT / "build").glob(pattern):
-            remove_tree(path)
+    build = REPO_ROOT / "build"
+    remove_trees(
+        [path for pattern in ("temp.*", "lib.*", "bdist.*") for path in build.glob(pattern)]
+    )
 
 
 def python_build_and_test(instance: str) -> None:
