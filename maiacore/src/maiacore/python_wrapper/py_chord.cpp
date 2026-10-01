@@ -58,12 +58,13 @@ void ChordClass(const py::module& m) {
         ``info`` degrades rather than raising.
 
         Notes of transposing instruments are analysed at concert pitch: at the pitch each one
-        sounds, spelled with its written letter moved by the diatonic transposing interval. A
-        horn in F's written ``B4`` is an ``E4``, so with ``C4`` and ``G4`` it makes a C major
-        chord. The notes the analysis returns -- ``getRoot``, ``getBassNote``, the open and close
-        stacks, their heaps and the chords built from them -- are untransposed notes at those
-        pitches, and so are the notes of a chord built from a list of notes. ``getNotes`` returns
-        the notes as they were added.
+        sounds, spelled with its written letter moved by the diatonic transposing interval, or,
+        where that gives no spelling, by the fallback described on ``Note.getSoundingPitch``,
+        without the simplification. A horn in F's written ``B4`` is an ``E4``, so with ``C4`` and
+        ``G4`` it makes a C major chord. The notes the analysis returns -- ``getRoot``,
+        ``getBassNote``, the open and close stacks, their heaps and the chords built from them --
+        are untransposed notes at those pitches, and so are the notes of a chord built from a list
+        of notes. ``getNotes`` returns the notes as they were added.
 
         Examples
         --------

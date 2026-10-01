@@ -456,10 +456,14 @@ class Note {
      *          getTransposeDiatonic() is 0 while getTransposeChromatic() is not, as for a MusicXML
      *          `<transpose>` without `<diatonic>` -- or the letter it gives would need an
      *          accidental beyond a double sharp or flat, or an octave outside -1..11, the position
-     *          is spelled from the semitones alone and then simplified as above: a black key takes
-     *          a sharp when the instrument transposes up and a flat when it transposes down. A
-     *          written D4 sounds D#4 a semitone up and Db4 a semitone down without a diatonic
-     *          interval.
+     *          is spelled from its semitone alone (rounded ties upward; a quarter tone stays in
+     *          the accidental): as the white key there or the sharp of the white key below, or,
+     *          when the instrument transposes down, as the flat of the white key above, if that key
+     *          is white and the flat keeps the octave. With (0, -2) a written C4 is spelled Bb3, a
+     *          written F#4 Fb4, and a written C#4 B3, since Cb4 would leave octave 3. operator==()
+     *          and the analyses relate the note by that spelling; this getter then simplifies it
+     *          as above, so the written F#4 sounds E4. Without a diatonic interval a written D4
+     *          sounds D#4 a semitone up and Db4 a semitone down.
      * @return Sounding pitch string, or "rest" for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).

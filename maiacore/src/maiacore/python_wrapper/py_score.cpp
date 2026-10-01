@@ -473,8 +473,9 @@ void ScoreClass(const py::module& m) {
         holds the parts' own notes: a note of a transposing instrument keeps its written pitch
         and its transposing interval, and the chord's analysis (``getName``, ``getRoot``, ...)
         relates it at concert pitch, spelled with its written letter moved by the diatonic
-        transposing interval. The notes that analysis returns are untransposed notes at that
-        pitch (see ``Chord``).
+        transposing interval, or, where that gives no spelling, by the fallback described on
+        ``Note.getSoundingPitch``, without the simplification. The notes that analysis returns
+        are untransposed notes at that pitch (see ``Chord``).
 
         Parameters
         ----------
