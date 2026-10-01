@@ -2157,6 +2157,9 @@ TEST(NoteMutatorThatThrows, aRestIsNotGivenAPitchThatCannotSound) {
 // spelling's own octave. Acoustic: getMidiNumber() and the other measures of what sounds. A note is
 // compared, and analysed, at its concert spelling: the written pitch moved by the transposing
 // interval, its letter by the diatonic interval.
+//
+// The design these tests cite, with its decisions D1-D7, the examples of its section 3 and the
+// measurements of its section 5, is docs/superpowers/specs/2026-09-30-note-pitch-views-design.md.
 
 // The design's section 3, through the public API: the written pitch, the concert spelling the note
 // is compared at, the sounding pitch and its octave, and the MIDI number -- plus decision D4's

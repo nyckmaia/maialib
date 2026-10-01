@@ -851,7 +851,9 @@ def transposing(written, diatonic, chromatic):
 
 class NotePitchViews(unittest.TestCase):
     """Written (the unprefixed getters are shortcuts for it), Sounding (the simplest spelling of
-    what sounds) and acoustic. Mirrors the C++ NotePitchViews tests."""
+    what sounds) and acoustic. Mirrors the C++ NotePitchViews tests. The design these tests cite,
+    with its decisions D1-D7 and the examples of its section 3, is
+    docs/superpowers/specs/2026-09-30-note-pitch-views-design.md."""
 
     # The design's section 3 through the public API, plus decision D4's tie example.
     def testTheSpecExamplesTable(self):
