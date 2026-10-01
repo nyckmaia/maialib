@@ -1,0 +1,547 @@
+{
+ "anacrusis": false,
+ "composer": "",
+ "parts": [
+  {
+   "measures": [
+    {
+     "barlines": [
+      {
+       "location": "left",
+       "repeat": "",
+       "style": ""
+      },
+      {
+       "location": "right",
+       "repeat": "",
+       "style": ""
+      }
+     ],
+     "changed": {
+      "clef": true,
+      "divisions": true,
+      "key": true,
+      "metronome": false,
+      "time": true
+     },
+     "divisions": 256,
+     "key": {
+      "fifths": 0,
+      "major": true
+     },
+     "number": 0,
+     "staves": [
+      {
+       "clef": {
+        "line": 2,
+        "sign": "G"
+       },
+       "notes": [
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "C4",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "C4",
+         "staff": 0,
+         "stem": "up",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 1
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "D4",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "D4",
+         "staff": 0,
+         "stem": "up",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 1
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "E4",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "E4",
+         "staff": 0,
+         "stem": "up",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 1
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "F4",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "F4",
+         "staff": 0,
+         "stem": "up",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 1
+        }
+       ]
+      },
+      {
+       "clef": {
+        "line": 4,
+        "sign": "F"
+       },
+       "notes": [
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "G2",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "G2",
+         "staff": 1,
+         "stem": "up",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 2
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "A2",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "A2",
+         "staff": 1,
+         "stem": "up",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 2
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "B2",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "B2",
+         "staff": 1,
+         "stem": "up",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 2
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "C3",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "C3",
+         "staff": 1,
+         "stem": "up",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 2
+        }
+       ]
+      }
+     ],
+     "time": [
+      4,
+      4
+     ]
+    },
+    {
+     "barlines": [
+      {
+       "location": "left",
+       "repeat": "",
+       "style": ""
+      },
+      {
+       "location": "",
+       "repeat": "",
+       "style": "light-heavy"
+      }
+     ],
+     "changed": {
+      "clef": true,
+      "divisions": false,
+      "key": false,
+      "metronome": false,
+      "time": false
+     },
+     "divisions": 256,
+     "key": {
+      "fifths": 0,
+      "major": true
+     },
+     "number": 1,
+     "staves": [
+      {
+       "clef": {
+        "line": 2,
+        "sign": "G"
+       },
+       "notes": [
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "G4",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "G4",
+         "staff": 0,
+         "stem": "up",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 1
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "A4",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "A4",
+         "staff": 0,
+         "stem": "up",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 1
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "B4",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "B4",
+         "staff": 0,
+         "stem": "down",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 1
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "C5",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "C5",
+         "staff": 0,
+         "stem": "down",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 1
+        }
+       ]
+      },
+      {
+       "clef": {
+        "line": 4,
+        "sign": "F"
+       },
+       "notes": [
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "D3",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "D3",
+         "staff": 1,
+         "stem": "down",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 2
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "E3",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "E3",
+         "staff": 1,
+         "stem": "down",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 2
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "F3",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "F3",
+         "staff": 1,
+         "stem": "down",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 2
+        },
+        {
+         "articulations": [],
+         "beams": [],
+         "chord": false,
+         "divisions": 256,
+         "dots": 0,
+         "grace": false,
+         "on": true,
+         "pitch": "G3",
+         "pitched": true,
+         "slur": [
+          "",
+          ""
+         ],
+         "sounding": "G3",
+         "staff": 1,
+         "stem": "down",
+         "ticks": 256,
+         "ties": [],
+         "transpose": [
+          0,
+          0
+         ],
+         "type": "quarter",
+         "unpitched_index": 0,
+         "voice": 2
+        }
+       ]
+      }
+     ],
+     "time": [
+      4,
+      4
+     ]
+    }
+   ],
+   "midi_unpitched": [],
+   "name": "Piano",
+   "pitched": true,
+   "short_name": "Piano.",
+   "staff_lines": 5,
+   "staves": 2
+  }
+ ],
+ "title": ""
+}
