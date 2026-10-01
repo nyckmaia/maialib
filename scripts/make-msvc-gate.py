@@ -289,6 +289,14 @@ def remove_setuptools_build_dirs() -> None:
     )
 
 
+def pinned_requirement(name: str) -> str:
+    """Return the requirement line pinning ``name`` in requirements-dev.txt."""
+    for line in (REPO_ROOT / "requirements-dev.txt").read_text(encoding="utf-8").splitlines():
+        if line.split("==")[0].strip().lower() == name:
+            return line.strip()
+    check_failed(f"requirements-dev.txt does not pin {name}")
+
+
 def python_build_and_test(instance: str) -> None:
     """Install the package with pip into a fresh virtual environment, then test and import it."""
     python = VENV_DIR / "Scripts" / "python.exe"
@@ -320,6 +328,12 @@ def python_build_and_test(instance: str) -> None:
         # Visual Studio 2022 generator.
         remove_setuptools_build_dirs()
 
+    # The MusicXML tests validate documents with lxml, a test-only dependency pinned in
+    # requirements-dev.txt; `pip install .` does not install it.
+    run_step(
+        [str(python), "-m", "pip", "install", pinned_requirement("lxml")],
+        "pip install lxml (test dependency)",
+    )
     run_step([str(python), "-m", "unittest"], "Python unit tests", cwd=str(REPO_ROOT / "test"))
 
     version = (REPO_ROOT / "VERSION").read_text(encoding="utf-8").strip()

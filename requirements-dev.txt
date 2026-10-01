@@ -22,6 +22,9 @@ plotly==7.1.0
 kaleido==1.4.0
 nbformat==5.11.1
 
+# Test-only: the MusicXML tests validate documents against the official 4.0 schema with lxml.
+lxml==6.1.3
+
 # Build / dev tooling
 setuptools==84.0.0
 wheel==0.48.0
