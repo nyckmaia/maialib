@@ -3170,10 +3170,11 @@ bool operator<(const HeapData& a, const HeapData& b) { return std::get<1>(a) < s
 std::ostream& operator<<(std::ostream& os, const Chord& chord) {
     const int chordSize = chord.size();
 
-    // A stream operator must not throw: gtest calls operator<< to format values in failure
-    // messages, so a throwing operator<< can turn a clean test failure into a process abort.
-    // getNote(-1) on an empty chord throws, so the empty case is handled here explicitly,
-    // matching __repr__'s "[]" for an empty chord.
+    // A stream operator should not throw where it can answer: gtest calls operator<< to format
+    // values in failure messages, so a throwing operator<< can turn a clean test failure into a
+    // process abort. getNote(-1) on an empty chord throws, so the empty case is handled here
+    // explicitly, matching __repr__'s "[]" for an empty chord. A note sounding below C1b-1 has no
+    // spelling to show, so it still throws, as the declaration documents.
     if (chordSize == 0) {
         os << "[]";
         return os;

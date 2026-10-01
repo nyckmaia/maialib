@@ -48,7 +48,10 @@ void NoteClass(const py::module& m) {
         spelled alike unless the written spelling has a simpler one: an untransposed ``Cb4``
         sounds ``B3``. ``Chord``, ``Interval`` and a score's chord and melody analyses relate a
         note of a transposing instrument at the pitch it sounds, spelled with its written letter
-        moved by the diatonic transposing interval, and ``==`` compares notes the same way.
+        moved by the diatonic transposing interval -- or, where that gives no spelling, by the
+        fallback described on ``getSoundingPitch``, without the simplification: with
+        ``transposeDiatonic=0`` and ``transposeChromatic=-2``, a written ``C4`` is a ``Bb3``
+        there, not a ``Cbb4`` -- and ``==`` compares notes the same way.
 
         Examples
         --------
@@ -1345,10 +1348,14 @@ void NoteClass(const py::module& m) {
         A note of a transposing instrument is compared at the pitch it sounds, spelled with its
         written letter moved by the diatonic transposing interval, as ``Chord`` and ``Interval``
         relate it: a B-flat clarinet's written ``D4`` equals ``Note("C4")``, and its written
-        ``Db4`` equals ``Note("Cb4")``, not ``Note("B3")``. An untransposed note is compared as
-        written, so ``Note("C#4") == Note("Db4")`` and ``Note("E1b4") == Note("E4")`` are both
-        False. Raises ``RuntimeError`` for a note whose sounding pitch lies below ``C1b-1``; see
-        ``getSoundingPitch``.
+        ``Db4`` equals ``Note("Cb4")``, not ``Note("B3")``. Where the diatonic interval gives no
+        such spelling, the position is spelled by the fallback described on
+        ``getSoundingPitch``, without the simplification: with ``transposeDiatonic=0`` and
+        ``transposeChromatic=-2``, a written ``C4`` equals ``Note("Bb3")``, not
+        ``Note("Cbb4")``, and a written ``F#4`` equals ``Note("Fb4")``, not ``Note("E4")``. An
+        untransposed note is compared as written, so ``Note("C#4") == Note("Db4")`` and
+        ``Note("E1b4") == Note("E4")`` are both False. Raises ``RuntimeError`` for a note whose
+        sounding pitch lies below ``C1b-1``; see ``getSoundingPitch``.
 
         Examples
         --------

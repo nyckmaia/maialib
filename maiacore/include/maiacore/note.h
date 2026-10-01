@@ -56,8 +56,11 @@ Pitch concertPitch(const Note& note);
  * The analyses that relate notes -- Chord, Interval, and the chord extraction and melody search of
  * Score -- relate a note of a transposing instrument at the pitch it sounds, spelled with its
  * written letter moved by the diatonic transposing interval (a B-flat clarinet's written Db4 is a
- * Cb4 there, as in a C-flat chord), and an untransposed note exactly as it is written. operator==()
- * compares notes the same way.
+ * Cb4 there, as in a C-flat chord), and an untransposed note exactly as it is written. Where the
+ * diatonic interval gives no such spelling, the fallback described on getSoundingPitch() spells
+ * the position, without the simplification: with no diatonic interval, a (0, -2) instrument's
+ * written C4 is a Bb3 there, not a Cbb4, and its written F#4 an Fb4. operator==() compares notes
+ * the same way.
  */
 class Note {
    private:
@@ -974,10 +977,13 @@ class Note {
      * @details A note of a transposing instrument is compared at the pitch it sounds, spelled with
      *          its written letter moved by the diatonic transposing interval, as Chord and Interval
      *          relate it: a B-flat clarinet's written D4 equals a C4, and its written Db4 equals a
-     *          Cb4, not a B3. An untransposed note is compared as written, so C#4 and Db4 differ,
-     *          as do E1b4 and E4. Duration, voice and every other attribute are ignored. Two equal
-     *          notes lie at the same exact position, so neither is ordered before the other
-     *          (operator<()).
+     *          Cb4, not a B3. Where the diatonic interval gives no such spelling, the position is
+     *          spelled by the fallback described on getSoundingPitch(), without the
+     *          simplification: with no diatonic interval, a (0, -2) instrument's written C4 equals
+     *          a Bb3, not a Cbb4, and its written F#4 an Fb4, not an E4. An untransposed note is
+     *          compared as written, so C#4 and Db4 differ, as do E1b4 and E4. Duration, voice and
+     *          every other attribute are ignored. Two equal notes lie at the same exact position,
+     *          so neither is ordered before the other (operator<()).
      * @throws std::runtime_error If either note's sounding pitch lies below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
      */

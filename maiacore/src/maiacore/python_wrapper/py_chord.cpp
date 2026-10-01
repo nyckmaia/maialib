@@ -766,7 +766,8 @@ void ChordClass(const py::module& m) {
         ------
         RuntimeError
             If the chord (or, for an analysable chord, its stacked-in-thirds representation) is
-            empty. Quarter tones are never the cause.
+            empty, or if a note's sounding pitch lies below ``C1b-1`` (see
+            ``Note.getSoundingPitch``). Quarter tones are never the cause.
     )pbdoc");
 
     cls.def("print", &Chord::print,
@@ -1000,7 +1001,10 @@ void ChordClass(const py::module& m) {
         Compare the chords note by note, in the order the notes were added, as ``Note.__eq__``
         compares notes: the same pitches, spelled alike, a note of a transposing instrument taken
         at the pitch it sounds, spelled with its written letter moved by the diatonic transposing
-        interval. Chords of different sizes differ, and so do the same notes in another order.
+        interval -- or, where that gives no spelling, by the fallback described on
+        ``Note.getSoundingPitch``, without the simplification (with ``transposeDiatonic=0`` and
+        ``transposeChromatic=-2``, a written ``C4`` is a ``Bb3``, not a ``Cbb4``). Chords of
+        different sizes differ, and so do the same notes in another order.
 
         Examples
         --------
@@ -1049,9 +1053,11 @@ void ChordClass(const py::module& m) {
         ``<Chord [P1, P2, ...]>``, the notes in the order they were added, each at concert pitch
         as the harmonic analysis relates it: a note of a transposing instrument at the pitch it
         sounds, spelled with its written letter moved by the diatonic transposing interval (a
-        B-flat clarinet's written ``Db5`` is shown ``Cb5``), an untransposed note as written.
-        Raises ``RuntimeError`` for a note whose sounding pitch lies below ``C1b-1``; see
-        ``Note.getSoundingPitch``.
+        B-flat clarinet's written ``Db5`` is shown ``Cb5``) -- or, where that gives no spelling,
+        by the fallback described on ``Note.getSoundingPitch``, without the simplification (with
+        ``transposeDiatonic=0`` and ``transposeChromatic=-2``, a written ``F#4`` is shown
+        ``Fb4``) -- and an untransposed note as written. Raises ``RuntimeError`` for a note whose
+        sounding pitch lies below ``C1b-1``; see ``Note.getSoundingPitch``.
     )pbdoc");
 
     // The hash of exactly what == compares, the notes' concert spellings in order, so that equal

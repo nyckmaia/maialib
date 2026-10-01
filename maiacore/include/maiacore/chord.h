@@ -1326,8 +1326,13 @@ class Chord {
      * @brief Prints the pitches of all notes in the chord to the log.
      * @details Each note is shown at concert pitch, as the analysis relates it: a note of a
      *          transposing instrument at the pitch it sounds, spelled with its written letter moved
-     *          by the diatonic transposing interval (a B-flat clarinet's written Db5 is shown Cb5),
-     *          an untransposed note as written. Useful for debugging and inspection.
+     *          by the diatonic transposing interval (a B-flat clarinet's written Db5 is shown Cb5)
+     *          -- or, where that gives no spelling, by the fallback described on
+     *          Note::getSoundingPitch(), without the simplification (with no diatonic interval, a
+     *          (0, -2) instrument's written F#4 is shown Fb4) -- and an untransposed note as
+     *          written. Useful for debugging and inspection.
+     * @throws std::runtime_error If a note's sounding pitch lies below the lowest representable
+     *         pitch, C1b-1 (see Note::getMidiNumber()).
      */
     void print() const;
 
@@ -1335,6 +1340,8 @@ class Chord {
      * @brief Prints the pitches of all notes in the open stack to the log.
      * @details Each note is shown at concert pitch, as print() shows it. Useful for debugging and
      *          inspection of the stacked chord.
+     * @throws std::runtime_error If a note of the stack sounds below the lowest representable
+     *         pitch, C1b-1 (see Note::getMidiNumber()).
      */
     void printStack() const;
 
@@ -1351,6 +1358,8 @@ class Chord {
      *          a chord they do not understand, so it must work on any chord that can be built.
      * @throws std::runtime_error If the chord (or, for an analysable chord, its stacked-in-thirds
      *         representation) is empty. Quarter tones are never the cause.
+     * @throws std::runtime_error If a note's sounding pitch lies below the lowest representable
+     *         pitch, C1b-1 (see Note::getMidiNumber()).
      */
     void info();
 
@@ -1635,6 +1644,9 @@ class Chord {
      *             spelled alike, a note of a transposing instrument taken at the pitch it sounds,
      *             spelled with its written letter moved by the diatonic transposing interval, so a
      *             chord holding a B-flat clarinet's written D4 equals one holding a C4 in its place
+     *             -- or, where that gives no spelling, by the fallback described on
+     *             Note::getSoundingPitch(), without the simplification (with no diatonic
+     *             interval, a (0, -2) instrument's written C4 is a Bb3, not a Cbb4)
      *
      *          This is a strict pitch-space comparison that preserves registral and voice-leading
      *          relationships. It does NOT compare:
@@ -1765,6 +1777,8 @@ class Chord {
      * @param os Output stream.
      * @param chord Chord to print.
      * @return Reference to the output stream.
+     * @throws std::runtime_error If a note's sounding pitch lies below the lowest representable
+     *         pitch, C1b-1 (see Note::getMidiNumber()).
      */
     friend std::ostream& operator<<(std::ostream& os, const Chord& chord);
 };
