@@ -691,10 +691,11 @@ class Score {
      *              note onsets (homophonic texture, block chord analysis)
      *          - `includeDuplicates` (boolean): Duplicate pitch handling
      *            - **true**: Keep every note, unisons included (["C4", "C4", "E4", "G4"])
-     *            - **false**: Keep one note of each pitch, spelling and octave included
-     *              (["C4", "E4", "G4"]): an octave doubling such as C4 and C5 keeps both notes, as
-     *              do C#4 and Db4, and notes of transposing parts are compared at concert pitch
-     *              (Chord::removeDuplicateNotes())
+     *            - **false**: Remove duplicates as Chord::removeDuplicateNotes() does: the notes
+     *              are sorted, then each note spelled, at concert pitch, exactly as the note
+     *              before it is removed (["C4", "C4", "E4", "G4"] gives ["C4", "E4", "G4"]): a
+     *              B-flat clarinet's written D4 duplicates a violin's C4, while C#4 and Db4 are
+     *              both kept, and so are the C4 and C5 of an octave doubling
      *          - `includeUnpitched` (boolean): Include percussion/unpitched elements
      *
      *          **Example Configuration**:

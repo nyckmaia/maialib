@@ -68,8 +68,10 @@ typedef std::vector<SetharesDissonanceTableRow> SetharesDissonanceTable;
  * closed stack representations, as well as enharmonic transformations of notes.
  *
  * Notes of transposing instruments are analysed at concert pitch: at the pitch each one sounds,
- * spelled with its written letter moved by the diatonic transposing interval. A horn in F's written
- * B4 is an E4, so with C4 and G4 it makes a C major chord. The notes the analysis returns -- the
+ * spelled with its written letter moved by the diatonic transposing interval, which is inferred
+ * from the chromatic one when it is 0; where that gives no spelling, the fallback spells the
+ * position (see Note::getSoundingPitch()). A horn in F's written B4 is an E4, so with C4 and G4 it
+ * makes a C major chord, and so does a (0, -7) instrument's. The notes the analysis returns -- the
  * root, the bass note, the open and close stacks, their heaps and the chords built from them --
  * are untransposed notes at those pitches; getNotes() returns the chord's own notes as they were
  * added.
@@ -1326,11 +1328,12 @@ class Chord {
      * @brief Prints the pitches of all notes in the chord to the log.
      * @details Each note is shown at concert pitch, as the analysis relates it: a note of a
      *          transposing instrument at the pitch it sounds, spelled with its written letter moved
-     *          by the diatonic transposing interval (a B-flat clarinet's written Db5 is shown Cb5)
-     *          -- or, where that gives no spelling, by the fallback described on
-     *          Note::getSoundingPitch(), without the simplification (with no diatonic interval, a
-     *          (0, -2) instrument's written F#4 is shown Fb4) -- and an untransposed note as
-     *          written. Useful for debugging and inspection.
+     *          by the diatonic transposing interval, inferred from the chromatic one when it is 0
+     *          (a B-flat clarinet's written Db5 is shown Cb5, and so is a (0, -2) instrument's) --
+     *          or, where that gives no spelling, by the fallback described on
+     *          Note::getSoundingPitch(), without the simplification (a B-flat clarinet's written
+     *          Cbb4 is shown Ab3) -- and an untransposed note as written. Useful for debugging and
+     *          inspection.
      * @throws std::runtime_error If a note's sounding pitch lies below the lowest representable
      *         pitch, C1b-1 (see Note::getMidiNumber()).
      */
@@ -1339,11 +1342,13 @@ class Chord {
     /**
      * @brief Prints the pitches of all notes in the open stack to the log.
      * @details The stack is the open stack of the last analysis (see getOpenStackNotes()) or, for
-     *          a chord never analysed, the notes as they were added. Changes made since are not
-     *          reflected until an analysis method runs again: addNote() and insertNote() append
-     *          their note to it, and a note removed with removeNote() or removeTopNote() stays in
-     *          it. Each note is shown at concert pitch, as print() shows it. Useful for debugging
-     *          and inspection of the stacked chord.
+     *          a chord never analysed, the notes as they were added. A note added or removed since
+     *          is not stacked until an analysis method runs again: addNote() and insertNote()
+     *          append their note to the end of the stack, and a note removed with removeNote(),
+     *          removeTopNote() or removeDuplicateNotes() stays in it. transpose(),
+     *          transposeStackOnly(), roundQuarterTones() and clear() change the stack itself, so it
+     *          shows their result at once. Each note is shown at concert pitch, as print() shows
+     *          it. Useful for debugging and inspection of the stacked chord.
      * @throws std::runtime_error If a note of the stack sounds below the lowest representable
      *         pitch, C1b-1 (see Note::getMidiNumber()).
      */
@@ -1646,11 +1651,12 @@ class Chord {
      *          1. They contain the same number of notes (cardinality equality)
      *          2. Each corresponding note pair is equal (Note::operator==): the same pitch,
      *             spelled alike, a note of a transposing instrument taken at the pitch it sounds,
-     *             spelled with its written letter moved by the diatonic transposing interval, so a
-     *             chord holding a B-flat clarinet's written D4 equals one holding a C4 in its place
-     *             -- or, where that gives no spelling, by the fallback described on
-     *             Note::getSoundingPitch(), without the simplification (with no diatonic
-     *             interval, a (0, -2) instrument's written C4 is a Bb3, not a Cbb4)
+     *             spelled with its written letter moved by the diatonic transposing interval,
+     *             inferred from the chromatic one when it is 0, so a chord holding a B-flat
+     *             clarinet's or a (0, -2) instrument's written D4 equals one holding a C4 in its
+     *             place -- or, where that gives no spelling, by the fallback described on
+     *             Note::getSoundingPitch(), without the simplification (a B-flat clarinet's
+     *             written Cbb4 is an Ab3)
      *
      *          This is a strict pitch-space comparison that preserves registral and voice-leading
      *          relationships. It does NOT compare:

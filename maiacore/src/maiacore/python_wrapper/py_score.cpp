@@ -473,7 +473,8 @@ void ScoreClass(const py::module& m) {
         holds the parts' own notes: a note of a transposing instrument keeps its written pitch
         and its transposing interval, and the chord's analysis (``getName``, ``getRoot``, ...)
         relates it at concert pitch, spelled with its written letter moved by the diatonic
-        transposing interval, or, where that gives no spelling, by the fallback described on
+        transposing interval -- inferred from the chromatic one for a ``<transpose>`` without
+        ``<diatonic>`` -- or, where that gives no spelling, by the fallback described on
         ``Note.getSoundingPitch``, without the simplification. The notes that analysis returns
         are untransposed notes at that pitch (see ``Chord``).
 
@@ -483,8 +484,9 @@ void ScoreClass(const py::module& m) {
             ``partNames`` (list of str, default every part); ``measureStart`` (int, the
             zero-based index of the first measure, default 0); ``measureEnd`` (int, the
             zero-based index one past the last measure, default the score's length);
-            ``includeDuplicates`` (bool, default False, which keeps one of the notes spelled
-            alike at concert pitch, see ``Chord.removeDuplicateNotes``); ``includeUnpitched``
+            ``includeDuplicates`` (bool, default False, which removes duplicates as
+            ``Chord.removeDuplicateNotes`` does: the notes are sorted, then each note spelled, at
+            concert pitch, exactly as the note before it is removed); ``includeUnpitched``
             (bool, default False, which skips unpitched parts).
 
         Returns

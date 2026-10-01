@@ -1305,6 +1305,8 @@ TEST(ChordOfTransposingInstruments, isAnalysedAsTheChordOfThePitchesItsNotesSoun
         {{bFlatClarinet("A#3"), Note("B3"), Note("D4"), Note("F4")},
          {"G#3", "B3", "D4", "F4"},
          "G#º"},
+        // Only the chromatic interval: the inferred major second makes the written F#4 an E4.
+        {{Note("C4"), transposingNote("F#4", 0, -2), Note("G4")}, {"C4", "E4", "G4"}, "C"},
     };
     for (const auto& [notes, sounds, name] : cases) {
         const std::string where = "the chord of " + testing::PrintToString(sounds);

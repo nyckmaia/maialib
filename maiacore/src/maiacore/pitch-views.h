@@ -20,16 +20,27 @@ namespace maiacore::detail {
  *          writes F#4 for E4, Db4 for Cb4 and C1x4 for B1b3; a horn in F (-4, -7) writes B4 for
  *          E4; a piccolo (7, 12) writes Bb4 for Bb5.
  *
- *          Fallback: when transposeDiatonic is 0 while transposeChromatic is not (a MusicXML
- *          `<transpose>` without `<diatonic>`), when that alter would pass a double accidental,
- *          or when that octave would leave -1..11, the position is spelled by the chromatic rule
+ *          Inferred diatonic interval: when transposeDiatonic is 0 while transposeChromatic is
+ *          not (a MusicXML `<transpose>` without `<diatonic>`, or a Note given only a chromatic
+ *          interval), the letter is moved by the diatonic interval conventionally written for
+ *          those semitones: 7 letters for each whole octave plus, for the semitones left over, 1
+ *          for 1 or 2, 2 for 3 or 4, 3 for 5 or 6 (the tritone as an augmented fourth), 4 for 7,
+ *          5 for 8 or 9 and 6 for 10 or 11, in the direction of transposeChromatic. With (0, -2)
+ *          F#4 gives E4 and C4 gives Bb3, as with a B-flat clarinet's (-1, -2), and (0, -7)
+ *          moves the letter as a horn in F's (-4, -7) does. A non-zero transposeDiatonic is used
+ *          as given, even when it disagrees with transposeChromatic.
+ *
+ *          Fallback: when the alter the letter needs would pass a double accidental, or when the
+ *          letter's octave would leave -1..11, the position is spelled by the chromatic rule
  *          instead: the natural or sharp spelling when transposeChromatic is positive; otherwise
  *          the flat spelling when one exists in the same octave, and the natural or sharp one
- *          when not (C4 with (0, -2) gives Bb3, Db4 with (0, -2) gives B3, C4 with (0, 2) gives
- *          D4).
+ *          when not. A B-flat clarinet's Cbb4 gives Ab3, as Bbbb3 is not representable; Fx4 with
+ *          (1, 3) gives A#4, as G would need three sharps; Bb11 with (0, 1) or (1, 1) gives B11,
+ *          as Cb12 would leave octave 11.
  * @param written The written pitch. A rest is returned unchanged.
  * @param transposeDiatonic Letters from the written to the sounding pitch (-1 for a B-flat
- *        clarinet).
+ *        clarinet); 0 with a non-zero transposeChromatic stands for the conventional diatonic
+ *        interval of those semitones.
  * @param transposeChromatic Semitones from the written to the sounding pitch (-2 for a B-flat
  *        clarinet).
  * @return The written pitch itself when both intervals are 0; otherwise its concert spelling.

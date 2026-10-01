@@ -10,6 +10,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstdlib>
 #include <limits>
 #include <map>
 #include <string>
@@ -106,6 +107,14 @@ size_t stepIndex(const std::string& step) {
     return index;
 }
 
+// The diatonic interval a transposition of 'chromatic' semitones is read with when only the
+// chromatic one is given: the whole number of letters nearest to 7 letters per 12 semitones, with
+// the tritone's 3.5 taken down to 3, an augmented fourth, in the direction of 'chromatic'.
+int inferredDiatonic(const int chromatic) {
+    const int letters = (7 * std::abs(chromatic) + 5) / 12;
+    return chromatic < 0 ? -letters : letters;
+}
+
 // The letter and octave 'diatonic' letters away from (step, octave), counted one letter at a
 // time as a musician counts them: up from B to the next octave's C, down from C to the previous
 // octave's B.
@@ -166,7 +175,9 @@ TEST(ConcertSpelling, theSpecExamplesTable) {
         {"C1x4", -1, -2, "B1b3", 59},  // B-flat clarinet: 58.5 rounds up
         {"B4", -4, -7, "E4", 64},      // horn in F
         {"Bb4", 7, 12, "Bb5", 82},     // piccolo
-        {"C4", 0, -2, "Bb3", 58},      // no <diatonic>: the chromatic fallback
+        {"C4", 0, -2, "Bb3", 58},      // no <diatonic>: the inferred major second
+        {"F#4", 0, -2, "E4", 64},      // no <diatonic>: the inferred major second
+        {"Cbb4", -1, -2, "Ab3", 56},   // B-flat clarinet: Bbbb3 needs the chromatic fallback
     };
     for (const auto& [written, diatonic, chromatic, expected, midi] : rows) {
         EXPECT_EQ(concert(written, diatonic, chromatic), expected)
@@ -221,14 +232,14 @@ TEST(ConcertSpelling, aQuarterToneKeepsItsFraction) {
     });
 }
 
-// A MusicXML <transpose> without <diatonic> gives no letter to move: the chromatic rule spells
-// the position, with the natural or sharp spelling going up and the flat spelling going down when
-// one exists in the same octave.
-TEST(ConcertSpelling, withoutADiatonicIntervalTheChromaticRuleSpellsThePosition) {
+// A MusicXML <transpose> without <diatonic>, or a note given only a chromatic interval, moves the
+// letter by the diatonic interval conventionally written for those semitones: a B-flat clarinet's
+// (-1, -2) for (0, -2), so a written F#4 is E4, not Fb4, and a written Db4 is Cb4.
+TEST(ConcertSpelling, withoutADiatonicIntervalTheConventionalOneIsInferred) {
     expectConcert({
         {"C4", 0, -2, "Bb3"},
-        {"F#4", 0, -2, "Fb4"},
-        {"Db4", 0, -2, "B3"},  // Cb4, the flat spelling, lies in another octave
+        {"F#4", 0, -2, "E4"},
+        {"Db4", 0, -2, "Cb4"},
         {"C4", 0, 2, "D4"},
         {"C#4", 0, 2, "D#4"},
         {"C1x4", 0, -2, "B1b3"},
@@ -236,28 +247,68 @@ TEST(ConcertSpelling, withoutADiatonicIntervalTheChromaticRuleSpellsThePosition)
     });
 }
 
+// The inferred diatonic interval for every number of semitones within an octave, in both
+// directions, and for compound intervals: seven letters for each whole octave, plus a second for
+// 1 or 2 semitones, a third for 3 or 4, a fourth for 5, a fifth for 7, a sixth for 8 or 9 and a
+// seventh for 10 or 11. Written C4 shows the letter each one reaches.
+TEST(ConcertSpelling, theInferredIntervalIsTheConventionalOneForEverySemitoneCount) {
+    expectConcert({
+        {"C4", 0, 1, "Db4"},  {"C4", 0, -1, "B3"},    // minor second
+        {"C4", 0, 2, "D4"},   {"C4", 0, -2, "Bb3"},   // major second
+        {"C4", 0, 3, "Eb4"},  {"C4", 0, -3, "A3"},    // minor third
+        {"C4", 0, 4, "E4"},   {"C4", 0, -4, "Ab3"},   // major third
+        {"C4", 0, 5, "F4"},   {"C4", 0, -5, "G3"},    // perfect fourth
+        {"C4", 0, 7, "G4"},   {"C4", 0, -7, "F3"},    // perfect fifth
+        {"C4", 0, 8, "Ab4"},  {"C4", 0, -8, "E3"},    // minor sixth
+        {"C4", 0, 9, "A4"},   {"C4", 0, -9, "Eb3"},   // major sixth
+        {"C4", 0, 10, "Bb4"}, {"C4", 0, -10, "D3"},   // minor seventh
+        {"C4", 0, 11, "B4"},  {"C4", 0, -11, "Db3"},  // major seventh
+        {"C4", 0, 12, "C5"},  {"C4", 0, -12, "C3"},   // octave
+        {"C4", 0, 14, "D5"},  {"C4", 0, -14, "Bb2"},  // major ninth: a B-flat bass clarinet
+        {"C4", 0, 21, "A5"},  {"C4", 0, -21, "Eb2"},  // major thirteenth
+        {"C4", 0, 24, "C6"},  {"C4", 0, -24, "C2"},   // two octaves
+    });
+}
+
+// Six semitones are a fourth, the augmented one, not a diminished fifth: the tritone takes three
+// letters in either direction.
+TEST(ConcertSpelling, theInferredTritoneIsAnAugmentedFourth) {
+    expectConcert({
+        {"C4", 0, 6, "F#4"},
+        {"C4", 0, -6, "Gb3"},
+        {"B3", 0, 6, "E#4"},
+        {"F4", 0, -6, "Cb4"},
+    });
+}
+
 // When the letter would need an alter beyond a double accidental, the chromatic rule spells the
-// position.
+// position, whether the diatonic interval is given or inferred.
 TEST(ConcertSpelling, fallsBackWhenTheAlterWouldPassADoubleAccidental) {
     expectConcert({
         {"Fx4", 1, 3, "A#4"},      // G would need +3
         {"Ex4", 1, 2, "G#4"},      // F would need +3
         {"Dbb4", -1, -3, "A3"},    // C would need -3
         {"C3b4", -1, -2, "A1b3"},  // B would need -2.5
+        {"Cbb4", -1, -2, "Ab3"},   // B would need -3
+        {"Cbb4", 0, -2, "Ab3"},    // the inferred major second: B would need -3
+        {"Ex4", 0, 2, "G#4"},      // the inferred major second: F would need +3
     });
 }
 
-// When the letter would land outside octaves -1..11, the chromatic rule spells the position.
+// When the letter would land outside octaves -1..11, the chromatic rule spells the position,
+// whether the diatonic interval is given or inferred.
 TEST(ConcertSpelling, fallsBackWhenTheOctaveWouldLeaveTheRange) {
     expectConcert({
         {"Bb11", 1, 1, "B11"},       // Cb12
+        {"Bb11", 0, 1, "B11"},       // the inferred minor second: Cb12
         {"D-1", -2, -1, "Db-1"},     // Bx-2
         {"C#-1", -1, -1, "C-1"},     // B#-2
         {"C1x-1", -1, -1, "C1b-1"},  // B1x-2; C1b-1 is the lowest representable pitch
     });
 }
 
-// A spelling the diatonic interval reaches is returned even above B11, up to Bx11.
+// A spelling the diatonic interval reaches is returned even above B11, up to Bx11, also when the
+// diatonic interval is inferred.
 TEST(ConcertSpelling, aDiatonicSpellingAboveB11IsReturned) {
     expectConcert({
         {"A#11", 1, 2, "B#11"},
@@ -266,6 +317,8 @@ TEST(ConcertSpelling, aDiatonicSpellingAboveB11IsReturned) {
         {"Bx10", 7, 12, "Bx11"},
         {"Gx11", 2, 3, "B#11"},
         {"A1x11", 1, 2, "B1x11"},
+        {"A#11", 0, 2, "B#11"},   // the inferred major second
+        {"B#10", 0, 12, "B#11"},  // the inferred octave
     });
 }
 
@@ -274,7 +327,8 @@ TEST(ConcertSpelling, aDiatonicSpellingAboveB11IsReturned) {
 TEST(ConcertSpelling, aPositionAboveB11WithoutADiatonicSpellingIsRejected) {
     EXPECT_EQ(concert("B11", 1, 3), raisesAboveTheCeiling("B11", 1, 3, "158.000000"));    // C#12
     EXPECT_EQ(concert("C11", 7, 12), raisesAboveTheCeiling("C11", 7, 12, "156.000000"));  // C12
-    EXPECT_EQ(concert("B11", 0, 1), raisesAboveTheCeiling("B11", 0, 1, "156.000000"));  // no letter
+    // The inferred minor second would need C12.
+    EXPECT_EQ(concert("B11", 0, 1), raisesAboveTheCeiling("B11", 0, 1, "156.000000"));
 }
 
 // A position below C1b-1 has no spelling at all. It is rejected with the chromatic rule's error
@@ -291,25 +345,36 @@ TEST(ConcertSpelling, aPositionBelowTheFloorIsRejected) {
 // The floor is checked on the written MIDI number and the chromatic interval added in 64 bits, so
 // an interval at the limits of int cannot wrap the position around to the other end of the range:
 // the largest upward interval is rejected as above B11, the largest downward one as below C1b-1,
-// each reporting the exact position (C4 is 60: 60 + 2147483647 and 60 - 2147483648).
+// each reporting the exact position (C4 is 60: 60 + 2147483647 and 60 - 2147483648). So is either
+// one given without a diatonic interval, whose inferred letter count lies far outside the octaves.
 TEST(ConcertSpelling, anIntervalAtTheLimitsOfIntIsRejectedOnItsOwnSide) {
     const int up = std::numeric_limits<int>::max();
     const int down = std::numeric_limits<int>::min();
     EXPECT_EQ(concert("C4", 1, up), raisesAboveTheCeiling("C4", 1, up, "2147483707.000000"));
     EXPECT_EQ(concert("C4", -1, down), belowTheFloor("C4", -1, down, "-2147483588.000000"));
+    EXPECT_EQ(concert("C4", 0, up), raisesAboveTheCeiling("C4", 0, up, "2147483707.000000"));
+    EXPECT_EQ(concert("C4", 0, down), belowTheFloor("C4", 0, down, "-2147483588.000000"));
 }
 
 // Every pitch this library can hold, with transposing intervals of every size and direction:
 // the position always moves by the chromatic interval, and whenever the letter the diatonic
 // interval reaches (counted one letter at a time) can spell it within a double accidental and
-// octaves -1..11, that is the spelling. Otherwise the chromatic rule spells it, rejecting a
-// position above B11; a position below C1b-1 is always rejected.
+// octaves -1..11, that is the spelling. A diatonic interval of 0 with a non-zero chromatic one
+// counts the letters of the conventional interval instead (inferredDiatonic()). Otherwise the
+// chromatic rule spells the position, rejecting one above B11; a position below C1b-1 is always
+// rejected.
 TEST(ConcertSpelling, everySpellingAndIntervalFollowsTheRule) {
+    // From {0, -1} on, only the chromatic interval is given: every number of semitones within an
+    // octave in both directions, and compound ones.
     const std::vector<std::pair<int, int>> intervals = {
-        {-1, -2},  {-2, -3}, {-4, -7}, {-5, -9},   {1, 2},  {2, 3}, {7, 12}, {-7, -12},
-        {-8, -14}, {0, -2},  {0, 0},   {0, 1},     {1, 0},  {1, 1}, {1, 3},  {-1, 0},
-        {-1, -1},  {-1, -3}, {-2, -1}, {3, 5},     {4, 7},  {5, 9}, {6, 11}, {-3, -5},
-        {-6, -10}, {8, 14},  {14, 24}, {-14, -24}, {1, -1},
+        {-1, -2},  {-2, -3}, {-4, -7}, {-5, -9},   {1, 2},   {2, 3},  {7, 12},  {-7, -12},
+        {-8, -14}, {0, -2},  {0, 0},   {0, 1},     {1, 0},   {1, 1},  {1, 3},   {-1, 0},
+        {-1, -1},  {-1, -3}, {-2, -1}, {3, 5},     {4, 7},   {5, 9},  {6, 11},  {-3, -5},
+        {-6, -10}, {8, 14},  {14, 24}, {-14, -24}, {1, -1},  {0, -1}, {0, 2},   {0, 3},
+        {0, -3},   {0, 4},   {0, -4},  {0, 5},     {0, -5},  {0, 6},  {0, -6},  {0, 7},
+        {0, -7},   {0, 8},   {0, -8},  {0, 9},     {0, -9},  {0, 10}, {0, -10}, {0, 11},
+        {0, -11},  {0, 12},  {0, -12}, {0, 14},    {0, -14}, {0, 21}, {0, -21}, {0, 24},
+        {0, -24},
     };
     std::vector<std::string> failures;
     std::map<std::string, size_t> cases;
@@ -328,12 +393,15 @@ TEST(ConcertSpelling, everySpellingAndIntervalFollowsTheRule) {
             const std::string actual = concertOrError(written, diatonic, chromatic);
             const bool raised = actual.rfind("raises: ", 0) == 0;
 
-            const auto [step, octave] = countLetters(stepIndex(written.getPitchStep()),
-                                                     written.getOctave().value(), diatonic);
+            const bool inferred = diatonic == 0;
+            const auto [step, octave] =
+                countLetters(stepIndex(written.getPitchStep()), written.getOctave().value(),
+                             inferred ? inferredDiatonic(chromatic) : diatonic);
             const float alter = position - (12.0f * static_cast<float>(octave + 1) +
                                             static_cast<float>(c_diatonicStepSemitones[step]));
-            const bool isDiatonic = diatonic != 0 && octave >= c_minPitchOctave &&
-                                    octave <= c_maxPitchOctave && std::fabs(alter) <= 2.0f;
+            const bool isDiatonic = octave >= c_minPitchOctave && octave <= c_maxPitchOctave &&
+                                    std::fabs(alter) <= 2.0f;
+            const std::string given = inferred ? ", inferred" : ", given";
 
             if (diatonic == 0 && chromatic == 0) {
                 cases["untransposed"]++;
@@ -347,7 +415,7 @@ TEST(ConcertSpelling, everySpellingAndIntervalFollowsTheRule) {
                     failures.push_back(where + " gives " + actual);
                 }
             } else if (isDiatonic) {
-                cases["diatonic"]++;
+                cases["diatonic" + given]++;
                 const std::string expected =
                     Pitch(c_C_diatonicScale[step], alter, octave).getPitch();
                 if (actual != expected) {
@@ -359,7 +427,7 @@ TEST(ConcertSpelling, everySpellingAndIntervalFollowsTheRule) {
                     failures.push_back(where + " gives " + actual);
                 }
             } else {
-                cases["chromatic fallback"]++;
+                cases["chromatic fallback" + given]++;
                 if (raised || Pitch(actual).getQuarterToneSteps() != position) {
                     failures.push_back(where + " gives " + actual + ", not a spelling of " +
                                        std::to_string(position));
@@ -368,8 +436,9 @@ TEST(ConcertSpelling, everySpellingAndIntervalFollowsTheRule) {
         }
     }
 
-    // Every branch of the rule is exercised.
-    EXPECT_EQ(cases.size(), 6u);
+    // Every branch of the rule is exercised, the diatonic and the fallback ones both with a given
+    // and with an inferred diatonic interval.
+    EXPECT_EQ(cases.size(), 8u);
     for (const auto& [name, count] : cases) {
         EXPECT_GT(count, 0u) << name;
     }
@@ -520,7 +589,9 @@ TEST(SoundingSpelling, isTheSimplestSpellingOfTheConcertSpelling) {
         {"F#4", -1, -2, "E4", 4},     // B-flat clarinet
         {"B4", -4, -7, "E4", 4},      // horn in F
         {"Bb4", 7, 12, "Bb5", 5},     // piccolo
-        {"C4", 0, -2, "Bb3", 3},      // no <diatonic>
+        {"C4", 0, -2, "Bb3", 3},      // no <diatonic>: the inferred major second
+        {"F#4", 0, -2, "E4", 4},      // no <diatonic>: the inferred major second
+        {"Cbb4", -1, -2, "Ab3", 3},   // B-flat clarinet: the chromatic fallback, a tie kept flat
     };
     for (const auto& [written, diatonic, chromatic, expected, octave] : rows) {
         const Pitch sounding =

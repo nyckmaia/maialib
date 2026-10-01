@@ -37,10 +37,11 @@ void NoteClass(const py::module& m) {
         - Sounding, what the note sounds, in its simplest spelling: ``getSoundingPitch``,
           ``getSoundingOctave``, ``getSoundingPitchClass``, ``getSoundingPitchStep`` and
           ``getDiatonicSoundingPitchClass``. The written pitch is moved by the transposing
-          interval -- its letter by ``transposeDiatonic``, its position by
-          ``transposeChromatic`` -- and respelled with the smallest accidental any spelling of
-          that position has; between a sharp and a flat equally close, the moved spelling's side
-          is kept. The octave is that spelling's own (see ``getSoundingPitch``).
+          interval -- its letter by ``transposeDiatonic`` (inferred from ``transposeChromatic``
+          when it is 0), its position by ``transposeChromatic`` -- and respelled with the
+          smallest accidental any spelling of that position has; between a sharp and a flat
+          equally close, the moved spelling's side is kept. The octave is that spelling's own
+          (see ``getSoundingPitch``).
         - Acoustic, measures of what sounds: ``getMidiNumber``, ``getQuarterToneSteps``,
           ``getFrequency`` and ``getHarmonicSpectrum``.
 
@@ -48,10 +49,11 @@ void NoteClass(const py::module& m) {
         spelled alike unless the written spelling has a simpler one: an untransposed ``Cb4``
         sounds ``B3``. ``Chord``, ``Interval`` and a score's chord and melody analyses relate a
         note of a transposing instrument at the pitch it sounds, spelled with its written letter
-        moved by the diatonic transposing interval -- or, where that gives no spelling, by the
-        fallback described on ``getSoundingPitch``, without the simplification: with
-        ``transposeDiatonic=0`` and ``transposeChromatic=-2``, a written ``C4`` is a ``Bb3``
-        there, not a ``Cbb4`` -- and ``==`` compares notes the same way.
+        moved by the diatonic transposing interval, inferred from the chromatic one when
+        ``transposeDiatonic`` is 0 (with ``transposeChromatic=-2`` alone, a written ``F#4`` is
+        an ``E4``, as a B-flat clarinet's is) -- or, where that gives no spelling, by the
+        fallback described on ``getSoundingPitch``, without the simplification (a B-flat
+        clarinet's written ``Cbb4`` is an ``Ab3``) -- and ``==`` compares notes the same way.
 
         Examples
         --------
@@ -88,7 +90,8 @@ void NoteClass(const py::module& m) {
         transposeDiatonic : int, default 0
             Diatonic steps from the written to the sounding pitch, e.g. -1 for a B-flat
             clarinet. With 0 and a non-zero ``transposeChromatic``, the sounding pitch is spelled
-            by the fallback described on ``getSoundingPitch``.
+            with the conventional diatonic interval for those semitones, -1 for -2 (see
+            ``getSoundingPitch``); ``getTransposeDiatonic()`` still returns 0.
         transposeChromatic : int, default 0
             Semitones from the written to the sounding pitch, e.g. -2 for a B-flat clarinet.
         divisionsPerQuarterNote : int, default 256
@@ -134,7 +137,8 @@ void NoteClass(const py::module& m) {
         transposeDiatonic : int, default 0
             Diatonic steps from the written to the sounding pitch, e.g. -1 for a B-flat
             clarinet. With 0 and a non-zero ``transposeChromatic``, the sounding pitch is spelled
-            by the fallback described on ``getSoundingPitch``.
+            with the conventional diatonic interval for those semitones, -1 for -2 (see
+            ``getSoundingPitch``); ``getTransposeDiatonic()`` still returns 0.
         transposeChromatic : int, default 0
             Semitones from the written to the sounding pitch, e.g. -2 for a B-flat clarinet.
         divisionsPerQuarterNote : int, default 256
@@ -391,14 +395,16 @@ void NoteClass(const py::module& m) {
         note 155) can be spelled; above it only ``B1x11``, ``B#11``, ``B3x11`` and ``Bx11`` lie
         within octaves -1 to 11, and they are spelled only when the diatonic interval moves the
         written letter to the B of octave 11: a written ``A#11`` moved up a major second sounds
-        ``B#11``, while with no diatonic interval it could not be spelled. On a rest this does
-        nothing: a rest has no pitch to transpose.
+        ``B#11``, while a written ``B11`` moved up a minor second, to ``C12``, cannot be spelled.
+        On a rest this does nothing: a rest has no pitch to transpose.
 
         Parameters
         ----------
         diatonicInterval : int
             Diatonic steps from the written to the sounding pitch, e.g. -1 for a B-flat
-            clarinet.
+            clarinet. With 0 and a non-zero ``chromaticInterval``, the sounding pitch is spelled
+            with the conventional diatonic interval for those semitones, -1 for -2 (see
+            ``getSoundingPitch``); ``getTransposeDiatonic()`` still returns 0.
         chromaticInterval : int
             Semitones from the written to the sounding pitch, e.g. -2 for a B-flat clarinet.
 
@@ -505,8 +511,8 @@ void NoteClass(const py::module& m) {
             R"pbdoc(
         Return the diatonic step of the sounding pitch (see ``getSoundingPitch``).
 
-        Spelled as ``getSoundingPitch`` spells it, in its simplest spelling, with the same silent
-        fallback for an interval that gives no letter.
+        Spelled as ``getSoundingPitch`` spells it, in its simplest spelling, with the same
+        inferred diatonic interval and the same silent fallback.
 
         Returns
         -------
@@ -552,8 +558,9 @@ void NoteClass(const py::module& m) {
         Return the pitch class of the sounding pitch (see ``getSoundingPitch``): its step and
         accidental, without the octave.
 
-        Spelled as ``getSoundingPitch`` spells it, in its simplest spelling, with the same silent
-        fallback for an interval that gives no letter: an untransposed ``Cb4`` gives ``"B"``.
+        Spelled as ``getSoundingPitch`` spells it, in its simplest spelling, with the same
+        inferred diatonic interval and the same silent fallback: an untransposed ``Cb4`` gives
+        ``"B"``.
 
         Returns
         -------
@@ -587,19 +594,28 @@ void NoteClass(const py::module& m) {
         transposing interval this is the written pitch in its simplest spelling: an untransposed
         ``Cb4`` sounds ``"B3"`` and ``C3x4`` sounds ``"D1b4"``, while ``Db4`` stays ``"Db4"``.
 
-        Fallback, silent (no warning is given): when the interval gives no letter --
-        ``transposeDiatonic`` is 0 while ``transposeChromatic`` is not, as for a MusicXML
-        ``<transpose>`` without ``<diatonic>`` -- or the letter it gives would need an accidental
+        Inferred diatonic interval, silent (no warning is given): when ``transposeDiatonic`` is 0
+        while ``transposeChromatic`` is not -- a MusicXML ``<transpose>`` without ``<diatonic>``,
+        or a note given only ``transposeChromatic`` -- the letter is moved by the diatonic
+        interval conventionally written for those semitones: 7 letters for each whole octave,
+        plus 1 letter for 1 or 2 semitones (a second), 2 for 3 or 4 (a third), 3 for 5 or 6 (a
+        fourth, the tritone being an augmented fourth), 4 for 7 (a fifth), 5 for 8 or 9 (a
+        sixth) and 6 for 10 or 11 (a seventh), in the direction of ``transposeChromatic``. So
+        ``transposeChromatic=-2`` alone is read as a B-flat clarinet's (-1, -2), and a written
+        ``F#4`` sounds ``"E4"``; -7 as a horn in F's (-4, -7); 12 as a piccolo's (7, 12); and a
+        written ``D4`` sounds ``"Eb4"`` a semitone up and ``"C#4"`` a semitone down.
+        ``getTransposeDiatonic()`` still returns 0. A non-zero ``transposeDiatonic`` is used as
+        given, even when it disagrees with ``transposeChromatic``.
+
+        Fallback, silent: when the letter the diatonic interval gives would need an accidental
         beyond a double sharp or flat, or an octave outside -1 to 11, the position is spelled from
         its semitone alone (rounded ties upward; a quarter tone stays in the accidental): as the
         white key there or the sharp of the white key below, or, when the instrument transposes
         down, as the flat of the white key above, if that key is white and the flat keeps the
-        octave. With ``transposeDiatonic=0`` and ``transposeChromatic=-2``, a written ``C4`` is
-        spelled ``Bb3``, a written ``F#4`` ``Fb4``, and a written ``C#4`` ``B3``, since ``Cb4``
-        would leave octave 3. ``==`` and the analyses relate the note by that spelling; this
-        method then simplifies it as above, so the written ``F#4`` sounds ``"E4"``. Without a
-        diatonic interval a written ``D4`` sounds ``"D#4"`` a semitone up and ``"Db4"`` a semitone
-        down.
+        octave. A B-flat clarinet's written ``Cbb4`` is spelled ``Ab3``, since the letter B would
+        need three flats, and a written ``Bb11`` moved up a minor second is spelled ``B11``, since
+        ``Cb12`` would leave octave 11. ``==`` and the analyses relate the note by that spelling,
+        and this method simplifies it as above.
 
         Returns
         -------
@@ -627,7 +643,9 @@ void NoteClass(const py::module& m) {
         >>> ml.Note("Cb4").getSoundingPitch()
         'B3'
         >>> ml.Note("D4", transposeDiatonic=0, transposeChromatic=-1).getSoundingPitch()
-        'Db4'
+        'C#4'
+        >>> ml.Note("F#4", transposeChromatic=-2).getSoundingPitch()
+        'E4'
     )pbdoc");
 
     cls.def("getWrittenPitchClass", &Note::getWrittenPitchClass,
@@ -680,7 +698,8 @@ void NoteClass(const py::module& m) {
     cls.def("getDiatonicSoundingPitchClass", &Note::getDiatonicSoundingPitchClass,
             R"pbdoc(
         Return the sounding pitch class without its accidental: the diatonic step of
-        ``getSoundingPitch``, spelled as it spells it, silent fallback included.
+        ``getSoundingPitch``, spelled as it spells it, inferred diatonic interval and silent
+        fallback included.
 
         Returns
         -------
@@ -704,8 +723,9 @@ void NoteClass(const py::module& m) {
             R"pbdoc(
         Return the octave of the sounding pitch (see ``getSoundingPitch``).
 
-        The octave of the sounding spelling, silent fallback included: an untransposed ``Cb4``
-        sounds ``B3``, octave 3, and a piccolo's written ``C4`` sounds ``C5``, octave 5.
+        The octave of the sounding spelling, inferred diatonic interval and silent fallback
+        included: an untransposed ``Cb4`` sounds ``B3``, octave 3, and a piccolo's written ``C4``
+        sounds ``C5``, octave 5.
 
         Returns
         -------
@@ -951,7 +971,28 @@ void NoteClass(const py::module& m) {
     )pbdoc");
 
     cls.def("inChord", &Note::inChord);
-    cls.def("getTransposeDiatonic", &Note::getTransposeDiatonic);
+    cls.def("getTransposeDiatonic", &Note::getTransposeDiatonic,
+            R"pbdoc(
+        Return the diatonic transposing interval, as given to the constructor or
+        ``setTransposingInterval``.
+
+        A note given only ``transposeChromatic`` answers 0, although its sounding pitch is then
+        spelled with the conventional diatonic interval for those semitones (see
+        ``getSoundingPitch``).
+
+        Returns
+        -------
+        int
+            Letters from the written to the sounding pitch, e.g. -1 for a B-flat clarinet.
+
+        Examples
+        --------
+        >>> ml.Note("F#4", transposeDiatonic=-1, transposeChromatic=-2).getTransposeDiatonic()
+        -1
+        >>> note = ml.Note("F#4", transposeChromatic=-2)
+        >>> note.getTransposeDiatonic(), note.getSoundingPitch()
+        (0, 'E4')
+    )pbdoc");
     cls.def("getTransposeChromatic", &Note::getTransposeChromatic);
     cls.def("isTransposed", &Note::isTransposed);
     cls.def("isGraceNote", &Note::isGraceNote);
@@ -1358,18 +1399,21 @@ void NoteClass(const py::module& m) {
         A note of a transposing instrument is compared at the pitch it sounds, spelled with its
         written letter moved by the diatonic transposing interval, as ``Chord`` and ``Interval``
         relate it: a B-flat clarinet's written ``D4`` equals ``Note("C4")``, and its written
-        ``Db4`` equals ``Note("Cb4")``, not ``Note("B3")``. Where the diatonic interval gives no
-        such spelling, the position is spelled by the fallback described on
-        ``getSoundingPitch``, without the simplification: with ``transposeDiatonic=0`` and
-        ``transposeChromatic=-2``, a written ``C4`` equals ``Note("Bb3")``, not
-        ``Note("Cbb4")``, and a written ``F#4`` equals ``Note("Fb4")``, not ``Note("E4")``. An
-        untransposed note is compared as written, so ``Note("C#4") == Note("Db4")`` and
-        ``Note("E1b4") == Note("E4")`` are both False. Raises ``RuntimeError`` for a note whose
-        sounding pitch lies below ``C1b-1``; see ``getSoundingPitch``.
+        ``Db4`` equals ``Note("Cb4")``, not ``Note("B3")``. A ``transposeDiatonic`` of 0 with a
+        non-zero ``transposeChromatic`` is inferred, as ``getSoundingPitch`` describes, so with
+        ``transposeChromatic=-2`` alone a written ``F#4`` equals ``Note("E4")``, not
+        ``Note("Fb4")``. Where the diatonic interval gives no such spelling, the position is
+        spelled by the fallback described there, without the simplification: a B-flat
+        clarinet's written ``Cbb4`` equals ``Note("Ab3")``. An untransposed note is compared as
+        written, so ``Note("C#4") == Note("Db4")`` and ``Note("E1b4") == Note("E4")`` are both
+        False. Raises ``RuntimeError`` for a note whose sounding pitch lies below ``C1b-1``; see
+        ``getSoundingPitch``.
 
         Examples
         --------
         >>> ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2) == ml.Note("C4")
+        True
+        >>> ml.Note("F#4", transposeChromatic=-2) == ml.Note("E4")
         True
         >>> ml.Note("C#4") == ml.Note("Db4")
         False

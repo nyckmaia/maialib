@@ -2280,6 +2280,8 @@ TEST(IntervalOfTransposingInstruments, isTheIntervalOfThePitchesTheNotesSound) {
         {Note("Bb5"), piccolo("Bb4"), "Bb5", "Bb5", "P1 "},
         {bFlatClarinet("Db4"), Note("Cb5"), "Cb4", "Cb5", "P8 asc"},
         {bFlatClarinet("F#4"), hornInF("B4"), "E4", "E4", "P1 "},
+        {Note("C4"), transposingNote("F#4", 0, -2), "C4", "E4", "M3 asc"},
+        {transposingNote("Db4", 0, -2), Note("Cb5"), "Cb4", "Cb5", "P8 asc"},
     };
     for (const auto& [noteA, noteB, soundsA, soundsB, name] : cases) {
         const std::string where = noteA.getWrittenPitch() + " (" +
@@ -2290,6 +2292,24 @@ TEST(IntervalOfTransposingInstruments, isTheIntervalOfThePitchesTheNotesSound) {
         EXPECT_EQ(interval.getName() + " " + interval.getDirection(), name) << where;
         EXPECT_EQ(describe(interval), describe(Interval(soundsA, soundsB))) << where;
     }
+}
+
+// A transposing interval given only in semitones is read with the diatonic interval
+// conventionally written for them: two semitones down are a major second, so a written F#4 on a
+// (0, -2) instrument is an E4, a unison with E4 rather than a diminished second, and two notes of
+// that part are named by their written interval: its written C4 and F#4, sounding Bb3 and E4, are
+// an augmented fourth.
+TEST(IntervalOfTransposingInstruments, aChromaticIntervalAloneIsReadWithItsDiatonicInterval) {
+    const Note written = transposingNote("F#4", 0, -2);
+    const Interval unison(Note("E4"), written);
+    EXPECT_EQ(unison.getName(), "P1");
+    EXPECT_EQ(unison.getDirection(), "");
+    EXPECT_EQ(unison.getNumSemitones(), 0);
+    EXPECT_EQ(describe(unison), describe(Interval("E4", "E4")));
+
+    const Interval withinThePart(transposingNote("C4", 0, -2), written);
+    EXPECT_EQ(withinThePart.getName() + " " + withinThePart.getDirection(), "A4 asc");
+    EXPECT_EQ(describe(withinThePart), describe(Interval("Bb3", "E4")));
 }
 
 // The interval keeps the notes it was given, with their written pitches and transposing

@@ -42,10 +42,11 @@ Pitch concertPitch(const Note& note);
  * - **Sounding**, what the note sounds, in its simplest spelling: getSoundingPitch(),
  *   getSoundingOctave(), getSoundingPitchClass(), getSoundingPitchStep() and
  *   getDiatonicSoundingPitchClass(). The written pitch is moved by the transposing interval -- its
- *   letter by the diatonic interval, its position by the chromatic one -- and respelled with the
- *   smallest accidental any spelling of that position has; between a sharp and a flat equally
- *   close, the moved spelling's side is kept. The octave is that spelling's own: an untransposed
- *   Cb4 sounds B3, a B-flat clarinet's written Db4 sounds B3 and its written Eb4 sounds Db4.
+ *   letter by the diatonic interval (inferred from the chromatic one when it is 0), its position
+ *   by the chromatic one -- and respelled with the smallest accidental any spelling of that
+ *   position has; between a sharp and a flat equally close, the moved spelling's side is kept. The
+ *   octave is that spelling's own: an untransposed Cb4 sounds B3, a B-flat clarinet's written Db4
+ *   sounds B3 and its written Eb4 sounds Db4.
  * - **Acoustic**, measures of what sounds: getMidiNumber(), getQuarterToneSteps(), getFrequency()
  *   and getHarmonicSpectrum().
  *
@@ -56,11 +57,12 @@ Pitch concertPitch(const Note& note);
  * The analyses that relate notes -- Chord, Interval, and the chord extraction and melody search of
  * Score -- relate a note of a transposing instrument at the pitch it sounds, spelled with its
  * written letter moved by the diatonic transposing interval (a B-flat clarinet's written Db4 is a
- * Cb4 there, as in a C-flat chord), and an untransposed note exactly as it is written. Where the
- * diatonic interval gives no such spelling, the fallback described on getSoundingPitch() spells
- * the position, without the simplification: with no diatonic interval, a (0, -2) instrument's
- * written C4 is a Bb3 there, not a Cbb4, and its written F#4 an Fb4. operator==() compares notes
- * the same way.
+ * Cb4 there, as in a C-flat chord), and an untransposed note exactly as it is written. A diatonic
+ * interval of 0 with a non-zero chromatic one is inferred, as getSoundingPitch() describes, so a
+ * (0, -2) instrument's written F#4 is an E4 there, as a B-flat clarinet's is. Where the diatonic
+ * interval gives no such spelling, the fallback described there spells the position, without the
+ * simplification: a B-flat clarinet's written Cbb4 is an Ab3. operator==() compares notes the
+ * same way.
  */
 class Note {
    private:
@@ -133,7 +135,8 @@ class Note {
      * @param inChord True if part of a chord.
      * @param transposeDiatonic Diatonic interval: letters from the written to the sounding pitch
      *        (-1 for a B-flat clarinet). With 0 and a non-zero transposeChromatic, the sounding
-     *        pitch is spelled by the fallback described on getSoundingPitch().
+     *        pitch is spelled with the conventional diatonic interval for those semitones, -1 for
+     *        -2 (see getSoundingPitch()); getTransposeDiatonic() still returns 0.
      * @param transposeChromatic Chromatic interval: semitones from the written to the sounding
      *        pitch (-2 for a B-flat clarinet).
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
@@ -155,7 +158,8 @@ class Note {
      * @param inChord True if part of a chord.
      * @param transposeDiatonic Diatonic interval: letters from the written to the sounding pitch
      *        (-1 for a B-flat clarinet). With 0 and a non-zero transposeChromatic, the sounding
-     *        pitch is spelled by the fallback described on getSoundingPitch().
+     *        pitch is spelled with the conventional diatonic interval for those semitones, -1 for
+     *        -2 (see getSoundingPitch()); getTransposeDiatonic() still returns 0.
      * @param transposeChromatic Chromatic interval: semitones from the written to the sounding
      *        pitch (-2 for a B-flat clarinet).
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
@@ -327,12 +331,14 @@ class Note {
      *          getter call. Every sounding pitch up to B11 (MIDI note 155) can be spelled; above
      *          it only B1x11, B#11, B3x11 and Bx11 lie within octaves -1..11, and they are spelled
      *          only when the diatonic interval moves the written letter to the B of octave 11 (a
-     *          written A#11 moved up a major second sounds B#11; with no diatonic interval it could
-     *          not be spelled). A sounding pitch below the lowest representable pitch, C1b-1, is
-     *          accepted: the note stays constructible, and each sounding getter reports the
-     *          condition when asked. A rest ignores the call.
+     *          written A#11 moved up a major second sounds B#11, while a written B11 moved up a
+     *          minor second, to C12, cannot be spelled). A sounding pitch below the lowest
+     *          representable pitch, C1b-1, is accepted: the note stays constructible, and each
+     *          sounding getter reports the condition when asked. A rest ignores the call.
      * @param diatonicInterval Diatonic interval: letters from the written to the sounding pitch
-     *        (-1 for a B-flat clarinet).
+     *        (-1 for a B-flat clarinet). With 0 and a non-zero chromaticInterval, the sounding
+     *        pitch is spelled with the conventional diatonic interval for those semitones, -1 for
+     *        -2 (see getSoundingPitch()); getTransposeDiatonic() still returns 0.
      * @param chromaticInterval Chromatic interval: semitones from the written to the sounding pitch
      *        (-2 for a B-flat clarinet).
      * @throws std::runtime_error If the sounding pitch with this interval cannot be spelled: one
@@ -438,8 +444,9 @@ class Note {
     /**
      * @brief Returns the pitch class of the sounding pitch (see getSoundingPitch()): its step and
      *        accidental, without the octave.
-     * @details Spelled as getSoundingPitch() spells it, silent fallback included: a B-flat
-     *          clarinet's written Db4 gives "B", an untransposed Cb4 "B".
+     * @details Spelled as getSoundingPitch() spells it, inferred diatonic interval and silent
+     *          fallback included: a B-flat clarinet's written Db4 gives "B", an untransposed Cb4
+     *          "B".
      * @return Sounding pitch class string, or "rest" for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
@@ -458,18 +465,28 @@ class Note {
      *          transposing interval this is the written pitch in its simplest spelling: an
      *          untransposed Cb4 sounds B3, C3x4 sounds D1b4, Db4 stays Db4.
      *
-     *          Fallback, silent (no warning is given): when the interval gives no letter --
-     *          getTransposeDiatonic() is 0 while getTransposeChromatic() is not, as for a MusicXML
-     *          `<transpose>` without `<diatonic>` -- or the letter it gives would need an
+     *          Inferred diatonic interval, silent (no warning is given): when
+     *          getTransposeDiatonic() is 0 while getTransposeChromatic() is not -- a MusicXML
+     *          `<transpose>` without `<diatonic>`, or a note given only a chromatic interval --
+     *          the letter is moved by the diatonic interval conventionally written for those
+     *          semitones: 7 letters for each whole octave, plus 1 letter for 1 or 2 semitones (a
+     *          second), 2 for 3 or 4 (a third), 3 for 5 or 6 (a fourth, the tritone being an
+     *          augmented fourth), 4 for 7 (a fifth), 5 for 8 or 9 (a sixth) and 6 for 10 or 11 (a
+     *          seventh), in the direction of the chromatic interval. So (0, -2) is read as a B-flat
+     *          clarinet's (-1, -2), and a written F#4 sounds E4; (0, -7) as a horn in F's (-4, -7);
+     *          (0, 12) as a piccolo's (7, 12); and a written D4 sounds Eb4 a semitone up and C#4 a
+     *          semitone down. getTransposeDiatonic() still returns 0. A non-zero diatonic interval
+     *          is used as given, even when it disagrees with the chromatic one.
+     *
+     *          Fallback, silent: when the letter the diatonic interval gives would need an
      *          accidental beyond a double sharp or flat, or an octave outside -1..11, the position
      *          is spelled from its semitone alone (rounded ties upward; a quarter tone stays in
      *          the accidental): as the white key there or the sharp of the white key below, or,
      *          when the instrument transposes down, as the flat of the white key above, if that key
-     *          is white and the flat keeps the octave. With (0, -2) a written C4 is spelled Bb3, a
-     *          written F#4 Fb4, and a written C#4 B3, since Cb4 would leave octave 3. operator==()
-     *          and the analyses relate the note by that spelling; this getter then simplifies it
-     *          as above, so the written F#4 sounds E4. Without a diatonic interval a written D4
-     *          sounds D#4 a semitone up and Db4 a semitone down.
+     *          is white and the flat keeps the octave. A B-flat clarinet's written Cbb4 is spelled
+     *          Ab3, since the letter B would need three flats, and a written Bb11 moved up a minor
+     *          second is spelled B11, since Cb12 would leave octave 11. operator==() and the
+     *          analyses relate the note by that spelling, and this getter simplifies it as above.
      * @return Sounding pitch string, or "rest" for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
@@ -496,7 +513,8 @@ class Note {
 
     /**
      * @brief Returns the diatonic step of the sounding pitch (e.g., "C", "D").
-     * @details The step of getSoundingPitch(), spelled as it spells it, silent fallback included.
+     * @details The step of getSoundingPitch(), spelled as it spells it, inferred diatonic interval
+     *          and silent fallback included.
      * @return Diatonic sounding pitch class, or "rest" for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
@@ -505,10 +523,10 @@ class Note {
 
     /**
      * @brief Returns the octave of the sounding pitch (see getSoundingPitch()).
-     * @details The octave of the sounding spelling, silent fallback included: an untransposed Cb4
-     *          sounds B3, octave 3, and a piccolo's written C4 sounds C5, octave 5. An empty
-     *          optional means this note is a rest, which has no octave; isNoteOff() is the
-     *          authoritative test.
+     * @details The octave of the sounding spelling, inferred diatonic interval and silent fallback
+     *          included: an untransposed Cb4 sounds B3, octave 3, and a piccolo's written C4
+     *          sounds C5, octave 5. An empty optional means this note is a rest, which has no
+     *          octave; isNoteOff() is the authoritative test.
      * @return Sounding octave number, or an empty optional for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
@@ -549,7 +567,8 @@ class Note {
 
     /**
      * @brief Returns the diatonic step of the sounding pitch (e.g., "C", "D").
-     * @details The step of getSoundingPitch(), spelled as it spells it, silent fallback included.
+     * @details The step of getSoundingPitch(), spelled as it spells it, inferred diatonic interval
+     *          and silent fallback included.
      * @return Sounding pitch step, or "rest" for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
@@ -777,6 +796,9 @@ class Note {
 
     /**
      * @brief Returns the diatonic transposition interval.
+     * @details The interval as given to the constructor or setTransposingInterval(): 0 for a note
+     *          given only a chromatic interval, although its sounding pitch is then spelled with
+     *          the conventional diatonic interval for those semitones (see getSoundingPitch()).
      * @return Diatonic interval.
      */
     int getTransposeDiatonic() const;
@@ -987,13 +1009,14 @@ class Note {
      * @details A note of a transposing instrument is compared at the pitch it sounds, spelled with
      *          its written letter moved by the diatonic transposing interval, as Chord and Interval
      *          relate it: a B-flat clarinet's written D4 equals a C4, and its written Db4 equals a
-     *          Cb4, not a B3. Where the diatonic interval gives no such spelling, the position is
-     *          spelled by the fallback described on getSoundingPitch(), without the
-     *          simplification: with no diatonic interval, a (0, -2) instrument's written C4 equals
-     *          a Bb3, not a Cbb4, and its written F#4 an Fb4, not an E4. An untransposed note is
-     *          compared as written, so C#4 and Db4 differ, as do E1b4 and E4. Duration, voice and
-     *          every other attribute are ignored. Two equal notes lie at the same exact position,
-     *          so neither is ordered before the other (operator<()).
+     *          Cb4, not a B3. A diatonic interval of 0 with a non-zero chromatic one is inferred,
+     *          as getSoundingPitch() describes, so a (0, -2) instrument's written F#4 equals an E4,
+     *          not an Fb4. Where the diatonic interval gives no such spelling, the position is
+     *          spelled by the fallback described there, without the simplification: a B-flat
+     *          clarinet's written Cbb4 equals an Ab3. An untransposed note is compared as written,
+     *          so C#4 and Db4 differ, as do E1b4 and E4. Duration, voice and every other attribute
+     *          are ignored. Two equal notes lie at the same exact position, so neither is ordered
+     *          before the other (operator<()).
      * @throws std::runtime_error If either note's sounding pitch lies below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
      */

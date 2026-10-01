@@ -771,6 +771,15 @@ class ChordOfTransposingInstruments(unittest.TestCase):
         self.assertEqual(chord.getRoot().getWrittenPitch(), "C4")
         self.assertFalse(chord.getRoot().isTransposed())
 
+    # A note given only transposeChromatic is read with its conventional diatonic interval: two
+    # semitones down are a major second, so a written F#4 is the E4 of a C major chord.
+    def testAChromaticIntervalAloneIsReadWithItsDiatonicInterval(self):
+        written = ml.Note("F#4", transposeChromatic=-2)
+        chord = chordOf(ml.Note("C4"), written, ml.Note("G4"))
+        self.assertEqual(chord.getName(), "C")
+        self.assertEqual(repr(chord), "<Chord [C4, E4, G4]>")
+        self.assertTrue(chord == ml.Chord(["C4", "E4", "G4"]))
+
     # Mirrors ChordOfTransposingInstruments.equalityComparesTheNotesAtConcertPitch.
     def testEqualityComparesTheNotesAtConcertPitch(self):
         clarinet = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)

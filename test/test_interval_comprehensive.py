@@ -427,6 +427,21 @@ class IntervalOfTransposingInstrumentsTestCase(unittest.TestCase):
         self.assertEqual(interval.getDirection(), "")
         self.assertEqual(ml.Interval(ml.Note("C4"), clarinet).getName(), "M3")
 
+    def test_a_chromatic_interval_alone_is_read_with_its_diatonic_interval(self):
+        """Two semitones down without a diatonic interval are read as a major second: a written
+        F#4 is an E4, a unison with E4, and two notes of that part are named by their written
+        interval (mirrors aChromaticIntervalAloneIsReadWithItsDiatonicInterval)"""
+        written = ml.Note("F#4", transposeChromatic=-2)
+        unison = ml.Interval(ml.Note("E4"), written)
+        self.assertEqual(unison.getName(), "P1")
+        self.assertEqual(unison.getDirection(), "")
+        self.assertEqual(unison.getNumSemitones(), 0)
+        self.assertEqual(ml.Interval(ml.Note("C4"), written).getName(), "M3")
+
+        within_the_part = ml.Interval(ml.Note("C4", transposeChromatic=-2), written)
+        self.assertEqual(within_the_part.getName(), "A4")
+        self.assertEqual(within_the_part.getDirection(), "asc")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -2090,14 +2090,15 @@ TEST(NoteMutatorThatThrows, setOctaveChecksTheSoundingPitchLikeSetPitch) {
     EXPECT_EQ(note.getSoundingPitch(), "D5");
 }
 
-// A11 on an instrument that transposes two semitones up without a diatonic interval sounds B11;
-// as A#11 it would sound at 156, which only a letter moved to the B of octave 11 could spell.
+// Bb11 on an instrument that transposes a semitone up without a diatonic interval sounds B11: the
+// minor second inferred for that semitone would reach Cb12, so the chromatic rule spells it. As
+// B11 it would sound at 156, which only a letter moved to the B of octave 11 could spell.
 TEST(NoteMutatorThatThrows, setAlterChecksTheSoundingPitchLikeSetPitch) {
-    Note note = transposingNote("A11", 0, 2);
+    Note note = transposingNote("Bb11", 0, 1);
     const NoteState before = stateOf(note);
-    const std::string message = thrownFirstLine([&] { note.setAlter(1.0f); });
-    EXPECT_EQ(message, aboveTheCeiling("A#11", 0, 2, "156.000000"));
-    EXPECT_EQ(message, setPitchRejection(note, "A#11"));
+    const std::string message = thrownFirstLine([&] { note.setAlter(0.0f); });
+    EXPECT_EQ(message, aboveTheCeiling("B11", 0, 1, "156.000000"));
+    EXPECT_EQ(message, setPitchRejection(note, "B11"));
     EXPECT_EQ(stateOf(note), before);
     EXPECT_EQ(note.getSoundingPitch(), "B11");
 }
@@ -2181,6 +2182,8 @@ TEST(NotePitchViews, theSpecExamplesTable) {
         {hornInF("B4"), "B4", "E4", "E4", 4, 64},                   // horn in F
         {piccolo("Bb4"), "Bb4", "Bb5", "Bb5", 5, 82},               // piccolo
         {transposingNote("C4", 0, -2), "C4", "Bb3", "Bb3", 3, 58},  // no <diatonic>
+        {transposingNote("F#4", 0, -2), "F#4", "E4", "E4", 4, 64},  // no <diatonic>
+        {bFlatClarinet("Cbb4"), "Cbb4", "Ab3", "Ab3", 3, 56},       // the chromatic fallback
         {bFlatClarinet("Eb4"), "Eb4", "Db4", "Db4", 4, 61},         // a tie keeps the flat
     };
     for (const Row& row : rows) {
@@ -2414,6 +2417,55 @@ TEST(NotePitchViews, aSoundingPitchTheDiatonicIntervalSpellsAboveB11IsAccepted) 
     byTranspose.transpose(13, "#");
     EXPECT_EQ(byTranspose.getWrittenPitch(), "A#11");
     EXPECT_EQ(byTranspose.getSoundingPitch(), "B#11");
+}
+
+// The diatonic interval inferred for a chromatic interval given alone reaches the B of octave 11
+// too: two semitones up are a major second, so a written A#11 sounds B#11, through the
+// constructor and every mutator, while the note keeps the diatonic interval it was given, 0.
+TEST(NotePitchViews, anInferredDiatonicIntervalSpellsAboveB11Too) {
+    const Note sharp = transposingNote("A#11", 0, 2);
+    EXPECT_EQ(sharp.getSoundingPitch(), "B#11");
+    EXPECT_EQ(sharp.getMidiNumber(), 156);
+    EXPECT_EQ(sharp.getTransposeDiatonic(), 0);
+
+    Note byInterval("A#11");
+    byInterval.setTransposingInterval(0, 2);
+    EXPECT_EQ(byInterval.getSoundingPitch(), "B#11");
+
+    Note byAlter = transposingNote("A11", 0, 2);  // sounds B11
+    byAlter.setAlter(1.0f);
+    EXPECT_EQ(byAlter.getSoundingPitch(), "B#11");
+
+    Note byPitch = transposingNote("C4", 0, 2);
+    byPitch.setPitch("A#11");
+    EXPECT_EQ(byPitch.getSoundingPitch(), "B#11");
+}
+
+// A transposing interval given only in semitones -- a MusicXML <transpose> without <diatonic>, or
+// a note built with only a chromatic interval -- is read with the diatonic interval conventionally
+// written for those semitones (decision D4): two semitones down are a major second, as for a
+// B-flat clarinet, so a written F#4 sounds E4 and is compared as an E4, not as an Fb4. The note
+// keeps the interval it was given: getTransposeDiatonic() is still 0.
+TEST(NotePitchViews, aChromaticIntervalAloneIsReadWithItsConventionalDiatonicInterval) {
+    const Note note = transposingNote("F#4", 0, -2);
+    EXPECT_EQ(note.getTransposeDiatonic(), 0);
+    EXPECT_EQ(note.getTransposeChromatic(), -2);
+    EXPECT_TRUE(note.isTransposed());
+    EXPECT_EQ(note.getPitch(), "F#4");
+    EXPECT_EQ(note.getSoundingPitch(), "E4");
+    EXPECT_EQ(note.getMidiNumber(), 64);
+    EXPECT_TRUE(note == Note("E4"));
+    EXPECT_TRUE(note != Note("Fb4"));
+    EXPECT_TRUE(note == bFlatClarinet("F#4"));
+
+    // A semitone is a minor second, in either direction.
+    EXPECT_EQ(transposingNote("D4", 0, 1).getSoundingPitch(), "Eb4");
+    EXPECT_EQ(transposingNote("D4", 0, -1).getSoundingPitch(), "C#4");
+
+    Note byInterval("F#4");
+    byInterval.setTransposingInterval(0, -2);
+    EXPECT_EQ(byInterval.getTransposeDiatonic(), 0);
+    EXPECT_TRUE(byInterval == Note("E4"));
 }
 
 // getScaleDegree() reads the written step: the keys maialib reads from a part's measures are that

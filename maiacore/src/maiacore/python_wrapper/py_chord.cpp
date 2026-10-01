@@ -58,10 +58,12 @@ void ChordClass(const py::module& m) {
         ``info`` degrades rather than raising.
 
         Notes of transposing instruments are analysed at concert pitch: at the pitch each one
-        sounds, spelled with its written letter moved by the diatonic transposing interval, or,
-        where that gives no spelling, by the fallback described on ``Note.getSoundingPitch``,
-        without the simplification. A horn in F's written ``B4`` is an ``E4``, so with ``C4`` and
-        ``G4`` it makes a C major chord. The notes the analysis returns -- ``getRoot``,
+        sounds, spelled with its written letter moved by the diatonic transposing interval,
+        inferred from the chromatic one when ``transposeDiatonic`` is 0, or, where that gives no
+        spelling, by the fallback, without the simplification (both described on
+        ``Note.getSoundingPitch``). A horn in F's written ``B4`` is an ``E4``, so with ``C4`` and
+        ``G4`` it makes a C major chord, and so does a written ``B4`` with only
+        ``transposeChromatic=-7``. The notes the analysis returns -- ``getRoot``,
         ``getBassNote``, the open and close stacks, their heaps and the chords built from them --
         are untransposed notes at those pitches, and so are the notes of a chord built from a list
         of notes. ``getNotes`` returns the notes as they were added.
@@ -839,9 +841,11 @@ void ChordClass(const py::module& m) {
 
         Each note is shown at concert pitch, as the analysis relates it: a note of a transposing
         instrument at the pitch it sounds, spelled with its written letter moved by the diatonic
-        transposing interval (a B-flat clarinet's written ``Db5`` is shown ``Cb5``) -- or, where
-        that gives no spelling, by the fallback described on ``Note.getSoundingPitch``, without
-        the simplification -- and an untransposed note as written.
+        transposing interval, inferred from the chromatic one when ``transposeDiatonic`` is 0 (a
+        B-flat clarinet's written ``Db5`` is shown ``Cb5``, and so is one with only
+        ``transposeChromatic=-2``) -- or, where that gives no spelling, by the fallback described
+        on ``Note.getSoundingPitch``, without the simplification (a B-flat clarinet's written
+        ``Cbb4`` is shown ``Ab3``) -- and an untransposed note as written.
 
         Raises
         ------
@@ -865,10 +869,12 @@ void ChordClass(const py::module& m) {
         Print the chord's stack to stdout, one ``openStack[i] = P`` line per note.
 
         The stack is the open stack of the last analysis (see ``getOpenStackNotes``) or, for a
-        chord never analysed, the notes as they were added. Changes made since are not reflected
-        until an analysis method runs again: ``addNote`` and ``insertNote`` append their note to
-        it, and a note removed with ``removeNote`` or ``removeTopNote`` stays in it. Each note is
-        shown at concert pitch, as ``print`` shows it.
+        chord never analysed, the notes as they were added. A note added or removed since is not
+        stacked until an analysis method runs again: ``addNote`` and ``insertNote`` append their
+        note to the end of the stack, and a note removed with ``removeNote``, ``removeTopNote``
+        or ``removeDuplicateNotes`` stays in it. ``transpose``, ``transposeStackOnly``,
+        ``roundQuarterTones`` and ``clear`` change the stack itself, so it shows their result at
+        once. Each note is shown at concert pitch, as ``print`` shows it.
 
         Raises
         ------
@@ -1230,10 +1236,11 @@ void ChordClass(const py::module& m) {
         Compare the chords note by note, in the order the notes were added, as ``Note.__eq__``
         compares notes: the same pitches, spelled alike, a note of a transposing instrument taken
         at the pitch it sounds, spelled with its written letter moved by the diatonic transposing
-        interval -- or, where that gives no spelling, by the fallback described on
-        ``Note.getSoundingPitch``, without the simplification (with ``transposeDiatonic=0`` and
-        ``transposeChromatic=-2``, a written ``C4`` is a ``Bb3``, not a ``Cbb4``). Chords of
-        different sizes differ, and so do the same notes in another order.
+        interval, inferred from the chromatic one when ``transposeDiatonic`` is 0 (with
+        ``transposeChromatic=-2`` alone, a written ``F#4`` is an ``E4``, not an ``Fb4``) -- or,
+        where that gives no spelling, by the fallback described on ``Note.getSoundingPitch``,
+        without the simplification (a B-flat clarinet's written ``Cbb4`` is an ``Ab3``). Chords
+        of different sizes differ, and so do the same notes in another order.
 
         Examples
         --------
@@ -1281,12 +1288,14 @@ void ChordClass(const py::module& m) {
         R"pbdoc(
         ``<Chord [P1, P2, ...]>``, the notes in the order they were added, each at concert pitch
         as the harmonic analysis relates it: a note of a transposing instrument at the pitch it
-        sounds, spelled with its written letter moved by the diatonic transposing interval (a
-        B-flat clarinet's written ``Db5`` is shown ``Cb5``) -- or, where that gives no spelling,
-        by the fallback described on ``Note.getSoundingPitch``, without the simplification (with
-        ``transposeDiatonic=0`` and ``transposeChromatic=-2``, a written ``F#4`` is shown
-        ``Fb4``) -- and an untransposed note as written. Raises ``RuntimeError`` for a note whose
-        sounding pitch lies below ``C1b-1``; see ``Note.getSoundingPitch``.
+        sounds, spelled with its written letter moved by the diatonic transposing interval,
+        inferred from the chromatic one when ``transposeDiatonic`` is 0 (a B-flat clarinet's
+        written ``Db5`` is shown ``Cb5``; with ``transposeChromatic=-2`` alone, a written
+        ``F#4`` is shown ``E4``) -- or, where that gives no spelling, by the fallback described
+        on ``Note.getSoundingPitch``, without the simplification (a B-flat clarinet's written
+        ``Cbb4`` is shown ``Ab3``) -- and an untransposed note as written. Raises
+        ``RuntimeError`` for a note whose sounding pitch lies below ``C1b-1``; see
+        ``Note.getSoundingPitch``.
     )pbdoc");
 
     // The hash of exactly what == compares, the notes' concert spellings in order, so that equal

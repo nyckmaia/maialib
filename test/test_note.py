@@ -798,15 +798,16 @@ class NoteMutatorThatRaises(unittest.TestCase):
         )
         self.assertEqual(note.getSoundingPitch(), "D5")
 
-    # Without a diatonic interval no letter is moved to the B of octave 11, so A#11 moved up two
-    # semitones (156) cannot be spelled.
+    # Bb11 moved up a semitone without a diatonic interval sounds B11: the minor second inferred
+    # for that semitone would reach Cb12, so the chromatic rule spells it. B11 moved up a semitone
+    # (156) can be spelled by no letter.
     def testSetAlterChecksTheSoundingPitchLikeSetPitch(self):
         note = self.assertChecksLikeSetPitch(
-            lambda: ml.Note("A11", transposeDiatonic=0, transposeChromatic=2),
-            "A#11",
-            aboveTheCeiling("A#11", 0, 2, "156.000000"),
+            lambda: ml.Note("Bb11", transposeDiatonic=0, transposeChromatic=1),
+            "B11",
+            aboveTheCeiling("B11", 0, 1, "156.000000"),
             "setAlter",
-            1,
+            0,
         )
         self.assertEqual(note.getSoundingPitch(), "B11")
 
@@ -865,6 +866,8 @@ class NotePitchViews(unittest.TestCase):
             (transposing("B4", -4, -7), "B4", "E4", "E4", 4, 64),
             (transposing("Bb4", 7, 12), "Bb4", "Bb5", "Bb5", 5, 82),
             (transposing("C4", 0, -2), "C4", "Bb3", "Bb3", 3, 58),
+            (transposing("F#4", 0, -2), "F#4", "E4", "E4", 4, 64),
+            (transposing("Cbb4", -1, -2), "Cbb4", "Ab3", "Ab3", 3, 56),
             (transposing("Eb4", -1, -2), "Eb4", "Db4", "Db4", 4, 61),
         )
         for note, written, concert, sounding, sounding_octave, midi_number in rows:
@@ -998,6 +1001,93 @@ class NotePitchViews(unittest.TestCase):
                 getattr(note, mutator)(argument)
                 self.assertEqual(note.getSoundingPitch(), sounding)
 
+    # Mirrors NotePitchViews.anInferredDiatonicIntervalSpellsAboveB11Too: two semitones up without
+    # a diatonic interval are read as a major second, so a written A#11 sounds B#11, while the
+    # note keeps the diatonic interval it was given, 0.
+    def testAnInferredDiatonicIntervalSpellsAboveB11Too(self):
+        sharp = transposing("A#11", 0, 2)
+        self.assertEqual(sharp.getSoundingPitch(), "B#11")
+        self.assertEqual(sharp.getMidiNumber(), 156)
+        self.assertEqual(sharp.getTransposeDiatonic(), 0)
+
+        note = ml.Note("A#11")
+        note.setTransposingInterval(0, 2)
+        self.assertEqual(note.getSoundingPitch(), "B#11")
+
+        for start, mutator, argument in (("A11", "setAlter", 1), ("C4", "setPitch", "A#11")):
+            with self.subTest(mutator=mutator):
+                note = transposing(start, 0, 2)
+                getattr(note, mutator)(argument)
+                self.assertEqual(note.getSoundingPitch(), "B#11")
+
+    # Mirrors NotePitchViews.aChromaticIntervalAloneIsReadWithItsConventionalDiatonicInterval
+    # (decision D4): a note given only transposeChromatic is read with the diatonic interval
+    # conventionally written for those semitones -- two semitones down are a B-flat clarinet's
+    # major second -- and keeps the transposeDiatonic it was given, 0.
+    def testAChromaticIntervalAloneIsReadWithItsConventionalDiatonicInterval(self):
+        note = ml.Note("F#4", transposeChromatic=-2)
+        self.assertEqual(note.getTransposeDiatonic(), 0)
+        self.assertEqual(note.getTransposeChromatic(), -2)
+        self.assertTrue(note.isTransposed())
+        self.assertEqual(note.getPitch(), "F#4")
+        self.assertEqual(note.getSoundingPitch(), "E4")
+        self.assertEqual(note.getMidiNumber(), 64)
+        self.assertTrue(note == ml.Note("E4"))
+        self.assertTrue(note != ml.Note("Fb4"))
+        self.assertEqual(hash(note), hash(ml.Note("E4")))
+
+        # A semitone is a minor second, in either direction.
+        self.assertEqual(ml.Note("D4", transposeChromatic=1).getSoundingPitch(), "Eb4")
+        self.assertEqual(ml.Note("D4", transposeChromatic=-1).getSoundingPitch(), "C#4")
+
+    # The diatonic interval inferred for every number of semitones within an octave, in both
+    # directions, and for compound intervals, compared at the spelling == and the analyses use: a
+    # written C4 moved by it. Six semitones are an augmented fourth, not a diminished fifth.
+    # Mirrors the C++ ConcertSpelling tests of the inferred interval.
+    def testEverySemitoneCountIsReadWithItsConventionalDiatonicInterval(self):
+        for chromatic, concert in (
+            (1, "Db4"),
+            (-1, "B3"),
+            (2, "D4"),
+            (-2, "Bb3"),
+            (3, "Eb4"),
+            (-3, "A3"),
+            (4, "E4"),
+            (-4, "Ab3"),
+            (5, "F4"),
+            (-5, "G3"),
+            (6, "F#4"),
+            (-6, "Gb3"),
+            (7, "G4"),
+            (-7, "F3"),
+            (8, "Ab4"),
+            (-8, "E3"),
+            (9, "A4"),
+            (-9, "Eb3"),
+            (10, "Bb4"),
+            (-10, "D3"),
+            (11, "B4"),
+            (-11, "Db3"),
+            (12, "C5"),
+            (-12, "C3"),
+            (14, "D5"),
+            (-14, "Bb2"),
+            (21, "A5"),
+            (-21, "Eb2"),
+            (24, "C6"),
+            (-24, "C2"),
+        ):
+            with self.subTest(chromatic=chromatic):
+                note = ml.Note("C4", transposeChromatic=chromatic)
+                self.assertTrue(
+                    note == ml.Note(concert), f"C4 moved by {chromatic} is not {concert}"
+                )
+                self.assertEqual(note.getTransposeDiatonic(), 0)
+
+        tritone = ml.Note("B3", transposeChromatic=6)
+        self.assertTrue(tritone == ml.Note("E#4"))
+        self.assertEqual(tritone.getSoundingPitch(), "F4")
+
     # getScaleDegree() reads the written step, in the key the part is written in.
     def testGetScaleDegreeReadsTheWrittenStep(self):
         self.assertEqual(transposing("D4", -1, -2).getScaleDegree(ml.Key("C")), 2)
@@ -1022,6 +1112,20 @@ class NotePitchViews(unittest.TestCase):
                 doc = " ".join(getattr(ml.Note, name).__doc__.split()).lower()
                 self.assertIn("fallback", doc)
                 self.assertIn("silent", doc)
+
+    # Decision D7: the Sounding getters document the diatonic interval they infer when only the
+    # chromatic one is given.
+    def testEverySoundingGetterDocumentsTheInferredDiatonicInterval(self):
+        for name in (
+            "getSoundingPitch",
+            "getSoundingPitchClass",
+            "getSoundingPitchStep",
+            "getDiatonicSoundingPitchClass",
+            "getSoundingOctave",
+        ):
+            with self.subTest(getter=name):
+                doc = " ".join(getattr(ml.Note, name).__doc__.split()).lower()
+                self.assertIn("inferred diatonic interval", doc)
 
 
 if __name__ == "__main__":

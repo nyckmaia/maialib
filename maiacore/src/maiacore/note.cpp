@@ -140,7 +140,8 @@ Pitch chromaticSpelling(const Pitch& writtenPitch, const int transposeDiatonic,
     const Pitch defaultSpelling(defaultSpelled);
 
     // Accidental preference: flats going down, the default (natural/sharp-side) spelling going up,
-    // so a written C4 moved down two semitones without a diatonic interval is "Bb3", not "A#3".
+    // so a B-flat clarinet's written Cbb4, which the letter B could spell only with a triple flat,
+    // is "Ab3", not "G#3".
     if (transposeChromatic > 0) {
         return defaultSpelling;
     }
@@ -304,18 +305,31 @@ std::pair<std::string, std::string> quarterToneEnharmonics(const std::string& pi
                           : std::make_pair(partners[1].first, partners[0].first);
 }
 
-// The concert spelling of 'written' moved by a transposing interval when the diatonic interval
-// can spell it: the letter moved by 'transposeDiatonic', the alter taken from the exact position
-// 'transposeChromatic' semitones away. Empty when there is no diatonic interval (a MusicXML
-// <transpose> without <diatonic>), when the alter would pass a double accidental, or when the
-// octave would leave -1..11. The caller has already rejected a position below the lowest
-// representable pitch, so the Pitch built here always exists.
-std::optional<Pitch> diatonicSpelling(const Pitch& written, const int transposeDiatonic,
-                                      const int transposeChromatic) {
-    if (transposeDiatonic == 0) {
-        return std::nullopt;
-    }
+// The diatonic interval conventionally written for a transposing interval of 'transposeChromatic'
+// semitones: seven letters for each whole octave, plus the letters of the simple interval left
+// over -- a second for 1 or 2 semitones, a third for 3 or 4, a fourth for 5 and also for the
+// tritone, 6, an augmented fourth; a fifth for 7, a sixth for 8 or 9, a seventh for 10 or 11 --
+// in the direction of the chromatic interval: -2 gives -1 (a B-flat clarinet), -9 gives -5 (an
+// E-flat alto saxophone), 12 gives 7 (a piccolo). The magnitude is taken in 64 bits, where that of
+// the lowest int fits; the result is never larger than it, so its value fits an int again.
+std::int64_t conventionalDiatonicInterval(const int transposeChromatic) {
+    static constexpr std::array<std::int64_t, 12> simpleIntervalLetters = {0, 1, 1, 2, 2, 3,
+                                                                           3, 4, 5, 5, 6, 6};
+    const std::int64_t semitones = transposeChromatic;
+    const std::int64_t magnitude = semitones < 0 ? -semitones : semitones;
+    const std::int64_t letters =
+        7 * (magnitude / 12) + simpleIntervalLetters[static_cast<size_t>(magnitude % 12)];
+    return semitones < 0 ? -letters : letters;
+}
 
+// The concert spelling of 'written' moved by a transposing interval when its diatonic interval
+// can spell it: the letter moved by 'transposeDiatonic' letters -- the given diatonic interval,
+// or the one the caller inferred from the chromatic interval -- and the alter taken from the
+// exact position 'transposeChromatic' semitones away. Empty when the alter would pass a double
+// accidental, or when the octave would leave -1..11. The caller has already rejected a position
+// below the lowest representable pitch, so the Pitch built here always exists.
+std::optional<Pitch> diatonicSpelling(const Pitch& written, const std::int64_t transposeDiatonic,
+                                      const int transposeChromatic) {
     // Letters are counted on the diatonic number, 7 * octave + step index (C4 is 28, B3 is 27):
     // its floor division by 7 carries whole octaves across C in either direction. 64 bits keep
     // any int interval from overflowing.
@@ -361,8 +375,14 @@ Pitch concertSpelling(const Pitch& written, const int transposeDiatonic,
         throwSoundingPitchBelowFloor(written, transposeDiatonic, transposeChromatic);
     }
 
-    const std::optional<Pitch> concert =
-        diatonicSpelling(written, transposeDiatonic, transposeChromatic);
+    // A transposing interval given only in semitones -- a MusicXML <transpose> without <diatonic>,
+    // or a note given only a chromatic interval -- moves the letter by the diatonic interval
+    // conventionally written for those semitones. A diatonic interval that is given is used as it
+    // is, even one that disagrees with the chromatic interval.
+    const std::int64_t diatonic = (transposeDiatonic != 0)
+                                      ? std::int64_t{transposeDiatonic}
+                                      : conventionalDiatonicInterval(transposeChromatic);
+    const std::optional<Pitch> concert = diatonicSpelling(written, diatonic, transposeChromatic);
     if (concert.has_value()) {
         return concert.value();
     }
