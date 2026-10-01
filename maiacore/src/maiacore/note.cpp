@@ -187,6 +187,15 @@ void changeWrittenPitch(Pitch& writtenPitch, const int transposeDiatonic,
     writtenPitch = changed;
 }
 
+// A new note written 'writtenPitch' on an instrument transposing by (transposeDiatonic,
+// transposeChromatic), with the default rhythm figure. A respelling of a note's written pitch built
+// this way sounds exactly what that note sounds: the same position, moved by the same interval.
+Note respelledNote(const std::string& writtenPitch, const int transposeDiatonic,
+                   const int transposeChromatic) {
+    return Note(writtenPitch, RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
+                transposeDiatonic, transposeChromatic);
+}
+
 // Formats a pitch alter value for the MusicXML <alter> element: a whole-tone accidental with no
 // decimal part ("1", "-2"), a quarter tone with exactly one decimal place ("0.5", "-1.5"). The
 // text is looked up by accidental symbol rather than formatted through a stream, so it never
@@ -772,15 +781,22 @@ void Note::toEnharmonicPitch(const bool alternativeEnharmonicPitch) {
 }
 
 Note Note::getEnharmonicNote(const bool alternativeEnharmonicPitch) const {
-    return Note(getEnharmonicPitch(alternativeEnharmonicPitch));
+    return respelledNote(getEnharmonicPitch(alternativeEnharmonicPitch), _transposeDiatonic,
+                         _transposeChromatic);
 }
 
 std::vector<Note> Note::getEnharmonicNotes(const bool includeCurrentPitch) const {
+    // Each note keeps this note's transposing interval, so every one sounds what this note sounds.
+    const auto respelled = [this](const std::string& writtenPitch) {
+        return respelledNote(writtenPitch, _transposeDiatonic, _transposeChromatic);
+    };
+
     if (includeCurrentPitch) {
-        return {Note(getPitch()), Note(getEnharmonicPitch(false)), Note(getEnharmonicPitch(true))};
+        return {respelled(getPitch()), respelled(getEnharmonicPitch(false)),
+                respelled(getEnharmonicPitch(true))};
     }
 
-    return {Note(getEnharmonicPitch(false)), Note(getEnharmonicPitch(true))};
+    return {respelled(getEnharmonicPitch(false)), respelled(getEnharmonicPitch(true))};
 }
 
 int Note::getScaleDegree(const Key& key) const {

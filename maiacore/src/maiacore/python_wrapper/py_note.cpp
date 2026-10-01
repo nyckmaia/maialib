@@ -1020,8 +1020,11 @@ void NoteClass(const py::module& m) {
             R"pbdoc(
         Return a new Note spelled with ``getEnharmonicPitch(alternativeEnharmonicPitch)``.
 
-        The new note holds that spelling of the written pitch as its written pitch, with no
-        transposing interval and the default rhythm figure.
+        The new note holds that respelling of the written pitch as its written pitch, with this
+        note's transposing interval and the default rhythm figure, so it sounds exactly what this
+        note sounds -- the same ``getMidiNumber()`` and ``getQuarterToneSteps()`` -- only written
+        differently: a B-flat clarinet's written ``D4`` (sounding ``C4``) gives a written
+        ``Ebb4``, also sounding ``C4``. A rest gives a rest.
 
         Parameters
         ----------
@@ -1033,17 +1036,29 @@ void NoteClass(const py::module& m) {
         Note
             Enharmonic note.
 
+        Raises
+        ------
+        RuntimeError
+            If the respelling cannot be spelled once moved by the transposing interval, the case
+            ``toEnharmonicPitch`` raises for: a written ``A#11`` moved up a major second sounds
+            ``B#11``, but its respelling ``Bb11`` would need the letter C of octave 12.
+
         Examples
         --------
         >>> ml.Note("E1b4").getEnharmonicNote().getPitch()
         'D3x4'
+        >>> clarinet = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> respelled = clarinet.getEnharmonicNote()
+        >>> respelled.getPitch(), respelled.getSoundingPitch(), respelled.getMidiNumber()
+        ('Ebb4', 'C4', 60)
     )pbdoc");
     cls.def("getEnharmonicNotes", &Note::getEnharmonicNotes, py::arg("includeCurrentPitch") = false,
             R"pbdoc(
         Return new Notes spelled with the strings ``getEnharmonicPitches`` returns.
 
-        Each new note holds its spelling of the written pitch as its written pitch, with no
-        transposing interval and the default rhythm figure.
+        Each new note holds its respelling of the written pitch as its written pitch, with this
+        note's transposing interval and the default rhythm figure, so every one sounds exactly
+        what this note sounds (see ``getEnharmonicNote``).
 
         Parameters
         ----------
@@ -1055,10 +1070,19 @@ void NoteClass(const py::module& m) {
         list of Note
             Enharmonic notes (entries may repeat, see ``getEnharmonicPitches``).
 
+        Raises
+        ------
+        RuntimeError
+            If a respelling cannot be spelled once moved by the transposing interval (see
+            ``getEnharmonicNote``).
+
         Examples
         --------
         >>> [note.getPitch() for note in ml.Note("E1b4").getEnharmonicNotes()]
         ['D3x4', 'F3b4']
+        >>> clarinet = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> [(n.getPitch(), n.getSoundingPitch()) for n in clarinet.getEnharmonicNotes()]
+        [('Ebb4', 'C4'), ('Cx4', 'C4')]
     )pbdoc");
 
     cls.def("toEnharmonicPitch", &Note::toEnharmonicPitch,

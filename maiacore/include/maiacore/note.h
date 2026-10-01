@@ -823,19 +823,28 @@ class Note {
 
     /**
      * @brief Returns a new Note spelled with getEnharmonicPitch(alternativeEnharmonicPitch).
-     * @details The new Note holds that spelling of the written pitch as its written pitch, with no
-     *          transposing interval and the default rhythm figure.
+     * @details The new Note holds that respelling of the written pitch as its written pitch, with
+     *          this note's transposing interval and the default rhythm figure, so it sounds exactly
+     *          what this note sounds -- the same getMidiNumber() and getQuarterToneSteps() -- only
+     *          written differently: a B-flat clarinet's written D4 (sounding C4) gives a written
+     *          Ebb4, also sounding C4. A rest gives a rest.
      * @param alternativeEnharmonicPitch If true, uses the alternative enharmonic.
      * @return Enharmonic Note object.
+     * @throws std::runtime_error If the respelling cannot be spelled once moved by the transposing
+     *         interval, the case toEnharmonicPitch() raises for: a written A#11 moved up a major
+     *         second sounds B#11, but its respelling Bb11 would need the letter C of octave 12.
      */
     Note getEnharmonicNote(const bool alternativeEnharmonicPitch = false) const;
 
     /**
      * @brief Returns new Notes spelled with the strings getEnharmonicPitches() returns.
-     * @details Each new Note holds its spelling of the written pitch as its written pitch, with
-     *          no transposing interval and the default rhythm figure; entries may repeat.
+     * @details Each new Note holds its respelling of the written pitch as its written pitch, with
+     *          this note's transposing interval and the default rhythm figure, so every one sounds
+     *          exactly what this note sounds (see getEnharmonicNote()); entries may repeat.
      * @param includeCurrentPitch If true, includes a Note spelled with the current pitch.
      * @return Vector of enharmonic Note objects.
+     * @throws std::runtime_error If a respelling cannot be spelled once moved by the transposing
+     *         interval (see getEnharmonicNote()).
      */
     std::vector<Note> getEnharmonicNotes(const bool includeCurrentPitch = false) const;
 

@@ -2337,6 +2337,54 @@ TEST(NotePitchViews, toEnharmonicPitchKeepsWhatATransposedNoteSounds) {
     }
 }
 
+// The enharmonic notes of a transposed note keep its transposing interval: each is written with a
+// respelling of the written pitch and sounds exactly what the note sounds. A B-flat clarinet's
+// written D4 sounds C4, and so do its respellings Ebb4 and Cx4; its written C1x4 sounds B1b3
+// (58.5), and so do D3b4 and B3x3; a horn in F's written F#4, Gb4 and Ex4 all sound B3.
+TEST(NotePitchViews, enharmonicNotesKeepTheTransposingInterval) {
+    // A note, then the written pitches of getEnharmonicNotes(true): its own, the default and the
+    // alternative respelling.
+    const std::vector<std::pair<Note, std::vector<std::string>>> cases = {
+        {bFlatClarinet("D4"), {"D4", "Ebb4", "Cx4"}},
+        {bFlatClarinet("C1x4"), {"C1x4", "D3b4", "B3x3"}},
+        {hornInF("F#4"), {"F#4", "Gb4", "Ex4"}},
+    };
+    for (const auto& [note, written] : cases) {
+        std::vector<Note> respelled = note.getEnharmonicNotes(true);
+        for (const Note& other : note.getEnharmonicNotes(false)) {
+            respelled.push_back(other);
+        }
+        respelled.push_back(note.getEnharmonicNote(false));
+        respelled.push_back(note.getEnharmonicNote(true));
+        const std::vector<std::string> expected = {written[0], written[1], written[2], written[1],
+                                                   written[2], written[1], written[2]};
+        ASSERT_EQ(respelled.size(), expected.size());
+
+        for (size_t i = 0; i < respelled.size(); i++) {
+            const Note& other = respelled[i];
+            const std::string where = note.getPitch() + " -> " + expected[i];
+            EXPECT_EQ(other.getPitch(), expected[i]) << where;
+            EXPECT_EQ(other.getTransposeDiatonic(), note.getTransposeDiatonic()) << where;
+            EXPECT_EQ(other.getTransposeChromatic(), note.getTransposeChromatic()) << where;
+            EXPECT_EQ(other.getMidiNumber(), note.getMidiNumber()) << where;
+            EXPECT_EQ(other.getQuarterToneSteps(), note.getQuarterToneSteps()) << where;
+            EXPECT_EQ(other.getSoundingPitch(), note.getSoundingPitch()) << where;
+        }
+    }
+}
+
+// A respelling that the transposing interval moves where no spelling reaches cannot be returned:
+// a written A#11 a major second up sounds B#11, but its respelling Bb11 (the default, and the
+// alternative too) would need the letter C of octave 12 -- the error toEnharmonicPitch() raises.
+TEST(NotePitchViews, anEnharmonicNoteThatCannotBeSpelledIsRejected) {
+    const Note note = transposingNote("A#11", 1, 2);
+    ASSERT_EQ(note.getSoundingPitch(), "B#11");
+    const std::string error = aboveTheCeiling("Bb11", 1, 2, "156.000000");
+    EXPECT_EQ(thrownFirstLine([&] { note.getEnharmonicNote(false); }), error);
+    EXPECT_EQ(thrownFirstLine([&] { note.getEnharmonicNote(true); }), error);
+    EXPECT_EQ(thrownFirstLine([&] { note.getEnharmonicNotes(true); }), error);
+}
+
 // Above B11 the diatonic interval spells what the chromatic rule cannot: B1x11, B#11, B3x11 and
 // Bx11, when it moves the written letter to the B of octave 11. The constructor and every mutator
 // accept such a sounding pitch, which no simpler spelling within octaves -1..11 has.

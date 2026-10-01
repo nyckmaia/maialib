@@ -924,6 +924,42 @@ class NotePitchViews(unittest.TestCase):
                 self.assertEqual(clarinet.getMidiNumber(), 59)
                 self.assertEqual(clarinet.getSoundingPitch(), "B3")
 
+    # Mirrors NotePitchViews.enharmonicNotesKeepTheTransposingInterval: each enharmonic note is a
+    # respelling of the written pitch that keeps the transposing interval, so it sounds what the
+    # note sounds.
+    def testEnharmonicNotesKeepTheTransposingInterval(self):
+        for note, written in (
+            (transposing("D4", -1, -2), ["D4", "Ebb4", "Cx4"]),
+            (transposing("C1x4", -1, -2), ["C1x4", "D3b4", "B3x3"]),
+            (transposing("F#4", -4, -7), ["F#4", "Gb4", "Ex4"]),
+        ):
+            respelled = (
+                note.getEnharmonicNotes(True)
+                + note.getEnharmonicNotes()
+                + [note.getEnharmonicNote(), note.getEnharmonicNote(True)]
+            )
+            self.assertEqual([other.getPitch() for other in respelled], written + written[1:] * 2)
+            for other in respelled:
+                with self.subTest(written=note.getPitch(), respelled=other.getPitch()):
+                    self.assertEqual(other.getTransposeDiatonic(), note.getTransposeDiatonic())
+                    self.assertEqual(other.getTransposeChromatic(), note.getTransposeChromatic())
+                    self.assertEqual(other.getMidiNumber(), note.getMidiNumber())
+                    self.assertEqual(other.getQuarterToneSteps(), note.getQuarterToneSteps())
+                    self.assertEqual(other.getSoundingPitch(), note.getSoundingPitch())
+
+    # Mirrors NotePitchViews.anEnharmonicNoteThatCannotBeSpelledIsRejected: A#11 a major second up
+    # sounds B#11, but its respelling Bb11 would need the letter C of octave 12.
+    def testAnEnharmonicNoteThatCannotBeSpelledIsRejected(self):
+        note = transposing("A#11", 1, 2)
+        self.assertEqual(note.getSoundingPitch(), "B#11")
+        for alternative in (False, True):
+            with self.subTest(alternative=alternative):
+                with self.assertRaises(RuntimeError) as context:
+                    note.getEnharmonicNote(alternative)
+                self.assertEqual(
+                    firstLine(context.exception), aboveTheCeiling("Bb11", 1, 2, "156.000000")
+                )
+
     # Above B11 the diatonic interval spells B#11 and Bx11, and every entry point accepts them.
     def testASoundingPitchTheDiatonicIntervalSpellsAboveB11IsAccepted(self):
         self.assertEqual(transposing("A#11", 1, 2).getSoundingPitch(), "B#11")
