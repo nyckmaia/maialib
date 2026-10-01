@@ -1,6 +1,6 @@
 # Note pitch views and diatonic transposition (roadmap step 1a) — Design
 
-**Status:** decisions approved by the user on 2026-09-30 (answers recorded below).
+**Status:** decisions approved by the user on 2026-09-30 (answers recorded below); D4 amended by the user on 2026-10-01 (a diatonic interval of 0 with a non-zero chromatic interval is inferred).
 **Roadmap:** step 1a of `C:/Users/nyck/.claude/plans/wobbly-coalescing-quill.md`. Step 1b (`<transpose>` read/write, `octave-change`, concert key) builds on this.
 
 ## 1. Problem
@@ -23,14 +23,14 @@ Measured on `main` @ `a287fcf`:
 
 **D3 — simplest spelling.** Among the spellings of the same exact position, take the one with the smallest `|alter|`; on a tie, keep the direction (sharp side / flat side) of the spelling being simplified. Semitones: `Db4`→`Db4`, `C#4`→`C#4`, `Cb4`→`B3`, `E#4`→`F4`, `B#3`→`C4`, `Fb4`→`E4`, `Ebb4`→`D4`, `Fx4`→`G4`, `Bbb4`→`A4`. Quarter tones: `C1x4`→`C1x4` (0.5 beats `D3b4`'s 1.5), `C3x4`→`D1b4`, `E1x4`→`E1x4` (tie with `F1b4`, keeps the sharp side), `B1b3`→`B1b3`. The octave is that spelling's own octave (`Cb4` sounds `B3`, octave 3).
 
-**D4 — concert spelling (internal view).** The written pitch moved by the transposing interval, with the letter taken from the diatonic interval (written step + `transposeDiatonic`, carrying octaves) and the alter from the exact position (written position + `transposeChromatic`). For an untransposed note it is the written pitch. **Fallback, silent and documented:** when `transposeDiatonic == 0` while `transposeChromatic != 0` (e.g. a MusicXML file without `<diatonic>`), or when the resulting alter is not one of the nine representable accidentals, or the octave falls outside −1..11, the current chromatic rule spells the position. The speller must not throw in normal operation (the current one uses try/catch on every downward transposition).
+**D4 — concert spelling (internal view).** The written pitch moved by the transposing interval, with the letter taken from the diatonic interval (written step + `transposeDiatonic`, carrying octaves) and the alter from the exact position (written position + `transposeChromatic`). For an untransposed note it is the written pitch. **Inferred diatonic interval (user, 2026-10-01):** when `transposeDiatonic == 0` while `transposeChromatic != 0` (e.g. a MusicXML file without `<diatonic>`, or a Python `Note` built with only `transposeChromatic`), the speller uses the conventional diatonic interval for those semitones, `d = sign(c) · (7 · ⌊|c| / 12⌋ + T[|c| mod 12])` with `T = [0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 6]` — seconds 1, thirds 2, the fourth and the tritone 3 (the tritone is an augmented fourth), the fifth 4, sixths 5, sevenths 6: −2 → −1 (B♭ clarinet), −3 → −2 (A clarinet), −7 → −4 (horn in F), −9 → −5 (E♭ alto saxophone), −14 → −8 (B♭ bass clarinet), +12 → +7 (piccolo). The inferred count is used by the speller only; `getTransposeDiatonic()` returns the stored value. **Fallback, silent and documented:** when the resulting alter is not one of the nine representable accidentals, or the octave falls outside −1..11, the chromatic rule spells the position. The speller must not throw in normal operation (the current one uses try/catch on every downward transposition).
 - The **Sounding** view is D3 applied to the concert spelling: B-flat clarinet written `Db4` → concert `Cb4` → sounding `B3`; written `Eb4` → concert `Db4` → sounding `Db4` (tie with `C#4`, keeps the flat side); written `C1x4` → concert `B1b3` → sounding `B1b3`.
 
 **D5 — analyses use the concert spelling (D4), not the simplified Sounding spelling.** Everything that relates pitches — `Chord` analyses, `Interval`, chord extraction from a `Score`, melody-pattern search — works on the concert spelling. For untransposed notes this is exactly today's written spelling, so no interval or chord name changes (`Interval(C4, Cb5)` stays a diminished octave; `Chord(Ab4, Cb5, Eb5)` stays A-flat minor); for transposing parts it is the correct concert pitch. The concert view stays **internal**: no Python binding and no documented public API (C++ access for `Chord`/`Interval`/`Score` through the narrowest mechanism the code allows, e.g. a `detail` function or friendship). Python-side displays (maiapy plot labels, dissonance labels) have no concert view and use the public Sounding view.
 
 **D6 — mutators work on the written pitch.** `transpose()` transposes the written pitch once (`transpose(0)` changes nothing); `toEnharmonicPitch()` respells the written pitch, so the sounding position never moves. Existing strong exception guarantees stay.
 
-**D7 — the fallback of D4 is silent** (no warning), documented in the Doxygen and numpydoc of the Sounding getters.
+**D7 — the fallback of D4 is silent** (no warning), and so is the inferred diatonic interval; both are documented in the Doxygen and numpydoc of the Sounding getters.
 
 ## 3. Examples (after this step)
 
@@ -42,7 +42,9 @@ Measured on `main` @ `a287fcf`:
 | B♭ clarinet written `C1x4` | `C1x4` | `B1b3` | `B1b3` / 3 | 59 (58.5 rounds up) |
 | Horn in F (d=−4, c=−7) written `B4` | `B4` | `E4` | `E4` / 4 | 64 |
 | Piccolo (d=7, c=12) written `Bb4` | `Bb4` | `Bb5` | `Bb5` / 5 | 82 |
-| No `<diatonic>` (d=0, c=−2) written `C4` | `C4` | fallback `Bb3` | `Bb3` / 3 | 58 |
+| No `<diatonic>` (d=0, c=−2) written `C4` | `C4` | `Bb3` (inferred d=−1) | `Bb3` / 3 | 58 |
+| No `<diatonic>` (d=0, c=−2) written `F#4` | `F#4` | `E4` (inferred d=−1) | `E4` / 4 | 64 |
+| B♭ clarinet written `Cbb4` | `Cbb4` | fallback `Ab3` (`Bbbb3` is not representable) | `Ab3` / 3 | 56 |
 | Rest | unchanged | — | unchanged | −1 |
 
 ## 4. Internal consumers
@@ -60,7 +62,7 @@ Every internal use of an unprefixed pitch getter must be reviewed and switched d
 - `getPitch`, `getOctave`, `getPitchClass`, `getPitchStep`, `getAlterSymbol` and the enharmonic family describe the written pitch (they described the sounding pitch) — different only for transposed notes. The notes `getEnharmonicNote(s)` return keep the transposing interval: their `getPitch()` is the respelled written pitch, and they sound like the note.
 - `getSounding*` return the simplest spelling and its octave (`Cb4` → `B3`, octave 3) — different for untransposed notes spelled with Cb, Fb, E#, B#, a double accidental or a three-quarter-tone accidental (`C3x4` → `D1b4`), and for transposed notes. `getSoundingOctave` is the spelling's octave, not the MIDI number's: `B1x3` → 3 (was 4); `B1x11`, `B#11`, `B3x11`, `Bx11` → 11 (was 12).
 - `transpose()` moves the written pitch once; `toEnharmonicPitch()` respells the written pitch.
-- Analyses of transposing parts use correct concert spellings (chord and interval names may change there). The notes the chord analysis returns (root, bass note, stacks) are untransposed notes at concert pitch; `Chord(notes)` holds its notes untransposed at their concert spelling; `removeDuplicateNotes()` pairs notes by concert spelling.
+- Analyses of transposing parts use correct concert spellings (chord and interval names may change there); a transposing interval given only in semitones is spelled by its conventional diatonic interval (D4). The notes the chord analysis returns (root, bass note, stacks) are untransposed notes at concert pitch; `Chord(notes)` holds its notes untransposed at their concert spelling; `removeDuplicateNotes()` pairs notes by concert spelling.
 - `Note` `==`/`!=` compare the concert spelling (a B♭ clarinet's written `D4` equals a `C4`); the `Note` and `Chord` hashes hash exactly what `==` compares; `Note.__repr__`/`info()` show the written pitch, and `__repr__` no longer raises for a note sounding below `C1b-1`; `Chord`'s representations show the notes at concert spelling (unchanged for untransposed chords); `getScaleDegree()` reads the written step.
 - Edges of the range: `toEnharmonicPitch()` and `getEnharmonicNote(s)` raise at the very top when the respelling cannot be spelled once transposed (`A#11` on a (1, 2) instrument: `Bb11` would need `C12`); a `Chord` display raises for a note sounding below `C1b-1`.
 
