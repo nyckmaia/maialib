@@ -247,10 +247,10 @@ TEST(ConcertSpelling, withoutADiatonicIntervalTheConventionalOneIsInferred) {
     });
 }
 
-// The inferred diatonic interval for every number of semitones within an octave, in both
-// directions, and for compound intervals: seven letters for each whole octave, plus a second for
-// 1 or 2 semitones, a third for 3 or 4, a fourth for 5, a fifth for 7, a sixth for 8 or 9 and a
-// seventh for 10 or 11. Written C4 shows the letter each one reaches.
+// The inferred diatonic interval for every number of semitones within an octave but the tritone
+// (the next test), in both directions, and for compound intervals: seven letters for each whole
+// octave, plus a second for 1 or 2 semitones, a third for 3 or 4, a fourth for 5, a fifth for 7, a
+// sixth for 8 or 9 and a seventh for 10 or 11. Written C4 shows the letter each one reaches.
 TEST(ConcertSpelling, theInferredIntervalIsTheConventionalOneForEverySemitoneCount) {
     expectConcert({
         {"C4", 0, 1, "Db4"},  {"C4", 0, -1, "B3"},    // minor second

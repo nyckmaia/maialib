@@ -2420,8 +2420,9 @@ TEST(NotePitchViews, aSoundingPitchTheDiatonicIntervalSpellsAboveB11IsAccepted) 
 }
 
 // The diatonic interval inferred for a chromatic interval given alone reaches the B of octave 11
-// too: two semitones up are a major second, so a written A#11 sounds B#11, through the
-// constructor and every mutator, while the note keeps the diatonic interval it was given, 0.
+// too: two semitones up are a major second, so a written A#11 sounds B#11 -- through the
+// constructor, setTransposingInterval(), setAlter() and setPitch() -- while the note keeps the
+// diatonic interval it was given, 0.
 TEST(NotePitchViews, anInferredDiatonicIntervalSpellsAboveB11Too) {
     const Note sharp = transposingNote("A#11", 0, 2);
     EXPECT_EQ(sharp.getSoundingPitch(), "B#11");
