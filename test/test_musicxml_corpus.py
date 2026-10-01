@@ -127,6 +127,13 @@ class LedgerLogicTestCase(unittest.TestCase):
             corpus.updated_ledger(old, actual),
         )
 
+    def test_an_update_drops_the_note_when_no_alternative_still_holds(self):
+        old = {SMALL_FILE: {**FINISHED, "load": {"any_of": ["ok", "crash"]}, "note": "why"}}
+        actual = {SMALL_FILE: {**FINISHED, "load": "IndexError"}}
+        self.assertEqual(
+            {SMALL_FILE: {**FINISHED, "load": "IndexError"}}, corpus.updated_ledger(old, actual)
+        )
+
 
 class WorkerStagesTestCase(unittest.TestCase):
     def test_each_stage_is_followed_by_a_record_and_an_ill_formed_export_has_no_schema_result(
@@ -212,6 +219,14 @@ class WorkerProcessTestCase(unittest.TestCase):
 class CorpusLedgerTestCase(unittest.TestCase):
     def test_the_ledger_lists_every_corpus_file(self):
         self.assertEqual(corpus.corpus_files(), sorted(corpus.load_ledger(corpus.LEDGER)))
+
+    def test_the_ledger_marks_as_slow_exactly_the_files_of_10_mb_or_more(self):
+        # The slow flag decides which files `make py-tests` skips.
+        ledger = corpus.load_ledger(corpus.LEDGER)
+        self.assertEqual(
+            [name for name in corpus.corpus_files() if corpus.is_slow(name)],
+            sorted(name for name, entry in ledger.items() if entry.get("slow")),
+        )
 
     def test_every_corpus_file_matches_its_ledger_entry(self):
         ledger = corpus.load_ledger(corpus.LEDGER)

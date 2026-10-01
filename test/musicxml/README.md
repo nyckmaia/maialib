@@ -30,7 +30,9 @@ One line per corpus file (a repository-relative path), with these fields:
 A crash or a timeout is charged to the first stage that had not finished, and every later stage is
 `n/a`. Exception types are compared, never messages: the text of a C++ exception differs between
 compilers. A value may be `{"any_of": [...]}` with a `note` saying why, for an outcome that
-depends on the compiler.
+depends on the compiler. `make corpus-update-ledger` keeps the alternatives while the new value is
+one of them, and their note while any are kept, so alternatives never narrow by themselves: once
+their cause is fixed, prune them, and the note, by hand.
 
 The ledger is strict both ways: a file that gets worse fails, and so does a file that gets better
 without a ledger update. `make corpus-update-ledger` writes the current results; review its diff

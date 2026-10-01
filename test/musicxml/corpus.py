@@ -26,7 +26,7 @@ LEDGER = HERE / "ledger.json"
 EXTERNAL_ROOT = HERE / "external"
 EXTERNAL_LEDGER = HERE / "ledger-external.json"
 CORPUS_ROOTS = ("test/xml_examples", "maialib/xml-scores-examples", "test/musicxml/w3c-test-suite")
-SUFFIXES = (".xml", ".musicxml", ".mxl", ".invalid")
+SUFFIXES = (".xml", ".musicxml", ".mxl")
 SLOW_BYTES = 10_000_000
 SLOW_TIMEOUT = 3600.0
 IGNORED_KEYS = ("slow", "note")
@@ -125,15 +125,18 @@ def write_ledger(path: Path, records: dict[str, Record]) -> None:
 
 def updated_ledger(old: dict[str, Record], actual: dict[str, Record]) -> dict[str, Record]:
     """The ledger to write for these results: where the old entry allowed several values and the
-    new one is among them, the alternatives and the note stay; slow files are marked."""
+    new one is among them, the alternatives stay, and the note with them while any do; slow files
+    are marked. Alternatives never narrow here: prune them by hand once their cause is fixed."""
     ledger: dict[str, Record] = {}
     for name, record in actual.items():
         entry = dict(record)
         previous = old.get(name, {})
+        kept_alternatives = False
         for key, allowed in previous.items():
             if isinstance(allowed, dict) and record.get(key) in allowed.get("any_of", []):
                 entry[key] = allowed
-        if "note" in previous:
+                kept_alternatives = True
+        if kept_alternatives and "note" in previous:
             entry["note"] = previous["note"]
         if is_slow(name):
             entry["slow"] = True
