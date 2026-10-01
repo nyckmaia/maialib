@@ -832,9 +832,47 @@ void ChordClass(const py::module& m) {
     )pbdoc");
 
     cls.def("print", &Chord::print,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Print the chord's notes to stdout, one ``note[i] = P`` line per note, in the order they
+        were added.
+
+        Each note is shown at concert pitch, as the analysis relates it: a note of a transposing
+        instrument at the pitch it sounds, spelled with its written letter moved by the diatonic
+        transposing interval (a B-flat clarinet's written ``Db5`` is shown ``Cb5``) -- or, where
+        that gives no spelling, by the fallback described on ``Note.getSoundingPitch``, without
+        the simplification -- and an untransposed note as written.
+
+        Raises
+        ------
+        RuntimeError
+            If a note's sounding pitch lies below ``C1b-1`` (see ``Note.getSoundingPitch``).
+
+        Examples
+        --------
+        >>> clarinet = ml.Note("Db5", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> chord = ml.Chord()
+        >>> for note in [ml.Note("Ab4"), clarinet, ml.Note("Eb5")]:
+        ...     chord.addNote(note)
+        >>> chord.print()
+        [INFO] note[0] = Ab4
+        [INFO] note[1] = Cb5
+        [INFO] note[2] = Eb5
+    )pbdoc");
     cls.def("printStack", &Chord::printStack,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Print the chord's open stack to stdout, one ``openStack[i] = P`` line per note.
+
+        Once the chord is stacked in thirds (by any analysis method), these are the notes of
+        ``getOpenStackNotes``; before, the notes as they were added. Each note is shown at
+        concert pitch, as ``print`` shows it.
+
+        Raises
+        ------
+        RuntimeError
+            If a note of the stack sounds below ``C1b-1`` (see ``Note.getSoundingPitch``).
+    )pbdoc");
 
     cls.def("getOpenStackChord", &Chord::getOpenStackChord, py::arg("enharmonyNotes") = false,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
@@ -873,7 +911,8 @@ void ChordClass(const py::module& m) {
         Stacks the chord first if it has not been stacked yet. The root is placed in octave 4,
         the third, fifth and seventh above it within the octave, and the ninth, eleventh and
         thirteenth an octave higher. The notes are spelled as the stacking spells them, which
-        can respell a chord note: ``["C#4", "F4", "G#4"]`` stacks as ``F4, Ab4, C#5``. A note
+        can respell a chord note: ``["C4", "D#4", "G4"]`` stacks as ``C4, Eb4, G4`` and is named
+        ``"Cm"``. A note
         of a transposing instrument is analysed at concert pitch (see the class notes), so every
         note of the stack is an untransposed note at that pitch.
 

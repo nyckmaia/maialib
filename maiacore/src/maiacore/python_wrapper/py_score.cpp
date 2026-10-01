@@ -493,8 +493,9 @@ void ScoreClass(const py::module& m) {
             One ``(measure, floatMeasure, key, chord, isHomophonic)`` per onset, in time order:
             the one-based measure number; the onset as a one-based measure position, whose
             fraction is the position within the measure (``1.5`` is halfway through the first
-            measure); the key of the first part's measure there, as that part writes it; the
-            chord; and whether every note of the chord starts at that onset.
+            measure); the key of that measure in the score's first part, as that part writes it,
+            even when ``partNames`` leaves the part out; the chord; and whether every note of
+            the chord starts at that onset.
 
         Raises
         ------
