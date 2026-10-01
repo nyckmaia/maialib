@@ -126,5 +126,171 @@ class ArchiveTestCase(unittest.TestCase):
         self.assertFalse(musicxml_check.check_mxl_bytes(b"PK\x03\x04 not an archive").readable)
 
 
+WHOLE_NOTE = (
+    b"<note><pitch><step>C</step><octave>4</octave></pitch>"
+    b"<duration>4</duration><type>whole</type></note>"
+)
+
+
+def note(duration: int, kind: bytes, after_duration: bytes = b"", notations: bytes = b"") -> bytes:
+    """A C4 note; ``after_duration`` holds <tie> elements, ``notations`` <notations> content."""
+    return (
+        b"<note><pitch><step>C</step><octave>4</octave></pitch><duration>"
+        + str(duration).encode()
+        + b"</duration>"
+        + after_duration
+        + b"<type>"
+        + kind
+        + b"</type>"
+        + (b"<notations>" + notations + b"</notations>" if notations else b"")
+        + b"</note>"
+    )
+
+
+def with_notes(*notes: bytes) -> bytes:
+    return MINIMAL_SCORE.replace(WHOLE_NOTE, b"".join(notes))
+
+
+def errors(data: bytes) -> list:
+    return musicxml_check.check_bytes(data).errors
+
+
+def warnings(data: bytes) -> list:
+    return musicxml_check.check_bytes(data).warnings
+
+
+class SemanticChecksTestCase(unittest.TestCase):
+    def test_the_minimal_score_breaks_no_rule(self):
+        self.assertEqual([], errors(MINIMAL_SCORE))
+        self.assertEqual([], warnings(MINIMAL_SCORE))
+
+    def test_a_duration_before_any_divisions_is_an_error(self):
+        data = MINIMAL_SCORE.replace(b"<divisions>1</divisions>", b"")
+        self.assertIn("duration-before-divisions", errors(data))
+
+    def test_a_chord_note_without_a_preceding_note_is_an_error(self):
+        data = MINIMAL_SCORE.replace(b"<note><pitch>", b"<note><chord/><pitch>")
+        self.assertIn("chord-without-anchor", errors(data))
+
+    def test_a_staff_above_the_number_of_staves_is_an_error(self):
+        data = MINIMAL_SCORE.replace(b"<type>whole</type>", b"<type>whole</type><staff>2</staff>")
+        self.assertIn("staff-above-staves", errors(data))
+
+    def test_a_backup_before_the_measure_start_is_an_error(self):
+        data = MINIMAL_SCORE.replace(b"</note>", b"</note><backup><duration>8</duration></backup>")
+        self.assertIn("position-negative", errors(data))
+
+    def test_a_forward_past_the_measure_end_is_an_error(self):
+        data = MINIMAL_SCORE.replace(
+            b"</note>", b"</note><forward><duration>4</duration></forward>"
+        )
+        self.assertIn("position-past-measure-end", errors(data))
+
+    def test_a_forward_to_the_measure_end_is_allowed(self):
+        voice_two = b"</note><backup><duration>4</duration></backup><forward><duration>4</duration></forward>"
+        self.assertEqual([], errors(MINIMAL_SCORE.replace(b"</note>", voice_two)))
+
+    def test_a_tie_start_without_a_stop_is_an_error(self):
+        data = with_notes(note(4, b"whole", b'<tie type="start"/>'))
+        self.assertIn("unpaired-tie", errors(data))
+
+    def test_a_tie_stop_without_a_start_is_an_error(self):
+        data = with_notes(note(4, b"whole", b'<tie type="stop"/>'))
+        self.assertIn("unpaired-tie", errors(data))
+
+    def test_tied_notes_pair_including_a_note_that_ends_one_tie_and_starts_the_next(self):
+        data = with_notes(
+            note(2, b"half", b'<tie type="start"/>'),
+            note(1, b"quarter", b'<tie type="stop"/><tie type="start"/>'),
+            note(1, b"quarter", b'<tie type="stop"/>'),
+        )
+        self.assertEqual([], errors(data))
+
+    def test_a_slur_start_without_a_stop_is_an_error(self):
+        data = with_notes(note(4, b"whole", notations=b'<slur type="start" number="1"/>'))
+        self.assertIn("unpaired-slur", errors(data))
+
+    def test_a_slur_start_and_stop_pair(self):
+        data = with_notes(
+            note(2, b"half", notations=b'<slur type="start" number="1"/>'),
+            note(2, b"half", notations=b'<slur type="stop" number="1"/>'),
+        )
+        self.assertEqual([], errors(data))
+
+    def test_a_tuplet_start_without_a_stop_is_an_error(self):
+        data = with_notes(note(4, b"whole", notations=b'<tuplet type="start"/>'))
+        self.assertIn("unpaired-tuplet", errors(data))
+
+    def test_a_part_without_its_score_part_is_an_error(self):
+        found = errors(MINIMAL_SCORE.replace(b'<part id="P1">', b'<part id="P2">'))
+        self.assertIn("part-without-score-part", found)
+        self.assertIn("score-part-without-part", found)
+
+    def test_a_second_part_for_one_score_part_is_an_error(self):
+        start = MINIMAL_SCORE.index(b'<part id="P1">')
+        end = MINIMAL_SCORE.index(b"</part>") + len(b"</part>")
+        part = MINIMAL_SCORE[start:end]
+        self.assertIn("duplicate-part", errors(MINIMAL_SCORE.replace(part, part + part)))
+
+    def test_an_instrument_reference_to_no_score_instrument_is_an_error(self):
+        data = MINIMAL_SCORE.replace(
+            b"<duration>4</duration>", b'<duration>4</duration><instrument id="P1-I9"/>'
+        )
+        self.assertIn("dangling-instrument-ref", errors(data))
+
+    def test_a_measure_shorter_than_its_time_signature_is_a_warning_only(self):
+        data = MINIMAL_SCORE.replace(
+            b"<duration>4</duration><type>whole</type>",
+            b"<duration>3</duration><type>half</type><dot/>",
+        )
+        self.assertEqual([], errors(data))
+        self.assertEqual(["measure-length-mismatch"], warnings(data))
+
+    def test_an_implicit_measure_is_not_measured(self):
+        data = MINIMAL_SCORE.replace(
+            b"<duration>4</duration><type>whole</type>",
+            b"<duration>3</duration><type>half</type><dot/>",
+        ).replace(b'<measure number="1">', b'<measure number="1" implicit="yes">')
+        self.assertEqual([], warnings(data))
+
+    def test_a_measure_without_meter_is_not_measured(self):
+        data = MINIMAL_SCORE.replace(
+            b"<duration>4</duration><type>whole</type>",
+            b"<duration>3</duration><type>half</type><dot/>",
+        ).replace(
+            b"<time><beats>4</beats><beat-type>4</beat-type></time>",
+            b"<time><senza-misura/></time>",
+        )
+        self.assertEqual([], warnings(data))
+
+    def test_composite_beats_are_summed(self):
+        five_eighths = (
+            MINIMAL_SCORE.replace(b"<divisions>1</divisions>", b"<divisions>2</divisions>")
+            .replace(
+                b"<time><beats>4</beats><beat-type>4</beat-type></time>",
+                b"<time><beats>3+2</beats><beat-type>8</beat-type></time>",
+            )
+            .replace(
+                b"<duration>4</duration><type>whole</type>",
+                b"<duration>5</duration><type>half</type>",
+            )
+        )
+        self.assertEqual([], warnings(five_eighths))
+        self.assertEqual(
+            ["measure-length-mismatch"],
+            warnings(five_eighths.replace(b"<duration>5<", b"<duration>4<")),
+        )
+
+    def test_a_timewise_score_is_reported_as_not_checked(self):
+        timewise = (
+            b'<?xml version="1.0" encoding="UTF-8"?>\n<score-timewise version="4.0">'
+            b'<part-list><score-part id="P1"><part-name>Music</part-name></score-part></part-list>'
+            b'<measure number="1"><part id="P1">'
+            + WHOLE_NOTE
+            + b"</part></measure></score-timewise>"
+        )
+        self.assertEqual(["timewise-not-checked"], warnings(timewise))
+
+
 if __name__ == "__main__":
     unittest.main()
