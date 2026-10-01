@@ -14,9 +14,12 @@
  * queries for music analysis and computational musicology.
  *
  * A note of a transposing instrument is related at concert pitch: by the pitch it sounds, spelled
- * with its written letter moved by the diatonic transposing interval. A B-flat clarinet's written
- * D4 against a violin's C4 is a perfect unison, and its written F#4 against C4 a major third (it
- * sounds E4). getNotes() returns the notes as they were given.
+ * with its written letter moved by the diatonic transposing interval, which is inferred from the
+ * chromatic one when it is 0; where that gives no spelling, the fallback spells the position, not
+ * simplified (see Note::getSoundingPitch()). A B-flat clarinet's written D4 against a violin's C4
+ * is a perfect unison, and its written F#4 against C4 a major third (it sounds E4), as is a
+ * written F#4 given only a chromatic interval of -2. getNotes() returns the notes as they were
+ * given.
  */
 class Interval {
    private:

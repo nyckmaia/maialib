@@ -973,17 +973,21 @@ void NoteClass(const py::module& m) {
     cls.def("inChord", &Note::inChord);
     cls.def("getTransposeDiatonic", &Note::getTransposeDiatonic,
             R"pbdoc(
-        Return the diatonic transposing interval, as given to the constructor or
-        ``setTransposingInterval``.
+        Return the stored diatonic transposing interval.
 
+        A note stores the interval given to the constructor or to ``setTransposingInterval``.
         A note given only ``transposeChromatic`` answers 0, although its sounding pitch is then
         spelled with the conventional diatonic interval for those semitones (see
-        ``getSoundingPitch``).
+        ``getSoundingPitch``). A rest answers the interval it stores: a note constructed as a
+        rest drops the interval it is given, ``setTransposingInterval`` is ignored on a rest, and
+        ``setPitch`` to a rest resets the interval to 0, while a note silenced with
+        ``setIsNoteOn(False)`` keeps its interval.
 
         Returns
         -------
         int
-            Letters from the written to the sounding pitch, e.g. -1 for a B-flat clarinet.
+            Letters from the written to the sounding pitch, e.g. -1 for a B-flat clarinet, or 0
+            when none is stored.
 
         Examples
         --------
@@ -992,9 +996,60 @@ void NoteClass(const py::module& m) {
         >>> note = ml.Note("F#4", transposeChromatic=-2)
         >>> note.getTransposeDiatonic(), note.getSoundingPitch()
         (0, 'E4')
+        >>> ml.Note("rest", transposeDiatonic=-1, transposeChromatic=-2).getTransposeDiatonic()
+        0
+        >>> silenced = ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> silenced.setIsNoteOn(False)
+        >>> silenced.getTransposeDiatonic()
+        -1
     )pbdoc");
-    cls.def("getTransposeChromatic", &Note::getTransposeChromatic);
-    cls.def("isTransposed", &Note::isTransposed);
+    cls.def("getTransposeChromatic", &Note::getTransposeChromatic,
+            R"pbdoc(
+        Return the stored chromatic transposing interval.
+
+        Stored as ``getTransposeDiatonic`` describes, rests included. ``getMidiNumber`` is the
+        written MIDI number moved by it.
+
+        Returns
+        -------
+        int
+            Semitones from the written to the sounding pitch, e.g. -2 for a B-flat clarinet, or
+            0 when none is stored.
+
+        Examples
+        --------
+        >>> clarinet = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> clarinet.getTransposeChromatic(), clarinet.getMidiNumber()
+        (-2, 60)
+        >>> ml.Note("D4").getTransposeChromatic()
+        0
+    )pbdoc");
+    cls.def("isTransposed", &Note::isTransposed,
+            R"pbdoc(
+        Return True when a transposing interval is stored: ``getTransposeDiatonic()`` or
+        ``getTransposeChromatic()`` is not 0.
+
+        A note given only ``transposeChromatic`` is transposed. A rest answers by the interval it
+        stores (see ``getTransposeDiatonic``): a note silenced with ``setIsNoteOn(False)`` keeps
+        its interval and stays transposed, while a note constructed as a rest, or set to one with
+        ``setPitch``, is not.
+
+        Returns
+        -------
+        bool
+            True if either transposing interval is not 0.
+
+        Examples
+        --------
+        >>> ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2).isTransposed()
+        True
+        >>> ml.Note("D4", transposeChromatic=-2).isTransposed()
+        True
+        >>> ml.Note("D4").isTransposed()
+        False
+        >>> ml.Note("rest", transposeDiatonic=-1, transposeChromatic=-2).isTransposed()
+        False
+    )pbdoc");
     cls.def("isGraceNote", &Note::isGraceNote);
 
     cls.def("getEnharmonicPitch", &Note::getEnharmonicPitch,

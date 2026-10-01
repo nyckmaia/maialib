@@ -799,8 +799,8 @@ class NoteMutatorThatRaises(unittest.TestCase):
         self.assertEqual(note.getSoundingPitch(), "D5")
 
     # Bb11 moved up a semitone without a diatonic interval sounds B11: the minor second inferred
-    # for that semitone would reach Cb12, so the chromatic rule spells it. B11 moved up a semitone
-    # (156) can be spelled by no letter.
+    # for that semitone would reach Cb12, so the chromatic rule spells it. As B11 it would sound at
+    # 156, which only a letter moved to the B of octave 11 could spell.
     def testSetAlterChecksTheSoundingPitchLikeSetPitch(self):
         note = self.assertChecksLikeSetPitch(
             lambda: ml.Note("Bb11", transposeDiatonic=0, transposeChromatic=1),

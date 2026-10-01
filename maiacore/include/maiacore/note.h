@@ -795,23 +795,36 @@ class Note {
     bool inChord() const;
 
     /**
-     * @brief Returns the diatonic transposition interval.
-     * @details The interval as given to the constructor or setTransposingInterval(): 0 for a note
-     *          given only a chromatic interval, although its sounding pitch is then spelled with
-     *          the conventional diatonic interval for those semitones (see getSoundingPitch()).
-     * @return Diatonic interval.
+     * @brief Returns the stored diatonic transposition interval.
+     * @details A note stores the interval given to the constructor or to
+     *          setTransposingInterval(): 0 for a note given only a chromatic interval, although
+     *          its sounding pitch is then spelled with the conventional diatonic interval for those
+     *          semitones (see getSoundingPitch()). A rest answers the interval it stores: a note
+     *          constructed as a rest drops the interval it is given, setTransposingInterval() is
+     *          ignored on a rest, and setPitch() to a rest resets the interval to 0, while a note
+     *          silenced with setIsNoteOn(false) keeps its interval.
+     * @return Diatonic interval: letters from the written to the sounding pitch (-1 for a B-flat
+     *         clarinet), or 0 when none is stored.
      */
     int getTransposeDiatonic() const;
 
     /**
-     * @brief Returns the chromatic transposition interval.
-     * @return Chromatic interval.
+     * @brief Returns the stored chromatic transposition interval.
+     * @details Stored as getTransposeDiatonic() describes, rests included. getMidiNumber() is the
+     *          written MIDI number moved by it.
+     * @return Chromatic interval: semitones from the written to the sounding pitch (-2 for a
+     *         B-flat clarinet), or 0 when none is stored.
      */
     int getTransposeChromatic() const;
 
     /**
-     * @brief Returns true if the note is transposed.
-     * @return True if transposed.
+     * @brief Returns true if a transposing interval is stored: getTransposeDiatonic() or
+     *        getTransposeChromatic() is not 0.
+     * @details A note given only a chromatic interval is transposed. A rest answers by the
+     *          interval it stores (see getTransposeDiatonic()): a note silenced with
+     *          setIsNoteOn(false) keeps its interval and stays transposed, while a note
+     *          constructed as a rest, or set to one with setPitch(), is not.
+     * @return True if either transposing interval is not 0.
      */
     bool isTransposed() const;
 

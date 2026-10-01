@@ -15,8 +15,10 @@ using maiacore::detail::concertPitch;
 // Every spelling this class relates -- the notes' steps and octaves, and the pitches its errors
 // name -- is the notes' concert spelling, concertPitch(): an untransposed note's written
 // pitch, and for a note of a transposing instrument the pitch it sounds, spelled with its written
-// letter moved by the diatonic interval. The semitone count comes from the notes' sounding MIDI
-// numbers. getNotes() returns the notes as they were given.
+// letter moved by the diatonic interval (inferred from the chromatic one when it is 0), or by the
+// chromatic fallback where that gives no spelling, as maiacore::detail::concertSpelling() spells
+// it. The semitone count comes from the notes' sounding MIDI numbers. getNotes() returns the
+// notes as they were given.
 
 namespace {
 // Rejects a quarter tone at an Interval entry point.
