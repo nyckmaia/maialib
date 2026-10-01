@@ -57,10 +57,12 @@ Every internal use of an unprefixed pitch getter must be reviewed and switched d
 
 ## 6. Breaking changes
 
-- `getPitch`, `getOctave`, `getPitchClass`, `getPitchStep`, `getAlterSymbol` and the enharmonic family describe the written pitch (they described the sounding pitch) — different only for transposed notes.
-- `getSounding*` return the simplest spelling and its octave (`Cb4` → `B3`, octave 3) — different for untransposed notes spelled with Cb, Fb, E#, B# or a double accidental, and for transposed notes.
+- `getPitch`, `getOctave`, `getPitchClass`, `getPitchStep`, `getAlterSymbol` and the enharmonic family describe the written pitch (they described the sounding pitch) — different only for transposed notes. The notes `getEnharmonicNote(s)` return keep the transposing interval: their `getPitch()` is the respelled written pitch, and they sound like the note.
+- `getSounding*` return the simplest spelling and its octave (`Cb4` → `B3`, octave 3) — different for untransposed notes spelled with Cb, Fb, E#, B#, a double accidental or a three-quarter-tone accidental (`C3x4` → `D1b4`), and for transposed notes. `getSoundingOctave` is the spelling's octave, not the MIDI number's: `B1x3` → 3 (was 4); `B1x11`, `B#11`, `B3x11`, `Bx11` → 11 (was 12).
 - `transpose()` moves the written pitch once; `toEnharmonicPitch()` respells the written pitch.
-- Analyses of transposing parts use correct concert spellings (chord and interval names may change there).
+- Analyses of transposing parts use correct concert spellings (chord and interval names may change there). The notes the chord analysis returns (root, bass note, stacks) are untransposed notes at concert pitch; `Chord(notes)` holds its notes untransposed at their concert spelling; `removeDuplicateNotes()` pairs notes by concert spelling.
+- `Note` `==`/`!=` compare the concert spelling (a B♭ clarinet's written `D4` equals a `C4`); the `Note` and `Chord` hashes hash exactly what `==` compares; `Note.__repr__`/`info()` show the written pitch, and `__repr__` no longer raises for a note sounding below `C1b-1`; `Chord`'s representations show the notes at concert spelling (unchanged for untransposed chords); `getScaleDegree()` reads the written step.
+- Edges of the range: `toEnharmonicPitch()` and `getEnharmonicNote(s)` raise at the very top when the respelling cannot be spelled once transposed (`A#11` on a (1, 2) instrument: `Bb11` would need `C12`); a `Chord` display raises for a note sounding below `C1b-1`.
 
 ## 7. Out of scope
 
