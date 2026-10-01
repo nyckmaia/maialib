@@ -20,6 +20,7 @@
 #include "maiacore/constants.h"
 #include "maiacore/pitch.h"
 #include "test-capture.h"
+#include "transposing-instruments.h"
 
 using maiacore::detail::concertSpelling;
 using maiacore::detail::simplestSpelling;
@@ -64,16 +65,11 @@ std::string belowTheFloor(const std::string& written, const int diatonic, const 
            "pitch at or above C1b-1 makes it spellable.";
 }
 
-// The error for a written pitch whose position lies above B11 and has no diatonic spelling.
-std::string aboveTheCeiling(const std::string& written, const int diatonic, const int chromatic,
-                            const std::string& position) {
-    return "raises: [maiacore] The sounding pitch of the written pitch '" + written +
-           "' with transposeDiatonic=" + std::to_string(diatonic) +
-           " and transposeChromatic=" + std::to_string(chromatic) + " is at position " + position +
-           ", above B11 (MIDI note 155), and has no sounding spelling within octaves -1..11: "
-           "above B11 only B1x11, B#11, B3x11 and Bx11 can be spelled, when the diatonic "
-           "interval moves the written letter to the B of octave 11. A lower written pitch or a "
-           "smaller transposing interval keeps the sounding pitch at or below B11.";
+// concertOrError()'s text for a written pitch whose position lies above B11 and has no diatonic
+// spelling (aboveTheCeiling(), transposing-instruments.h).
+std::string raisesAboveTheCeiling(const std::string& written, const int diatonic,
+                                  const int chromatic, const std::string& position) {
+    return "raises: " + aboveTheCeiling(written, diatonic, chromatic, position);
 }
 
 void expectConcert(const std::vector<Case>& cases) {
@@ -276,9 +272,9 @@ TEST(ConcertSpelling, aDiatonicSpellingAboveB11IsReturned) {
 // A position above B11 without a diatonic spelling is rejected by the chromatic rule, with its
 // error.
 TEST(ConcertSpelling, aPositionAboveB11WithoutADiatonicSpellingIsRejected) {
-    EXPECT_EQ(concert("B11", 1, 3), aboveTheCeiling("B11", 1, 3, "158.000000"));    // C#12
-    EXPECT_EQ(concert("C11", 7, 12), aboveTheCeiling("C11", 7, 12, "156.000000"));  // C12
-    EXPECT_EQ(concert("B11", 0, 1), aboveTheCeiling("B11", 0, 1, "156.000000"));    // no letter
+    EXPECT_EQ(concert("B11", 1, 3), raisesAboveTheCeiling("B11", 1, 3, "158.000000"));    // C#12
+    EXPECT_EQ(concert("C11", 7, 12), raisesAboveTheCeiling("C11", 7, 12, "156.000000"));  // C12
+    EXPECT_EQ(concert("B11", 0, 1), raisesAboveTheCeiling("B11", 0, 1, "156.000000"));  // no letter
 }
 
 // A position below C1b-1 has no spelling at all. It is rejected with the chromatic rule's error
@@ -299,7 +295,7 @@ TEST(ConcertSpelling, aPositionBelowTheFloorIsRejected) {
 TEST(ConcertSpelling, anIntervalAtTheLimitsOfIntIsRejectedOnItsOwnSide) {
     const int up = std::numeric_limits<int>::max();
     const int down = std::numeric_limits<int>::min();
-    EXPECT_EQ(concert("C4", 1, up), aboveTheCeiling("C4", 1, up, "2147483707.000000"));
+    EXPECT_EQ(concert("C4", 1, up), raisesAboveTheCeiling("C4", 1, up, "2147483707.000000"));
     EXPECT_EQ(concert("C4", -1, down), belowTheFloor("C4", -1, down, "-2147483588.000000"));
 }
 

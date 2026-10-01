@@ -46,3 +46,18 @@ inline Note piccolo(const std::string& written,
                     const RhythmFigure rhythmFigure = RhythmFigure::QUARTER) {
     return transposingNote(written, 7, 12, rhythmFigure);
 }
+
+// The first line of the error for 'writtenPitch' on a (diatonic, chromatic) instrument whose
+// sounding pitch lies at 'position' (as std::to_string() writes it), above B11, where no spelling
+// within octaves -1..11 reaches it: only B1x11, B#11, B3x11 and Bx11 lie above B11, and only a
+// diatonic interval that moves the written letter to the B of octave 11 spells them.
+inline std::string aboveTheCeiling(const std::string& writtenPitch, const int diatonic,
+                                   const int chromatic, const std::string& position) {
+    return "[maiacore] The sounding pitch of the written pitch '" + writtenPitch +
+           "' with transposeDiatonic=" + std::to_string(diatonic) +
+           " and transposeChromatic=" + std::to_string(chromatic) + " is at position " + position +
+           ", above B11 (MIDI note 155), and has no sounding spelling within octaves -1..11: "
+           "above B11 only B1x11, B#11, B3x11 and Bx11 can be spelled, when the diatonic "
+           "interval moves the written letter to the B of octave 11. A lower written pitch or a "
+           "smaller transposing interval keeps the sounding pitch at or below B11.";
+}

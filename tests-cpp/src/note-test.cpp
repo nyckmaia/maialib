@@ -1462,12 +1462,13 @@ TEST(NoteComposesPitch, QuarterTonePitchOnATransposingInstrumentSoundsInsteadOfT
 }
 
 // setIsNoteOn(false) turns a note into a rest but deliberately does not clear its transposing
-// intervals, so isTransposed() stays true. getSoundingPitch() answers "rest" for it through a rest
-// guard at its top, ahead of the transposition branch, which would otherwise compose the pitch
-// CLASS ("rest") with an octave into a malformed string such as "rest-2", not a valid pitch and
-// rejected by every Note constructor. The sibling getters are covered too:
-// computeSoundingPitch() returns early for a rest, toXML() emits its pitch block only under
-// isNoteOn(), and getWrittenPitch() delegates to Pitch::getPitch(), which guards rest itself.
+// intervals, so isTransposed() stays true. Every view must still answer the well-formed "rest",
+// never a malformed string such as "rest-2", not a valid pitch and rejected by every Note
+// constructor. getSoundingPitch() is computeSoundingPitch().getPitch(): it spells a whole Pitch,
+// never a pitch class glued to an octave, and the concert and simplest spellings both return a
+// rest unchanged, whatever the interval. getPitch() is getWrittenPitch(), which delegates to
+// Pitch::getPitch(), which guards rest itself; toXML() emits its pitch block only under
+// isNoteOn().
 //
 // "rest" is the correct answer, and what the untransposed case and setPitch("rest") return. It is
 // not the note's former sounding pitch ("Bb3" for the clarinet, "C5" for the piccolo): a rest has
@@ -1482,7 +1483,7 @@ TEST(NoteComposesPitch, GetPitchIsWellFormedRestForTransposedNoteTurnedOff) {
         ASSERT_TRUE(n.isNoteOn());
         n.setIsNoteOn(false);
 
-        // The transposing intervals survive, which is precisely why the guard is needed.
+        // The transposing intervals survive, so the views below answer with one still set.
         EXPECT_TRUE(n.isTransposed()) << "pitch: " << c.first;
         EXPECT_TRUE(n.isNoteOff()) << "pitch: " << c.first;
         EXPECT_EQ(n.getPitch(), "rest") << "pitch: " << c.first;
@@ -1907,21 +1908,6 @@ NoteState stateOf(const Note& note) {
             note.getDurationTicks(),
             note.getLongType(),
             note.toXML()};
-}
-
-// The error for 'writtenPitch' on a (diatonic, chromatic) instrument, whose sounding pitch lies at
-// 'position' (as std::to_string() writes it), above B11, where no spelling within octaves -1..11
-// reaches it: only B1x11, B#11, B3x11 and Bx11 lie above B11, and only a diatonic interval that
-// moves the written letter to the B of octave 11 spells them.
-std::string aboveTheCeiling(const std::string& writtenPitch, const int diatonic,
-                            const int chromatic, const std::string& position) {
-    return "[maiacore] The sounding pitch of the written pitch '" + writtenPitch +
-           "' with transposeDiatonic=" + std::to_string(diatonic) +
-           " and transposeChromatic=" + std::to_string(chromatic) + " is at position " + position +
-           ", above B11 (MIDI note 155), and has no sounding spelling within octaves -1..11: "
-           "above B11 only B1x11, B#11, B3x11 and Bx11 can be spelled, when the diatonic "
-           "interval moves the written letter to the B of octave 11. A lower written pitch or a "
-           "smaller transposing interval keeps the sounding pitch at or below B11.";
 }
 }  // namespace
 

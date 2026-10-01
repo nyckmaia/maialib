@@ -407,16 +407,18 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertTrue(note.isNoteOn())
 
     # Silencing a TRANSPOSING instrument with setIsNoteOn(False) makes it a rest but deliberately
-    # keeps its transposing interval, so isTransposed() stays True. getSoundingPitch() must still
-    # answer the well-formed "rest", never compose the pitch class "rest" with an octave into a
-    # malformed string such as "rest-2", which the Note constructor rejects. Mirrors the C++
+    # keeps its transposing interval, so isTransposed() stays True. Every view still answers the
+    # well-formed "rest", never a malformed string such as "rest-2", which the Note constructor
+    # rejects: getSoundingPitch() spells a whole sounding pitch, and the sounding pitch of a rest
+    # is the rest itself, whatever the interval; getPitch() and getWrittenPitch() answer the
+    # written pitch, a rest. Mirrors the C++
     # NoteComposesPitch.GetPitchIsWellFormedRestForTransposedNoteTurnedOff test.
     def testSilencedTransposedNoteReportsWellFormedRest(self):
         note = ml.Note(
             "C#4", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
         )
         note.setIsNoteOn(False)
-        self.assertTrue(note.isTransposed())  # the interval survives; hence the guard
+        self.assertTrue(note.isTransposed())  # the interval survives the silencing
         self.assertTrue(note.isNoteOff())
         self.assertEqual(note.getPitch(), "rest")
         self.assertEqual(note.getSoundingPitch(), "rest")
