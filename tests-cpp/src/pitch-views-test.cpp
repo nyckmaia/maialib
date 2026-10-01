@@ -70,9 +70,10 @@ std::string aboveTheCeiling(const std::string& written, const int diatonic, cons
     return "raises: [maiacore] The sounding pitch of the written pitch '" + written +
            "' with transposeDiatonic=" + std::to_string(diatonic) +
            " and transposeChromatic=" + std::to_string(chromatic) + " is at position " + position +
-           ", above B11 (MIDI note 155), the highest sounding pitch that can be spelled within "
-           "octaves -1..11, so it has no sounding spelling. A lower written pitch or a smaller "
-           "transposing interval keeps the sounding pitch at or below B11.";
+           ", above B11 (MIDI note 155), and has no sounding spelling within octaves -1..11: "
+           "above B11 only B1x11, B#11, B3x11 and Bx11 can be spelled, when the diatonic "
+           "interval moves the written letter to the B of octave 11. A lower written pitch or a "
+           "smaller transposing interval keeps the sounding pitch at or below B11.";
 }
 
 void expectConcert(const std::vector<Case>& cases) {

@@ -53,8 +53,10 @@ std::string soundingPositionText(const Pitch& writtenPitch, const int transposeC
               "pitch at or above C1b-1 makes it spellable.");
 }
 
-// The error for a transposed note whose sounding pitch lies above B11 (MIDI note 155):
-// soundingPitchOf() spells a sounding pitch with naturals and sharps, and above B11 that spelling
+// The error for a transposed note whose sounding pitch lies above B11 (MIDI note 155) where no
+// spelling reaches it. Above B11 only B1x11, B#11, B3x11 and Bx11 exist within octaves -1..11,
+// and only the diatonic interval spells them, when it moves the written letter to the B of octave
+// 11; the chromatic rule, chromaticSpelling(), spells with naturals and sharps, which above B11
 // would need octave 12. The constructor and every mutator that could store such a pitch check it
 // before storing anything, so this is raised there, naming the written pitch and the interval.
 [[noreturn]] void throwSoundingPitchAboveCeiling(const Pitch& writtenPitch,
@@ -64,9 +66,10 @@ std::string soundingPositionText(const Pitch& writtenPitch, const int transposeC
               "' with transposeDiatonic=" + std::to_string(transposeDiatonic) +
               " and transposeChromatic=" + std::to_string(transposeChromatic) + " is at position " +
               soundingPositionText(writtenPitch, transposeChromatic) +
-              ", above B11 (MIDI note 155), the highest sounding pitch that can be spelled within "
-              "octaves -1..11, so it has no sounding spelling. A lower written pitch or a smaller "
-              "transposing interval keeps the sounding pitch at or below B11.");
+              ", above B11 (MIDI note 155), and has no sounding spelling within octaves -1..11: "
+              "above B11 only B1x11, B#11, B3x11 and Bx11 can be spelled, when the diatonic "
+              "interval moves the written letter to the B of octave 11. A lower written pitch or a "
+              "smaller transposing interval keeps the sounding pitch at or below B11.");
 }
 
 // Returns the spelling of the pitch 'alter' semitones from the white key at the whole-semitone
@@ -90,19 +93,17 @@ std::string spellFromWhiteKey(const int whiteKeySteps, const float alter) {
     return c_C_diatonicScale[stepIdx] + Helper::alterValue2symbol(alter) + std::to_string(octave);
 }
 
-// The sounding pitch of 'writtenPitch' on an instrument transposing by 'transposeDiatonic' and
-// 'transposeChromatic': what Note::computeSoundingPitch() answers for a note holding them, for any
-// written pitch and interval, so that a mutator can check a new state before storing it.
+// The chromatic rule: the pitch 'writtenPitch' sounds on an instrument transposing by
+// 'transposeDiatonic' and 'transposeChromatic', spelled from its position alone. It is
+// maiacore::detail::concertSpelling()'s fallback, for an interval whose diatonic part cannot spell
+// the position.
 //
 // It is the written pitch's exact position moved by the chromatic interval, a whole number of
 // semitones, and spelled from there. A position below the lowest representable pitch has no
 // spelling: it throws here, rather than answering a rest, so that no sounding getter passes such
 // a note off as a rest. A position above B11 has none either, and throws naming the note.
-//
-// This chromatic rule is also maiacore::detail::concertSpelling()'s fallback, for an interval
-// whose diatonic part cannot spell the position.
-Pitch soundingPitchOf(const Pitch& writtenPitch, const int transposeDiatonic,
-                      const int transposeChromatic) {
+Pitch chromaticSpelling(const Pitch& writtenPitch, const int transposeDiatonic,
+                        const int transposeChromatic) {
     // A rest has no sounding pitch, and an untransposed note sounds as written.
     if (writtenPitch.isRest() || (transposeDiatonic == 0 && transposeChromatic == 0)) {
         return writtenPitch;
@@ -139,7 +140,7 @@ Pitch soundingPitchOf(const Pitch& writtenPitch, const int transposeDiatonic,
     const Pitch defaultSpelling(defaultSpelled);
 
     // Accidental preference: flats going down, the default (natural/sharp-side) spelling going up,
-    // which keeps a B-flat clarinet's written C4 sounding "Bb3" rather than "A#3".
+    // so a written C4 moved down two semitones without a diatonic interval is "Bb3", not "A#3".
     if (transposeChromatic > 0) {
         return defaultSpelling;
     }
@@ -147,12 +148,9 @@ Pitch soundingPitchOf(const Pitch& writtenPitch, const int transposeDiatonic,
     // The flat spelling is the white key above the semitone, lowered: it exists when that key is
     // white and within octaves -1..11 (MIDI note 60, a natural "C", has none).
     //
-    // Going down, the flat spelling is preferred -- but only when it agrees with the default about
-    // the OCTAVE. Note::getSoundingPitch() composes its string from this pitch CLASS and
-    // Note::getSoundingOctave()'s arithmetic octave, so a spelling that crosses the octave
-    // boundary ("Cb4" rather than "B3" for MIDI 59) would compose "Cb3": a different note
-    // entirely, a full octave off. Dropping the preference in that case is what keeps the two
-    // halves consistent.
+    // Going down, the flat spelling is preferred, but only when it lies in the octave of the
+    // default spelling: MIDI note 59 is spelled "B3", never "Cb4", so this rule always spells a
+    // position in the octave its MIDI number gives.
     const std::string flatSpelled =
         spellFromWhiteKey(semitone + 1, soundingSteps - static_cast<float>(semitone + 1));
     if (!flatSpelled.empty()) {
@@ -166,12 +164,13 @@ Pitch soundingPitchOf(const Pitch& writtenPitch, const int transposeDiatonic,
 }
 
 // Throws, as the sounding getters would, if 'writtenPitch' with this transposing interval has a
-// sounding pitch that cannot be spelled. A sounding pitch below the lowest representable pitch is
-// accepted: a note holding it stays constructible, and each sounding getter reports it when asked.
+// sounding pitch that cannot be spelled: one above B11 that the diatonic interval does not spell.
+// A sounding pitch below the lowest representable pitch is accepted: a note holding it stays
+// constructible, and each sounding getter reports it when asked.
 void checkSoundingPitch(const Pitch& writtenPitch, const int transposeDiatonic,
                         const int transposeChromatic) {
     if (!isSoundingPitchBelowFloor(writtenPitch, transposeChromatic)) {
-        soundingPitchOf(writtenPitch, transposeDiatonic, transposeChromatic);
+        maiacore::detail::concertSpelling(writtenPitch, transposeDiatonic, transposeChromatic);
     }
 }
 
@@ -360,7 +359,7 @@ Pitch concertSpelling(const Pitch& written, const int transposeDiatonic,
     }
 
     // The fallback, the chromatic rule, rejects a position above B11.
-    return soundingPitchOf(written, transposeDiatonic, transposeChromatic);
+    return chromaticSpelling(written, transposeDiatonic, transposeChromatic);
 }
 
 Pitch simplestSpelling(const Pitch& pitch) {
@@ -490,7 +489,7 @@ void Note::setIsPitched(const bool isPitched) { _isPitched = isPitched; }
 
 bool Note::isPitched() const { return _isPitched; }
 
-std::string Note::getPitchClass() const { return getSoundingPitchClass(); }
+std::string Note::getPitchClass() const { return getWrittenPitchClass(); }
 
 void Note::setOctave(const int octave) {
     // Pitch::setOctave() refuses on a rest (LOG_WARN, no change) instead of writing a fabricated
@@ -499,11 +498,7 @@ void Note::setOctave(const int octave) {
                        [octave](Pitch& pitch) { pitch.setOctave(octave); });
 }
 
-std::optional<int> Note::getOctave() const {
-    // The octave of the sounding spelling: empty for a rest, whose Pitch has no octave. A sounding
-    // pitch below the lowest representable pitch throws from computeSoundingPitch().
-    return computeSoundingPitch().getOctave();
-}
+std::optional<int> Note::getOctave() const { return getWrittenOctave(); }
 
 int Note::getTransposeDiatonic() const { return _transposeDiatonic; }
 
@@ -661,7 +656,7 @@ bool Note::isNoteOff() const { return _writtenPitch.isRest(); }
 
 bool Note::isQuarterTone() const { return isQuarterToneValue(_writtenPitch.getAlter()); }
 
-std::string Note::getAlterSymbol() const { return computeSoundingPitch().getAlterSymbol(); }
+std::string Note::getAlterSymbol() const { return _writtenPitch.getAlterSymbol(); }
 
 void Note::setIsInChord(bool inChord) { _inChord = inChord; }
 
@@ -674,10 +669,10 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnharmonicPitch) cons
         return MUSIC_XML::PITCH::REST;
     }
 
-    // The respelling is of the sounding pitch, the one getPitch() reports, so the result always
-    // describes the same pitch as getPitch(). A sounding pitch below the lowest representable
-    // pitch has no spelling to respell: getPitch() throws for it.
-    const std::string pitch = getPitch();
+    // The respelling is of the written pitch, the one getPitch() reports, so the result always
+    // describes the same pitch as getPitch(). The transposing interval plays no part: a written
+    // pitch always has its spellings, whatever the instrument sounds.
+    const std::string pitch = getWrittenPitch();
     std::string pitchClass;
     std::string pitchStep;
     std::string alterSymbol;
@@ -687,7 +682,7 @@ std::string Note::getEnharmonicPitch(const bool alternativeEnharmonicPitch) cons
 
     if (isQuarterToneValue(alterValue)) {
         const auto [defaultPitch, alternativePitch] =
-            quarterToneEnharmonics(pitch, getQuarterToneSteps(), alterValue);
+            quarterToneEnharmonics(pitch, _writtenPitch.getQuarterToneSteps(), alterValue);
         return alternativeEnharmonicPitch ? alternativePitch : defaultPitch;
     }
 
@@ -869,7 +864,9 @@ std::pair<std::vector<float>, std::vector<float>> Note::getHarmonicSpectrum(
 }
 
 void Note::transpose(const float semitones, const std::string& accType) {
-    const std::string newPitch = Helper::transposePitch(getPitch(), semitones, accType);
+    // The written pitch moves, once; the transposing interval is kept, so the sounding pitch moves
+    // by the same number of semitones.
+    const std::string newPitch = Helper::transposePitch(getWrittenPitch(), semitones, accType);
     setPitch(newPitch);
 }
 
@@ -909,7 +906,7 @@ void Note::setTransposingInterval(const int diatonicInterval, const int chromati
 }
 
 Pitch Note::computeSoundingPitch() const {
-    return soundingPitchOf(_writtenPitch, _transposeDiatonic, _transposeChromatic);
+    return maiacore::detail::simplestSpelling(computeConcertPitch());
 }
 
 Pitch Note::computeConcertPitch() const {
@@ -962,7 +959,7 @@ std::string Note::getWrittenPitchStep() const { return _writtenPitch.getPitchSte
 
 std::string Note::getSoundingPitchStep() const { return computeSoundingPitch().getPitchStep(); }
 
-std::string Note::getPitchStep() const { return getSoundingPitchStep(); }
+std::string Note::getPitchStep() const { return getWrittenPitchStep(); }
 
 int Note::getVoice() const { return _voice; }
 
@@ -992,22 +989,9 @@ const std::string Note::getSoundingPitchClass() const {
 }
 
 const std::string Note::getSoundingPitch() const {
-    // A rest has no sounding pitch: answer the rest sentinel before the transposition branch
-    // below can compose anything. setIsNoteOn(false) turns a note into a rest but keeps its
-    // transposing interval, so isTransposed() can be true for a rest.
-    if (_writtenPitch.isRest()) {
-        return MUSIC_XML::PITCH::REST;
-    }
-
-    if (!isTransposed()) {
-        return getWrittenPitch();
-    }
-
-    // The pitch class and the octave come from the same sounding position: computeSoundingPitch()
-    // only keeps a flat spelling whose octave agrees with getSoundingOctave(). A sounding pitch
-    // below the lowest representable pitch throws from both, with the same error, so the
-    // octave is always engaged here -- never a sentinel glued onto the pitch class.
-    return getSoundingPitchClass() + std::to_string(getSoundingOctave().value());
+    // One spelling, with its own octave: "B3" for an untransposed Cb4. A rest -- also one that
+    // setIsNoteOn(false) made of a transposed note, which keeps its interval -- answers "rest".
+    return computeSoundingPitch().getPitch();
 }
 
 const std::string Note::getDiatonicWrittenPitchClass() const {
@@ -1025,9 +1009,9 @@ const std::string Note::getDiatonicSoundingPitchClass() const {
 }
 
 std::optional<int> Note::getSoundingOctave() const {
-    // Arithmetic, from the sounding MIDI number: empty for a rest (MIDI_REST), and a sounding
-    // pitch below the lowest representable pitch throws from getMidiNumber().
-    return Helper::midiNote2octave(getMidiNumber());
+    // The octave of the sounding spelling: empty for a rest, whose Pitch has no octave. A sounding
+    // pitch below the lowest representable pitch throws from computeSoundingPitch().
+    return computeSoundingPitch().getOctave();
 }
 
 const std::string Note::getWrittenPitchClass() const { return _writtenPitch.getPitchClass(); }
@@ -1038,7 +1022,7 @@ const std::string Note::getWrittenPitch() const { return _writtenPitch.getPitch(
 // value that a real octave could collide with.
 std::optional<int> Note::getWrittenOctave() const { return _writtenPitch.getOctave(); }
 
-std::string Note::getPitch() const { return getSoundingPitch(); }
+std::string Note::getPitch() const { return getWrittenPitch(); }
 
 bool Note::inChord() const { return _inChord; }
 

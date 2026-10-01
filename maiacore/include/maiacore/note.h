@@ -29,6 +29,35 @@ Pitch concertPitch(const Note& note);
  * octave handling, duration and rhythm, articulations, ties, beams, transposition, enharmonic
  * equivalents, and MusicXML serialization. Designed for music analysis, computational musicology,
  * and MusicXML processing.
+ *
+ * @par Pitch views
+ * A note of a transposing instrument is written at one pitch and sounds at another, so Note
+ * answers about its pitch in three views:
+ * - **Written**, the pitch as written in the part: getWrittenPitch(), getWrittenOctave(),
+ *   getWrittenPitchClass(), getWrittenPitchStep() and getDiatonicWrittenPitchClass(). The
+ *   unprefixed getters getPitch(), getOctave(), getPitchClass(), getPitchStep() and
+ *   getAlterSymbol() are shortcuts for it; the enharmonic family (getEnharmonicPitch(),
+ *   getEnharmonicPitches(), getEnharmonicNote(), getEnharmonicNotes(), toEnharmonicPitch()),
+ *   transpose(), the setters and toXML() work on it.
+ * - **Sounding**, what the note sounds, in its simplest spelling: getSoundingPitch(),
+ *   getSoundingOctave(), getSoundingPitchClass(), getSoundingPitchStep() and
+ *   getDiatonicSoundingPitchClass(). The written pitch is moved by the transposing interval -- its
+ *   letter by the diatonic interval, its position by the chromatic one -- and respelled with the
+ *   smallest accidental any spelling of that position has; between a sharp and a flat equally
+ *   close, the moved spelling's side is kept. The octave is that spelling's own: an untransposed
+ *   Cb4 sounds B3, a B-flat clarinet's written Db4 sounds B3 and its written Eb4 sounds Db4.
+ * - **Acoustic**, measures of what sounds: getMidiNumber(), getQuarterToneSteps(), getFrequency()
+ *   and getHarmonicSpectrum().
+ *
+ * Without a transposing interval the written and the sounding pitch are the same pitch, spelled
+ * alike unless the written spelling has a simpler one (Cb, Fb, E#, B#, a double accidental, or a
+ * quarter tone such as C3x4, which sounds D1b4).
+ *
+ * The analyses that relate notes -- Chord, Interval, and the chord extraction and melody search of
+ * Score -- relate a note of a transposing instrument at the pitch it sounds, spelled with its
+ * written letter moved by the diatonic transposing interval (a B-flat clarinet's written Db4 is a
+ * Cb4 there, as in a C-flat chord), and an untransposed note exactly as it is written. operator==()
+ * compares notes the same way.
  */
 class Note {
    private:
@@ -53,19 +82,18 @@ class Note {
     std::vector<std::string> _beam;             ///< Beam types.
 
     /**
-     * @brief Computes the sounding Pitch: the written pitch transposed by
-     *        _transposeDiatonic/_transposeChromatic.
-     * @details A rest, or an untransposed note, returns _writtenPitch itself: nothing is cached,
-     *          every "sounding" getter (getSoundingPitch(), getOctave(), getAlterSymbol(),
-     *          getPitchClass(), ...) calls this on demand. setTransposingInterval() and
-     *          setPitch() derive it for the new interval or written pitch before storing it, so a
+     * @brief Computes the sounding Pitch: the simplest spelling
+     *        (maiacore::detail::simplestSpelling()) of the concert Pitch, computeConcertPitch().
+     * @details A rest returns a rest. Nothing is cached: every Sounding getter
+     *          (getSoundingPitch(), getSoundingOctave(), getSoundingPitchClass(), ...) calls this
+     *          on demand. setTransposingInterval(), setPitch() and the partial setters derive the
+     *          concert spelling for the new interval or written pitch before storing it, so a
      *          sounding pitch that cannot be spelled throws there, with the note unchanged, rather
      *          than from a later getter call -- except one below the lowest representable pitch,
      *          which leaves the note constructible.
      * @return The sounding Pitch.
-     * @throws std::runtime_error If this note is transposed and its sounding pitch lies below the
-     *         lowest representable pitch, C1b-1 (see getMidiNumber()), or above B11 (MIDI note
-     *         155), the highest sounding pitch that can be spelled within octaves -1..11.
+     * @throws std::runtime_error If this note's sounding pitch lies below the lowest
+     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     Pitch computeSoundingPitch() const;
 
@@ -104,8 +132,8 @@ class Note {
      * @param transposeChromatic Chromatic transposition interval.
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
      * @throws std::runtime_error If the pitch string is invalid (see Helper::splitPitch()), or if
-     *         the note is transposed and its sounding pitch lies above B11 (MIDI note 155), the
-     *         highest sounding pitch that can be spelled within octaves -1..11 (see
+     *         the note is transposed and its sounding pitch cannot be spelled: one above B11
+     *         (MIDI note 155) that the diatonic interval does not spell (see
      *         setTransposingInterval()).
      */
     explicit Note(const std::string& pitch, const RhythmFigure rhythmFigure = RhythmFigure::QUARTER,
@@ -123,9 +151,9 @@ class Note {
      * @param transposeChromatic Chromatic transposition interval.
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
      * @throws std::runtime_error If the MIDI number cannot be spelled with accType within
-     *         octaves -1..11, or if the note is transposed and its sounding pitch lies above B11
-     *         (MIDI note 155), the highest sounding pitch that can be spelled within octaves
-     *         -1..11 (see setTransposingInterval()).
+     *         octaves -1..11, or if the note is transposed and its sounding pitch cannot be
+     *         spelled: one above B11 (MIDI note 155) that the diatonic interval does not spell (see
+     *         setTransposingInterval()).
      */
     explicit Note(const int midiNumber, const std::string& accType = "",
                   const RhythmFigure rhythmFigure = RhythmFigure::QUARTER, bool isNoteOn = true,
@@ -147,14 +175,15 @@ class Note {
      *
      *          The change is made on a copy of the written pitch, whose sounding pitch is checked
      *          with the transposing interval before it is stored, as setPitch() checks a whole
-     *          pitch: a sounding pitch above B11 (MIDI note 155), the highest sounding pitch that
-     *          can be spelled within octaves -1..11, throws with the note unchanged. A sounding
-     *          pitch below the lowest representable pitch, C1b-1, is accepted, as setPitch()
-     *          accepts it.
+     *          pitch: a sounding pitch that cannot be spelled, one above B11 (MIDI note 155) that
+     *          the diatonic interval does not spell (see setTransposingInterval()), throws with
+     *          the note unchanged. A sounding pitch below the lowest representable pitch, C1b-1,
+     *          is accepted, as setPitch() accepts it.
      * @param pitchClass The pitch class string.
      * @throws std::runtime_error If the pitch class is invalid or the pitch lies below MIDI note 0
-     *         (see Helper::splitPitch()), or if the sounding pitch the change gives lies above B11
-     *         (the same error setPitch() raises for that pitch). The note is then left unchanged.
+     *         (see Helper::splitPitch()), or if the sounding pitch the change gives cannot be
+     *         spelled (the same error setPitch() raises for that pitch). The note is then left
+     *         unchanged.
      */
     void setPitchClass(const std::string& pitchClass);
 
@@ -165,14 +194,14 @@ class Note {
      *
      *          The change is made on a copy of the written pitch, whose sounding pitch is checked
      *          with the transposing interval before it is stored, as setPitch() checks a whole
-     *          pitch: a sounding pitch above B11 (MIDI note 155), the highest sounding pitch that
-     *          can be spelled within octaves -1..11, throws with the note unchanged. A sounding
-     *          pitch below the lowest representable pitch, C1b-1, is accepted, as setPitch()
-     *          accepts it.
+     *          pitch: a sounding pitch that cannot be spelled, one above B11 (MIDI note 155) that
+     *          the diatonic interval does not spell (see setTransposingInterval()), throws with
+     *          the note unchanged. A sounding pitch below the lowest representable pitch, C1b-1,
+     *          is accepted, as setPitch() accepts it.
      * @param octave Octave number, within [-1, 11].
      * @throws std::runtime_error If octave is outside [-1, 11] on a note, or if the sounding pitch
-     *         the change gives lies above B11 (the same error setPitch() raises for that pitch).
-     *         The note is then left unchanged.
+     *         the change gives cannot be spelled (the same error setPitch() raises for that
+     *         pitch). The note is then left unchanged.
      */
     void setOctave(int octave);
 
@@ -185,14 +214,14 @@ class Note {
      *
      *          The change is made on a copy of the written pitch, whose sounding pitch is checked
      *          with the transposing interval before it is stored, as setPitch() checks a whole
-     *          pitch: a sounding pitch above B11 (MIDI note 155), the highest sounding pitch that
-     *          can be spelled within octaves -1..11, throws with the note unchanged. A sounding
-     *          pitch below the lowest representable pitch, C1b-1, is accepted, as setPitch()
-     *          accepts it.
+     *          pitch: a sounding pitch that cannot be spelled, one above B11 (MIDI note 155) that
+     *          the diatonic interval does not spell (see setTransposingInterval()), throws with
+     *          the note unchanged. A sounding pitch below the lowest representable pitch, C1b-1,
+     *          is accepted, as setPitch() accepts it.
      * @param step Diatonic step ("A".."G").
      * @throws std::runtime_error If step is not one of "A".."G", or if the sounding pitch the
-     *         change gives lies above B11 (the same error setPitch() raises for that pitch). The
-     *         note is then left unchanged.
+     *         change gives cannot be spelled (the same error setPitch() raises for that pitch).
+     *         The note is then left unchanged.
      */
     void setStep(const std::string& step);
 
@@ -205,15 +234,15 @@ class Note {
      *
      *          The change is made on a copy of the written pitch, whose sounding pitch is checked
      *          with the transposing interval before it is stored, as setPitch() checks a whole
-     *          pitch: a sounding pitch above B11 (MIDI note 155), the highest sounding pitch that
-     *          can be spelled within octaves -1..11, throws with the note unchanged. A sounding
-     *          pitch below the lowest representable pitch, C1b-1, is accepted, as setPitch()
-     *          accepts it.
+     *          pitch: a sounding pitch that cannot be spelled, one above B11 (MIDI note 155) that
+     *          the diatonic interval does not spell (see setTransposingInterval()), throws with
+     *          the note unchanged. A sounding pitch below the lowest representable pitch, C1b-1,
+     *          is accepted, as setPitch() accepts it.
      * @param alter Alter value; must be a multiple of 0.5 (a semitone or quarter-tone step),
      *        within [-2, 2].
      * @throws std::runtime_error If alter is NaN or infinite, is not a multiple of 0.5, or is
-     *         outside [-2, 2], or if the sounding pitch the change gives lies above B11 (the same
-     *         error setPitch() raises for that pitch). The note is then left unchanged.
+     *         outside [-2, 2], or if the sounding pitch the change gives cannot be spelled (the
+     *         same error setPitch() raises for that pitch). The note is then left unchanged.
      */
     void setAlter(float alter);
 
@@ -264,10 +293,11 @@ class Note {
      * @param pitch Pitch string. An empty string or a string containing "rest" turns the note
      *        into a rest.
      * @throws std::runtime_error If the pitch string is invalid (see Helper::splitPitch()), or if
-     *         its sounding pitch with the current transposing interval lies above B11 (MIDI note
-     *         155), the highest sounding pitch that can be spelled within octaves -1..11. The note
-     *         is then left unchanged. A sounding pitch below the lowest representable pitch, C1b-1,
-     *         is accepted, as setTransposingInterval() accepts it.
+     *         its sounding pitch with the current transposing interval cannot be spelled: one
+     *         above B11 (MIDI note 155) that the diatonic interval does not spell (see
+     *         setTransposingInterval()). The note is then left unchanged. A sounding pitch below
+     *         the lowest representable pitch, C1b-1, is accepted, as setTransposingInterval()
+     *         accepts it.
      */
     void setPitch(const std::string& pitch);
 
@@ -280,18 +310,24 @@ class Note {
     /**
      * @brief Sets the transposing interval for the note.
      * @details The note is written at its written pitch and sounds that pitch moved by the
-     *          interval; every sounding getter derives the sounding pitch on demand, so a second
-     *          call replaces the interval rather than adding to it. The sounding pitch is derived
-     *          here too, before the interval is stored, so one that cannot be spelled throws now,
-     *          with the note unchanged, rather than from a later getter call. A sounding pitch
-     *          below the lowest representable pitch, C1b-1, is accepted: the note stays
-     *          constructible, and each sounding getter reports the condition when asked. A rest
-     *          ignores the call.
-     * @param diatonicInterval Diatonic interval.
-     * @param chromaticInterval Chromatic interval.
-     * @throws std::runtime_error If the sounding pitch with this interval lies above B11 (MIDI note
-     *         155), the highest sounding pitch that can be spelled within octaves -1..11; the note
-     *         is then left unchanged.
+     *          interval: its letter by diatonicInterval letters, its position by chromaticInterval
+     *          semitones (see getSoundingPitch()). Every sounding getter derives the sounding
+     *          pitch on demand, so a second call replaces the interval rather than adding to it.
+     *          The sounding pitch is derived here too, before the interval is stored, so one that
+     *          cannot be spelled throws now, with the note unchanged, rather than from a later
+     *          getter call. Every sounding pitch up to B11 (MIDI note 155) can be spelled; above
+     *          it only B1x11, B#11, B3x11 and Bx11 lie within octaves -1..11, and they are spelled
+     *          only when the diatonic interval moves the written letter to the B of octave 11 (a
+     *          written A#11 moved up a major second sounds B#11; with no diatonic interval it could
+     *          not be spelled). A sounding pitch below the lowest representable pitch, C1b-1, is
+     *          accepted: the note stays constructible, and each sounding getter reports the
+     *          condition when asked. A rest ignores the call.
+     * @param diatonicInterval Diatonic interval: letters from the written to the sounding pitch
+     *        (-1 for a B-flat clarinet).
+     * @param chromaticInterval Chromatic interval: semitones from the written to the sounding pitch
+     *        (-2 for a B-flat clarinet).
+     * @throws std::runtime_error If the sounding pitch with this interval cannot be spelled: one
+     *         above B11 that the diatonic interval does not spell. The note is then left unchanged.
      */
     void setTransposingInterval(const int diatonicInterval, const int chromaticInterval);
 
@@ -391,7 +427,10 @@ class Note {
     // ===== GETTERS ===== //
 
     /**
-     * @brief Returns the sounding pitch class (after transposition).
+     * @brief Returns the pitch class of the sounding pitch (see getSoundingPitch()): its step and
+     *        accidental, without the octave.
+     * @details Spelled as getSoundingPitch() spells it, silent fallback included: a B-flat
+     *          clarinet's written Db4 gives "B", an untransposed Cb4 "B".
      * @return Sounding pitch class string, or "rest" for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
@@ -399,7 +438,25 @@ class Note {
     const std::string getSoundingPitchClass() const;
 
     /**
-     * @brief Returns the full sounding pitch (after transposition).
+     * @brief Returns the sounding pitch: what the note sounds, in its simplest spelling.
+     * @details The written pitch moved by the transposing interval -- its letter by
+     *          getTransposeDiatonic() letters, carrying octaves across C, its exact position by
+     *          getTransposeChromatic() semitones -- and then respelled with the smallest accidental
+     *          any spelling of that position has within octaves -1..11. Between a sharp and a flat
+     *          equally close, the side of the moved spelling is kept. The octave is that
+     *          spelling's own. A B-flat clarinet's written Db4 sounds B3 and its written Eb4 Db4;
+     *          a quarter tone keeps its fraction (a written C1x4 sounds B1b3). Without a
+     *          transposing interval this is the written pitch in its simplest spelling: an
+     *          untransposed Cb4 sounds B3, C3x4 sounds D1b4, Db4 stays Db4.
+     *
+     *          Fallback, silent (no warning is given): when the interval gives no letter --
+     *          getTransposeDiatonic() is 0 while getTransposeChromatic() is not, as for a MusicXML
+     *          `<transpose>` without `<diatonic>` -- or the letter it gives would need an
+     *          accidental beyond a double sharp or flat, or an octave outside -1..11, the position
+     *          is spelled from the semitones alone and then simplified as above: a black key takes
+     *          a sharp when the instrument transposes up and a flat when it transposes down. A
+     *          written D4 sounds D#4 a semitone up and Db4 a semitone down without a diatonic
+     *          interval.
      * @return Sounding pitch string, or "rest" for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
@@ -407,25 +464,26 @@ class Note {
     const std::string getSoundingPitch() const;
 
     /**
-     * @brief Returns the written pitch class (as notated).
-     * @return Written pitch class string.
+     * @brief Returns the pitch class of the written pitch (as notated).
+     * @return Written pitch class string, or "rest" for a rest.
      */
     const std::string getWrittenPitchClass() const;
 
     /**
      * @brief Returns the full written pitch (as notated).
-     * @return Written pitch string.
+     * @return Written pitch string, or "rest" for a rest.
      */
     const std::string getWrittenPitch() const;
 
     /**
-     * @brief Returns the diatonic written pitch class (e.g., "C", "D").
-     * @return Diatonic written pitch class.
+     * @brief Returns the diatonic step of the written pitch (e.g., "C", "D").
+     * @return Diatonic written pitch class, or "rest" for a rest.
      */
     const std::string getDiatonicWrittenPitchClass() const;
 
     /**
-     * @brief Returns the diatonic sounding pitch class (e.g., "C", "D").
+     * @brief Returns the diatonic step of the sounding pitch (e.g., "C", "D").
+     * @details The step of getSoundingPitch(), spelled as it spells it, silent fallback included.
      * @return Diatonic sounding pitch class, or "rest" for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
@@ -433,9 +491,11 @@ class Note {
     const std::string getDiatonicSoundingPitchClass() const;
 
     /**
-     * @brief Returns the sounding octave (after transposition).
-     * @details Arithmetic, from getMidiNumber(). An empty optional means this note is a rest,
-     *          which has no octave; isNoteOff() is the authoritative test.
+     * @brief Returns the octave of the sounding pitch (see getSoundingPitch()).
+     * @details The octave of the sounding spelling, silent fallback included: an untransposed Cb4
+     *          sounds B3, octave 3, and a piccolo's written C4 sounds C5, octave 5. An empty
+     *          optional means this note is a rest, which has no octave; isNoteOff() is the
+     *          authoritative test.
      * @return Sounding octave number, or an empty optional for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
@@ -452,32 +512,31 @@ class Note {
     std::optional<int> getWrittenOctave() const;
 
     /**
-     * @brief Returns the octave (sounding).
-     * @details The octave of the sounding spelling, which always agrees with
-     *          getSoundingOctave(). An empty optional means this note is a rest, which has no
-     *          octave; isNoteOff() is the authoritative test.
+     * @brief Returns the octave of the written pitch: a shortcut for getWrittenOctave().
+     * @details The octave as notated in the part, whatever the instrument sounds; the octave it
+     *          sounds is getSoundingOctave(). An empty optional means this note is a rest, which
+     *          has no octave; isNoteOff() is the authoritative test. Never throws.
      * @return Octave number, or an empty optional for a rest.
-     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
-     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::optional<int> getOctave() const;
 
     /**
-     * @brief Returns the pitch class (sounding).
+     * @brief Returns the pitch class of the written pitch: a shortcut for getWrittenPitchClass().
+     * @details The step and accidental as notated in the part; the pitch class it sounds is
+     *          getSoundingPitchClass(). Never throws.
      * @return Pitch class string, or "rest" for a rest.
-     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
-     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::string getPitchClass() const;
 
     /**
-     * @brief Returns the written pitch step (e.g., "C", "D").
-     * @return Written pitch step.
+     * @brief Returns the diatonic step of the written pitch (e.g., "C", "D").
+     * @return Written pitch step, or "rest" for a rest.
      */
     std::string getWrittenPitchStep() const;
 
     /**
-     * @brief Returns the sounding pitch step (e.g., "C", "D").
+     * @brief Returns the diatonic step of the sounding pitch (e.g., "C", "D").
+     * @details The step of getSoundingPitch(), spelled as it spells it, silent fallback included.
      * @return Sounding pitch step, or "rest" for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below the lowest
      *         representable pitch, C1b-1 (see getMidiNumber()).
@@ -485,10 +544,10 @@ class Note {
     std::string getSoundingPitchStep() const;
 
     /**
-     * @brief Returns the pitch step (sounding).
+     * @brief Returns the diatonic step of the written pitch: a shortcut for getWrittenPitchStep().
+     * @details The step as notated in the part; the step it sounds is getSoundingPitchStep().
+     *          Never throws.
      * @return Pitch step string, or "rest" for a rest.
-     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
-     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::string getPitchStep() const;
 
@@ -583,9 +642,11 @@ class Note {
     bool isQuarterTone() const;
 
     /**
-     * @brief Returns the full pitch string (sounding).
-     * @return Pitch string.
-     * @throws std::runtime_error See getSoundingPitch(), which this delegates to.
+     * @brief Returns the written pitch: a shortcut for getWrittenPitch().
+     * @details The pitch as notated in the part -- the one the note was constructed or set with --
+     *          whatever the instrument sounds: a B-flat clarinet's written D4 answers "D4". What it
+     *          sounds is getSoundingPitch(), and getMidiNumber() measures it. Never throws.
+     * @return Pitch string, or "rest" for a rest.
      */
     std::string getPitch() const;
 
@@ -598,9 +659,10 @@ class Note {
      *          A transposing instrument can sound below the lowest pitch this library represents,
      *          C1b-1 (-0.5, which rounds to MIDI note 0): e.g. a written "C#-1" on a B-flat
      *          clarinet sounds at -1. Such a note is constructible and isNoteOn() is true, but it
-     *          has no sounding spelling, octave, MIDI number or frequency, so this method and
-     *          every other sounding getter throw the same error for it rather than answer a rest's
-     *          values. Its written pitch stays available through the written getters.
+     *          has no sounding spelling, octave, MIDI number or frequency, so this method, the
+     *          other acoustic getters and the Sounding getters throw the same error for it rather
+     *          than answer a rest's values. Its written pitch stays available through the written
+     *          getters and the unprefixed ones.
      * @return MIDI note number, or -1 (MUSIC_XML::MIDI::NUMBER::MIDI_REST) for a rest.
      * @throws std::runtime_error If this note's sounding pitch falls below C1b-1.
      */
@@ -687,10 +749,10 @@ class Note {
     int getUnpitchedIndex() const;
 
     /**
-     * @brief Returns the accidental symbol of the sounding pitch (e.g., "#", "b").
-     * @return Accidental symbol string, or "" for a rest.
-     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
-     *         representable pitch, C1b-1 (see getMidiNumber()).
+     * @brief Returns the accidental symbol of the written pitch (e.g., "#", "b").
+     * @details The accidental as notated in the part: a B-flat clarinet's written C4 answers ""
+     *          although it sounds Bb3 (see getSoundingPitchClass()). Never throws.
+     * @return Accidental symbol string, or "" for a natural and for a rest.
      */
     std::string getAlterSymbol() const;
 
@@ -719,8 +781,11 @@ class Note {
     bool isTransposed() const;
 
     /**
-     * @brief Returns an enharmonic spelling of the sounding pitch, getPitch().
-     * @details A semitone pitch is respelled among the other spellings of the same MIDI number,
+     * @brief Returns an enharmonic spelling of the written pitch, getPitch().
+     * @details The written pitch is respelled whatever the instrument sounds, so a transposed note
+     *          is respelled exactly as an untransposed note with the same written pitch.
+     *
+     *          A semitone pitch is respelled among the other spellings of the same MIDI number,
      *          with the accidentals "bb", "b", natural, "#" and "x", within octaves -1..11:
      *          - White keys: a natural returns its flat-side spelling by default (C4 -> Dbb4) and
      *            its sharp-side spelling as the alternative (B#3); a flat-side or sharp-side
@@ -743,64 +808,60 @@ class Note {
      *          default returns the note's own pitch (e.g., "Bx11" -> "Bx11", "B1x11" -> "B1x11").
      * @param alternativeEnharmonicPitch If true, returns the alternative enharmonic.
      * @return Enharmonic pitch string, or "rest" for a rest.
-     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
-     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::string getEnharmonicPitch(const bool alternativeEnharmonicPitch = false) const;
 
     /**
-     * @brief Returns the default and alternative enharmonic spellings of the sounding pitch.
+     * @brief Returns the default and alternative enharmonic spellings of the written pitch.
      * @details {getEnharmonicPitch(false), getEnharmonicPitch(true)}, preceded by getPitch() if
      *          includeCurrentPitch is true, so the vector may contain duplicates (e.g., "G#4" ->
      *          {"G#4", "Ab4", "Ab4"}, "C3x4" -> {"C3x4", "D1b4", "D1b4"}).
      * @param includeCurrentPitch If true, includes the current pitch.
      * @return Vector of enharmonic pitch strings.
-     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
-     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::vector<std::string> getEnharmonicPitches(const bool includeCurrentPitch = false) const;
 
     /**
      * @brief Returns a new Note spelled with getEnharmonicPitch(alternativeEnharmonicPitch).
-     * @details The new Note holds that spelling as its written pitch, with no transposing
-     *          interval and the default rhythm figure.
+     * @details The new Note holds that spelling of the written pitch as its written pitch, with no
+     *          transposing interval and the default rhythm figure.
      * @param alternativeEnharmonicPitch If true, uses the alternative enharmonic.
      * @return Enharmonic Note object.
-     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
-     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     Note getEnharmonicNote(const bool alternativeEnharmonicPitch = false) const;
 
     /**
      * @brief Returns new Notes spelled with the strings getEnharmonicPitches() returns.
-     * @details Each new Note holds its spelling as its written pitch, with no transposing
-     *          interval and the default rhythm figure; entries may repeat.
+     * @details Each new Note holds its spelling of the written pitch as its written pitch, with
+     *          no transposing interval and the default rhythm figure; entries may repeat.
      * @param includeCurrentPitch If true, includes a Note spelled with the current pitch.
      * @return Vector of enharmonic Note objects.
-     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
-     *         representable pitch, C1b-1 (see getMidiNumber()).
      */
     std::vector<Note> getEnharmonicNotes(const bool includeCurrentPitch = false) const;
 
     /**
-     * @brief Returns the scale degree of the note in a given key.
-     * @param key Key object for reference.
-     * @return Scale degree as integer.
+     * @brief Returns the scale degree of the note's written step in a given key.
+     * @details Reads getPitchStep(), the written step, and only the step: in C major C#4 and
+     *          C1x4 are degree 1, like C4. The keys read from a part's measures are that part's
+     *          written key signatures, so a note of a transposing instrument is measured in the
+     *          key its part is written in: a B-flat clarinet's written D4 is degree 2 in C major,
+     *          although it sounds C4.
+     * @param key Key object for reference; a minor key counts from its own tonic.
+     * @return Scale degree, 1 to 7, or 0 for a rest.
      */
     int getScaleDegree(const Key& key) const;
 
     /**
-     * @brief Respells the note with getEnharmonicPitch(alternativeEnharmonicPitch), through
-     *        setPitch().
-     * @details setPitch() sets the written pitch. On a transposing instrument the respelling is
-     *          of the sounding pitch, so the note then sounds that respelling moved by the
-     *          transposing interval again: a B-flat clarinet's written C#4 (sounding B3) becomes
-     *          a written Cb4, sounding A3.
+     * @brief Respells the written pitch with getEnharmonicPitch(alternativeEnharmonicPitch),
+     *        through setPitch().
+     * @details The transposing interval is kept, so the note sounds exactly what it sounded
+     *          before, only written differently: a B-flat clarinet's written C#4 (sounding B3)
+     *          becomes a written Db4, still sounding B3.
      * @param alternativeEnharmonicPitch If true, uses alternative enharmonic.
-     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
-     *         representable pitch, C1b-1 (see getMidiNumber()), or if setPitch() throws for the
-     *         respelling -- on a transposing instrument, when the respelling moved by the
-     *         transposing interval cannot be spelled. The note is then left unchanged.
+     * @throws std::runtime_error If setPitch() throws for the respelling: on a transposing
+     *         instrument, when the respelling cannot be spelled once moved by the transposing
+     *         interval (a written A#11 moved up a major second sounds B#11, but its respelling
+     *         Bb11 would need the letter C of octave 12). The note is then left unchanged.
      */
     void toEnharmonicPitch(const bool alternativeEnharmonicPitch = false);
 
@@ -832,18 +893,21 @@ class Note {
         const float partialsDecayExpRate = 0.88f, const float freqA4 = 440.0f) const;
 
     /**
-     * @brief Transposes the note by a number of semitones and optional accidental type.
+     * @brief Transposes the written pitch by a number of semitones and optional accidental type.
      * @details Transposes on exact pitch positions, so a quarter tone survives: transposing
-     *          "C4" by 0.5 gives "C1x4", and transposing "C1x4" by 2 gives "D1x4".
+     *          "C4" by 0.5 gives "C1x4", and transposing "C1x4" by 2 gives "D1x4". The written
+     *          pitch moves once and the transposing interval is kept, so what the note sounds moves
+     *          by the same number of semitones: a B-flat clarinet's written C4 (sounding Bb3)
+     *          transposed by 2 is a written D4, sounding C4, and transposing by 0 changes nothing.
      * @param semitones Number of semitones; must be a multiple of 0.5 (e.g. 0.5 for one quarter
      *        tone up, -2 for a whole tone down).
      * @param accType Accidental type (e.g., "#", "b").
      * @throws std::runtime_error If semitones is not finite or not a multiple of 0.5; if the
-     *         transposed pitch falls outside the representable range or cannot be spelled within
-     *         octaves -1..11 (see Helper::transposePitch()); or, on a transposing instrument, if
-     *         setPitch() throws for the result, which it stores as the written pitch. The note is
-     *         left unchanged when this throws: a note transposed too low never silently becomes a
-     *         rest.
+     *         transposed written pitch falls outside the representable range or cannot be spelled
+     *         within octaves -1..11 (see Helper::transposePitch()); or, on a transposing
+     *         instrument, if setPitch() throws for it: its sounding pitch cannot be spelled. The
+     *         note is left unchanged when this throws: a note transposed too low never silently
+     *         becomes a rest.
      */
     void transpose(const float semitones, const std::string& accType = MUSIC_XML::ACCIDENT::NONE);
 
@@ -857,6 +921,11 @@ class Note {
 
     /**
      * @brief Prints detailed information about the note to the log.
+     * @details One property per line: whether it is sounding, its pitch -- getPitch(), the written
+     *          pitch -- its type, quarter duration, voice, staff, MIDI number (what it sounds),
+     *          stem, beams, tuplet, grace-note and in-chord flags, and transposing interval.
+     * @throws std::runtime_error If this note's sounding pitch falls below the lowest
+     *         representable pitch, C1b-1, once it reaches the MIDI number (see getMidiNumber()).
      */
     void info() const;
 

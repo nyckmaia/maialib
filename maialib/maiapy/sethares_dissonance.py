@@ -330,7 +330,7 @@ def plotScoreSetharesDissonance(
         axis=1,
     )
     df["chordNotes"] = df.apply(
-        lambda row: ", ".join([str(x.getPitch()) for x in row.chord.getNotes()]), axis=1
+        lambda row: ", ".join([str(x.getSoundingPitch()) for x in row.chord.getNotes()]), axis=1
     )
     df["chordSize"] = df.apply(lambda row: row.chord.size(), axis=1)
     dissonanceMean = df.dissonance.mean()

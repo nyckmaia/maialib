@@ -1411,6 +1411,20 @@ TEST(ChordOfTransposingInstruments, aChordBuiltFromNotesHoldsThePitchesTheySound
     EXPECT_EQ(chord.getName(), "C");
 }
 
+// toInversion() moves the lowest note up an octave through Note::transpose(), which moves the
+// written pitch: a B-flat clarinet's written D4 becomes a written D5, sounding C5, so the C major
+// chord it closes is in first inversion.
+TEST(ChordOfTransposingInstruments, toInversionMovesATransposedNoteByAnOctave) {
+    Chord chord = chordOf({bFlatClarinet("D4"), Note("E4"), Note("G4")});
+    chord.toInversion(1);
+
+    ASSERT_EQ(chord.size(), 3);
+    EXPECT_EQ(chord.getNote(2).getWrittenPitch(), "D5");
+    EXPECT_EQ(chord.getNote(2).getSoundingPitch(), "C5");
+    EXPECT_EQ(chord.getNote(2).getTransposeChromatic(), -2);
+    EXPECT_EQ(chord.getName(), "C/E");
+}
+
 // Chords are compared note by note, each note as Note::operator== compares it: at concert pitch.
 TEST(ChordOfTransposingInstruments, equalityComparesTheNotesAtConcertPitch) {
     const Chord withClarinet = chordOf({bFlatClarinet("D4"), Note("E4"), Note("G4")});

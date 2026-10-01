@@ -2,6 +2,8 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
+#include <cmath>
 #include <functional>
 #include <limits>
 #include <ostream>
@@ -1088,14 +1090,15 @@ TEST(QuarterToneEnharmonic, theWholeFamilyRespellsAQuarterTone) {
     EXPECT_EQ(respelled.getPitch(), "B3x3");
 }
 
-// The family respells the sounding pitch, which is what getPitch() reports: a B-flat clarinet's
-// written C1x4 sounds B1b3 (58.5), respelled A3x3 or C3b4 -- not D3b4 or B3x3, the partners of
-// the written pitch.
-TEST(QuarterToneEnharmonic, theSoundingPitchIsRespelled) {
+// The family respells the written pitch, which is what getPitch() reports: a B-flat clarinet's
+// written C1x4 (sounding B1b3, 58.5) is respelled D3b4 or B3x3 -- not A3x3 or C3b4, the partners
+// of the pitch it sounds.
+TEST(QuarterToneEnharmonic, theWrittenPitchIsRespelled) {
     const Note clarinet("C1x4", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
                         /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
-    ASSERT_EQ(clarinet.getPitch(), "B1b3");
-    EXPECT_EQ(enharmonicsOf(clarinet), SpellingPair("A3x3", "C3b4"));
+    ASSERT_EQ(clarinet.getPitch(), "C1x4");
+    ASSERT_EQ(clarinet.getSoundingPitch(), "B1b3");
+    EXPECT_EQ(enharmonicsOf(clarinet), SpellingPair("D3b4", "B3x3"));
 }
 
 // Every quarter-tone spelling in the representable range is respelled into spellings of the same
@@ -1284,85 +1287,92 @@ TEST(NoteComposesPitch, SetStepAfterSetIsNoteOnFalseKeepsTransposingInterval) {
     EXPECT_NE(n.getSoundingPitch(), "Bb4");
 }
 
-// getAlterSymbol() reads the sounding pitch, like every unqualified Note getter, not the written
+// getAlterSymbol() reads the written pitch, like every unprefixed pitch getter, not the sounding
 // one. A transposing instrument shows the two diverging. B-flat clarinet: written C sounds a
 // major second lower (concert Bb). The same (pitch="C4", transposeDiatonic=-1,
 // transposeChromatic=-2) construction sounds "Bb3" in
 // NoteSetPitch.WrittenAndSoundingPitchTypesAndOctave_TransposeInstrumentChangeOctave too:
-//   written "C4"  -> alter symbol ""  (natural)
-//   sounding "Bb3" -> alter symbol "b" (flat), MIDI 58
-TEST(NoteComposesPitch, GetAlterSymbolForwardsToSoundingPitchOnTransposedNote) {
-    // Untransposed stand-in for "the written pitch's own accidental symbol": Note has no
-    // getWrittenAlterSymbol() getter, and for an untransposed note sounding == written.
-    const Note written("C4");
-    ASSERT_EQ(written.getAlterSymbol(), "");
-
+//   written "C4"   -> getAlterSymbol() ""  (natural)
+//   sounding "Bb3" -> getSoundingPitchClass() "Bb" (flat), MIDI 58
+// Written "C#4" shows the same in the opposite direction: it sounds "B3".
+TEST(NoteComposesPitch, GetAlterSymbolIsTheWrittenAccidentalOnTransposedNote) {
     const Note transposed("C4", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
                           /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
     ASSERT_EQ(transposed.getSoundingPitch(), "Bb3");
     ASSERT_EQ(transposed.getMidiNumber(), 58);
-    EXPECT_EQ(transposed.getAlterSymbol(), "b");
-    EXPECT_NE(transposed.getAlterSymbol(), written.getAlterSymbol());
+    EXPECT_EQ(transposed.getAlterSymbol(), "");
+    EXPECT_EQ(transposed.getSoundingPitchClass(), "Bb");
+
+    const Note sharp = bFlatClarinet("C#4");
+    ASSERT_EQ(sharp.getSoundingPitch(), "B3");
+    EXPECT_EQ(sharp.getAlterSymbol(), "#");
+    EXPECT_EQ(sharp.getSoundingPitchClass(), "B");
 }
 
 // A transposing instrument's sounding pitch is the written pitch's exact position moved by the
-// chromatic interval, spelled from there (see computeSoundingPitch() in note.cpp). getMidiNumber()
-// is that arithmetic, and getPitch() and getOctave() spell the same position:
-//   case                        getPitch()   getOctave()   getMidiNumber()
-//   B-flat clarinet C#4 -1/-2   "B3"         3             59
-//   horn in F       F#4 -4/-7   "B3"         3             59
-//   piccolo         C4  +7/+12  "C5"         5             72
+// chromatic interval, spelled with the written letter moved by the diatonic interval and then in
+// its simplest spelling (see getSoundingPitch()). getMidiNumber() is that position's arithmetic;
+// getPitch() and getOctave() are the written pitch's:
+//   case                        getPitch()  getOctave()  getSoundingPitch()  getMidiNumber()
+//   B-flat clarinet C#4 -1/-2   "C#4"       4            "B3"                59
+//   horn in F       F#4 -4/-7   "F#4"       4            "B3"                59
+//   piccolo         C4  +7/+12  "C4"        4            "C5"                72
 // The clarinet and the horn both sound MIDI 59, spelled B3. The piccolo sounds an octave above the
 // written pitch: an interval of exactly +12 semitones moves the octave too.
 TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForBFlatClarinet) {
     // B-flat clarinet: written C#4 sounds a major second lower.
     const Note n("C#4", RhythmFigure::QUARTER, true, false, -1, -2);
     EXPECT_EQ(n.getMidiNumber(), 59);
-    EXPECT_EQ(n.getOctave(), 3);
-    EXPECT_EQ(n.getPitch(), "B3");  // MIDI 59 is B3
+    EXPECT_EQ(n.getOctave(), 4);
+    EXPECT_EQ(n.getPitch(), "C#4");
+    EXPECT_EQ(n.getSoundingPitch(), "B3");  // MIDI 59 is B3
+    EXPECT_EQ(n.getSoundingOctave(), 3);
 }
 
 TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForHornInF) {
     // Horn in F: written F#4 sounds a perfect fifth lower.
     const Note n("F#4", RhythmFigure::QUARTER, true, false, -4, -7);
     EXPECT_EQ(n.getMidiNumber(), 59);
-    EXPECT_EQ(n.getOctave(), 3);
-    EXPECT_EQ(n.getPitch(), "B3");  // MIDI 59 is B3
+    EXPECT_EQ(n.getOctave(), 4);
+    EXPECT_EQ(n.getPitch(), "F#4");
+    EXPECT_EQ(n.getSoundingPitch(), "B3");  // MIDI 59 is B3
+    EXPECT_EQ(n.getSoundingOctave(), 3);
 }
 
 TEST(NoteComposesPitch, GetMidiNumberIsArithmeticForPiccolo) {
     // Piccolo: written C4 sounds an octave higher.
     const Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
     EXPECT_EQ(n.getMidiNumber(), 72);
-    // An exact +12 transpose moves the octave, so the sounding octave is one above the written
-    // one, and getOctave() agrees with getSoundingOctave() below.
-    EXPECT_EQ(n.getOctave(), 5);
+    // An exact +12 transpose moves the octave: the sounding octave is one above the written one.
+    EXPECT_EQ(n.getOctave(), 4);
     EXPECT_EQ(n.getSoundingOctave(), 5);
-    EXPECT_EQ(n.getPitch(), "C5");
+    EXPECT_EQ(n.getPitch(), "C4");
+    EXPECT_EQ(n.getSoundingPitch(), "C5");
 }
 
-// getEnharmonicPitch() respells the sounding pitch getPitch() reports, so the two agree on the
-// octave: for the piccolo, getPitch() is "C5" and the respellings are "Dbb5" and "B#4" -- the same
-// pitch, never one spelled a full octave apart ("Dbb4").
+// getEnharmonicPitch() respells the written pitch getPitch() reports, so the two agree on the
+// octave: for the piccolo, getPitch() is "C4" and the respellings are "Dbb4" and "B#3" -- the same
+// pitch, never one spelled a full octave apart, and never one of the "C5" the piccolo sounds.
 TEST(NoteComposesPitch, GetEnharmonicPitchAgreesWithGetPitchOnTransposedNote) {
     // Piccolo: written C4 sounds an octave higher.
     const Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
-    ASSERT_EQ(n.getPitch(), "C5");
-    EXPECT_EQ(n.getEnharmonicPitch(false), "Dbb5");
-    EXPECT_EQ(n.getEnharmonicPitch(true), "B#4");
+    ASSERT_EQ(n.getPitch(), "C4");
+    EXPECT_EQ(n.getEnharmonicPitch(false), "Dbb4");
+    EXPECT_EQ(n.getEnharmonicPitch(true), "B#3");
 
-    // Scope of this check: it pins THIS case's respellings against THIS note's own MIDI number,
-    // comparing two live calls rather than a hard-coded literal, so a future legitimate change
-    // of spelling moves both sides together and a genuine regression is still caught.
+    // Scope of this check: it pins THIS case's respellings against THIS note's own written MIDI
+    // number, comparing two live calls rather than a hard-coded literal, so a future legitimate
+    // change of spelling moves both sides together and a genuine regression is still caught.
     //
     // The test below checks the same for every transposing instrument.
-    EXPECT_EQ(Note(n.getEnharmonicPitch(false)).getMidiNumber(), n.getMidiNumber());
-    EXPECT_EQ(Note(n.getEnharmonicPitch(true)).getMidiNumber(), n.getMidiNumber());
+    const int writtenMidiNumber = Note(n.getPitch()).getMidiNumber();
+    EXPECT_EQ(Note(n.getEnharmonicPitch(false)).getMidiNumber(), writtenMidiNumber);
+    EXPECT_EQ(Note(n.getEnharmonicPitch(true)).getMidiNumber(), writtenMidiNumber);
 }
 
 // An enharmonic respelling must describe the same pitch as the note it was spelled from, for
-// EVERY transposing instrument: getEnharmonicPitch() re-derives from getPitch(), so a wrongly
-// spelled sounding pitch class would move the respelling to another pitch.
+// EVERY transposing instrument: getEnharmonicPitch() re-derives from getPitch(), the written
+// pitch, so a respelling of anything else would move it to another pitch.
 TEST(NoteComposesPitch, GetEnharmonicPitchDescribesTheSamePitchForEveryTransposingInstrument) {
     const std::vector<std::pair<std::string, std::pair<int, int>>> instruments = {
         {"C#4", {-1, -2}},  // B-flat clarinet
@@ -1372,58 +1382,65 @@ TEST(NoteComposesPitch, GetEnharmonicPitchDescribesTheSamePitchForEveryTransposi
     for (const auto& instrument : instruments) {
         const Note n("" + instrument.first, RhythmFigure::QUARTER, /*isNoteOn=*/true,
                      /*inChord=*/false, instrument.second.first, instrument.second.second);
-        EXPECT_EQ(Note(n.getEnharmonicPitch(false)).getMidiNumber(), n.getMidiNumber())
+        const int writtenMidiNumber = Note(n.getWrittenPitch()).getMidiNumber();
+        EXPECT_EQ(Note(n.getEnharmonicPitch(false)).getMidiNumber(), writtenMidiNumber)
             << "written pitch: " << instrument.first;
-        EXPECT_EQ(Note(n.getEnharmonicPitch(true)).getMidiNumber(), n.getMidiNumber())
+        EXPECT_EQ(Note(n.getEnharmonicPitch(true)).getMidiNumber(), writtenMidiNumber)
             << "written pitch: " << instrument.first;
     }
 }
 
-// getOctave() is the sounding octave: one BELOW the written octave for the clarinet and the horn,
-// one ABOVE for the piccolo, and in each case it agrees with getSoundingOctave(), which is
-// arithmetic:
+// getOctave() is the written octave, 4 for each note below; getSoundingOctave() is the octave of
+// the sounding spelling: one BELOW the written octave for the clarinet and the horn, one ABOVE for
+// the piccolo:
 //
-//   case                         getOctave()
-//   B-flat clarinet  C#4 -1/-2       3
-//   horn in F        F#4 -4/-7       3
-//   piccolo          C4  +7/+12      5
+//   case                         getOctave()   getSoundingOctave()
+//   B-flat clarinet  C#4 -1/-2       4              3
+//   horn in F        F#4 -4/-7       4              3
+//   piccolo          C4  +7/+12      4              5
 //
 // What this test guards is CONSISTENCY ACROSS THE MUTATION PATH: setOctave() called with the
-// note's OWN current written octave (4) is a no-op value, so getOctave() must answer the same thing
-// before and after it. A transposed note must never report one octave when constructed and
-// another once that same octave is set again.
+// note's OWN current written octave (4) is a no-op value, so both octave getters must answer the
+// same thing before and after it. A transposed note must never report one octave when constructed
+// and another once that same octave is set again.
 TEST(NoteComposesPitch, GetOctaveIsUnchangedByASetOctaveNoOpOnATransposedNote) {
     // B-flat clarinet: written C#4 sounds a major second lower.
     {
         Note n("C#4", RhythmFigure::QUARTER, true, false, -1, -2);
-        ASSERT_EQ(n.getOctave(), 3);  // construction path
-        n.setOctave(4);               // no-op value: the note's own current WRITTEN octave
-        EXPECT_EQ(n.getOctave(), 3);
-        EXPECT_EQ(n.getSoundingOctave(), 3);  // arithmetic; agrees with getOctave()
+        ASSERT_EQ(n.getOctave(), 4);          // construction path
+        ASSERT_EQ(n.getSoundingOctave(), 3);  // construction path
+        n.setOctave(4);                       // no-op value: the note's own current WRITTEN octave
+        EXPECT_EQ(n.getOctave(), 4);
+        EXPECT_EQ(n.getSoundingOctave(), 3);
         EXPECT_EQ(n.getMidiNumber(), 59);
-        EXPECT_EQ(n.getPitch(), "B3");
+        EXPECT_EQ(n.getPitch(), "C#4");
+        EXPECT_EQ(n.getSoundingPitch(), "B3");
     }
 
     // Horn in F: written F#4 sounds a perfect fifth lower.
     {
         Note n("F#4", RhythmFigure::QUARTER, true, false, -4, -7);
-        ASSERT_EQ(n.getOctave(), 3);
+        ASSERT_EQ(n.getOctave(), 4);
+        ASSERT_EQ(n.getSoundingOctave(), 3);
         n.setOctave(4);
-        EXPECT_EQ(n.getOctave(), 3);
+        EXPECT_EQ(n.getOctave(), 4);
         EXPECT_EQ(n.getSoundingOctave(), 3);
         EXPECT_EQ(n.getMidiNumber(), 59);
-        EXPECT_EQ(n.getPitch(), "B3");
+        EXPECT_EQ(n.getPitch(), "F#4");
+        EXPECT_EQ(n.getSoundingPitch(), "B3");
     }
 
     // Piccolo: written C4 sounds an octave higher.
     {
         Note n("C4", RhythmFigure::QUARTER, true, false, 7, 12);
-        ASSERT_EQ(n.getOctave(), 5);
+        ASSERT_EQ(n.getOctave(), 4);
+        ASSERT_EQ(n.getSoundingOctave(), 5);
         n.setOctave(4);
-        EXPECT_EQ(n.getOctave(), 5);
+        EXPECT_EQ(n.getOctave(), 4);
         EXPECT_EQ(n.getSoundingOctave(), 5);
         EXPECT_EQ(n.getMidiNumber(), 72);
-        EXPECT_EQ(n.getPitch(), "C5");
+        EXPECT_EQ(n.getPitch(), "C4");
+        EXPECT_EQ(n.getSoundingPitch(), "C5");
     }
 }
 
@@ -1436,8 +1453,9 @@ TEST(NoteComposesPitch, QuarterTonePitchOnATransposingInstrumentSoundsInsteadOfT
     EXPECT_TRUE(n.isQuarterTone());
     EXPECT_EQ(n.getSoundingPitch(), "B1b3");
     EXPECT_EQ(n.getSoundingPitchClass(), "B1b");
-    EXPECT_EQ(n.getAlterSymbol(), "1b");
-    EXPECT_EQ(n.getOctave(), 3);
+    EXPECT_EQ(n.getSoundingOctave(), 3);
+    EXPECT_EQ(n.getAlterSymbol(), "1x");  // the written C1x4's
+    EXPECT_EQ(n.getOctave(), 4);
     // getMidiNumber() still rounds ties upward: 58.5 -> 59. The spelling above keeps the exact
     // value the MIDI number rounds away.
     EXPECT_EQ(n.getMidiNumber(), 59);
@@ -1483,13 +1501,14 @@ TEST(NoteComposesPitch, GetPitchIsWellFormedRestForTransposedNoteTurnedOff) {
 // A written "C#-1" on a B-flat clarinet (transposeDiatonic=-1, transposeChromatic=-2) sounds at
 // -1, below the lowest representable pitch C1b-1 (-0.5). The note is constructible and is a note,
 // not a rest; every sounding getter fails loudly with the same diagnosable error, instead of a
-// rest's values or an unexplained std::bad_optional_access.
-TEST(NoteComposesPitch, GetPitchBelowMidiZeroFailsDiagnosablyNotWithBadOptionalAccess) {
+// rest's values or an unexplained std::bad_optional_access. Its written pitch still answers.
+TEST(NoteComposesPitch, GetSoundingPitchBelowMidiZeroFailsDiagnosablyNotWithBadOptionalAccess) {
     const Note n("C#-1", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
                  /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
     ASSERT_TRUE(n.isNoteOn());
+    EXPECT_EQ(n.getPitch(), "C#-1");
 
-    const std::string message = thrownFirstLine([&] { n.getPitch(); });
+    const std::string message = thrownFirstLine([&] { n.getSoundingPitch(); });
     EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
         << "message: " << message;
     EXPECT_NE(message.find("'C#-1'"), std::string::npos) << "message: " << message;
@@ -1519,7 +1538,7 @@ TEST(NoteComposesPitch, SoundingPitchOnTheLowestQuarterToneIsWellFormedNotRestMi
     EXPECT_EQ(n.getMidiNumber(), 0);
     EXPECT_EQ(n.getSoundingPitch(), "C1b-1");  // not "rest-1"
     EXPECT_EQ(n.getSoundingPitchClass(), "C1b");
-    EXPECT_EQ(n.getOctave().value_or(-99), -1);  // agrees with the line below
+    EXPECT_EQ(n.getOctave().value_or(-99), -1);  // the written C1x-1's
     EXPECT_EQ(n.getSoundingOctave().value_or(-99), -1);
 }
 
@@ -1769,24 +1788,18 @@ TEST(NoteQuarterToneSteps, setAlterOfNegativeZeroLeavesAPlainNatural) {
 // ===== A sounding pitch below the lowest representable pitch ===== //
 
 namespace {
-// Each sounding getter of a note, by name, as a call that discards its result.
+// Each sounding getter of a note -- the Sounding view and the acoustic getters -- by name, as a
+// call that discards its result.
 std::vector<std::pair<std::string, std::function<void(const Note&)>>> soundingGetters() {
     return {
-        {"getPitch", [](const Note& n) { n.getPitch(); }},
         {"getSoundingPitch", [](const Note& n) { n.getSoundingPitch(); }},
-        {"getPitchClass", [](const Note& n) { n.getPitchClass(); }},
         {"getSoundingPitchClass", [](const Note& n) { n.getSoundingPitchClass(); }},
-        {"getPitchStep", [](const Note& n) { n.getPitchStep(); }},
         {"getSoundingPitchStep", [](const Note& n) { n.getSoundingPitchStep(); }},
         {"getDiatonicSoundingPitchClass", [](const Note& n) { n.getDiatonicSoundingPitchClass(); }},
-        {"getAlterSymbol", [](const Note& n) { n.getAlterSymbol(); }},
-        {"getOctave", [](const Note& n) { n.getOctave(); }},
         {"getSoundingOctave", [](const Note& n) { n.getSoundingOctave(); }},
         {"getMidiNumber", [](const Note& n) { n.getMidiNumber(); }},
         {"getQuarterToneSteps", [](const Note& n) { n.getQuarterToneSteps(); }},
         {"getFrequency", [](const Note& n) { n.getFrequency(); }},
-        {"getEnharmonicPitch", [](const Note& n) { n.getEnharmonicPitch(); }},
-        {"getEnharmonicPitches", [](const Note& n) { n.getEnharmonicPitches(); }},
     };
 }
 }  // namespace
@@ -1808,7 +1821,9 @@ TEST(NoteSoundingPitchBelowFloor, everySoundingGetterFailsTheSameWay) {
     }
 }
 
-// It is a note, not a rest, and everything about its written pitch still answers.
+// It is a note, not a rest, and everything about its written pitch still answers: the Written
+// getters, the unprefixed getters that are shortcuts for them, and the enharmonic family, which
+// respells the written pitch.
 TEST(NoteSoundingPitchBelowFloor, theWrittenPitchStillAnswers) {
     const Note n("C#-1", RhythmFigure::QUARTER, /*isNoteOn=*/true, /*inChord=*/false,
                  /*transposeDiatonic=*/-1, /*transposeChromatic=*/-2);
@@ -1817,6 +1832,12 @@ TEST(NoteSoundingPitchBelowFloor, theWrittenPitchStillAnswers) {
     EXPECT_EQ(n.getWrittenPitch(), "C#-1");
     EXPECT_EQ(n.getWrittenPitchClass(), "C#");
     EXPECT_EQ(n.getWrittenOctave().value_or(-99), -1);
+    EXPECT_EQ(n.getPitch(), "C#-1");
+    EXPECT_EQ(n.getPitchClass(), "C#");
+    EXPECT_EQ(n.getPitchStep(), "C");
+    EXPECT_EQ(n.getAlterSymbol(), "#");
+    EXPECT_EQ(n.getOctave().value_or(-99), -1);
+    EXPECT_EQ(n.getEnharmonicPitch(), "Db-1");
     EXPECT_FALSE(n.isQuarterTone());
     EXPECT_NE(n.toXML().find("<step>C</step>"), std::string::npos);
 }
@@ -1874,7 +1895,7 @@ std::ostream& operator<<(std::ostream& stream, const NoteState& state) {
 NoteState stateOf(const Note& note) {
     std::string soundingPitch;
     try {
-        soundingPitch = note.getPitch();
+        soundingPitch = note.getSoundingPitch();
     } catch (const std::runtime_error& error) {
         const std::string what = error.what();
         soundingPitch = "raises: " + what.substr(0, what.find('\n'));
@@ -1889,16 +1910,18 @@ NoteState stateOf(const Note& note) {
 }
 
 // The error for 'writtenPitch' on a (diatonic, chromatic) instrument, whose sounding pitch lies at
-// 'position' (as std::to_string() writes it), above B11, the highest sounding pitch that can be
-// spelled within octaves -1..11.
+// 'position' (as std::to_string() writes it), above B11, where no spelling within octaves -1..11
+// reaches it: only B1x11, B#11, B3x11 and Bx11 lie above B11, and only a diatonic interval that
+// moves the written letter to the B of octave 11 spells them.
 std::string aboveTheCeiling(const std::string& writtenPitch, const int diatonic,
                             const int chromatic, const std::string& position) {
     return "[maiacore] The sounding pitch of the written pitch '" + writtenPitch +
            "' with transposeDiatonic=" + std::to_string(diatonic) +
            " and transposeChromatic=" + std::to_string(chromatic) + " is at position " + position +
-           ", above B11 (MIDI note 155), the highest sounding pitch that can be spelled within "
-           "octaves -1..11, so it has no sounding spelling. A lower written pitch or a smaller "
-           "transposing interval keeps the sounding pitch at or below B11.";
+           ", above B11 (MIDI note 155), and has no sounding spelling within octaves -1..11: "
+           "above B11 only B1x11, B#11, B3x11 and Bx11 can be spelled, when the diatonic "
+           "interval moves the written letter to the B of octave 11. A lower written pitch or a "
+           "smaller transposing interval keeps the sounding pitch at or below B11.";
 }
 }  // namespace
 
@@ -1918,7 +1941,7 @@ TEST(NoteMutatorThatThrows, setTransposingIntervalLeavesTheNoteUnchanged) {
               aboveTheCeiling("C4", 0, 200, "260.000000"));
     EXPECT_EQ(stateOf(clarinet), clarinetBefore);
     EXPECT_EQ(clarinet.getTransposeChromatic(), -2);
-    EXPECT_EQ(clarinet.getPitch(), "Bb3");
+    EXPECT_EQ(clarinet.getSoundingPitch(), "Bb3");
 }
 
 // An interval at the limits of int cannot wrap the sounding pitch around to the other end of the
@@ -1957,39 +1980,42 @@ TEST(NoteMutatorThatThrows, setPitchLeavesTheNoteUnchanged) {
     EXPECT_EQ(thrownFirstLine([&] { note.setPitch("B11"); }),
               aboveTheCeiling("B11", 1, 3, "158.000000"));
     EXPECT_EQ(stateOf(note), before);
-    EXPECT_EQ(note.getPitch(), "D#4");
+    EXPECT_EQ(note.getSoundingPitch(), "D#4");
 
     Note clarinet = transposingNote("C4", -1, -2);
     clarinet.setPitch("C#-1");
     EXPECT_EQ(clarinet.getWrittenPitch(), "C#-1");
-    const std::string message = thrownFirstLine([&] { clarinet.getPitch(); });
+    const std::string message = thrownFirstLine([&] { clarinet.getSoundingPitch(); });
     EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
         << message;
 }
 
-// transpose() stores its result through setPitch(), which on a transposing instrument moves it by
-// the interval again: A11 plus 3 semitones sounds at 156, above B11.
+// transpose() moves the written pitch and stores it through setPitch(), which checks it with the
+// transposing interval: the written C4 moved up 95 semitones is B11, which on a (1, 3) instrument
+// would sound at 158, above Bx11 (157), the highest pitch any letter spells.
 TEST(NoteMutatorThatThrows, transposeLeavesTheNoteUnchanged) {
     Note note = transposingNote("C4", 1, 3);
     const NoteState before = stateOf(note);
-    EXPECT_EQ(thrownFirstLine([&] { note.transpose(90); }),
-              aboveTheCeiling("A11", 1, 3, "156.000000"));
+    EXPECT_EQ(thrownFirstLine([&] { note.transpose(95); }),
+              aboveTheCeiling("B11", 1, 3, "158.000000"));
     EXPECT_EQ(stateOf(note), before);
-    EXPECT_EQ(note.getPitch(), "D#4");
+    EXPECT_EQ(note.getSoundingPitch(), "D#4");
 }
 
-// toEnharmonicPitch() stores the respelling of the sounding B11 through setPitch(), where it is
-// moved by the interval again: B11 (the default, which has no flat partner within octave 11) or
-// Ax11 (the alternative) plus 2 semitones sounds at 157, above B11.
+// toEnharmonicPitch() stores the respelling of the written pitch through setPitch(), which checks
+// it with the transposing interval. A#11 on a (1, 2) instrument sounds B#11 (156), a spelling its
+// letter reaches; its respelling Bb11 -- the default, and the alternative too, as A#11 has no
+// double-accidental spelling within octave 11 -- would need the letter C of octave 12, and no
+// other spelling reaches 156.
 TEST(NoteMutatorThatThrows, toEnharmonicPitchLeavesTheNoteUnchanged) {
     for (const bool alternative : {false, true}) {
-        Note note = transposingNote("A11", 1, 2);
+        Note note = transposingNote("A#11", 1, 2);
         const NoteState before = stateOf(note);
         EXPECT_EQ(thrownFirstLine([&] { note.toEnharmonicPitch(alternative); }),
-                  aboveTheCeiling(alternative ? "Ax11" : "B11", 1, 2, "157.000000"))
+                  aboveTheCeiling("Bb11", 1, 2, "156.000000"))
             << "alternative " << alternative;
         EXPECT_EQ(stateOf(note), before) << "alternative " << alternative;
-        EXPECT_EQ(note.getPitch(), "B11");
+        EXPECT_EQ(note.getSoundingPitch(), "B#11");
     }
 }
 
@@ -2039,31 +2065,32 @@ std::string setPitchRejection(const Note& note, const std::string& pitch) {
 // A note whose sounding pitch is below the lowest representable pitch: every sounding getter
 // raises, naming the condition.
 void expectSoundingBelowTheFloor(const Note& note) {
-    const std::string message = thrownFirstLine([&] { note.getPitch(); });
+    const std::string message = thrownFirstLine([&] { note.getSoundingPitch(); });
     EXPECT_NE(message.find("below the lowest representable pitch C1b-1"), std::string::npos)
         << message;
 }
 }  // namespace
 
-// C11 on a (1, 3) instrument sounds D#11; as A11 it would sound at 156, above B11.
+// C11 on a (1, 3) instrument sounds D#11; as B11 it would sound at 158, above Bx11 (157), the
+// highest pitch any letter spells.
 TEST(NoteMutatorThatThrows, setStepChecksTheSoundingPitchLikeSetPitch) {
     Note note = transposingNote("C11", 1, 3);
     const NoteState before = stateOf(note);
-    const std::string message = thrownFirstLine([&] { note.setStep("A"); });
-    EXPECT_EQ(message, aboveTheCeiling("A11", 1, 3, "156.000000"));
-    EXPECT_EQ(message, setPitchRejection(note, "A11"));
+    const std::string message = thrownFirstLine([&] { note.setStep("B"); });
+    EXPECT_EQ(message, aboveTheCeiling("B11", 1, 3, "158.000000"));
+    EXPECT_EQ(message, setPitchRejection(note, "B11"));
     EXPECT_EQ(stateOf(note), before);
-    EXPECT_EQ(note.getPitch(), "D#11");
+    EXPECT_EQ(note.getSoundingPitch(), "D#11");
 }
 
 TEST(NoteMutatorThatThrows, setPitchClassChecksTheSoundingPitchLikeSetPitch) {
     Note note = transposingNote("C11", 1, 3);
     const NoteState before = stateOf(note);
-    const std::string message = thrownFirstLine([&] { note.setPitchClass("A"); });
-    EXPECT_EQ(message, aboveTheCeiling("A11", 1, 3, "156.000000"));
-    EXPECT_EQ(message, setPitchRejection(note, "A11"));
+    const std::string message = thrownFirstLine([&] { note.setPitchClass("B"); });
+    EXPECT_EQ(message, aboveTheCeiling("B11", 1, 3, "158.000000"));
+    EXPECT_EQ(message, setPitchRejection(note, "B11"));
     EXPECT_EQ(stateOf(note), before);
-    EXPECT_EQ(note.getPitch(), "D#11");
+    EXPECT_EQ(note.getSoundingPitch(), "D#11");
 }
 
 // B4 on a (1, 3) instrument sounds D5; as B11 it would sound at 158, above B11.
@@ -2074,18 +2101,19 @@ TEST(NoteMutatorThatThrows, setOctaveChecksTheSoundingPitchLikeSetPitch) {
     EXPECT_EQ(message, aboveTheCeiling("B11", 1, 3, "158.000000"));
     EXPECT_EQ(message, setPitchRejection(note, "B11"));
     EXPECT_EQ(stateOf(note), before);
-    EXPECT_EQ(note.getPitch(), "D5");
+    EXPECT_EQ(note.getSoundingPitch(), "D5");
 }
 
-// A11 on a (1, 2) instrument sounds B11; as A#11 it would sound at 156, above B11.
+// A11 on an instrument that transposes two semitones up without a diatonic interval sounds B11;
+// as A#11 it would sound at 156, which only a letter moved to the B of octave 11 could spell.
 TEST(NoteMutatorThatThrows, setAlterChecksTheSoundingPitchLikeSetPitch) {
-    Note note = transposingNote("A11", 1, 2);
+    Note note = transposingNote("A11", 0, 2);
     const NoteState before = stateOf(note);
     const std::string message = thrownFirstLine([&] { note.setAlter(1.0f); });
-    EXPECT_EQ(message, aboveTheCeiling("A#11", 1, 2, "156.000000"));
+    EXPECT_EQ(message, aboveTheCeiling("A#11", 0, 2, "156.000000"));
     EXPECT_EQ(message, setPitchRejection(note, "A#11"));
     EXPECT_EQ(stateOf(note), before);
-    EXPECT_EQ(note.getPitch(), "B11");
+    EXPECT_EQ(note.getSoundingPitch(), "B11");
 }
 
 // A sounding pitch below the lowest representable pitch is still accepted, as setPitch() accepts
@@ -2102,7 +2130,7 @@ TEST(NoteMutatorThatThrows, thePartialSettersStillAcceptASoundingPitchBelowTheFl
     EXPECT_EQ(byPitchClass.getWrittenPitch(), "C#-1");
     expectSoundingBelowTheFloor(byPitchClass);
 
-    Note byOctave = transposingNote("C#0", -7, -12);  // sounds Db-1
+    Note byOctave = transposingNote("C#0", -7, -12);  // sounds C#-1
     byOctave.setOctave(-1);                           // C#-1 sounds at -11
     EXPECT_EQ(byOctave.getWrittenPitch(), "C#-1");
     expectSoundingBelowTheFloor(byOctave);
@@ -2133,4 +2161,243 @@ TEST(NoteMutatorThatThrows, aRestIsNotGivenAPitchThatCannotSound) {
         EXPECT_TRUE(rest.isNoteOff());
         EXPECT_EQ(rest.getTransposeChromatic(), 90);
     }
+}
+
+// ===== The three pitch views ===== //
+//
+// Written: the pitch as written in the part; getPitch(), getOctave(), getPitchClass(),
+// getPitchStep() and getAlterSymbol() are shortcuts for it, and the enharmonic family, transpose()
+// and the setters work on it. Sounding: what sounds, in its simplest spelling, with that
+// spelling's own octave. Acoustic: getMidiNumber() and the other measures of what sounds. A note is
+// compared, and analysed, at its concert spelling: the written pitch moved by the transposing
+// interval, its letter by the diatonic interval.
+
+// The design's section 3, through the public API: the written pitch, the concert spelling the note
+// is compared at, the sounding pitch and its octave, and the MIDI number -- plus decision D4's
+// example of a sharp-and-flat tie, which keeps the side of the concert spelling.
+TEST(NotePitchViews, theSpecExamplesTable) {
+    struct Row {
+        Note note;
+        std::string written;
+        std::string concert;
+        std::string sounding;
+        int soundingOctave;
+        int midiNumber;
+    };
+    const std::vector<Row> rows = {
+        {Note("Cb4"), "Cb4", "Cb4", "B3", 3, 59},                   // untransposed
+        {bFlatClarinet("F#4"), "F#4", "E4", "E4", 4, 64},           // B-flat clarinet
+        {bFlatClarinet("Db4"), "Db4", "Cb4", "B3", 3, 59},          // B-flat clarinet
+        {bFlatClarinet("C1x4"), "C1x4", "B1b3", "B1b3", 3, 59},     // 58.5 rounds up
+        {hornInF("B4"), "B4", "E4", "E4", 4, 64},                   // horn in F
+        {piccolo("Bb4"), "Bb4", "Bb5", "Bb5", 5, 82},               // piccolo
+        {transposingNote("C4", 0, -2), "C4", "Bb3", "Bb3", 3, 58},  // no <diatonic>
+        {bFlatClarinet("Eb4"), "Eb4", "Db4", "Db4", 4, 61},         // a tie keeps the flat
+    };
+    for (const Row& row : rows) {
+        const Note& note = row.note;
+        const Pitch written(row.written);
+        EXPECT_EQ(note.getPitch(), row.written);
+        EXPECT_EQ(note.getWrittenPitch(), row.written);
+        EXPECT_EQ(note.getOctave(), written.getOctave()) << row.written;
+        EXPECT_EQ(note.getPitchClass(), written.getPitchClass()) << row.written;
+        EXPECT_EQ(note.getPitchStep(), written.getPitchStep()) << row.written;
+        EXPECT_EQ(note.getAlterSymbol(), written.getAlterSymbol()) << row.written;
+        EXPECT_TRUE(note == Note(row.concert)) << row.written << " is compared as " << row.concert;
+        EXPECT_EQ(note.getSoundingPitch(), row.sounding) << row.written;
+        EXPECT_EQ(note.getSoundingOctave(), row.soundingOctave) << row.written;
+        EXPECT_EQ(note.getMidiNumber(), row.midiNumber) << row.written;
+    }
+
+    // The section's last row: a rest, also one made of a transposed note, is a rest in every view.
+    Note silenced = bFlatClarinet("C4");
+    silenced.setIsNoteOn(false);
+    for (const Note& rest : {Note("rest"), silenced}) {
+        EXPECT_EQ(rest.getPitch(), "rest");
+        EXPECT_EQ(rest.getSoundingPitch(), "rest");
+        EXPECT_EQ(rest.getSoundingPitchClass(), "rest");
+        EXPECT_EQ(rest.getSoundingPitchStep(), "rest");
+        EXPECT_FALSE(rest.getOctave().has_value());
+        EXPECT_FALSE(rest.getSoundingOctave().has_value());
+        EXPECT_EQ(rest.getMidiNumber(), -1);
+    }
+}
+
+// Decision D3 through the public API: an untransposed note sounds its simplest spelling, with that
+// spelling's own octave, so the Sounding view differs from the written one exactly for the
+// spellings that have a simpler one.
+TEST(NotePitchViews, anUntransposedNoteSoundsItsSimplestSpelling) {
+    const std::vector<std::tuple<std::string, std::string, int>> examples = {
+        {"Db4", "Db4", 4},   {"C#4", "C#4", 4},   {"Cb4", "B3", 3},    {"E#4", "F4", 4},
+        {"B#3", "C4", 4},    {"Fb4", "E4", 4},    {"Ebb4", "D4", 4},   {"Fx4", "G4", 4},
+        {"Bbb4", "A4", 4},   {"C1x4", "C1x4", 4}, {"C3x4", "D1b4", 4}, {"E1x4", "E1x4", 4},
+        {"B1b3", "B1b3", 3}, {"B1x3", "B1x3", 3}, {"B3x3", "C1x4", 4}, {"Bx11", "Bx11", 11},
+    };
+    for (const auto& [written, sounding, octave] : examples) {
+        const Note note(written);
+        EXPECT_EQ(note.getPitch(), written);
+        EXPECT_EQ(note.getSoundingPitch(), sounding) << written;
+        EXPECT_EQ(note.getSoundingOctave(), octave) << written;
+        EXPECT_EQ(note.getSoundingPitchClass() + std::to_string(octave), sounding) << written;
+    }
+}
+
+// Every spelling in octaves 3..5 on every transposing instrument of the design's measurements: the
+// unprefixed getters answer the written pitch, and the enharmonic family respells it as it would
+// an untransposed note's; the Sounding getters answer one spelling of the position the note
+// sounds, with the smallest accidental any spelling of that position has, and its own octave.
+TEST(NotePitchViews, everyTransposedSpellingFollowsTheViews) {
+    const std::vector<std::pair<int, int>> intervals = {
+        {-1, -2}, {-2, -3},  {-4, -7},  {-5, -9}, {1, 2}, {2, 3},
+        {7, 12},  {-7, -12}, {-8, -14}, {0, -2},  {0, 0},
+    };
+    const std::vector<std::string> accidentals = {"bb", "3b", "b", "1b", "", "1x", "#", "3x", "x"};
+    size_t checked = 0;
+    std::vector<std::string> failures;
+    for (int octave = 3; octave <= 5; octave++) {
+        for (const std::string& step : c_C_diatonicScale) {
+            for (const std::string& accidental : accidentals) {
+                const std::string written = step + accidental + std::to_string(octave);
+                const Note untransposed(written);
+                for (const auto& [diatonic, chromatic] : intervals) {
+                    const Note note = transposingNote(written, diatonic, chromatic);
+                    const std::string where = written + " (" + std::to_string(diatonic) + ", " +
+                                              std::to_string(chromatic) + ")";
+                    checked++;
+
+                    if (note.getPitch() != written ||
+                        note.getOctave() != untransposed.getWrittenOctave() ||
+                        note.getPitchClass() != untransposed.getWrittenPitchClass() ||
+                        note.getPitchStep() != untransposed.getWrittenPitchStep() ||
+                        note.getAlterSymbol() != Pitch(written).getAlterSymbol() ||
+                        note.getEnharmonicPitches(true) !=
+                            untransposed.getEnharmonicPitches(true)) {
+                        failures.push_back(where + ": the written view");
+                    }
+
+                    const Pitch sounding(note.getSoundingPitch());
+                    const float position = note.getQuarterToneSteps();
+                    const float wholePart = std::floor(position);
+                    const bool isWhiteKey =
+                        position == wholePart &&
+                        std::find(c_diatonicStepSemitones.begin(), c_diatonicStepSemitones.end(),
+                                  static_cast<int>(wholePart) % 12) !=
+                            c_diatonicStepSemitones.end();
+                    const float fewest = position != wholePart ? 0.5f : (isWhiteKey ? 0.0f : 1.0f);
+                    if (sounding.getQuarterToneSteps() != position ||
+                        std::fabs(sounding.getAlter()) != fewest ||
+                        note.getSoundingOctave() != sounding.getOctave() ||
+                        note.getSoundingPitchClass() != sounding.getPitchClass() ||
+                        note.getSoundingPitchStep() != sounding.getPitchStep() ||
+                        note.getDiatonicSoundingPitchClass() != sounding.getPitchStep()) {
+                        failures.push_back(where + ": the sounding view " + sounding.getPitch());
+                    }
+                }
+            }
+        }
+    }
+    EXPECT_EQ(checked, 3u * 7u * 9u * 11u);
+    EXPECT_TRUE(failures.empty()) << failures.size() << " cases differ, the first: "
+                                  << (failures.empty() ? "" : failures.front());
+}
+
+// transpose() moves the written pitch, once (decision D6): by 0 it changes nothing, and by a whole
+// tone it moves the written and the sounding pitch by a whole tone.
+TEST(NotePitchViews, transposeMovesTheWrittenPitchOnce) {
+    Note clarinet = bFlatClarinet("C4");  // sounds Bb3
+    clarinet.transpose(0);
+    EXPECT_EQ(clarinet.getWrittenPitch(), "C4");
+    EXPECT_EQ(clarinet.getSoundingPitch(), "Bb3");
+    EXPECT_EQ(clarinet.getMidiNumber(), 58);
+
+    clarinet.transpose(2);
+    EXPECT_EQ(clarinet.getWrittenPitch(), "D4");
+    EXPECT_EQ(clarinet.getSoundingPitch(), "C4");
+    EXPECT_EQ(clarinet.getMidiNumber(), 60);
+    EXPECT_EQ(clarinet.getTransposeChromatic(), -2);
+
+    Note horn = hornInF("C5");  // sounds F4
+    horn.transpose(0);
+    EXPECT_EQ(horn.getWrittenPitch(), "C5");
+    EXPECT_EQ(horn.getSoundingPitch(), "F4");
+}
+
+// toEnharmonicPitch() respells the written pitch (decision D6), so the note keeps sounding where
+// it did: a B-flat clarinet's written C#4 (sounding B3, MIDI 59) becomes a written Db4, or Bx3,
+// both still sounding B3.
+TEST(NotePitchViews, toEnharmonicPitchKeepsWhatATransposedNoteSounds) {
+    for (const bool alternative : {false, true}) {
+        Note clarinet = bFlatClarinet("C#4");
+        clarinet.toEnharmonicPitch(alternative);
+        EXPECT_EQ(clarinet.getWrittenPitch(), alternative ? "Bx3" : "Db4");
+        EXPECT_EQ(clarinet.getMidiNumber(), 59) << "alternative " << alternative;
+        EXPECT_EQ(clarinet.getQuarterToneSteps(), 59.0f) << "alternative " << alternative;
+        EXPECT_EQ(clarinet.getSoundingPitch(), "B3") << "alternative " << alternative;
+        EXPECT_EQ(clarinet.getTransposeChromatic(), -2);
+    }
+}
+
+// Above B11 the diatonic interval spells what the chromatic rule cannot: B1x11, B#11, B3x11 and
+// Bx11, when it moves the written letter to the B of octave 11. The constructor and every mutator
+// accept such a sounding pitch, which no simpler spelling within octaves -1..11 has.
+TEST(NotePitchViews, aSoundingPitchTheDiatonicIntervalSpellsAboveB11IsAccepted) {
+    const Note sharp = transposingNote("A#11", 1, 2);
+    EXPECT_EQ(sharp.getSoundingPitch(), "B#11");
+    EXPECT_EQ(sharp.getSoundingOctave(), 11);
+    EXPECT_EQ(sharp.getMidiNumber(), 156);
+    EXPECT_EQ(transposingNote("A#11", 1, 3).getSoundingPitch(), "Bx11");
+    EXPECT_EQ(transposingNote("Bx10", 7, 12).getSoundingPitch(), "Bx11");
+    EXPECT_EQ(transposingNote("A1x11", 1, 2).getSoundingPitch(), "B1x11");
+
+    Note byInterval("A#11");
+    byInterval.setTransposingInterval(1, 2);
+    EXPECT_EQ(byInterval.getSoundingPitch(), "B#11");
+
+    Note byPitch = transposingNote("C4", 1, 2);
+    byPitch.setPitch("A#11");
+    EXPECT_EQ(byPitch.getSoundingPitch(), "B#11");
+
+    Note byStep = transposingNote("G#11", 1, 2);  // sounds A#11
+    byStep.setStep("A");
+    EXPECT_EQ(byStep.getSoundingPitch(), "B#11");
+
+    Note byPitchClass = transposingNote("G11", 1, 2);  // sounds A11
+    byPitchClass.setPitchClass("A#");
+    EXPECT_EQ(byPitchClass.getSoundingPitch(), "B#11");
+
+    Note byOctave = transposingNote("A#10", 1, 2);  // sounds B#10
+    byOctave.setOctave(11);
+    EXPECT_EQ(byOctave.getSoundingPitch(), "B#11");
+
+    Note byAlter = transposingNote("A11", 1, 2);  // sounds B11
+    byAlter.setAlter(2.0f);
+    EXPECT_EQ(byAlter.getSoundingPitch(), "Bx11");
+
+    Note byTranspose = transposingNote("A10", 1, 2);  // sounds B10
+    byTranspose.transpose(13, "#");
+    EXPECT_EQ(byTranspose.getWrittenPitch(), "A#11");
+    EXPECT_EQ(byTranspose.getSoundingPitch(), "B#11");
+}
+
+// getScaleDegree() reads the written step: the keys maialib reads from a part's measures are that
+// part's written key signatures, so a B-flat clarinet's written D4 is the second degree of the C
+// major its part is written in, although it sounds C4.
+TEST(NotePitchViews, getScaleDegreeReadsTheWrittenStep) {
+    EXPECT_EQ(bFlatClarinet("D4").getScaleDegree(Key(0, true)), 2);
+    EXPECT_EQ(hornInF("G4").getScaleDegree(Key(0, true)), 5);  // sounds C4
+    EXPECT_EQ(Note("D4").getScaleDegree(Key(0, true)), 2);
+}
+
+// info() prints the note as it is written, like the pitch it was constructed with, and the MIDI
+// number of what it sounds.
+TEST(NotePitchViews, infoShowsTheWrittenPitch) {
+    const Note clarinet = bFlatClarinet("D4");
+    std::string printed;
+    {
+        StdoutCapture capture;
+        clarinet.info();
+        printed = capture.str();
+    }
+    EXPECT_NE(printed.find("Pitch: D4"), std::string::npos) << printed;
+    EXPECT_NE(printed.find("MIDI Number: 60"), std::string::npos) << printed;
 }

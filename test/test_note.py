@@ -261,10 +261,12 @@ class NoteQuarterToneEnharmonic(unittest.TestCase):
         note.toEnharmonicPitch(alternativeEnharmonicPitch=True)
         self.assertEqual(note.getPitch(), "B3x3")
 
-    def testTheSoundingPitchIsRespelled(self):
+    # A B-flat clarinet's written C1x4 sounds B1b3; the family respells the written pitch.
+    def testTheWrittenPitchIsRespelled(self):
         clarinet = ml.Note("C1x4", transposeDiatonic=-1, transposeChromatic=-2)
-        self.assertEqual(clarinet.getPitch(), "B1b3")
-        self.assertEqual(enharmonicsOf(clarinet), ("A3x3", "C3b4"))
+        self.assertEqual(clarinet.getPitch(), "C1x4")
+        self.assertEqual(clarinet.getSoundingPitch(), "B1b3")
+        self.assertEqual(enharmonicsOf(clarinet), ("D3b4", "B3x3"))
 
     def testEveryRespellingDescribesTheSamePitch(self):
         numSpellings = 0
@@ -327,36 +329,28 @@ class NoteComposesPitch(unittest.TestCase):
         self.assertEqual(note.getWrittenPitchStep(), "rest")
         self.assertEqual(note.getPitchClass(), "rest")
 
-    # getAlterSymbol() reads the sounding pitch, not the written one. B-flat clarinet: written
-    # "C4" (alter symbol "") transposed by (transposeDiatonic=-1, transposeChromatic=-2) sounds
-    # "Bb3" (alter symbol "b") -- the same construction and values pinned in note-test.cpp's
-    # NoteComposesPitch.GetAlterSymbolForwardsToSoundingPitchOnTransposedNote. Written "C#4" shows
-    # the same in the opposite direction.
-    def testGetAlterSymbolForwardsToSoundingPitchOnTransposedNote(self):
-        written = ml.Note("C4")
-        self.assertEqual(written.getAlterSymbol(), "")
-
+    # getAlterSymbol() reads the written pitch, like every unprefixed pitch getter. B-flat
+    # clarinet: written "C4" (alter symbol "") transposed by (transposeDiatonic=-1,
+    # transposeChromatic=-2) sounds "Bb3" -- the same construction and values pinned in
+    # note-test.cpp's NoteComposesPitch.GetAlterSymbolIsTheWrittenAccidentalOnTransposedNote.
+    # Written "C#4" shows the same in the opposite direction.
+    def testGetAlterSymbolIsTheWrittenAccidentalOnTransposedNote(self):
         transposed = ml.Note(
             "C4", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
         )
         self.assertEqual(transposed.getSoundingPitch(), "Bb3")
         self.assertEqual(transposed.getMidiNumber(), 58)
-        self.assertEqual(transposed.getAlterSymbol(), "b")
-        self.assertNotEqual(transposed.getAlterSymbol(), written.getAlterSymbol())
+        self.assertEqual(transposed.getAlterSymbol(), "")
+        self.assertEqual(transposed.getSoundingPitchClass(), "Bb")
 
-        # The opposite direction: written "C#4" (alter symbol "#") sounds "B3" (alter symbol "").
-        sharpWritten = ml.Note("C#4")
-        self.assertEqual(sharpWritten.getAlterSymbol(), "#")
-
+        # The opposite direction: written "C#4" (alter symbol "#") sounds "B3".
         sharpTransposed = ml.Note(
             "C#4", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
         )
         self.assertEqual(sharpTransposed.getSoundingPitch(), "B3")
         self.assertEqual(sharpTransposed.getMidiNumber(), 59)
-        self.assertEqual(sharpTransposed.getAlterSymbol(), "")
-        self.assertNotEqual(
-            sharpTransposed.getAlterSymbol(), sharpWritten.getAlterSymbol()
-        )
+        self.assertEqual(sharpTransposed.getAlterSymbol(), "#")
+        self.assertEqual(sharpTransposed.getSoundingPitchClass(), "B")
 
     # Mirror the C++ NoteComposesPitch.SetAlterOnRestRefusesAndWarns and
     # .SetStepResurrectsRestToOctave4 tests through the bindings.
@@ -431,16 +425,18 @@ class NoteComposesPitch(unittest.TestCase):
 
     # A written "C#-1" on a B-flat clarinet sounds below the lowest representable pitch, C1b-1.
     # The note is constructible and is a note, not a rest; its sounding pitch fails loudly and
-    # diagnosably, not as a rest and not with an unexplained internal error.
-    def testGetPitchBelowMidiZeroFailsDiagnosably(self):
+    # diagnosably, not as a rest and not with an unexplained internal error. Its written pitch
+    # still answers.
+    def testGetSoundingPitchBelowMidiZeroFailsDiagnosably(self):
         note = ml.Note(
             "C#-1", isNoteOn=True, inChord=False, transposeDiatonic=-1, transposeChromatic=-2
         )
         self.assertTrue(note.isNoteOn())
         self.assertFalse(note.isNoteOff())
+        self.assertEqual(note.getPitch(), "C#-1")
 
         with self.assertRaises(RuntimeError) as ctx:
-            note.getPitch()
+            note.getSoundingPitch()
         message = str(ctx.exception).splitlines()[0]
         self.assertIn("below the lowest representable pitch C1b-1", message)
         self.assertIn("'C#-1'", message)
@@ -552,23 +548,17 @@ class NoteQuarterToneSteps(unittest.TestCase):
 
 
 class NoteSoundingPitchBelowFloor(unittest.TestCase):
-    # Mirrors NoteSoundingPitchBelowFloor.everySoundingGetterFailsTheSameWay.
+    # Mirrors NoteSoundingPitchBelowFloor.everySoundingGetterFailsTheSameWay: the Sounding view and
+    # the acoustic getters.
     GETTERS = (
-        "getPitch",
         "getSoundingPitch",
-        "getPitchClass",
         "getSoundingPitchClass",
-        "getPitchStep",
         "getSoundingPitchStep",
         "getDiatonicSoundingPitchClass",
-        "getAlterSymbol",
-        "getOctave",
         "getSoundingOctave",
         "getMidiNumber",
         "getQuarterToneSteps",
         "getFrequency",
-        "getEnharmonicPitch",
-        "getEnharmonicPitches",
     )
 
     def testEverySoundingGetterFailsTheSameWay(self):
@@ -582,11 +572,20 @@ class NoteSoundingPitchBelowFloor(unittest.TestCase):
                     self.assertIn("below the lowest representable pitch C1b-1", message)
                     self.assertIn(f"'{written}'", message)
 
+    # The written getters, the unprefixed ones that are shortcuts for them, and the enharmonic
+    # family, which respells the written pitch, all answer.
     def testTheWrittenPitchStillAnswers(self):
         note = ml.Note("C#-1", transposeDiatonic=-1, transposeChromatic=-2)
         self.assertTrue(note.isNoteOn())
         self.assertEqual(note.getWrittenPitch(), "C#-1")
         self.assertEqual(note.getWrittenOctave(), -1)
+        self.assertEqual(note.getPitch(), "C#-1")
+        self.assertEqual(note.getPitchClass(), "C#")
+        self.assertEqual(note.getPitchStep(), "C")
+        self.assertEqual(note.getAlterSymbol(), "#")
+        self.assertEqual(note.getOctave(), -1)
+        self.assertEqual(note.getEnharmonicPitch(), "Db-1")
+        self.assertEqual(repr(note), "<Note C#-1>")
         self.assertIn("<step>C</step>", note.toXML())
 
     def testAnIntervalWithSuchANoteFailsDiagnosably(self):
@@ -655,7 +654,7 @@ def noteState(note):
     pitch (or the first line of the error a sounding getter raises), the duration, and the
     MusicXML the note writes, which also carries its tuplet values."""
     try:
-        sounding = note.getPitch()
+        sounding = note.getSoundingPitch()
     except RuntimeError as error:
         sounding = "raises: " + firstLine(error)
     return (
@@ -671,13 +670,15 @@ def noteState(note):
 
 def aboveTheCeiling(written, diatonic, chromatic, position):
     """The error for 'written' on a (diatonic, chromatic) instrument, whose sounding pitch lies at
-    'position' (as C++'s std::to_string() writes it), above B11, the highest sounding pitch that
-    can be spelled within octaves -1..11."""
+    'position' (as C++'s std::to_string() writes it), above B11, where no spelling within octaves
+    -1..11 reaches it: only B1x11, B#11, B3x11 and Bx11 lie above B11, and only a diatonic
+    interval that moves the written letter to the B of octave 11 spells them."""
     return (
         f"[maiacore] The sounding pitch of the written pitch '{written}' with "
         f"transposeDiatonic={diatonic} and transposeChromatic={chromatic} is at position "
-        f"{position}, above B11 (MIDI note 155), the highest sounding pitch that can be spelled "
-        "within octaves -1..11, so it has no sounding spelling. A lower written pitch or a "
+        f"{position}, above B11 (MIDI note 155), and has no sounding spelling within octaves "
+        "-1..11: above B11 only B1x11, B#11, B3x11 and Bx11 can be spelled, when the diatonic "
+        "interval moves the written letter to the B of octave 11. A lower written pitch or a "
         "smaller transposing interval keeps the sounding pitch at or below B11."
     )
 
@@ -706,28 +707,31 @@ class NoteMutatorThatRaises(unittest.TestCase):
         self.assertRaisesLeavingTheNote(
             note, aboveTheCeiling("B11", 1, 3, "158.000000"), note.setPitch, "B11"
         )
-        self.assertEqual(note.getPitch(), "D#4")
+        self.assertEqual(note.getSoundingPitch(), "D#4")
 
+    # The written C4 moved up 95 semitones is B11, which on a (1, 3) instrument would sound at
+    # 158, above Bx11 (157), the highest pitch any letter spells.
     def testTransposeLeavesTheNoteUnchanged(self):
         note = ml.Note("C4", transposeDiatonic=1, transposeChromatic=3)
         self.assertRaisesLeavingTheNote(
-            note, aboveTheCeiling("A11", 1, 3, "156.000000"), note.transpose, 90
+            note, aboveTheCeiling("B11", 1, 3, "158.000000"), note.transpose, 95
         )
-        self.assertEqual(note.getPitch(), "D#4")
+        self.assertEqual(note.getSoundingPitch(), "D#4")
 
     def testToEnharmonicPitchLeavesTheNoteUnchanged(self):
         for alternative in (False, True):
             with self.subTest(alternative=alternative):
-                note = ml.Note("A11", transposeDiatonic=1, transposeChromatic=2)
-                # The default respelling of the sounding B11 is B11 itself (no flat partner
-                # within octave 11), the alternative Ax11; each sounds at 157 once written.
+                note = ml.Note("A#11", transposeDiatonic=1, transposeChromatic=2)
+                # A#11 sounds B#11, a spelling its letter reaches; its respelling Bb11 (the
+                # default, and the alternative too: A#11 has no double-accidental spelling within
+                # octave 11) would need the letter C of octave 12.
                 self.assertRaisesLeavingTheNote(
                     note,
-                    aboveTheCeiling("Ax11" if alternative else "B11", 1, 2, "157.000000"),
+                    aboveTheCeiling("Bb11", 1, 2, "156.000000"),
                     note.toEnharmonicPitch,
                     alternative,
                 )
-                self.assertEqual(note.getPitch(), "B11")
+                self.assertEqual(note.getSoundingPitch(), "B#11")
 
     def testSetDurationLeavesTheNoteUnchanged(self):
         for duration in (0.0, -1.0):
@@ -765,22 +769,22 @@ class NoteMutatorThatRaises(unittest.TestCase):
     def testSetStepChecksTheSoundingPitchLikeSetPitch(self):
         note = self.assertChecksLikeSetPitch(
             lambda: ml.Note("C11", transposeDiatonic=1, transposeChromatic=3),
-            "A11",
-            aboveTheCeiling("A11", 1, 3, "156.000000"),
+            "B11",
+            aboveTheCeiling("B11", 1, 3, "158.000000"),
             "setStep",
-            "A",
+            "B",
         )
-        self.assertEqual(note.getPitch(), "D#11")
+        self.assertEqual(note.getSoundingPitch(), "D#11")
 
     def testSetPitchClassChecksTheSoundingPitchLikeSetPitch(self):
         note = self.assertChecksLikeSetPitch(
             lambda: ml.Note("C11", transposeDiatonic=1, transposeChromatic=3),
-            "A11",
-            aboveTheCeiling("A11", 1, 3, "156.000000"),
+            "B11",
+            aboveTheCeiling("B11", 1, 3, "158.000000"),
             "setPitchClass",
-            "A",
+            "B",
         )
-        self.assertEqual(note.getPitch(), "D#11")
+        self.assertEqual(note.getSoundingPitch(), "D#11")
 
     def testSetOctaveChecksTheSoundingPitchLikeSetPitch(self):
         note = self.assertChecksLikeSetPitch(
@@ -790,17 +794,19 @@ class NoteMutatorThatRaises(unittest.TestCase):
             "setOctave",
             11,
         )
-        self.assertEqual(note.getPitch(), "D5")
+        self.assertEqual(note.getSoundingPitch(), "D5")
 
+    # Without a diatonic interval no letter is moved to the B of octave 11, so A#11 moved up two
+    # semitones (156) cannot be spelled.
     def testSetAlterChecksTheSoundingPitchLikeSetPitch(self):
         note = self.assertChecksLikeSetPitch(
-            lambda: ml.Note("A11", transposeDiatonic=1, transposeChromatic=2),
+            lambda: ml.Note("A11", transposeDiatonic=0, transposeChromatic=2),
             "A#11",
-            aboveTheCeiling("A#11", 1, 2, "156.000000"),
+            aboveTheCeiling("A#11", 0, 2, "156.000000"),
             "setAlter",
             1,
         )
-        self.assertEqual(note.getPitch(), "B11")
+        self.assertEqual(note.getSoundingPitch(), "B11")
 
     def testThePartialSettersStillAcceptASoundingPitchBelowTheFloor(self):
         for written, diatonic, chromatic, mutator, argument, result in (
@@ -814,7 +820,7 @@ class NoteMutatorThatRaises(unittest.TestCase):
                 getattr(note, mutator)(argument)
                 self.assertEqual(note.getWrittenPitch(), result)
                 with self.assertRaises(RuntimeError) as context:
-                    note.getPitch()
+                    note.getSoundingPitch()
                 self.assertIn(
                     "below the lowest representable pitch C1b-1", firstLine(context.exception)
                 )
@@ -833,6 +839,137 @@ class NoteMutatorThatRaises(unittest.TestCase):
                 )
                 self.assertTrue(rest.isNoteOff())
                 self.assertEqual(rest.getTransposeChromatic(), 90)
+
+
+def transposing(written, diatonic, chromatic):
+    """A note written 'written' in the part of an instrument that sounds 'diatonic' letters and
+    'chromatic' semitones away from what it reads."""
+    return ml.Note(written, transposeDiatonic=diatonic, transposeChromatic=chromatic)
+
+
+class NotePitchViews(unittest.TestCase):
+    """Written (the unprefixed getters are shortcuts for it), Sounding (the simplest spelling of
+    what sounds) and acoustic. Mirrors the C++ NotePitchViews tests."""
+
+    # The design's section 3 through the public API, plus decision D4's tie example.
+    def testTheSpecExamplesTable(self):
+        rows = (
+            (ml.Note("Cb4"), "Cb4", "Cb4", "B3", 3, 59),
+            (transposing("F#4", -1, -2), "F#4", "E4", "E4", 4, 64),
+            (transposing("Db4", -1, -2), "Db4", "Cb4", "B3", 3, 59),
+            (transposing("C1x4", -1, -2), "C1x4", "B1b3", "B1b3", 3, 59),
+            (transposing("B4", -4, -7), "B4", "E4", "E4", 4, 64),
+            (transposing("Bb4", 7, 12), "Bb4", "Bb5", "Bb5", 5, 82),
+            (transposing("C4", 0, -2), "C4", "Bb3", "Bb3", 3, 58),
+            (transposing("Eb4", -1, -2), "Eb4", "Db4", "Db4", 4, 61),
+        )
+        for note, written, concert, sounding, sounding_octave, midi_number in rows:
+            with self.subTest(written=written, interval=note.getTransposeChromatic()):
+                pitch = ml.Pitch(written)
+                self.assertEqual(note.getPitch(), written)
+                self.assertEqual(note.getWrittenPitch(), written)
+                self.assertEqual(note.getOctave(), pitch.getOctave())
+                self.assertEqual(note.getPitchClass(), pitch.getPitchClass())
+                self.assertEqual(note.getPitchStep(), pitch.getPitchStep())
+                self.assertEqual(note.getAlterSymbol(), pitch.getAlterSymbol())
+                self.assertTrue(note == ml.Note(concert))
+                self.assertEqual(note.getSoundingPitch(), sounding)
+                self.assertEqual(note.getSoundingOctave(), sounding_octave)
+                self.assertEqual(note.getMidiNumber(), midi_number)
+
+        silenced = transposing("C4", -1, -2)
+        silenced.setIsNoteOn(False)
+        for rest in (ml.Note("rest"), silenced):
+            self.assertEqual(rest.getPitch(), "rest")
+            self.assertEqual(rest.getSoundingPitch(), "rest")
+            self.assertIsNone(rest.getOctave())
+            self.assertIsNone(rest.getSoundingOctave())
+            self.assertEqual(rest.getMidiNumber(), -1)
+
+    # Decision D3: an untransposed note sounds its simplest spelling, with that spelling's octave.
+    def testAnUntransposedNoteSoundsItsSimplestSpelling(self):
+        for written, sounding, octave in (
+            ("Cb4", "B3", 3),
+            ("B#3", "C4", 4),
+            ("Ebb4", "D4", 4),
+            ("Db4", "Db4", 4),
+            ("C3x4", "D1b4", 4),
+            ("B1x3", "B1x3", 3),
+        ):
+            with self.subTest(written=written):
+                note = ml.Note(written)
+                self.assertEqual(note.getPitch(), written)
+                self.assertEqual(note.getSoundingPitch(), sounding)
+                self.assertEqual(note.getSoundingOctave(), octave)
+
+    # Decision D6: transpose() moves the written pitch once.
+    def testTransposeMovesTheWrittenPitchOnce(self):
+        clarinet = transposing("C4", -1, -2)
+        clarinet.transpose(0)
+        self.assertEqual(clarinet.getWrittenPitch(), "C4")
+        self.assertEqual(clarinet.getSoundingPitch(), "Bb3")
+
+        clarinet.transpose(2)
+        self.assertEqual(clarinet.getWrittenPitch(), "D4")
+        self.assertEqual(clarinet.getSoundingPitch(), "C4")
+        self.assertEqual(clarinet.getMidiNumber(), 60)
+
+    # Decision D6: toEnharmonicPitch() respells the written pitch, so the note sounds as before.
+    def testToEnharmonicPitchKeepsWhatATransposedNoteSounds(self):
+        for alternative, respelled in ((False, "Db4"), (True, "Bx3")):
+            with self.subTest(alternative=alternative):
+                clarinet = transposing("C#4", -1, -2)
+                clarinet.toEnharmonicPitch(alternative)
+                self.assertEqual(clarinet.getWrittenPitch(), respelled)
+                self.assertEqual(clarinet.getMidiNumber(), 59)
+                self.assertEqual(clarinet.getSoundingPitch(), "B3")
+
+    # Above B11 the diatonic interval spells B#11 and Bx11, and every entry point accepts them.
+    def testASoundingPitchTheDiatonicIntervalSpellsAboveB11IsAccepted(self):
+        self.assertEqual(transposing("A#11", 1, 2).getSoundingPitch(), "B#11")
+        self.assertEqual(transposing("A#11", 1, 3).getSoundingPitch(), "Bx11")
+        self.assertEqual(transposing("A#11", 1, 2).getMidiNumber(), 156)
+
+        note = ml.Note("A#11")
+        note.setTransposingInterval(1, 2)
+        self.assertEqual(note.getSoundingPitch(), "B#11")
+
+        for start, mutator, argument, sounding in (
+            ("C4", "setPitch", "A#11", "B#11"),
+            ("G#11", "setStep", "A", "B#11"),
+            ("G11", "setPitchClass", "A#", "B#11"),
+            ("A#10", "setOctave", 11, "B#11"),
+            ("A11", "setAlter", 2, "Bx11"),
+        ):
+            with self.subTest(mutator=mutator):
+                note = transposing(start, 1, 2)
+                getattr(note, mutator)(argument)
+                self.assertEqual(note.getSoundingPitch(), sounding)
+
+    # getScaleDegree() reads the written step, in the key the part is written in.
+    def testGetScaleDegreeReadsTheWrittenStep(self):
+        self.assertEqual(transposing("D4", -1, -2).getScaleDegree(ml.Key("C")), 2)
+        self.assertEqual(transposing("G4", -4, -7).getScaleDegree(ml.Key("C")), 5)
+
+    # repr() shows the written pitch, the one the note was constructed with, and never raises.
+    def testReprShowsTheWrittenPitch(self):
+        self.assertEqual(repr(transposing("D4", -1, -2)), "<Note D4>")
+        self.assertEqual(repr(transposing("C#-1", -1, -2)), "<Note C#-1>")
+        self.assertEqual(repr(ml.Note("Cb4")), "<Note Cb4>")
+
+    # Decision D7: the Sounding getters document their silent fallback.
+    def testEverySoundingGetterDocumentsTheFallback(self):
+        for name in (
+            "getSoundingPitch",
+            "getSoundingPitchClass",
+            "getSoundingPitchStep",
+            "getDiatonicSoundingPitchClass",
+            "getSoundingOctave",
+        ):
+            with self.subTest(getter=name):
+                doc = " ".join(getattr(ml.Note, name).__doc__.split()).lower()
+                self.assertIn("fallback", doc)
+                self.assertIn("silent", doc)
 
 
 if __name__ == "__main__":

@@ -19,7 +19,45 @@ using maiacore::detail::concertPitch;
 void NoteClass(const py::module& m) {
     m.doc() = "Note class binding";
 
-    py::class_<Note> cls(m, "Note");
+    py::class_<Note> cls(m, "Note", R"pbdoc(
+        A musical note: its pitch, duration, articulations and MusicXML attributes.
+
+        Notes
+        -----
+        A note of a transposing instrument is written at one pitch and sounds at another, so a
+        note answers about its pitch in three views:
+
+        - Written, the pitch as written in the part: ``getWrittenPitch``,
+          ``getWrittenOctave``, ``getWrittenPitchClass``, ``getWrittenPitchStep`` and
+          ``getDiatonicWrittenPitchClass``. The unprefixed getters ``getPitch``, ``getOctave``,
+          ``getPitchClass``, ``getPitchStep`` and ``getAlterSymbol`` are shortcuts for it; the
+          enharmonic family (``getEnharmonicPitch``, ``getEnharmonicPitches``,
+          ``getEnharmonicNote``, ``getEnharmonicNotes``, ``toEnharmonicPitch``),
+          ``transpose``, the setters and ``toXML`` work on it.
+        - Sounding, what the note sounds, in its simplest spelling: ``getSoundingPitch``,
+          ``getSoundingOctave``, ``getSoundingPitchClass``, ``getSoundingPitchStep`` and
+          ``getDiatonicSoundingPitchClass``. The written pitch is moved by the transposing
+          interval -- its letter by ``transposeDiatonic``, its position by
+          ``transposeChromatic`` -- and respelled with the smallest accidental any spelling of
+          that position has; between a sharp and a flat equally close, the moved spelling's side
+          is kept. The octave is that spelling's own (see ``getSoundingPitch``).
+        - Acoustic, measures of what sounds: ``getMidiNumber``, ``getQuarterToneSteps``,
+          ``getFrequency`` and ``getHarmonicSpectrum``.
+
+        Without a transposing interval the written and the sounding pitch are the same pitch,
+        spelled alike unless the written spelling has a simpler one: an untransposed ``Cb4``
+        sounds ``B3``. ``Chord``, ``Interval`` and a score's chord and melody analyses relate a
+        note of a transposing instrument at the pitch it sounds, spelled with its written letter
+        moved by the diatonic transposing interval, and ``==`` compares notes the same way.
+
+        Examples
+        --------
+        >>> clarinet = ml.Note("Db4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> clarinet.getPitch(), clarinet.getSoundingPitch(), clarinet.getMidiNumber()
+        ('Db4', 'B3', 59)
+        >>> clarinet == ml.Note("Cb4")
+        True
+    )pbdoc");
 
     cls.def(py::init<const std::string&, const RhythmFigure, bool, bool, const int, const int,
                      const int>(),
@@ -55,8 +93,8 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If the pitch string is invalid, or if the note is transposed and its sounding pitch
-            lies above ``"B11"`` (MIDI note 155), the highest sounding pitch that can be spelled
-            within octaves -1 to 11.
+            cannot be spelled: one above ``"B11"`` (MIDI note 155) that the diatonic interval
+            does not spell (see ``setTransposingInterval``).
 
         Examples
         --------
@@ -99,8 +137,9 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If the MIDI number cannot be spelled with ``accType`` within octaves -1 to 11, or if
-            the note is transposed and its sounding pitch lies above ``"B11"`` (MIDI note 155),
-            the highest sounding pitch that can be spelled within octaves -1 to 11.
+            the note is transposed and its sounding pitch cannot be spelled: one above ``"B11"``
+            (MIDI note 155) that the diatonic interval does not spell (see
+            ``setTransposingInterval``).
     )pbdoc");
 
     // ====== Methods SETTERS for class Note ===== //
@@ -112,10 +151,10 @@ void NoteClass(const py::module& m) {
         is kept, and the MIDI number and every other getter follow the new pitch.
 
         On a transposing instrument the change is checked the way ``setPitch`` checks a whole
-        pitch: if the written pitch it gives would sound above ``"B11"`` (MIDI note 155), the
-        highest sounding pitch that can be spelled within octaves -1 to 11, it raises and the
-        note is left unchanged. A sounding pitch below ``C1b-1`` is accepted, as ``setPitch``
-        accepts it.
+        pitch: if the written pitch it gives would sound where no spelling reaches -- above
+        ``"B11"`` (MIDI note 155), unless the diatonic interval spells it (see
+        ``setTransposingInterval``) -- it raises and the note is left unchanged. A sounding pitch
+        below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
 
         Parameters
         ----------
@@ -127,7 +166,7 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If the pitch class is invalid, or the pitch it gives lies below MIDI note 0 (e.g.
-            ``"Cb"`` on a ``C-1``), or if its sounding pitch lies above ``"B11"`` -- the error
+            ``"Cb"`` on a ``C-1``), or if its sounding pitch cannot be spelled -- the error
             ``setPitch`` raises for that pitch. The note is then left unchanged.
 
         Examples
@@ -154,10 +193,10 @@ void NoteClass(const py::module& m) {
         would.
 
         On a transposing instrument the change is checked the way ``setPitch`` checks a whole
-        pitch: if the written pitch it gives would sound above ``"B11"`` (MIDI note 155), the
-        highest sounding pitch that can be spelled within octaves -1 to 11, it raises and the
-        note is left unchanged. A sounding pitch below ``C1b-1`` is accepted, as ``setPitch``
-        accepts it.
+        pitch: if the written pitch it gives would sound where no spelling reaches -- above
+        ``"B11"`` (MIDI note 155), unless the diatonic interval spells it (see
+        ``setTransposingInterval``) -- it raises and the note is left unchanged. A sounding pitch
+        below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
 
         Parameters
         ----------
@@ -170,7 +209,7 @@ void NoteClass(const py::module& m) {
             If ``octave`` is not an int -- e.g. None, which ``getOctave()`` returns for a rest.
         RuntimeError
             If the note is not a rest and ``octave`` lies outside -1 to 11, or if the sounding
-            pitch the change gives lies above ``"B11"`` -- the error ``setPitch`` raises for that
+            pitch the change gives cannot be spelled -- the error ``setPitch`` raises for that
             pitch. The note is then left unchanged.
 
         Examples
@@ -191,10 +230,10 @@ void NoteClass(const py::module& m) {
         left unchanged.
 
         On a transposing instrument the change is checked the way ``setPitch`` checks a whole
-        pitch: if the written pitch it gives would sound above ``"B11"`` (MIDI note 155), the
-        highest sounding pitch that can be spelled within octaves -1 to 11, it raises and the
-        note is left unchanged. A sounding pitch below ``C1b-1`` is accepted, as ``setPitch``
-        accepts it.
+        pitch: if the written pitch it gives would sound where no spelling reaches -- above
+        ``"B11"`` (MIDI note 155), unless the diatonic interval spells it (see
+        ``setTransposingInterval``) -- it raises and the note is left unchanged. A sounding pitch
+        below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
 
         Parameters
         ----------
@@ -204,8 +243,8 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If step is not one of "A" to "G", or if the sounding pitch the change gives lies
-            above ``"B11"`` -- the error ``setPitch`` raises for that pitch. The note is then left
+            If step is not one of "A" to "G", or if the sounding pitch the change gives cannot
+            be spelled -- the error ``setPitch`` raises for that pitch. The note is then left
             unchanged.
     )pbdoc");
     cls.def("setAlter", &Note::setAlter, py::arg("alter"),
@@ -222,10 +261,10 @@ void NoteClass(const py::module& m) {
         the way in and is accepted (``setAlter(0.9999999999)`` sets 1.0).
 
         On a transposing instrument the change is checked the way ``setPitch`` checks a whole
-        pitch: if the written pitch it gives would sound above ``"B11"`` (MIDI note 155), the
-        highest sounding pitch that can be spelled within octaves -1 to 11, it raises and the
-        note is left unchanged. A sounding pitch below ``C1b-1`` is accepted, as ``setPitch``
-        accepts it.
+        pitch: if the written pitch it gives would sound where no spelling reaches -- above
+        ``"B11"`` (MIDI note 155), unless the diatonic interval spells it (see
+        ``setTransposingInterval``) -- it raises and the note is left unchanged. A sounding pitch
+        below ``C1b-1`` is accepted, as ``setPitch`` accepts it.
 
         Parameters
         ----------
@@ -237,7 +276,7 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If alter is NaN or infinite, is not exactly a multiple of 0.5, or is outside
-            [-2, 2], or if the sounding pitch the change gives lies above ``"B11"`` -- the error
+            [-2, 2], or if the sounding pitch the change gives cannot be spelled -- the error
             ``setPitch`` raises for that pitch. The note is then left unchanged.
     )pbdoc");
     cls.def("setDuration", py::overload_cast<const Duration&>(&Note::setDuration),
@@ -311,8 +350,8 @@ void NoteClass(const py::module& m) {
         Set the written pitch of the note.
 
         Replaces the step, accidental and octave. A transposing interval is kept, so the
-        sounding pitch, ``getPitch()``, is this pitch moved by it. Setting a rest also clears the
-        transposing interval and the in-chord and grace-note flags.
+        sounding pitch, ``getSoundingPitch()``, is this pitch moved by it. Setting a rest also
+        clears the transposing interval and the in-chord and grace-note flags.
 
         Parameters
         ----------
@@ -325,22 +364,28 @@ void NoteClass(const py::module& m) {
         ------
         RuntimeError
             If the pitch string is invalid, or if its sounding pitch with the note's transposing
-            interval lies above ``"B11"`` (MIDI note 155), the highest sounding pitch that can be
-            spelled within octaves -1 to 11. The note is then left unchanged. A sounding pitch
-            below ``C1b-1`` is accepted, as ``setTransposingInterval`` accepts it.
+            interval cannot be spelled: one above ``"B11"`` (MIDI note 155) that the diatonic
+            interval does not spell (see ``setTransposingInterval``). The note is then left
+            unchanged. A sounding pitch below ``C1b-1`` is accepted, as
+            ``setTransposingInterval`` accepts it.
     )pbdoc");
     cls.def("setIsInChord", &Note::setIsInChord, py::arg("inChord"));
     cls.def("setTransposingInterval", &Note::setTransposingInterval, py::arg("diatonicInterval"),
             py::arg("chromaticInterval"),
             R"pbdoc(
         Set the transposing interval: the note is written at its written pitch and sounds that
-        pitch moved by the interval.
+        pitch moved by the interval -- its letter by ``diatonicInterval`` letters, its position
+        by ``chromaticInterval`` semitones (see ``getSoundingPitch``).
 
-        Every sounding getter derives the sounding pitch from the written pitch and
-        ``chromaticInterval`` when asked, so a second call replaces the interval rather than
-        applying it again. The sounding pitch is also derived here, before the interval is
-        stored, so one that cannot be spelled raises now, with the note unchanged. On a rest this
-        does nothing: a rest has no pitch to transpose.
+        Every sounding getter derives the sounding pitch from the written pitch and the interval
+        when asked, so a second call replaces the interval rather than applying it again. The
+        sounding pitch is also derived here, before the interval is stored, so one that cannot be
+        spelled raises now, with the note unchanged. Every sounding pitch up to ``"B11"`` (MIDI
+        note 155) can be spelled; above it only ``B1x11``, ``B#11``, ``B3x11`` and ``Bx11`` lie
+        within octaves -1 to 11, and they are spelled only when the diatonic interval moves the
+        written letter to the B of octave 11: a written ``A#11`` moved up a major second sounds
+        ``B#11``, while with no diatonic interval it could not be spelled. On a rest this does
+        nothing: a rest has no pitch to transpose.
 
         Parameters
         ----------
@@ -353,17 +398,17 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the sounding pitch lies above ``"B11"`` (MIDI note 155), the highest sounding pitch
-            that can be spelled within octaves -1 to 11; the note is then left unchanged. A
-            sounding pitch below the lowest representable pitch, ``C1b-1``, is not raised here:
-            the interval is stored, the note stays constructible and each sounding getter raises
-            instead (see ``getSoundingPitch``).
+            If the sounding pitch cannot be spelled: one above ``"B11"`` that the diatonic
+            interval does not spell. The note is then left unchanged. A sounding pitch below the
+            lowest representable pitch, ``C1b-1``, is not raised here: the interval is stored,
+            the note stays constructible and each sounding getter raises instead (see
+            ``getSoundingPitch``).
 
         Examples
         --------
         >>> note = ml.Note("C4")
         >>> note.setTransposingInterval(-1, -2)
-        >>> note.getWrittenPitch(), note.getPitch(), note.getMidiNumber()
+        >>> note.getPitch(), note.getSoundingPitch(), note.getMidiNumber()
         ('C4', 'Bb3', 58)
     )pbdoc");
 
@@ -413,15 +458,16 @@ void NoteClass(const py::module& m) {
     cls.def("info", &Note::info,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
             R"pbdoc(
-        Print the note's properties, one per line: whether it is sounding, its pitch, type,
-        quarter duration, voice, staff, MIDI number, stem, beams, tuplet, grace-note and in-chord
-        flags, and transposing interval.
+        Print the note's properties, one per line: whether it is sounding, its pitch
+        (``getPitch()``, the written pitch), type, quarter duration, voice, staff, MIDI number
+        (of what it sounds), stem, beams, tuplet, grace-note and in-chord flags, and transposing
+        interval.
 
         Raises
         ------
         RuntimeError
             If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1``, once it reaches the pitch line; see
+            representable pitch, ``C1b-1``, once it reaches the MIDI number; see
             ``getSoundingPitch``.
     )pbdoc");
 
@@ -450,8 +496,10 @@ void NoteClass(const py::module& m) {
     )pbdoc");
     cls.def("getSoundingPitchStep", &Note::getSoundingPitchStep,
             R"pbdoc(
-        Return the diatonic step of the sounding pitch: the written pitch moved by the
-        transposing interval.
+        Return the diatonic step of the sounding pitch (see ``getSoundingPitch``).
+
+        Spelled as ``getSoundingPitch`` spells it, in its simplest spelling, with the same silent
+        fallback for an interval that gives no letter.
 
         Returns
         -------
@@ -473,31 +521,32 @@ void NoteClass(const py::module& m) {
     )pbdoc");
     cls.def("getPitchStep", &Note::getPitchStep,
             R"pbdoc(
-        Return the diatonic step of the pitch -- the sounding pitch (see
-        ``getSoundingPitchStep``).
+        Return the diatonic step of the written pitch: a shortcut for ``getWrittenPitchStep``.
+
+        The step as notated in the part, whatever the instrument sounds; the step it sounds is
+        ``getSoundingPitchStep``. Never raises.
 
         Returns
         -------
         str
             ``"A"`` to ``"G"``, or ``"rest"`` for a rest.
 
-        Raises
-        ------
-        RuntimeError
-            If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
-
         Examples
         --------
         >>> ml.Note("E1b4").getPitchStep()
         'E'
+        >>> ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2).getPitchStep()
+        'C'
         >>> ml.Note("rest").getPitchStep()
         'rest'
     )pbdoc");
     cls.def("getSoundingPitchClass", &Note::getSoundingPitchClass,
             R"pbdoc(
-        Return the pitch class of the sounding pitch: its step and accidental, without the
-        octave.
+        Return the pitch class of the sounding pitch (see ``getSoundingPitch``): its step and
+        accidental, without the octave.
+
+        Spelled as ``getSoundingPitch`` spells it, in its simplest spelling, with the same silent
+        fallback for an interval that gives no letter: an untransposed ``Cb4`` gives ``"B"``.
 
         Returns
         -------
@@ -519,12 +568,25 @@ void NoteClass(const py::module& m) {
     )pbdoc");
     cls.def("getSoundingPitch", &Note::getSoundingPitch,
             R"pbdoc(
-        Return the sounding pitch: the written pitch moved by the transposing interval.
+        Return the sounding pitch: what the note sounds, in its simplest spelling.
 
-        Derived arithmetically from the written pitch and the chromatic interval, so a quarter
-        tone keeps sounding as one: a B-flat clarinet's written ``C4`` sounds ``"Bb3"`` and its
-        written ``C1x4`` sounds ``"B1b3"``. Without a transposing interval this is the written
-        pitch.
+        The written pitch moved by the transposing interval -- its letter by
+        ``transposeDiatonic`` letters, carrying octaves across C, its exact position by
+        ``transposeChromatic`` semitones -- and then respelled with the smallest accidental any
+        spelling of that position has within octaves -1 to 11. Between a sharp and a flat equally
+        close, the side of the moved spelling is kept. The octave is that spelling's own. A
+        B-flat clarinet's written ``Db4`` sounds ``"B3"`` and its written ``Eb4`` ``"Db4"``; a
+        quarter tone keeps its fraction (its written ``C1x4`` sounds ``"B1b3"``). Without a
+        transposing interval this is the written pitch in its simplest spelling: an untransposed
+        ``Cb4`` sounds ``"B3"`` and ``C3x4`` sounds ``"D1b4"``, while ``Db4`` stays ``"Db4"``.
+
+        Fallback, silent (no warning is given): when the interval gives no letter --
+        ``transposeDiatonic`` is 0 while ``transposeChromatic`` is not, as for a MusicXML
+        ``<transpose>`` without ``<diatonic>`` -- or the letter it gives would need an accidental
+        beyond a double sharp or flat, or an octave outside -1 to 11, the position is spelled from
+        the semitones alone and then simplified as above: a black key takes a sharp when the
+        instrument transposes up and a flat when it transposes down. A written ``D4`` sounds
+        ``"D#4"`` a semitone up and ``"Db4"`` a semitone down without a diatonic interval.
 
         Returns
         -------
@@ -538,19 +600,53 @@ void NoteClass(const py::module& m) {
             If the note's transposing interval carries its sounding pitch below the lowest
             representable pitch, ``C1b-1`` (-0.5, MIDI 0) -- e.g. a B-flat clarinet's written
             ``"C#-1"``. Every sounding getter raises the same error for such a note; its written
-            pitch is still available from ``getWrittenPitch()``. The message names the
-            written pitch and the interval.
+            pitch is still available from ``getWrittenPitch()`` and ``getPitch()``. The message
+            names the written pitch and the interval.
 
         Examples
         --------
         >>> ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2).getSoundingPitch()
         'Bb3'
+        >>> ml.Note("Db4", transposeDiatonic=-1, transposeChromatic=-2).getSoundingPitch()
+        'B3'
         >>> ml.Note("C1x4", transposeDiatonic=-1, transposeChromatic=-2).getSoundingPitch()
         'B1b3'
+        >>> ml.Note("Cb4").getSoundingPitch()
+        'B3'
+        >>> ml.Note("D4", transposeDiatonic=0, transposeChromatic=-1).getSoundingPitch()
+        'Db4'
     )pbdoc");
 
-    cls.def("getWrittenPitchClass", &Note::getWrittenPitchClass);
-    cls.def("getWrittenPitch", &Note::getWrittenPitch);
+    cls.def("getWrittenPitchClass", &Note::getWrittenPitchClass,
+            R"pbdoc(
+        Return the pitch class of the written pitch (as notated): its step and accidental,
+        without the octave.
+
+        Returns
+        -------
+        str
+            Pitch class (e.g. ``"C1x"``, ``"Bb"``), or ``"rest"`` for a rest.
+
+        Examples
+        --------
+        >>> ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2).getWrittenPitchClass()
+        'C'
+    )pbdoc");
+    cls.def("getWrittenPitch", &Note::getWrittenPitch,
+            R"pbdoc(
+        Return the written pitch (as notated): the pitch the note was constructed or set with,
+        whatever the instrument sounds.
+
+        Returns
+        -------
+        str
+            Pitch string (e.g. ``"C1x4"``), or ``"rest"`` for a rest.
+
+        Examples
+        --------
+        >>> ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2).getWrittenPitch()
+        'C4'
+    )pbdoc");
 
     cls.def("getDiatonicWrittenPitchClass", &Note::getDiatonicWrittenPitchClass,
             R"pbdoc(
@@ -570,7 +666,8 @@ void NoteClass(const py::module& m) {
     )pbdoc");
     cls.def("getDiatonicSoundingPitchClass", &Note::getDiatonicSoundingPitchClass,
             R"pbdoc(
-        Return the sounding pitch class without its accidental: the diatonic step.
+        Return the sounding pitch class without its accidental: the diatonic step of
+        ``getSoundingPitch``, spelled as it spells it, silent fallback included.
 
         Returns
         -------
@@ -592,9 +689,10 @@ void NoteClass(const py::module& m) {
 
     cls.def("getSoundingOctave", &Note::getSoundingOctave,
             R"pbdoc(
-        Return the sounding octave (after transposition).
+        Return the octave of the sounding pitch (see ``getSoundingPitch``).
 
-        Arithmetic, from the sounding MIDI number.
+        The octave of the sounding spelling, silent fallback included: an untransposed ``Cb4``
+        sounds ``B3``, octave 3, and a piccolo's written ``C4`` sounds ``C5``, octave 5.
 
         Returns
         -------
@@ -608,6 +706,13 @@ void NoteClass(const py::module& m) {
             representable pitch, ``C1b-1`` (-0.5, MIDI 0) -- e.g. a B-flat clarinet's written
             ``"C#-1"``. Every sounding getter raises the same error for such a note; its written
             pitch is still available from ``getWrittenPitch()``.
+
+        Examples
+        --------
+        >>> ml.Note("Cb4").getSoundingOctave()
+        3
+        >>> ml.Note("C4", transposeDiatonic=7, transposeChromatic=12).getSoundingOctave()
+        5
     )pbdoc");
     cls.def("getWrittenOctave", &Note::getWrittenOctave,
             R"pbdoc(
@@ -621,43 +726,39 @@ void NoteClass(const py::module& m) {
 
     cls.def("getPitchClass", &Note::getPitchClass,
             R"pbdoc(
-        Return the pitch class -- of the sounding pitch (see ``getSoundingPitchClass``): its step
-        and accidental, without the octave.
+        Return the pitch class of the written pitch: a shortcut for ``getWrittenPitchClass``.
+
+        The step and accidental as notated in the part, without the octave, whatever the
+        instrument sounds; the pitch class it sounds is ``getSoundingPitchClass``. Never raises.
 
         Returns
         -------
         str
             Pitch class (e.g. ``"C1x"``, ``"Bb"``), or ``"rest"`` for a rest.
 
-        Raises
-        ------
-        RuntimeError
-            If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
-
         Examples
         --------
         >>> ml.Note("C1x4").getPitchClass()
         'C1x'
         >>> ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2).getPitchClass()
-        'Bb'
+        'C'
     )pbdoc");
     cls.def("getOctave", &Note::getOctave,
             R"pbdoc(
-        Return the octave (sounding).
+        Return the octave of the written pitch: a shortcut for ``getWrittenOctave``.
+
+        The octave as notated in the part, whatever the instrument sounds; the octave it sounds
+        is ``getSoundingOctave``. Never raises.
 
         Returns
         -------
         int or None
             Octave number, or ``None`` for a rest.
 
-        Raises
-        ------
-        RuntimeError
-            If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1`` (-0.5, MIDI 0) -- e.g. a B-flat clarinet's written
-            ``"C#-1"``. Every sounding getter raises the same error for such a note; its written
-            pitch is still available from ``getWrittenPitch()``.
+        Examples
+        --------
+        >>> ml.Note("C4", transposeDiatonic=7, transposeChromatic=12).getOctave()
+        4
     )pbdoc");
 
     cls.def("getType", &Note::getType);
@@ -705,25 +806,23 @@ void NoteClass(const py::module& m) {
     )pbdoc");
     cls.def("getPitch", &Note::getPitch,
             R"pbdoc(
-        Return the pitch string -- the sounding pitch (see ``getSoundingPitch``).
+        Return the written pitch: a shortcut for ``getWrittenPitch``.
+
+        The pitch as notated in the part -- the one the note was constructed or set with --
+        whatever the instrument sounds: a B-flat clarinet's written ``D4`` answers ``"D4"``.
+        What it sounds is ``getSoundingPitch``, and ``getMidiNumber`` measures it. Never raises.
 
         Returns
         -------
         str
             Pitch string (e.g. ``"C1x4"``), or ``"rest"`` for a rest.
 
-        Raises
-        ------
-        RuntimeError
-            If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
-
         Examples
         --------
         >>> ml.Note("C1x4").getPitch()
         'C1x4'
         >>> ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2).getPitch()
-        'Bb3'
+        'C4'
     )pbdoc");
     cls.def("getMidiNumber", &Note::getMidiNumber,
             R"pbdoc(
@@ -794,10 +893,11 @@ void NoteClass(const py::module& m) {
 
     cls.def("getAlterSymbol", &Note::getAlterSymbol,
             R"pbdoc(
-        Return the accidental symbol of the sounding pitch.
+        Return the accidental symbol of the written pitch.
 
-        For a transposing instrument this is the sounding pitch's accidental, not the written
-        one: a B-flat clarinet's written ``C4`` sounds ``Bb3``, so this returns ``"b"``.
+        The accidental as notated in the part, whatever the instrument sounds: a B-flat
+        clarinet's written ``C4`` sounds ``Bb3``, but this returns ``""``; the sounding pitch's
+        accidental is part of ``getSoundingPitchClass``. Never raises.
 
         Returns
         -------
@@ -805,18 +905,12 @@ void NoteClass(const py::module& m) {
             One of ``"bb"``, ``"3b"``, ``"b"``, ``"1b"``, ``""`` (natural), ``"1x"``, ``"#"``,
             ``"3x"`` and ``"x"``; ``""`` for a rest.
 
-        Raises
-        ------
-        RuntimeError
-            If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
-
         Examples
         --------
         >>> ml.Note("E1b4").getAlterSymbol()
         '1b'
         >>> ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2).getAlterSymbol()
-        'b'
+        ''
     )pbdoc");
 
     cls.def("isQuarterTone", &Note::isQuarterTone,
@@ -852,9 +946,11 @@ void NoteClass(const py::module& m) {
     cls.def("getEnharmonicPitch", &Note::getEnharmonicPitch,
             py::arg("alternativeEnharmonicPitch") = false,
             R"pbdoc(
-        Return an enharmonic spelling of the sounding pitch, ``getPitch()``.
+        Return an enharmonic spelling of the written pitch, ``getPitch()``.
 
-        A semitone pitch is respelled among the spellings of the same MIDI number. White keys: a
+        The written pitch is respelled whatever the instrument sounds, so a transposed note is
+        respelled exactly as an untransposed note with the same written pitch. A semitone pitch
+        is respelled among the spellings of the same MIDI number. White keys: a
         natural returns its flat-side spelling (``C4`` -> ``Dbb4``) and the sharp-side spelling
         as the alternative (``B#3``); other spellings return the natural and, as the
         alternative, the remaining spelling. Black keys: ``#`` and ``b`` swap
@@ -883,15 +979,11 @@ void NoteClass(const py::module& m) {
         str
             Enharmonic pitch string, or ``"rest"`` for a rest.
 
-        Raises
-        ------
-        RuntimeError
-            If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
-
         Examples
         --------
         >>> ml.Note("C#4").getEnharmonicPitch()
+        'Db4'
+        >>> ml.Note("C#4", transposeDiatonic=-1, transposeChromatic=-2).getEnharmonicPitch()
         'Db4'
         >>> ml.Note("C1x4").getEnharmonicPitch(), ml.Note("C1x4").getEnharmonicPitch(True)
         ('D3b4', 'B3x3')
@@ -901,7 +993,7 @@ void NoteClass(const py::module& m) {
     cls.def("getEnharmonicPitches", &Note::getEnharmonicPitches,
             py::arg("includeCurrentPitch") = false,
             R"pbdoc(
-        Return the default and alternative enharmonic spellings of the sounding pitch.
+        Return the default and alternative enharmonic spellings of the written pitch.
 
         Parameters
         ----------
@@ -914,12 +1006,6 @@ void NoteClass(const py::module& m) {
             ``[getEnharmonicPitch(False), getEnharmonicPitch(True)]``, preceded by
             ``getPitch()`` when ``includeCurrentPitch`` is True. Entries may repeat, e.g.
             ``["G#4", "Ab4", "Ab4"]``.
-
-        Raises
-        ------
-        RuntimeError
-            If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
 
         Examples
         --------
@@ -934,8 +1020,8 @@ void NoteClass(const py::module& m) {
             R"pbdoc(
         Return a new Note spelled with ``getEnharmonicPitch(alternativeEnharmonicPitch)``.
 
-        The new note holds that spelling as its written pitch, with no transposing interval and
-        the default rhythm figure.
+        The new note holds that spelling of the written pitch as its written pitch, with no
+        transposing interval and the default rhythm figure.
 
         Parameters
         ----------
@@ -947,12 +1033,6 @@ void NoteClass(const py::module& m) {
         Note
             Enharmonic note.
 
-        Raises
-        ------
-        RuntimeError
-            If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
-
         Examples
         --------
         >>> ml.Note("E1b4").getEnharmonicNote().getPitch()
@@ -962,8 +1042,8 @@ void NoteClass(const py::module& m) {
             R"pbdoc(
         Return new Notes spelled with the strings ``getEnharmonicPitches`` returns.
 
-        Each new note holds its spelling as its written pitch, with no transposing interval and
-        the default rhythm figure.
+        Each new note holds its spelling of the written pitch as its written pitch, with no
+        transposing interval and the default rhythm figure.
 
         Parameters
         ----------
@@ -975,12 +1055,6 @@ void NoteClass(const py::module& m) {
         list of Note
             Enharmonic notes (entries may repeat, see ``getEnharmonicPitches``).
 
-        Raises
-        ------
-        RuntimeError
-            If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
-
         Examples
         --------
         >>> [note.getPitch() for note in ml.Note("E1b4").getEnharmonicNotes()]
@@ -990,10 +1064,13 @@ void NoteClass(const py::module& m) {
     cls.def("toEnharmonicPitch", &Note::toEnharmonicPitch,
             py::arg("alternativeEnharmonicPitch") = false,
             R"pbdoc(
-        Respell the note in place with ``getEnharmonicPitch(alternativeEnharmonicPitch)``.
+        Respell the written pitch in place with
+        ``getEnharmonicPitch(alternativeEnharmonicPitch)``.
 
-        The respelling is set as the written pitch, through ``setPitch``. When this raises, the
-        note is left unchanged.
+        The respelling is set as the written pitch, through ``setPitch``, and the transposing
+        interval is kept, so the note sounds exactly what it sounded before, only written
+        differently: a B-flat clarinet's written ``C#4`` (sounding ``B3``) becomes a written
+        ``Db4``, still sounding ``B3``. When this raises, the note is left unchanged.
 
         Parameters
         ----------
@@ -1003,17 +1080,10 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1`` (see ``getSoundingPitch``), or if ``setPitch`` raises
-            for the respelling: on a transposing instrument, when the respelling moved by the
-            transposing interval cannot be spelled.
-
-        Warnings
-        --------
-        On a transposing instrument the respelling is of the SOUNDING pitch but is stored as
-        the WRITTEN pitch, so the note then sounds that respelling moved by the transposing
-        interval again: a B-flat clarinet's written ``C#4`` (sounding ``B3``) becomes a written
-        ``Cb4``, sounding ``A3``.
+            If ``setPitch`` raises for the respelling: on a transposing instrument, when the
+            respelling cannot be spelled once moved by the transposing interval (a written
+            ``A#11`` moved up a major second sounds ``B#11``, but its respelling ``Bb11`` would
+            need the letter C of octave 12).
 
         Examples
         --------
@@ -1021,13 +1091,20 @@ void NoteClass(const py::module& m) {
         >>> note.toEnharmonicPitch()
         >>> note.getPitch()
         'D3b4'
+        >>> clarinet = ml.Note("C#4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> clarinet.toEnharmonicPitch()
+        >>> clarinet.getPitch(), clarinet.getSoundingPitch(), clarinet.getMidiNumber()
+        ('Db4', 'B3', 59)
     )pbdoc");
     cls.def("getScaleDegree", &Note::getScaleDegree, py::arg("key"),
             R"pbdoc(
-        Return the scale degree, 1 to 7, of the sounding pitch's diatonic step in a key.
+        Return the scale degree, 1 to 7, of the written pitch's diatonic step in a key.
 
         Only the step counts, not the accidental: in C major ``C#4`` and ``C1x4`` are degree 1,
-        like ``C4``.
+        like ``C4``. The step is the written one, ``getPitchStep()``: the keys read from a part's
+        measures are that part's written key signatures, so a note of a transposing instrument is
+        measured in the key its part is written in -- a B-flat clarinet's written ``D4`` is
+        degree 2 in C major, although it sounds ``C4``.
 
         Parameters
         ----------
@@ -1039,18 +1116,14 @@ void NoteClass(const py::module& m) {
         int
             The scale degree, or 0 for a rest.
 
-        Raises
-        ------
-        RuntimeError
-            If the note's transposing interval carries its sounding pitch below the lowest
-            representable pitch, ``C1b-1``; see ``getSoundingPitch``.
-
         Examples
         --------
         >>> ml.Note("E4").getScaleDegree(ml.Key("C"))
         3
         >>> ml.Note("C1x4").getScaleDegree(ml.Key("C"))
         1
+        >>> ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2).getScaleDegree(ml.Key("C"))
+        2
     )pbdoc");
     cls.def("getFrequency", &Note::getFrequency, py::arg("freqA4") = 440.0f,
             R"pbdoc(
@@ -1128,10 +1201,14 @@ void NoteClass(const py::module& m) {
     cls.def("transpose", &Note::transpose, py::arg("semitones"),
             py::arg("accType") = MUSIC_XML::ACCIDENT::NONE,
             R"pbdoc(
-        Transpose the note by a number of semitones.
+        Transpose the written pitch by a number of semitones.
 
         Computed on exact pitch positions, so a quarter tone survives: ``C4`` up 0.5 is
-        ``C1x4``, and ``C1x4`` up 2 is ``D1x4``. The note is left unchanged when this raises.
+        ``C1x4``, and ``C1x4`` up 2 is ``D1x4``. The written pitch moves once and the
+        transposing interval is kept, so what the note sounds moves by the same number of
+        semitones: a B-flat clarinet's written ``C4`` (sounding ``Bb3``) transposed by 2 is a
+        written ``D4``, sounding ``C4``, and transposing by 0 changes nothing. The note is left
+        unchanged when this raises.
 
         Parameters
         ----------
@@ -1145,21 +1222,11 @@ void NoteClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If ``semitones`` is not finite or not a multiple of 0.5; if the result would lie
-            outside the representable range, ``"C1b-1"`` to ``"Bx11"`` -- the note never silently
-            becomes a rest; if the result cannot be spelled with ``accType`` within octaves -1
-            to 11; if the note's transposing interval carries its sounding pitch below
-            ``C1b-1``, so that it has none to transpose (see ``getSoundingPitch``); or, on a
-            transposing instrument, if the result, stored as the written pitch, sounds where it
-            cannot be spelled (see ``setPitch``). The note is left unchanged when this raises.
-
-        Warnings
-        --------
-        On a transposing instrument this transposes the SOUNDING pitch but stores the result as
-        the WRITTEN pitch, so the transposing interval is applied again when the note is read: a
-        B-flat clarinet's written ``C4`` (sounding ``Bb3``) transposed by 2 still sounds
-        ``Bb3``. For such a note, transpose the written pitch instead:
-        ``note.setPitch(ml.Helper.transposePitch(note.getWrittenPitch(), 2, ""))``.
+            If ``semitones`` is not finite or not a multiple of 0.5; if the transposed written
+            pitch would lie outside the representable range, ``"C1b-1"`` to ``"Bx11"`` -- the note
+            never silently becomes a rest; if it cannot be spelled with ``accType`` within
+            octaves -1 to 11; or, on a transposing instrument, if it would sound where it cannot
+            be spelled (see ``setPitch``). The note is left unchanged when this raises.
 
         Examples
         --------
@@ -1167,6 +1234,10 @@ void NoteClass(const py::module& m) {
         >>> note.transpose(0.5)
         >>> note.getPitch()
         'C1x4'
+        >>> clarinet = ml.Note("C4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> clarinet.transpose(2)
+        >>> clarinet.getPitch(), clarinet.getSoundingPitch()
+        ('D4', 'C4')
     )pbdoc");
 
     cls.def("toXML", &Note::toXML, py::arg("instrumentId") = 1, py::arg("identSize") = 2,
@@ -1204,8 +1275,8 @@ void NoteClass(const py::module& m) {
     cls.def(
         "__repr__", [](const Note& note) { return "<Note " + note.getPitch() + ">"; },
         R"pbdoc(
-        ``<Note P>``, where P is ``getPitch()``, the sounding pitch. Raises ``RuntimeError`` for a
-        note whose sounding pitch lies below ``C1b-1``; see ``getSoundingPitch``.
+        ``<Note P>``, where P is ``getPitch()``, the written pitch -- the pitch the note was
+        constructed or set with, whatever the instrument sounds. Never raises.
     )pbdoc");
 
     // The hash of exactly what == compares, the concert spelling, so that equal notes hash equally
