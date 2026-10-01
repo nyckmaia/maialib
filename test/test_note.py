@@ -887,14 +887,26 @@ class NotePitchViews(unittest.TestCase):
             self.assertEqual(rest.getMidiNumber(), -1)
 
     # Decision D3: an untransposed note sounds its simplest spelling, with that spelling's octave.
+    # Mirrors NotePitchViews.anUntransposedNoteSoundsItsSimplestSpelling: every example the design
+    # gives, then B1x3, B3x3 and Bx11, whose octave is the simplest spelling's own.
     def testAnUntransposedNoteSoundsItsSimplestSpelling(self):
         for written, sounding, octave in (
-            ("Cb4", "B3", 3),
-            ("B#3", "C4", 4),
-            ("Ebb4", "D4", 4),
             ("Db4", "Db4", 4),
+            ("C#4", "C#4", 4),
+            ("Cb4", "B3", 3),
+            ("E#4", "F4", 4),
+            ("B#3", "C4", 4),
+            ("Fb4", "E4", 4),
+            ("Ebb4", "D4", 4),
+            ("Fx4", "G4", 4),
+            ("Bbb4", "A4", 4),
+            ("C1x4", "C1x4", 4),
             ("C3x4", "D1b4", 4),
+            ("E1x4", "E1x4", 4),
+            ("B1b3", "B1b3", 3),
             ("B1x3", "B1x3", 3),
+            ("B3x3", "C1x4", 4),
+            ("Bx11", "Bx11", 11),
         ):
             with self.subTest(written=written):
                 note = ml.Note(written)
