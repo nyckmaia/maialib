@@ -86,9 +86,11 @@ void NoteClass(const py::module& m) {
         inChord : bool, default False
             Whether the note belongs to a chord.
         transposeDiatonic : int, default 0
-            Diatonic transposition interval (transposing instruments).
+            Diatonic steps from the written to the sounding pitch, e.g. -1 for a B-flat
+            clarinet. With 0 and a non-zero ``transposeChromatic``, the sounding pitch is spelled
+            by the fallback described on ``getSoundingPitch``.
         transposeChromatic : int, default 0
-            Chromatic transposition interval (transposing instruments).
+            Semitones from the written to the sounding pitch, e.g. -2 for a B-flat clarinet.
         divisionsPerQuarterNote : int, default 256
             Divisions per quarter note.
 
@@ -130,9 +132,11 @@ void NoteClass(const py::module& m) {
         inChord : bool, default False
             Whether the note belongs to a chord.
         transposeDiatonic : int, default 0
-            Diatonic transposition interval.
+            Diatonic steps from the written to the sounding pitch, e.g. -1 for a B-flat
+            clarinet. With 0 and a non-zero ``transposeChromatic``, the sounding pitch is spelled
+            by the fallback described on ``getSoundingPitch``.
         transposeChromatic : int, default 0
-            Chromatic transposition interval.
+            Semitones from the written to the sounding pitch, e.g. -2 for a B-flat clarinet.
         divisionsPerQuarterNote : int, default 256
             Divisions per quarter note.
 

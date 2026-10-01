@@ -1338,8 +1338,12 @@ class Chord {
 
     /**
      * @brief Prints the pitches of all notes in the open stack to the log.
-     * @details Each note is shown at concert pitch, as print() shows it. Useful for debugging and
-     *          inspection of the stacked chord.
+     * @details The stack is the open stack of the last analysis (see getOpenStackNotes()) or, for
+     *          a chord never analysed, the notes as they were added. Changes made since are not
+     *          reflected until an analysis method runs again: addNote() and insertNote() append
+     *          their note to it, and a note removed with removeNote() or removeTopNote() stays in
+     *          it. Each note is shown at concert pitch, as print() shows it. Useful for debugging
+     *          and inspection of the stacked chord.
      * @throws std::runtime_error If a note of the stack sounds below the lowest representable
      *         pitch, C1b-1 (see Note::getMidiNumber()).
      */

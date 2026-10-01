@@ -131,8 +131,11 @@ class Note {
      * @param rhythmFigure Rhythm figure (default: QUARTER).
      * @param isNoteOn True if sounding note, false for rest.
      * @param inChord True if part of a chord.
-     * @param transposeDiatonic Diatonic transposition interval.
-     * @param transposeChromatic Chromatic transposition interval.
+     * @param transposeDiatonic Diatonic interval: letters from the written to the sounding pitch
+     *        (-1 for a B-flat clarinet). With 0 and a non-zero transposeChromatic, the sounding
+     *        pitch is spelled by the fallback described on getSoundingPitch().
+     * @param transposeChromatic Chromatic interval: semitones from the written to the sounding
+     *        pitch (-2 for a B-flat clarinet).
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
      * @throws std::runtime_error If the pitch string is invalid (see Helper::splitPitch()), or if
      *         the note is transposed and its sounding pitch cannot be spelled: one above B11
@@ -150,8 +153,11 @@ class Note {
      * @param rhythmFigure Rhythm figure (default: QUARTER).
      * @param isNoteOn True if sounding note, false for rest.
      * @param inChord True if part of a chord.
-     * @param transposeDiatonic Diatonic transposition interval.
-     * @param transposeChromatic Chromatic transposition interval.
+     * @param transposeDiatonic Diatonic interval: letters from the written to the sounding pitch
+     *        (-1 for a B-flat clarinet). With 0 and a non-zero transposeChromatic, the sounding
+     *        pitch is spelled by the fallback described on getSoundingPitch().
+     * @param transposeChromatic Chromatic interval: semitones from the written to the sounding
+     *        pitch (-2 for a B-flat clarinet).
      * @param divisionsPerQuarterNote Divisions per quarter note (default: 256).
      * @throws std::runtime_error If the MIDI number cannot be spelled with accType within
      *         octaves -1..11, or if the note is transposed and its sounding pitch cannot be

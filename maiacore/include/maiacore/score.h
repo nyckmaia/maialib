@@ -689,10 +689,12 @@ class Score {
      *              non-aligned notes (polyphonic/contrapuntal texture analysis)
      *            - **false**: Attack-point synchronization—only chords formed by simultaneous
      *              note onsets (homophonic texture, block chord analysis)
-     *          - `includeDuplicates` (boolean): Octave doubling handling
-     *            - **true**: Preserve pitch-class duplications (["C4", "C4", "E4", "G4"])
-     *            - **false**: Remove duplicate pitch classes (["C4", "E4", "G4"]); notes of
-     *              transposing parts are compared at concert pitch (Chord::removeDuplicateNotes())
+     *          - `includeDuplicates` (boolean): Duplicate pitch handling
+     *            - **true**: Keep every note, unisons included (["C4", "C4", "E4", "G4"])
+     *            - **false**: Keep one note of each pitch, spelling and octave included
+     *              (["C4", "E4", "G4"]): an octave doubling such as C4 and C5 keeps both notes, as
+     *              do C#4 and Db4, and notes of transposing parts are compared at concert pitch
+     *              (Chord::removeDuplicateNotes())
      *          - `includeUnpitched` (boolean): Include percussion/unpitched elements
      *
      *          **Example Configuration**:

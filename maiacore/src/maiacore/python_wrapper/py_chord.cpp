@@ -862,11 +862,13 @@ void ChordClass(const py::module& m) {
     cls.def("printStack", &Chord::printStack,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
             R"pbdoc(
-        Print the chord's open stack to stdout, one ``openStack[i] = P`` line per note.
+        Print the chord's stack to stdout, one ``openStack[i] = P`` line per note.
 
-        Once the chord is stacked in thirds (by any analysis method), these are the notes of
-        ``getOpenStackNotes``; before, the notes as they were added. Each note is shown at
-        concert pitch, as ``print`` shows it.
+        The stack is the open stack of the last analysis (see ``getOpenStackNotes``) or, for a
+        chord never analysed, the notes as they were added. Changes made since are not reflected
+        until an analysis method runs again: ``addNote`` and ``insertNote`` append their note to
+        it, and a note removed with ``removeNote`` or ``removeTopNote`` stays in it. Each note is
+        shown at concert pitch, as ``print`` shows it.
 
         Raises
         ------
@@ -912,9 +914,8 @@ void ChordClass(const py::module& m) {
         the third, fifth and seventh above it within the octave, and the ninth, eleventh and
         thirteenth an octave higher. The notes are spelled as the stacking spells them, which
         can respell a chord note: ``["C4", "D#4", "G4"]`` stacks as ``C4, Eb4, G4`` and is named
-        ``"Cm"``. A note
-        of a transposing instrument is analysed at concert pitch (see the class notes), so every
-        note of the stack is an untransposed note at that pitch.
+        ``"Cm"``. A note of a transposing instrument is analysed at concert pitch (see the class
+        notes), so every note of the stack is an untransposed note at that pitch.
 
         Parameters
         ----------
