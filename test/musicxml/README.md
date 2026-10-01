@@ -17,15 +17,18 @@ One line per corpus file (a repository-relative path), with these fields:
 
 | Field | Values |
 |---|---|
-| `input` | `valid`, `invalid` or `unreadable`: the file itself against the 4.0 schema (informational) |
-| `load` | `ok`, the type of the exception `maialib.Score(path)` raised (`IndexError`, `RuntimeError`, …), `crash` or `timeout` |
+| `input` | `valid`, `invalid` or `unreadable`: the file itself against the 4.0 schema (informational); the type of the exception the validator raised (maialib still examines the file); `crash` or `timeout` |
+| `load` | `ok`, the type of the exception `maialib.Score(path)` raised (`IndexError`, `RuntimeError`, …), `crash`, `timeout`, or `n/a` after a crash or timeout in `input` |
 | `export` | `ok`, the exception type `Score.toXML()` raised, `crash`, `timeout` or `n/a` |
-| `export_xml`, `export_xsd` | `well-formed`/`ill-formed`, `valid`/`invalid`, or `n/a` |
-| `export_errors` | the error-level semantic checks the export fails (`musicxml_check.py`) |
+| `export_xml` | `well-formed` or `ill-formed`; `crash` or `timeout` while the export is checked (well-formedness, schema and semantic checks are one step); `n/a` without an export |
+| `export_xsd` | `valid` or `invalid`; `n/a` without a well-formed export |
+| `export_errors` | the error-level semantic checks the export fails (`musicxml_check.py`); empty without a well-formed export |
 | `roundtrip` | `stable` when the export, loaded and exported again, is identical apart from its encoding date; `unstable`; an exception type; `crash`; `timeout`; `n/a` |
 | `slow` | `true` for files of 10 MB or more: `make py-tests` skips them, `make corpus` runs them |
+| `note` | why a field lists alternatives |
 
-Exception types are compared, never messages: the text of a C++ exception differs between
+A crash or a timeout is charged to the first stage that had not finished, and every later stage is
+`n/a`. Exception types are compared, never messages: the text of a C++ exception differs between
 compilers. A value may be `{"any_of": [...]}` with a `note` saying why, for an outcome that
 depends on the compiler.
 

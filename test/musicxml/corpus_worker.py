@@ -3,11 +3,13 @@
 Usage: ``python corpus_worker.py PATH [--analyses]``
 
 After each stage the worker prints a line "CORPUS-RECORD <json>" holding the record so far, so
-the parent still learns the finished stages when a later one crashes or hangs. The stages, in
-order: input (the file itself against the MusicXML 4.0 schema), load (maialib.Score), analyses
-(only with --analyses: chords and the intervals between consecutive notes), export
-(Score.toXML), the export's checks (well-formed, schema, semantic errors), and roundtrip (the
-export loaded and exported again, compared without its encoding date).
+the parent still learns the finished stages when a later one crashes or hangs, and charges the
+crash or hang to the first stage still pending. The stages, in order: input (the file itself
+against the MusicXML 4.0 schema), load (maialib.Score), analyses (only with --analyses: chords and
+the intervals between consecutive notes), export (Score.toXML), the export's checks (export_xml:
+well-formed; export_xsd: the schema; export_errors: the semantic errors), and roundtrip (the
+export loaded and exported again, compared without its encoding date). A stage that cannot run
+because of an earlier result is "n/a".
 """
 
 from __future__ import annotations
@@ -51,7 +53,12 @@ def finish(record: Record) -> None:
 
 
 def input_status(path: Path) -> str:
-    report = musicxml_check.check_file(path)
+    """valid, invalid or unreadable; the type of the exception when the validator raises one,
+    so that maialib still examines the file."""
+    try:
+        report = musicxml_check.check_file(path)
+    except Exception as error:  # the exception type is the result
+        return type(error).__name__
     if not report.readable:
         return "unreadable"
     return "valid" if report.xsd_valid else "invalid"
@@ -86,7 +93,9 @@ def run_analyses(ml: Any, score: Any) -> str:
 def roundtrip_status(ml: Any, exported: str) -> str:
     with tempfile.TemporaryDirectory() as folder:
         path = Path(folder) / "roundtrip.musicxml"
-        path.write_text(exported, encoding="utf-8")
+        # Bytes, so the file holds the export as it is on every platform: text mode would turn
+        # each line ending into CRLF on Windows.
+        path.write_bytes(exported.encode("utf-8"))
         try:
             again = ml.Score(str(path)).toXML()
         except Exception as error:  # the exception type is the result
@@ -123,11 +132,15 @@ def examine(path: Path, analyses: bool) -> None:
         finish(record)
         return
     record["export"] = "ok"
+    emit(record)
+
     report = musicxml_check.check_bytes(exported.encode("utf-8"))
     record["export_xml"] = "well-formed" if report.readable else "ill-formed"
     if report.readable:
         record["export_xsd"] = "valid" if report.xsd_valid else "invalid"
         record["export_errors"] = report.errors
+    else:
+        record["export_xsd"] = NOT_APPLICABLE
     emit(record)
 
     record["roundtrip"] = roundtrip_status(ml, exported)
