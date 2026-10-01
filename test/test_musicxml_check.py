@@ -1,6 +1,7 @@
 """The MusicXML validator: the 4.0 schema offline, .mxl archives, and the semantic rules."""
 
 import io
+import struct
 import sys
 import tempfile
 import unittest
@@ -146,6 +147,28 @@ class ArchiveTestCase(unittest.TestCase):
     def test_bytes_that_are_not_a_zip_archive_are_unreadable(self):
         self.assertFalse(musicxml_check.check_mxl_bytes(b"PK\x03\x04 not an archive").readable)
 
+    def test_an_entry_name_flagged_utf8_that_is_not_utf8_is_unreadable(self):
+        # zipfile flags a non-ASCII entry name as UTF-8; the name's bytes then stop being UTF-8.
+        name = "partitura-éèê.txt"
+        buffer = io.BytesIO(archive())
+        with zipfile.ZipFile(buffer, "a") as zipped:
+            zipped.writestr(name, b"")
+        data = buffer.getvalue().replace(name.encode(), b"partitura-" + b"\xff" * 6 + b".txt")
+        self.assertFalse(musicxml_check.check_mxl_bytes(data).readable)
+
+    def test_a_damaged_lzma_entry_is_unreadable(self):
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as zipped:
+            zipped.writestr("META-INF/container.xml", CONTAINER)
+            zipped.writestr("score.musicxml", MINIMAL_SCORE, compress_type=zipfile.ZIP_LZMA)
+        data = bytearray(buffer.getvalue())
+        entry = zipfile.ZipFile(io.BytesIO(bytes(data))).getinfo("score.musicxml")
+        name_length, extra_length = struct.unpack_from("<HH", data, entry.header_offset + 26)
+        # The entry's data opens with zipfile's 4-byte LZMA header and then the 5 property bytes,
+        # whose first (lc, lp and pb together) cannot be 0xFF.
+        data[entry.header_offset + 30 + name_length + extra_length + 4] = 0xFF
+        self.assertFalse(musicxml_check.check_mxl_bytes(bytes(data)).readable)
+
 
 WHOLE_NOTE = (
     b"<note><pitch><step>C</step><octave>4</octave></pitch>"
@@ -266,6 +289,15 @@ class SemanticChecksTestCase(unittest.TestCase):
             note(2, b"half", b'<tie type="start"/>'),
             note(1, b"quarter", b'<tie type="stop"/><tie type="start"/>'),
             note(1, b"quarter", b'<tie type="stop"/>'),
+        )
+        self.assertEqual([], errors(data))
+
+    def test_ties_into_two_repeat_endings_pair(self):
+        # The note before the endings starts one tie into each; each ending stops its own.
+        data = with_notes(
+            note(2, b"half", b'<tie type="start" time-only="1"/><tie type="start" time-only="2"/>'),
+            note(1, b"quarter", b'<tie type="stop" time-only="1"/>'),
+            note(1, b"quarter", b'<tie type="stop" time-only="2"/>'),
         )
         self.assertEqual([], errors(data))
 

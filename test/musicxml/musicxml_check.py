@@ -4,6 +4,11 @@ The schema files in schema-4.0/ are the unmodified MusicXML 4.0 release. Their i
 and xlink.xsd name http://www.musicxml.org/xsd/ URLs that no longer resolve, so a resolver maps
 them to the local copies: validation never uses the network.
 
+semantic_findings() checks the rules the schema cannot express. It resolves instrument references
+only from <instrument> in notes and <midi-instrument> in <score-part>, and checks <staff> only on
+notes: references from midi-device, play, instrument-change, instrument-link and player elements,
+and <staff> on forward, direction and harmony, are not checked.
+
 Command line: ``python musicxml_check.py FILE...`` prints one line per file and exits with 1 when
 a file cannot be read, is invalid against the schema, or breaks an error-level rule.
 """
@@ -11,6 +16,7 @@ a file cannot be read, is invalid against the schema, or breaks an error-level r
 from __future__ import annotations
 
 import io
+import lzma
 import sys
 import zipfile
 import zlib
@@ -118,8 +124,10 @@ def _xsd_errors(schema: etree.XMLSchema, root: etree._Element) -> list[str]:
 def read_mxl(data: bytes) -> tuple[bytes | None, list[Finding]]:
     """Return the MusicXML document inside an .mxl archive and what is wrong with its layout.
 
-    The document is None when the archive names no readable MusicXML rootfile. Raises
-    zipfile.BadZipFile (or zlib.error) when the bytes are not a readable zip archive.
+    The document is None when the archive names no readable MusicXML rootfile. Bytes that are not
+    a readable zip archive raise zipfile.BadZipFile or another of the errors check_mxl_bytes
+    catches: a corrupt deflate or LZMA stream, an entry name flagged UTF-8 that is not, an entry
+    compressed by an unsupported method.
     """
     findings: list[Finding] = []
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
@@ -303,8 +311,10 @@ def _quarters(element, state: _PartState, where: str, findings: list[Finding]) -
 def _count_spanners(note, state: _PartState) -> None:
     key = _pitch_key(note)
     if key is not None:
-        for kind in {tie.get("type") for tie in note.iterfind("tie")}:
-            state.ties.count(kind, "/".join(key))
+        # Every <tie> counts: a note before repeat endings can start two ties (time-only="1" and
+        # time-only="2"), each stopping in its own ending.
+        for tie in note.iterfind("tie"):
+            state.ties.count(tie.get("type"), "/".join(key))
     for slur in note.iterfind("notations/slur"):
         state.slurs.count(slur.get("type"), slur.get("number", "1"))
     for tuplet in note.iterfind("notations/tuplet"):
@@ -521,11 +531,13 @@ def check_mxl_bytes(data: bytes) -> Report:
     except (
         zipfile.BadZipFile,
         zlib.error,
+        lzma.LZMAError,
         EOFError,
         KeyError,
         NotImplementedError,
         OSError,
         RuntimeError,
+        ValueError,
     ) as error:
         return Report(problem=f"not a readable zip archive: {error}")
     if document is None:
