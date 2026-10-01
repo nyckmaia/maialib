@@ -16,13 +16,26 @@ from fixtures import CONTAINER, MINIMAL_SCORE  # noqa: E402
 SUITE = Path(__file__).resolve().parent / "musicxml" / "w3c-test-suite"
 
 
+def suite_files() -> list:
+    """The MusicXML files of the W3C suite: every .musicxml file, the .invalid ones included, and
+    the .mxl archive."""
+    return [
+        path
+        for path in sorted(SUITE.rglob("*"))
+        if path.is_file() and (".musicxml" in path.name or path.suffix == ".mxl")
+    ]
+
+
 # A zip extra field with no data, under the header id 0xCAFE that Java's jar tool writes.
 JAR_MARKER = b"\xfe\xca\x00\x00"
 
 
-def archive(score=MINIMAL_SCORE, container=CONTAINER, mimetype="stored") -> bytes:
+def archive(
+    score=MINIMAL_SCORE, container=CONTAINER, mimetype="stored", content=musicxml_check.MIMETYPE
+) -> bytes:
     """An .mxl archive; ``mimetype`` is "stored" (first, uncompressed), "deflated", "extra" (first,
-    stored, with a zip extra field), "second" (stored, after a stored container) or None."""
+    stored, with a zip extra field), "second" (stored, after a stored container) or None, and
+    ``content`` is what the mimetype entry holds."""
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zipped:
         if mimetype == "second":
@@ -36,9 +49,9 @@ def archive(score=MINIMAL_SCORE, container=CONTAINER, mimetype="stored") -> byte
             entry = zipfile.ZipInfo("mimetype")
             if mimetype == "extra":
                 entry.extra = JAR_MARKER
-            zipped.writestr(entry, musicxml_check.MIMETYPE, compress_type=zipfile.ZIP_STORED)
+            zipped.writestr(entry, content, compress_type=zipfile.ZIP_STORED)
         elif mimetype == "deflated":
-            zipped.writestr("mimetype", musicxml_check.MIMETYPE)
+            zipped.writestr("mimetype", content)
         if container is not None and mimetype != "second":
             zipped.writestr("META-INF/container.xml", container)
         zipped.writestr("score.musicxml", score)
@@ -73,11 +86,7 @@ class SchemaValidationTestCase(unittest.TestCase):
         self.assertTrue(report.xsd_valid, report.xsd_errors)
 
     def test_every_w3c_suite_file_is_valid_unless_named_invalid(self):
-        files = [
-            path
-            for path in sorted(SUITE.rglob("*"))
-            if path.is_file() and (".musicxml" in path.name or path.suffix == ".mxl")
-        ]
+        files = suite_files()
         self.assertGreaterEqual(len(files), 180)
         wrong = [
             path.name
@@ -113,8 +122,19 @@ class ArchiveTestCase(unittest.TestCase):
         self.assertTrue(report.xsd_valid, report.problem)
         self.assertEqual(["mimetype-not-first-stored"], report.warnings)
 
+    def test_mimetype_content_other_than_the_media_type_is_a_warning(self):
+        content = b"application/vnd.recordare.musicxml+xml"
+        report = musicxml_check.check_mxl_bytes(archive(content=content))
+        self.assertTrue(report.xsd_valid, report.problem)
+        self.assertEqual(["mimetype-not-first-stored"], report.warnings)
+
     def test_an_archive_without_container_is_unreadable(self):
         report = musicxml_check.check_mxl_bytes(archive(container=None))
+        self.assertFalse(report.readable)
+        self.assertEqual(["container-missing"], report.errors)
+
+    def test_an_ill_formed_container_is_unreadable(self):
+        report = musicxml_check.check_mxl_bytes(archive(container=b"<container><rootfiles>"))
         self.assertFalse(report.readable)
         self.assertEqual(["container-missing"], report.errors)
 
@@ -212,6 +232,29 @@ class SemanticChecksTestCase(unittest.TestCase):
         self.assertEqual([], errors(MINIMAL_SCORE))
         self.assertEqual([], warnings(MINIMAL_SCORE))
 
+    def test_a_chord_in_a_full_measure_breaks_no_rule(self):
+        chord_tone = (
+            b"<note><chord/><pitch><step>E</step><octave>4</octave></pitch>"
+            b"<duration>4</duration><type>whole</type></note>"
+        )
+        report = musicxml_check.check_bytes(with_notes(WHOLE_NOTE, chord_tone))
+        self.assertEqual([], report.findings)
+
+    def test_a_note_on_the_second_of_two_staves_breaks_no_rule(self):
+        data = MINIMAL_SCORE.replace(b"</time>", b"</time><staves>2</staves>").replace(
+            b"<type>whole</type>", b"<type>whole</type><staff>2</staff>"
+        )
+        self.assertEqual([], musicxml_check.check_bytes(data).findings)
+
+    def test_backup_and_forward_durations_are_read_in_divisions(self):
+        # At 2 divisions per quarter note, a <backup> and a <forward> of 8 span the 4/4 measure
+        # exactly; read as 8 quarter notes, they would leave it.
+        data = with_notes(
+            note(8, b"whole"),
+            b"<backup><duration>8</duration></backup><forward><duration>8</duration></forward>",
+        ).replace(b"<divisions>1</divisions>", b"<divisions>2</divisions>")
+        self.assertEqual([], musicxml_check.check_bytes(data).findings)
+
     def test_a_duration_before_any_divisions_is_an_error(self):
         data = MINIMAL_SCORE.replace(b"<divisions>1</divisions>", b"")
         self.assertIn("duration-before-divisions", errors(data))
@@ -247,6 +290,10 @@ class SemanticChecksTestCase(unittest.TestCase):
 
     def test_a_backup_before_the_measure_start_is_an_error(self):
         data = MINIMAL_SCORE.replace(b"</note>", b"</note><backup><duration>8</duration></backup>")
+        self.assertIn("position-negative", errors(data))
+
+    def test_a_backup_one_quarter_before_the_measure_start_is_an_error(self):
+        data = MINIMAL_SCORE.replace(b"</note>", b"</note><backup><duration>5</duration></backup>")
         self.assertIn("position-negative", errors(data))
 
     def test_a_forward_past_the_measure_end_is_an_error(self):
@@ -350,6 +397,19 @@ class SemanticChecksTestCase(unittest.TestCase):
         )
         self.assertIn("dangling-instrument-ref", errors(data))
 
+    def test_a_midi_instrument_naming_no_score_instrument_is_an_error(self):
+        def score_part(midi_id: bytes) -> bytes:
+            instruments = (
+                b'<score-instrument id="P1-I1"><instrument-name>Piano</instrument-name>'
+                b'</score-instrument><midi-instrument id="'
+                + midi_id
+                + b'"><midi-channel>1</midi-channel></midi-instrument>'
+            )
+            return MINIMAL_SCORE.replace(b"</part-name>", b"</part-name>" + instruments)
+
+        self.assertEqual([], errors(score_part(b"P1-I1")))
+        self.assertIn("dangling-instrument-ref", errors(score_part(b"P1-I2")))
+
     def test_a_measure_shorter_than_its_time_signature_is_a_warning_only(self):
         data = MINIMAL_SCORE.replace(
             b"<duration>4</duration><type>whole</type>",
@@ -393,6 +453,26 @@ class SemanticChecksTestCase(unittest.TestCase):
             warnings(five_eighths.replace(b"<duration>5<", b"<duration>4<")),
         )
 
+    def test_several_beats_and_beat_type_pairs_are_added(self):
+        # 3+2/8 and 3/4 in one <time>, as in W3C test 11e: 5.5 quarter notes, 11 divisions at 2.
+        mixed = MINIMAL_SCORE.replace(
+            b"<divisions>1</divisions>", b"<divisions>2</divisions>"
+        ).replace(
+            b"<time><beats>4</beats><beat-type>4</beat-type></time>",
+            b"<time><beats>3+2</beats><beat-type>8</beat-type>"
+            b"<beats>3</beats><beat-type>4</beat-type></time>",
+        )
+        dotted_quarter = (
+            b"<note><pitch><step>C</step><octave>4</octave></pitch>"
+            b"<duration>3</duration><type>quarter</type><dot/></note>"
+        )
+        self.assertEqual(
+            [], warnings(mixed.replace(WHOLE_NOTE, note(8, b"whole") + dotted_quarter))
+        )
+        self.assertEqual(
+            ["measure-length-mismatch"], warnings(mixed.replace(WHOLE_NOTE, note(8, b"whole")))
+        )
+
     def test_a_timewise_score_is_reported_as_not_checked(self):
         timewise = (
             b'<?xml version="1.0" encoding="UTF-8"?>\n<score-timewise version="4.0">'
@@ -402,6 +482,56 @@ class SemanticChecksTestCase(unittest.TestCase):
             + b"</part></measure></score-timewise>"
         )
         self.assertEqual(["timewise-not-checked"], warnings(timewise))
+
+
+# The findings of every W3C suite file that has any, as (errors, warnings); every other suite file
+# has none. The suite is reference MusicXML, so a rule change that alters this needs a reason for
+# each file it touches.
+W3C_SUITE_FINDINGS = {
+    "03b-Rhythm-Backup.musicxml": ([], ["measure-length-mismatch"]),
+    "03d-Rhythm-DottedDurations-Factors.musicxml": ([], ["measure-length-mismatch"]),
+    "03e-Rhythm-No-Divisions.musicxml": (["duration-before-divisions"], []),
+    "03f-Rhythm-Forward.musicxml": ([], ["measure-length-mismatch"]),
+    "11b-TimeSignatures-NoTime.musicxml": (["position-negative"], []),
+    "13b-KeySignatures-ChurchModes.musicxml": ([], ["measure-length-mismatch"]),
+    "21a-Chord-Basic.musicxml": ([], ["measure-length-mismatch"]),
+    "21h-Chord-Accidentals.musicxml": ([], ["measure-length-mismatch"]),
+    "21i-Chord-DifferentVoices.musicxml": ([], ["measure-length-mismatch"]),
+    "23b-Tuplets-Styles.musicxml": ([], ["measure-length-mismatch"]),
+    "24g-GraceNote-Dynamics.musicxml": ([], ["measure-length-mismatch"]),
+    "33i-Ties-NotEnded.musicxml": (["unpaired-tie"], []),
+    "41g-PartNoId.invalid.musicxml": (
+        ["duration-before-divisions", "part-without-score-part", "score-part-without-part"],
+        [],
+    ),
+    "41h-TooManyParts.musicxml": (["duration-before-divisions", "part-without-score-part"], []),
+    "45h-Repeats-Partial.musicxml": ([], ["measure-length-mismatch"]),
+    "46c-Midmeasure-Clef.musicxml": ([], ["measure-length-mismatch"]),
+    "46d-PickupMeasure-ImplicitMeasures.musicxml": ([], ["measure-length-mismatch"]),
+    "46f-IncompleteMeasures.musicxml": ([], ["measure-length-mismatch"]),
+    "46i-OverfullMeasures.musicxml": ([], ["measure-length-mismatch"]),
+    "46j-EmptyMeasure.musicxml": ([], ["measure-length-mismatch"]),
+    "51a-Header-Credits.musicxml": (["duration-before-divisions"], []),
+    "51b-Header-Quotes.musicxml": (["duration-before-divisions"], []),
+    "51c-MultipleMetadata.musicxml": (["duration-before-divisions"], []),
+    "51c-MultipleRights.musicxml": (["duration-before-divisions"], []),
+    "51d-EmptyTitle.musicxml": (["duration-before-divisions"], []),
+    "61i-Lyrics-Chords.musicxml": ([], ["measure-length-mismatch"]),
+    "71f-AllChordTypes.musicxml": ([], ["measure-length-mismatch"]),
+    "74a-FiguredBass.musicxml": ([], ["measure-length-mismatch"]),
+    "90a-Compressed-MusicXML.mxl": ([], ["mimetype-not-first-stored"]),
+    "99a-Sibelius5-IgnoreBeaming.musicxml": ([], ["measure-length-mismatch"]),
+}
+
+
+class SuiteFindingsTestCase(unittest.TestCase):
+    def test_the_findings_of_every_w3c_suite_file(self):
+        found = {}
+        for path in suite_files():
+            report = musicxml_check.check_file(path)
+            if report.errors or report.warnings:
+                found[path.name] = (report.errors, report.warnings)
+        self.assertEqual(W3C_SUITE_FINDINGS, found)
 
 
 if __name__ == "__main__":
