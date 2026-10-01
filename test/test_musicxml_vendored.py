@@ -36,5 +36,36 @@ class VendoredSchemaTestCase(unittest.TestCase):
         self.assertIn("test/musicxml/schema-4.0/** -text", git_attributes())
 
 
+SUITE = ROOT / "test" / "musicxml" / "w3c-test-suite"
+OWN_FILES = ("MANIFEST.sha256", "ORIGIN.md")
+
+
+def manifest() -> dict:
+    """The pinned SHA-256 of every vendored suite file, by path relative to the suite folder."""
+    pins = {}
+    for line in (SUITE / "MANIFEST.sha256").read_text(encoding="utf-8").splitlines():
+        digest, name = line.split("  ", 1)
+        pins[name] = digest
+    return pins
+
+
+class VendoredTestSuiteTestCase(unittest.TestCase):
+    def test_every_suite_file_is_byte_identical_to_the_pinned_commit(self):
+        for name, digest in manifest().items():
+            with self.subTest(file=name):
+                self.assertEqual(digest, sha256(SUITE / name))
+
+    def test_the_manifest_lists_every_vendored_file(self):
+        files = {
+            path.relative_to(SUITE).as_posix()
+            for path in SUITE.rglob("*")
+            if path.is_file() and path.name not in OWN_FILES
+        }
+        self.assertEqual(files, set(manifest()))
+
+    def test_git_keeps_the_suite_bytes(self):
+        self.assertIn("test/musicxml/w3c-test-suite/** -text", git_attributes())
+
+
 if __name__ == "__main__":
     unittest.main()
