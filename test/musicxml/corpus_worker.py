@@ -12,6 +12,7 @@ export loaded and exported again, compared without its encoding date).
 
 from __future__ import annotations
 
+import io
 import json
 import re
 import sys
@@ -141,6 +142,11 @@ def main(argv: list[str]) -> int:
         # dialog, which would hold it until the parent's timeout.
         sem_failcriticalerrors, sem_nogpfaulterrorbox = 0x0001, 0x0002
         ctypes.windll.kernel32.SetErrorMode(sem_failcriticalerrors | sem_nogpfaulterrorbox)
+    # maialib prints its warnings to sys.stdout, and a warning with a character the stream
+    # cannot encode ends the process. A pipe takes the platform's encoding (the ANSI code page
+    # on Windows); UTF-8 encodes every character, so a file gives the same result everywhere.
+    if isinstance(sys.stdout, io.TextIOWrapper):
+        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
     analyses = "--analyses" in argv
     paths = [argument for argument in argv if argument != "--analyses"]
     if len(paths) != 1:

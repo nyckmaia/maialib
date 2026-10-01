@@ -4,6 +4,7 @@ The slow files (marked in the ledger) run only under `make corpus`.
 """
 
 import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -11,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "musicxml"))
 
 import corpus  # noqa: E402
 import corpus_worker  # noqa: E402
+from fixtures import MINIMAL_SCORE  # noqa: E402
 
 FINISHED = {
     "input": "valid",
@@ -113,6 +115,17 @@ class WorkerProcessTestCase(unittest.TestCase):
             {**NOTHING_FINISHED, "input": "crash"},
             corpus.run_one("test/xml_examples/missing.xml", timeout=60),
         )
+
+    def test_a_warning_the_windows_code_page_cannot_encode_leaves_the_worker_running(self):
+        # maialib warns about an <alter> it cannot spell and quotes it; this one is a CJK
+        # character, which the ANSI code page of a pipe on Windows cannot encode.
+        step = b"<step>C</step>"
+        score = MINIMAL_SCORE.replace(step, step + "<alter>\u4e00</alter>".encode())
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / "score.musicxml"
+            path.write_bytes(score)
+            record = corpus.run_one(str(path), timeout=60)
+        self.assertEqual("ok", record["load"])
 
 
 class CorpusLedgerTestCase(unittest.TestCase):
