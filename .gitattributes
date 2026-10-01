@@ -1,3 +1,4 @@
 # Vendored files that must stay byte-identical to their upstream releases: the tests pin their
 # SHA-256, and line-ending conversion would change them.
 test/musicxml/schema-4.0/** -text
+test/musicxml/w3c-test-suite/** -text
