@@ -38,6 +38,9 @@ class VendoredSchemaTestCase(unittest.TestCase):
 
 SUITE = ROOT / "test" / "musicxml" / "w3c-test-suite"
 OWN_FILES = ("MANIFEST.sha256", "ORIGIN.md")
+# The manifest pins every vendored file and this pins the manifest, so editing a file and re-pinning
+# it, or removing a file together with its manifest line, fails as well.
+MANIFEST_SHA256 = "e908697f0756d3e58c36847cecf7a186d6b624aaf97b8237a52cbaab9f8f459d"
 
 
 def manifest() -> dict:
@@ -55,6 +58,9 @@ class VendoredTestSuiteTestCase(unittest.TestCase):
             with self.subTest(file=name):
                 self.assertEqual(digest, sha256(SUITE / name))
 
+    def test_the_manifest_itself_is_pinned(self):
+        self.assertEqual(MANIFEST_SHA256, sha256(SUITE / "MANIFEST.sha256"))
+
     def test_the_manifest_lists_every_vendored_file(self):
         files = {
             path.relative_to(SUITE).as_posix()
@@ -62,6 +68,11 @@ class VendoredTestSuiteTestCase(unittest.TestCase):
             if path.is_file() and path.name not in OWN_FILES
         }
         self.assertEqual(files, set(manifest()))
+
+    def test_the_folder_holds_its_origin_and_manifest(self):
+        for name in OWN_FILES:
+            with self.subTest(file=name):
+                self.assertTrue((SUITE / name).is_file(), f"{name} is missing")
 
     def test_git_keeps_the_suite_bytes(self):
         self.assertIn("test/musicxml/w3c-test-suite/** -text", git_attributes())
