@@ -15,19 +15,30 @@ from fixtures import CONTAINER, MINIMAL_SCORE  # noqa: E402
 SUITE = Path(__file__).resolve().parent / "musicxml" / "w3c-test-suite"
 
 
+# A zip extra field with no data, under the header id 0xCAFE that Java's jar tool writes.
+JAR_MARKER = b"\xfe\xca\x00\x00"
+
+
 def archive(score=MINIMAL_SCORE, container=CONTAINER, mimetype="stored") -> bytes:
-    """An .mxl archive; ``mimetype`` is "stored" (first, uncompressed), "deflated" or None."""
+    """An .mxl archive; ``mimetype`` is "stored" (first, uncompressed), "deflated", "extra" (first,
+    stored, with a zip extra field), "second" (stored, after a stored container) or None."""
     buffer = io.BytesIO()
     with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as zipped:
-        if mimetype == "stored":
+        if mimetype == "second":
+            # Stored, as the mimetype entry should be, so that only the order is wrong.
             zipped.writestr(
-                zipfile.ZipInfo("mimetype"),
-                musicxml_check.MIMETYPE,
+                zipfile.ZipInfo("META-INF/container.xml"),
+                container,
                 compress_type=zipfile.ZIP_STORED,
             )
+        if mimetype in ("stored", "second", "extra"):
+            entry = zipfile.ZipInfo("mimetype")
+            if mimetype == "extra":
+                entry.extra = JAR_MARKER
+            zipped.writestr(entry, musicxml_check.MIMETYPE, compress_type=zipfile.ZIP_STORED)
         elif mimetype == "deflated":
             zipped.writestr("mimetype", musicxml_check.MIMETYPE)
-        if container is not None:
+        if container is not None and mimetype != "second":
             zipped.writestr("META-INF/container.xml", container)
         zipped.writestr("score.musicxml", score)
     return buffer.getvalue()
@@ -91,6 +102,16 @@ class ArchiveTestCase(unittest.TestCase):
         report = musicxml_check.check_mxl_bytes(archive(mimetype="deflated"))
         self.assertEqual(["mimetype-not-first-stored"], report.warnings)
 
+    def test_a_mimetype_after_another_entry_is_a_warning(self):
+        report = musicxml_check.check_mxl_bytes(archive(mimetype="second"))
+        self.assertTrue(report.xsd_valid, report.problem)
+        self.assertEqual(["mimetype-not-first-stored"], report.warnings)
+
+    def test_a_mimetype_with_an_extra_field_is_a_warning(self):
+        report = musicxml_check.check_mxl_bytes(archive(mimetype="extra"))
+        self.assertTrue(report.xsd_valid, report.problem)
+        self.assertEqual(["mimetype-not-first-stored"], report.warnings)
+
     def test_an_archive_without_container_is_unreadable(self):
         report = musicxml_check.check_mxl_bytes(archive(container=None))
         self.assertFalse(report.readable)
@@ -151,6 +172,10 @@ def with_notes(*notes: bytes) -> bytes:
     return MINIMAL_SCORE.replace(WHOLE_NOTE, b"".join(notes))
 
 
+# Five quarter notes of content in the 4/4 measure, then a <backup> to its start.
+OVERFULL = note(4, b"whole") + note(1, b"quarter") + b"<backup><duration>5</duration></backup>"
+
+
 def errors(data: bytes) -> list:
     return musicxml_check.check_bytes(data).errors
 
@@ -167,6 +192,27 @@ class SemanticChecksTestCase(unittest.TestCase):
     def test_a_duration_before_any_divisions_is_an_error(self):
         data = MINIMAL_SCORE.replace(b"<divisions>1</divisions>", b"")
         self.assertIn("duration-before-divisions", errors(data))
+
+    def test_durations_without_divisions_are_read_with_one_division_per_quarter(self):
+        # The default of W3C test 03e: two halves of 2 fill the 4/4 measure, and the missing
+        # <divisions> is reported once although both durations precede it.
+        data = with_notes(note(2, b"half"), note(2, b"half"))
+        report = musicxml_check.check_bytes(data.replace(b"<divisions>1</divisions>", b""))
+        self.assertEqual(
+            ["duration-before-divisions"], [finding.check for finding in report.findings]
+        )
+
+    def test_a_divisions_change_inside_a_full_measure_is_no_length_mismatch(self):
+        # Two quarter notes at 1 division per quarter, then two at 2 (W3C test 03c).
+        data = with_notes(
+            note(1, b"quarter"),
+            note(1, b"quarter"),
+            b"<attributes><divisions>2</divisions></attributes>",
+            note(2, b"quarter"),
+            note(2, b"quarter"),
+        )
+        self.assertEqual([], errors(data))
+        self.assertEqual([], warnings(data))
 
     def test_a_chord_note_without_a_preceding_note_is_an_error(self):
         data = MINIMAL_SCORE.replace(b"<note><pitch>", b"<note><chord/><pitch>")
@@ -189,6 +235,23 @@ class SemanticChecksTestCase(unittest.TestCase):
     def test_a_forward_to_the_measure_end_is_allowed(self):
         voice_two = b"</note><backup><duration>4</duration></backup><forward><duration>4</duration></forward>"
         self.assertEqual([], errors(MINIMAL_SCORE.replace(b"</note>", voice_two)))
+
+    def test_a_forward_within_the_notes_of_an_overfull_measure_is_allowed(self):
+        data = with_notes(OVERFULL, b"<forward><duration>5</duration></forward>")
+        self.assertEqual([], errors(data))
+        self.assertEqual(["measure-length-mismatch"], warnings(data))
+
+    def test_a_forward_past_the_notes_of_an_overfull_measure_is_an_error(self):
+        data = with_notes(OVERFULL, b"<forward><duration>6</duration></forward>")
+        self.assertIn("position-past-measure-end", errors(data))
+
+    def test_a_forward_is_measured_against_the_notes_written_after_it(self):
+        data = with_notes(
+            b"<forward><duration>5</duration></forward><backup><duration>5</duration></backup>",
+            note(4, b"whole"),
+            note(1, b"quarter"),
+        )
+        self.assertEqual([], errors(data))
 
     def test_a_tie_start_without_a_stop_is_an_error(self):
         data = with_notes(note(4, b"whole", b'<tie type="start"/>'))
@@ -220,6 +283,23 @@ class SemanticChecksTestCase(unittest.TestCase):
     def test_a_tuplet_start_without_a_stop_is_an_error(self):
         data = with_notes(note(4, b"whole", notations=b'<tuplet type="start"/>'))
         self.assertIn("unpaired-tuplet", errors(data))
+
+    def test_a_tuplet_of_one_note_pairs(self):
+        # A tuplet that holds a single note starts and stops on it (W3C test 23e, measure 2).
+        tuplet = b'<tuplet type="start"/><tuplet type="stop"/>'
+        self.assertEqual([], errors(with_notes(note(4, b"whole", notations=tuplet))))
+
+    def test_a_slur_across_voices_that_stops_first_in_the_document_pairs(self):
+        # Voice 1 is written before voice 2, so a slur from beat 1 of voice 2 to beat 3 of voice 1
+        # stops before it starts in document order (W3C test 33c, measure 3).
+        data = with_notes(
+            note(2, b"half", b"<voice>1</voice>"),
+            note(2, b"half", b"<voice>1</voice>", notations=b'<slur type="stop" number="1"/>'),
+            b"<backup><duration>4</duration></backup>",
+            note(2, b"half", b"<voice>2</voice>", notations=b'<slur type="start" number="1"/>'),
+            note(2, b"half", b"<voice>2</voice>"),
+        )
+        self.assertEqual([], errors(data))
 
     def test_a_part_without_its_score_part_is_an_error(self):
         found = errors(MINIMAL_SCORE.replace(b'<part id="P1">', b'<part id="P2">'))

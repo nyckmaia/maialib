@@ -14,6 +14,7 @@ import io
 import sys
 import zipfile
 import zlib
+from collections import Counter
 from dataclasses import dataclass, field
 from fractions import Fraction
 from pathlib import Path
@@ -211,6 +212,44 @@ def _time_quarters(time: etree._Element) -> Fraction | None:
     return total
 
 
+class _Spanners:
+    """The starts and stops of one kind of spanner in a part, counted per key: the pitch for ties,
+    the number for slurs and tuplets.
+
+    Counting ignores document order, which is not musical order: MusicXML writes the voices of a
+    measure one after another, so a slur from a later voice to an earlier one stops before it
+    starts, and a tuplet of one note starts and stops on that note.
+    """
+
+    def __init__(self, name: str) -> None:
+        self.name = name
+        self.starts: Counter[str] = Counter()
+        self.stops: Counter[str] = Counter()
+
+    def count(self, kind: str | None, key: str) -> None:
+        if kind == "start":
+            self.starts[key] += 1
+        elif kind == "stop":
+            self.stops[key] += 1
+
+    def findings(self, where: str) -> list[Finding]:
+        """One error for each key whose starts and stops differ in number."""
+        found: list[Finding] = []
+        for key in sorted(set(self.starts) | set(self.stops)):
+            starts, stops = self.starts[key], self.stops[key]
+            if starts != stops:
+                larger = "starts than stops" if starts > stops else "stops than starts"
+                found.append(
+                    Finding(
+                        f"unpaired-{self.name}",
+                        "error",
+                        where,
+                        f"{self.name} {key}: starts {starts}, stops {stops} (more {larger})",
+                    )
+                )
+        return found
+
+
 class _PartState:
     """What carries over from one measure to the next within a part."""
 
@@ -219,15 +258,9 @@ class _PartState:
         self.staves = 1
         self.quarters: Fraction | None = None
         self.duration_before_divisions_seen = False
-        self.open_ties: dict[tuple[str, str, str], int] = {}
-        self.open_slurs: set[str] = set()
-        self.open_tuplets: set[str] = set()
-
-    def measure_length(self) -> Fraction | None:
-        """The time signature's length in divisions, or None when either is unknown."""
-        if self.quarters is None or self.divisions is None:
-            return None
-        return self.quarters * self.divisions
+        self.ties = _Spanners("tie")
+        self.slurs = _Spanners("slur")
+        self.tuplets = _Spanners("tuplet")
 
 
 def _pitch_key(note: etree._Element) -> tuple[str, str, str] | None:
@@ -245,49 +278,37 @@ def _pitch_key(note: etree._Element) -> tuple[str, str, str] | None:
     return None
 
 
-def _check_ties(note, state: _PartState, where: str, findings: list[Finding]) -> None:
+def _quarters(element, state: _PartState, where: str, findings: list[Finding]) -> Fraction | None:
+    """The element's <duration> in quarter notes, with the divisions in force where it is read;
+    None when it has none. A duration before any <divisions> is reported once per part and read
+    with divisions 1, the default the W3C test suite agrees on."""
+    duration = _number(element.findtext("duration"))
+    if duration is None:
+        return None
+    if state.divisions is None:
+        if not state.duration_before_divisions_seen:
+            state.duration_before_divisions_seen = True
+            findings.append(
+                Finding(
+                    "duration-before-divisions",
+                    "error",
+                    where,
+                    "a <duration> comes before any <divisions> in its part; read with divisions 1",
+                )
+            )
+        return duration
+    return duration / state.divisions
+
+
+def _count_spanners(note, state: _PartState) -> None:
     key = _pitch_key(note)
-    if key is None:
-        return
-    kinds = {tie.get("type") for tie in note.iterfind("tie")}
-    if "stop" in kinds:
-        if state.open_ties.get(key, 0) > 0:
-            state.open_ties[key] -= 1
-        else:
-            findings.append(
-                Finding(
-                    "unpaired-tie", "error", where, f"a tie stop on {'/'.join(key)} has no start"
-                )
-            )
-    if "start" in kinds:
-        state.open_ties[key] = state.open_ties.get(key, 0) + 1
-
-
-def _pair_spanners(
-    elements, open_numbers: set[str], name: str, where: str, findings: list[Finding]
-) -> None:
-    """Pair the starts and stops of slurs or tuplets by number. Stops apply before starts, so a
-    note can end one and begin the next with the same number."""
-    numbers: dict[str, list[str]] = {"start": [], "stop": []}
-    for element in elements:
-        kind = element.get("type")
-        if kind in numbers:
-            numbers[kind].append(element.get("number", "1"))
-    for number in numbers["stop"]:
-        if number in open_numbers:
-            open_numbers.discard(number)
-        else:
-            findings.append(
-                Finding(
-                    f"unpaired-{name}", "error", where, f"{name} {number} stops without a start"
-                )
-            )
-    for number in numbers["start"]:
-        if number in open_numbers:
-            findings.append(
-                Finding(f"unpaired-{name}", "error", where, f"{name} {number} starts while open")
-            )
-        open_numbers.add(number)
+    if key is not None:
+        for kind in {tie.get("type") for tie in note.iterfind("tie")}:
+            state.ties.count(kind, "/".join(key))
+    for slur in note.iterfind("notations/slur"):
+        state.slurs.count(slur.get("type"), slur.get("number", "1"))
+    for tuplet in note.iterfind("notations/tuplet"):
+        state.tuplets.count(tuplet.get("type"), tuplet.get("number", "1"))
 
 
 def _check_note(
@@ -296,29 +317,11 @@ def _check_note(
     state: _PartState,
     instrument_ids: set[str],
     has_previous: bool,
-    cursor: Fraction,
-    end: Fraction,
     findings: list[Finding],
-) -> tuple[Fraction, Fraction]:
-    """Check one note; return the measure's cursor and furthest position after it."""
-    is_grace = note.find("grace") is not None
-    is_chord = note.find("chord") is not None
-    duration = _number(note.findtext("duration"))
-    if (
-        duration is not None
-        and state.divisions is None
-        and not state.duration_before_divisions_seen
-    ):
-        state.duration_before_divisions_seen = True
-        findings.append(
-            Finding(
-                "duration-before-divisions",
-                "error",
-                where,
-                "a note has a <duration> before any <divisions> in its part",
-            )
-        )
-    if is_chord and not has_previous:
+) -> Fraction | None:
+    """Check one note; return its duration in quarter notes, or None when it has none."""
+    duration = _quarters(note, state, where, findings)
+    if note.find("chord") is not None and not has_previous:
         findings.append(
             Finding(
                 "chord-without-anchor", "error", where, "<chord/> on the first note of the measure"
@@ -344,22 +347,21 @@ def _check_note(
                     f'<instrument id="{instrument.get("id")}"> names no <score-instrument> of the part',
                 )
             )
-    _check_ties(note, state, where, findings)
-    _pair_spanners(note.iterfind("notations/slur"), state.open_slurs, "slur", where, findings)
-    _pair_spanners(note.iterfind("notations/tuplet"), state.open_tuplets, "tuplet", where, findings)
-    if not is_chord and not is_grace and duration is not None:
-        cursor += duration
-        end = max(end, cursor)
-    return cursor, end
+    _count_spanners(note, state)
+    return duration
 
 
 def _check_measure(
     part_id: str, measure, state: _PartState, instrument_ids: set[str], findings: list[Finding]
 ) -> None:
+    """Check one measure, following the musical position in quarter notes."""
     where = f"part {part_id}, measure {measure.get('number', '?')}"
     implicit = measure.get("implicit") == "yes"
     cursor = Fraction(0)
-    end = Fraction(0)
+    # A chord tone is never longer than the note it joins, so the furthest note end is reached by
+    # a note that is not a chord tone.
+    note_end = Fraction(0)
+    forward_end = Fraction(0)  # the furthest position a <forward> reaches
     has_note = False
     for child in measure:
         if child.tag == "attributes":
@@ -373,12 +375,13 @@ def _check_measure(
             if time is not None:
                 state.quarters = _time_quarters(time)
         elif child.tag == "note":
-            cursor, end = _check_note(
-                child, where, state, instrument_ids, has_note, cursor, end, findings
-            )
+            duration = _check_note(child, where, state, instrument_ids, has_note, findings)
             has_note = True
+            if duration is not None and child.find("chord") is None and child.find("grace") is None:
+                cursor += duration
+                note_end = max(note_end, cursor)
         elif child.tag == "backup":
-            cursor -= _number(child.findtext("duration")) or Fraction(0)
+            cursor -= _quarters(child, state, where, findings) or Fraction(0)
             if cursor < 0:
                 findings.append(
                     Finding(
@@ -390,26 +393,32 @@ def _check_measure(
                 )
                 cursor = Fraction(0)
         elif child.tag == "forward":
-            cursor += _number(child.findtext("duration")) or Fraction(0)
-            limit = state.measure_length()
-            if limit is not None and not implicit and cursor > limit:
-                findings.append(
-                    Finding(
-                        "position-past-measure-end",
-                        "error",
-                        where,
-                        f"<forward> reaches {cursor} divisions in a measure of {limit}",
-                    )
-                )
-            end = max(end, cursor)
-    limit = state.measure_length()
-    if limit is not None and not implicit and end != limit:
+            cursor += _quarters(child, state, where, findings) or Fraction(0)
+            forward_end = max(forward_end, cursor)
+    limit = state.quarters
+    if limit is None or implicit:
+        return
+    # Notes may run past the time signature (an overfull measure, rounded tuplet durations), and a
+    # <forward> may follow them there; it is an error only beyond every note of the measure,
+    # including the notes written after it.
+    if forward_end > limit and forward_end > note_end:
+        findings.append(
+            Finding(
+                "position-past-measure-end",
+                "error",
+                where,
+                f"a <forward> reaches {forward_end} quarter notes, past the time signature "
+                f"({limit}) and the last note end ({note_end})",
+            )
+        )
+    end = max(note_end, forward_end)
+    if end != limit:
         findings.append(
             Finding(
                 "measure-length-mismatch",
                 "warning",
                 where,
-                f"the content lasts {end} divisions, the time signature {limit}",
+                f"the content lasts {end} quarter notes, the time signature {limit}",
             )
         )
 
@@ -472,17 +481,8 @@ def _check_part(part, instrument_ids: set[str], findings: list[Finding]) -> None
     for measure in part.iterfind("measure"):
         _check_measure(part_id, measure, state, instrument_ids, findings)
     where = f"part {part_id}"
-    for key, count in sorted(state.open_ties.items()):
-        if count > 0:
-            findings.append(
-                Finding(
-                    "unpaired-tie", "error", where, f"a tie start on {'/'.join(key)} has no stop"
-                )
-            )
-    for number in sorted(state.open_slurs):
-        findings.append(Finding("unpaired-slur", "error", where, f"slur {number} never stops"))
-    for number in sorted(state.open_tuplets):
-        findings.append(Finding("unpaired-tuplet", "error", where, f"tuplet {number} never stops"))
+    for spanners in (state.ties, state.slurs, state.tuplets):
+        findings.extend(spanners.findings(where))
 
 
 def semantic_findings(root: etree._Element) -> list[Finding]:
