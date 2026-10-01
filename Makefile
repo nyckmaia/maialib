@@ -31,6 +31,8 @@ all: dev
 .PHONY: cpp-tests
 .PHONY: py-tests
 .PHONY: tests
+.PHONY: corpus
+.PHONY: corpus-update-ledger
 .PHONY: msvc-gate
 .PHONY: linux-gate
 .PHONY: dist
@@ -117,6 +119,15 @@ py-tests:
 tests:
 	@$(MAKE) --no-print-directory cpp-tests
 	@$(MAKE) --no-print-directory py-tests
+
+# Every file of the MusicXML corpus, the slow ones included, and the external corpus once
+# `make corpus-fetch` has downloaded it, compared with test/musicxml/ledger*.json.
+corpus:
+	@$(PYTHON) $(SCRIPTS_DIR)/make-corpus.py
+
+# Write the current corpus results as the ledgers; review the diff before committing it.
+corpus-update-ledger:
+	@$(PYTHON) $(SCRIPTS_DIR)/make-corpus.py --update-ledger
 
 # Windows only: maiacore and its C++ tests compiled by MSVC (Visual Studio 2022) in Debug and
 # Release, then the package built by `pip install .` as CI builds it, with the Python tests.
