@@ -462,7 +462,38 @@ void ChordClass(const py::module& m) {
     // invalidateStackCache() exists to prevent. Keep `getNote` copy-returning.
 
     cls.def("getRoot", &Chord::getRoot,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Get the chord's root: the first note of its close stack (see ``getCloseStackChord``).
+
+        Stacks the chord first if it has not been stacked yet. A note of a transposing
+        instrument is analysed at concert pitch (see the class notes), so the root is an
+        untransposed note at that pitch, spelled as the stacking spells it.
+
+        Returns
+        -------
+        Note
+            The root, in octave 4.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone (call ``roundQuarterTones`` first), or if no
+            enharmonic respelling of the notes produces a valid stacked-in-thirds form (see
+            ``getName``).
+        IndexError
+            If the chord is empty.
+
+        Examples
+        --------
+        >>> clarinet = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> chord = ml.Chord()
+        >>> for note in [clarinet, ml.Note("E4"), ml.Note("G4")]:
+        ...     chord.addNote(note)
+        >>> root = chord.getRoot()
+        >>> root.getPitch(), root.isTransposed()
+        ('C4', False)
+    )pbdoc");
     cls.def("getName", &Chord::getName,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
             R"pbdoc(
@@ -492,7 +523,36 @@ void ChordClass(const py::module& m) {
         >>> ml.Chord(["C4", "Eb4", "G4", "Bb4"]).getName()
         'Cm7'
     )pbdoc");
-    cls.def("getBassNote", &Chord::getBassNote);
+    cls.def("getBassNote", &Chord::getBassNote,
+            R"pbdoc(
+        Get the chord's lowest note, by sounding position.
+
+        Stacks the chord first if it has not been stacked yet. A note of a transposing
+        instrument is analysed at concert pitch (see the class notes), so the bass note is an
+        untransposed note at that pitch; ``getNotes`` keeps the note as it was added.
+
+        Returns
+        -------
+        Note
+            The lowest note.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone (call ``roundQuarterTones`` first), or if no
+            enharmonic respelling of the notes produces a valid stacked-in-thirds form (see
+            ``getName``).
+
+        Examples
+        --------
+        >>> horn = ml.Note("B3", transposeDiatonic=-4, transposeChromatic=-7)
+        >>> chord = ml.Chord()
+        >>> for note in [ml.Note("C4"), horn, ml.Note("G4")]:
+        ...     chord.addNote(note)
+        >>> bass = chord.getBassNote()
+        >>> bass.getPitch(), bass.isTransposed()
+        ('E3', False)
+    )pbdoc");
     cls.def("getNotes", &Chord::getNotes);
 
     cls.def("getCloseStackHarmonicComplexity", &Chord::getCloseStackHarmonicComplexity,
@@ -776,13 +836,141 @@ void ChordClass(const py::module& m) {
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("getOpenStackChord", &Chord::getOpenStackChord, py::arg("enharmonyNotes") = false,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("getCloseStackChord", &Chord::getCloseStackChord, py::arg("enharmonyNotes") = false,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
-    cls.def("getCloseChord", &Chord::getCloseChord, py::arg("enharmonyNotes") = false,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Get the chord's open stack (see ``getOpenStackNotes``) as a chord.
 
-    cls.def("getOpenStackNotes", &Chord::getOpenStackNotes);
+        Parameters
+        ----------
+        enharmonyNotes : bool, default False
+            Accepted but currently ignored by the stacking, which always considers enharmonic
+            respellings.
+
+        Returns
+        -------
+        Chord
+            A chord of the open stack's notes: untransposed notes at concert pitch, lowest
+            first.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone (call ``roundQuarterTones`` first), or if no
+            enharmonic respelling of the notes produces a valid stacked-in-thirds form (see
+            ``getName``).
+
+        Examples
+        --------
+        >>> ml.Chord(["C4", "G4", "E5", "C6"]).getOpenStackChord()
+        <Chord [C4, G4, E5]>
+    )pbdoc");
+    cls.def("getCloseStackChord", &Chord::getCloseStackChord, py::arg("enharmonyNotes") = false,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Get the chord's close stack: its pitch classes stacked in thirds from the root.
+
+        Stacks the chord first if it has not been stacked yet. The root is placed in octave 4,
+        the third, fifth and seventh above it within the octave, and the ninth, eleventh and
+        thirteenth an octave higher. The notes are spelled as the stacking spells them, which
+        can respell a chord note: ``["C#4", "F4", "G#4"]`` stacks as ``F4, Ab4, C#5``. A note
+        of a transposing instrument is analysed at concert pitch (see the class notes), so every
+        note of the stack is an untransposed note at that pitch.
+
+        Parameters
+        ----------
+        enharmonyNotes : bool, default False
+            Accepted but currently ignored by the stacking, which always considers enharmonic
+            respellings.
+
+        Returns
+        -------
+        Chord
+            A chord of the close stack's notes, root first.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone (call ``roundQuarterTones`` first), or if no
+            enharmonic respelling of the notes produces a valid stacked-in-thirds form (see
+            ``getName``).
+
+        Examples
+        --------
+        >>> horn = ml.Note("B4", transposeDiatonic=-4, transposeChromatic=-7)
+        >>> chord = ml.Chord()
+        >>> for note in [ml.Note("C3"), horn, ml.Note("G5")]:
+        ...     chord.addNote(note)
+        >>> chord.getCloseStackChord()
+        <Chord [C4, E4, G4]>
+    )pbdoc");
+    cls.def("getCloseChord", &Chord::getCloseChord, py::arg("enharmonyNotes") = false,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Get the close stack (see ``getCloseStackChord``) with each ninth, eleventh or
+        thirteenth that the chord plays in its root's octave moved into the root's octave,
+        sorted from the lowest note up.
+
+        The chord's own notes are compared at concert pitch (see the class notes), and every
+        returned note is an untransposed note at that pitch.
+
+        Parameters
+        ----------
+        enharmonyNotes : bool, default False
+            Accepted but currently ignored by the stacking, which always considers enharmonic
+            respellings.
+
+        Returns
+        -------
+        Chord
+            The close chord, lowest note first.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone (call ``roundQuarterTones`` first), or if no
+            enharmonic respelling of the notes produces a valid stacked-in-thirds form (see
+            ``getName``).
+        IndexError
+            If the chord is empty.
+
+        Examples
+        --------
+        >>> ml.Chord(["C4", "D4", "E4", "G4"]).getCloseChord()
+        <Chord [C4, D4, E4, G4]>
+        >>> ml.Chord(["C4", "E4", "G4", "D5"]).getCloseChord()
+        <Chord [C4, E4, G4, D5]>
+    )pbdoc");
+
+    cls.def("getOpenStackNotes", &Chord::getOpenStackNotes,
+            R"pbdoc(
+        Get the chord's open stack: one note of each pitch class, the lowest one, from the bass
+        up.
+
+        Stacks the chord first if it has not been stacked yet. A note of a transposing
+        instrument is analysed at concert pitch (see the class notes), so every returned note is
+        an untransposed note at that pitch; ``getNotes`` keeps the notes as they were added.
+
+        Returns
+        -------
+        list of Note
+            The open stack, lowest note first.
+
+        Raises
+        ------
+        RuntimeError
+            If the chord contains a quarter tone (call ``roundQuarterTones`` first), or if no
+            enharmonic respelling of the notes produces a valid stacked-in-thirds form (see
+            ``getName``).
+
+        Examples
+        --------
+        >>> clarinet = ml.Note("D4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> chord = ml.Chord()
+        >>> for note in [clarinet, ml.Note("G4"), ml.Note("E5"), ml.Note("C6")]:
+        ...     chord.addNote(note)
+        >>> [(note.getPitch(), note.isTransposed()) for note in chord.getOpenStackNotes()]
+        [('C4', False), ('G4', False), ('E5', False)]
+    )pbdoc");
 
     cls.def("sortNotes", &Chord::sortNotes,
             R"pbdoc(

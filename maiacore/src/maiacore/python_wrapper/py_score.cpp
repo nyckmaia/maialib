@@ -463,7 +463,55 @@ void ScoreClass(const py::module& m) {
     // );
 
     cls.def("getChords", &Score::getChords, py::arg("config") = nlohmann::json(),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Get the chords of the score: the notes that sound together at each onset.
+
+        Each onset of a note (grace notes excluded) in the selected parts and measures gives a
+        chord of every note sounding at that moment -- the notes that start there and those
+        still sounding from before -- sorted from the lowest sounding position up. The chord
+        holds the parts' own notes: a note of a transposing instrument keeps its written pitch
+        and its transposing interval, and the chord's analysis (``getName``, ``getRoot``, ...)
+        relates it at concert pitch, spelled with its written letter moved by the diatonic
+        transposing interval. The notes that analysis returns are untransposed notes at that
+        pitch (see ``Chord``).
+
+        Parameters
+        ----------
+        config : dict, optional
+            ``partNames`` (list of str, default every part); ``measureStart`` (int, the
+            zero-based index of the first measure, default 0); ``measureEnd`` (int, the
+            zero-based index one past the last measure, default the score's length);
+            ``includeDuplicates`` (bool, default False, which keeps one of the notes spelled
+            alike at concert pitch, see ``Chord.removeDuplicateNotes``); ``includeUnpitched``
+            (bool, default False, which skips unpitched parts).
+
+        Returns
+        -------
+        list of tuple of (int, float, Key, Chord, bool)
+            One ``(measure, floatMeasure, key, chord, isHomophonic)`` per onset, in time order:
+            the one-based measure number; the onset as a one-based measure position, whose
+            fraction is the position within the measure (``1.5`` is halfway through the first
+            measure); the key of the first part's measure there, as that part writes it; the
+            chord; and whether every note of the chord starts at that onset.
+
+        Raises
+        ------
+        RuntimeError
+            If a config value is invalid (a part name the score does not have, a negative
+            measure index, ``measureStart`` after ``measureEnd``), or if a note sounds below
+            ``C1b-1`` (see ``Note.getSoundingPitch``).
+
+        Examples
+        --------
+        >>> score = ml.Score(["Clarinet in Bb", "Violin"], 1)
+        >>> clarinet = ml.Note("F#4", transposeDiatonic=-1, transposeChromatic=-2)
+        >>> score.getPart(0).getMeasure(0).addNote(clarinet)
+        >>> score.getPart(1).getMeasure(0).addNote(ml.Note("C4"))
+        >>> measure, floatMeasure, key, chord, isHomophonic = score.getChords()[0]
+        >>> chord, [note.getPitch() for note in chord.getNotes()], isHomophonic
+        (<Chord [C4, E4]>, ['C4', 'F#4'], True)
+    )pbdoc");
     cls.def(
         "getChordsDataFrame",
         [](Score& score, nlohmann::json config) {
@@ -483,7 +531,35 @@ void ScoreClass(const py::module& m) {
             return df;
         },
         py::arg("config") = nlohmann::json(),
-        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+        R"pbdoc(
+        Get the chords of the score as a table, one row per ``getChords`` tuple.
+
+        Parameters
+        ----------
+        config : dict, optional
+            As for ``getChords``.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The columns ``measure``, ``floatMeasure``, ``key``, ``chord`` and ``isHomophonic``,
+            in the order and with the meaning of ``getChords``' tuples. A chord holds the parts'
+            own notes, and its analysis relates a note of a transposing instrument at concert
+            pitch, returning untransposed notes at that pitch (see ``getChords``).
+
+        Raises
+        ------
+        RuntimeError
+            As for ``getChords``.
+
+        Examples
+        --------
+        >>> score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
+        >>> table = score.getChordsDataFrame({"measureEnd": 1})
+        >>> list(table.columns)
+        ['measure', 'floatMeasure', 'key', 'chord', 'isHomophonic']
+    )pbdoc");
 
     cls.def("forEachNote", &Score::forEachNote, py::arg("callback"), py::arg("measureStart") = 0,
             py::arg("measureEnd") = -1, py::arg("partNames") = std::vector<std::string>(),
