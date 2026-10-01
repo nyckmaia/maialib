@@ -100,7 +100,7 @@ Actions: `default` (use the default), `infer` (derive from context), `carry` (ke
 ### 7.1 Vendored files (`test/musicxml/`)
 - `schema-4.0/`: `musicxml.xsd`, `xml.xsd`, `xlink.xsd`, `catalog.xml`, `container.xsd` from `https://github.com/w3c-cg/musicxml` tag `v4.0` (commit `799e2defb2ece0ae7bafe08dcbcac25b2c631d53`), unmodified; `NOTICE.md` names the specification ("MusicXML 4.0"), its source, the W3C Community Final Specification Agreement, and the origin of `xml.xsd` (`http://www.w3.org/2007/08/xml.xsd`, W3C). A test pins each file's SHA-256 (Appendix A). Do not use the repository's `gh-pages` branch (4.1 draft, different licence).
 - `w3c-test-suite/`: the files of `https://github.com/w3c-cg/musicxmlTestSuite` at a pinned commit (HEAD was `77c19f7e` on 2026-10-01; the 4a plan pins the full SHA), 183 files — the fork of Reinhold Kainhofer's LilyPond suite — unmodified, with its MIT `LICENSE` and the README attribution.
-- `.gitattributes`: both folders `-text` (the files mix CRLF and LF; `core.autocrlf` would rewrite them and break the SHA-256 pins).
+- `.gitattributes`: both folders `-text`. The schema files mix CRLF and LF, and the suite's are LF text plus one binary `.mxl`; line-ending conversion would rewrite either folder and break the SHA-256 pins (`core.autocrlf=true` stores CRLF files as LF and checks LF files out as CRLF, so it would rewrite the suite's text files on checkout).
 
 ### 7.2 Validator (`musicxml_check.py`)
 - XSD validation with `lxml` (dev dependency, pinned in `requirements-dev.txt`): an `etree.Resolver` maps the schema's remote imports (`http://www.musicxml.org/xsd/xml.xsd`, `…/xlink.xsd`, both HTTP 404 today) to the local files; never the network, never `XML_CATALOG_FILES` (libxml2 reads it once per process).
