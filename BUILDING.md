@@ -37,7 +37,7 @@ pip install pybind11-stubgen
 
 For a reproducible environment that matches the exact versions this project's test workflow is
 known to work with (runtime deps plus `setuptools`, `wheel`, `pybind11-stubgen`, `mypy`,
-`cpplint`, `cppcheck`, `ruff`), install from the pinned
+`cpplint`, `cppcheck`, `ruff` and the test-only `lxml`), install from the pinned
 [`requirements-dev.txt`](requirements-dev.txt) instead. `make validate` needs the cpplint and
 cppcheck versions pinned there:
 
@@ -105,6 +105,17 @@ through the Python launcher (`py -3.12`). `make linux-gate` exports the committe
 needs, it lists the `apt` packages to install and exits with code 2. It needs CMake 3.25 or newer
 on Linux, which the build's `add_subdirectory(... SYSTEM)` requires: Ubuntu 22.04's `apt` CMake,
 3.22, fails at configure.
+
+```bash
+make corpus                # Every MusicXML corpus file, slow ones and the fetched external corpus included, against its ledger
+make corpus-update-ledger  # Write the current corpus results as the ledgers (review the diff)
+make corpus-fetch          # Download the external MusicXML corpus (OpenScore, CC0) at pinned commits
+make fuzz                  # Seeded mutation fuzzing of the MusicXML reader and writer (FUZZ_ARGS="--seed N --cases N")
+make fuzz-minimize         # The same, then the failing cases minimised into test/musicxml/fuzz-regressions/
+```
+
+`make py-tests` includes the corpus test, which needs `lxml` from `requirements-dev.txt`;
+[`test/musicxml/README.md`](test/musicxml/README.md) describes the MusicXML test infrastructure.
 
 #### Library Building (Advanced)
 
