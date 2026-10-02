@@ -16,7 +16,8 @@ temp.xml
 .claude/
 CLAUDE.md
 TODO.txt
-# Written by the test suites: C++ into the repository root, Python into test/. Anchored, so
+# Written by the Python tests into test/, and left there when a run dies before its cleanup; the
+# root rule covers output written into the repository root, where the C++ tests run. Anchored, so
 # fixtures named test_*.xml in other directories (test/xml_examples/) are not ignored.
 /test_*.xml
 /test/test_*.xml
