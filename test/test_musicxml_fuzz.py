@@ -167,8 +167,16 @@ class ClassifyTestCase(unittest.TestCase):
             (record(input="timeout", **AFTER_INPUT), "timeout:input"),
             (record(input="ValueError"), "input:ValueError"),
             (record(input="ValueError", load="IndexError", **AFTER_LOAD), "input:ValueError"),
-            (record(input="unreadable", load="RuntimeError", **AFTER_LOAD), "load:RuntimeError"),
             (record(input="invalid", export_xsd="invalid"), "export:xsd-invalid"),
+            # maialib refusing a file the validator cannot read either is a class of its own.
+            (
+                record(input="unreadable", load="RuntimeError", **AFTER_LOAD),
+                "load:RuntimeError:unreadable",
+            ),
+            (record(input="valid", load="RuntimeError", **AFTER_LOAD), "load:RuntimeError"),
+            (record(input="invalid", load="RuntimeError", **AFTER_LOAD), "load:RuntimeError"),
+            # An exception comes before the export's validity.
+            (record(analyses="RuntimeError", export_xsd="invalid"), "analyses:RuntimeError"),
             # A crash or hang anywhere comes before any exception.
             (record(input="ValueError", load="crash", **AFTER_LOAD), "crash:load"),
             (record(export_xml="crash", export_xsd="n/a", roundtrip="n/a"), "crash:export_xml"),
@@ -186,21 +194,25 @@ class ClassifyTestCase(unittest.TestCase):
     def test_expected_rejections_are_not_minimised(self):
         for outcome in (
             "ok",
-            "load:RuntimeError",
+            "load:RuntimeError:unreadable",
             "export:xsd-invalid",
             "export:semantic-errors",
             "roundtrip:unstable",
         ):
-            self.assertFalse(fuzz.worth_minimising(outcome))
+            with self.subTest(outcome=outcome):
+                self.assertFalse(fuzz.worth_minimising(outcome))
+        # A RuntimeError on a file the validator reads is a finding, like every other exception.
         for outcome in (
             "crash:load",
             "timeout:load",
             "load:IndexError",
+            "load:RuntimeError",
             "export:ill-formed",
             "crash:exit",
             "input:ValueError",
         ):
-            self.assertTrue(fuzz.worth_minimising(outcome))
+            with self.subTest(outcome=outcome):
+                self.assertTrue(fuzz.worth_minimising(outcome))
 
 
 class RunTestCase(unittest.TestCase):

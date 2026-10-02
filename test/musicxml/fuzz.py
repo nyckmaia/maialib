@@ -63,9 +63,14 @@ ENUM_ELEMENTS = {
 }
 ENUM_ATTRIBUTES = ("type", "location", "direction", "placement", "orientation")
 NUMBER = re.compile(r"\s*-?\d+(\.\d+)?\s*")
+# "ok" and the expected rejections. maialib may refuse with RuntimeError a file that is not
+# readable MusicXML, which the validator cannot read either; a RuntimeError on a file the
+# validator reads, valid against the schema or not, is a finding like any other exception. A file
+# whose root is not a score, which maialib may refuse as well, would be readable, but no corpus
+# file has one and no mutation renames the root.
 EXPECTED_OUTCOMES = (
     "ok",
-    "load:RuntimeError",
+    "load:RuntimeError:unreadable",
     "export:xsd-invalid",
     "export:semantic-errors",
     "roundtrip:unstable",
@@ -235,9 +240,10 @@ def mutate_archive(data: bytes, mutation: str, rng: random.Random) -> bytes:
 
 def classify(record: Record) -> str:
     """The outcome class of a record: a crash or timeout first, in a stage or, by the worker's
-    diagnostics, after its final record ("crash:exit", "timeout:exit"); then an exception; then
-    the export's validity; then an unstable round trip; "ok" when nothing failed. Each step looks
-    at the stages in their order, the input first."""
+    diagnostics, after its final record ("crash:exit", "timeout:exit"); then an exception, where
+    a RuntimeError from loading a file the validator could not read is
+    "load:RuntimeError:unreadable"; then the export's validity; then an unstable round trip; "ok"
+    when nothing failed. Each step looks at the stages in their order, the input first."""
     for stage in CRASH_STAGES:
         if record.get(stage) in ("crash", "timeout"):
             return f"{record[stage]}:{stage}"
@@ -249,6 +255,8 @@ def classify(record: Record) -> str:
     for stage, results in RESULTS.items():
         value = record.get(stage, "n/a")
         if value not in results and value != "n/a":
+            if stage == "load" and value == "RuntimeError" and record.get("input") == "unreadable":
+                return "load:RuntimeError:unreadable"
             return f"{stage}:{value}"
     if record.get("export_xml") == "ill-formed":
         return "export:ill-formed"
@@ -262,7 +270,8 @@ def classify(record: Record) -> str:
 
 
 def worth_minimising(outcome: str) -> bool:
-    """Crashes, hangs, unexpected exceptions and ill-formed exports; not the expected rejections."""
+    """Crashes, hangs, exceptions and ill-formed exports; not "ok" or the expected rejections,
+    among which a RuntimeError is only maialib refusing a file the validator could not read."""
     return outcome not in EXPECTED_OUTCOMES
 
 

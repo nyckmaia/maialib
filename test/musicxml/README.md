@@ -60,16 +60,18 @@ record gets one outcome:
 - `crash:<stage>` or `timeout:<stage>`, the stage the worker had not finished; `crash:exit` or
   `timeout:exit` when it crashed or hung after its final record;
 - `<stage>:<exception type>` for an exception in `input` (the validator), `load`, `analyses`,
-  `export` or `roundtrip`;
+  `export` or `roundtrip`; a `RuntimeError` from `load` on a file the validator cannot read either
+  (`input` is `unreadable`) is `load:RuntimeError:unreadable`;
 - `export:ill-formed`, `export:xsd-invalid`, `export:semantic-errors`, `roundtrip:unstable`;
 - `ok` when nothing failed.
 
 The first that applies wins, in that order, and within each the earliest stage. The report lists
 every case that is not `ok` with its record, the worker's exit code and the end of its stderr.
 `make fuzz-minimize` minimises the cases worth it, every outcome but `ok` and the expected
-rejections (`load:RuntimeError`, `export:xsd-invalid`, `export:semantic-errors`,
+rejections (`load:RuntimeError:unreadable`, `export:xsd-invalid`, `export:semantic-errors`,
 `roundtrip:unstable`), by removing elements while the outcome stays the same; re-encoded, truncated
-and archive mutants are kept as they are.
+and archive mutants are kept as they are. A `load:RuntimeError` on a file the validator reads,
+valid against the schema or not, is a finding like any other exception.
 
 ## Commands
 
