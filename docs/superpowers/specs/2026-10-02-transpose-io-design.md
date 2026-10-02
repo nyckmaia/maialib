@@ -1,7 +1,9 @@
 # MusicXML `<transpose>` reading and writing (roadmap step 1b) — Design
 
 **Status:** decisions approved by the user on 2026-10-02 (answers recorded in §2; sections §3–§8
-approved one by one).
+approved one by one); aligned with the code on 2026-10-02 while the implementation plan was written
+(the enum's namespace, unpitched notes, a fifth warning code, multi-staff and chord rules of the writer,
+the validity rule of the round-trip tests, two out-of-scope limits).
 **Roadmap:** step 1b of `C:/Users/nyck/.claude/plans/wobbly-coalescing-quill.md`. It builds on step 1a
 (`docs/superpowers/specs/2026-09-30-note-pitch-views-design.md`: written, sounding and internal concert
 views of a `Note`) and on step 4a (the MusicXML test infrastructure in `test/musicxml/`). The item-4
@@ -73,8 +75,8 @@ in chord extraction and the piano roll, a note one octave below (or above) what 
   interval: `octave-change` is folded in as `(d + 7·oc, c + 12·oc)`, the convention the existing tests
   already use (a B♭ bass clarinet is `(−8, −14)`, a piccolo `(7, 12)`). Step 1a's sounding and concert
   computations already treat a folded pair exactly as MusicXML's sum.
-- New enum `OctaveDoubling { NONE, BELOW, ABOVE }` (C++ `maiacore::OctaveDoubling`, Python
-  `maialib.OctaveDoubling`), with `Note::setOctaveDoubling(OctaveDoubling)` and
+- New enum `OctaveDoubling { NONE, BELOW, ABOVE }` (C++: global, in `constants.h`, like `ClefSign` and
+  `RhythmFigure`; Python `maialib.OctaveDoubling`), with `Note::setOctaveDoubling(OctaveDoubling)` and
   `Note::getOctaveDoubling()`. On a rest the setter changes nothing and logs a warning (`LOG_WARN`), as
   the other pitch setters do; `setPitch("rest")` clears the doubling together with the interval.
 - The written, sounding, concert and acoustic getters keep returning the note's own single pitch; the
@@ -87,10 +89,11 @@ in chord extraction and the piano roll, a note one octave below (or above) what 
 - New `Part::setTransposingInterval(int diatonicInterval, int chromaticInterval, int measureStart = 0,
   int measureEnd = -1, int staff = -1, OctaveDoubling doubling = OctaveDoubling::NONE)`: stamps the
   interval and the doubling on every pitched note of the measures `[measureStart, measureEnd)`
-  (`measureEnd = -1`: to the end of the part, as `getChords`' measure range) and of the staff `staff`
-  (0-based; `-1`: every staff). Rests and unpitched notes are left alone.
-- **Atomic:** before changing anything it checks every note in the range; if one would sound above B11
-  or below the lowest representable pitch, it throws (Python `RuntimeError`) naming the first such note
+  (`measureEnd = -1`: to the end of the part) and of the staff `staff` (0-based; `-1`: every staff).
+  Rests and unpitched notes are left alone.
+- **Atomic:** before changing anything it checks every note in the range; if one would have no
+  sounding pitch under the interval (outside the representable range, as `Note::setTransposingInterval`
+  defines it), it throws (Python `RuntimeError`) naming the first such note
   (measure, staff, written pitch) and changes nothing. Invalid measure or staff indices throw as the
   other `Part` accessors do.
 - In Python this is the way to change transpositions in place while `Measure.getNote()` returns copies
@@ -110,8 +113,11 @@ in chord extraction and the piano roll, a note one octave below (or above) what 
   `<backup>` and `<forward>`, applies score order. No corpus file has that case: `xakypueri`'s
   mid-measure `<transpose>` elements follow the last note of their measure and take effect in the next
   one.
-- Each note is stamped with the interval and the doubling in force for its staff (§3.1); rests are not
-  stamped. A part with no `<transpose>` stays untransposed.
+- Each pitched note is stamped with the interval and the doubling in force for its staff (§3.1); rests
+  and unpitched notes are not stamped (the setter and the writer leave them alone too, so stamping them
+  would not survive a round trip). A part with no `<transpose>` stays untransposed.
+- A `number` that is not a positive integer reads as absent (every staff); one beyond the part's staves
+  applies to no note.
 
 ### 4.2 Values
 - `<chromatic>` (required by the schema): the chromatic interval.
@@ -130,8 +136,9 @@ the code given here.
 | Case | Action | Code (4c-1) |
 |---|---|---|
 | `<chromatic>` is not an integer | The `<transpose>` is ignored; the previous interval stays in force | `transpose-chromatic-not-integer` |
-| The diatonic interval disagrees with the chromatic one | The diatonic interval is replaced by `conventionalDiatonicInterval(c)` and the chromatic one kept, so nothing sounds different; for a tritone (`|c| mod 12 == 6`) both the augmented fourth and the diminished fifth agree. Example: the Dvořák trumpets in E, `(3, 4)` → `(2, 4)`. An explicit `<diatonic>0</diatonic>` with a non-zero chromatic interval is a disagreement too | `transpose-pair-corrected` |
-| A note in the element's scope would sound above B11 or below the lowest representable pitch | The `<transpose>` is ignored for its whole scope; the previous interval stays in force (today the load aborts; this anticipates item-4 §8 item 10) | `transpose-out-of-range` |
+| `<octave-change>` is not an integer (schema-invalid) | The same | `transpose-octave-change-not-integer` |
+| The diatonic interval disagrees with the chromatic one | The diatonic interval is replaced by `conventionalDiatonicInterval(c)` and the chromatic one kept, so nothing sounds different; for a tritone (`|c| mod 12 == 6`) both the augmented fourth and the diminished fifth agree. Example: the Dvořák trumpets in E, `(3, 4)` → `(2, 4)`. An explicit `<diatonic>0</diatonic>` with a non-zero chromatic interval, and a `<diatonic>` that is not an integer, are disagreements too | `transpose-pair-corrected` |
+| A note in the element's scope would have no sounding pitch (outside the representable range) | The `<transpose>` is ignored for its whole scope, checked before anything is stamped; the previous interval stays in force, and a note that the previous interval cannot sound either is read untransposed (the warning gives how many). Today the load aborts; this anticipates item-4 §8 item 10 | `transpose-out-of-range` |
 | `<for-part>` (MusicXML 4.0 concert score) | Not modelled; dropped. The notes of a concert score are already written at concert pitch | `for-part-not-modelled` |
 
 The pair check runs on the values as written in the file (some files fold octaves into `<diatonic>`
@@ -153,7 +160,10 @@ and `<chromatic>`, e.g. the Strauss sample's contrabassoon `(−7, −12)`, whic
   note in the measure, otherwise in an `<attributes>` written just before the note. A change back to an
   untransposed staff is written as `<diatonic>0</diatonic><chromatic>0</chromatic>`.
 - **`number`:** one `<transpose>` without `number` when every staff of the part has the same tuple at
-  that point; otherwise one `<transpose number="s">` for each staff whose tuple changes.
+  that point; otherwise one `<transpose number="s">` for each staff whose tuple changes. A mid-measure
+  change in a part with more than one staff always carries `number`: the staves are written one after
+  another, so an element without it would also reach the following staves' notes of that measure.
+- A change brought by a chord is written before the chord's first note.
 - **Chords:** a chord whose notes have different tuples (possible only through note-level edits)
   cannot be written; the export throws, naming the measure and the staff (the spirit of item-4 D3).
 - `<attributes>` is opened when a `<transpose>` must be written, also in measures where key, time,
@@ -203,8 +213,9 @@ interval comes back as the conventional value the speller already used.
 
 ### 6.2 The octave doubling
 - In `getChords`, each doubled note adds a note one octave below (`BELOW`) or above (`ABOVE`) its
-  concert pitch, with the same onset and duration. A doubled pitch outside the representable range is
-  skipped with a warning.
+  concert pitch, with the same onset and duration; the added note is an untransposed note at that
+  concert pitch. A doubled pitch outside the representable range is skipped, with one warning per note
+  and call.
 - Everything built on `getChords` inherits it: `getChordsDataFrame`, chord qualities, the Sethares
   dissonance functions and the chord plots of `maiapy`.
 - `maiapy`'s `plotPianoRoll` also draws the doubled octave of each doubled note.
@@ -233,8 +244,11 @@ without `<diatonic>`.
 - **Writer:** the exported `<transpose>` elements — position, values, `number`, `double`,
   `octave-change`, a mid-measure change, and the error for a chord with mixed tuples.
 - **Round trip (§5.3):** for every corpus file with `<transpose>` and every fixture, export → import
-  keeps each note's sounding pitch, spelling and doubling; each such export passes the 4.0 schema and
-  the semantic checks of `test/musicxml/musicxml_check.py`.
+  keeps each note's sounding pitch, spelling and doubling. Each such export has no schema or semantic
+  error (`test/musicxml/musicxml_check.py`) involving `<transpose>` or its children, and passes the 4.0
+  schema entirely where the ledger records that file's export as valid (several samples' exports are
+  invalid for unrelated reasons, a phase-4b matter). The slow files' round trip runs under
+  `make corpus` only.
 - **`Part.setTransposingInterval`:** measure range, staff, doubling, and atomicity on a note that would
   leave the range.
 - **Concert key:** 72a, 72c (its change), 72d, `test_pattern.musicxml` and the Beethoven 5 sample;
@@ -277,6 +291,11 @@ Python tests on Linux (GCC, WSL); a short `make fuzz` run, since the reader chan
 - `<for-part>` and `<concert-score/>` are not modelled (a phase-4d candidate).
 - Non-integer transpositions (D3).
 - The import report itself (phase 4c-1 turns the warnings of §4.3 into records).
+- `Measure::getNumber()` is set only by the reader (to the measure's index), so in a score built through
+  the API every measure is 0 and `getChords` reports measure 0's key for each chord (phase 4b, which
+  handles measure numbers).
+- A score built through the API exports no `<key>` and cannot be reloaded (item-4 Appendix B 3,
+  phases 4c-1 and 4b); the round-trip tests of API-built scores set a key.
 - Correction to the roadmap: its note that "Beethoven 5 contrabasses and bass clarinets are read an
   octave high" is half wrong — the Beethoven 5 sample has no bass clarinet; bass clarinets with
   `octave-change` are in W3C 41c, the Mahler 8 sample and `xakypueri`.
