@@ -95,16 +95,19 @@ class MutationTestCase(unittest.TestCase):
 
     def test_minimising_keeps_only_what_the_outcome_needs_in_its_order(self):
         def run_case(case, timeout, tag=""):
-            # A stand-in for the worker: the load fails while the step precedes the octave.
-            failing = b"<step>C</step><octave>4</octave>" in case.data
+            # A stand-in for the worker: the load fails while <divisions> precedes <time>. The
+            # minimiser tries <time>, the larger, before <divisions>: putting each back at the end
+            # instead of where it was would leave <divisions> after <time>.
+            data = case.data
+            failing = b"<time" in data and b"<divisions" in data[: data.find(b"<time")]
             return record(load="IndexError" if failing else "ok")
 
         case = fuzz.Case(1, 1, "x", "delete-element", MINIMAL_SCORE, ".musicxml")
         with mock.patch.object(fuzz, "run_case", side_effect=run_case):
             minimal = fuzz.minimize(case, "load:IndexError", timeout=1)
         self.assertEqual(
-            b'<score-partwise version="4.0"><part id="P1"><measure number="1"><note><pitch>'
-            b"<step>C</step><octave>4</octave></pitch></note></measure></part></score-partwise>",
+            b'<score-partwise version="4.0"><part id="P1"><measure number="1"><attributes>'
+            b"<divisions>1</divisions><time></time></attributes></measure></part></score-partwise>",
             canonical(minimal),
         )
 
