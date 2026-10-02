@@ -111,8 +111,8 @@ make corpus                # Every corpus file against its ledger, slow and fetc
 make corpus-update-ledger  # Write the current corpus results as the ledgers (review the diff)
 make corpus-fetch          # Download the external corpus (OpenScore, CC0) at pinned commits
 make fuzz                  # Fuzz the MusicXML reader and writer (FUZZ_ARGS="--seed N --cases N")
-make fuzz-minimize         # The same, then up to two failing cases of each outcome minimised
-                           # into test/musicxml/fuzz-regressions/
+make fuzz-minimize         # The same, then up to two failing cases of each outcome saved
+                           # into test/musicxml/fuzz-regressions/, minimised where possible
 ```
 
 `make py-tests` includes the validator, corpus and fuzz tests (`test/test_musicxml_check.py`,

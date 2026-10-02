@@ -142,7 +142,7 @@ corpus-fetch:
 fuzz:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-fuzz.py $(FUZZ_ARGS)
 
-# The same, then up to two failing cases of each outcome minimised into
+# The same, then up to two failing cases of each outcome saved, minimised where possible, into
 # test/musicxml/fuzz-regressions/ (FUZZ_ARGS="--per-outcome N" sets how many).
 fuzz-minimize:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-fuzz.py --minimize $(FUZZ_ARGS)

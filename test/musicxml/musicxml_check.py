@@ -263,7 +263,7 @@ def _time_quarters(time: etree._Element) -> Fraction | None:
     """Quarter notes in a measure of this <time>: composite beats such as 3+2 are summed and
     several beats/beat-type pairs added; None under senza-misura or when unreadable. A sum that
     grows too long (_too_long) is returned as soon as it does, unfinished, and every measure under
-    it is reported as not measured."""
+    it that is not implicit is reported as not measured."""
     if time.find("senza-misura") is not None:
         return None
     beats = time.findall("beats")

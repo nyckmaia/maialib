@@ -13,7 +13,7 @@
 | `external/` | The external corpus, downloaded by `make corpus-fetch`; ignored by git |
 | `fuzz.py` | Seeded mutation fuzzing of maialib's MusicXML reader and writer |
 | `fuzz-work/` | The scratch files and reports of `make fuzz`; ignored by git |
-| `fuzz-regressions/` | Findings minimised by `make fuzz-minimize`, to be turned into fixtures; not ignored by git, so that they can be added |
+| `fuzz-regressions/` | Findings saved by `make fuzz-minimize`, minimised where possible, to be turned into fixtures; not ignored by git, so that they can be added |
 | `fixtures.py` | Small MusicXML documents for the tests of these tools |
 
 ## The ledger
@@ -75,7 +75,11 @@ rejections (`load:RuntimeError:unreadable`, `export:xsd-invalid`, `export:semant
 on a file the validator reads, valid against the schema or not, is a finding like any other
 exception. Re-encoded, truncated and archive mutants are kept as they are, and so is every
 `load:RuntimeError`: maialib also refuses a score without parts with a `RuntimeError`, so removing
-elements would keep the outcome but lose its cause.
+elements would keep the outcome but lose its cause. For the other outcomes, too, a minimised case
+keeps the outcome but not necessarily its cause: another fault of the same class can take over
+while elements are removed. Its `.json` names the seed, case, source file and mutation, so the
+original mutant can be generated again on the same checkout; check that both fail for the same
+reason before turning a case into a fixture.
 
 ## Commands
 
@@ -91,8 +95,8 @@ network access, and `musicxml_check.py` needs only lxml.
   the repository's root is longer than 66 characters: the deepest OpenScore file adds 193 more,
   and git there creates no file whose path is 260 characters or longer.
 - `make fuzz` runs 300 cases of seed 1 and writes `fuzz-work/report-seed-1.json`; `make
-  fuzz-minimize` does the same, then minimises up to two cases of each outcome worth it into
-  `fuzz-regressions/`. Options go through `FUZZ_ARGS`, e.g.
+  fuzz-minimize` does the same, then saves up to two cases of each outcome worth it into
+  `fuzz-regressions/`, minimised where possible. Options go through `FUZZ_ARGS`, e.g.
   `make fuzz FUZZ_ARGS="--seed 7 --cases 1000"` (also `--minutes`, `--timeout`, `--per-outcome`).
 - `python test/musicxml/musicxml_check.py FILE...` validates files; `python
   test/musicxml/dump_score.py SCORE [OUTPUT]` dumps a score.

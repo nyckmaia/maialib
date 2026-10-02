@@ -28,7 +28,7 @@ def main() -> int:
     )
     parser.add_argument("--timeout", type=float, default=30.0, help="seconds per case")
     parser.add_argument("--minimize", action="store_true")
-    parser.add_argument("--per-outcome", type=int, default=2, help="cases minimised per outcome")
+    parser.add_argument("--per-outcome", type=int, default=2, help="cases saved per outcome")
     arguments = parser.parse_args()
 
     results = fuzz.run(arguments.seed, arguments.cases, arguments.minutes, arguments.timeout)
