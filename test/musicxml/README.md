@@ -71,9 +71,11 @@ The first that applies wins, in that order, and within each the earliest stage. 
 every case that is not `ok` with its record, the worker's exit code and the end of its stderr.
 `make fuzz-minimize` minimises the cases worth it, every outcome but `ok` and the expected
 rejections (`load:RuntimeError:unreadable`, `export:xsd-invalid`, `export:semantic-errors`,
-`roundtrip:unstable`), by removing elements while the outcome stays the same; re-encoded, truncated
-and archive mutants are kept as they are. A `load:RuntimeError` on a file the validator reads,
-valid against the schema or not, is a finding like any other exception.
+`roundtrip:unstable`), by removing elements while the outcome stays the same. A `load:RuntimeError`
+on a file the validator reads, valid against the schema or not, is a finding like any other
+exception. Re-encoded, truncated and archive mutants are kept as they are, and so is every
+`load:RuntimeError`: maialib also refuses a score without parts with a `RuntimeError`, so removing
+elements would keep the outcome but lose its cause.
 
 ## Commands
 

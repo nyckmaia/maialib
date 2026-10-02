@@ -93,6 +93,19 @@ class MutationTestCase(unittest.TestCase):
                         case = fuzz.Case(1, 1, "x", mutation, data, ".musicxml")
                         self.assertEqual(data, fuzz.minimize(case, "crash:load", timeout=1))
 
+    def test_a_load_runtime_error_is_kept_as_it_is(self):
+        # maialib refuses with RuntimeError the score left once every <part> is removed, so this
+        # stand-in is what the minimiser would see: the same outcome whatever it removes.
+        case = fuzz.Case(1, 1, "x", "delete-element", MINIMAL_SCORE, ".musicxml")
+        with mock.patch.object(fuzz, "run_case", side_effect=every_load_raises("RuntimeError")):
+            self.assertEqual(MINIMAL_SCORE, fuzz.minimize(case, "load:RuntimeError", timeout=1))
+
+    def test_another_exception_on_every_load_is_minimised_to_the_root(self):
+        case = fuzz.Case(1, 1, "x", "delete-element", MINIMAL_SCORE, ".musicxml")
+        with mock.patch.object(fuzz, "run_case", side_effect=every_load_raises("IndexError")):
+            minimal = fuzz.minimize(case, "load:IndexError", timeout=1)
+        self.assertEqual(b'<score-partwise version="4.0"></score-partwise>', canonical(minimal))
+
     def test_minimising_keeps_only_what_the_outcome_needs_in_its_order(self):
         def run_case(case, timeout, tag=""):
             # A stand-in for the worker: the load fails while <divisions> precedes <time>. The
@@ -142,6 +155,15 @@ AFTER_LOAD = {key: value for key, value in AFTER_INPUT.items() if key != "load"}
 def exited(code):
     """Diagnostics of a worker that ended with ``code`` (None: stopped at the timeout)."""
     return {"exit_code": code, "stderr_tail": ""}
+
+
+def every_load_raises(exception):
+    """A stand-in for fuzz.run_case: whatever the document, maialib's load raises ``exception``."""
+
+    def run_case(case, timeout, tag=""):
+        return record(load=exception, **AFTER_LOAD)
+
+    return run_case
 
 
 class ClassifyTestCase(unittest.TestCase):

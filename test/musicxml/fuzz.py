@@ -49,6 +49,13 @@ MXL_MUTATIONS = ("mxl-drop-container", "mxl-wrong-rootfile", "mxl-corrupt-zip")
 # and re-serialising a re-encoded one or an archive's document after removing elements would undo
 # the mutation, so minimize() returns them as they are.
 UNMINIMISABLE = ("utf16", "byte-order-mark", "latin1-declaration", "truncate") + MXL_MUTATIONS
+# Outcomes whose cause removing elements cannot keep, so minimize() returns them as they are too.
+# minimize() keeps a removal while the outcome class stays the same, and maialib refuses with
+# RuntimeError many documents it cannot read, a score without any <part> among them ("Unable to
+# locate the MusicXML XPath: /score-partwise/part"): a readable load:RuntimeError would shrink to
+# an empty score, whatever its cause was. A finer signature, such as the exception's message,
+# would tell the causes apart.
+UNMINIMISABLE_OUTCOMES = ("load:RuntimeError",)
 ENUM_ELEMENTS = {
     "step",
     "type",
@@ -271,7 +278,8 @@ def classify(record: Record) -> str:
 
 def worth_minimising(outcome: str) -> bool:
     """Crashes, hangs, exceptions and ill-formed exports; not "ok" or the expected rejections,
-    among which a RuntimeError is only maialib refusing a file the validator could not read."""
+    among which a RuntimeError is only maialib refusing a file the validator could not read.
+    make fuzz-minimize saves these cases; minimize() returns some of them as they are."""
     return outcome not in EXPECTED_OUTCOMES
 
 
@@ -349,8 +357,10 @@ def _attached(element: etree._Element, root: etree._Element) -> bool:
 
 
 def minimize(case: Case, outcome: str, timeout: float, budget: int = 200) -> bytes:
-    """Remove elements, larger subtrees first, while the mutant keeps its outcome."""
-    if case.mutation in UNMINIMISABLE:
+    """Remove elements, larger subtrees first, while the mutant keeps its outcome. A mutant whose
+    mutation is in UNMINIMISABLE, or whose outcome is in UNMINIMISABLE_OUTCOMES, is returned as it
+    is."""
+    if case.mutation in UNMINIMISABLE or outcome in UNMINIMISABLE_OUTCOMES:
         return case.data
     try:
         root = musicxml_check.parse_document(case.data)

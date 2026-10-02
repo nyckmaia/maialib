@@ -3,8 +3,8 @@
 Options go through FUZZ_ARGS, e.g. `make fuzz FUZZ_ARGS="--seed 7 --cases 1000"`. The run prints
 how many cases ended in each outcome and writes every case that is not ok to
 test/musicxml/fuzz-work/report-seed-<seed>.json; with --minimize, up to --per-outcome cases of
-each failing outcome are minimised into test/musicxml/fuzz-regressions/. Needs maialib installed
-(`make dev`).
+each failing outcome are saved into test/musicxml/fuzz-regressions/, minimised unless
+fuzz.minimize keeps them as they are. Needs maialib installed (`make dev`).
 """
 
 import argparse
