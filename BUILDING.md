@@ -107,11 +107,12 @@ on Linux, which the build's `add_subdirectory(... SYSTEM)` requires: Ubuntu 22.0
 3.22, fails at configure.
 
 ```bash
-make corpus                # Every MusicXML corpus file, slow ones and the fetched external corpus included, against its ledger
+make corpus                # Every corpus file against its ledger, slow and fetched ones included
 make corpus-update-ledger  # Write the current corpus results as the ledgers (review the diff)
-make corpus-fetch          # Download the external MusicXML corpus (OpenScore, CC0) at pinned commits
-make fuzz                  # Seeded mutation fuzzing of the MusicXML reader and writer (FUZZ_ARGS="--seed N --cases N")
-make fuzz-minimize         # The same, then the failing cases minimised into test/musicxml/fuzz-regressions/
+make corpus-fetch          # Download the external corpus (OpenScore, CC0) at pinned commits
+make fuzz                  # Fuzz the MusicXML reader and writer (FUZZ_ARGS="--seed N --cases N")
+make fuzz-minimize         # The same, then up to two failing cases of each outcome minimised
+                           # into test/musicxml/fuzz-regressions/
 ```
 
 `make py-tests` includes the corpus test, which needs `lxml` from `requirements-dev.txt`;
