@@ -7,6 +7,7 @@ import contextlib
 import io
 import json
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -44,6 +45,12 @@ NOTHING_FINISHED = {
 # Corpus files under and over the size from which a file is slow.
 SMALL_FILE = "test/xml_examples/unit_test/test_chord.xml"
 SLOW_FILE = "test/xml_examples/Beethoven/big_files/Symphony_9th.xml"
+
+# Small corpus files that load, one uncompressed and one compressed.
+LOADABLE_FILES = (
+    "test/musicxml/w3c-test-suite/xmlFiles/45a-SimpleRepeat.musicxml",
+    "test/xml_examples/unit_test/test_compressed_file.mxl",
+)
 
 # MINIMAL_SCORE with an ampersand in its title, which maialib writes unescaped: the score is valid
 # and loads, but its export is not well-formed XML.
@@ -214,6 +221,26 @@ class WorkerProcessTestCase(unittest.TestCase):
             path.write_bytes(score)
             record = corpus.run_one(str(path), timeout=60)
         self.assertEqual("ok", record["load"])
+
+    def test_a_file_whose_path_is_not_ascii_has_the_record_of_its_content(self):
+        # maialib cannot open a path with a character outside ASCII on Windows, where these
+        # loads succeed only through the worker's ASCII-named copy. On Linux maialib opens such a
+        # path itself, so there the test passes with or without the copy.
+        ledger = corpus.load_ledger(corpus.LEDGER)
+        for name in LOADABLE_FILES:
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as folder:
+                path = Path(folder) / ("partitura_\u00e9" + Path(name).suffix)
+                shutil.copyfile(str(corpus.REPO_ROOT / name), str(path))
+                done = subprocess.run(
+                    [sys.executable, str(corpus.WORKER), str(path)],
+                    capture_output=True,
+                    timeout=120,
+                )
+                record = records_in(done.stdout.decode("utf-8"))[-1]
+                self.assertEqual("ok", record["load"])
+                self.assertEqual([], corpus.compare({name: ledger[name]}, {name: record}))
+                # The worker removes its copy; a failure to do so would end it with an error.
+                self.assertEqual(0, done.returncode, done.stderr.decode("utf-8", "replace"))
 
 
 class CorpusLedgerTestCase(unittest.TestCase):

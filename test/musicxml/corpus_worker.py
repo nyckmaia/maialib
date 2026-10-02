@@ -5,7 +5,8 @@ Usage: ``python corpus_worker.py PATH [--analyses]``
 After each stage the worker prints a line "CORPUS-RECORD <json>" holding the record so far, so
 the parent still learns the finished stages when a later one crashes or hangs, and charges the
 crash or hang to the first stage still pending. The stages, in order: input (the file itself
-against the MusicXML 4.0 schema), load (maialib.Score), analyses (only with --analyses: chords and
+against the MusicXML 4.0 schema), load (maialib.Score, from an ASCII-named copy of the file when
+its path is not ASCII), analyses (only with --analyses: chords and
 the intervals between consecutive notes), export (Score.toXML), the export's checks (export_xml:
 well-formed; export_xsd: the schema; export_errors: the semantic errors), and roundtrip (the
 export loaded and exported again, compared without its encoding date). A stage that cannot run
@@ -14,13 +15,15 @@ because of an earlier result is "n/a".
 
 from __future__ import annotations
 
+import contextlib
 import io
 import json
 import re
+import shutil
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Iterator
 
 import musicxml_check
 
@@ -105,11 +108,31 @@ def roundtrip_status(ml: Any, exported: str) -> str:
     )
 
 
+@contextlib.contextmanager
+def loadable_path(path: Path) -> Iterator[Path]:
+    """``path`` when it is ASCII; otherwise an ASCII-named temporary copy of the file, removed when
+    the with block ends."""
+    if str(path).isascii():
+        yield path
+        return
+    # maialib cannot open a non-ASCII path on Windows; the copy keeps the ledger about the
+    # MusicXML content. It keeps the suffix, from which maialib decides how to read the file.
+    with tempfile.TemporaryDirectory() as folder:
+        copy = Path(folder) / ("score" + path.suffix)
+        shutil.copyfile(str(path), str(copy))
+        yield copy
+
+
 def examine(path: Path, analyses: bool) -> None:
     record = new_record(analyses)
     record["input"] = input_status(path)
     emit(record)
+    # The copy, if any, lasts until the record is final: longer than maialib reads the file.
+    with loadable_path(path) as source:
+        examine_with_maialib(source, record, analyses)
 
+
+def examine_with_maialib(path: Path, record: Record, analyses: bool) -> None:
     import maialib as ml
 
     try:
