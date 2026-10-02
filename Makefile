@@ -33,6 +33,7 @@ all: dev
 .PHONY: tests
 .PHONY: corpus
 .PHONY: corpus-update-ledger
+.PHONY: corpus-fetch
 .PHONY: msvc-gate
 .PHONY: linux-gate
 .PHONY: dist
@@ -128,6 +129,11 @@ corpus:
 # Write the current corpus results as the ledgers; review the diff before committing it.
 corpus-update-ledger:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-corpus.py --update-ledger
+
+# Download the external MusicXML corpus (OpenScore, CC0) at pinned commits into
+# test/musicxml/external/, which git ignores.
+corpus-fetch:
+	@$(PYTHON) $(SCRIPTS_DIR)/make-corpus-fetch.py
 
 # Windows only: maiacore and its C++ tests compiled by MSVC (Visual Studio 2022) in Debug and
 # Release, then the package built by `pip install .` as CI builds it, with the Python tests.

@@ -9,6 +9,8 @@
 | `golden/` | Reviewed tool outputs that the tests compare byte for byte |
 | `corpus.py`, `corpus_worker.py` | The corpus, how each file is examined, and the ledger |
 | `ledger.json` | The expected result of every in-repository corpus file |
+| `ledger-external.json` | The same for the external corpus |
+| `external/` | The external corpus, downloaded by `make corpus-fetch`; ignored by git |
 | `fixtures.py` | Small MusicXML documents for the tests of these tools |
 
 ## The ledger
@@ -40,11 +42,13 @@ like code — every changed line must be explained by the change being committed
 
 ## Commands
 
-All need maialib installed (`make dev`).
+All but `make corpus-fetch` need maialib installed (`make dev`).
 
 - `make py-tests` runs `test_musicxml_corpus.py`: every corpus file except the slow ones against
   `ledger.json`.
 - `make corpus` runs every file, slow ones included.
 - `make corpus-update-ledger` writes the ledgers from the current results.
+- `make corpus-fetch` downloads OpenScore Lieder and String Quartets (CC0) at pinned commits;
+  `make corpus` then includes them. It needs git and network access.
 - `python test/musicxml/musicxml_check.py FILE...` validates files; `python
   test/musicxml/dump_score.py SCORE [OUTPUT]` dumps a score.
