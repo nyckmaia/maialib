@@ -267,6 +267,20 @@ class WorkerStagesTestCase(unittest.TestCase):
         self.assertEqual("stable", corpus_worker.roundtrip_status(maialib, exported))
         self.assertEqual([exported.encode("utf-8")], read)
 
+    def test_the_round_trip_comparison_leaves_out_only_the_encoding_date(self):
+        dated = (
+            "<identification>\n"
+            "    <encoding>\n"
+            "      <encoding-date>2026-10-02</encoding-date>\n"
+            "      <software>Maialib 1.0.0</software>\n"
+            "      <encoding-description>Maialib / MusicXML 3.0</encoding-description>\n"
+            "    </encoding>\n"
+            "  </identification>\n"
+        )
+        undated = dated.replace("<encoding-date>2026-10-02</encoding-date>", "")
+        self.assertEqual(undated, corpus_worker.without_encoding_date(dated))
+        self.assertEqual(undated, corpus_worker.without_encoding_date(undated))
+
 
 class WorkerProcessTestCase(unittest.TestCase):
     def test_a_worker_out_of_time_is_a_timeout_at_its_first_unfinished_stage(self):

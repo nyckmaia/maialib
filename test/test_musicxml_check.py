@@ -401,6 +401,30 @@ class SemanticChecksTestCase(unittest.TestCase):
         )
         self.assertEqual([], errors(data))
 
+    def test_a_tie_from_a_sharp_to_the_natural_of_its_step_does_not_pair(self):
+        # C#4 and C4 differ only in their <alter>.
+        sharp = note(2, b"half", b'<tie type="start"/><voice>1</voice>').replace(
+            b"<step>C</step>", b"<step>C</step><alter>1</alter>"
+        )
+        natural = note(2, b"half", b'<tie type="stop"/><voice>1</voice>')
+        self.assertEqual(
+            [
+                musicxml_check.Finding(
+                    "unpaired-tie",
+                    "error",
+                    "part P1",
+                    "tie C/0/4: starts 0, stops 1 (more stops than starts)",
+                ),
+                musicxml_check.Finding(
+                    "unpaired-tie",
+                    "error",
+                    "part P1",
+                    "tie C/1/4: starts 1, stops 0 (more starts than stops)",
+                ),
+            ],
+            musicxml_check.check_bytes(with_notes(sharp, natural)).findings,
+        )
+
     def test_a_slur_start_without_a_stop_is_an_error(self):
         data = with_notes(note(4, b"whole", notations=b'<slur type="start" number="1"/>'))
         self.assertIn("unpaired-slur", errors(data))
