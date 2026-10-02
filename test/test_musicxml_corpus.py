@@ -59,6 +59,69 @@ AMPERSAND_SCORE = MINIMAL_SCORE.replace(
     b'<score-partwise version="4.0"><work><work-title>A &amp; B</work-title></work>',
 )
 
+# A stand-in maialib whose scores load and export MINIMAL_SCORE, so that every stage succeeds; at
+# exit, after the worker's final record, it writes 3,000 characters and a byte that is not UTF-8
+# to stderr and ends the process with status 3, as a crash in a destructor would.
+DIES_AFTER_THE_FINAL_RECORD = f"""
+import atexit
+import os
+import sys
+
+EXPORT = {MINIMAL_SCORE.decode()!r}
+
+
+class Score:
+    def __init__(self, path):
+        pass
+
+    def toXML(self):
+        return EXPORT
+
+
+def die():
+    sys.stderr.buffer.write(b"a" * 3000 + b"\\xff the end")
+    sys.stderr.buffer.flush()
+    os._exit(3)
+
+
+atexit.register(die)
+"""
+
+# A stand-in maialib that replaces the checks of the export, which the worker runs after
+# importing maialib, by an exit with status 3.
+DIES_WHILE_CHECKING_THE_EXPORT = """
+import os
+
+import musicxml_check
+
+musicxml_check.check_bytes = lambda data: os._exit(3)
+
+
+class Score:
+    def __init__(self, path):
+        pass
+
+    def toXML(self):
+        return "<score-partwise/>"
+"""
+
+# A stand-in for corpus_worker.py: it leaves a file in its temporary directory and names the file
+# on stderr, then hangs when the file to examine is called "hang" and exits with status 3
+# otherwise.
+LEAVES_A_TEMPORARY_FILE = """
+import os
+import sys
+import tempfile
+import time
+
+handle, path = tempfile.mkstemp()
+os.close(handle)
+print(path, file=sys.stderr, flush=True)
+if os.path.basename(sys.argv[1]) == "hang":
+    time.sleep(60)
+sys.exit(3)
+"""
+
 
 def records_in(output):
     """The records a worker printed, in order."""
@@ -70,6 +133,18 @@ def records_in(output):
 
 def pending_stages(record):
     return sorted(key for key, value in record.items() if value == corpus_worker.PENDING)
+
+
+@contextlib.contextmanager
+def stand_in_maialib(source):
+    """Inside the with block, the workers import a maialib package holding ``source``: it comes
+    first on PYTHONPATH."""
+    with tempfile.TemporaryDirectory() as folder:
+        package = Path(folder) / "maialib"
+        package.mkdir()
+        (package / "__init__.py").write_text(source, encoding="utf-8")
+        with mock.patch.dict(os.environ, {"PYTHONPATH": folder}):
+            yield
 
 
 class LedgerLogicTestCase(unittest.TestCase):
@@ -201,15 +276,62 @@ class WorkerProcessTestCase(unittest.TestCase):
         )
 
     def test_a_worker_that_dies_is_a_crash_at_its_first_unfinished_stage(self):
-        # A stand-in for maialib, found first on PYTHONPATH, ends the process when the worker
-        # imports it after the input stage, as a crash inside maialib would.
-        with tempfile.TemporaryDirectory() as folder:
-            package = Path(folder) / "maialib"
-            package.mkdir()
-            (package / "__init__.py").write_text("import os\n\nos._exit(3)\n", encoding="utf-8")
-            with mock.patch.dict(os.environ, {"PYTHONPATH": folder}):
-                record = corpus.run_one(SMALL_FILE, timeout=60)
+        # The stand-in ends the process when the worker imports it after the input stage, as a
+        # crash inside maialib would.
+        with stand_in_maialib("import os\n\nos._exit(3)\n"):
+            record = corpus.run_one(SMALL_FILE, timeout=60)
         self.assertEqual({**NOTHING_FINISHED, "input": "valid", "load": "crash"}, record)
+
+    def test_a_worker_that_dies_while_checking_the_export_is_a_crash_there(self):
+        # The record that says the export succeeded comes before the export's checks.
+        with stand_in_maialib(DIES_WHILE_CHECKING_THE_EXPORT):
+            record = corpus.run_one(SMALL_FILE, timeout=60)
+        self.assertEqual(
+            {
+                **NOTHING_FINISHED,
+                "input": "valid",
+                "load": "ok",
+                "export": "ok",
+                "export_xml": "crash",
+            },
+            record,
+        )
+
+    def test_diagnostics_give_the_exit_status_and_the_end_of_stderr(self):
+        diagnostics = {}
+        with stand_in_maialib(DIES_AFTER_THE_FINAL_RECORD):
+            record = corpus.run_one(SMALL_FILE, timeout=60, diagnostics=diagnostics)
+        # The record is complete: only the exit status shows the crash.
+        self.assertEqual({**FINISHED, "export_xsd": "valid"}, record)
+        self.assertEqual(
+            {"exit_code": 3, "stderr_tail": "a" * 1991 + "\ufffd the end"}, diagnostics
+        )
+
+    def test_the_stderr_tail_keeps_every_character_the_worker_wrote(self):
+        # On Windows a pipe would otherwise take the ANSI code page: the parent would get a byte
+        # that is not UTF-8 for the first character and an escape sequence for the second.
+        diagnostics = {}
+        source = 'import sys\n\nprint("partitura \\u00e9 \\u4e00", file=sys.stderr)\n'
+        with stand_in_maialib(source):
+            corpus.run_one(SMALL_FILE, timeout=60, diagnostics=diagnostics)
+        self.assertIn("partitura \u00e9 \u4e00", diagnostics["stderr_tail"])
+
+    def test_a_worker_keeps_its_temporary_files_in_a_folder_removed_when_it_ends(self):
+        with tempfile.TemporaryDirectory() as folder:
+            worker = Path(folder) / "worker.py"
+            worker.write_text(LEAVES_A_TEMPORARY_FILE, encoding="utf-8")
+            temporary = Path(folder) / "temporary"
+            temporary.mkdir()
+            for name, timeout in (("crash", 60), ("hang", 3)):
+                with self.subTest(name=name), mock.patch.object(
+                    corpus, "WORKER", worker
+                ), mock.patch.object(tempfile, "tempdir", str(temporary)):
+                    diagnostics = {}
+                    corpus.run_one(name, timeout=timeout, diagnostics=diagnostics)
+                    left = Path(diagnostics["stderr_tail"].strip())
+                    # The worker's file was in a folder of its own, which is gone, file and all.
+                    self.assertEqual(temporary, left.parent.parent)
+                    self.assertEqual([], os.listdir(str(temporary)))
 
     def test_a_warning_the_windows_code_page_cannot_encode_leaves_the_worker_running(self):
         # maialib warns about an <alter> it cannot spell and quotes it; this one is a CJK
@@ -231,16 +353,22 @@ class WorkerProcessTestCase(unittest.TestCase):
             with self.subTest(name=name), tempfile.TemporaryDirectory() as folder:
                 path = Path(folder) / ("partitura_\u00e9" + Path(name).suffix)
                 shutil.copyfile(str(corpus.REPO_ROOT / name), str(path))
+                temporary = Path(folder) / "temporary"
+                temporary.mkdir()
+                variables = dict.fromkeys(("TMPDIR", "TEMP", "TMP"), str(temporary))
                 done = subprocess.run(
                     [sys.executable, str(corpus.WORKER), str(path)],
                     capture_output=True,
                     timeout=120,
+                    env={**os.environ, **variables},
                 )
                 record = records_in(done.stdout.decode("utf-8"))[-1]
                 self.assertEqual("ok", record["load"])
                 self.assertEqual([], corpus.compare({name: ledger[name]}, {name: record}))
-                # The worker removes its copy; a failure to do so would end it with an error.
+                # The worker ends without an error and leaves nothing in its temporary directory,
+                # where it made the copy.
                 self.assertEqual(0, done.returncode, done.stderr.decode("utf-8", "replace"))
+                self.assertEqual([], os.listdir(str(temporary)))
 
 
 class CorpusLedgerTestCase(unittest.TestCase):

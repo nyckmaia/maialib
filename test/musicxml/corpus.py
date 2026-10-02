@@ -13,6 +13,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from typing import Any, Dict, Iterable
@@ -30,6 +31,7 @@ SUFFIXES = (".xml", ".musicxml", ".mxl")
 SLOW_BYTES = 10_000_000
 SLOW_TIMEOUT = 3600.0
 IGNORED_KEYS = ("slow", "note")
+STDERR_TAIL = 2000
 
 Record = Dict[str, Any]
 
@@ -82,19 +84,44 @@ def ended(record: Record, outcome: str) -> Record:
     return record
 
 
-def run_one(name: str, analyses: bool = False, timeout: float | None = None) -> Record:
-    """Examine one repository-relative file in a fresh process and return its record."""
+def run_one(
+    name: str,
+    analyses: bool = False,
+    timeout: float | None = None,
+    diagnostics: dict[str, Any] | None = None,
+) -> Record:
+    """Examine one repository-relative file in a fresh process and return its record.
+
+    The worker keeps its temporary files in a directory of its own, removed when the worker has
+    ended, so that a worker killed at the timeout or ended by a crash leaves none behind. With
+    ``diagnostics``, also fill it with the worker's ``exit_code`` (None when the timeout stopped
+    it) and ``stderr_tail``, the last STDERR_TAIL characters of its standard error.
+    """
     command = [sys.executable, str(WORKER), str(REPO_ROOT / name)]
     if analyses:
         command.append("--analyses")
     limit = timeout_for(name) if timeout is None else timeout
-    try:
-        completed = subprocess.run(command, cwd=str(REPO_ROOT), capture_output=True, timeout=limit)
-    except subprocess.TimeoutExpired as expired:
-        record = _last_record(expired.stdout or b"") or corpus_worker.new_record(analyses)
-        return ended(record, "timeout")
-    record = _last_record(completed.stdout) or corpus_worker.new_record(analyses)
-    return ended(record, "crash")
+    with tempfile.TemporaryDirectory() as temporary:
+        # Python's tempfile reads TMPDIR, TEMP and TMP; Windows' own functions read TMP and TEMP.
+        variables = dict.fromkeys(("TMPDIR", "TEMP", "TMP"), temporary)
+        try:
+            completed = subprocess.run(
+                command,
+                cwd=str(REPO_ROOT),
+                env={**os.environ, **variables},
+                capture_output=True,
+                timeout=limit,
+            )
+        except subprocess.TimeoutExpired as expired:
+            # subprocess.run has killed the worker and waited for it.
+            exit_code, stdout, stderr = None, expired.stdout, expired.stderr
+        else:
+            exit_code, stdout, stderr = completed.returncode, completed.stdout, completed.stderr
+    if diagnostics is not None:
+        diagnostics["exit_code"] = exit_code
+        diagnostics["stderr_tail"] = (stderr or b"").decode("utf-8", "replace")[-STDERR_TAIL:]
+    record = _last_record(stdout or b"") or corpus_worker.new_record(analyses)
+    return ended(record, "timeout" if exit_code is None else "crash")
 
 
 def run_corpus(

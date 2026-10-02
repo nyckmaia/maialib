@@ -19,7 +19,7 @@ One line per corpus file (a repository-relative path), with these fields:
 
 | Field | Values |
 |---|---|
-| `input` | `valid`, `invalid` or `unreadable`: the file itself against the 4.0 schema (informational); the type of the exception the validator raised (maialib still examines the file); `crash` or `timeout` |
+| `input` | `valid`, `invalid` or `unreadable`: the file itself against the 4.0 schema; the type of the exception the validator raised (maialib still examines the file); `crash` or `timeout`. Compared like every other field, so a validator change that alters it needs a ledger update |
 | `load` | `ok`, the type of the exception `maialib.Score(path)` raised (`IndexError`, `RuntimeError`, …), `crash`, `timeout`, or `n/a` after a crash or timeout in `input` |
 | `export` | `ok`, the exception type `Score.toXML()` raised, `crash`, `timeout` or `n/a` |
 | `export_xml` | `well-formed` or `ill-formed`; `crash` or `timeout` while the export is checked (well-formedness, schema and semantic checks are one step); `n/a` without an export |
@@ -46,13 +46,16 @@ like code — every changed line must be explained by the change being committed
 
 ## Commands
 
-All but `make corpus-fetch` need maialib installed (`make dev`).
+Every command needs maialib installed (`make dev`) except two: `make corpus-fetch` needs git and
+network access, and `musicxml_check.py` needs only lxml.
 
 - `make py-tests` runs `test_musicxml_corpus.py`: every corpus file except the slow ones against
   `ledger.json`.
 - `make corpus` runs every file, slow ones included.
 - `make corpus-update-ledger` writes the ledgers from the current results.
 - `make corpus-fetch` downloads OpenScore Lieder and String Quartets (CC0) at pinned commits;
-  `make corpus` then includes them. It needs git and network access.
+  `make corpus` then includes them. On Windows it fails with "Filename too long" when the path of
+  the repository's root is longer than 66 characters: the deepest OpenScore file adds 193 more,
+  and git there creates no file whose path is 260 characters or longer.
 - `python test/musicxml/musicxml_check.py FILE...` validates files; `python
   test/musicxml/dump_score.py SCORE [OUTPUT]` dumps a score.

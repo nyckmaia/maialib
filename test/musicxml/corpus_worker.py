@@ -6,11 +6,11 @@ After each stage the worker prints a line "CORPUS-RECORD <json>" holding the rec
 the parent still learns the finished stages when a later one crashes or hangs, and charges the
 crash or hang to the first stage still pending. The stages, in order: input (the file itself
 against the MusicXML 4.0 schema), load (maialib.Score, from an ASCII-named copy of the file when
-its path is not ASCII), analyses (only with --analyses: chords and
-the intervals between consecutive notes), export (Score.toXML), the export's checks (export_xml:
-well-formed; export_xsd: the schema; export_errors: the semantic errors), and roundtrip (the
-export loaded and exported again, compared without its encoding date). A stage that cannot run
-because of an earlier result is "n/a".
+its path is not ASCII), analyses (only with --analyses: chords and the intervals between
+consecutive notes), export (Score.toXML), the export's checks (export_xml: well-formed;
+export_xsd: the schema; export_errors: the semantic errors), and roundtrip (the export loaded and
+exported again, compared without its encoding date). A stage that cannot run because of an
+earlier result is "n/a".
 """
 
 from __future__ import annotations
@@ -181,8 +181,10 @@ def main(argv: list[str]) -> int:
     # maialib prints its warnings to sys.stdout, and a warning with a character the stream
     # cannot encode ends the process. A pipe takes the platform's encoding (the ANSI code page
     # on Windows); UTF-8 encodes every character, so a file gives the same result everywhere.
-    if isinstance(sys.stdout, io.TextIOWrapper):
-        sys.stdout.reconfigure(encoding="utf-8", errors="backslashreplace")
+    # The parent reads both streams as UTF-8.
+    for stream in (sys.stdout, sys.stderr):
+        if isinstance(stream, io.TextIOWrapper):
+            stream.reconfigure(encoding="utf-8", errors="backslashreplace")
     analyses = "--analyses" in argv
     paths = [argument for argument in argv if argument != "--analyses"]
     if len(paths) != 1:
