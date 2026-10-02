@@ -1,5 +1,7 @@
 """dump_score: a canonical, deterministic JSON dump of a maialib Score."""
 
+import contextlib
+import io
 import json
 import subprocess
 import sys
@@ -17,6 +19,14 @@ from fixtures import MINIMAL_SCORE  # noqa: E402
 
 # Two staves in every measure, so a dump that left out a staff would lose notes.
 FIXTURE = Path(__file__).resolve().parent / "xml_examples" / "unit_test" / "test_staves.xml"
+
+# Its <accidental> name is unknown to maialib, which prints a warning while it loads the score.
+WARNING_FIXTURE = (
+    Path(__file__).resolve().parent
+    / "xml_examples"
+    / "unit_test"
+    / "quarter_tone_unknown_accidental_name.xml"
+)
 
 # The command line's dump of FIXTURE, reviewed by hand. When the dump changes on purpose, write it
 # again from test/ with `python musicxml/dump_score.py xml_examples/unit_test/test_staves.xml
@@ -80,6 +90,20 @@ class DumpScoreTestCase(unittest.TestCase):
 
     def test_the_command_line_prints_the_golden_dump(self):
         self.assertEqual(GOLDEN.read_bytes(), run_command_line())
+
+    def test_the_command_line_prints_only_the_dump_and_warnings_go_to_stderr(self):
+        command = [sys.executable, str(MUSICXML / "dump_score.py"), str(WARNING_FIXTURE)]
+        done = subprocess.run(command, capture_output=True, timeout=120)
+        self.assertEqual(0, done.returncode, done.stderr.decode("utf-8", "replace"))
+        try:
+            printed = json.loads(done.stdout)
+        except ValueError:
+            self.fail(f"stdout is not only the JSON dump: {done.stdout[:200]!r}")
+        with contextlib.redirect_stdout(io.StringIO()):  # where the load's warning goes
+            expected = dump_score.dump_score(ml.Score(str(WARNING_FIXTURE)))
+        self.assertEqual(expected, printed)
+        self.assertNotIn(b"\r", done.stdout)
+        self.assertIn(b"[WARN] Unrecognized <accidental> name 'natural-sharp'", done.stderr)
 
     def test_a_note_is_dumped_with_its_pitch_rhythm_and_flags(self):
         record = dump_score.note_record(ml.Note("C#4"))

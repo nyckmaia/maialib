@@ -1,7 +1,8 @@
 """A canonical JSON dump of a maialib Score, to compare the model before and after a change.
 
 Command line: ``python dump_score.py SCORE [OUTPUT]`` writes the dump to OUTPUT or prints it, as
-ASCII with LF line endings on every platform.
+ASCII with LF line endings on every platform. What maialib prints while it loads the score and
+the dump reads it, such as its warnings, goes to stderr, so that stdout holds only the dump.
 Every value comes from maialib's public API through ``_safe``: a getter that raises, such as a
 string getter whose bytes are not UTF-8, is recorded as {"error": "<exception type>"} instead of
 stopping the dump. So is a list that cannot be read, such as the notes of a staff whose note
@@ -10,6 +11,7 @@ list is gone.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import sys
 from pathlib import Path
@@ -145,11 +147,15 @@ def main(argv: list[str]) -> int:
     if len(argv) not in (1, 2):
         print("usage: dump_score.py SCORE [OUTPUT]", file=sys.stderr)
         return 2
-    import maialib as ml
+    # maialib's binding sends what its C++ code prints to Python's sys.stdout, so redirecting
+    # sys.stdout moves it to stderr.
+    with contextlib.redirect_stdout(sys.stderr):
+        import maialib as ml
 
+        dump = dump_score(ml.Score(argv[0]))
     # Bytes, so that no platform rewrites the line endings: text-mode output on Windows turns
     # each LF into CRLF. json.dumps escapes every non-ASCII character, so the text is ASCII.
-    text = json.dumps(dump_score(ml.Score(argv[0])), indent=1, sort_keys=True) + "\n"
+    text = json.dumps(dump, indent=1, sort_keys=True) + "\n"
     data = text.encode("ascii")
     if len(argv) == 2:
         Path(argv[1]).write_bytes(data)
