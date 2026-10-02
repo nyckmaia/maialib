@@ -1,2 +1,5 @@
 # Downloaded by `make corpus-fetch`.
 external/
+
+# Scratch files of `make fuzz`.
+fuzz-work/

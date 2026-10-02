@@ -11,6 +11,9 @@
 | `ledger.json` | The expected result of every in-repository corpus file |
 | `ledger-external.json` | The same for the external corpus |
 | `external/` | The external corpus, downloaded by `make corpus-fetch`; ignored by git |
+| `fuzz.py` | Seeded mutation fuzzing of maialib's MusicXML reader and writer |
+| `fuzz-work/` | The scratch files and reports of `make fuzz`; ignored by git |
+| `fuzz-regressions/` | Findings minimised by `make fuzz-minimize`, to be turned into fixtures; not ignored by git, so that they can be added |
 | `fixtures.py` | Small MusicXML documents for the tests of these tools |
 
 ## The ledger
@@ -44,6 +47,30 @@ The ledger is strict both ways: a file that gets worse fails, and so does a file
 without a ledger update. `make corpus-update-ledger` writes the current results; review its diff
 like code — every changed line must be explained by the change being committed.
 
+## Fuzzing
+
+Case N of seed S mutates one corpus file of at most 200 KB with a random generator seeded with
+"S:N", so a seed and a case number always give the same mutant. The mutations delete, duplicate or
+reorder elements, empty texts, make numbers non-numeric, negative, zero or huge, put invalid
+enumeration values, re-encode the document (UTF-16, a byte-order mark, a declared Latin-1),
+truncate it, and, in an `.mxl` archive, remove `container.xml`, point the rootfile elsewhere or
+corrupt the zip. Each mutant goes through `corpus_worker.py --analyses` in its own process, and its
+record gets one outcome:
+
+- `crash:<stage>` or `timeout:<stage>`, the stage the worker had not finished; `crash:exit` or
+  `timeout:exit` when it crashed or hung after its final record;
+- `<stage>:<exception type>` for an exception in `input` (the validator), `load`, `analyses`,
+  `export` or `roundtrip`;
+- `export:ill-formed`, `export:xsd-invalid`, `export:semantic-errors`, `roundtrip:unstable`;
+- `ok` when nothing failed.
+
+The first that applies wins, in that order, and within each the earliest stage. The report lists
+every case that is not `ok` with its record, the worker's exit code and the end of its stderr.
+`make fuzz-minimize` minimises the cases worth it, every outcome but `ok` and the expected
+rejections (`load:RuntimeError`, `export:xsd-invalid`, `export:semantic-errors`,
+`roundtrip:unstable`), by removing elements while the outcome stays the same; re-encoded, truncated
+and archive mutants are kept as they are.
+
 ## Commands
 
 Every command needs maialib installed (`make dev`) except two: `make corpus-fetch` needs git and
@@ -57,5 +84,9 @@ network access, and `musicxml_check.py` needs only lxml.
   `make corpus` then includes them. On Windows it fails with "Filename too long" when the path of
   the repository's root is longer than 66 characters: the deepest OpenScore file adds 193 more,
   and git there creates no file whose path is 260 characters or longer.
+- `make fuzz` runs 300 cases of seed 1 and writes `fuzz-work/report-seed-1.json`; `make
+  fuzz-minimize` does the same, then minimises up to two cases of each outcome worth it into
+  `fuzz-regressions/`. Options go through `FUZZ_ARGS`, e.g.
+  `make fuzz FUZZ_ARGS="--seed 7 --cases 1000"` (also `--minutes`, `--timeout`, `--per-outcome`).
 - `python test/musicxml/musicxml_check.py FILE...` validates files; `python
   test/musicxml/dump_score.py SCORE [OUTPUT]` dumps a score.

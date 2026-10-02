@@ -34,6 +34,8 @@ all: dev
 .PHONY: corpus
 .PHONY: corpus-update-ledger
 .PHONY: corpus-fetch
+.PHONY: fuzz
+.PHONY: fuzz-minimize
 .PHONY: msvc-gate
 .PHONY: linux-gate
 .PHONY: dist
@@ -134,6 +136,15 @@ corpus-update-ledger:
 # test/musicxml/external/, which git ignores.
 corpus-fetch:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-corpus-fetch.py
+
+# Seeded mutation fuzzing of the MusicXML reader and writer; options through FUZZ_ARGS, e.g.
+# make fuzz FUZZ_ARGS="--seed 7 --cases 1000".
+fuzz:
+	@$(PYTHON) $(SCRIPTS_DIR)/make-fuzz.py $(FUZZ_ARGS)
+
+# The same, then the failing cases minimised into test/musicxml/fuzz-regressions/.
+fuzz-minimize:
+	@$(PYTHON) $(SCRIPTS_DIR)/make-fuzz.py --minimize $(FUZZ_ARGS)
 
 # Windows only: maiacore and its C++ tests compiled by MSVC (Visual Studio 2022) in Debug and
 # Release, then the package built by `pip install .` as CI builds it, with the Python tests.

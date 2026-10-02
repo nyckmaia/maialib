@@ -90,7 +90,8 @@ def run_one(
     timeout: float | None = None,
     diagnostics: dict[str, Any] | None = None,
 ) -> Record:
-    """Examine one repository-relative file in a fresh process and return its record.
+    """Examine one file, named relative to the repository or by an absolute path, in a fresh
+    process and return its record.
 
     The worker keeps its temporary files in a directory of its own, removed when the worker has
     ended, so that a worker killed at the timeout or ended by a crash leaves none behind. With
