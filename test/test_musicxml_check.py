@@ -2,6 +2,7 @@
 
 import io
 import struct
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -13,7 +14,33 @@ sys.path.insert(0, str(Path(__file__).resolve().parent / "musicxml"))
 import musicxml_check  # noqa: E402
 from fixtures import CONTAINER, MINIMAL_SCORE  # noqa: E402
 
-SUITE = Path(__file__).resolve().parent / "musicxml" / "w3c-test-suite"
+try:
+    import lzma
+except ImportError:  # CPython can be built without it
+    lzma = None
+
+MUSICXML = Path(__file__).resolve().parent / "musicxml"
+SUITE = MUSICXML / "w3c-test-suite"
+
+# A Python built without the lzma and compression.zstd modules, as CPython can be, checking a
+# conforming archive: it prints whether the archive is valid.
+WITHOUT_OPTIONAL_DECOMPRESSORS = """
+import sys
+
+sys.modules["lzma"] = sys.modules["compression.zstd"] = None
+
+import io
+import zipfile
+
+import musicxml_check
+from fixtures import CONTAINER, MINIMAL_SCORE
+
+buffer = io.BytesIO()
+with zipfile.ZipFile(buffer, "w") as zipped:
+    zipped.writestr("META-INF/container.xml", CONTAINER)
+    zipped.writestr("score.musicxml", MINIMAL_SCORE)
+print(musicxml_check.check_mxl_bytes(buffer.getvalue()).xsd_valid)
+"""
 
 
 def suite_files() -> list:
@@ -176,6 +203,7 @@ class ArchiveTestCase(unittest.TestCase):
         data = buffer.getvalue().replace(name.encode(), b"partitura-" + b"\xff" * 6 + b".txt")
         self.assertFalse(musicxml_check.check_mxl_bytes(data).readable)
 
+    @unittest.skipUnless(lzma, "this Python was built without the lzma module")
     def test_a_damaged_lzma_entry_is_unreadable(self):
         buffer = io.BytesIO()
         with zipfile.ZipFile(buffer, "w") as zipped:
@@ -188,6 +216,30 @@ class ArchiveTestCase(unittest.TestCase):
         # whose first (lc, lp and pb together) cannot be 0xFF.
         data[entry.header_offset + 30 + name_length + extra_length + 4] = 0xFF
         self.assertFalse(musicxml_check.check_mxl_bytes(bytes(data)).readable)
+
+    def test_an_entry_flagged_zstandard_whose_data_is_not_zstandard_is_unreadable(self):
+        # Python 3.14 decompresses Zstandard (method 93) and raises its own error on bad data;
+        # earlier versions refuse the method.
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w") as zipped:
+            zipped.writestr("META-INF/container.xml", CONTAINER)
+            zipped.writestr("score.musicxml", MINIMAL_SCORE)
+        data = bytearray(buffer.getvalue())
+        entry = zipfile.ZipFile(io.BytesIO(bytes(data))).getinfo("score.musicxml")
+        # The compression method: at offset 8 of the entry's local header and at offset 10 of its
+        # central directory header, the last one in the archive.
+        struct.pack_into("<H", data, entry.header_offset + 8, 93)
+        struct.pack_into("<H", data, data.rindex(b"PK\x01\x02") + 10, 93)
+        self.assertFalse(musicxml_check.check_mxl_bytes(bytes(data)).readable)
+
+    def test_the_validator_reads_archives_without_the_optional_decompressors(self):
+        done = subprocess.run(
+            [sys.executable, "-c", WITHOUT_OPTIONAL_DECOMPRESSORS],
+            cwd=str(MUSICXML),
+            capture_output=True,
+            timeout=120,
+        )
+        self.assertEqual(b"True", done.stdout.strip(), done.stderr.decode("utf-8", "replace"))
 
 
 WHOLE_NOTE = (

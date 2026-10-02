@@ -6,8 +6,9 @@ them to the local copies: validation never uses the network.
 
 semantic_findings() checks the rules the schema cannot express. It resolves instrument references
 only from <instrument> in notes and <midi-instrument> in <score-part>, and checks <staff> only on
-notes: references from midi-device, play, instrument-change, instrument-link and player elements,
-and <staff> on forward, direction and harmony, are not checked.
+notes: the id references of midi-device, play, instrument-change and instrument-link, the player
+attributes of assess, wait, sync and other-listening, and <staff> on forward, direction and
+harmony, are not checked.
 
 Command line: ``python musicxml_check.py FILE...`` prints one line per file and exits with 1 when
 a file cannot be read, is invalid against the schema, or breaks an error-level rule.
@@ -16,7 +17,6 @@ a file cannot be read, is invalid against the schema, or breaks an error-level r
 from __future__ import annotations
 
 import io
-import lzma
 import sys
 import zipfile
 import zlib
@@ -26,6 +26,34 @@ from fractions import Fraction
 from pathlib import Path
 
 from lxml import etree
+
+# The errors reading a damaged archive can raise: zipfile's own; a corrupt deflate stream; data
+# that ends early; a missing entry; an unsupported compression method; a corrupt bzip2 stream; an
+# encrypted entry or a decompressor this Python lacks; an entry name flagged UTF-8 that is not.
+# CPython can be built without lzma, and Python reads Zstandard from 3.14 on, so the errors of
+# those decompressors join only when their module imports.
+_ARCHIVE_ERRORS: tuple[type[Exception], ...] = (
+    zipfile.BadZipFile,
+    zlib.error,
+    EOFError,
+    KeyError,
+    NotImplementedError,
+    OSError,
+    RuntimeError,
+    ValueError,
+)
+try:
+    import lzma
+except ImportError:
+    pass
+else:
+    _ARCHIVE_ERRORS += (lzma.LZMAError,)
+try:
+    from compression import zstd
+except ImportError:
+    pass
+else:
+    _ARCHIVE_ERRORS += (zstd.ZstdError,)
 
 SCHEMA_DIR = Path(__file__).resolve().parent / "schema-4.0"
 REMOTE_SCHEMA_PREFIX = "http://www.musicxml.org/xsd/"
@@ -126,8 +154,8 @@ def read_mxl(data: bytes) -> tuple[bytes | None, list[Finding]]:
 
     The document is None when the archive names no readable MusicXML rootfile. Bytes that are not
     a readable zip archive raise zipfile.BadZipFile or another of the errors check_mxl_bytes
-    catches: a corrupt deflate or LZMA stream, an entry name flagged UTF-8 that is not, an entry
-    compressed by an unsupported method.
+    catches: a corrupt deflate, LZMA or Zstandard stream, an entry name flagged UTF-8 that is not,
+    an entry compressed by an unsupported method.
     """
     findings: list[Finding] = []
     with zipfile.ZipFile(io.BytesIO(data)) as archive:
@@ -528,17 +556,7 @@ def check_mxl_bytes(data: bytes) -> Report:
     """Check an .mxl archive: its layout, then the MusicXML document it names."""
     try:
         document, findings = read_mxl(data)
-    except (
-        zipfile.BadZipFile,
-        zlib.error,
-        lzma.LZMAError,
-        EOFError,
-        KeyError,
-        NotImplementedError,
-        OSError,
-        RuntimeError,
-        ValueError,
-    ) as error:
+    except _ARCHIVE_ERRORS as error:
         return Report(problem=f"not a readable zip archive: {error}")
     if document is None:
         problems = "; ".join(finding.detail for finding in findings if finding.severity == "error")
