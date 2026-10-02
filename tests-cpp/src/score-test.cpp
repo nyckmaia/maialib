@@ -607,7 +607,6 @@ TEST(ScoreComplex, MultiplePartsAndMeasures) {
 // }
 
 TEST(ScoreComplex, LoadAndExportRoundTrip) {
-    // Load a score
     Score score1("./test/xml_examples/unit_test/test_chord.xml");
     EXPECT_TRUE(score1.isValid());
 
@@ -615,17 +614,21 @@ TEST(ScoreComplex, LoadAndExportRoundTrip) {
     int originalMeasures = score1.getNumMeasures();
     int originalParts = score1.getNumParts();
 
-    // Export to file (toFile adds .xml extension automatically)
-    score1.toFile("test_roundtrip", false);
+    // toFile appends the .xml extension. The export goes to the temporary directory, not to the
+    // working directory, which is the repository root when the tests run.
+    const std::filesystem::path exportBase =
+        std::filesystem::temp_directory_path() / "maialib_load_export_round_trip";
+    const std::string exportedFile = exportBase.string() + ".xml";
+    score1.toFile(exportBase.string(), false);
 
-    // Load the exported file
-    Score score2("test_roundtrip.xml");
+    Score score2(exportedFile);
     EXPECT_TRUE(score2.isValid());
 
-    // Verify counts match
     EXPECT_EQ(score2.getNumNotes(), originalNotes);
     EXPECT_EQ(score2.getNumMeasures(), originalMeasures);
     EXPECT_EQ(score2.getNumParts(), originalParts);
+
+    std::filesystem::remove(exportedFile);
 }
 
 // ====================
