@@ -17,6 +17,7 @@ a file cannot be read, is invalid against the schema, or breaks an error-level r
 from __future__ import annotations
 
 import io
+import re
 import sys
 import zipfile
 import zlib
@@ -219,19 +220,48 @@ def read_mxl(data: bytes) -> tuple[bytes | None, list[Finding]]:
         return archive.read(path), findings
 
 
+# The lexical space of xs:decimal, from which MusicXML's numeric types derive, between the XML
+# whitespace that the schema collapses: an optional sign, then ASCII digits with an optional
+# fraction part, or a fraction part alone. Fraction also reads an exponent, and computes all
+# hundred million digits of "1e100000000".
+_DECIMAL = re.compile(r"[ \t\n\r]*([+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+))[ \t\n\r]*")
+# The most digits a number may have, leading and trailing zeros included. XSD processors need
+# support only 18 digits of xs:decimal, and a score's numbers have far fewer; 100 keeps every
+# number that is read far below Python's limit of 4,300 digits for converting between an integer
+# and text.
+_MAX_DIGITS = 100
+# The most bits either term of a position or of a measure's length may have. Each number read is
+# bounded, but a sum of many whose denominators differ is not, and each addition costs more than
+# the one before: a measure whose positions outgrow this is not measured, and a time signature
+# that does is not read. 4,096 bits are about 1,233 digits, so a finding quotes no fraction that
+# Python refuses to write as text.
+_MAX_POSITION_BITS = 4096
+
+
 def _number(text: str | None) -> Fraction | None:
-    """The value of a decimal element text, or None when it is absent or not a number."""
+    """The value of an element text in the lexical space of xs:decimal, or None when the text is
+    absent, is anything else (an exponent, inf, nan, a digit outside ASCII) or has more than
+    _MAX_DIGITS digits. Every element text that the checks compute with is read here."""
     if text is None:
         return None
-    try:
-        return Fraction(text.strip())
-    except (ValueError, ZeroDivisionError):
+    match = _DECIMAL.fullmatch(text)
+    if match is None:
         return None
+    number = match.group(1)
+    if len(number.lstrip("+-").replace(".", "")) > _MAX_DIGITS:
+        return None
+    return Fraction(number)
+
+
+def _too_long(value: Fraction) -> bool:
+    """Whether a term of ``value`` has more than _MAX_POSITION_BITS bits."""
+    return max(value.numerator.bit_length(), value.denominator.bit_length()) > _MAX_POSITION_BITS
 
 
 def _time_quarters(time: etree._Element) -> Fraction | None:
     """Quarter notes in a measure of this <time>: composite beats such as 3+2 are summed and
-    several beats/beat-type pairs added; None under senza-misura or when unreadable."""
+    several beats/beat-type pairs added; None under senza-misura, when unreadable, or when the
+    sum grows too long (_too_long)."""
     if time.find("senza-misura") is not None:
         return None
     beats = time.findall("beats")
@@ -245,6 +275,8 @@ def _time_quarters(time: etree._Element) -> Fraction | None:
         if any(count is None for count in counts) or unit is None or unit <= 0:
             return None
         total += sum(counts) * 4 / unit
+        if _too_long(total):
+            return None
     return total
 
 
@@ -401,6 +433,8 @@ def _check_measure(
     note_end = Fraction(0)
     forward_end = Fraction(0)  # the furthest position a <forward> reaches
     has_note = False
+    # Positions are followed until one grows too long (_too_long); the notes are checked anyway.
+    measured = True
     for child in measure:
         if child.tag == "attributes":
             divisions = _number(child.findtext("divisions"))
@@ -415,26 +449,32 @@ def _check_measure(
         elif child.tag == "note":
             duration = _check_note(child, where, state, instrument_ids, has_note, findings)
             has_note = True
-            if duration is not None and child.find("chord") is None and child.find("grace") is None:
+            advances = child.find("chord") is None and child.find("grace") is None
+            if measured and duration is not None and advances:
                 cursor += duration
                 note_end = max(note_end, cursor)
         elif child.tag == "backup":
-            cursor -= _quarters(child, state, where, findings) or Fraction(0)
-            if cursor < 0:
-                findings.append(
-                    Finding(
-                        "position-negative",
-                        "error",
-                        where,
-                        "<backup> moves before the start of the measure",
+            backup = _quarters(child, state, where, findings) or Fraction(0)
+            if measured:
+                cursor -= backup
+                if cursor < 0:
+                    findings.append(
+                        Finding(
+                            "position-negative",
+                            "error",
+                            where,
+                            "<backup> moves before the start of the measure",
+                        )
                     )
-                )
-                cursor = Fraction(0)
+                    cursor = Fraction(0)
         elif child.tag == "forward":
-            cursor += _quarters(child, state, where, findings) or Fraction(0)
-            forward_end = max(forward_end, cursor)
+            forward = _quarters(child, state, where, findings) or Fraction(0)
+            if measured:
+                cursor += forward
+                forward_end = max(forward_end, cursor)
+        measured = measured and not _too_long(cursor)
     limit = state.quarters
-    if limit is None or implicit:
+    if limit is None or implicit or not measured:
         return
     # Notes may run past the time signature (an overfull measure, rounded tuplet durations), and a
     # <forward> may follow them there; it is an error only beyond every note of the measure,

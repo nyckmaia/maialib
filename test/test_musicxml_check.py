@@ -7,6 +7,7 @@ import sys
 import tempfile
 import unittest
 import zipfile
+from fractions import Fraction
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent / "musicxml"))
@@ -534,6 +535,55 @@ class SemanticChecksTestCase(unittest.TestCase):
             + b"</part></measure></score-timewise>"
         )
         self.assertEqual(["timewise-not-checked"], warnings(timewise))
+
+
+def with_duration(text: bytes) -> bytes:
+    """MINIMAL_SCORE with ``text`` as the duration of its whole note."""
+    return MINIMAL_SCORE.replace(b"<duration>4</duration>", b"<duration>" + text + b"</duration>")
+
+
+class NumberTestCase(unittest.TestCase):
+    def test_an_exponent_infinity_nan_or_a_digit_outside_ascii_is_not_a_number(self):
+        for text in ("1e5", "1E5", "2.5e-3", "inf", "-Infinity", "NaN", "\u0661\u0662", "\u00a05"):
+            with self.subTest(text=ascii(text)):
+                self.assertIsNone(musicxml_check._number(text))
+
+    def test_a_decimal_is_read_with_its_sign_and_the_whitespace_around_it(self):
+        self.assertEqual(Fraction(-3, 2), musicxml_check._number(" -1.5 "))
+        self.assertEqual(Fraction(1, 2), musicxml_check._number(".5"))
+        self.assertEqual(Fraction(3), musicxml_check._number("\t+3.\n"))
+
+    def test_a_number_of_more_than_100_digits_is_not_read(self):
+        self.assertEqual(int("9" * 100), musicxml_check._number("9" * 100))
+        self.assertIsNone(musicxml_check._number("9" * 101))
+        self.assertIsNone(musicxml_check._number("0." + "9" * 100))
+
+    def test_a_duration_too_long_to_read_is_left_out_without_an_exception(self):
+        # 1e5000 is ten to the 5,000th; Python refuses to write an integer of more than 4,300
+        # digits as text, which a finding about the measure's length would do.
+        for duration in (b"1e5000", b"1" * 5000):
+            with self.subTest(duration=duration[:8]):
+                report = musicxml_check.check_bytes(with_duration(duration))
+                self.assertEqual(["measure-length-mismatch"], report.warnings)
+
+    def test_a_measure_whose_positions_grow_too_long_is_not_measured(self):
+        # Fifty quarter notes, each after a <divisions> of its own, a different odd number of 100
+        # digits: the denominator of their sum has thousands of digits, and each addition costs
+        # more than the one before.
+        notes = b"".join(
+            b"<attributes><divisions>%d</divisions></attributes>" % (10**99 + 2 * i + 1)
+            + note(1, b"quarter")
+            for i in range(50)
+        )
+        self.assertEqual([], musicxml_check.check_bytes(with_notes(notes)).findings)
+
+    def test_a_time_signature_too_long_to_compute_is_not_read(self):
+        # Fifty beats of one, each over a different odd beat type of 100 digits.
+        pairs = b"".join(
+            b"<beats>1</beats><beat-type>%d</beat-type>" % (10**99 + 2 * i + 1) for i in range(50)
+        )
+        data = MINIMAL_SCORE.replace(b"<beats>4</beats><beat-type>4</beat-type>", pairs)
+        self.assertEqual([], musicxml_check.check_bytes(data).findings)
 
 
 # The findings of every W3C suite file that has any, as (errors, warnings); every other suite file
