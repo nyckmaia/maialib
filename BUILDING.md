@@ -115,7 +115,8 @@ make fuzz-minimize         # The same, then up to two failing cases of each outc
                            # into test/musicxml/fuzz-regressions/
 ```
 
-`make py-tests` includes the corpus test, which needs `lxml` from `requirements-dev.txt`;
+`make py-tests` includes the validator, corpus and fuzz tests (`test/test_musicxml_check.py`,
+`test_musicxml_corpus.py`, `test_musicxml_fuzz.py`), which need `lxml` from `requirements-dev.txt`;
 [`test/musicxml/README.md`](test/musicxml/README.md) describes the MusicXML test infrastructure.
 
 #### Library Building (Advanced)

@@ -114,7 +114,7 @@ Actions: `default` (use the default), `infer` (derive from context), `carry` (ke
 One entry per corpus file (the current fixtures under `test/xml_examples/`, the 7 bundled samples, the W3C suite):
 - `load`: `ok`, the exception **type** (`IndexError`, `RuntimeError`, … — never the message, which differs between MSVC and libstdc++), `crash` or `timeout`;
 - the export's XSD result and semantic errors; `roundtrip`: `stable` when export → import → export is byte-identical except the encoding date;
-- the input file's own validity (informational);
+- the input file's own validity against the 4.0 schema (`valid`, `invalid` or `unreadable`), compared like every other field, so a validator change that alters it needs a ledger update;
 - `slow` for the large files (`Beethoven/big_files/Symphony_9th.xml`, 71 MB; `unit_test/xakypueri.xml`, 14 MB);
 - from 4c-1 on, the report codes.
 

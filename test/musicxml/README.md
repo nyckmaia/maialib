@@ -50,12 +50,14 @@ like code — every changed line must be explained by the change being committed
 ## Fuzzing
 
 Case N of seed S mutates one corpus file of at most 200 KB with a random generator seeded with
-"S:N", so a seed and a case number always give the same mutant. The mutations delete, duplicate or
-reorder elements, empty texts, make numbers non-numeric, negative, zero or huge, put invalid
-enumeration values, re-encode the document (UTF-16, a byte-order mark, a declared Latin-1),
-truncate it, and, in an `.mxl` archive, remove `container.xml`, point the rootfile elsewhere or
-corrupt the zip. Each mutant goes through `corpus_worker.py --analyses` in its own process, and its
-record gets one outcome:
+"S:N", so a seed and a case number give the same mutant in the same checkout of the same corpus: a
+corpus file added or removed shifts the list of files the cases pick from, and files checked out
+with CRLF line endings (`core.autocrlf`) give other truncated, byte-order-marked and re-encoded
+mutants. The mutations delete, duplicate or reorder elements, empty texts, make numbers non-numeric,
+negative, zero or huge, put invalid enumeration values, re-encode the document (UTF-16, a byte-order
+mark, a declared Latin-1), truncate it, and, in an `.mxl` archive, remove `container.xml`, point the
+rootfile elsewhere or corrupt the zip. Each mutant goes through `corpus_worker.py --analyses` in its
+own process, and its record gets one outcome:
 
 - `crash:<stage>` or `timeout:<stage>`, the stage the worker had not finished; `crash:exit` or
   `timeout:exit` when it crashed or hung after its final record;

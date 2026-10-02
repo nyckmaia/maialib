@@ -1,9 +1,9 @@
 """Seeded mutation fuzzing of maialib's MusicXML reader and writer.
 
 Case N of seed S picks a small corpus file and one mutation with a random generator seeded with
-"S:N", so the same seed and case number always give the same mutant. Each mutant runs through
-corpus_worker.py --analyses in its own process: load, chords and intervals, export, the export's
-checks and the round trip.
+"S:N", so the same seed and case number give the same mutant in the same checkout of the same
+corpus (README.md says what changes it). Each mutant runs through corpus_worker.py --analyses in
+its own process: load, chords and intervals, export, the export's checks and the round trip.
 """
 
 from __future__ import annotations
