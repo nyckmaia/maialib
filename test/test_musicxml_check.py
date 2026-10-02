@@ -566,6 +566,11 @@ def with_duration(text: bytes) -> bytes:
     return MINIMAL_SCORE.replace(b"<duration>4</duration>", b"<duration>" + text + b"</duration>")
 
 
+def located(findings: list) -> list:
+    """Each finding's check, severity and place, without its detail."""
+    return [(finding.check, finding.severity, finding.where) for finding in findings]
+
+
 class NumberTestCase(unittest.TestCase):
     def test_an_exponent_infinity_nan_or_a_digit_outside_ascii_is_not_a_number(self):
         for text in ("1e5", "1E5", "2.5e-3", "inf", "-Infinity", "NaN", "\u0661\u0662", "\u00a05"):
@@ -590,24 +595,45 @@ class NumberTestCase(unittest.TestCase):
                 report = musicxml_check.check_bytes(with_duration(duration))
                 self.assertEqual(["measure-length-mismatch"], report.warnings)
 
-    def test_a_measure_whose_positions_grow_too_long_is_not_measured(self):
+    def test_a_measure_whose_positions_grow_too_long_is_reported_as_not_measured(self):
         # Fifty quarter notes, each after a <divisions> of its own, a different odd number of 100
         # digits: the denominator of their sum has thousands of digits, and each addition costs
-        # more than the one before.
+        # more than the one before. Positions are not followed past the cap, so the closing
+        # <backup>, which goes past the start of the measure, is not reported either.
         notes = b"".join(
             b"<attributes><divisions>%d</divisions></attributes>" % (10**99 + 2 * i + 1)
             + note(1, b"quarter")
             for i in range(50)
         )
-        self.assertEqual([], musicxml_check.check_bytes(with_notes(notes)).findings)
+        backup = b"<backup><duration>1000</duration></backup>"
+        self.assertEqual(
+            [("measure-not-measured", "warning", "part P1, measure 1")],
+            located(musicxml_check.check_bytes(with_notes(notes + backup)).findings),
+        )
 
-    def test_a_time_signature_too_long_to_compute_is_not_read(self):
+    def test_a_time_signature_stops_adding_once_its_length_is_too_long(self):
+        # All fifty pairs would need about 16,300 bits, each addition costing more than the last.
+        pairs = b"".join(
+            b"<beats>1</beats><beat-type>%d</beat-type>" % (10**99 + 2 * i + 1) for i in range(50)
+        )
+        total = musicxml_check._time_quarters(
+            musicxml_check.parse_document(b"<time>" + pairs + b"</time>")
+        )
+        self.assertTrue(musicxml_check._too_long(total))
+        self.assertLess(total.denominator.bit_length(), 2 * musicxml_check._MAX_POSITION_BITS)
+
+    def test_a_measure_under_a_time_signature_too_long_to_compute_is_reported_as_not_measured(
+        self,
+    ):
         # Fifty beats of one, each over a different odd beat type of 100 digits.
         pairs = b"".join(
             b"<beats>1</beats><beat-type>%d</beat-type>" % (10**99 + 2 * i + 1) for i in range(50)
         )
         data = MINIMAL_SCORE.replace(b"<beats>4</beats><beat-type>4</beat-type>", pairs)
-        self.assertEqual([], musicxml_check.check_bytes(data).findings)
+        self.assertEqual(
+            [("measure-not-measured", "warning", "part P1, measure 1")],
+            located(musicxml_check.check_bytes(data).findings),
+        )
 
 
 # The findings of every W3C suite file that has any, as (errors, warnings); every other suite file

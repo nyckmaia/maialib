@@ -232,9 +232,10 @@ _DECIMAL = re.compile(r"[ \t\n\r]*([+-]?(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+))[ \t\n\
 _MAX_DIGITS = 100
 # The most bits either term of a position or of a measure's length may have. Each number read is
 # bounded, but a sum of many whose denominators differ is not, and each addition costs more than
-# the one before: a measure whose positions outgrow this is not measured, and a time signature
-# that does is not read. 4,096 bits are about 1,233 digits, so a finding quotes no fraction that
-# Python refuses to write as text.
+# the one before. A measure whose positions or length outgrow this is not measured, and a
+# "measure-not-measured" warning says so. The bound keeps the arithmetic fast, and it is far below
+# Python's limit of 4,300 digits (about 14,280 bits) for converting an integer to text, so every
+# value that a finding quotes can be written.
 _MAX_POSITION_BITS = 4096
 
 
@@ -260,8 +261,9 @@ def _too_long(value: Fraction) -> bool:
 
 def _time_quarters(time: etree._Element) -> Fraction | None:
     """Quarter notes in a measure of this <time>: composite beats such as 3+2 are summed and
-    several beats/beat-type pairs added; None under senza-misura, when unreadable, or when the
-    sum grows too long (_too_long)."""
+    several beats/beat-type pairs added; None under senza-misura or when unreadable. A sum that
+    grows too long (_too_long) is returned as soon as it does, unfinished, and every measure under
+    it is reported as not measured."""
     if time.find("senza-misura") is not None:
         return None
     beats = time.findall("beats")
@@ -276,7 +278,7 @@ def _time_quarters(time: etree._Element) -> Fraction | None:
             return None
         total += sum(counts) * 4 / unit
         if _too_long(total):
-            return None
+            break
     return total
 
 
@@ -473,8 +475,30 @@ def _check_measure(
                 cursor += forward
                 forward_end = max(forward_end, cursor)
         measured = measured and not _too_long(cursor)
+    if not measured:
+        findings.append(
+            Finding(
+                "measure-not-measured",
+                "warning",
+                where,
+                f"a position needs more than {_MAX_POSITION_BITS} bits, so the positions after it "
+                "and the measure's length are not checked",
+            )
+        )
+        return
     limit = state.quarters
-    if limit is None or implicit or not measured:
+    if limit is None or implicit:
+        return
+    if _too_long(limit):
+        findings.append(
+            Finding(
+                "measure-not-measured",
+                "warning",
+                where,
+                f"the time signature's length needs more than {_MAX_POSITION_BITS} bits, so the "
+                "measure's length is not checked",
+            )
+        )
         return
     # Notes may run past the time signature (an overfull measure, rounded tuplet durations), and a
     # <forward> may follow them there; it is an error only beyond every note of the measure,
