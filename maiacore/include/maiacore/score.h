@@ -150,8 +150,18 @@ class Score {
      *          Note::getSoundingPitch()). One whose `<chromatic>` or `<octave-change>` is not a
      *          whole number is ignored, leaving the previous transposition in force, with a warning
      *          that starts with [transpose-chromatic-not-integer] or
-     *          [transpose-octave-change-not-integer] and names the part and the measure as the file
-     *          numbers it.
+     *          [transpose-octave-change-not-integer]. A `<diatonic>` that does not match
+     *          `<chromatic>` is replaced by the conventional diatonic interval, so that nothing
+     *          sounds different, with a [transpose-pair-corrected] warning; for a tritone both the
+     *          augmented fourth and the diminished fifth match, and an explicit 0 with a non-zero
+     *          `<chromatic>` does not. A `<transpose>` with which a note of its scope -- the notes
+     *          it would apply to, up to the next `<transpose>` for their staff -- would have no
+     *          sounding pitch (below C1b-1, or above B11 where its letter cannot spell it) is
+     *          ignored for its whole scope, with a [transpose-out-of-range] warning; there the
+     *          previous transposition stays in force, and a chord with a note it cannot sound
+     *          either is read untransposed. `<for-part>` is not modelled: it is dropped with a
+     *          [for-part-not-modelled] warning. Each warning names the part and the measure as the
+     *          file numbers it.
      * @param filePath Path to the MusicXML file.
      */
     explicit Score(const std::string& filePath);

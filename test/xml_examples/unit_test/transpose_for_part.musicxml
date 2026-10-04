@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A concert score: its notes are written at concert pitch, and <for-part> gives the
+     transposition of a part created from it. maialib does not model <for-part>: it is dropped
+     with a warning, and C4 sounds C4. -->
+<score-partwise version="4.0">
+  <defaults>
+    <concert-score/>
+  </defaults>
+  <part-list>
+    <score-part id="P1"><part-name>Clarinet in Bb</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+        <for-part>
+          <part-transpose><diatonic>-1</diatonic><chromatic>-2</chromatic></part-transpose>
+        </for-part>
+      </attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+  </part>
+</score-partwise>

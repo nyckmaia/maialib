@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A <transpose> with which a note of its scope would have no sounding pitch is ignored for its
+     whole scope. Piccolo: (0, 0, +1) from measure 1; the (0, 0, +3) of measure 2 would put the
+     C9 of measure 3 above B11, so it is ignored and C8 in measure 2 keeps +1 although it could
+     sound with +3. Contrabass: (0, 0, -1) from measure 1; the (0, 0, -2) of measure 2 would put
+     its Cb0 below C1b-1, so it is ignored; the previous -1 cannot sound that Cb0 either, so the
+     chord Cb0-C1 is read untransposed as a unit, C1 included, while the D1 of measure 3 keeps
+     -1. -->
+<score-partwise version="4.0">
+  <part-list>
+    <score-part id="P1"><part-name>Piccolo</part-name></score-part>
+    <score-part id="P2"><part-name>Contrabass</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+        <transpose><diatonic>0</diatonic><chromatic>0</chromatic><octave-change>1</octave-change></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>9</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+    <measure number="2">
+      <attributes>
+        <transpose><diatonic>0</diatonic><chromatic>0</chromatic><octave-change>3</octave-change></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>8</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+    <measure number="3">
+      <note><pitch><step>C</step><octave>9</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+  </part>
+  <part id="P2">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>F</sign><line>4</line></clef>
+        <transpose><diatonic>0</diatonic><chromatic>0</chromatic><octave-change>-1</octave-change></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>1</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+    <measure number="2">
+      <attributes>
+        <transpose><diatonic>0</diatonic><chromatic>0</chromatic><octave-change>-2</octave-change></transpose>
+      </attributes>
+      <note><pitch><step>C</step><alter>-1</alter><octave>0</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+      <note><chord/><pitch><step>C</step><octave>1</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+    <measure number="3">
+      <note><pitch><step>D</step><octave>1</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+  </part>
+</score-partwise>

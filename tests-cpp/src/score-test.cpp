@@ -1497,3 +1497,102 @@ TEST(ScoreTransposeRead, anOctaveTranspositionChangesTheChords) {
     Chord dominant = std::get<3>(chords[5]);
     EXPECT_EQ(dominant.getName(), "G7");
 }
+
+// A <diatonic> that does not match <chromatic> is replaced by the conventional diatonic interval,
+// with one warning per <transpose>; an explicit 0 with a non-zero chromatic interval does not
+// match either, while a tritone matches the augmented fourth and the diminished fifth alike.
+TEST(ScoreTransposeCorrection, aDiatonicIntervalThatDoesNotMatchIsReplaced) {
+    StdoutCapture capture;
+    Score score(kUnitTest + "transpose_pair_inconsistent.musicxml");
+    const std::string printed = capture.str();
+    EXPECT_EQ(transposedNotes(score, 0), (std::vector<std::string>{"F#4 (2, 4, NONE) A#4"}));
+    EXPECT_EQ(transposedNotes(score, 1), (std::vector<std::string>{"C4 (-1, -2, NONE) Bb3"}));
+    EXPECT_EQ(transposedNotes(score, 2), (std::vector<std::string>{"C4 (-4, -6, NONE) F#3"}));
+    EXPECT_EQ(transposedNotes(score, 3), (std::vector<std::string>{"C4 (-3, -6, NONE) Gb3"}));
+    EXPECT_NE(printed.find("[WARN] [transpose-pair-corrected] part \"Trumpet in E\", measure 1: "
+                           "<diatonic>3</diatonic> does not match <chromatic>4</chromatic>; "
+                           "using 2.\n"),
+              std::string::npos)
+        << printed;
+    EXPECT_NE(printed.find("[WARN] [transpose-pair-corrected] part \"Clarinet in Bb\", measure 1: "
+                           "<diatonic>0</diatonic> does not match <chromatic>-2</chromatic>; "
+                           "using -1.\n"),
+              std::string::npos)
+        << printed;
+    EXPECT_EQ(transposeWarnings(printed), 2) << printed;
+}
+
+// The Dvorak sample's trumpets in E, written with the letters of a fourth and the semitones of a
+// major third, are read as a major third: a written F#4 sounds A#4.
+TEST(ScoreTransposeCorrection, theDvorakTrumpetsInESoundAMajorThirdUp) {
+    StdoutCapture capture;
+    Score score(kSamples + "Dvorak_Symphony_9_mov_4.mxl");
+    const std::string printed = capture.str();
+    EXPECT_EQ(describeTransposition(score.getPart(6).getMeasure(7).getNote(1, 0)),
+              "F#4 (2, 4, NONE) A#4");
+    EXPECT_NE(printed.find("[WARN] [transpose-pair-corrected] part \"Trombe I. II. E\", measure "
+                           "1: <diatonic>3</diatonic> does not match <chromatic>4</chromatic>; "
+                           "using 2.\n"),
+              std::string::npos)
+        << printed;
+    EXPECT_EQ(transposeWarnings(printed), 1) << printed;
+}
+
+// A <diatonic> that is not a whole number does not match <chromatic> either.
+TEST(ScoreTransposeCorrection, aDiatonicThatIsNotAWholeNumberIsReplaced) {
+    StdoutCapture capture;
+    Score score(kUnitTest + "transpose_diatonic_not_integer.musicxml");
+    const std::string printed = capture.str();
+    EXPECT_EQ(transposedNotes(score, 0), (std::vector<std::string>{"G4 (-4, -7, NONE) C4"}));
+    EXPECT_NE(printed.find("[WARN] [transpose-pair-corrected] part \"Horn in F\", measure 1: "
+                           "<diatonic>-4.5</diatonic> does not match <chromatic>-7</chromatic>; "
+                           "using -4.\n"),
+              std::string::npos)
+        << printed;
+    EXPECT_EQ(transposeWarnings(printed), 1) << printed;
+}
+
+// A <transpose> with which a note of its scope would have no sounding pitch is ignored for its
+// whole scope -- none of its notes takes it, not even one that could sound with it -- and the
+// previous transposition stays in force; a chord with a note that this one cannot sound either is
+// read untransposed as a unit, and the warning counts its notes.
+TEST(ScoreTransposeCorrection, aTransposeOutOfRangeIsIgnoredForItsWholeScope) {
+    StdoutCapture capture;
+    Score score(kUnitTest + "transpose_out_of_range.musicxml");
+    const std::string printed = capture.str();
+    EXPECT_EQ(transposedNotes(score, 0),
+              (std::vector<std::string>{"C9 (7, 12, NONE) C10", "C8 (7, 12, NONE) C9",
+                                        "C9 (7, 12, NONE) C10"}));
+    EXPECT_EQ(transposedNotes(score, 1),
+              (std::vector<std::string>{"C1 (-7, -12, NONE) C0", "Cb0 (0, 0, NONE) B-1",
+                                        "C1 (0, 0, NONE) C1", "D1 (-7, -12, NONE) D0"}));
+    EXPECT_NE(printed.find("[WARN] [transpose-out-of-range] part \"Piccolo\", measure 2: the "
+                           "written C9 of measure 3, staff 1 would sound outside the "
+                           "representable range; the <transpose> is ignored and the previous "
+                           "transposition stays in force.\n"),
+              std::string::npos)
+        << printed;
+    EXPECT_NE(printed.find("[WARN] [transpose-out-of-range] part \"Contrabass\", measure 2: the "
+                           "written Cb0 of measure 2, staff 1 would sound outside the "
+                           "representable range; the <transpose> is ignored and the previous "
+                           "transposition stays in force. Its notes that the previous "
+                           "transposition cannot sound either are read untransposed, with the "
+                           "other notes of their chords (2 in all).\n"),
+              std::string::npos)
+        << printed;
+    EXPECT_EQ(transposeWarnings(printed), 2) << printed;
+}
+
+// <for-part> is dropped with a warning: a concert score's notes are already at concert pitch.
+TEST(ScoreTransposeCorrection, aForPartIsDroppedWithAWarning) {
+    StdoutCapture capture;
+    Score score(kUnitTest + "transpose_for_part.musicxml");
+    const std::string printed = capture.str();
+    EXPECT_EQ(transposedNotes(score, 0), (std::vector<std::string>{"C4 (0, 0, NONE) C4"}));
+    EXPECT_NE(printed.find("[WARN] [for-part-not-modelled] part \"Clarinet in Bb\", measure 1: "
+                           "<for-part> is not modelled and is dropped; the notes of a concert "
+                           "score are written at concert pitch.\n"),
+              std::string::npos)
+        << printed;
+    EXPECT_EQ(transposeWarnings(printed), 1) << printed;
+}

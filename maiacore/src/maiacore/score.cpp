@@ -104,6 +104,7 @@ struct TransposeElement {
     // What it stamps; empty when it is ignored, and 'ignored' is then the warning that says why.
     std::optional<NoteTransposition> values;
     std::string ignored;
+    std::string pairCorrected;  // the warning for a <diatonic> replaced, or empty
 };
 
 // A pitched note the reader stored: its measure, the position among the measure's <note> elements
@@ -160,10 +161,10 @@ int toIntRange(const std::int64_t value) {
 }
 
 // Reads one <transpose>: the interval, <octave-change> folded in as 7 letters and 12 semitones
-// per octave, and the octave doubling of <double>; an absent <diatonic> stands for the
-// conventional diatonic interval of <chromatic>. A <chromatic> or an <octave-change> that is not
-// a whole number makes the element ignored. A number attribute that is not a positive integer is
-// read as absent.
+// per octave, and the octave doubling of <double>. An absent <diatonic> stands for the
+// conventional diatonic interval of <chromatic>; one that does not match it is replaced by that
+// interval, with a warning. A <chromatic> or an <octave-change> that is not a whole number makes
+// the element ignored. A number attribute that is not a positive integer is read as absent.
 TransposeElement readTranspose(const pugi::xml_node& transpose, const int measureIdx,
                                const int notesBefore, const std::string& where) {
     TransposeElement element;
@@ -199,14 +200,29 @@ TransposeElement readTranspose(const pugi::xml_node& transpose, const int measur
         octaves = *value;
     }
 
-    // An absent <diatonic> stands for the diatonic interval conventionally written for the
-    // chromatic one, stored explicitly.
-    std::int64_t diatonic = maiacore::detail::conventionalDiatonicInterval(toIntRange(*chromatic));
+    // The diatonic interval conventionally written for the chromatic one: what an absent
+    // <diatonic> stands for, stored explicitly, and what replaces one that does not match
+    // <chromatic>. The check reads the values as the file writes them, before <octave-change>.
+    const std::int64_t conventional =
+        maiacore::detail::conventionalDiatonicInterval(toIntRange(*chromatic));
+    std::int64_t diatonic = conventional;
     if (transpose.child("diatonic")) {
-        const std::optional<std::int64_t> value =
-            wholeNumber(trimmedChildText(transpose, "diatonic"));
-        if (value) {
+        const std::string diatonicText = trimmedChildText(transpose, "diatonic");
+        const std::optional<std::int64_t> value = wholeNumber(diatonicText);
+        // A tritone matches both the augmented fourth, the conventional count, and the
+        // diminished fifth, one letter further.
+        const std::int64_t semitones = (*chromatic < 0) ? -*chromatic : *chromatic;
+        const bool tritone = semitones % 12 == 6;
+        const bool matches =
+            value && (*value == conventional ||
+                      (tritone && *value == conventional + (*chromatic > 0 ? 1 : -1)));
+        if (matches) {
             diatonic = *value;
+        } else {
+            element.pairCorrected = "[transpose-pair-corrected] " + where + ": <diatonic>" +
+                                    diatonicText + "</diatonic> does not match <chromatic>" +
+                                    chromaticText + "</chromatic>; using " +
+                                    std::to_string(conventional) + ".";
         }
     }
 
@@ -224,7 +240,7 @@ TransposeElement readTranspose(const pugi::xml_node& transpose, const int measur
 }
 
 // The <transpose> elements of a measure's <attributes>, in document order, each with the number
-// of <note> elements before its <attributes>.
+// of <note> elements before its <attributes>; a <for-part> is reported and dropped.
 void readTransposeElements(const pugi::xml_node& measure, const int measureIdx,
                            const std::string& where, std::vector<TransposeElement>& elements) {
     int notesBefore = 0;
@@ -235,6 +251,12 @@ void readTransposeElements(const pugi::xml_node& measure, const int measureIdx,
         } else if (name == "attributes") {
             for (const pugi::xml_node transpose : child.children("transpose")) {
                 elements.push_back(readTranspose(transpose, measureIdx, notesBefore, where));
+            }
+            for (pugi::xml_node forPart = child.child("for-part"); forPart;
+                 forPart = forPart.next_sibling("for-part")) {
+                LOG_WARN("[for-part-not-modelled] " + where +
+                         ": <for-part> is not modelled and is dropped; the notes of a concert "
+                         "score are written at concert pitch.");
             }
         }
     }
@@ -247,16 +269,30 @@ bool isAtOrAfter(const PitchedNote& note, const TransposeElement& element) {
            (note.measureIdx == element.measureIdx && note.chordPosition >= element.notesBefore);
 }
 
+// Whether two pitched notes of a staff are notes of one chord.
+bool inSameChord(const PitchedNote& a, const PitchedNote& b) {
+    return a.measureIdx == b.measureIdx && a.chordPosition == b.chordPosition;
+}
+
 // Stamps each pitched note of a part with the <transpose> in force for its staff: the last one
 // before the note -- before the first note of its chord, for a chord -- in document order that
 // applies to its staff, by its number or with none, and is not ignored. A note before every such
-// element stays untransposed. Each ignored element's warning is printed.
+// element stays untransposed. An element is ignored when its value cannot be read, or when a note
+// of its scope -- the notes it would stamp, up to the next <transpose> for their staff -- would
+// have no sounding pitch with it: it is checked before anything is stamped, so an ignored element
+// stamps nothing. The previous transposition stays in force over the scope of an ignored element;
+// a chord with a note it cannot sound either is read untransposed, all its notes. Each element
+// prints its warnings: the corrected pair, then why it is ignored.
 void applyTranspositions(Part& part, const std::vector<TransposeElement>& elements,
-                         const std::vector<PitchedNote>& notes) {
+                         const std::vector<PitchedNote>& notes,
+                         const std::vector<std::string>& measureNumbers) {
     std::map<int, std::vector<PitchedNote>> notesByStaff;
     for (const PitchedNote& note : notes) {
         notesByStaff[note.staff].push_back(note);
     }
+    const auto noteAt = [&part](const PitchedNote& pitched) -> Note& {
+        return part.getMeasure(pitched.measureIdx).getNote(pitched.index, pitched.staff);
+    };
 
     // Each element's scope on each staff it applies to: the half-open range of that staff's
     // notes from the element to the next element that applies to the staff.
@@ -282,21 +318,78 @@ void applyTranspositions(Part& part, const std::vector<TransposeElement>& elemen
     std::map<int, NoteTransposition> inForce;
     for (size_t e = 0; e < elements.size(); e++) {
         const TransposeElement& element = elements[e];
-        if (!element.values) {
-            LOG_WARN(element.ignored);
+        if (!element.pairCorrected.empty()) {
+            LOG_WARN(element.pairCorrected);
         }
+
+        // Why the element is ignored, if it is: its value cannot be read, or the first note of
+        // its scope that cannot sound with it.
+        std::string rejection = element.ignored;
+        if (rejection.empty()) {
+            const NoteTransposition& values = *element.values;
+            for (const auto& scope : scopes[e]) {
+                const std::vector<PitchedNote>& staffNotes = notesByStaff.at(scope.first);
+                for (size_t i = scope.second.first; i < scope.second.second && rejection.empty();
+                     i++) {
+                    const Note& note = noteAt(staffNotes[i]);
+                    if (!maiacore::detail::soundsWithinRange(note, values.diatonic,
+                                                             values.chromatic)) {
+                        rejection = "[transpose-out-of-range] " + element.where + ": the written " +
+                                    note.getWrittenPitch() + " of measure " +
+                                    measureNumbers.at(staffNotes[i].measureIdx) + ", staff " +
+                                    std::to_string(staffNotes[i].staff + 1) +
+                                    " would sound outside the representable range; the "
+                                    "<transpose> is ignored and the previous transposition stays "
+                                    "in force.";
+                    }
+                }
+                if (!rejection.empty()) {
+                    break;
+                }
+            }
+        }
+
+        int untransposed = 0;
         for (const auto& [staff, scope] : scopes[e]) {
-            if (element.values) {
+            if (rejection.empty()) {
                 inForce[staff] = *element.values;
             }
             const NoteTransposition stamp = inForce[staff];
             const std::vector<PitchedNote>& staffNotes = notesByStaff.at(staff);
-            for (size_t i = scope.first; i < scope.second; i++) {
-                Note& note = part.getMeasure(staffNotes[i].measureIdx)
-                                 .getNote(staffNotes[i].index, staffNotes[i].staff);
-                note.setTransposingInterval(stamp.diatonic, stamp.chromatic);
-                note.setOctaveDoubling(stamp.doubling);
+            // A chord is stamped as a unit: when the transposition cannot sound one of its notes,
+            // every note of the chord is read untransposed.
+            size_t chordStart = scope.first;
+            while (chordStart < scope.second) {
+                size_t chordEnd = chordStart;
+                bool sounds = true;
+                while (chordEnd < scope.second &&
+                       inSameChord(staffNotes[chordEnd], staffNotes[chordStart])) {
+                    sounds = sounds &&
+                             maiacore::detail::soundsWithinRange(noteAt(staffNotes[chordEnd]),
+                                                                 stamp.diatonic, stamp.chromatic);
+                    chordEnd++;
+                }
+                if (sounds) {
+                    for (size_t i = chordStart; i < chordEnd; i++) {
+                        Note& note = noteAt(staffNotes[i]);
+                        note.setTransposingInterval(stamp.diatonic, stamp.chromatic);
+                        note.setOctaveDoubling(stamp.doubling);
+                    }
+                } else {
+                    untransposed += static_cast<int>(chordEnd - chordStart);
+                }
+                chordStart = chordEnd;
             }
+        }
+
+        if (!rejection.empty()) {
+            if (untransposed > 0) {
+                rejection +=
+                    " Its notes that the previous transposition cannot sound either are "
+                    "read untransposed, with the other notes of their chords (" +
+                    std::to_string(untransposed) + " in all).";
+            }
+            LOG_WARN(rejection);
         }
     }
 }
@@ -1075,7 +1168,7 @@ void Score::loadXMLFile(const std::string& filePath) {
             }
         }
 
-        applyTranspositions(_part[p], transposeElements, pitchedNotes);
+        applyTranspositions(_part[p], transposeElements, pitchedNotes, measureNumbers);
     }
 }
 

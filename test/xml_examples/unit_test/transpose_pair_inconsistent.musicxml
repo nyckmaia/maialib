@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- <diatonic> against <chromatic>: trumpets in E written with the letters of a fourth and the
+     semitones of a major third (3, 4) are corrected to (2, 4), so F#4 sounds A#4; a clarinet's
+     explicit <diatonic>0</diatonic> with <chromatic>-2</chromatic> is corrected to (-1, -2); a
+     tritone accepts the diminished fifth (-4, -6) and the augmented fourth (-3, -6) alike. Two
+     warnings. -->
+<score-partwise version="4.0">
+  <part-list>
+    <score-part id="P1"><part-name>Trumpet in E</part-name></score-part>
+    <score-part id="P2"><part-name>Clarinet in Bb</part-name></score-part>
+    <score-part id="P3"><part-name>Horn in F#</part-name></score-part>
+    <score-part id="P4"><part-name>Horn in Gb</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+        <transpose><diatonic>3</diatonic><chromatic>4</chromatic></transpose>
+      </attributes>
+      <note><pitch><step>F</step><alter>1</alter><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+  </part>
+  <part id="P2">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+        <transpose><diatonic>0</diatonic><chromatic>-2</chromatic></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+  </part>
+  <part id="P3">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+        <transpose><diatonic>-4</diatonic><chromatic>-6</chromatic></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+  </part>
+  <part id="P4">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+        <transpose><diatonic>-3</diatonic><chromatic>-6</chromatic></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+  </part>
+</score-partwise>
