@@ -436,6 +436,7 @@ Note::Note(const std::string& pitch, const RhythmFigure rhythmFigure, bool isNot
       _inChord(false),
       _transposeDiatonic(0),
       _transposeChromatic(0),
+      _octaveDoubling(OctaveDoubling::NONE),
       _voice(1),
       _staff(0),
       _isGraceNote(false),
@@ -913,6 +914,7 @@ void Note::setPitch(const std::string& pitch) {
         _inChord = false;
         _transposeDiatonic = 0;
         _transposeChromatic = 0;
+        _octaveDoubling = OctaveDoubling::NONE;
         _isGraceNote = false;
         return;
     }
@@ -940,6 +942,17 @@ void Note::setTransposingInterval(const int diatonicInterval, const int chromati
     _transposeDiatonic = diatonicInterval;
     _transposeChromatic = chromaticInterval;
 }
+
+void Note::setOctaveDoubling(const OctaveDoubling doubling) {
+    if (!isNoteOn()) {
+        LOG_WARN("Note::setOctaveDoubling: cannot set the octave doubling of a rest; ignoring");
+        return;
+    }
+
+    _octaveDoubling = doubling;
+}
+
+OctaveDoubling Note::getOctaveDoubling() const { return _octaveDoubling; }
 
 Pitch Note::computeSoundingPitch() const {
     return maiacore::detail::simplestSpelling(computeConcertPitch());

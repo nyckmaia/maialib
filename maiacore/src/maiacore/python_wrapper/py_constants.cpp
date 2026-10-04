@@ -23,6 +23,16 @@ void Constants(const py::module &m) {
         .value("N512TH", RhythmFigure::N512TH)
         .value("N1024TH", RhythmFigure::N1024TH);
 
+    py::enum_<OctaveDoubling>(m, "OctaveDoubling", R"pbdoc(
+        Whether a note's part is doubled one octave from what the note sounds, as a MusicXML
+        ``<double>`` inside ``<transpose>`` states it: mixed cello and bass parts are doubled
+        below, mixed flute and piccolo parts above. See ``Note.getOctaveDoubling``.
+    )pbdoc")
+        .value("NONE", OctaveDoubling::NONE, "Not doubled.")
+        .value("BELOW", OctaveDoubling::BELOW, "Doubled one octave below: ``<double/>``.")
+        .value("ABOVE", OctaveDoubling::ABOVE,
+               "Doubled one octave above: ``<double above=\"yes\"/>``.");
+
     // py::enum_<TuningSystem>(m, "TuningSystem")
     //     .value("EQUAL_TEMPERAMENT", TuningSystem::EQUAL_TEMPERAMENT)
     //     .value("JUST_INTONATION", TuningSystem::JUST_INTONATION)

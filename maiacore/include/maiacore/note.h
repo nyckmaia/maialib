@@ -69,17 +69,18 @@ class Note {
     Pitch _writtenPitch;  ///< Written pitch. A rest is represented by _writtenPitch.isRest();
                           ///< there is no separate "is this a rest" flag (see isNoteOn()).
 
-    bool _inChord;            ///< True if this note is part of a chord.
-    int _transposeDiatonic;   ///< Diatonic transposition interval.
-    int _transposeChromatic;  ///< Chromatic transposition interval.
-    int _voice;               ///< Voice number.
-    int _staff;               ///< Staff number.
-    bool _isGraceNote;        ///< True if this is a grace note.
-    std::string _stem;        ///< Stem direction ("up", "down", etc.).
-    bool _isTuplet;           ///< True if this note is part of a tuplet.
-    bool _isPitched;          ///< True if this note is pitched, false for unpitched.
-    int _unpitchedIndex;      ///< Index for unpitched percussion notes.
-    Duration _duration;       ///< Duration object for this note.
+    bool _inChord;                   ///< True if this note is part of a chord.
+    int _transposeDiatonic;          ///< Diatonic transposition interval.
+    int _transposeChromatic;         ///< Chromatic transposition interval.
+    OctaveDoubling _octaveDoubling;  ///< Octave doubling of the note's part (MusicXML <double>).
+    int _voice;                      ///< Voice number.
+    int _staff;                      ///< Staff number.
+    bool _isGraceNote;               ///< True if this is a grace note.
+    std::string _stem;               ///< Stem direction ("up", "down", etc.).
+    bool _isTuplet;                  ///< True if this note is part of a tuplet.
+    bool _isPitched;                 ///< True if this note is pitched, false for unpitched.
+    int _unpitchedIndex;             ///< Index for unpitched percussion notes.
+    Duration _duration;              ///< Duration object for this note.
 
     std::pair<std::string, std::string> _slur;  ///< Slur type and orientation.
     std::vector<std::string> _tie;              ///< Tie types ("start", "stop").
@@ -302,7 +303,7 @@ class Note {
      * @details Replaces the pitch class, octave, accidental symbol and MIDI number. Accepts the
      *          same spellings as the pitch-string constructor. The transposing interval is kept,
      *          so the note then sounds this pitch moved by it; setting a rest also clears the
-     *          interval and the in-chord and grace-note flags.
+     *          interval, the octave doubling and the in-chord and grace-note flags.
      * @param pitch Pitch string. An empty string or a string containing "rest" turns the note
      *        into a rest.
      * @throws std::runtime_error If the pitch string is invalid (see Helper::splitPitch()), or if
@@ -345,6 +346,14 @@ class Note {
      *         above B11 that the diatonic interval does not spell. The note is then left unchanged.
      */
     void setTransposingInterval(const int diatonicInterval, const int chromaticInterval);
+
+    /**
+     * @brief Sets the octave doubling of the note (see getOctaveDoubling()).
+     * @details A rest has nothing to double: on a rest this changes nothing and prints a warning
+     *          (LOG_WARN), as setOctave() and setAlter() do.
+     * @param doubling OctaveDoubling::NONE, OctaveDoubling::BELOW or OctaveDoubling::ABOVE.
+     */
+    void setOctaveDoubling(const OctaveDoubling doubling);
 
     /**
      * @brief Sets the voice number for the note.
@@ -827,6 +836,19 @@ class Note {
      * @return True if either transposing interval is not 0.
      */
     bool isTransposed() const;
+
+    /**
+     * @brief Returns the octave doubling of the note: whether its part is doubled one octave
+     *        below or above what it sounds (MusicXML `<double>`).
+     * @details The pitch getters -- written, sounding and acoustic -- describe the note itself,
+     *          never the doubled octave. The doubling takes no part in operator==() and
+     *          operator!=(), nor in the Python hash, which hashes what operator==() compares: two
+     *          notes that differ only in their doubling are equal. A note constructed as a rest,
+     *          or set to one with setPitch(), is not doubled; a note silenced with
+     *          setIsNoteOn(false) keeps its doubling, as it keeps its transposing interval.
+     * @return OctaveDoubling::NONE, OctaveDoubling::BELOW or OctaveDoubling::ABOVE.
+     */
+    OctaveDoubling getOctaveDoubling() const;
 
     /**
      * @brief Returns an enharmonic spelling of the written pitch, getPitch().

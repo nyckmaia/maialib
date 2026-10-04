@@ -336,9 +336,10 @@ void NoteClass(const py::module& m) {
 
         ``setIsNoteOn(False)`` makes the note a rest everywhere: its pitch is gone and every
         getter answers as for a rest (``getPitch()`` is ``"rest"``, ``getMidiNumber()`` -1,
-        ``getOctave()`` None). Its transposing interval is kept. ``setIsNoteOn(True)`` leaves a
-        sounding note as it is; a rest has no pitch it could sound, so it prints a warning and
-        stays a rest -- give it a pitch with ``setPitch``, ``setPitchClass`` or ``setStep``.
+        ``getOctave()`` None). Its transposing interval and octave doubling are kept.
+        ``setIsNoteOn(True)`` leaves a sounding note as it is; a rest has no pitch it could
+        sound, so it prints a warning and stays a rest -- give it a pitch with ``setPitch``,
+        ``setPitchClass`` or ``setStep``.
 
         Parameters
         ----------
@@ -362,7 +363,8 @@ void NoteClass(const py::module& m) {
 
         Replaces the step, accidental and octave. A transposing interval is kept, so the
         sounding pitch, ``getSoundingPitch()``, is this pitch moved by it. Setting a rest also
-        clears the transposing interval and the in-chord and grace-note flags.
+        clears the transposing interval, the octave doubling and the in-chord and grace-note
+        flags.
 
         Parameters
         ----------
@@ -423,6 +425,27 @@ void NoteClass(const py::module& m) {
         >>> note.setTransposingInterval(-1, -2)
         >>> note.getPitch(), note.getSoundingPitch(), note.getMidiNumber()
         ('C4', 'Bb3', 58)
+    )pbdoc");
+
+    cls.def("setOctaveDoubling", &Note::setOctaveDoubling, py::arg("doubling"),
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Set the octave doubling of the note (see ``getOctaveDoubling``).
+
+        A rest has nothing to double: on a rest this changes nothing and prints a warning, as
+        ``setOctave`` and ``setAlter`` do.
+
+        Parameters
+        ----------
+        doubling : OctaveDoubling
+            ``OctaveDoubling.NONE``, ``OctaveDoubling.BELOW`` or ``OctaveDoubling.ABOVE``.
+
+        Examples
+        --------
+        >>> note = ml.Note("C3")
+        >>> note.setOctaveDoubling(ml.OctaveDoubling.BELOW)
+        >>> note.getOctaveDoubling()
+        <OctaveDoubling.BELOW: 1>
     )pbdoc");
 
     cls.def("setVoice", &Note::setVoice, py::arg("voice"));
@@ -1050,6 +1073,30 @@ void NoteClass(const py::module& m) {
         >>> ml.Note("rest", transposeDiatonic=-1, transposeChromatic=-2).isTransposed()
         False
     )pbdoc");
+    cls.def("getOctaveDoubling", &Note::getOctaveDoubling,
+            R"pbdoc(
+        Return the octave doubling of the note: whether its part is doubled one octave below or
+        above what it sounds (MusicXML ``<double>``).
+
+        The pitch getters -- written, sounding and acoustic -- describe the note itself, never
+        the doubled octave. ``==``, ``!=`` and the hash ignore the doubling: two notes that
+        differ only in it are equal. A note constructed as a rest, or set to one with
+        ``setPitch``, is not doubled; a note silenced with ``setIsNoteOn(False)`` keeps its
+        doubling, as it keeps its transposing interval.
+
+        Returns
+        -------
+        OctaveDoubling
+            ``OctaveDoubling.NONE``, ``OctaveDoubling.BELOW`` or ``OctaveDoubling.ABOVE``.
+
+        Examples
+        --------
+        >>> note = ml.Note("C3")
+        >>> note.setOctaveDoubling(ml.OctaveDoubling.BELOW)
+        >>> note.getOctaveDoubling(), note == ml.Note("C3")
+        (<OctaveDoubling.BELOW: 1>, True)
+    )pbdoc");
+
     cls.def("isGraceNote", &Note::isGraceNote);
 
     cls.def("getEnharmonicPitch", &Note::getEnharmonicPitch,

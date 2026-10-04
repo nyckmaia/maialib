@@ -78,6 +78,19 @@ const std::map<int, RhythmFigure> c_mapTimeSignatureLower_Duration = {
     {64, RhythmFigure::N64TH},   {128, RhythmFigure::N128TH},  {256, RhythmFigure::N256TH},
     {512, RhythmFigure::N512TH}, {1024, RhythmFigure::N1024TH}};
 
+/**
+ * @brief Whether a note's part is doubled one octave from what the note sounds, as a MusicXML
+ *        `<double>` inside `<transpose>` states it: mixed cello and bass parts are doubled below,
+ *        mixed flute and piccolo parts above.
+ * @details Each note holds its own (Note::getOctaveDoubling()); a note's pitch getters describe
+ *          the note itself, never the doubled octave.
+ */
+enum class OctaveDoubling {
+    NONE,   ///< Not doubled.
+    BELOW,  ///< Doubled one octave below: `<double/>`.
+    ABOVE,  ///< Doubled one octave above: `<double above="yes"/>`.
+};
+
 // ===== HARMONY DEGREES ===== //
 const std::array<int, 7> c_harmonyDegrees = {1, 2, 3, 4, 5, 6, 7};
 const std::array<std::string, 7> c_harmonyKeyDegrees = {"I", "II", "III", "IV", "V", "VI", "VII"};

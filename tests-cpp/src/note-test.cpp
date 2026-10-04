@@ -2491,3 +2491,57 @@ TEST(NotePitchViews, infoShowsTheWrittenPitch) {
     EXPECT_NE(printed.find("Pitch: D4"), std::string::npos) << printed;
     EXPECT_NE(printed.find("MIDI Number: 60"), std::string::npos) << printed;
 }
+
+// ===================================================================================================
+// OCTAVE DOUBLING
+// ===================================================================================================
+
+TEST(NoteOctaveDoubling, aNoteIsNotDoubledUntilItIsSet) {
+    Note note("C3");
+    EXPECT_EQ(note.getOctaveDoubling(), OctaveDoubling::NONE);
+    note.setOctaveDoubling(OctaveDoubling::BELOW);
+    EXPECT_EQ(note.getOctaveDoubling(), OctaveDoubling::BELOW);
+    note.setOctaveDoubling(OctaveDoubling::ABOVE);
+    EXPECT_EQ(note.getOctaveDoubling(), OctaveDoubling::ABOVE);
+    const Note copy = note;
+    EXPECT_EQ(copy.getOctaveDoubling(), OctaveDoubling::ABOVE);
+}
+
+// A rest sounds nothing to double: it refuses the doubling with a warning, as setOctave() does.
+TEST(NoteOctaveDoubling, aRestRefusesTheDoublingWithAWarning) {
+    Note rest("rest");
+    StdoutCapture capture;
+    rest.setOctaveDoubling(OctaveDoubling::BELOW);
+    EXPECT_EQ(rest.getOctaveDoubling(), OctaveDoubling::NONE);
+    EXPECT_NE(capture.str().find("[WARN] Note::setOctaveDoubling: cannot set the octave doubling "
+                                 "of a rest; ignoring"),
+              std::string::npos)
+        << capture.str();
+}
+
+// setPitch() to a rest clears the doubling with the transposing interval; setIsNoteOn(false)
+// keeps both.
+TEST(NoteOctaveDoubling, settingARestClearsTheDoublingAndSilencingKeepsIt) {
+    Note cleared = bassClarinet("D4");
+    cleared.setOctaveDoubling(OctaveDoubling::BELOW);
+    cleared.setPitch("rest");
+    EXPECT_EQ(cleared.getOctaveDoubling(), OctaveDoubling::NONE);
+    EXPECT_FALSE(cleared.isTransposed());
+
+    Note silenced = bassClarinet("D4");
+    silenced.setOctaveDoubling(OctaveDoubling::BELOW);
+    silenced.setIsNoteOn(false);
+    EXPECT_EQ(silenced.getOctaveDoubling(), OctaveDoubling::BELOW);
+    EXPECT_TRUE(silenced.isTransposed());
+}
+
+// The doubling is not part of the note's own pitch, nor of what == compares.
+TEST(NoteOctaveDoubling, thePitchViewsAndEqualityIgnoreTheDoubling) {
+    Note doubled("C3");
+    doubled.setOctaveDoubling(OctaveDoubling::BELOW);
+    EXPECT_EQ(doubled.getWrittenPitch(), "C3");
+    EXPECT_EQ(doubled.getSoundingPitch(), "C3");
+    EXPECT_EQ(doubled.getMidiNumber(), 48);
+    EXPECT_TRUE(doubled == Note("C3"));
+    EXPECT_FALSE(doubled != Note("C3"));
+}

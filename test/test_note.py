@@ -1128,5 +1128,42 @@ class NotePitchViews(unittest.TestCase):
                 self.assertIn("inferred diatonic interval", doc)
 
 
+class NoteOctaveDoubling(unittest.TestCase):
+    """A note holds the octave doubling of its part (MusicXML <double>)."""
+
+    def testTheEnumNamesTheThreeDoublings(self):
+        self.assertEqual(["NONE", "BELOW", "ABOVE"], list(ml.OctaveDoubling.__members__))
+
+    def testANoteIsNotDoubledUntilItIsSet(self):
+        note = ml.Note("C3")
+        self.assertEqual(note.getOctaveDoubling(), ml.OctaveDoubling.NONE)
+        note.setOctaveDoubling(ml.OctaveDoubling.ABOVE)
+        self.assertEqual(note.getOctaveDoubling(), ml.OctaveDoubling.ABOVE)
+
+    def testARestRefusesTheDoublingWithAWarning(self):
+        rest = ml.Note("rest")
+        printed = capturedStdout(lambda: rest.setOctaveDoubling(ml.OctaveDoubling.BELOW))
+        self.assertIn(
+            "[WARN] Note::setOctaveDoubling: cannot set the octave doubling of a rest", printed
+        )
+        self.assertEqual(rest.getOctaveDoubling(), ml.OctaveDoubling.NONE)
+
+    def testSettingARestClearsTheDoubling(self):
+        note = ml.Note("D4", transposeDiatonic=-8, transposeChromatic=-14)
+        note.setOctaveDoubling(ml.OctaveDoubling.BELOW)
+        note.setPitch("rest")
+        self.assertEqual(note.getOctaveDoubling(), ml.OctaveDoubling.NONE)
+
+    def testEqualityAndHashIgnoreTheDoubling(self):
+        doubled = ml.Note("C3")
+        doubled.setOctaveDoubling(ml.OctaveDoubling.BELOW)
+        self.assertEqual(doubled, ml.Note("C3"))
+        self.assertEqual(hash(doubled), hash(ml.Note("C3")))
+
+    def testTheGetterSaysThatEqualityIgnoresIt(self):
+        doc = " ".join(ml.Note.getOctaveDoubling.__doc__.split())
+        self.assertIn("``==``, ``!=`` and the hash ignore the doubling", doc)
+
+
 if __name__ == "__main__":
     unittest.main()
