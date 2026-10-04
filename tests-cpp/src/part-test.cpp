@@ -4,8 +4,11 @@
 #include <maiacore/note.h>
 #include <maiacore/part.h>
 
+#include <stdexcept>
 #include <string>
 #include <vector>
+
+#include "test-capture.h"
 
 // ====================
 // Constructor Tests
@@ -550,4 +553,106 @@ TEST(PartEdgeCases, LongPartName) {
     Part part("Soprano Saxophone in B-flat (Transposing)");
 
     EXPECT_EQ(part.getName(), "Soprano Saxophone in B-flat (Transposing)");
+}
+
+// ====================
+// Transposing interval
+// ====================
+
+namespace {
+// "(<diatonic>, <chromatic>, <doubling>)" of a note.
+std::string intervalOf(const Note& note) {
+    std::string doubling = "NONE";
+    if (note.getOctaveDoubling() == OctaveDoubling::BELOW) {
+        doubling = "BELOW";
+    } else if (note.getOctaveDoubling() == OctaveDoubling::ABOVE) {
+        doubling = "ABOVE";
+    }
+    return "(" + std::to_string(note.getTransposeDiatonic()) + ", " +
+           std::to_string(note.getTransposeChromatic()) + ", " + doubling + ")";
+}
+
+// Three measures of a two-staff part; each staff holds a C4 and a rest.
+Part clarinets() {
+    Part part("Clarinets", 2);
+    part.addMeasure(3);
+    for (int m = 0; m < 3; m++) {
+        for (int s = 0; s < 2; s++) {
+            part.getMeasure(m).addNote(Note("C4"), s);
+            part.getMeasure(m).addNote(Note("rest"), s);
+        }
+    }
+    return part;
+}
+}  // namespace
+
+TEST(PartSetTransposingInterval, stampsThePitchedNotesOfTheRangeAndStaff) {
+    Part part = clarinets();
+    part.setTransposingInterval(-1, -2, 1, 3, 0, OctaveDoubling::BELOW);
+    EXPECT_EQ(intervalOf(part.getMeasure(0).getNote(0, 0)), "(0, 0, NONE)");  // before the range
+    EXPECT_EQ(intervalOf(part.getMeasure(1).getNote(0, 0)), "(-1, -2, BELOW)");
+    EXPECT_EQ(intervalOf(part.getMeasure(2).getNote(0, 0)), "(-1, -2, BELOW)");
+    EXPECT_EQ(intervalOf(part.getMeasure(1).getNote(0, 1)), "(0, 0, NONE)");  // the other staff
+    EXPECT_FALSE(part.getMeasure(1).getNote(1, 0).isTransposed());            // a rest
+    EXPECT_EQ(part.getMeasure(1).getNote(0, 0).getSoundingPitch(), "Bb3");
+}
+
+TEST(PartSetTransposingInterval, theDefaultsStampEveryMeasureAndStaff) {
+    Part part = clarinets();
+    part.setTransposingInterval(-2, -3);
+    for (int m = 0; m < 3; m++) {
+        for (int s = 0; s < 2; s++) {
+            EXPECT_EQ(intervalOf(part.getMeasure(m).getNote(0, s)), "(-2, -3, NONE)")
+                << "measure " << m << ", staff " << s;
+        }
+    }
+}
+
+TEST(PartSetTransposingInterval, unpitchedNotesAreLeftAlone) {
+    Part part("Percussion");
+    part.addMeasure(1);
+    Note unpitched("E4");
+    unpitched.setIsPitched(false);
+    part.getMeasure(0).addNote(unpitched);
+    part.setTransposingInterval(-1, -2);
+    EXPECT_FALSE(part.getMeasure(0).getNote(0, 0).isTransposed());
+}
+
+// Every note is checked before any changes: one that would have no sounding pitch raises,
+// naming it, and the notes before it keep their transposition.
+TEST(PartSetTransposingInterval, changesAllTheNotesOrNone) {
+    Part part("Piccolo");
+    part.addMeasure(2);
+    part.getMeasure(0).addNote(Note("C4"));
+    part.getMeasure(1).addNote(Note("B11"));
+    EXPECT_EQ(thrownFirstLine([&] { part.setTransposingInterval(7, 12); }),
+              "[maiacore] Part::setTransposingInterval: with the transposing interval (7, 12), "
+              "the written B11 at measure index 1, staff index 0 would sound below the lowest "
+              "representable pitch, C1b-1, or above B11 (MIDI note 155) where its letter cannot "
+              "spell it; no note was changed.");
+    EXPECT_FALSE(part.getMeasure(0).getNote(0, 0).isTransposed());
+
+    Part bass("Contrabass");
+    bass.addMeasure(1);
+    bass.getMeasure(0).addNote(Note("D2"));
+    bass.getMeasure(0).addNote(Note("C#-1"));
+    EXPECT_NE(thrownFirstLine([&] {
+                  bass.setTransposingInterval(-1, -2);
+              }).find("the written C#-1 at measure index 0, staff index 0"),
+              std::string::npos);
+    EXPECT_FALSE(bass.getMeasure(0).getNote(0, 0).isTransposed());
+}
+
+TEST(PartSetTransposingInterval, invalidIndicesThrowOutOfRange) {
+    Part part = clarinets();
+    EXPECT_THROW(part.setTransposingInterval(-1, -2, -1), std::out_of_range);
+    EXPECT_THROW(part.setTransposingInterval(-1, -2, 2, 1), std::out_of_range);
+    EXPECT_THROW(part.setTransposingInterval(-1, -2, 0, 4), std::out_of_range);
+    EXPECT_THROW(part.setTransposingInterval(-1, -2, 0, -2), std::out_of_range);
+    EXPECT_THROW(part.setTransposingInterval(-1, -2, 0, -1, 2), std::out_of_range);
+    EXPECT_THROW(part.setTransposingInterval(-1, -2, 0, -1, -2), std::out_of_range);
+    EXPECT_NO_THROW(part.setTransposingInterval(-1, -2, 3, 3));  // an empty range
+    for (int m = 0; m < 3; m++) {
+        EXPECT_FALSE(part.getMeasure(m).getNote(0, 0).isTransposed());
+    }
 }

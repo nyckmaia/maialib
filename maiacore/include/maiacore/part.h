@@ -1,8 +1,11 @@
 #pragma once
 
 #include <iostream>
+#include <string>
 #include <variant>
 #include <vector>
+
+#include "maiacore/constants.h"
 
 class Chord;
 class Measure;
@@ -182,6 +185,36 @@ class Part {
      * @param isPitched True if pitched.
      */
     void setIsPitched(const bool isPitched = true);
+
+    /**
+     * @brief Sets the transposing interval and the octave doubling of the pitched notes of a
+     *        range of measures and a staff.
+     * @details Stamps every pitched note of the measures [measureStart, measureEnd) on the staff
+     *          'staff' with Note::setTransposingInterval() and Note::setOctaveDoubling(); rests
+     *          and unpitched notes are left alone. The interval is the total one: an octave
+     *          transposition is folded in as 7 letters and 12 semitones per octave (a B-flat bass
+     *          clarinet is (-8, -14)). The notes hold the transposition -- no Part, Measure or
+     *          Score state records it -- and the MusicXML writer derives its `<transpose>`
+     *          elements from them. Every note is checked before any changes, so the call changes
+     *          all of them or none.
+     * @param diatonicInterval Letters from the written to the sounding pitch (-1 for a B-flat
+     *        clarinet).
+     * @param chromaticInterval Semitones from the written to the sounding pitch (-2 for a
+     *        B-flat clarinet).
+     * @param measureStart Index of the first measure (default 0).
+     * @param measureEnd Index one past the last measure; -1 (default) for the end of the part.
+     * @param staff 0-based staff index; -1 (default) for every staff.
+     * @param doubling The octave doubling (default OctaveDoubling::NONE).
+     * @throws std::out_of_range If the measures are not a range of the part's measures, or the
+     *         staff is neither -1 nor one of the part's staves.
+     * @throws std::runtime_error If a note would have no sounding pitch with the interval: below
+     *         C1b-1, or above B11 where its letter cannot spell it. The message names the first
+     *         such note (measure index, staff index, written pitch); no note is changed.
+     */
+    void setTransposingInterval(const int diatonicInterval, const int chromaticInterval,
+                                const int measureStart = 0, const int measureEnd = -1,
+                                const int staff = -1,
+                                const OctaveDoubling doubling = OctaveDoubling::NONE);
 
     /**
      * @brief Sets the number of staff lines for the part.

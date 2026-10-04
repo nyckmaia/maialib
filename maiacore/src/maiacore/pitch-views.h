@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstdint>
+
 #include "maiacore/pitch.h"
 
 class Note;
@@ -79,5 +81,37 @@ Pitch simplestSpelling(const Pitch& pitch);
  *         pitch, C1b-1 (see Note::getMidiNumber()).
  */
 Pitch concertPitch(const Note& note);
+
+/**
+ * @brief The diatonic interval the speller moves the letter by: transposeDiatonic, or, when it is
+ *        0 while transposeChromatic is not, the diatonic interval conventionally written for
+ *        those semitones (see concertSpelling()).
+ * @details concertSpelling() and soundsWithinRange() spell with it, so that every user of a stored
+ *          transposing interval that needs its letters takes them from here and a stored 0 and
+ *          the conventional interval it stands for are one transposition.
+ * @param transposeDiatonic The stored diatonic interval.
+ * @param transposeChromatic The stored chromatic interval.
+ * @return The diatonic interval concertSpelling() uses.
+ */
+std::int64_t spelledDiatonicInterval(int transposeDiatonic, int transposeChromatic);
+
+/**
+ * @brief Whether a note would have a sounding pitch with the transposing interval
+ *        (transposeDiatonic, transposeChromatic) in place of its own.
+ * @details True exactly when concertSpelling() of the note's written pitch with that interval
+ *          returns a spelling: false when the sounding position lies below the lowest
+ *          representable pitch, C1b-1 (-0.5), or above B11 (MIDI note 155) where the diatonic
+ *          interval gives no spelling (a written A#11 moved up a major second sounds B#11, a
+ *          written B11 moved up a minor second has no spelling). A rest, and an untransposed
+ *          note, always have one. It never throws, so a caller can check many notes before
+ *          changing any: the MusicXML reader checks a <transpose>'s whole scope with it, and
+ *          Part::setTransposingInterval() every note of its range.
+ * @param note The note; only its written pitch is read.
+ * @param transposeDiatonic Letters from the written to the sounding pitch; 0 with a non-zero
+ *        transposeChromatic stands for the conventional diatonic interval of those semitones.
+ * @param transposeChromatic Semitones from the written to the sounding pitch.
+ * @return True if the note sounds a spellable pitch with the interval.
+ */
+bool soundsWithinRange(const Note& note, int transposeDiatonic, int transposeChromatic);
 
 }  // namespace maiacore::detail

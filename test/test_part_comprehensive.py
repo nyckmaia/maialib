@@ -327,5 +327,59 @@ class PartAppendOverflowTestCase(unittest.TestCase):
         self.assertEqual(part.getNumNotes(), 2)
 
 
+class PartSetTransposingIntervalTestCase(unittest.TestCase):
+    """Part.setTransposingInterval stamps the pitched notes of a measure range and a staff in
+    place, which an edit through Measure.getNote(), a copy, cannot do."""
+
+    def clarinets(self):
+        """Two measures of a two-staff part; each staff holds a C4 and a rest."""
+        score = ml.Score(["Clarinets"], 2)
+        part = score.getPart(0)
+        part.setNumStaves(2)
+        for m in range(2):
+            for s in range(2):
+                part.getMeasure(m).addNote(ml.Note("C4"), s)
+                part.getMeasure(m).addNote(ml.Note("rest"), s)
+        return score
+
+    def test_the_edit_reaches_the_score(self):
+        score = self.clarinets()
+        score.getPart(0).setTransposingInterval(
+            -1, -2, measureStart=1, staff=1, doubling=ml.OctaveDoubling.BELOW
+        )
+        stamped = score.getPart(0).getMeasure(1).getNote(0, 1)
+        self.assertEqual(
+            (-1, -2, ml.OctaveDoubling.BELOW, "Bb3"),
+            (
+                stamped.getTransposeDiatonic(),
+                stamped.getTransposeChromatic(),
+                stamped.getOctaveDoubling(),
+                stamped.getSoundingPitch(),
+            ),
+        )
+        self.assertFalse(score.getPart(0).getMeasure(0).getNote(0, 1).isTransposed())
+        self.assertFalse(score.getPart(0).getMeasure(1).getNote(0, 0).isTransposed())
+
+    def test_a_note_without_a_sounding_pitch_changes_nothing(self):
+        score = ml.Score(["Piccolo"], 2)
+        score.getPart(0).getMeasure(0).addNote(ml.Note("C4"))
+        score.getPart(0).getMeasure(1).addNote(ml.Note("B11"))
+        with self.assertRaises(RuntimeError) as context:
+            score.getPart(0).setTransposingInterval(7, 12)
+        self.assertIn("the written B11 at measure index 1, staff index 0", str(context.exception))
+        self.assertFalse(score.getPart(0).getMeasure(0).getNote(0).isTransposed())
+
+    def test_invalid_indices_raise_index_error(self):
+        part = self.clarinets().getPart(0)
+        for arguments in (
+            {"measureStart": -1},
+            {"measureStart": 2, "measureEnd": 1},
+            {"measureEnd": 3},
+            {"staff": 2},
+        ):
+            with self.subTest(**arguments), self.assertRaises(IndexError):
+                part.setTransposingInterval(-1, -2, **arguments)
+
+
 if __name__ == "__main__":
     unittest.main()

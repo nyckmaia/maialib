@@ -25,6 +25,8 @@
 
 using maiacore::detail::concertSpelling;
 using maiacore::detail::simplestSpelling;
+using maiacore::detail::soundsWithinRange;
+using maiacore::detail::spelledDiatonicInterval;
 
 namespace {
 // A pitch string, the transposing interval it is read with, and the expected pitch string.
@@ -599,4 +601,52 @@ TEST(SoundingSpelling, isTheSimplestSpellingOfTheConcertSpelling) {
         EXPECT_EQ(sounding.getPitch(), expected) << describe(written, diatonic, chromatic);
         EXPECT_EQ(sounding.getOctave(), octave) << describe(written, diatonic, chromatic);
     }
+}
+
+// The diatonic interval the speller moves the letter by: the stored one, or the conventional one
+// for the chromatic interval when the stored one is 0.
+TEST(SpelledDiatonicInterval, isTheStoredIntervalOrTheConventionalOneForZero) {
+    EXPECT_EQ(spelledDiatonicInterval(-1, -2), -1);
+    EXPECT_EQ(spelledDiatonicInterval(0, -2), -1);
+    EXPECT_EQ(spelledDiatonicInterval(3, 4), 3);  // a stored interval is used as it is
+    EXPECT_EQ(spelledDiatonicInterval(0, 0), 0);
+    EXPECT_EQ(spelledDiatonicInterval(7, 0), 7);
+}
+
+// soundsWithinRange() answers, without throwing, whether concertSpelling() spells the note's
+// written pitch with the interval: false exactly where concertSpelling() raises -- below C1b-1,
+// or above B11 where the diatonic interval gives no spelling.
+TEST(SoundsWithinRange, isTrueExactlyWhereTheConcertSpellingExists) {
+    const std::vector<std::string> pitches = {"C1b-1", "C-1",  "C#-1", "D-1",  "B2",
+                                              "C4",    "A#11", "B11",  "B#11", "Bx11"};
+    const std::vector<std::pair<int, int>> intervals = {{0, 0},
+                                                        {-1, -2},
+                                                        {0, -2},
+                                                        {1, 2},
+                                                        {1, 3},
+                                                        {0, 1},
+                                                        {1, 1},
+                                                        {7, 12},
+                                                        {-7, -12},
+                                                        {0, -200},
+                                                        {0, 200},
+                                                        {1, std::numeric_limits<int>::max()},
+                                                        {-1, std::numeric_limits<int>::min()}};
+    for (const std::string& pitch : pitches) {
+        for (const auto& [diatonic, chromatic] : intervals) {
+            const bool spelled =
+                concertOrError(Pitch(pitch), diatonic, chromatic).rfind("raises: ", 0) != 0;
+            EXPECT_EQ(soundsWithinRange(Note(pitch), diatonic, chromatic), spelled)
+                << describe(pitch, diatonic, chromatic);
+        }
+    }
+}
+
+TEST(SoundsWithinRange, theEdgesOfTheRange) {
+    EXPECT_TRUE(soundsWithinRange(Note("A#11"), 1, 2));     // B#11: the letter B spells it
+    EXPECT_FALSE(soundsWithinRange(Note("B11"), 1, 1));     // C12 has no spelling
+    EXPECT_FALSE(soundsWithinRange(Note("C#-1"), -1, -2));  // below C1b-1
+    EXPECT_TRUE(soundsWithinRange(Note("D-1"), -1, -2));    // C-1, MIDI note 0
+    EXPECT_TRUE(soundsWithinRange(Note("Bx11"), 0, 0));     // untransposed: as written
+    EXPECT_TRUE(soundsWithinRange(Note("rest"), 0, 200));   // a rest sounds nothing
 }

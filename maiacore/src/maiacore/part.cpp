@@ -1,5 +1,9 @@
 #include "maiacore/part.h"
 
+#include <stdexcept>
+#include <string>
+#include <vector>
+
 #include "cherno/instrumentor.h"
 #include "maiacore/chord.h"
 #include "maiacore/clef.h"
@@ -8,6 +12,7 @@
 #include "maiacore/measure.h"
 #include "maiacore/note.h"
 #include "maiacore/utils.h"
+#include "pitch-views.h"
 
 Part::Part(const std::string& partName, const int numStaves, const bool isPitched,
            const int divisionsPerQuarterNote)
@@ -80,6 +85,59 @@ void Part::setIsPitched(const bool isPitched) {
                 m.getNote(n, s).setIsPitched(isPitched);
             }
         }
+    }
+}
+
+void Part::setTransposingInterval(const int diatonicInterval, const int chromaticInterval,
+                                  const int measureStart, const int measureEnd, const int staff,
+                                  const OctaveDoubling doubling) {
+    const int numMeasures = getNumMeasures();
+    const int end = (measureEnd == -1) ? numMeasures : measureEnd;
+    if (measureStart < 0 || end < measureStart || end > numMeasures) {
+        throw std::out_of_range("Part::setTransposingInterval: the measures [" +
+                                std::to_string(measureStart) + ", " + std::to_string(measureEnd) +
+                                ") are not a range of the part's " + std::to_string(numMeasures) +
+                                " measures");
+    }
+    if (staff < -1 || staff >= _numStaves) {
+        throw std::out_of_range("Part::setTransposingInterval: staff " + std::to_string(staff) +
+                                " is neither -1 nor one of the part's " +
+                                std::to_string(_numStaves) + " staves");
+    }
+
+    // Every pitched note of the range is checked before any is changed, so a note that cannot
+    // sound with the interval leaves the part as it was.
+    std::vector<Note*> notes;
+    for (int m = measureStart; m < end; m++) {
+        Measure& measure = _measure[m];
+        for (int s = 0; s < measure.getNumStaves(); s++) {
+            if (staff != -1 && s != staff) {
+                continue;
+            }
+            for (int n = 0; n < measure.getNumNotes(s); n++) {
+                Note& note = measure.getNote(n, s);
+                if (!note.isNoteOn() || !note.isPitched()) {
+                    continue;
+                }
+                if (!maiacore::detail::soundsWithinRange(note, diatonicInterval,
+                                                         chromaticInterval)) {
+                    LOG_ERROR("Part::setTransposingInterval: with the transposing interval (" +
+                              std::to_string(diatonicInterval) + ", " +
+                              std::to_string(chromaticInterval) + "), the written " +
+                              note.getWrittenPitch() + " at measure index " + std::to_string(m) +
+                              ", staff index " + std::to_string(s) +
+                              " would sound below the lowest representable pitch, C1b-1, or "
+                              "above B11 (MIDI note 155) where its letter cannot spell it; no "
+                              "note was changed.");
+                }
+                notes.push_back(&note);
+            }
+        }
+    }
+
+    for (Note* note : notes) {
+        note->setTransposingInterval(diatonicInterval, chromaticInterval);
+        note->setOctaveDoubling(doubling);
     }
 }
 

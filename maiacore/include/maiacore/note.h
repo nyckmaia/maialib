@@ -14,10 +14,12 @@
 /// @cond IGNORE_DOXYGEN
 class Note;
 
-// The spelling the analyses relate a note by. Declared, with its documentation, in the private
-// header pitch-views.h next to the sources; not part of the public API.
+// The spelling the analyses relate a note by, and whether a transposing interval leaves a note a
+// sounding pitch. Declared, with their documentation, in the private header pitch-views.h next to
+// the sources; not part of the public API.
 namespace maiacore::detail {
 Pitch concertPitch(const Note& note);
+bool soundsWithinRange(const Note& note, int transposeDiatonic, int transposeChromatic);
 }  // namespace maiacore::detail
 /// @endcond
 
@@ -117,6 +119,8 @@ class Note {
 
     /// @cond IGNORE_DOXYGEN
     friend Pitch maiacore::detail::concertPitch(const Note& note);
+    friend bool maiacore::detail::soundsWithinRange(const Note& note, int transposeDiatonic,
+                                                    int transposeChromatic);
     /// @endcond
 
    public:

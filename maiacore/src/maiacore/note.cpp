@@ -72,6 +72,17 @@ std::string soundingPositionText(const Pitch& writtenPitch, const int transposeC
               "smaller transposing interval keeps the sounding pitch at or below B11.");
 }
 
+// True when the chromatic rule cannot spell 'writtenPitch' moved by 'transposeChromatic'
+// semitones: the position lies above B11 (MIDI note 155), where a default spelling would need
+// octave 12.
+bool isAboveTheChromaticCeiling(const Pitch& writtenPitch, const int transposeChromatic) {
+    const float soundingSteps =
+        writtenPitch.getQuarterToneSteps() + static_cast<float>(transposeChromatic);
+    const float highestDefaultSpelling = 12.0f * static_cast<float>(c_maxPitchOctave + 1) +
+                                         static_cast<float>(c_diatonicStepSemitones.back());
+    return soundingSteps > highestDefaultSpelling;
+}
+
 // Returns the spelling of the pitch 'alter' semitones from the white key at the whole-semitone
 // position 'whiteKeySteps', in that white key's own octave (59 and +1.5 give "B3x3"), or an empty
 // string if 'whiteKeySteps' is a black key or its octave falls outside the supported range
@@ -113,17 +124,15 @@ Pitch chromaticSpelling(const Pitch& writtenPitch, const int transposeDiatonic,
         throwSoundingPitchBelowFloor(writtenPitch, transposeDiatonic, transposeChromatic);
     }
 
-    const float soundingSteps =
-        writtenPitch.getQuarterToneSteps() + static_cast<float>(transposeChromatic);
-
     // The default spelling reaches no higher than B11 (MIDI note 155): above it, a position would
     // need octave 12 ("C12" for 156) or lies above the representable range. Such a position is
     // rejected naming the note, before it is converted to a whole number of semitones below.
-    const float highestDefaultSpelling = 12.0f * static_cast<float>(c_maxPitchOctave + 1) +
-                                         static_cast<float>(c_diatonicStepSemitones.back());
-    if (soundingSteps > highestDefaultSpelling) {
+    if (isAboveTheChromaticCeiling(writtenPitch, transposeChromatic)) {
         throwSoundingPitchAboveCeiling(writtenPitch, transposeDiatonic, transposeChromatic);
     }
+
+    const float soundingSteps =
+        writtenPitch.getQuarterToneSteps() + static_cast<float>(transposeChromatic);
 
     // The position is spelled from the semitone it rounds to, ties upward, as
     // Helper::steps2pitch() spells a position, and a quarter tone left over goes into the alter.
@@ -362,6 +371,11 @@ std::optional<Pitch> diatonicSpelling(const Pitch& written, const std::int64_t t
 
 namespace maiacore::detail {
 
+std::int64_t spelledDiatonicInterval(const int transposeDiatonic, const int transposeChromatic) {
+    return (transposeDiatonic != 0) ? std::int64_t{transposeDiatonic}
+                                    : conventionalDiatonicInterval(transposeChromatic);
+}
+
 Pitch concertSpelling(const Pitch& written, const int transposeDiatonic,
                       const int transposeChromatic) {
     // A rest has no pitch to move, and an untransposed note sounds as written.
@@ -379,9 +393,7 @@ Pitch concertSpelling(const Pitch& written, const int transposeDiatonic,
     // or a note given only a chromatic interval -- moves the letter by the diatonic interval
     // conventionally written for those semitones. A diatonic interval that is given is used as it
     // is, even one that disagrees with the chromatic interval.
-    const std::int64_t diatonic = (transposeDiatonic != 0)
-                                      ? std::int64_t{transposeDiatonic}
-                                      : conventionalDiatonicInterval(transposeChromatic);
+    const std::int64_t diatonic = spelledDiatonicInterval(transposeDiatonic, transposeChromatic);
     const std::optional<Pitch> concert = diatonicSpelling(written, diatonic, transposeChromatic);
     if (concert.has_value()) {
         return concert.value();
@@ -389,6 +401,24 @@ Pitch concertSpelling(const Pitch& written, const int transposeDiatonic,
 
     // The fallback, the chromatic rule, rejects a position above B11.
     return chromaticSpelling(written, transposeDiatonic, transposeChromatic);
+}
+
+bool soundsWithinRange(const Note& note, const int transposeDiatonic,
+                       const int transposeChromatic) {
+    const Pitch& written = note._writtenPitch;
+    // A rest sounds nothing, and an untransposed note sounds as written.
+    if (written.isRest() || (transposeDiatonic == 0 && transposeChromatic == 0)) {
+        return true;
+    }
+    if (isSoundingPitchBelowFloor(written, transposeChromatic)) {
+        return false;
+    }
+
+    // concertSpelling() returns a spelling when the diatonic interval spells the position, or
+    // when its fallback, the chromatic rule, does, which it can up to B11.
+    const std::int64_t diatonic = spelledDiatonicInterval(transposeDiatonic, transposeChromatic);
+    return diatonicSpelling(written, diatonic, transposeChromatic).has_value() ||
+           !isAboveTheChromaticCeiling(written, transposeChromatic);
 }
 
 Pitch simplestSpelling(const Pitch& pitch) {

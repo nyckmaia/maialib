@@ -57,6 +57,58 @@ void PartClass(const py::module& m) {
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
     cls.def("setIsPitched", &Part::setIsPitched, py::arg("isPitched") = true);
+    cls.def("setTransposingInterval", &Part::setTransposingInterval, py::arg("diatonicInterval"),
+            py::arg("chromaticInterval"), py::arg("measureStart") = 0, py::arg("measureEnd") = -1,
+            py::arg("staff") = -1, py::arg("doubling") = OctaveDoubling::NONE,
+            R"pbdoc(
+        Set the transposing interval and the octave doubling of the pitched notes of a range of
+        measures and a staff, in place.
+
+        Every pitched note of the measures ``measureStart`` up to, not including, ``measureEnd``
+        on the staff ``staff`` gets the interval (see ``Note.setTransposingInterval``) and the
+        doubling (see ``Note.setOctaveDoubling``); rests and unpitched notes are left alone. The
+        interval is the total one: an octave transposition is folded in as 7 letters and 12
+        semitones per octave, so a B-flat bass clarinet is ``(-8, -14)``. The notes hold the
+        transposition, and the MusicXML export writes its ``<transpose>`` elements from them.
+        This is the way to change a score's transpositions in place: ``Measure.getNote()``
+        returns a copy of the note, so a change made on it does not reach the score
+        (``Score.forEachNote`` edits in place too). Every note is checked before any changes, so
+        the call changes all of them or none.
+
+        Parameters
+        ----------
+        diatonicInterval : int
+            Letters from the written to the sounding pitch, e.g. -1 for a B-flat clarinet.
+        chromaticInterval : int
+            Semitones from the written to the sounding pitch, e.g. -2 for a B-flat clarinet.
+        measureStart : int, default 0
+            Index of the first measure.
+        measureEnd : int, default -1
+            Index one past the last measure; -1 for the end of the part.
+        staff : int, default -1
+            Zero-based staff index; -1 for every staff.
+        doubling : OctaveDoubling, default OctaveDoubling.NONE
+            The octave doubling.
+
+        Raises
+        ------
+        IndexError
+            If the measures are not a range of the part's measures, or ``staff`` is neither -1
+            nor one of its staves.
+        RuntimeError
+            If a note would have no sounding pitch with the interval (below ``C1b-1``, or above
+            ``B11`` where its letter cannot spell it); the message names the first such note,
+            and no note is changed.
+
+        Examples
+        --------
+        >>> score = ml.Score(["Clarinet"], 2)
+        >>> for m in range(2):
+        ...     score.getPart(0).getMeasure(m).addNote(ml.Note("D4"))
+        >>> score.getPart(0).setTransposingInterval(-1, -2, measureStart=1)
+        >>> [score.getPart(0).getMeasure(m).getNote(0).getSoundingPitch() for m in range(2)]
+        ['D4', 'C4']
+    )pbdoc");
     cls.def("setStaffLines", &Part::setStaffLines, py::arg("staffLines") = 5);
     cls.def("isPitched", &Part::isPitched);
     cls.def("getStaffLines", &Part::getStaffLines);
