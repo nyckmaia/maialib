@@ -1,6 +1,9 @@
 #include "maiacore/measure.h"
 
 #include <iostream>
+#include <map>
+#include <string>
+#include <utility>
 
 #include "cherno/instrumentor.h"
 #include "maiacore/helper.h"
@@ -529,6 +532,12 @@ std::pair<std::string, int> Measure::getMetronome() const {
 }
 
 const std::string Measure::toXML(const int instrumentId, const int identSize) const {
+    return toXML(instrumentId, identSize, {});
+}
+
+const std::string Measure::toXML(
+    const int instrumentId, const int identSize,
+    const std::map<std::pair<int, int>, std::string>& beforeNote) const {
     std::string xml;
 
     // int backup = 0;
@@ -597,6 +606,10 @@ const std::string Measure::toXML(const int instrumentId, const int identSize) co
                 xml.append(Helper::generateIdentation(3, identSize) + "</backup>\n");
             }
 
+            const auto insertion = beforeNote.find({s, n});
+            if (insertion != beforeNote.end()) {
+                xml.append(insertion->second);
+            }
             xml.append(currentStave[n].toXML(instrumentId, identSize));
         }
     }

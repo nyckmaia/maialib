@@ -308,9 +308,11 @@ class Score {
 
     /**
      * @brief Exports the score to MusicXML format.
-     * @details Generates a complete MusicXML string, including metadata and all parts.
+     * @details Generates a complete MusicXML string, including metadata and all parts. Each
+     *          part's transpositions are written as `<transpose>` elements (see Part::toXML()).
      * @param identSize Indentation size (default: 2).
      * @return MusicXML string.
+     * @throws std::runtime_error If a part cannot be written (see Part::toXML()).
      */
     const std::string toXML(const int identSize = 2) const;
 
@@ -326,6 +328,8 @@ class Score {
      * @param fileName Output file name.
      * @param compressedXML True to save as .mxl (compressed).
      * @param identSize Indentation size (default: 2).
+     * @throws std::runtime_error If fileName is empty, the file cannot be opened, or a part
+     *         cannot be written (see Part::toXML()).
      */
     void toFile(std::string fileName, bool compressedXML = false, const int identSize = 2) const;
 

@@ -123,10 +123,31 @@ void ScoreClass(const py::module& m) {
             py::arg("rhythmFigure") = RhythmFigure::QUARTER, py::arg("measureStart") = 0);
 
     cls.def("haveAnacrusisMeasure", &Score::haveAnacrusisMeasure);
-    cls.def("toXML", &Score::toXML, py::arg("identSize") = 2);
+    cls.def("toXML", &Score::toXML, py::arg("identSize") = 2,
+            R"pbdoc(
+        Return the score as MusicXML text. Each part's transpositions are written as
+        ``<transpose>`` elements (see ``Part.toXML``).
+
+        Raises
+        ------
+        RuntimeError
+            If a part cannot be written: the notes of a chord have different transposing
+            intervals or octave doublings (see ``Part.toXML``).
+    )pbdoc");
     cls.def("toJSON", &Score::toJSON);
     cls.def("toFile", &Score::toFile, py::arg("fileName"), py::arg("compressedXML") = false,
-            py::arg("identSize") = 2);
+            py::arg("identSize") = 2,
+            R"pbdoc(
+        Write the score as MusicXML to ``fileName`` plus ``.xml``, or to ``fileName`` plus
+        ``.mxl`` when ``compressedXML`` is True. Each part's transpositions are written as
+        ``<transpose>`` elements (see ``Part.toXML``).
+
+        Raises
+        ------
+        RuntimeError
+            If ``fileName`` is empty, the file cannot be opened, or a part cannot be written
+            (see ``Part.toXML``).
+    )pbdoc");
     cls.def("info", &Score::info,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 

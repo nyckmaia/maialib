@@ -7,7 +7,9 @@
 #include <maiacore/note.h>
 #include <maiacore/time-signature.h>
 
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 // ====================
@@ -1051,6 +1053,32 @@ TEST(MeasureSerialization, ToXMLWithComplexContent) {
 
     // Just verify XML was generated with complex content
     EXPECT_GT(xml.length(), 0);
+}
+
+// The overload writes the text mapped to (staff, note index) just before that note; with nothing
+// mapped it writes what toXML(instrumentId, identSize) writes.
+TEST(MeasureSerialization, ToXMLWritesTheInsertionsBeforeTheirNotes) {
+    Measure measure(2);
+    measure.addNote(Note("C4"), 0);
+    measure.addNote(Note("D4"), 0);
+    measure.addNote(Note("E4"), 1);
+
+    const std::string xml =
+        measure.toXML(1, 2, {{{0, 1}, "<!--before D4-->\n"}, {{1, 0}, "<!--before E4-->\n"}});
+    const size_t c4 = xml.find("<step>C</step>");
+    const size_t beforeD4 = xml.find("<!--before D4-->");
+    const size_t d4 = xml.find("<step>D</step>");
+    const size_t beforeE4 = xml.find("<!--before E4-->");
+    const size_t e4 = xml.find("<step>E</step>");
+    ASSERT_NE(beforeD4, std::string::npos);
+    ASSERT_NE(beforeE4, std::string::npos);
+    EXPECT_LT(c4, beforeD4);
+    EXPECT_LT(beforeD4, d4);
+    EXPECT_LT(d4, beforeE4);
+    EXPECT_LT(beforeE4, e4);
+    EXPECT_EQ(xml.rfind("<note>", d4), xml.find("<note>", beforeD4));
+
+    EXPECT_EQ(measure.toXML(1, 2, {}), measure.toXML(1, 2));
 }
 
 // ====================

@@ -169,7 +169,39 @@ void PartClass(const py::module& m) {
             list, only within each individual append.
     )pbdoc");
 
-    cls.def("toXML", &Part::toXML, py::arg("instrumentId") = 1, py::arg("identSize") = 2);
+    cls.def("toXML", &Part::toXML, py::arg("instrumentId") = 1, py::arg("identSize") = 2,
+            R"pbdoc(
+        Return the part's measures as MusicXML text.
+
+        The transpositions are written from the notes, which hold them: for each staff, a
+        ``<transpose>`` in measure 1 when its first pitched note is transposed or doubled, and
+        one wherever a pitched note's interval or octave doubling differs from that of the
+        staff's previous pitched note -- in the measure's ``<attributes>`` when the note is the
+        staff's first pitched note there, otherwise in an ``<attributes>`` just before it. Rests
+        and unpitched notes change nothing. A ``<transpose>`` has no ``number`` when every staff
+        has the same transposition there; the interval is unfolded into ``<diatonic>``,
+        ``<chromatic>`` and, from an octave on, ``<octave-change>``, and ``<double/>`` or
+        ``<double above="yes"/>`` states the doubling.
+
+        Parameters
+        ----------
+        instrumentId : int, default 1
+            Zero-based index of the part in its score.
+        identSize : int, default 2
+            Number of spaces per indentation level.
+
+        Returns
+        -------
+        str
+            The ``<measure>`` elements of the part.
+
+        Raises
+        ------
+        RuntimeError
+            If the notes of a chord have different transposing intervals or octave doublings,
+            which one ``<transpose>`` cannot express; the message names the part, the measure
+            and the staff.
+    )pbdoc");
     cls.def("toJSON", &Part::toJSON);
 
     // Default Python 'print' function:

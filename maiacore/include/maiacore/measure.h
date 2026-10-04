@@ -1,7 +1,9 @@
 #pragma once
 #include <ctype.h>
 
+#include <map>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "maiacore/barline.h"
@@ -495,6 +497,20 @@ class Measure {
      * @return MusicXML string for the measure.
      */
     const std::string toXML(const int instrumentId = 1, const int identSize = 2) const;
+
+    /**
+     * @brief Serializes the measure to MusicXML, writing extra XML before chosen notes.
+     * @details As toXML(instrumentId, identSize), and the text mapped to a (staff, note index)
+     *          pair is written just before that note: Part::toXML() writes a change of
+     *          transposition in the middle of a measure as an `<attributes>` there.
+     * @param instrumentId Instrument index.
+     * @param identSize Indentation size.
+     * @param beforeNote XML text to write before a note, keyed by its 0-based staff and its index
+     *        among that staff's notes.
+     * @return MusicXML string for the measure.
+     */
+    const std::string toXML(const int instrumentId, const int identSize,
+                            const std::map<std::pair<int, int>, std::string>& beforeNote) const;
 
     /**
      * @brief Serializes the measure to JSON format.

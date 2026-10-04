@@ -166,7 +166,8 @@ void MeasureClass(const py::module& m) {
     cls.def("setDivisionsPerQuarterNote", &Measure::setDivisionsPerQuarterNote);
     cls.def("getDivisionsPerQuarterNote", &Measure::getDivisionsPerQuarterNote);
 
-    cls.def("toXML", &Measure::toXML, py::arg("instrumentId") = 1, py::arg("identSize") = 2);
+    cls.def("toXML", py::overload_cast<const int, const int>(&Measure::toXML, py::const_),
+            py::arg("instrumentId") = 1, py::arg("identSize") = 2);
     cls.def("toJSON", &Measure::toJSON);
 
     // Default Python 'print' function:

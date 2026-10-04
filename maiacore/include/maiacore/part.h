@@ -294,9 +294,27 @@ class Part {
 
     /**
      * @brief Serializes the part to MusicXML format.
+     * @details The transpositions are written from the notes, which hold them: for each staff, a
+     *          `<transpose>` in measure 1 when its first pitched note is transposed or doubled
+     *          (it applies from the start of the part), and one wherever a pitched note's interval
+     *          or doubling differs from that of the staff's previous pitched note -- in the
+     *          measure's `<attributes>` when the note is the staff's first pitched note there,
+     *          otherwise in an `<attributes>` written just before the first note of its chord.
+     *          Rests and unpitched notes change nothing. A `<transpose>` has no `number` when
+     *          every staff has the same transposition at that point; a change in the middle of a
+     *          measure of a part with more than one staff always has one. The interval is
+     *          unfolded into `<diatonic>`, `<chromatic>` and, from an octave on,
+     *          `<octave-change>` (its whole octaves, rounded toward zero), with the diatonic
+     *          interval the note is spelled with -- the conventional one when the stored one is 0
+     *          -- and `<double/>` or `<double above="yes"/>` states the doubling. The elements go
+     *          after `<clef>` and `<staff-details>`; an `<attributes>` is opened for them when
+     *          nothing else needs one.
      * @param instrumentId Instrument index (default: 1).
      * @param identSize Indentation size (default: 2).
      * @return MusicXML string for the part.
+     * @throws std::runtime_error If the notes of a chord have different transposing intervals or
+     *         octave doublings, which one `<transpose>` cannot express; the message names the
+     *         part, the measure and the staff.
      */
     const std::string toXML(const int instrumentId = 1, const int identSize = 2) const;
 

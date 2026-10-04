@@ -1,7 +1,12 @@
 #include "maiacore/part.h"
 
+#include <algorithm>
+#include <cstdint>
+#include <map>
+#include <optional>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "cherno/instrumentor.h"
@@ -13,6 +18,196 @@
 #include "maiacore/note.h"
 #include "maiacore/utils.h"
 #include "pitch-views.h"
+
+namespace {
+// A pitched note's transposition as the MusicXML writer writes it: the diatonic interval the note
+// is spelled with (the conventional one for the chromatic interval when the stored one is 0), the
+// chromatic interval and the octave doubling. A stored 0 and the conventional interval it stands
+// for are one transposition.
+struct WrittenTransposition {
+    std::int64_t diatonic = 0;
+    std::int64_t chromatic = 0;
+    OctaveDoubling doubling = OctaveDoubling::NONE;
+
+    bool operator==(const WrittenTransposition& other) const {
+        return diatonic == other.diatonic && chromatic == other.chromatic &&
+               doubling == other.doubling;
+    }
+    bool operator!=(const WrittenTransposition& other) const { return !(*this == other); }
+};
+
+WrittenTransposition writtenTransposition(const Note& note) {
+    WrittenTransposition transposition;
+    transposition.diatonic = maiacore::detail::spelledDiatonicInterval(
+        note.getTransposeDiatonic(), note.getTransposeChromatic());
+    transposition.chromatic = note.getTransposeChromatic();
+    transposition.doubling = note.getOctaveDoubling();
+    return transposition;
+}
+
+// The transposition of the first pitched note of a staff of a measure, if it has one.
+std::optional<WrittenTransposition> firstPitchedTransposition(const Measure& measure,
+                                                              const int staff) {
+    if (staff >= measure.getNumStaves()) {
+        return std::nullopt;
+    }
+    for (int n = 0; n < measure.getNumNotes(staff); n++) {
+        const Note& note = measure.getNote(n, staff);
+        if (note.isNoteOn() && note.isPitched()) {
+            return writtenTransposition(note);
+        }
+    }
+    return std::nullopt;
+}
+
+// A <transpose> element: number="staff + 1", or no number when 'staff' is -1. The interval is
+// unfolded: <octave-change> takes the chromatic interval's whole octaves, rounded toward zero,
+// and <diatonic> and <chromatic> what remains of each; <octave-change> is written only when it is
+// not 0, as MusicXML asks for intervals of less than an octave.
+std::string transposeXML(const WrittenTransposition& transposition, const int staff,
+                         const int identSize) {
+    const std::int64_t octaves = transposition.chromatic / 12;
+    const std::string inner = Helper::generateIdentation(5, identSize);
+    std::string xml = Helper::generateIdentation(4, identSize) + "<transpose";
+    if (staff >= 0) {
+        xml.append(" number=\"" + std::to_string(staff + 1) + "\"");
+    }
+    xml.append(">\n");
+    xml.append(inner + "<diatonic>" + std::to_string(transposition.diatonic - 7 * octaves) +
+               "</diatonic>\n");
+    xml.append(inner + "<chromatic>" + std::to_string(transposition.chromatic - 12 * octaves) +
+               "</chromatic>\n");
+    if (octaves != 0) {
+        xml.append(inner + "<octave-change>" + std::to_string(octaves) + "</octave-change>\n");
+    }
+    if (transposition.doubling == OctaveDoubling::BELOW) {
+        xml.append(inner + "<double/>\n");
+    } else if (transposition.doubling == OctaveDoubling::ABOVE) {
+        xml.append(inner + "<double above=\"yes\"/>\n");
+    }
+    xml.append(Helper::generateIdentation(4, identSize) + "</transpose>\n");
+    return xml;
+}
+
+// Where a part's <transpose> elements go, derived from its notes, which hold the transpositions:
+// the elements of each measure's <attributes>, and the <attributes> written before a note, keyed
+// by (staff, note index).
+struct TransposePlan {
+    std::vector<std::string> measureStart;
+    std::vector<std::map<std::pair<int, int>, std::string>> beforeNote;
+};
+
+// Each staff's transposition in force is that of its last pitched note; rests and unpitched notes
+// change nothing. Measure 1 states each staff's first pitched note's transposition, which applies
+// from the start of the part, when it is not (0, 0, NONE). A later change goes into the
+// <attributes> at the start of its measure when the staff's first pitched note there brings it,
+// and otherwise into an <attributes> written just before the first note of the chord that brings
+// it. A <transpose> has no number when every staff has the same transposition at that point; a
+// change in the middle of a measure of a part with more than one staff always has one, as the
+// staves are written one after another. A chord whose notes differ cannot be written.
+TransposePlan transposePlan(const Part& part, const int identSize) {
+    const int numMeasures = part.getNumMeasures();
+    TransposePlan plan;
+    plan.measureStart.resize(numMeasures);
+    plan.beforeNote.resize(numMeasures);
+
+    int numStaves = part.getNumStaves();
+    for (int m = 0; m < numMeasures; m++) {
+        numStaves = std::max(numStaves, part.getMeasure(m).getNumStaves());
+    }
+
+    // The transposition in force on each staff, from the start: that of its first pitched note.
+    std::vector<WrittenTransposition> current(numStaves);
+    std::vector<bool> found(numStaves, false);
+    for (int m = 0; m < numMeasures; m++) {
+        for (int s = 0; s < numStaves; s++) {
+            if (found[s]) {
+                continue;
+            }
+            const std::optional<WrittenTransposition> first =
+                firstPitchedTransposition(part.getMeasure(m), s);
+            if (first) {
+                current[s] = *first;
+                found[s] = true;
+            }
+        }
+    }
+
+    for (int m = 0; m < numMeasures; m++) {
+        const Measure& measure = part.getMeasure(m);
+
+        // At the start of the measure: in measure 1, every staff that is transposed or doubled;
+        // later, every staff whose first pitched note in the measure changes its transposition.
+        std::vector<int> changed;
+        for (int s = 0; s < numStaves; s++) {
+            if (m == 0) {
+                if (current[s] != WrittenTransposition{}) {
+                    changed.push_back(s);
+                }
+                continue;
+            }
+            const std::optional<WrittenTransposition> first = firstPitchedTransposition(measure, s);
+            if (first && *first != current[s]) {
+                current[s] = *first;
+                changed.push_back(s);
+            }
+        }
+        if (!changed.empty()) {
+            const WrittenTransposition shared = current[changed.front()];
+            const bool everyStaffAlike =
+                std::all_of(current.begin(), current.end(),
+                            [&shared](const WrittenTransposition& t) { return t == shared; });
+            if (everyStaffAlike) {
+                plan.measureStart[m] = transposeXML(shared, -1, identSize);
+            } else {
+                for (const int s : changed) {
+                    plan.measureStart[m] += transposeXML(current[s], s, identSize);
+                }
+            }
+        }
+
+        // Inside the measure: a pitched note whose transposition differs from that of the
+        // previous pitched note of its staff, after the staff's first one there.
+        for (int s = 0; s < measure.getNumStaves(); s++) {
+            bool firstPitched = true;
+            int chordStart = 0;
+            std::optional<WrittenTransposition> chordTransposition;
+            for (int n = 0; n < measure.getNumNotes(s); n++) {
+                const Note& note = measure.getNote(n, s);
+                if (!note.inChord()) {
+                    chordStart = n;
+                    chordTransposition.reset();
+                }
+                if (!note.isNoteOn() || !note.isPitched()) {
+                    continue;
+                }
+                const WrittenTransposition transposition = writtenTransposition(note);
+                if (chordTransposition && *chordTransposition != transposition) {
+                    LOG_ERROR("Part '" + part.getName() + "', measure " + std::to_string(m + 1) +
+                              ", staff " + std::to_string(s + 1) +
+                              ": the notes of a chord have different transposing intervals or "
+                              "octave doublings, which one MusicXML <transpose> cannot express. "
+                              "Give every note of the chord the same interval and doubling.");
+                }
+                chordTransposition = transposition;
+                if (firstPitched) {
+                    firstPitched = false;
+                    continue;
+                }
+                if (transposition != current[s]) {
+                    current[s] = transposition;
+                    const int number = (numStaves > 1) ? s : -1;
+                    plan.beforeNote[m][{s, chordStart}] =
+                        Helper::generateIdentation(3, identSize) + "<attributes>\n" +
+                        transposeXML(transposition, number, identSize) +
+                        Helper::generateIdentation(3, identSize) + "</attributes>\n";
+                }
+            }
+        }
+    }
+    return plan;
+}
+}  // namespace
 
 Part::Part(const std::string& partName, const int numStaves, const bool isPitched,
            const int divisionsPerQuarterNote)
@@ -249,6 +444,7 @@ const std::string Part::toXML(const int instrumentId, const int identSize) const
     std::string xml;
 
     const int numMeasures = getNumMeasures();
+    const TransposePlan transposes = transposePlan(*this, identSize);
 
     for (int m = 0; m < numMeasures; m++) {
         xml.append(Helper::Helper::generateIdentation(2, identSize) + "<!--============== Part: P" +
@@ -281,6 +477,7 @@ const std::string Part::toXML(const int instrumentId, const int identSize) const
         for (const auto& clef : measureClefs) {
             attributeChanged |= clef.isClefChanged();
         }
+        attributeChanged |= !transposes.measureStart[m].empty();
 
         if (attributeChanged) {
             xml.append(Helper::generateIdentation(3, identSize) + "<attributes>\n");
@@ -335,6 +532,9 @@ const std::string Part::toXML(const int instrumentId, const int identSize) const
             xml.append(Helper::generateIdentation(4, identSize) + "</staff-details>\n");
         }
 
+        // After clef and staff-details, as the MusicXML content model of <attributes> requires.
+        xml.append(transposes.measureStart[m]);
+
         if (attributeChanged) {
             xml.append(Helper::generateIdentation(3, identSize) + "</attributes>\n");
         }
@@ -358,7 +558,7 @@ const std::string Part::toXML(const int instrumentId, const int identSize) const
             xml.append(Helper::generateIdentation(3, identSize) + "</direction>\n");
         }
 
-        xml.append(_measure[m].toXML(instrumentId, identSize));
+        xml.append(_measure[m].toXML(instrumentId, identSize, transposes.beforeNote[m]));
 
         if ((m == numMeasures - 1) && _measure[m].getBarlineRight().getBarStyle().empty()) {
             xml.append(Helper::generateIdentation(2, identSize) + "<barline location=\"right\">\n");
