@@ -479,9 +479,10 @@ class Note {
      *          untransposed Cb4 sounds B3, C3x4 sounds D1b4, Db4 stays Db4.
      *
      *          Inferred diatonic interval, silent (no warning is given): when
-     *          getTransposeDiatonic() is 0 while getTransposeChromatic() is not -- a MusicXML
-     *          `<transpose>` without `<diatonic>`, or a note given only a chromatic interval --
-     *          the letter is moved by the diatonic interval conventionally written for those
+     *          getTransposeDiatonic() is 0 while getTransposeChromatic() is not -- a note given
+     *          only a chromatic interval; the MusicXML reader stores the conventional interval
+     *          itself for a `<transpose>` without `<diatonic>` -- the letter is moved by the
+     *          diatonic interval conventionally written for those
      *          semitones: 7 letters for each whole octave, plus 1 letter for 1 or 2 semitones (a
      *          second), 2 for 3 or 4 (a third), 3 for 5 or 6 (a fourth, the tritone being an
      *          augmented fourth), 4 for 7 (a fifth), 5 for 8 or 9 (a sixth) and 6 for 10 or 11 (a

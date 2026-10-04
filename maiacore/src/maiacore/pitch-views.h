@@ -23,9 +23,10 @@ namespace maiacore::detail {
  *          E4; a piccolo (7, 12) writes Bb4 for Bb5.
  *
  *          Inferred diatonic interval: when transposeDiatonic is 0 while transposeChromatic is
- *          not (a MusicXML `<transpose>` without `<diatonic>`, or a Note given only a chromatic
- *          interval), the letter is moved by the diatonic interval conventionally written for
- *          those semitones: 7 letters for each whole octave plus, for the semitones left over, 1
+ *          not (a Note given only a chromatic interval; the MusicXML reader stores the
+ *          conventional interval itself), the letter is moved by the diatonic interval
+ *          conventionally written for those semitones: 7 letters for each whole octave plus, for
+ *          the semitones left over, 1
  *          for 1 or 2, 2 for 3 or 4, 3 for 5 or 6 (the tritone as an augmented fourth), 4 for 7,
  *          5 for 8 or 9 and 6 for 10 or 11, in the direction of transposeChromatic. With (0, -2)
  *          F#4 gives E4 and C4 gives Bb3, as with a B-flat clarinet's (-1, -2), and (0, -7)
@@ -113,5 +114,20 @@ std::int64_t spelledDiatonicInterval(int transposeDiatonic, int transposeChromat
  * @return True if the note sounds a spellable pitch with the interval.
  */
 bool soundsWithinRange(const Note& note, int transposeDiatonic, int transposeChromatic);
+
+/**
+ * @brief The diatonic interval conventionally written for a transposing interval of
+ *        transposeChromatic semitones.
+ * @details Seven letters for each whole octave, plus the letters of the simple interval left
+ *          over -- 1 for 1 or 2 semitones (a second), 2 for 3 or 4 (a third), 3 for 5 or 6 (a
+ *          fourth, the tritone being an augmented fourth), 4 for 7 (a fifth), 5 for 8 or 9 (a
+ *          sixth) and 6 for 10 or 11 (a seventh) -- in the direction of the chromatic interval:
+ *          -2 gives -1 (a B-flat clarinet), -9 gives -5 (an E-flat alto saxophone), 12 gives 7 (a
+ *          piccolo). concertSpelling() moves the letter by it when the diatonic interval is 0,
+ *          and the MusicXML reader stores it for a `<transpose>` without `<diatonic>`.
+ * @param transposeChromatic Semitones from the written to the sounding pitch.
+ * @return The number of letters, with the sign of transposeChromatic; it always fits an int.
+ */
+std::int64_t conventionalDiatonicInterval(int transposeChromatic);
 
 }  // namespace maiacore::detail

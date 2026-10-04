@@ -2,17 +2,21 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstdint>
 #include <exception>
 #include <filesystem>  // Para std::filesystem::absolute
 #include <future>
 #include <iostream>
 #include <limits>  // std::numeric_limits
 #include <locale>
+#include <map>
 #include <optional>
 #include <set>
 #include <sstream>
+#include <string>
 #include <thread>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 // #include "cherno/instrumentor.h"
@@ -79,6 +83,221 @@ void rejectQuarterToneTransposition(const Note& patternFirstNote, const Note& se
                   "are defined only over twelve-tone equal temperament). Round the score's quarter "
                   "tones to the nearest semitone first, e.g. by calling Note::roundToSemitone() on "
                   "every note through Score::forEachNote(), then repeat the search.");
+    }
+}
+
+// A transposing interval -- <octave-change> folded in -- and an octave doubling, as a
+// <transpose> stamps them on the notes of its staves.
+struct NoteTransposition {
+    int diatonic = 0;
+    int chromatic = 0;
+    OctaveDoubling doubling = OctaveDoubling::NONE;
+};
+
+// A <transpose> of a part as the reader met it: where it is, the staves it applies to, and what
+// it stands for.
+struct TransposeElement {
+    int measureIdx = 0;   // the index of its measure in the part
+    int notesBefore = 0;  // the <note> elements before its <attributes> in that measure
+    int staff = -1;       // the 0-based staff its number attribute names; -1 for every staff
+    std::string where;    // part "<name>", measure <number as the file writes it>
+    // What it stamps; empty when it is ignored, and 'ignored' is then the warning that says why.
+    std::optional<NoteTransposition> values;
+    std::string ignored;
+};
+
+// A pitched note the reader stored: its measure, the position among the measure's <note> elements
+// of the first note of its chord (its own position when it is in no chord), its staff, and its
+// index among that staff's notes. A chord is read as a unit, from the position of its first note.
+struct PitchedNote {
+    int measureIdx = 0;
+    int chordPosition = 0;
+    int staff = 0;
+    int index = 0;
+};
+
+// 'text' without the white space around it, which MusicXML numbers allow.
+std::string trimmed(const std::string& text) {
+    const size_t begin = text.find_first_not_of(" \t\r\n");
+    if (begin == std::string::npos) {
+        return {};
+    }
+    return text.substr(begin, text.find_last_not_of(" \t\r\n") - begin + 1);
+}
+
+// The text of the child element 'name' of 'node', trimmed; empty when there is no such child.
+std::string trimmedChildText(const pugi::xml_node& node, const char* name) {
+    return trimmed(node.child_value(name));
+}
+
+// The value of a MusicXML number -- an optional sign, digits and an optional fraction -- when it
+// is a whole number; std::nullopt for any other text, a fraction other than zero or an exponent
+// included. A magnitude beyond 10^12, far outside every interval a note can take, is held there.
+std::optional<std::int64_t> wholeNumber(const std::string& text) {
+    size_t i = (!text.empty() && (text[0] == '-' || text[0] == '+')) ? 1 : 0;
+    bool hasDigits = false;
+    std::int64_t magnitude = 0;
+    for (; i < text.size() && text[i] >= '0' && text[i] <= '9'; i++) {
+        hasDigits = true;
+        magnitude = std::min<std::int64_t>(magnitude * 10 + (text[i] - '0'), 1000000000000);
+    }
+    if (i < text.size() && text[i] == '.') {
+        for (i++; i < text.size() && text[i] == '0'; i++) {
+            hasDigits = true;
+        }
+    }
+    if (!hasDigits || i != text.size()) {
+        return std::nullopt;
+    }
+    return (text[0] == '-') ? -magnitude : magnitude;
+}
+
+// An interval held to the range of int: one beyond it is held at its limit, where no note can
+// sound.
+int toIntRange(const std::int64_t value) {
+    return static_cast<int>(std::clamp<std::int64_t>(value, std::numeric_limits<int>::min(),
+                                                     std::numeric_limits<int>::max()));
+}
+
+// Reads one <transpose>: the interval, <octave-change> folded in as 7 letters and 12 semitones
+// per octave, and the octave doubling of <double>; an absent <diatonic> stands for the
+// conventional diatonic interval of <chromatic>. A <chromatic> or an <octave-change> that is not
+// a whole number makes the element ignored. A number attribute that is not a positive integer is
+// read as absent.
+TransposeElement readTranspose(const pugi::xml_node& transpose, const int measureIdx,
+                               const int notesBefore, const std::string& where) {
+    TransposeElement element;
+    element.measureIdx = measureIdx;
+    element.notesBefore = notesBefore;
+    element.where = where;
+    const std::optional<std::int64_t> number =
+        wholeNumber(trimmed(transpose.attribute("number").value()));
+    element.staff = (number && *number >= 1) ? toIntRange(*number - 1) : -1;
+
+    const std::string chromaticText = trimmedChildText(transpose, "chromatic");
+    const std::optional<std::int64_t> chromatic = wholeNumber(chromaticText);
+    if (!chromatic) {
+        element.ignored = "[transpose-chromatic-not-integer] " + where + ": <chromatic>" +
+                          chromaticText +
+                          "</chromatic> is not a whole number of semitones; the <transpose> is "
+                          "ignored and the previous transposition stays in force.";
+        return element;
+    }
+
+    std::int64_t octaves = 0;
+    if (transpose.child("octave-change")) {
+        const std::string octaveText = trimmedChildText(transpose, "octave-change");
+        const std::optional<std::int64_t> value = wholeNumber(octaveText);
+        if (!value) {
+            element.ignored = "[transpose-octave-change-not-integer] " + where +
+                              ": <octave-change>" + octaveText +
+                              "</octave-change> is not a whole number of octaves; the "
+                              "<transpose> is ignored and the previous transposition stays in "
+                              "force.";
+            return element;
+        }
+        octaves = *value;
+    }
+
+    // An absent <diatonic> stands for the diatonic interval conventionally written for the
+    // chromatic one, stored explicitly.
+    std::int64_t diatonic = maiacore::detail::conventionalDiatonicInterval(toIntRange(*chromatic));
+    if (transpose.child("diatonic")) {
+        const std::optional<std::int64_t> value =
+            wholeNumber(trimmedChildText(transpose, "diatonic"));
+        if (value) {
+            diatonic = *value;
+        }
+    }
+
+    NoteTransposition values;
+    values.diatonic = toIntRange(diatonic + 7 * octaves);
+    values.chromatic = toIntRange(*chromatic + 12 * octaves);
+    const pugi::xml_node doubled = transpose.child("double");
+    if (doubled) {
+        values.doubling = (std::string(doubled.attribute("above").value()) == "yes")
+                              ? OctaveDoubling::ABOVE
+                              : OctaveDoubling::BELOW;
+    }
+    element.values = values;
+    return element;
+}
+
+// The <transpose> elements of a measure's <attributes>, in document order, each with the number
+// of <note> elements before its <attributes>.
+void readTransposeElements(const pugi::xml_node& measure, const int measureIdx,
+                           const std::string& where, std::vector<TransposeElement>& elements) {
+    int notesBefore = 0;
+    for (const pugi::xml_node child : measure.children()) {
+        const std::string name = child.name();
+        if (name == "note") {
+            notesBefore++;
+        } else if (name == "attributes") {
+            for (const pugi::xml_node transpose : child.children("transpose")) {
+                elements.push_back(readTranspose(transpose, measureIdx, notesBefore, where));
+            }
+        }
+    }
+}
+
+// Whether 'note' comes at or after 'element' in document order, so that the element reaches it.
+// A chord counts from its first note: an element written between its notes reaches none of them.
+bool isAtOrAfter(const PitchedNote& note, const TransposeElement& element) {
+    return note.measureIdx > element.measureIdx ||
+           (note.measureIdx == element.measureIdx && note.chordPosition >= element.notesBefore);
+}
+
+// Stamps each pitched note of a part with the <transpose> in force for its staff: the last one
+// before the note -- before the first note of its chord, for a chord -- in document order that
+// applies to its staff, by its number or with none, and is not ignored. A note before every such
+// element stays untransposed. Each ignored element's warning is printed.
+void applyTranspositions(Part& part, const std::vector<TransposeElement>& elements,
+                         const std::vector<PitchedNote>& notes) {
+    std::map<int, std::vector<PitchedNote>> notesByStaff;
+    for (const PitchedNote& note : notes) {
+        notesByStaff[note.staff].push_back(note);
+    }
+
+    // Each element's scope on each staff it applies to: the half-open range of that staff's
+    // notes from the element to the next element that applies to the staff.
+    std::vector<std::map<int, std::pair<size_t, size_t>>> scopes(elements.size());
+    for (const auto& [staff, staffNotes] : notesByStaff) {
+        size_t cursor = 0;
+        std::optional<size_t> previous;
+        for (size_t e = 0; e < elements.size(); e++) {
+            if (elements[e].staff != -1 && elements[e].staff != staff) {
+                continue;
+            }
+            while (cursor < staffNotes.size() && !isAtOrAfter(staffNotes[cursor], elements[e])) {
+                cursor++;
+            }
+            if (previous) {
+                scopes[*previous][staff].second = cursor;
+            }
+            scopes[e][staff] = {cursor, staffNotes.size()};
+            previous = e;
+        }
+    }
+
+    std::map<int, NoteTransposition> inForce;
+    for (size_t e = 0; e < elements.size(); e++) {
+        const TransposeElement& element = elements[e];
+        if (!element.values) {
+            LOG_WARN(element.ignored);
+        }
+        for (const auto& [staff, scope] : scopes[e]) {
+            if (element.values) {
+                inForce[staff] = *element.values;
+            }
+            const NoteTransposition stamp = inForce[staff];
+            const std::vector<PitchedNote>& staffNotes = notesByStaff.at(staff);
+            for (size_t i = scope.first; i < scope.second; i++) {
+                Note& note = part.getMeasure(staffNotes[i].measureIdx)
+                                 .getNote(staffNotes[i].index, staffNotes[i].staff);
+                note.setTransposingInterval(stamp.diatonic, stamp.chromatic);
+                note.setOctaveDoubling(stamp.doubling);
+            }
+        }
     }
 }
 }  // namespace
@@ -445,35 +664,12 @@ void Score::loadXMLFile(const std::string& filePath) {
             const int staffLines = atoi(staffLinesNode.node().first_child().value());
             _part[p].setStaffLines(staffLines);
         }
-        // ===== STEP 2: GET THE PART 'i' TRANSPOSE VALUES ===== //
-        const std::string xPathTranspose = xPathPart + "/measure[1]/attributes/transpose";
-
-        // Get the xPath result:
-        const pugi::xpath_node_set numTransposeTag = Helper::getNodeSet(_doc, xPathTranspose);
-
-        // Verify if the part 'i' is a transposed instrument or not:
-        const bool isTransposedInstrument = (numTransposeTag.size() == 0) ? false : true;
-
-        // Get the number of staves for the part 'i':
-        int transposeDiatonic = 0;
-        int transposeChromatic = 0;
-
-        const std::string xPathDiatonic = "/diatonic";
-        const std::string xPathChormatic = "/chromatic";
-
-        if (isTransposedInstrument) {
-            const pugi::xpath_node_set diatonic =
-                Helper::getNodeSet(_doc, xPathTranspose + xPathDiatonic);
-            const pugi::xpath_node_set chromatic =
-                Helper::getNodeSet(_doc, xPathTranspose + xPathChormatic);
-
-            if (diatonic.size() > 0 && diatonic[0].node()) {
-                transposeDiatonic = diatonic[0].node().text().as_int();
-            }
-            if (chromatic.size() > 0 && chromatic[0].node()) {
-                transposeChromatic = chromatic[0].node().text().as_int();
-            }
-        }
+        // ===== STEP 2: THE PART 'p' TRANSPOSITIONS ===== //
+        // Each <transpose> is collected measure by measure below, and once the part is read it
+        // is stamped on the pitched notes it applies to.
+        std::vector<TransposeElement> transposeElements;
+        std::vector<PitchedNote> pitchedNotes;
+        std::vector<std::string> measureNumbers(_numMeasures);
 
         // Get the part 'p' first measure divisions per quarter note
         int firstDivisionsTemp = 0;
@@ -623,6 +819,16 @@ void Score::loadXMLFile(const std::string& filePath) {
                     _part[p].getMeasure(m).getBarlineRight().setDirection(barDirection);
                 }
             }
+            // ===== TRANSPOSE ===== //
+            measureNumbers[m] = measureNode.node().attribute("number").value();
+            readTransposeElements(
+                measureNode.node(), m,
+                "part \"" + _part[p].getName() + "\", measure " + measureNumbers[m],
+                transposeElements);
+            // The position of the first note of the chord the current note belongs to: a chord is
+            // read as a unit, from its first note.
+            int chordStart = 0;
+
             // Get the xPath for all notes inside the measure 'm'
             const std::string xPathNotes = xPathMeasure + "//note";
 
@@ -789,7 +995,6 @@ void Score::loadXMLFile(const std::string& filePath) {
 
                 Note note(pitch);
                 note.setIsInChord(inChord);
-                note.setTransposingInterval(transposeDiatonic, transposeChromatic);
                 note.setVoice(voice);
                 note.setStaff(staff);
                 note.setIsGraceNote(isGraceNote);
@@ -860,8 +1065,17 @@ void Score::loadXMLFile(const std::string& filePath) {
                 // }
 
                 _part[p].getMeasure(m).addNote(note, staff);
+                if (!inChord) {
+                    chordStart = n;
+                }
+                if (isNoteOn && !isUnpitched) {
+                    pitchedNotes.push_back(
+                        {m, chordStart, staff, _part[p].getMeasure(m).getNumNotes(staff) - 1});
+                }
             }
         }
+
+        applyTranspositions(_part[p], transposeElements, pitchedNotes);
     }
 }
 

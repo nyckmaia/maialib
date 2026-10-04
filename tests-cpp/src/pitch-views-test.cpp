@@ -10,6 +10,7 @@
 #include <array>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <limits>
 #include <map>
@@ -24,6 +25,7 @@
 #include "transposing-instruments.h"
 
 using maiacore::detail::concertSpelling;
+using maiacore::detail::conventionalDiatonicInterval;
 using maiacore::detail::simplestSpelling;
 using maiacore::detail::soundsWithinRange;
 using maiacore::detail::spelledDiatonicInterval;
@@ -649,4 +651,17 @@ TEST(SoundsWithinRange, theEdgesOfTheRange) {
     EXPECT_TRUE(soundsWithinRange(Note("D-1"), -1, -2));    // C-1, MIDI note 0
     EXPECT_TRUE(soundsWithinRange(Note("Bx11"), 0, 0));     // untransposed: as written
     EXPECT_TRUE(soundsWithinRange(Note("rest"), 0, 200));   // a rest sounds nothing
+}
+
+// The diatonic interval conventionally written for a number of semitones: seven letters per whole
+// octave, plus a second for 1 or 2, a third for 3 or 4, a fourth for 5 and the tritone, a fifth
+// for 7, a sixth for 8 or 9, a seventh for 10 or 11, in the direction of the semitones.
+TEST(ConventionalDiatonicInterval, isTheLetterCountOfTheConventionalInterval) {
+    const std::vector<std::pair<int, std::int64_t>> rows = {{0, 0},  {1, 1},    {-2, -1},  {-3, -2},
+                                                            {6, 3},  {-6, -3},  {-7, -4},  {-9, -5},
+                                                            {12, 7}, {-14, -8}, {-26, -15}};
+    for (const auto& [chromatic, letters] : rows) {
+        EXPECT_EQ(conventionalDiatonicInterval(chromatic), letters) << chromatic;
+    }
+    EXPECT_EQ(conventionalDiatonicInterval(std::numeric_limits<int>::min()), -1252698795);
 }

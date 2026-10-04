@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Two clarinets on two staves of one part. Measure 1: staff 1 in B-flat (-1, -2) and staff 2
+     in A (-2, -3), each by its number; measure 2: staff 2 alone becomes a horn in F (-4, -7);
+     measure 3: a <transpose> without number puts both staves in B-flat. Expected: C5 sounds Bb4
+     and A4; D5 sounds C5 and G4; E5 sounds D5 on both staves. -->
+<score-partwise version="4.0">
+  <part-list>
+    <score-part id="P1"><part-name>Clarinets</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <staves>2</staves>
+        <clef number="1"><sign>G</sign><line>2</line></clef>
+        <clef number="2"><sign>G</sign><line>2</line></clef>
+        <transpose number="1"><diatonic>-1</diatonic><chromatic>-2</chromatic></transpose>
+        <transpose number="2"><diatonic>-2</diatonic><chromatic>-3</chromatic></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type><staff>1</staff></note>
+      <backup><duration>4</duration></backup>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>4</duration><voice>2</voice><type>whole</type><staff>2</staff></note>
+    </measure>
+    <measure number="2">
+      <attributes>
+        <transpose number="2"><diatonic>-4</diatonic><chromatic>-7</chromatic></transpose>
+      </attributes>
+      <note><pitch><step>D</step><octave>5</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type><staff>1</staff></note>
+      <backup><duration>4</duration></backup>
+      <note><pitch><step>D</step><octave>5</octave></pitch><duration>4</duration><voice>2</voice><type>whole</type><staff>2</staff></note>
+    </measure>
+    <measure number="3">
+      <attributes>
+        <transpose><diatonic>-1</diatonic><chromatic>-2</chromatic></transpose>
+      </attributes>
+      <note><pitch><step>E</step><octave>5</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type><staff>1</staff></note>
+      <backup><duration>4</duration></backup>
+      <note><pitch><step>E</step><octave>5</octave></pitch><duration>4</duration><voice>2</voice><type>whole</type><staff>2</staff></note>
+    </measure>
+  </part>
+</score-partwise>

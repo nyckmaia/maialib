@@ -37,6 +37,21 @@ void ScoreClass(const py::module& m) {
         recognised ``<accidental>`` and the ``<alter>`` disagree, the ``<accidental>`` is used
         and a warning is printed. None of these aborts the load.
 
+        A ``<transpose>`` is read in every measure. It applies to the pitched notes written after
+        it, in its measure and the following ones, on the staff its ``number`` names or, without
+        ``number``, on every staff of the part, until the next ``<transpose>`` for that staff;
+        inside a measure document order decides, and a chord is read as a unit: a ``<transpose>``
+        between the notes of a chord applies from the first note after the chord. Each such note is
+        given the interval with ``<octave-change>`` folded in, 7 letters and 12 semitones per octave
+        (a B-flat bass clarinet's -1, -2 and -1 make ``(-8, -14)``), and the octave doubling of
+        ``<double>`` (see ``Note.getOctaveDoubling``); rests and unpitched notes are left alone. A
+        ``<transpose>`` without ``<diatonic>`` is given the conventional diatonic interval of its
+        ``<chromatic>`` one (see ``Note.getSoundingPitch``). One whose ``<chromatic>`` or
+        ``<octave-change>`` is not a whole number is ignored, leaving the previous transposition in
+        force, with a warning that starts with ``[transpose-chromatic-not-integer]`` or
+        ``[transpose-octave-change-not-integer]`` and names the part and the measure as the file
+        numbers it.
+
         Parameters
         ----------
         filePath : str
@@ -473,8 +488,8 @@ void ScoreClass(const py::module& m) {
         holds the parts' own notes: a note of a transposing instrument keeps its written pitch
         and its transposing interval, and the chord's analysis (``getName``, ``getRoot``, ...)
         relates it at concert pitch, spelled with its written letter moved by the diatonic
-        transposing interval -- inferred from the chromatic one for a ``<transpose>`` without
-        ``<diatonic>`` -- or, where that gives no spelling, by the fallback described on
+        transposing interval -- inferred from the chromatic one when it is 0 -- or, where that
+        gives no spelling, by the fallback described on
         ``Note.getSoundingPitch``, without the simplification. The notes that analysis returns
         are untransposed notes at that pitch (see ``Chord``).
 

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A horn part whose only <transpose> comes in measure 2, where a rest precedes the first
+     pitched note: measure 1 is untransposed (C4 sounds C4); from measure 2 on, a horn in F
+     (-4, -7): C4 sounds F3 and G4 sounds C4. The rest and the unpitched note take no
+     transposition. -->
+<score-partwise version="4.0">
+  <part-list>
+    <score-part id="P1"><part-name>Horn</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+      </attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+    <measure number="2">
+      <attributes>
+        <transpose><diatonic>-4</diatonic><chromatic>-7</chromatic></transpose>
+      </attributes>
+      <note><rest/><duration>2</duration><voice>1</voice><type>half</type></note>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>2</duration><voice>1</voice><type>half</type></note>
+    </measure>
+    <measure number="3">
+      <note><pitch><step>G</step><octave>4</octave></pitch><duration>2</duration><voice>1</voice><type>half</type></note>
+      <note><unpitched><display-step>E</display-step><display-octave>4</display-octave></unpitched><duration>2</duration><voice>1</voice><type>half</type></note>
+    </measure>
+  </part>
+</score-partwise>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- <double>: a cello part doubled one octave below (<double/>) and a flute part doubled one
+     octave above (<double above="yes"/>). Each note sounds as written and holds the doubling:
+     C3 BELOW, G4 ABOVE. -->
+<score-partwise version="4.0">
+  <part-list>
+    <score-part id="P1"><part-name>Violoncello and Contrabass</part-name></score-part>
+    <score-part id="P2"><part-name>Flute and Piccolo</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>F</sign><line>4</line></clef>
+        <transpose><diatonic>0</diatonic><chromatic>0</chromatic><double/></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>3</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+  </part>
+  <part id="P2">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+        <transpose><diatonic>0</diatonic><chromatic>0</chromatic><double above="yes"/></transpose>
+      </attributes>
+      <note><pitch><step>G</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+  </part>
+</score-partwise>

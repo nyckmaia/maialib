@@ -136,6 +136,22 @@ class Score {
      *          warns and leaves the note natural, never rounded to the nearest pitch. When a
      *          recognised `<accidental>` and the `<alter>` disagree, the `<accidental>` is used
      *          and a warning is printed. None of these aborts the load.
+     *
+     *          A `<transpose>` is read in every measure. It applies to the pitched notes written
+     *          after it, in its measure and the following ones, on the staff its `number` names or,
+     *          without `number`, on every staff of the part, until the next `<transpose>` for that
+     *          staff; inside a measure document order decides, and a chord is read as a unit: a
+     *          `<transpose>` between the notes of a chord applies from the first note after the
+     *          chord. Each such note is given the interval with `<octave-change>` folded in, 7
+     *          letters and 12 semitones per octave (a B-flat bass clarinet's -1, -2 and -1 make
+     *          (-8, -14)), and the octave doubling of `<double>` (Note::getOctaveDoubling()); rests
+     *          and unpitched notes are left alone. A `<transpose>` without `<diatonic>` is given
+     *          the conventional diatonic interval of its `<chromatic>` one (see
+     *          Note::getSoundingPitch()). One whose `<chromatic>` or `<octave-change>` is not a
+     *          whole number is ignored, leaving the previous transposition in force, with a warning
+     *          that starts with [transpose-chromatic-not-integer] or
+     *          [transpose-octave-change-not-integer] and names the part and the measure as the file
+     *          numbers it.
      * @param filePath Path to the MusicXML file.
      */
     explicit Score(const std::string& filePath);

@@ -8,6 +8,7 @@
 #include <fstream>
 #include <iostream>
 #include <mutex>
+#include <set>
 #include <sstream>
 #include <streambuf>
 #include <string>
@@ -1255,4 +1256,244 @@ TEST(ScoreGetChords, ATransposingPartIsAnalysedByThePitchesItSounds) {
     Chord chord = std::get<3>(chords[0]);
     EXPECT_EQ(chord.size(), 3);
     EXPECT_EQ(chord.getName(), "C");
+}
+
+// ====================
+// MusicXML <transpose>
+// ====================
+
+namespace {
+const std::string kUnitTest = "./test/xml_examples/unit_test/";
+const std::string kW3c = "./test/musicxml/w3c-test-suite/xmlFiles/";
+const std::string kSamples = "./maialib/xml-scores-examples/";
+
+std::string doublingName(const OctaveDoubling doubling) {
+    switch (doubling) {
+        case OctaveDoubling::BELOW:
+            return "BELOW";
+        case OctaveDoubling::ABOVE:
+            return "ABOVE";
+        default:
+            return "NONE";
+    }
+}
+
+// A note as "<written> (<diatonic>, <chromatic>, <doubling>) <sounding>".
+std::string describeTransposition(const Note& note) {
+    return note.getWrittenPitch() + " (" + std::to_string(note.getTransposeDiatonic()) + ", " +
+           std::to_string(note.getTransposeChromatic()) + ", " +
+           doublingName(note.getOctaveDoubling()) + ") " + note.getSoundingPitch();
+}
+
+// Every pitched note of a part, measure by measure and staff by staff, as describeTransposition()
+// writes it.
+std::vector<std::string> transposedNotes(Score& score, const int partId) {
+    std::vector<std::string> notes;
+    Part& part = score.getPart(partId);
+    for (int m = 0; m < part.getNumMeasures(); m++) {
+        const Measure& measure = part.getMeasure(m);
+        for (int s = 0; s < measure.getNumStaves(); s++) {
+            for (int n = 0; n < measure.getNumNotes(s); n++) {
+                const Note& note = measure.getNote(n, s);
+                if (note.isNoteOn() && note.isPitched()) {
+                    notes.push_back(describeTransposition(note));
+                }
+            }
+        }
+    }
+    return notes;
+}
+
+// How many warnings of the <transpose> reader 'printed' holds.
+int transposeWarnings(const std::string& printed) {
+    int count = 0;
+    for (const char* code : {"[WARN] [transpose-", "[WARN] [for-part-"}) {
+        for (size_t at = printed.find(code); at != std::string::npos;
+             at = printed.find(code, at + 1)) {
+            count++;
+        }
+    }
+    return count;
+}
+}  // namespace
+
+// A <transpose> applies from where it stands to the next one: a change in the middle of a part is
+// followed and carried forward, and <diatonic>0</diatonic><chromatic>0</chromatic> returns to
+// untransposed.
+TEST(ScoreTransposeRead, aChangeInTheMiddleOfAPartIsFollowed) {
+    StdoutCapture capture;
+    Score score(kUnitTest + "transpose_change_mid_part.musicxml");
+    EXPECT_EQ(transposedNotes(score, 0),
+              (std::vector<std::string>{"C4 (-1, -2, NONE) Bb3", "C4 (-2, -3, NONE) A3",
+                                        "D4 (-2, -3, NONE) B3", "C4 (0, 0, NONE) C4"}));
+    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+}
+
+// A part whose first <transpose> comes in a later measure is untransposed up to it; rests and
+// unpitched notes take no transposition.
+TEST(ScoreTransposeRead, aTransposeInALaterMeasureAppliesFromThere) {
+    StdoutCapture capture;
+    Score score(kUnitTest + "transpose_later_measure.musicxml");
+    EXPECT_EQ(transposedNotes(score, 0),
+              (std::vector<std::string>{"C4 (0, 0, NONE) C4", "C4 (-4, -7, NONE) F3",
+                                        "G4 (-4, -7, NONE) C4"}));
+    const Note& rest = score.getPart(0).getMeasure(1).getNote(0, 0);
+    ASSERT_TRUE(rest.isNoteOff());
+    EXPECT_FALSE(rest.isTransposed());
+    const Note& unpitched = score.getPart(0).getMeasure(2).getNote(1, 0);
+    ASSERT_FALSE(unpitched.isPitched());
+    EXPECT_FALSE(unpitched.isTransposed());
+    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+}
+
+// A <transpose number="s"> applies to staff s alone; one without number to every staff.
+TEST(ScoreTransposeRead, aNumberedTransposeAppliesToItsStaffAlone) {
+    Score score(kUnitTest + "transpose_per_staff.musicxml");
+    EXPECT_EQ(transposedNotes(score, 0),
+              (std::vector<std::string>{"C5 (-1, -2, NONE) Bb4", "C5 (-2, -3, NONE) A4",
+                                        "D5 (-1, -2, NONE) C5", "D5 (-4, -7, NONE) G4",
+                                        "E5 (-1, -2, NONE) D5", "E5 (-1, -2, NONE) D5"}));
+}
+
+// <octave-change> is folded into the interval: 7 letters and 12 semitones per octave.
+TEST(ScoreTransposeRead, anOctaveChangeIsFoldedIntoTheInterval) {
+    Score score(kUnitTest + "transpose_octave_change.musicxml");
+    EXPECT_EQ(transposedNotes(score, 0), (std::vector<std::string>{"G5 (7, 12, NONE) G6"}));
+    EXPECT_EQ(transposedNotes(score, 1), (std::vector<std::string>{"D4 (-8, -14, NONE) C3"}));
+    EXPECT_EQ(transposedNotes(score, 2), (std::vector<std::string>{"C3 (-7, -12, NONE) C2"}));
+}
+
+// <double/> doubles one octave below, <double above="yes"/> one octave above; the note itself
+// sounds as written.
+TEST(ScoreTransposeRead, doubleIsReadAsTheOctaveDoubling) {
+    Score score(kUnitTest + "transpose_double.musicxml");
+    EXPECT_EQ(transposedNotes(score, 0), (std::vector<std::string>{"C3 (0, 0, BELOW) C3"}));
+    EXPECT_EQ(transposedNotes(score, 1), (std::vector<std::string>{"G4 (0, 0, ABOVE) G4"}));
+}
+
+// Inside a measure, document order decides: a <transpose> after notes applies to the notes after
+// it, and one after the measure's last note from the next measure on.
+TEST(ScoreTransposeRead, aTransposeAfterNotesAppliesToTheNotesAfterIt) {
+    Score score(kUnitTest + "transpose_after_notes.musicxml");
+    EXPECT_EQ(transposedNotes(score, 0),
+              (std::vector<std::string>{"C5 (0, 0, NONE) C5", "D5 (0, 0, NONE) D5",
+                                        "E5 (-3, -5, NONE) B4", "F5 (-3, -5, NONE) C5",
+                                        "G5 (-3, -5, NONE) D5", "C5 (0, 0, NONE) C5"}));
+}
+
+// A chord is read as a unit: a <transpose> written between the notes of a chord applies from the
+// first note after the chord, and every note of the chord keeps the transposition in force at its
+// first note.
+TEST(ScoreTransposeRead, aTransposeBetweenTheNotesOfAChordAppliesAfterTheChord) {
+    Score score(kUnitTest + "transpose_inside_chord.musicxml");
+    EXPECT_EQ(transposedNotes(score, 0),
+              (std::vector<std::string>{"C5 (-1, -2, NONE) Bb4", "E5 (-1, -2, NONE) D5",
+                                        "G5 (-1, -2, NONE) F5", "D5 (-2, -3, NONE) B4"}));
+}
+
+// Without <diatonic>, the conventional diatonic interval of <chromatic> is stored, silently.
+TEST(ScoreTransposeRead, aTransposeWithoutDiatonicStoresTheConventionalInterval) {
+    StdoutCapture capture;
+    Score score(kUnitTest + "transpose_without_diatonic.musicxml");
+    EXPECT_EQ(transposedNotes(score, 0), (std::vector<std::string>{"F#4 (-1, -2, NONE) E4"}));
+    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+}
+
+// A <chromatic> that is not a whole number is ignored with one warning; the previous
+// transposition stays in force.
+TEST(ScoreTransposeRead, aChromaticThatIsNotAWholeNumberIsIgnored) {
+    StdoutCapture capture;
+    Score score(kUnitTest + "transpose_chromatic_not_integer.musicxml");
+    const std::string printed = capture.str();
+    EXPECT_EQ(transposedNotes(score, 0),
+              (std::vector<std::string>{"C4 (-1, -2, NONE) Bb3", "C4 (-1, -2, NONE) Bb3"}));
+    EXPECT_NE(printed.find("[WARN] [transpose-chromatic-not-integer] part \"Clarinet\", measure 2: "
+                           "<chromatic>-2.5</chromatic> is not a whole number of semitones; the "
+                           "<transpose> is ignored and the previous transposition stays in "
+                           "force.\n"),
+              std::string::npos)
+        << printed;
+    EXPECT_EQ(transposeWarnings(printed), 1) << printed;
+}
+
+// Likewise an <octave-change> that is not a whole number.
+TEST(ScoreTransposeRead, anOctaveChangeThatIsNotAWholeNumberIsIgnored) {
+    StdoutCapture capture;
+    Score score(kUnitTest + "transpose_octave_change_not_integer.musicxml");
+    const std::string printed = capture.str();
+    EXPECT_EQ(transposedNotes(score, 0),
+              (std::vector<std::string>{"C4 (-1, -2, NONE) Bb3", "C4 (-1, -2, NONE) Bb3"}));
+    EXPECT_NE(printed.find("[WARN] [transpose-octave-change-not-integer] part \"Clarinet\", "
+                           "measure 2: <octave-change>1.5</octave-change> is not a whole number "
+                           "of octaves; the <transpose> is ignored and the previous "
+                           "transposition stays in force.\n"),
+              std::string::npos)
+        << printed;
+    EXPECT_EQ(transposeWarnings(printed), 1) << printed;
+}
+
+// The W3C transposing-instrument files sound as they say: 72c's change from E-flat to B-flat
+// clarinet in measure 2 is followed, and 72d's part transposed by an augmented fourth and three
+// octaves sounds MIDI note 72 from a written F#1.
+TEST(ScoreTransposeRead, theW3cTransposingInstrumentsSoundAsTheFilesSay) {
+    Score a(kW3c + "72a-TransposingInstruments.musicxml");
+    EXPECT_EQ(describeTransposition(a.getPart(0).getMeasure(0).getNote(0, 0)),
+              "D4 (-1, -2, NONE) C4");
+    EXPECT_EQ(describeTransposition(a.getPart(1).getMeasure(0).getNote(0, 0)),
+              "A4 (-5, -9, NONE) C4");
+
+    Score c(kW3c + "72c-TransposingInstruments-Change.musicxml");
+    EXPECT_EQ(transposedNotes(c, 0),
+              (std::vector<std::string>{"C4 (2, 3, NONE) Eb4", "C4 (-1, -2, NONE) Bb3",
+                                        "C4 (-1, -2, NONE) Bb3"}));
+
+    Score d(kW3c + "72d-TransposingInstruments-scorePitch.musicxml");
+    const Note& displayed = d.getPart(9).getMeasure(0).getNote(0, 0);
+    EXPECT_EQ(describeTransposition(displayed), "F#1 (24, 42, NONE) C5");
+    EXPECT_EQ(displayed.getMidiNumber(), 72);
+}
+
+// W3C 41c's piccolo, bass clarinet, contrabassoon and contrabass sound an octave from what they
+// read.
+TEST(ScoreTransposeRead, theOctaveTransposingPartsOf41cSoundAnOctaveAway) {
+    Score score(kW3c + "41c-StaffGroups.musicxml");
+    EXPECT_EQ(describeTransposition(score.getPart(0).getMeasure(0).getNote(0, 0)),
+              "B4 (7, 12, NONE) B5");
+    EXPECT_EQ(describeTransposition(score.getPart(6).getMeasure(0).getNote(0, 0)),
+              "B4 (-8, -14, NONE) A3");
+    EXPECT_EQ(describeTransposition(score.getPart(8).getMeasure(0).getNote(0, 0)),
+              "B2 (-7, -12, NONE) B1");
+    EXPECT_EQ(describeTransposition(score.getPart(24).getMeasure(0).getNote(0, 0)),
+              "C3 (-7, -12, NONE) C2");
+}
+
+// The samples' contrabasses sound an octave below what they read; their other transposing parts
+// read as before.
+TEST(ScoreTransposeRead, theSamplesContrabassesSoundAnOctaveLower) {
+    Score beethoven(kSamples + "Beethoven_Symphony_5_mov_1.xml");
+    EXPECT_EQ(describeTransposition(beethoven.getPart(11).getMeasure(0).getNote(1, 0)),
+              "G3 (-7, -12, NONE) G2");
+    EXPECT_EQ(describeTransposition(beethoven.getPart(2).getMeasure(0).getNote(1, 0)),
+              "A4 (-1, -2, NONE) G4");
+    EXPECT_EQ(describeTransposition(beethoven.getPart(4).getMeasure(17).getNote(1, 0)),
+              "E5 (-5, -9, NONE) G4");
+
+    Score dvorak(kSamples + "Dvorak_Symphony_9_mov_4.mxl");
+    EXPECT_EQ(describeTransposition(dvorak.getPart(15).getMeasure(0).getNote(0, 0)),
+              "B2 (-7, -12, NONE) B1");
+    EXPECT_EQ(describeTransposition(dvorak.getPart(2).getMeasure(7).getNote(1, 0)),
+              "Db5 (-2, -3, NONE) Bb4");
+}
+
+// Reading <octave-change> changes the chords: test_getchords_poly's contrabass sounds C2 under the
+// first chord, and its G2 makes measure 3's first chord a G7 in root position, where its G3 had
+// made a G7/F.
+TEST(ScoreTransposeRead, anOctaveTranspositionChangesTheChords) {
+    Score score(kUnitTest + "test_getchords_poly.musicxml");
+    const auto chords = score.getChords();
+    ASSERT_EQ(chords.size(), 9u);
+    Chord first = std::get<3>(chords[0]);
+    EXPECT_EQ(first.getBassNote().getPitch(), "C2");
+    Chord dominant = std::get<3>(chords[5]);
+    EXPECT_EQ(dominant.getName(), "G7");
 }

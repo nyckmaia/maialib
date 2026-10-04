@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A clarinet part that changes its transposition in the middle of the part, then plays
+     untransposed: in B-flat (-1, -2) in measure 1, in A (-2, -3) from measure 2, carried into
+     measure 3, untransposed (0, 0) from measure 4. Expected: C4 sounds Bb3; C4 sounds A3 and D4
+     sounds B3; C4 sounds C4. -->
+<score-partwise version="4.0">
+  <part-list>
+    <score-part id="P1"><part-name>Clarinet</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+        <transpose><diatonic>-1</diatonic><chromatic>-2</chromatic></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+    <measure number="2">
+      <attributes>
+        <transpose><diatonic>-2</diatonic><chromatic>-3</chromatic></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+    <measure number="3">
+      <note><pitch><step>D</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+    <measure number="4">
+      <attributes>
+        <transpose><diatonic>0</diatonic><chromatic>0</chromatic></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>4</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+    </measure>
+  </part>
+</score-partwise>
