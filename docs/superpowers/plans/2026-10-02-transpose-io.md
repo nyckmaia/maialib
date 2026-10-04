@@ -4,7 +4,7 @@
 
 **Goal:** Read MusicXML `<transpose>` in every measure and per staff, with `<octave-change>` and `<double>`, correcting or ignoring what cannot be followed with one coded warning per element; write `<transpose>` back on export so that a re-imported score keeps its transpositions; report the concert key in `Score::getChords()`; and count the octave doubling in the chord analysis and the piano roll.
 
-**Architecture:** The notes are the single source of truth (spec D1): each pitched `Note` holds its total transposing interval (two ints, `octave-change` folded in) and a new `OctaveDoubling`. `Score::loadXMLFile()` collects a part's `<transpose>` elements while it reads the measures (with the number of `<note>` elements before each one's `<attributes>`), then stamps them on the stored pitched notes staff by staff, checking each element's whole scope first with the non-throwing `maiacore::detail::soundsWithinRange()`. `Part::toXML()` derives a per-part plan of `<transpose>` elements from the notes and writes the measure-start ones in schema position; `Measure::toXML()` gains an overload that writes the mid-measure `<attributes>`. `Score::getChords()` computes the concert key of each measure once per call and adds the doubled octaves to its chords. `Part::setTransposingInterval()` stamps a range of measures and a staff, all or none. There is no transposition state on `Measure`, `Part` or `Score`.
+**Architecture:** The notes are the single source of truth (spec D1): each pitched `Note` holds its total transposing interval (two ints, `octave-change` folded in) and a new `OctaveDoubling`. `Score::loadXMLFile()` collects a part's `<transpose>` elements while it reads the measures (with the number of `<note>` elements before each one's `<attributes>`), then stamps them on the stored pitched notes staff by staff, a chord as a unit, checking each element's whole scope first with the non-throwing `maiacore::detail::soundsWithinRange()`. `Part::toXML()` derives a per-part plan of `<transpose>` elements from the notes and writes the measure-start ones in schema position; `Measure::toXML()` gains an overload that writes the mid-measure `<attributes>`. `Score::getChords()` computes the concert key of each measure once per call and adds the doubled octaves to its chords. `Part::setTransposingInterval()` stamps a range of measures and a staff, all or none. There is no transposition state on `Measure`, `Part` or `Score`.
 
 **Tech Stack:** C++17 (maiacore), pugixml (reader), pybind11 bindings with numpydoc docstrings, GoogleTest 1.14 (`tests-cpp/src/`, sources listed in `tests-cpp/CMakeLists.txt`), Python `unittest` (`test/`), `lxml` through the 4a validator `test/musicxml/musicxml_check.py`, pandas/plotly (`maialib/maiapy/plots.py`).
 
@@ -32,7 +32,8 @@
 - Equality: `OctaveDoubling` takes no part in `Note`'s `==`/`!=` or its Python hash (they keep comparing the concert spelling); the getter's Doxygen and numpydoc say so.
 - Out-of-range scope: an element's scope is every pitched note it would stamp before the next `<transpose>` for the same staff or for all staves; the scope is checked before anything is stamped, so a rejected element stamps nothing.
 - Fixtures: small `score-partwise` files `test/xml_examples/unit_test/transpose_<rule>.musicxml`, valid against the MusicXML 4.0 schema unless the rule needs an invalid value (the two `*_not_integer` fixtures of `<octave-change>` and `<diatonic>`, which the schema types as `xs:integer`); written octaves stay within the schema's 0–9; every part has a `<key>` in measure 1 (the reader still fails without one). The task that adds fixtures runs `make corpus-update-ledger` and commits only the added `test/musicxml/ledger.json` lines after `git diff test/musicxml/ledger.json` shows no other line changed and `git diff --stat test/musicxml/ledger-external.json` is empty.
-- Tests: Python (lxml, the 4a validator) for anything that inspects or validates exported XML; C++ for the model, the reader and the analyses, next to the existing C++ tests.
+- Tests: Python (lxml, the 4a validator) for anything that inspects or validates exported XML; C++ for the model, the reader and the analyses, next to the existing C++ tests. A C++-only serialization API that Python cannot reach (the `Measure::toXML` overload of Task 5, which the bindings do not expose) is tested in C++ on the text it returns.
+- Line hints (`~N`) give the line at bd63266; an earlier task's insertions move them. The quoted anchor text decides where an edit goes: every anchor matches exactly once, in the text the earlier tasks leave after clang-format.
 - Dump: each note record of `test/musicxml/dump_score.py` gains `"octaveDoubling"` with the enum member's name (`"NONE"`, `"BELOW"`, `"ABOVE"`), and `test/musicxml/golden/test_staves.dump.json` is regenerated in the same task.
 - Writer values (spec §5.2): `oc = trunc(c / 12)` toward zero, `<diatonic>d − 7·oc</diatonic>`, `<chromatic>c − 12·oc</chromatic>`, `<octave-change>` only when `oc ≠ 0`; `<diatonic>` always written, with the conventional value when the stored one is 0 and `c ≠ 0`; `<double/>` for `BELOW`, `<double above="yes"/>` for `ABOVE`; inside `<attributes>` after `clef` and `staff-details`; `<for-part>` never written; the header stays MusicXML 3.0.
 - Concert key (spec §6.1): key-neutral means `7·c − 12·d == 0` with `d` the diatonic interval the speller uses; majority of written keys compared as (fifths, mode); a tie goes to the first part in score order; fallback: part 0's written key moved by `7·c − 12·d` fifths, kept when within −6..11 (the range `Key`'s constructor accepts), otherwise brought inside by adding or subtracting 12.
@@ -47,15 +48,15 @@
 6. **A mid-measure change in a part with more than one staff always carries `number`**: the writer emits staves one after another, so a `<transpose>` without `number` there would also reach the next staves' notes of that measure.
 7. **A change whose note is not the first of its chord is written before the chord's first note.**
 8. **A doubled octave left out of `getChords()` is reported once per note and per call**, not once per chord it sounds in; the added note is an untransposed note at the concert pitch one octave away.
-9. **Decomposition:** a Task 0 records baselines (counts, a fuzz report); the non-integer `<chromatic>`/`<octave-change>` rules move from the corrections task to the reader task (Task 3), because the reader's parser must already decide what such a value means; `conventionalDiatonicInterval` is exposed in Task 3, its first user (absent `<diatonic>`); `spelledDiatonicInterval` (the speller's diatonic interval) is added in Task 5 and reused by Task 7; the slow corpus files' round trip runs under `make corpus` through `MAIALIB_SLOW_TESTS=1` (Task 6).
+9. **Decomposition:** a Task 0 records baselines (counts, a fuzz report); the non-integer `<chromatic>`/`<octave-change>` rules move from the corrections task to the reader task (Task 3), because the reader's parser must already decide what such a value means; `conventionalDiatonicInterval` is exposed in Task 3, its first user (absent `<diatonic>`); `spelledDiatonicInterval` (the speller's diatonic interval) is added in Task 2, where `concertSpelling` and `soundsWithinRange` share it, and reused by Tasks 5 and 7; the slow corpus files' round trip runs under `make corpus` through `MAIALIB_SLOW_TESTS=1` (Task 6).
 
 ## File map
 
 | File | Responsibility | Tasks |
 |---|---|---|
 | `maiacore/include/maiacore/constants.h` | `enum class OctaveDoubling { NONE, BELOW, ABOVE }` | 1 |
-| `maiacore/include/maiacore/note.h`, `maiacore/src/maiacore/note.cpp` | the `_octaveDoubling` field, `setOctaveDoubling`/`getOctaveDoubling`, `setPitch("rest")` clears it; `soundsWithinRange` (friend), the shared ceiling check; `conventionalDiatonicInterval` and `spelledDiatonicInterval` moved to / added in `maiacore::detail`; doc of the inferred interval | 1, 2, 3, 5, 8 |
-| `maiacore/src/maiacore/pitch-views.h` | declarations and Doxygen of `soundsWithinRange`, `conventionalDiatonicInterval`, `spelledDiatonicInterval` | 2, 3, 5 |
+| `maiacore/include/maiacore/note.h`, `maiacore/src/maiacore/note.cpp` | the `_octaveDoubling` field, `setOctaveDoubling`/`getOctaveDoubling`, `setPitch("rest")` clears it; `soundsWithinRange` (friend), the shared ceiling check; `spelledDiatonicInterval` added to and `conventionalDiatonicInterval` moved to `maiacore::detail`; doc of the inferred interval | 1, 2, 3, 8 |
+| `maiacore/src/maiacore/pitch-views.h` | declarations and Doxygen of `soundsWithinRange`, `spelledDiatonicInterval`, `conventionalDiatonicInterval` | 2, 3 |
 | `maiacore/include/maiacore/part.h`, `maiacore/src/maiacore/part.cpp` | `Part::setTransposingInterval`; the `<transpose>` plan and its writing in `Part::toXML` | 2, 5 |
 | `maiacore/include/maiacore/measure.h`, `maiacore/src/maiacore/measure.cpp` | `Measure::toXML` overload writing XML before chosen notes | 5 |
 | `maiacore/include/maiacore/score.h`, `maiacore/src/maiacore/score.cpp` | the reader (collect, check, stamp, warn); the concert key and the doubled octaves in `getChords`; Doxygen of `Score(path)`, `toXML`, `toFile`, `getChords` | 3, 4, 5, 7, 8 |
@@ -65,10 +66,10 @@
 | `maiacore/src/maiacore/python_wrapper/py_measure.cpp` | `toXML` bound through `py::overload_cast` | 5 |
 | `maiacore/src/maiacore/python_wrapper/py_score.cpp` | numpydoc of `Score(path)`, `toXML`, `toFile`, `getChords` | 3, 4, 5, 7, 8 |
 | `maialib/maiapy/plots.py` | `plotPianoRoll` draws the doubled octave | 8 |
-| `test/xml_examples/unit_test/transpose_*.musicxml` (13 new) | one fixture per rule | 3, 4 |
-| `test/musicxml/ledger.json` | 13 added lines | 3, 4 |
+| `test/xml_examples/unit_test/transpose_*.musicxml` (14 new) | one fixture per rule | 3, 4 |
+| `test/musicxml/ledger.json` | 14 added lines | 3, 4 |
 | `tests-cpp/src/note-test.cpp` | `NoteOctaveDoubling` | 1 |
-| `tests-cpp/src/pitch-views-test.cpp` | `SoundsWithinRange`, `ConventionalDiatonicInterval`, `SpelledDiatonicInterval` | 2, 3, 5 |
+| `tests-cpp/src/pitch-views-test.cpp` | `SoundsWithinRange`, `ConventionalDiatonicInterval`, `SpelledDiatonicInterval` | 2, 3 |
 | `tests-cpp/src/part-test.cpp` | `PartSetTransposingInterval` | 2 |
 | `tests-cpp/src/measure-test.cpp` | `MeasureSerialization.ToXMLWritesTheInsertionsBeforeTheirNotes` | 5 |
 | `tests-cpp/src/score-test.cpp` | `ScoreTransposeRead`, `ScoreTransposeCorrection`, `ScoreConcertKey`, `ScoreOctaveDoubling` | 3, 4, 7, 8 |
@@ -436,14 +437,24 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 ### Task 2: `Part::setTransposingInterval`, all or none
 
 **Files:**
-- Modify: `maiacore/include/maiacore/note.h` (the `@cond` block ~14-22 and the friend ~117-119), `maiacore/src/maiacore/pitch-views.h` (append to the namespace), `maiacore/src/maiacore/note.cpp` (anonymous namespace after `throwSoundingPitchAboveCeiling` ~73; `chromaticSpelling` ~116-126; after `concertSpelling` ~392), `maiacore/include/maiacore/part.h` (includes; after `setIsPitched` ~184), `maiacore/src/maiacore/part.cpp` (includes; after `setIsPitched` ~84), `maiacore/src/maiacore/python_wrapper/py_part.cpp` (after `setIsPitched` ~59)
+- Modify: `maiacore/include/maiacore/note.h` (the `@cond` block ~14-22 and the friend ~117-119), `maiacore/src/maiacore/pitch-views.h` (`#include <cstdint>`; append to the namespace), `maiacore/src/maiacore/note.cpp` (anonymous namespace after `throwSoundingPitchAboveCeiling` ~73; `chromaticSpelling` ~116-126; before `concertSpelling` ~365 and its diatonic interval ~382-384; after `concertSpelling` ~392), `maiacore/include/maiacore/part.h` (includes; after `setIsPitched` ~184), `maiacore/src/maiacore/part.cpp` (includes; after `setIsPitched` ~84), `maiacore/src/maiacore/python_wrapper/py_part.cpp` (after `setIsPitched` ~59)
 - Test: `tests-cpp/src/pitch-views-test.cpp` (append), `tests-cpp/src/part-test.cpp` (includes; append), `test/test_part_comprehensive.py` (append)
 
-**Interfaces:** consumes `OctaveDoubling`, `Note::setOctaveDoubling` (Task 1). Produces `bool maiacore::detail::soundsWithinRange(const Note& note, int transposeDiatonic, int transposeChromatic)` (internal; never throws; true exactly where `concertSpelling()` of the note's written pitch with that interval returns a spelling) — consumed by Task 4; and `void Part::setTransposingInterval(const int diatonicInterval, const int chromaticInterval, const int measureStart = 0, const int measureEnd = -1, const int staff = -1, const OctaveDoubling doubling = OctaveDoubling::NONE)` (Python `Part.setTransposingInterval(diatonicInterval, chromaticInterval, measureStart=0, measureEnd=-1, staff=-1, doubling=OctaveDoubling.NONE)`) — consumed by Task 5's tests.
+**Interfaces:** consumes `OctaveDoubling`, `Note::setOctaveDoubling` (Task 1). Produces `std::int64_t maiacore::detail::spelledDiatonicInterval(int transposeDiatonic, int transposeChromatic)` (internal; the diatonic interval `concertSpelling()` moves the letter by) — consumed by Tasks 5 and 7; `bool maiacore::detail::soundsWithinRange(const Note& note, int transposeDiatonic, int transposeChromatic)` (internal; never throws; true exactly where `concertSpelling()` of the note's written pitch with that interval returns a spelling) — consumed by Task 4; and `void Part::setTransposingInterval(const int diatonicInterval, const int chromaticInterval, const int measureStart = 0, const int measureEnd = -1, const int staff = -1, const OctaveDoubling doubling = OctaveDoubling::NONE)` (Python `Part.setTransposingInterval(diatonicInterval, chromaticInterval, measureStart=0, measureEnd=-1, staff=-1, doubling=OctaveDoubling.NONE)`) — consumed by Task 5's tests.
 
-- [ ] **Step 1: Failing C++ tests of the predicate** — append to `tests-cpp/src/pitch-views-test.cpp`, and add `using maiacore::detail::soundsWithinRange;` after `using maiacore::detail::simplestSpelling;`:
+- [ ] **Step 1: Failing C++ tests of the predicate** — append to `tests-cpp/src/pitch-views-test.cpp`, and add `using maiacore::detail::soundsWithinRange;` and `using maiacore::detail::spelledDiatonicInterval;` after `using maiacore::detail::simplestSpelling;`:
 
 ```cpp
+// The diatonic interval the speller moves the letter by: the stored one, or the conventional one
+// for the chromatic interval when the stored one is 0.
+TEST(SpelledDiatonicInterval, isTheStoredIntervalOrTheConventionalOneForZero) {
+    EXPECT_EQ(spelledDiatonicInterval(-1, -2), -1);
+    EXPECT_EQ(spelledDiatonicInterval(0, -2), -1);
+    EXPECT_EQ(spelledDiatonicInterval(3, 4), 3);  // a stored interval is used as it is
+    EXPECT_EQ(spelledDiatonicInterval(0, 0), 0);
+    EXPECT_EQ(spelledDiatonicInterval(7, 0), 7);
+}
+
 // soundsWithinRange() answers, without throwing, whether concertSpelling() spells the note's
 // written pitch with the interval: false exactly where concertSpelling() raises -- below C1b-1,
 // or above B11 where the diatonic interval gives no spelling.
@@ -636,9 +647,9 @@ class PartSetTransposingIntervalTestCase(unittest.TestCase):
                 part.setTransposingInterval(-1, -2, **arguments)
 ```
 
-- [ ] **Step 4: Run and see them fail.** C++ subset `SoundsWithinRange:PartSetTransposingInterval` (filter `--gtest_filter='SoundsWithinRange.*:PartSetTransposingInterval.*'`) → build error: `no member named 'soundsWithinRange' in namespace 'maiacore::detail'` and `no member named 'setTransposingInterval' in 'Part'`.
+- [ ] **Step 4: Run and see them fail.** C++ subset `SpelledDiatonicInterval:SoundsWithinRange:PartSetTransposingInterval` (filter `--gtest_filter='SpelledDiatonicInterval.*:SoundsWithinRange.*:PartSetTransposingInterval.*'`) → build error: `no member named 'spelledDiatonicInterval' in namespace 'maiacore::detail'`, `no member named 'soundsWithinRange' in namespace 'maiacore::detail'` and `no member named 'setTransposingInterval' in 'Part'`.
 
-- [ ] **Step 5: The predicate.** In `maiacore/include/maiacore/note.h` replace
+- [ ] **Step 5: The speller's diatonic interval and the predicate.** In `maiacore/include/maiacore/note.h` replace
 
 ```cpp
 // The spelling the analyses relate a note by. Declared, with its documentation, in the private
@@ -668,9 +679,22 @@ and replace `    friend Pitch maiacore::detail::concertPitch(const Note& note);`
                                                     int transposeChromatic);
 ```
 
-In `maiacore/src/maiacore/pitch-views.h`, before `}  // namespace maiacore::detail`, insert:
+In `maiacore/src/maiacore/pitch-views.h` add `#include <cstdint>` before `#include "maiacore/pitch.h"` (blank line between), and before `}  // namespace maiacore::detail` insert:
 
 ```cpp
+
+/**
+ * @brief The diatonic interval the speller moves the letter by: transposeDiatonic, or, when it is
+ *        0 while transposeChromatic is not, the diatonic interval conventionally written for
+ *        those semitones (see concertSpelling()).
+ * @details concertSpelling() and soundsWithinRange() spell with it, so that every user of a stored
+ *          transposing interval that needs its letters takes them from here and a stored 0 and
+ *          the conventional interval it stands for are one transposition.
+ * @param transposeDiatonic The stored diatonic interval.
+ * @param transposeChromatic The stored chromatic interval.
+ * @return The diatonic interval concertSpelling() uses.
+ */
+std::int64_t spelledDiatonicInterval(int transposeDiatonic, int transposeChromatic);
 
 /**
  * @brief Whether a note would have a sounding pitch with the transposing interval
@@ -739,6 +763,30 @@ with
         writtenPitch.getQuarterToneSteps() + static_cast<float>(transposeChromatic);
 ```
 
+- inside `namespace maiacore::detail {`, before `Pitch concertSpelling(const Pitch& written, const int transposeDiatonic,` insert:
+
+```cpp
+std::int64_t spelledDiatonicInterval(const int transposeDiatonic, const int transposeChromatic) {
+    return (transposeDiatonic != 0) ? std::int64_t{transposeDiatonic}
+                                    : conventionalDiatonicInterval(transposeChromatic);
+}
+
+```
+
+- in `concertSpelling` replace
+
+```cpp
+    const std::int64_t diatonic = (transposeDiatonic != 0)
+                                      ? std::int64_t{transposeDiatonic}
+                                      : conventionalDiatonicInterval(transposeChromatic);
+```
+
+with
+
+```cpp
+    const std::int64_t diatonic = spelledDiatonicInterval(transposeDiatonic, transposeChromatic);
+```
+
 - after the closing `}` of `maiacore::detail::concertSpelling` (before `Pitch simplestSpelling(`) insert:
 
 ```cpp
@@ -756,9 +804,7 @@ bool soundsWithinRange(const Note& note, const int transposeDiatonic,
 
     // concertSpelling() returns a spelling when the diatonic interval spells the position, or
     // when its fallback, the chromatic rule, does, which it can up to B11.
-    const std::int64_t diatonic = (transposeDiatonic != 0)
-                                      ? std::int64_t{transposeDiatonic}
-                                      : conventionalDiatonicInterval(transposeChromatic);
+    const std::int64_t diatonic = spelledDiatonicInterval(transposeDiatonic, transposeChromatic);
     return diatonicSpelling(written, diatonic, transposeChromatic).has_value() ||
            !isAboveTheChromaticCeiling(written, transposeChromatic);
 }
@@ -925,9 +971,9 @@ In `maiacore/src/maiacore/python_wrapper/py_part.cpp`, after `    cls.def("setIs
     )pbdoc");
 ```
 
-- [ ] **Step 7: Format, build, pass.** clang-format the eight changed C++ files. C++ subset `SoundsWithinRange.*:PartSetTransposingInterval.*` → 7 tests pass. «build» `make "PYTHON=$py" dev`; «pytest» `test_part_comprehensive.PartSetTransposingIntervalTestCase` → 3 OK.
+- [ ] **Step 7: Format, build, pass.** clang-format the eight changed C++ files. C++ subset `SpelledDiatonicInterval.*:SoundsWithinRange.*:PartSetTransposingInterval.*` → 8 tests pass, and the subset `ConcertSpelling.*` stays green. «build» `make "PYTHON=$py" dev`; «pytest» `test_part_comprehensive.PartSetTransposingIntervalTestCase` → 3 OK.
 
-- [ ] **Step 8: Mutations.** (a) In `soundsWithinRange` replace `return false;` (below the floor) with `return true;` → `SoundsWithinRange.isTrueExactlyWhereTheConcertSpellingExists` (C#-1 with (-1, -2)) and `theEdgesOfTheRange` fail. (b) Return `!isAboveTheChromaticCeiling(written, transposeChromatic);` alone (drop the diatonic branch) → both fail on A#11 (1, 2). (c) In `Part::setTransposingInterval` stamp inside the checking loop (call `setTransposingInterval`/`setOctaveDoubling` right after the check, and drop the second loop) → `changesAllTheNotesOrNone` fails (C4 transposed before B11 raises); after `make dev`, `test_a_note_without_a_sounding_pitch_changes_nothing` fails. (d) Drop `if (staff != -1 && s != staff) { continue; }` → `stampsThePitchedNotesOfTheRangeAndStaff` and `test_the_edit_reaches_the_score` fail. (e) Drop `|| !note.isPitched()` → `unpitchedNotesAreLeftAlone` fails. (f) Replace `staff >= _numStaves` with `staff > _numStaves` → `invalidIndicesThrowOutOfRange` fails (staff 2 of a two-staff part no longer throws); after `make dev`, `test_invalid_indices_raise_index_error` fails for `{"staff": 2}`. Revert each; rerun green.
+- [ ] **Step 8: Mutations.** (a) In `soundsWithinRange` replace `return false;` (below the floor) with `return true;` → `SoundsWithinRange.isTrueExactlyWhereTheConcertSpellingExists` (C#-1 with (-1, -2)) and `theEdgesOfTheRange` fail. (b) Return `!isAboveTheChromaticCeiling(written, transposeChromatic);` alone (drop the diatonic branch) → both fail on A#11 (1, 2). (c) In `Part::setTransposingInterval` stamp inside the checking loop (call `setTransposingInterval`/`setOctaveDoubling` right after the check, and drop the second loop) → `changesAllTheNotesOrNone` fails (C4 transposed before B11 raises); after `make dev`, `test_a_note_without_a_sounding_pitch_changes_nothing` fails. (d) Drop `if (staff != -1 && s != staff) { continue; }` → `stampsThePitchedNotesOfTheRangeAndStaff` and `test_the_edit_reaches_the_score` fail. (e) Drop `|| !note.isPitched()` → `unpitchedNotesAreLeftAlone` fails. (f) Replace `staff >= _numStaves` with `staff > _numStaves` → `invalidIndicesThrowOutOfRange` fails (staff 2 of a two-staff part no longer throws); after `make dev`, `test_invalid_indices_raise_index_error` fails for `{"staff": 2}`. (g) Replace `const int end = (measureEnd == -1) ? numMeasures : measureEnd;` with `const int end = measureEnd;` (the default -1 no longer means the end of the part) → `theDefaultsStampEveryMeasureAndStaff` fails (the default call throws `std::out_of_range`). (h) In `spelledDiatonicInterval` return `transposeDiatonic;` alone → `SpelledDiatonicInterval.isTheStoredIntervalOrTheConventionalOneForZero` fails (`(0, -2)` gives 0). Revert each; rerun green.
 
 - [ ] **Step 9: Whole suites.** `make cpp-tests`, `make py-tests`, `make validate` → 0, no new findings.
 
@@ -939,7 +985,8 @@ feat: Part.setTransposingInterval stamps a range of measures and a staff, all or
 The interval and the octave doubling go on every pitched note of the
 range; a note that would have no sounding pitch raises, naming it, before
 any note changes. soundsWithinRange() answers that question without
-throwing, exactly where concertSpelling() would raise.
+throwing, exactly where concertSpelling() would raise; both take the
+letters from spelledDiatonicInterval().
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
@@ -950,11 +997,11 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 ### Task 3: The reader — every measure, per staff, values
 
 **Files:**
-- Create: `test/xml_examples/unit_test/transpose_change_mid_part.musicxml`, `transpose_later_measure.musicxml`, `transpose_per_staff.musicxml`, `transpose_octave_change.musicxml`, `transpose_double.musicxml`, `transpose_after_notes.musicxml`, `transpose_without_diatonic.musicxml`, `transpose_chromatic_not_integer.musicxml`, `transpose_octave_change_not_integer.musicxml` (schema-invalid: `<octave-change>1.5</octave-change>`)
-- Modify: `maiacore/src/maiacore/pitch-views.h` (Doxygen ~23-26; a declaration; `#include <cstdint>`), `maiacore/src/maiacore/note.cpp` (`conventionalDiatonicInterval` ~308-323 moved; comment ~378-381), `maiacore/src/maiacore/score.cpp` (includes ~3-16; anonymous namespace ~29-84; STEP 2 ~448-476; the measure loop ~626; the note loop ~792 and ~862; after the measure loop ~864), `maiacore/include/maiacore/score.h` (`Score(path)` Doxygen ~130-139), `maiacore/include/maiacore/note.h` (`getSoundingPitch` Doxygen ~467-471), `maiacore/src/maiacore/python_wrapper/py_note.cpp` (`getSoundingPitch` docstring ~597-600), `maiacore/src/maiacore/python_wrapper/py_score.cpp` (`Score(path)` docstring ~29-38; `getChords` docstring ~475-477), `test/musicxml/ledger.json` (9 added lines)
+- Create: `test/xml_examples/unit_test/transpose_change_mid_part.musicxml`, `transpose_later_measure.musicxml`, `transpose_per_staff.musicxml`, `transpose_octave_change.musicxml`, `transpose_double.musicxml`, `transpose_after_notes.musicxml`, `transpose_inside_chord.musicxml`, `transpose_without_diatonic.musicxml`, `transpose_chromatic_not_integer.musicxml`, `transpose_octave_change_not_integer.musicxml` (schema-invalid: `<octave-change>1.5</octave-change>`)
+- Modify: `maiacore/src/maiacore/pitch-views.h` (Doxygen ~23-26; a declaration), `maiacore/src/maiacore/note.cpp` (`conventionalDiatonicInterval` ~308-323 moved; comment ~378-381), `maiacore/src/maiacore/score.cpp` (includes ~3-16; anonymous namespace ~29-84; STEP 2 ~448-476; the measure loop ~626; the note loop ~792 and ~862; after the measure loop ~864), `maiacore/include/maiacore/score.h` (`Score(path)` Doxygen ~130-139), `maiacore/include/maiacore/note.h` (`getSoundingPitch` Doxygen ~467-471), `maiacore/src/maiacore/python_wrapper/py_note.cpp` (`getSoundingPitch` docstring ~597-600), `maiacore/src/maiacore/python_wrapper/py_score.cpp` (`Score(path)` docstring ~29-38; `getChords` docstring ~475-477), `test/musicxml/ledger.json` (10 added lines)
 - Test: `tests-cpp/src/score-test.cpp` (append), `tests-cpp/src/pitch-views-test.cpp` (append)
 
-**Interfaces:** consumes `OctaveDoubling`, `Note::setOctaveDoubling`, `Note::getOctaveDoubling` (Task 1). Produces `std::int64_t maiacore::detail::conventionalDiatonicInterval(int transposeChromatic)` (moved out of `note.cpp`'s anonymous namespace; consumed by Tasks 4 and 5) and, in `score.cpp`'s anonymous namespace, `struct NoteTransposition { int diatonic; int chromatic; OctaveDoubling doubling; }`, `struct TransposeElement { int measureIdx; int notesBefore; int staff; std::string where; std::optional<NoteTransposition> values; std::string ignored; }`, `struct PitchedNote { int measureIdx; int position; int staff; int index; }`, `std::string trimmedChildText(const pugi::xml_node&, const char*)`, `std::optional<std::int64_t> wholeNumber(const std::string&)`, `int toIntRange(std::int64_t)`, `TransposeElement readTranspose(const pugi::xml_node&, int measureIdx, int notesBefore, const std::string& where)`, `void readTransposeElements(const pugi::xml_node& measure, int measureIdx, const std::string& where, std::vector<TransposeElement>& elements)`, `bool isAtOrAfter(const PitchedNote&, const TransposeElement&)`, `void applyTranspositions(Part&, const std::vector<TransposeElement>&, const std::vector<PitchedNote>&)` — all extended by Task 4; and the score-test helpers `doublingName`, `describeTransposition`, `transposedNotes`, `transposeWarnings`, `kUnitTest`, `kW3c`, `kSamples` (consumed by Tasks 4, 7, 8).
+**Interfaces:** consumes `OctaveDoubling`, `Note::setOctaveDoubling`, `Note::getOctaveDoubling` (Task 1). Produces `std::int64_t maiacore::detail::conventionalDiatonicInterval(int transposeChromatic)` (moved out of `note.cpp`'s anonymous namespace; consumed by Tasks 4 and 5) and, in `score.cpp`'s anonymous namespace, `struct NoteTransposition { int diatonic; int chromatic; OctaveDoubling doubling; }`, `struct TransposeElement { int measureIdx; int notesBefore; int staff; std::string where; std::optional<NoteTransposition> values; std::string ignored; }`, `struct PitchedNote { int measureIdx; int chordPosition; int staff; int index; }` (a chord is read as a unit: `chordPosition` is the position of its first note), `std::string trimmed(const std::string&)`, `std::string trimmedChildText(const pugi::xml_node&, const char*)`, `std::optional<std::int64_t> wholeNumber(const std::string&)`, `int toIntRange(std::int64_t)`, `TransposeElement readTranspose(const pugi::xml_node&, int measureIdx, int notesBefore, const std::string& where)`, `void readTransposeElements(const pugi::xml_node& measure, int measureIdx, const std::string& where, std::vector<TransposeElement>& elements)`, `bool isAtOrAfter(const PitchedNote&, const TransposeElement&)`, `void applyTranspositions(Part&, const std::vector<TransposeElement>&, const std::vector<PitchedNote>&)` — all extended by Task 4; and the score-test helpers `doublingName`, `describeTransposition`, `transposedNotes`, `transposeWarnings`, `kUnitTest`, `kW3c`, `kSamples` (consumed by Tasks 4, 7, 8).
 
 - [ ] **Step 1: The fixtures.** Create each file under `test/xml_examples/unit_test/` with exactly this content.
 
@@ -1217,6 +1264,39 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 </score-partwise>
 ```
 
+`transpose_inside_chord.musicxml`:
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- A chord is read as a unit: a <transpose> written between the notes of a chord applies from
+     the first note after the chord. The clarinet is in B-flat (-1, -2) from measure 1; its change
+     to A (-2, -3) stands between the E5 and the G5 of the chord C5-E5-G5, so the whole chord
+     sounds Bb4-D5-F5, and the D5 after it sounds B4. -->
+<score-partwise version="4.0">
+  <part-list>
+    <score-part id="P1"><part-name>Clarinet</part-name></score-part>
+  </part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <clef><sign>G</sign><line>2</line></clef>
+        <transpose><diatonic>-1</diatonic><chromatic>-2</chromatic></transpose>
+      </attributes>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>2</duration><voice>1</voice><type>half</type></note>
+      <note><chord/><pitch><step>E</step><octave>5</octave></pitch><duration>2</duration><voice>1</voice><type>half</type></note>
+      <attributes>
+        <transpose><diatonic>-2</diatonic><chromatic>-3</chromatic></transpose>
+      </attributes>
+      <note><chord/><pitch><step>G</step><octave>5</octave></pitch><duration>2</duration><voice>1</voice><type>half</type></note>
+      <note><pitch><step>D</step><octave>5</octave></pitch><duration>2</duration><voice>1</voice><type>half</type></note>
+    </measure>
+  </part>
+</score-partwise>
+```
+
 `transpose_without_diatonic.musicxml`:
 
 ```xml
@@ -1451,6 +1531,16 @@ TEST(ScoreTransposeRead, aTransposeAfterNotesAppliesToTheNotesAfterIt) {
                                         "G5 (-3, -5, NONE) D5", "C5 (0, 0, NONE) C5"}));
 }
 
+// A chord is read as a unit: a <transpose> written between the notes of a chord applies from the
+// first note after the chord, and every note of the chord keeps the transposition in force at its
+// first note.
+TEST(ScoreTransposeRead, aTransposeBetweenTheNotesOfAChordAppliesAfterTheChord) {
+    Score score(kUnitTest + "transpose_inside_chord.musicxml");
+    EXPECT_EQ(transposedNotes(score, 0),
+              (std::vector<std::string>{"C5 (-1, -2, NONE) Bb4", "E5 (-1, -2, NONE) D5",
+                                        "G5 (-1, -2, NONE) F5", "D5 (-2, -3, NONE) B4"}));
+}
+
 // Without <diatonic>, the conventional diatonic interval of <chromatic> is stored, silently.
 TEST(ScoreTransposeRead, aTransposeWithoutDiatonicStoresTheConventionalInterval) {
     StdoutCapture capture;
@@ -1559,9 +1649,9 @@ TEST(ScoreTransposeRead, anOctaveTranspositionChangesTheChords) {
 }
 ```
 
-- [ ] **Step 3: Run them and see them fail.** C++ subset `ConventionalDiatonicInterval.*:ScoreTransposeRead.*` → the build fails: `no member named 'conventionalDiatonicInterval' in namespace 'maiacore::detail'`. After Step 4 (which exposes it) and before Step 5, run the subset again: it builds, `ConventionalDiatonicInterval` passes, and the reader tests fail on today's reader — `aChangeInTheMiddleOfAPartIsFollowed` gets `"C4 (-1, -2, NONE) Bb3"` four times, `anOctaveChangeIsFoldedIntoTheInterval` gets `"G5 (0, 0, NONE) G5"`, `aChromaticThatIsNotAWholeNumberIsIgnored` finds no warning.
+- [ ] **Step 3: Run them and see them fail.** C++ subset `ConventionalDiatonicInterval.*:ScoreTransposeRead.*` → the build fails: `no member named 'conventionalDiatonicInterval' in namespace 'maiacore::detail'`. After Step 4 (which exposes it) and before Step 5, run the subset again: it builds, `ConventionalDiatonicInterval` passes, and the reader tests fail on today's reader — `aChangeInTheMiddleOfAPartIsFollowed` gets `{"C4 (-1, -2, NONE) Bb3", "C4 (-1, -2, NONE) Bb3", "D4 (-1, -2, NONE) C4", "C4 (-1, -2, NONE) Bb3"}`, `anOctaveChangeIsFoldedIntoTheInterval` gets `"G5 (0, 0, NONE) G5"`, `aTransposeBetweenTheNotesOfAChordAppliesAfterTheChord` gets `"D5 (-1, -2, NONE) C5"` for the last note, `aChromaticThatIsNotAWholeNumberIsIgnored` finds no warning.
 
-- [ ] **Step 4: Expose the conventional diatonic interval.** In `maiacore/src/maiacore/note.cpp`, cut the whole definition of `std::int64_t conventionalDiatonicInterval(const int transposeChromatic)` with its comment (the block from `// The diatonic interval conventionally written for a transposing interval of 'transposeChromatic'` to its closing `}`) out of the anonymous namespace, and paste it, unchanged, as the first definition inside `namespace maiacore::detail {` (before `Pitch concertSpelling(`). In `concertSpelling` replace the comment
+- [ ] **Step 4: Expose the conventional diatonic interval.** In `maiacore/src/maiacore/note.cpp`, cut the whole definition of `std::int64_t conventionalDiatonicInterval(const int transposeChromatic)` with its comment (the block from `// The diatonic interval conventionally written for a transposing interval of 'transposeChromatic'` to its closing `}`) out of the anonymous namespace, and paste it, unchanged, as the first definition inside `namespace maiacore::detail {` (before `std::int64_t spelledDiatonicInterval(`, which calls it). In `concertSpelling` replace the comment
 
 ```cpp
     // A transposing interval given only in semitones -- a MusicXML <transpose> without <diatonic>,
@@ -1579,7 +1669,7 @@ with
     // interval.
 ```
 
-In `maiacore/src/maiacore/pitch-views.h` add `#include <cstdint>` before `#include "maiacore/pitch.h"` (blank line between), replace
+In `maiacore/src/maiacore/pitch-views.h` (which includes `<cstdint>` since Task 2) replace
 
 ```cpp
  *          Inferred diatonic interval: when transposeDiatonic is 0 while transposeChromatic is
@@ -1690,24 +1780,28 @@ struct TransposeElement {
     std::string ignored;
 };
 
-// A pitched note the reader stored: its measure, its position among the measure's <note>
-// elements, its staff, and its index among that staff's notes.
+// A pitched note the reader stored: its measure, the position among the measure's <note> elements
+// of the first note of its chord (its own position when it is in no chord), its staff, and its
+// index among that staff's notes. A chord is read as a unit, from the position of its first note.
 struct PitchedNote {
     int measureIdx = 0;
-    int position = 0;
+    int chordPosition = 0;
     int staff = 0;
     int index = 0;
 };
 
-// The text of the child element 'name' of 'node' without the white space around it, which
-// MusicXML numbers allow; empty when there is no such child.
-std::string trimmedChildText(const pugi::xml_node& node, const char* name) {
-    const std::string text = node.child_value(name);
+// 'text' without the white space around it, which MusicXML numbers allow.
+std::string trimmed(const std::string& text) {
     const size_t begin = text.find_first_not_of(" \t\r\n");
     if (begin == std::string::npos) {
         return {};
     }
     return text.substr(begin, text.find_last_not_of(" \t\r\n") - begin + 1);
+}
+
+// The text of the child element 'name' of 'node', trimmed; empty when there is no such child.
+std::string trimmedChildText(const pugi::xml_node& node, const char* name) {
+    return trimmed(node.child_value(name));
 }
 
 // The value of a MusicXML number -- an optional sign, digits and an optional fraction -- when it
@@ -1750,8 +1844,9 @@ TransposeElement readTranspose(const pugi::xml_node& transpose, const int measur
     element.measureIdx = measureIdx;
     element.notesBefore = notesBefore;
     element.where = where;
-    const pugi::xml_attribute number = transpose.attribute("number");
-    element.staff = number ? std::max(number.as_int() - 1, -1) : -1;
+    const std::optional<std::int64_t> number =
+        wholeNumber(trimmed(transpose.attribute("number").value()));
+    element.staff = (number && *number >= 1) ? toIntRange(*number - 1) : -1;
 
     const std::string chromaticText = trimmedChildText(transpose, "chromatic");
     const std::optional<std::int64_t> chromatic = wholeNumber(chromaticText);
@@ -1780,8 +1875,7 @@ TransposeElement readTranspose(const pugi::xml_node& transpose, const int measur
 
     // An absent <diatonic> stands for the diatonic interval conventionally written for the
     // chromatic one, stored explicitly.
-    std::int64_t diatonic =
-        maiacore::detail::conventionalDiatonicInterval(toIntRange(*chromatic));
+    std::int64_t diatonic = maiacore::detail::conventionalDiatonicInterval(toIntRange(*chromatic));
     if (transpose.child("diatonic")) {
         const std::optional<std::int64_t> value =
             wholeNumber(trimmedChildText(transpose, "diatonic"));
@@ -1821,15 +1915,16 @@ void readTransposeElements(const pugi::xml_node& measure, const int measureIdx,
 }
 
 // Whether 'note' comes at or after 'element' in document order, so that the element reaches it.
+// A chord counts from its first note: an element written between its notes reaches none of them.
 bool isAtOrAfter(const PitchedNote& note, const TransposeElement& element) {
     return note.measureIdx > element.measureIdx ||
-           (note.measureIdx == element.measureIdx && note.position >= element.notesBefore);
+           (note.measureIdx == element.measureIdx && note.chordPosition >= element.notesBefore);
 }
 
 // Stamps each pitched note of a part with the <transpose> in force for its staff: the last one
-// before it in document order that applies to its staff -- by its number, or with none -- and is
-// not ignored. A note before every such element stays untransposed. Each ignored element's
-// warning is printed.
+// before the note -- before the first note of its chord, for a chord -- in document order that
+// applies to its staff, by its number or with none, and is not ignored. A note before every such
+// element stays untransposed. Each ignored element's warning is printed.
 void applyTranspositions(Part& part, const std::vector<TransposeElement>& elements,
                          const std::vector<PitchedNote>& notes) {
     std::map<int, std::vector<PitchedNote>> notesByStaff;
@@ -1902,6 +1997,9 @@ void applyTranspositions(Part& part, const std::vector<TransposeElement>& elemen
                 measureNode.node(), m,
                 "part \"" + _part[p].getName() + "\", measure " + measureNumbers[m],
                 transposeElements);
+            // The position of the first note of the chord the current note belongs to: a chord is
+            // read as a unit, from its first note.
+            int chordStart = 0;
 
 ```
 
@@ -1920,9 +2018,12 @@ void applyTranspositions(Part& part, const std::vector<TransposeElement>& elemen
 
 ```cpp
                 _part[p].getMeasure(m).addNote(note, staff);
+                if (!inChord) {
+                    chordStart = n;
+                }
                 if (isNoteOn && !isUnpitched) {
                     pitchedNotes.push_back(
-                        {m, n, staff, _part[p].getMeasure(m).getNumNotes(staff) - 1});
+                        {m, chordStart, staff, _part[p].getMeasure(m).getNumNotes(staff) - 1});
                 }
             }
         }
@@ -1947,18 +2048,20 @@ with
      *          and a warning is printed. None of these aborts the load.
      *
      *          A `<transpose>` is read in every measure. It applies to the pitched notes written
-     *          after it, in its measure and the following ones, on the staff its `number` names
-     *          or, without `number`, on every staff of the part, until the next `<transpose>` for
-     *          that staff; inside a measure document order decides. Each such note is given the
-     *          interval with `<octave-change>` folded in, 7 letters and 12 semitones per octave
-     *          (a B-flat bass clarinet's -1, -2 and -1 make (-8, -14)), and the octave doubling
-     *          of `<double>` (Note::getOctaveDoubling()); rests and unpitched notes are left
-     *          alone. A `<transpose>` without `<diatonic>` is given the conventional diatonic
-     *          interval of its `<chromatic>` one (see Note::getSoundingPitch()). One whose
-     *          `<chromatic>` or `<octave-change>` is not a whole number is ignored, leaving the
-     *          previous transposition in force, with a warning that starts with
-     *          [transpose-chromatic-not-integer] or [transpose-octave-change-not-integer] and
-     *          names the part and the measure as the file numbers it.
+     *          after it, in its measure and the following ones, on the staff its `number` names or,
+     *          without `number`, on every staff of the part, until the next `<transpose>` for that
+     *          staff; inside a measure document order decides, and a chord is read as a unit: a
+     *          `<transpose>` between the notes of a chord applies from the first note after the
+     *          chord. Each such note is given the interval with `<octave-change>` folded in, 7
+     *          letters and 12 semitones per octave (a B-flat bass clarinet's -1, -2 and -1 make
+     *          (-8, -14)), and the octave doubling of `<double>` (Note::getOctaveDoubling()); rests
+     *          and unpitched notes are left alone. A `<transpose>` without `<diatonic>` is given
+     *          the conventional diatonic interval of its `<chromatic>` one (see
+     *          Note::getSoundingPitch()). One whose `<chromatic>` or `<octave-change>` is not a
+     *          whole number is ignored, leaving the previous transposition in force, with a warning
+     *          that starts with [transpose-chromatic-not-integer] or
+     *          [transpose-octave-change-not-integer] and names the part and the measure as the file
+     *          numbers it.
      * @param filePath Path to the MusicXML file.
 ```
 
@@ -1975,34 +2078,36 @@ with
 ```
         and a warning is printed. None of these aborts the load.
 
-        A ``<transpose>`` is read in every measure. It applies to the pitched notes written
-        after it, in its measure and the following ones, on the staff its ``number`` names or,
-        without ``number``, on every staff of the part, until the next ``<transpose>`` for that
-        staff; inside a measure document order decides. Each such note is given the interval
-        with ``<octave-change>`` folded in, 7 letters and 12 semitones per octave (a B-flat bass
-        clarinet's -1, -2 and -1 make ``(-8, -14)``), and the octave doubling of ``<double>``
-        (see ``Note.getOctaveDoubling``); rests and unpitched notes are left alone. A
+        A ``<transpose>`` is read in every measure. It applies to the pitched notes written after
+        it, in its measure and the following ones, on the staff its ``number`` names or, without
+        ``number``, on every staff of the part, until the next ``<transpose>`` for that staff;
+        inside a measure document order decides, and a chord is read as a unit: a ``<transpose>``
+        between the notes of a chord applies from the first note after the chord. Each such note is
+        given the interval with ``<octave-change>`` folded in, 7 letters and 12 semitones per octave
+        (a B-flat bass clarinet's -1, -2 and -1 make ``(-8, -14)``), and the octave doubling of
+        ``<double>`` (see ``Note.getOctaveDoubling``); rests and unpitched notes are left alone. A
         ``<transpose>`` without ``<diatonic>`` is given the conventional diatonic interval of its
         ``<chromatic>`` one (see ``Note.getSoundingPitch``). One whose ``<chromatic>`` or
-        ``<octave-change>`` is not a whole number is ignored, leaving the previous transposition
-        in force, with a warning that starts with ``[transpose-chromatic-not-integer]`` or
+        ``<octave-change>`` is not a whole number is ignored, leaving the previous transposition in
+        force, with a warning that starts with ``[transpose-chromatic-not-integer]`` or
         ``[transpose-octave-change-not-integer]`` and names the part and the measure as the file
         numbers it.
 
         Parameters
 ```
 
-- [ ] **Step 8: Format, build, pass.** clang-format `note.cpp`, `note.h`, `pitch-views.h`, `score.cpp`, `score.h`, `py_note.cpp`, `py_score.cpp`, `score-test.cpp`, `pitch-views-test.cpp`. C++ subset `ConventionalDiatonicInterval.*:ScoreTransposeRead.*:ConcertSpelling.*` → all pass (13 new, the concert-spelling tests unchanged).
+- [ ] **Step 8: Format, build, pass.** clang-format `note.cpp`, `note.h`, `pitch-views.h`, `score.cpp`, `score.h`, `py_note.cpp`, `py_score.cpp`, `score-test.cpp`, `pitch-views-test.cpp`. C++ subset `ConventionalDiatonicInterval.*:ScoreTransposeRead.*:ConcertSpelling.*` → all pass (15 new: `ConventionalDiatonicInterval` and 14 reader tests; the concert-spelling tests unchanged).
 
-- [ ] **Step 9: Mutations** (C++ subset, rebuild each time). (a) `conventionalDiatonicInterval`: change the table entry for 6 semitones from `3` to `4` → `ConventionalDiatonicInterval` fails. (b) In `applyTranspositions` skip elements of later measures (`if (elements[e].measureIdx > 0) { continue; }` as the first statement of the scope loop's element loop) → `aChangeInTheMiddleOfAPartIsFollowed`, `aTransposeInALaterMeasureAppliesFromThere`, the 72c expectation fail. (c) In `readTranspose` set `element.staff = -1;` unconditionally → `aNumberedTransposeAppliesToItsStaffAlone` fails. (d) Use `toIntRange(diatonic)` and `toIntRange(*chromatic)` (no octaves) → `anOctaveChangeIsFoldedIntoTheInterval`, the 41c, 72d and sample tests fail. (e) Never set `values.doubling` → `doubleIsReadAsTheOctaveDoubling` fails. (f) `isAtOrAfter` returns `note.measureIdx >= element.measureIdx` → `aTransposeAfterNotesAppliesToTheNotesAfterIt` fails. (g) Start `diatonic` at `0` instead of the conventional interval → `aTransposeWithoutDiatonicStoresTheConventionalInterval` fails (`F#4 (0, -2, NONE) E4`). (h) Record every note (`if (true)` for `if (isNoteOn && !isUnpitched)`) → `aTransposeInALaterMeasureAppliesFromThere` fails (the unpitched note is transposed, the rest prints the doubling warning). (i) `wholeNumber` accepts a fraction (replace `text[i] == '0'` with `text[i] >= '0' && text[i] <= '9'`) → `aChromaticThatIsNotAWholeNumberIsIgnored` and `anOctaveChangeThatIsNotAWholeNumberIsIgnored` fail. (j) Drop `octaves` from the chromatic fold only (`toIntRange(*chromatic)`) → `anOctaveTranspositionChangesTheChords` fails with the contrabass back at C3. Revert each; rerun green.
+- [ ] **Step 9: Mutations** (C++ subset, rebuild each time). (a) `conventionalDiatonicInterval`: change the table entry for 6 semitones from `3` to `4` → `ConventionalDiatonicInterval` fails. (b) In `applyTranspositions` skip elements of later measures (`if (elements[e].measureIdx > 0) { continue; }` as the first statement of the scope loop's element loop) → `aChangeInTheMiddleOfAPartIsFollowed`, `aTransposeInALaterMeasureAppliesFromThere`, the 72c expectation fail. (c) In `readTranspose` set `element.staff = -1;` unconditionally → `aNumberedTransposeAppliesToItsStaffAlone` fails. (d) Use `toIntRange(diatonic)` and `toIntRange(*chromatic)` (no octaves) → `anOctaveChangeIsFoldedIntoTheInterval`, the 41c, 72d and sample tests fail. (e) Never set `values.doubling` → `doubleIsReadAsTheOctaveDoubling` fails. (f) `isAtOrAfter` returns `note.measureIdx >= element.measureIdx` → `aTransposeAfterNotesAppliesToTheNotesAfterIt` fails. (g) Start `diatonic` at `0` instead of the conventional interval → `aTransposeWithoutDiatonicStoresTheConventionalInterval` fails (`F#4 (0, -2, NONE) E4`). (h) Record every note (`if (true)` for `if (isNoteOn && !isUnpitched)`) → `aTransposeInALaterMeasureAppliesFromThere` fails (the unpitched note is transposed, the rest prints the doubling warning). (i) `wholeNumber` accepts a fraction (replace `text[i] == '0'` with `text[i] >= '0' && text[i] <= '9'`) → `aChromaticThatIsNotAWholeNumberIsIgnored` and `anOctaveChangeThatIsNotAWholeNumberIsIgnored` fail. (j) Drop `octaves` from the chromatic fold only (`toIntRange(*chromatic)`) → `anOctaveTranspositionChangesTheChords` fails with the contrabass back at C3. (k) In the note loop drop the `if (!inChord)` around `chordStart = n;`, so that every note counts from its own position → `aTransposeBetweenTheNotesOfAChordAppliesAfterTheChord` fails (`G5 (-2, -3, NONE) E5`). Revert each; rerun green.
 
-- [ ] **Step 10: The ledger.** «build» `make "PYTHON=$py" dev` → 0. «build» `make "PYTHON=$py" corpus-update-ledger; $LASTEXITCODE` → 0 (it runs every in-repository file, the slow ones and the fetched external corpus: expect a long run). `git diff --stat test/musicxml/ledger-external.json` → empty. `git diff test/musicxml/ledger.json` → exactly nine added lines, between `teste_one_measure.xml` and `unrepresentable_alter_eighth_tone.xml`, and no other change:
+- [ ] **Step 10: The ledger.** «build» `make "PYTHON=$py" dev` → 0. «build» `make "PYTHON=$py" corpus-update-ledger; $LASTEXITCODE` → 0 (it runs every in-repository file, the slow ones and the fetched external corpus: expect a long run). `git diff --stat test/musicxml/ledger-external.json` → empty. `git diff test/musicxml/ledger.json` → exactly ten added lines, between `teste_one_measure.xml` and `unrepresentable_alter_eighth_tone.xml`, and no other change:
 
 ```
   "test/xml_examples/unit_test/transpose_after_notes.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "stable"},
   "test/xml_examples/unit_test/transpose_change_mid_part.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "stable"},
   "test/xml_examples/unit_test/transpose_chromatic_not_integer.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "stable"},
   "test/xml_examples/unit_test/transpose_double.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "stable"},
+  "test/xml_examples/unit_test/transpose_inside_chord.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "stable"},
   "test/xml_examples/unit_test/transpose_later_measure.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "stable"},
   "test/xml_examples/unit_test/transpose_octave_change.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "stable"},
   "test/xml_examples/unit_test/transpose_octave_change_not_integer.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "invalid", "load": "ok", "roundtrip": "stable"},
@@ -2012,16 +2117,17 @@ with
 
 If any field differs from these, or any other line changed, stop and report the diff instead of committing.
 
-- [ ] **Step 11: Whole suites.** `make cpp-tests` → 0; `make py-tests` → OK (the corpus test covers the nine fixtures); `make validate` → no new findings.
+- [ ] **Step 11: Whole suites.** `make cpp-tests` → 0; `make py-tests` → OK (the corpus test covers the ten fixtures); `make validate` → no new findings.
 
-- [ ] **Step 12: Commit.** `git add test/xml_examples/unit_test/transpose_change_mid_part.musicxml test/xml_examples/unit_test/transpose_later_measure.musicxml test/xml_examples/unit_test/transpose_per_staff.musicxml test/xml_examples/unit_test/transpose_octave_change.musicxml test/xml_examples/unit_test/transpose_double.musicxml test/xml_examples/unit_test/transpose_after_notes.musicxml test/xml_examples/unit_test/transpose_without_diatonic.musicxml test/xml_examples/unit_test/transpose_chromatic_not_integer.musicxml test/xml_examples/unit_test/transpose_octave_change_not_integer.musicxml test/musicxml/ledger.json maiacore/src/maiacore/pitch-views.h maiacore/src/maiacore/note.cpp maiacore/include/maiacore/note.h maiacore/src/maiacore/score.cpp maiacore/include/maiacore/score.h maiacore/src/maiacore/python_wrapper/py_note.cpp maiacore/src/maiacore/python_wrapper/py_score.cpp tests-cpp/src/score-test.cpp tests-cpp/src/pitch-views-test.cpp`, message:
+- [ ] **Step 12: Commit.** `git add test/xml_examples/unit_test/transpose_change_mid_part.musicxml test/xml_examples/unit_test/transpose_later_measure.musicxml test/xml_examples/unit_test/transpose_per_staff.musicxml test/xml_examples/unit_test/transpose_octave_change.musicxml test/xml_examples/unit_test/transpose_double.musicxml test/xml_examples/unit_test/transpose_after_notes.musicxml test/xml_examples/unit_test/transpose_inside_chord.musicxml test/xml_examples/unit_test/transpose_without_diatonic.musicxml test/xml_examples/unit_test/transpose_chromatic_not_integer.musicxml test/xml_examples/unit_test/transpose_octave_change_not_integer.musicxml test/musicxml/ledger.json maiacore/src/maiacore/pitch-views.h maiacore/src/maiacore/note.cpp maiacore/include/maiacore/note.h maiacore/src/maiacore/score.cpp maiacore/include/maiacore/score.h maiacore/src/maiacore/python_wrapper/py_note.cpp maiacore/src/maiacore/python_wrapper/py_score.cpp tests-cpp/src/score-test.cpp tests-cpp/src/pitch-views-test.cpp`, message:
 
 ```
 feat!: read <transpose> in every measure, per staff, with octave-change and double
 
 Each <transpose> applies to the pitched notes after it on its staff, or on
-every staff without number, up to the next one; octave-change is folded
-into the interval and <double> becomes the note's octave doubling. A
+every staff without number, up to the next one; a chord is read as a
+unit. octave-change is folded into the interval and <double> becomes the
+note's octave doubling. A
 <transpose> without <diatonic> stores the conventional interval. One whose
 <chromatic> or <octave-change> is not a whole number is ignored with a
 coded warning. Octave-transposing parts now sound in the right octave.
@@ -2039,7 +2145,7 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 - Modify: `maiacore/src/maiacore/score.cpp` (`readTranspose`, `readTransposeElements`, `applyTranspositions`, the call after the measure loop), `maiacore/include/maiacore/score.h` (`Score(path)` Doxygen), `maiacore/src/maiacore/python_wrapper/py_score.cpp` (`Score(filePath)` docstring), `test/musicxml/ledger.json` (4 added lines)
 - Test: `tests-cpp/src/score-test.cpp` (append)
 
-**Interfaces:** consumes Task 3's reader helpers, `soundsWithinRange` (Task 2), `conventionalDiatonicInterval` (Task 3). Produces `TransposeElement::pairCorrected` (a `std::string`), `void applyTranspositions(Part&, const std::vector<TransposeElement>&, const std::vector<PitchedNote>&, const std::vector<std::string>& measureNumbers)`.
+**Interfaces:** consumes Task 3's reader helpers, `soundsWithinRange` (Task 2), `conventionalDiatonicInterval` (Task 3). Produces `TransposeElement::pairCorrected` (a `std::string`), `bool inSameChord(const PitchedNote&, const PitchedNote&)`, `void applyTranspositions(Part&, const std::vector<TransposeElement>&, const std::vector<PitchedNote>&, const std::vector<std::string>& measureNumbers)`.
 
 - [ ] **Step 1: The fixtures** under `test/xml_examples/unit_test/`.
 
@@ -2144,8 +2250,9 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
      whole scope. Piccolo: (0, 0, +1) from measure 1; the (0, 0, +3) of measure 2 would put the
      C9 of measure 3 above B11, so it is ignored and C8 in measure 2 keeps +1 although it could
      sound with +3. Contrabass: (0, 0, -1) from measure 1; the (0, 0, -2) of measure 2 would put
-     its Cb0 below C1b-1, so it is ignored; the previous -1 cannot sound that Cb0 either, which
-     is read untransposed, while the D1 of measure 3 keeps -1. -->
+     its Cb0 below C1b-1, so it is ignored; the previous -1 cannot sound that Cb0 either, so the
+     chord Cb0-C1 is read untransposed as a unit, C1 included, while the D1 of measure 3 keeps
+     -1. -->
 <score-partwise version="4.0">
   <part-list>
     <score-part id="P1"><part-name>Piccolo</part-name></score-part>
@@ -2188,6 +2295,7 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
         <transpose><diatonic>0</diatonic><chromatic>0</chromatic><octave-change>-2</octave-change></transpose>
       </attributes>
       <note><pitch><step>C</step><alter>-1</alter><octave>0</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
+      <note><chord/><pitch><step>C</step><octave>1</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
     </measure>
     <measure number="3">
       <note><pitch><step>D</step><octave>1</octave></pitch><duration>4</duration><voice>1</voice><type>whole</type></note>
@@ -2288,8 +2396,8 @@ TEST(ScoreTransposeCorrection, aDiatonicThatIsNotAWholeNumberIsReplaced) {
 
 // A <transpose> with which a note of its scope would have no sounding pitch is ignored for its
 // whole scope -- none of its notes takes it, not even one that could sound with it -- and the
-// previous transposition stays in force; a note that this one cannot sound either is read
-// untransposed, and the warning counts it.
+// previous transposition stays in force; a chord with a note that this one cannot sound either is
+// read untransposed as a unit, and the warning counts its notes.
 TEST(ScoreTransposeCorrection, aTransposeOutOfRangeIsIgnoredForItsWholeScope) {
     StdoutCapture capture;
     Score score(kUnitTest + "transpose_out_of_range.musicxml");
@@ -2299,7 +2407,7 @@ TEST(ScoreTransposeCorrection, aTransposeOutOfRangeIsIgnoredForItsWholeScope) {
                                         "C9 (7, 12, NONE) C10"}));
     EXPECT_EQ(transposedNotes(score, 1),
               (std::vector<std::string>{"C1 (-7, -12, NONE) C0", "Cb0 (0, 0, NONE) B-1",
-                                        "D1 (-7, -12, NONE) D0"}));
+                                        "C1 (0, 0, NONE) C1", "D1 (-7, -12, NONE) D0"}));
     EXPECT_NE(printed.find("[WARN] [transpose-out-of-range] part \"Piccolo\", measure 2: the "
                            "written C9 of measure 3, staff 1 would sound outside the "
                            "representable range; the <transpose> is ignored and the previous "
@@ -2310,7 +2418,8 @@ TEST(ScoreTransposeCorrection, aTransposeOutOfRangeIsIgnoredForItsWholeScope) {
                            "written Cb0 of measure 2, staff 1 would sound outside the "
                            "representable range; the <transpose> is ignored and the previous "
                            "transposition stays in force. Its notes that the previous "
-                           "transposition cannot sound either (1) are read untransposed.\n"),
+                           "transposition cannot sound either are read untransposed, with the "
+                           "other notes of their chords (2 in all).\n"),
               std::string::npos)
         << printed;
     EXPECT_EQ(transposeWarnings(printed), 2) << printed;
@@ -2338,8 +2447,7 @@ TEST(ScoreTransposeCorrection, aForPartIsDroppedWithAWarning) {
 ```cpp
     // An absent <diatonic> stands for the diatonic interval conventionally written for the
     // chromatic one, stored explicitly.
-    std::int64_t diatonic =
-        maiacore::detail::conventionalDiatonicInterval(toIntRange(*chromatic));
+    std::int64_t diatonic = maiacore::detail::conventionalDiatonicInterval(toIntRange(*chromatic));
     if (transpose.child("diatonic")) {
         const std::optional<std::int64_t> value =
             wholeNumber(trimmedChildText(transpose, "diatonic"));
@@ -2416,14 +2524,20 @@ and its comment to `// The <transpose> elements of a measure's <attributes>, in 
 - [ ] **Step 6: The range, checked over the whole scope.** Replace the whole `applyTranspositions` function (its comment included) with:
 
 ```cpp
+// Whether two pitched notes of a staff are notes of one chord.
+bool inSameChord(const PitchedNote& a, const PitchedNote& b) {
+    return a.measureIdx == b.measureIdx && a.chordPosition == b.chordPosition;
+}
+
 // Stamps each pitched note of a part with the <transpose> in force for its staff: the last one
-// before it in document order that applies to its staff -- by its number, or with none -- and is
-// not ignored. A note before every such element stays untransposed. An element is ignored when
-// its value cannot be read, or when a note of its scope -- the notes it would stamp, up to the
-// next <transpose> for their staff -- would have no sounding pitch with it: it is checked before
-// anything is stamped, so an ignored element stamps nothing. The previous transposition stays in
-// force over the scope of an ignored element; a note it cannot sound either is read
-// untransposed. Each element prints its warnings: the corrected pair, then why it is ignored.
+// before the note -- before the first note of its chord, for a chord -- in document order that
+// applies to its staff, by its number or with none, and is not ignored. A note before every such
+// element stays untransposed. An element is ignored when its value cannot be read, or when a note
+// of its scope -- the notes it would stamp, up to the next <transpose> for their staff -- would
+// have no sounding pitch with it: it is checked before anything is stamped, so an ignored element
+// stamps nothing. The previous transposition stays in force over the scope of an ignored element;
+// a chord with a note it cannot sound either is read untransposed, all its notes. Each element
+// prints its warnings: the corrected pair, then why it is ignored.
 void applyTranspositions(Part& part, const std::vector<TransposeElement>& elements,
                          const std::vector<PitchedNote>& notes,
                          const std::vector<std::string>& measureNumbers) {
@@ -2475,8 +2589,8 @@ void applyTranspositions(Part& part, const std::vector<TransposeElement>& elemen
                     const Note& note = noteAt(staffNotes[i]);
                     if (!maiacore::detail::soundsWithinRange(note, values.diatonic,
                                                              values.chromatic)) {
-                        rejection = "[transpose-out-of-range] " + element.where +
-                                    ": the written " + note.getWrittenPitch() + " of measure " +
+                        rejection = "[transpose-out-of-range] " + element.where + ": the written " +
+                                    note.getWrittenPitch() + " of measure " +
                                     measureNumbers.at(staffNotes[i].measureIdx) + ", staff " +
                                     std::to_string(staffNotes[i].staff + 1) +
                                     " would sound outside the representable range; the "
@@ -2497,21 +2611,38 @@ void applyTranspositions(Part& part, const std::vector<TransposeElement>& elemen
             }
             const NoteTransposition stamp = inForce[staff];
             const std::vector<PitchedNote>& staffNotes = notesByStaff.at(staff);
-            for (size_t i = scope.first; i < scope.second; i++) {
-                Note& note = noteAt(staffNotes[i]);
-                if (maiacore::detail::soundsWithinRange(note, stamp.diatonic, stamp.chromatic)) {
-                    note.setTransposingInterval(stamp.diatonic, stamp.chromatic);
-                    note.setOctaveDoubling(stamp.doubling);
-                } else {
-                    untransposed++;
+            // A chord is stamped as a unit: when the transposition cannot sound one of its notes,
+            // every note of the chord is read untransposed.
+            size_t chordStart = scope.first;
+            while (chordStart < scope.second) {
+                size_t chordEnd = chordStart;
+                bool sounds = true;
+                while (chordEnd < scope.second &&
+                       inSameChord(staffNotes[chordEnd], staffNotes[chordStart])) {
+                    sounds = sounds &&
+                             maiacore::detail::soundsWithinRange(noteAt(staffNotes[chordEnd]),
+                                                                 stamp.diatonic, stamp.chromatic);
+                    chordEnd++;
                 }
+                if (sounds) {
+                    for (size_t i = chordStart; i < chordEnd; i++) {
+                        Note& note = noteAt(staffNotes[i]);
+                        note.setTransposingInterval(stamp.diatonic, stamp.chromatic);
+                        note.setOctaveDoubling(stamp.doubling);
+                    }
+                } else {
+                    untransposed += static_cast<int>(chordEnd - chordStart);
+                }
+                chordStart = chordEnd;
             }
         }
 
         if (!rejection.empty()) {
             if (untransposed > 0) {
-                rejection += " Its notes that the previous transposition cannot sound either (" +
-                             std::to_string(untransposed) + ") are read untransposed.";
+                rejection +=
+                    " Its notes that the previous transposition cannot sound either are "
+                    "read untransposed, with the other notes of their chords (" +
+                    std::to_string(untransposed) + " in all).";
             }
             LOG_WARN(rejection);
         }
@@ -2524,31 +2655,33 @@ and replace the call `        applyTranspositions(_part[p], transposeElements, p
 - [ ] **Step 7: Document the corrections.** In `score.h`, in the `Score(path)` Doxygen, replace
 
 ```cpp
-     *          [transpose-chromatic-not-integer] or [transpose-octave-change-not-integer] and
-     *          names the part and the measure as the file numbers it.
+     *          that starts with [transpose-chromatic-not-integer] or
+     *          [transpose-octave-change-not-integer] and names the part and the measure as the file
+     *          numbers it.
 ```
 
 with
 
 ```cpp
-     *          [transpose-chromatic-not-integer] or [transpose-octave-change-not-integer]. A
-     *          `<diatonic>` that does not match `<chromatic>` is replaced by the conventional
-     *          diatonic interval, so that nothing sounds different, with a
-     *          [transpose-pair-corrected] warning; for a tritone both the augmented fourth and the
-     *          diminished fifth match, and an explicit 0 with a non-zero `<chromatic>` does not. A
-     *          `<transpose>` with which a note of its scope -- the notes it would apply to, up to
-     *          the next `<transpose>` for their staff -- would have no sounding pitch (below
-     *          C1b-1, or above B11 where its letter cannot spell it) is ignored for its whole
-     *          scope, with a [transpose-out-of-range] warning; there the previous transposition
-     *          stays in force, and a note it cannot sound either is read untransposed.
-     *          `<for-part>` is not modelled: it is dropped with a [for-part-not-modelled] warning.
-     *          Each warning names the part and the measure as the file numbers it.
+     *          that starts with [transpose-chromatic-not-integer] or
+     *          [transpose-octave-change-not-integer]. A `<diatonic>` that does not match
+     *          `<chromatic>` is replaced by the conventional diatonic interval, so that nothing
+     *          sounds different, with a [transpose-pair-corrected] warning; for a tritone both the
+     *          augmented fourth and the diminished fifth match, and an explicit 0 with a non-zero
+     *          `<chromatic>` does not. A `<transpose>` with which a note of its scope -- the notes
+     *          it would apply to, up to the next `<transpose>` for their staff -- would have no
+     *          sounding pitch (below C1b-1, or above B11 where its letter cannot spell it) is
+     *          ignored for its whole scope, with a [transpose-out-of-range] warning; there the
+     *          previous transposition stays in force, and a chord with a note it cannot sound
+     *          either is read untransposed. `<for-part>` is not modelled: it is dropped with a
+     *          [for-part-not-modelled] warning. Each warning names the part and the measure as the
+     *          file numbers it.
 ```
 
 In `py_score.cpp`, in the `Score(filePath)` docstring, replace
 
 ```
-        in force, with a warning that starts with ``[transpose-chromatic-not-integer]`` or
+        force, with a warning that starts with ``[transpose-chromatic-not-integer]`` or
         ``[transpose-octave-change-not-integer]`` and names the part and the measure as the file
         numbers it.
 ```
@@ -2556,24 +2689,23 @@ In `py_score.cpp`, in the `Score(filePath)` docstring, replace
 with
 
 ```
-        in force, with a warning that starts with ``[transpose-chromatic-not-integer]`` or
+        force, with a warning that starts with ``[transpose-chromatic-not-integer]`` or
         ``[transpose-octave-change-not-integer]``. A ``<diatonic>`` that does not match
         ``<chromatic>`` is replaced by the conventional diatonic interval, so that nothing sounds
-        different, with a ``[transpose-pair-corrected]`` warning; for a tritone both the
-        augmented fourth and the diminished fifth match, and an explicit 0 with a non-zero
-        ``<chromatic>`` does not. A ``<transpose>`` with which a note of its scope -- the notes
-        it would apply to, up to the next ``<transpose>`` for their staff -- would have no
-        sounding pitch (below ``C1b-1``, or above ``B11`` where its letter cannot spell it) is
-        ignored for its whole scope, with a ``[transpose-out-of-range]`` warning; there the
-        previous transposition stays in force, and a note it cannot sound either is read
-        untransposed. ``<for-part>`` is not modelled: it is dropped with a
-        ``[for-part-not-modelled]`` warning. Each warning names the part and the measure as the
-        file numbers it.
+        different, with a ``[transpose-pair-corrected]`` warning; for a tritone both the augmented
+        fourth and the diminished fifth match, and an explicit 0 with a non-zero ``<chromatic>``
+        does not. A ``<transpose>`` with which a note of its scope -- the notes it would apply to,
+        up to the next ``<transpose>`` for their staff -- would have no sounding pitch (below
+        ``C1b-1``, or above ``B11`` where its letter cannot spell it) is ignored for its whole
+        scope, with a ``[transpose-out-of-range]`` warning; there the previous transposition stays
+        in force, and a chord with a note it cannot sound either is read untransposed.
+        ``<for-part>`` is not modelled: it is dropped with a ``[for-part-not-modelled]`` warning.
+        Each warning names the part and the measure as the file numbers it.
 ```
 
-- [ ] **Step 8: Format, build, pass.** clang-format `score.cpp`, `score.h`, `py_score.cpp`, `score-test.cpp`. C++ subset `ScoreTransposeCorrection.*:ScoreTransposeRead.*` → all pass (5 new, the 13 reader tests still green).
+- [ ] **Step 8: Format, build, pass.** clang-format `score.cpp`, `score.h`, `py_score.cpp`, `score-test.cpp`. C++ subset `ScoreTransposeCorrection.*:ScoreTransposeRead.*` → all pass (5 new, the 14 reader tests still green).
 
-- [ ] **Step 9: Mutations** (C++ subset, rebuild each time). (a) `const bool matches = value.has_value();` → `aDiatonicIntervalThatDoesNotMatchIsReplaced` and `theDvorakTrumpetsInESoundAMajorThirdUp` fail. (b) Drop `(tritone && ...)` → `aDiatonicIntervalThatDoesNotMatchIsReplaced` fails (three warnings, the horn in F# corrected to (-3, -6)). (c) Make `wholeNumber` truncate a fraction (replace `text[i] == '0'` with `text[i] >= '0' && text[i] <= '9'`) → `aDiatonicThatIsNotAWholeNumberIsReplaced` fails. (d) Check only the element's own measure (add `&& staffNotes[i].measureIdx == element.measureIdx` to the check's condition) → `aTransposeOutOfRangeIsIgnoredForItsWholeScope` fails (the piccolo's element is accepted: C8 takes +3 and the C9 of measure 3, which cannot sound with it, is read untransposed, with no warning). (e) Stamp the previous transposition without the per-note check (call the two setters unconditionally) → the same test fails (`Cb0` below the floor: `getSoundingPitch()` raises). (f) Delete the `<for-part>` loop → `aForPartIsDroppedWithAWarning` fails. Revert each; rerun green.
+- [ ] **Step 9: Mutations** (C++ subset, rebuild each time). (a) `const bool matches = value.has_value();` → `aDiatonicIntervalThatDoesNotMatchIsReplaced` and `theDvorakTrumpetsInESoundAMajorThirdUp` fail. (b) Drop `(tritone && ...)` → `aDiatonicIntervalThatDoesNotMatchIsReplaced` fails (three warnings, the horn in F# corrected to (-3, -6)). (c) Make `wholeNumber` truncate a fraction (replace `text[i] == '0'` with `text[i] >= '0' && text[i] <= '9'`) → `aDiatonicThatIsNotAWholeNumberIsReplaced` fails. (d) Check only the element's own measure (add `&& staffNotes[i].measureIdx == element.measureIdx` to the check's condition) → `aTransposeOutOfRangeIsIgnoredForItsWholeScope` fails (the piccolo's element is accepted: C8 takes +3 and the C9 of measure 3, which cannot sound with it, is read untransposed, with no warning). (e) Stamp every chord without the check (`if (true)` for `if (sounds)`) → the same test fails (`Cb0` below the floor: `getSoundingPitch()` raises). (f) Delete the `<for-part>` loop → `aForPartIsDroppedWithAWarning` fails. (g) Check note by note instead of chord by chord (`chordEnd == chordStart` for `inSameChord(staffNotes[chordEnd], staffNotes[chordStart])`) → `aTransposeOutOfRangeIsIgnoredForItsWholeScope` fails (the chord's C1 takes -1, `C1 (-7, -12, NONE) C0`, and the warning counts 1). Revert each; rerun green.
 
 - [ ] **Step 10: The ledger.** «build» `make "PYTHON=$py" dev`; «build» `make "PYTHON=$py" corpus-update-ledger` → 0; `git diff --stat test/musicxml/ledger-external.json` empty; `git diff test/musicxml/ledger.json` → exactly these four added lines and nothing else (stop and report otherwise):
 
@@ -2595,8 +2727,9 @@ A <diatonic> that does not match <chromatic> is replaced by the
 conventional interval (the Dvorak trumpets in E, (3, 4), become (2, 4)). A
 <transpose> with which a note of its scope would have no sounding pitch is
 ignored for its whole scope instead of aborting the load; the previous
-transposition stays in force, and a note it cannot sound either is read
-untransposed. <for-part> is dropped. One coded warning per correction.
+transposition stays in force, and a chord with a note it cannot sound
+either is read untransposed as a unit. <for-part> is dropped. One coded
+warning per correction.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
 Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
@@ -2607,27 +2740,13 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 ### Task 5: The writer
 
 **Files:**
-- Modify: `maiacore/src/maiacore/pitch-views.h` (a declaration), `maiacore/src/maiacore/note.cpp` (`spelledDiatonicInterval` after `conventionalDiatonicInterval`; `concertSpelling` and `soundsWithinRange` use it), `maiacore/include/maiacore/measure.h` (includes ~4-5; after `toXML` ~497), `maiacore/src/maiacore/measure.cpp` (includes ~3; `toXML` ~531-609), `maiacore/src/maiacore/python_wrapper/py_measure.cpp` (~169), `maiacore/include/maiacore/part.h` (`toXML` Doxygen ~262-268), `maiacore/src/maiacore/part.cpp` (includes; anonymous namespace before `Part::Part`; `toXML` ~190-316), `maiacore/src/maiacore/python_wrapper/py_part.cpp` (~120), `maiacore/include/maiacore/score.h` (`toXML` ~283-289, `toFile` ~298-304 Doxygen), `maiacore/src/maiacore/python_wrapper/py_score.cpp` (~102-105)
+- Modify: `maiacore/include/maiacore/measure.h` (includes ~4-5; after `toXML` ~497), `maiacore/src/maiacore/measure.cpp` (includes ~3; `toXML` ~531-609), `maiacore/src/maiacore/python_wrapper/py_measure.cpp` (~169), `maiacore/include/maiacore/part.h` (`toXML` Doxygen ~262-268), `maiacore/src/maiacore/part.cpp` (includes; anonymous namespace before `Part::Part`; `toXML` ~190-316), `maiacore/src/maiacore/python_wrapper/py_part.cpp` (~120), `maiacore/include/maiacore/score.h` (`toXML` ~283-289, `toFile` ~298-304 Doxygen), `maiacore/src/maiacore/python_wrapper/py_score.cpp` (~102-105)
 - Create: `test/test_musicxml_transpose.py`
-- Test: `tests-cpp/src/pitch-views-test.cpp` (append), `tests-cpp/src/measure-test.cpp` (after `ToXMLWithComplexContent`)
+- Test: `tests-cpp/src/measure-test.cpp` (after `ToXMLWithComplexContent`)
 
-**Interfaces:** consumes the doubling (Task 1) and the reader (Tasks 3, 4: an export is read back by them). Produces `std::int64_t maiacore::detail::spelledDiatonicInterval(int transposeDiatonic, int transposeChromatic)` (consumed by Task 7), `const std::string Measure::toXML(const int instrumentId, const int identSize, const std::map<std::pair<int, int>, std::string>& beforeNote) const`, and in `test/test_musicxml_transpose.py` the helpers `load(path)`, `export(score)`, `transposes(data, part_index=0)`, `single_part_score(name, measures)` (consumed by Task 6).
+**Interfaces:** consumes the doubling (Task 1), `maiacore::detail::spelledDiatonicInterval` (Task 2) and the reader (Tasks 3, 4: an export is read back by them). Produces `const std::string Measure::toXML(const int instrumentId, const int identSize, const std::map<std::pair<int, int>, std::string>& beforeNote) const`, and in `test/test_musicxml_transpose.py` the helpers `load(path)`, `export(score)`, `transposes(data, part_index=0)`, `single_part_score(name, measures)` (consumed by Task 6).
 
-- [ ] **Step 1: Failing C++ tests.** Append to `tests-cpp/src/pitch-views-test.cpp` (and add `using maiacore::detail::spelledDiatonicInterval;`):
-
-```cpp
-// The diatonic interval the speller moves the letter by: the stored one, or the conventional one
-// for the chromatic interval when the stored one is 0.
-TEST(SpelledDiatonicInterval, isTheStoredIntervalOrTheConventionalOneForZero) {
-    EXPECT_EQ(spelledDiatonicInterval(-1, -2), -1);
-    EXPECT_EQ(spelledDiatonicInterval(0, -2), -1);
-    EXPECT_EQ(spelledDiatonicInterval(3, 4), 3);  // a stored interval is used as it is
-    EXPECT_EQ(spelledDiatonicInterval(0, 0), 0);
-    EXPECT_EQ(spelledDiatonicInterval(7, 0), 7);
-}
-```
-
-In `tests-cpp/src/measure-test.cpp` add `#include <map>` and `#include <utility>` beside `<string>`/`<vector>`, and after `TEST(MeasureSerialization, ToXMLWithComplexContent) {...}` insert:
+- [ ] **Step 1: Failing C++ test.** In `tests-cpp/src/measure-test.cpp` add `#include <map>` and `#include <utility>` beside `<string>`/`<vector>`, and after `TEST(MeasureSerialization, ToXMLWithComplexContent) {...}` insert:
 
 ```cpp
 // The overload writes the text mapped to (staff, note index) just before that note; with nothing
@@ -2841,45 +2960,9 @@ if __name__ == "__main__":
     unittest.main()
 ```
 
-- [ ] **Step 3: Run and see them fail.** C++ subset `SpelledDiatonicInterval.*:MeasureSerialization.*` → build error: `no member named 'spelledDiatonicInterval'` / `no matching member function for call to 'toXML'`. «pytest» `test_musicxml_transpose.TransposeWriterTestCase` (installed module from Task 4) → every expectation of `<transpose>` fails (`[] != [...]`), the chord test fails (`RuntimeError not raised`), the hash test fails (equal hashes); `test_every_fixture_exports_valid_musicxml` passes already (nothing is written yet).
+- [ ] **Step 3: Run and see them fail.** C++ subset `MeasureSerialization.*` → build error: `no matching member function for call to 'toXML'`. «pytest» `test_musicxml_transpose.TransposeWriterTestCase` (installed module from Task 4) → every expectation of `<transpose>` fails (`[] != [...]`), the chord test fails (`RuntimeError not raised`), the hash test fails (equal hashes); `test_every_fixture_exports_valid_musicxml` passes already (nothing is written yet).
 
-- [ ] **Step 4: The speller's diatonic interval.** In `pitch-views.h`, before `}  // namespace maiacore::detail`, insert:
-
-```cpp
-
-/**
- * @brief The diatonic interval the speller moves the letter by: transposeDiatonic, or, when it is
- *        0 while transposeChromatic is not, conventionalDiatonicInterval(transposeChromatic).
- * @details The MusicXML writer writes it as `<diatonic>`, and the concert key of
- *          Score::getChords() measures a transposing interval with it.
- * @param transposeDiatonic The stored diatonic interval.
- * @param transposeChromatic The stored chromatic interval.
- * @return The diatonic interval concertSpelling() uses.
- */
-std::int64_t spelledDiatonicInterval(int transposeDiatonic, int transposeChromatic);
-```
-
-In `note.cpp`, after `conventionalDiatonicInterval`'s definition (now in `maiacore::detail`), insert:
-
-```cpp
-
-std::int64_t spelledDiatonicInterval(const int transposeDiatonic, const int transposeChromatic) {
-    return (transposeDiatonic != 0) ? std::int64_t{transposeDiatonic}
-                                    : conventionalDiatonicInterval(transposeChromatic);
-}
-```
-
-and in both `concertSpelling` and `soundsWithinRange` replace
-
-```cpp
-    const std::int64_t diatonic = (transposeDiatonic != 0)
-                                      ? std::int64_t{transposeDiatonic}
-                                      : conventionalDiatonicInterval(transposeChromatic);
-```
-
-with `    const std::int64_t diatonic = spelledDiatonicInterval(transposeDiatonic, transposeChromatic);`.
-
-- [ ] **Step 5: `Measure::toXML` with insertions.** In `measure.h` add `#include <map>` before `#include <string>` and `#include <utility>` before `#include <vector>`; after `const std::string toXML(const int instrumentId = 1, const int identSize = 2) const;` insert:
+- [ ] **Step 4: `Measure::toXML` with insertions.** In `measure.h` add `#include <map>` before `#include <string>` and `#include <utility>` before `#include <vector>`; after `const std::string toXML(const int instrumentId = 1, const int identSize = 2) const;` insert:
 
 ```cpp
 
@@ -2927,7 +3010,7 @@ In `py_measure.cpp` replace `    cls.def("toXML", &Measure::toXML, py::arg("inst
             py::arg("instrumentId") = 1, py::arg("identSize") = 2);
 ```
 
-- [ ] **Step 6: The plan and `Part::toXML`.** In `part.cpp` extend the standard includes to
+- [ ] **Step 5: The plan and `Part::toXML`.** In `part.cpp` extend the standard includes to
 
 ```cpp
 #include <algorithm>
@@ -3190,7 +3273,7 @@ In `Part::toXML`:
 
 - replace `        xml.append(_measure[m].toXML(instrumentId, identSize));` with `        xml.append(_measure[m].toXML(instrumentId, identSize, transposes.beforeNote[m]));`.
 
-- [ ] **Step 7: Document the writer.** In `part.h` replace the `toXML` Doxygen block
+- [ ] **Step 6: Document the writer.** In `part.h` replace the `toXML` Doxygen block
 
 ```cpp
     /**
@@ -3347,13 +3430,13 @@ with
     )pbdoc");
 ```
 
-- [ ] **Step 8: Format, build, pass.** clang-format the twelve changed C++ files. C++ subset `SpelledDiatonicInterval.*:MeasureSerialization.*:ConcertSpelling.*:SoundsWithinRange.*` → pass. `& $py -m ruff format test\test_musicxml_transpose.py; & $py -m ruff check test\test_musicxml_transpose.py` → clean. «build» `make "PYTHON=$py" dev`; «pytest» `test_musicxml_transpose.TransposeWriterTestCase` → 12 OK.
+- [ ] **Step 7: Format, build, pass.** clang-format the nine changed C++ files. C++ subset `MeasureSerialization.*` → pass. `& $py -m ruff format test\test_musicxml_transpose.py; & $py -m ruff check test\test_musicxml_transpose.py` → clean. «build» `make "PYTHON=$py" dev`; «pytest» `test_musicxml_transpose.TransposeWriterTestCase` → 12 OK.
 
-- [ ] **Step 9: Mutations** (`make dev` before each Python run). (a) In `transposeXML` write `number` for every staff (`if (true)` for `if (staff >= 0)`, and `std::max(staff, 0) + 1` for `staff + 1`) → `test_number_is_written_only_where_the_staves_differ` and `test_each_change_is_written_at_the_start_of_its_measure` fail. (b) `const std::int64_t octaves = 0;` → `test_an_octave_transposition_is_written_as_octave_change` fails. (c) Write `<double/>` for both doublings → `test_the_doubling_is_written_as_double` fails. (d) Key the mid-measure insertion `{s, 0}` instead of `{s, chordStart}` → `test_a_change_after_the_first_pitched_note_is_written_just_before_its_note` fails. (e) In `firstPitchedTransposition` drop `note.isNoteOn() &&` (a rest then counts as the first pitched note) → `test_a_change_brought_by_the_first_pitched_note_is_written_at_the_measure_start` fails. (f) Look for each staff's first pitched note in measure 1 only (`m < 1` for `m < numMeasures` in the `found` loop) → `test_measure_one_states_the_interval_of_a_first_note_in_a_later_measure` fails. (g) `transposition.diatonic = note.getTransposeDiatonic();` in `writtenTransposition` → `test_a_diatonic_interval_of_zero_is_written_as_the_conventional_one` fails; `return transposeDiatonic;` in `spelledDiatonicInterval` → `SpelledDiatonicInterval` (C++) fails. (h) Delete `attributeChanged |= !transposes.measureStart[m].empty();` → `test_attributes_are_opened_for_a_transpose_alone` fails. (i) Delete the `LOG_ERROR` chord check → `test_a_chord_whose_notes_transpose_differently_cannot_be_written` fails. (j) Append `transposes.measureStart[m]` before the clefs instead of after `staff-details` → `test_every_fixture_exports_valid_musicxml` fails (`Element 'clef': This element is not expected`). (k) Do not append `transposes.measureStart[m]` → `test_the_hash_of_a_score_follows_its_transpositions` fails. (l) In `Measure::toXML` skip the insertion → `ToXMLWritesTheInsertionsBeforeTheirNotes` fails (C++). Revert each; rerun green.
+- [ ] **Step 8: Mutations** (`make dev` before each Python run). (a) In `transposeXML` write `number` for every staff (`if (true)` for `if (staff >= 0)`, and `std::max(staff, 0) + 1` for `staff + 1`) → `test_number_is_written_only_where_the_staves_differ` and `test_each_change_is_written_at_the_start_of_its_measure` fail. (b) `const std::int64_t octaves = 0;` → `test_an_octave_transposition_is_written_as_octave_change` fails. (c) Write `<double/>` for both doublings → `test_the_doubling_is_written_as_double` fails. (d) Key the mid-measure insertion `{s, 0}` instead of `{s, chordStart}` → `test_a_change_after_the_first_pitched_note_is_written_just_before_its_note` fails. (e) In `firstPitchedTransposition` drop `note.isNoteOn() &&` (a rest then counts as the first pitched note) → `test_a_change_brought_by_the_first_pitched_note_is_written_at_the_measure_start` fails. (f) Look for each staff's first pitched note in measure 1 only (`m < 1` for `m < numMeasures` in the `found` loop) → `test_measure_one_states_the_interval_of_a_first_note_in_a_later_measure` fails. (g) `transposition.diatonic = note.getTransposeDiatonic();` in `writtenTransposition` → `test_a_diatonic_interval_of_zero_is_written_as_the_conventional_one` fails. (h) Delete `attributeChanged |= !transposes.measureStart[m].empty();` → `test_attributes_are_opened_for_a_transpose_alone` fails. (i) Delete the `LOG_ERROR` chord check → `test_a_chord_whose_notes_transpose_differently_cannot_be_written` fails. (j) Append `transposes.measureStart[m]` before the clefs instead of after `staff-details` → `test_every_fixture_exports_valid_musicxml` fails (`Element 'clef': This element is not expected`). (k) Do not append `transposes.measureStart[m]` → `test_the_hash_of_a_score_follows_its_transpositions` fails. (l) In `Measure::toXML` skip the insertion → `ToXMLWritesTheInsertionsBeforeTheirNotes` fails (C++). Revert each; rerun green.
 
-- [ ] **Step 10: Whole suites.** `make cpp-tests` → 0; `make py-tests` → OK — the corpus test must still match the ledger: the exports of the transposing corpus files now carry `<transpose>` and stay `valid`/`stable` where they were (stop and report any ledger mismatch); `make validate` → no new findings.
+- [ ] **Step 9: Whole suites.** `make cpp-tests` → 0; `make py-tests` → OK — the corpus test must still match the ledger: the exports of the transposing corpus files now carry `<transpose>` and stay `valid`/`stable` where they were (stop and report any ledger mismatch); `make validate` → no new findings.
 
-- [ ] **Step 11: Commit.** `git add maiacore/src/maiacore/pitch-views.h maiacore/src/maiacore/note.cpp maiacore/include/maiacore/measure.h maiacore/src/maiacore/measure.cpp maiacore/src/maiacore/python_wrapper/py_measure.cpp maiacore/include/maiacore/part.h maiacore/src/maiacore/part.cpp maiacore/src/maiacore/python_wrapper/py_part.cpp maiacore/include/maiacore/score.h maiacore/src/maiacore/python_wrapper/py_score.cpp test/test_musicxml_transpose.py tests-cpp/src/pitch-views-test.cpp tests-cpp/src/measure-test.cpp`, message:
+- [ ] **Step 10: Commit.** `git add maiacore/include/maiacore/measure.h maiacore/src/maiacore/measure.cpp maiacore/src/maiacore/python_wrapper/py_measure.cpp maiacore/include/maiacore/part.h maiacore/src/maiacore/part.cpp maiacore/src/maiacore/python_wrapper/py_part.cpp maiacore/include/maiacore/score.h maiacore/src/maiacore/python_wrapper/py_score.cpp test/test_musicxml_transpose.py tests-cpp/src/measure-test.cpp`, message:
 
 ```
 feat!: the MusicXML writer writes <transpose> from the notes' transpositions
@@ -3426,8 +3509,8 @@ CORPUS_WITH_TRANSPOSE = (
     "test/xml_examples/unit_test/xakypueri.xml",
 )
 
-# They do not load yet -- a first measure without <key>, two clefs in one measure -- so no round
-# trip reaches them; W3C 72d covers 72b's transpositions.
+# They do not load: a first measure without <key>, two clefs in one measure; W3C 72d covers
+# 72b's transpositions.
 NOT_LOADABLE = (
     "maialib/xml-scores-examples/Mozart_Requiem_Introitus.mxl",
     "test/musicxml/w3c-test-suite/xmlFiles/72b-TransposingInstruments-Full.musicxml",
@@ -3483,25 +3566,28 @@ and before `if __name__ == "__main__":` insert:
 ```python
 class TransposeRoundTripTestCase(unittest.TestCase):
     """Export -> import keeps each note's sounding pitch, spelling, interval and doubling, and
-    each export is valid where the 4a ledger says the file's export is."""
+    each corpus file's export is valid where the 4a ledger says the file's export is."""
 
     def check_round_trip(self, path, ledger_record=None):
+        """The round trip of a file; with its ledger record, also the export's validity. The
+        fixtures' exports are validated by TransposeWriterTestCase."""
         score = load(path)
         data = export(score)
         again, _ = reloaded(data)
         self.assertEqual(note_transpositions(score), note_transpositions(again))
+        if ledger_record is None:
+            return
         report = musicxml_check.check_bytes(data)
         self.assertEqual(
             [], [error for error in report.xsd_errors if TRANSPOSE_ELEMENT.search(error)]
         )
-        if ledger_record is None or ledger_record.get("export_xsd") == "valid":
+        if ledger_record.get("export_xsd") == "valid":
             self.assertTrue(report.xsd_valid, report.xsd_errors[:3])
-        expected = [] if ledger_record is None else ledger_record.get("export_errors", [])
-        self.assertEqual(expected, report.errors)
+        self.assertEqual(ledger_record.get("export_errors", []), report.errors)
 
     def test_every_fixture_keeps_its_transpositions(self):
         fixtures = sorted(UNIT_TEST.glob("transpose_*.musicxml"))
-        self.assertEqual(13, len(fixtures))
+        self.assertEqual(14, len(fixtures))
         for path in fixtures:
             with self.subTest(fixture=path.name):
                 self.check_round_trip(path)
@@ -3543,13 +3629,14 @@ class TransposeRoundTripTestCase(unittest.TestCase):
         self.assertNotIn("[WARN]", printed)
 ```
 
-- [ ] **Step 4: Run them.** «pytest» `test_musicxml_transpose.TransposeRoundTripTestCase` → OK with one skip (the slow files). These tests check, across the whole corpus, what Tasks 3–5 implement, so they pass on arrival; the mutations of Step 7 are their failing runs (the dump test of Step 1 failed first in the usual way). Then Bash `(cd /c/Users/nyck/Desktop/maialib/test && MAIALIB_SLOW_TESTS=1 /c/Users/nyck/AppData/Local/Temp/maialib-1b-venv/Scripts/python.exe -m unittest test_musicxml_transpose.TransposeRoundTripTestCase.test_the_slow_corpus_files_keep_their_transpositions -v); echo "exit $?"` → OK (about two minutes: `Symphony_9th.xml` takes most of it).
+- [ ] **Step 4: Run them.** «pytest» `test_musicxml_transpose.TransposeRoundTripTestCase` → OK with one skip (the slow files). These tests check, across the whole corpus, what Tasks 3–5 implement, so they pass on arrival; the mutations of Step 7 are their failing runs (the dump test of Step 1 failed first in the usual way). Then Bash `(cd /c/Users/nyck/Desktop/maialib/test && MAIALIB_SLOW_TESTS=1 /c/Users/nyck/AppData/Local/Temp/maialib-1b-venv/Scripts/python.exe -m unittest test_musicxml_transpose.TransposeRoundTripTestCase.test_the_slow_corpus_files_keep_their_transpositions -v); echo "exit $?"` → OK (about two minutes: `Symphony_9th.xml` takes most of it). If a corpus file fails here for a reason that has nothing to do with `<transpose>` -- `Mahler_Symphony_8_Finale.mxl`, whose ledger round trip is `unstable`, is the likeliest -- stop and report it; do not weaken an assertion or drop the file.
 
 - [ ] **Step 5: `make corpus` runs the slow round trip.** In `scripts/make-corpus.py` replace `import argparse\nimport sys` with `import argparse\nimport os\nimport sys`, `from build_utils import REPO_ROOT` with `from build_utils import REPO_ROOT, run_step`, and before `    if failed:` insert:
 
 ```python
-    if not arguments.update_ledger:
-        # `make py-tests` skips the slow corpus files; their <transpose> round trip runs here.
+    if not arguments.update_ledger and not failed:
+        # `make py-tests` skips the slow corpus files; their <transpose> round trip runs here,
+        # once the corpus matches its ledgers, so that a ledger difference is always reported.
         os.environ["MAIALIB_SLOW_TESTS"] = "1"
         run_step(
             [
@@ -3566,14 +3653,14 @@ class TransposeRoundTripTestCase(unittest.TestCase):
 In `test/musicxml/README.md` replace `- \`make corpus\` runs every file, slow ones included.` with
 
 ```
-- `make corpus` runs every file, slow ones included, then the `<transpose>` round trip of
-  `test_musicxml_transpose.py` with `MAIALIB_SLOW_TESTS=1`, which adds the slow corpus files that
-  `make py-tests` skips.
+- `make corpus` runs every file, slow ones included, then, when every file matches its ledger,
+  the `<transpose>` round trip of `test_musicxml_transpose.py` with `MAIALIB_SLOW_TESTS=1`, which
+  adds the slow corpus files that `make py-tests` skips.
 ```
 
 - [ ] **Step 6: `make corpus`.** «build» `make "PYTHON=$py" corpus; $LASTEXITCODE` → 0: no ledger difference (in-repository and external), and the round trip runs its slow test (`test_the_slow_corpus_files_keep_their_transpositions ... ok`, not `skipped`). Any ledger difference is reported, not committed.
 
-- [ ] **Step 7: Mutations.** (a) In `transposeXML` drop the `<double>` lines, `make dev` → `test_every_fixture_keeps_its_transpositions` fails (`transpose_double`: `BELOW` against `NONE`). (b) In `transposeXML` delete the `if (octaves != 0) {...}` block that writes `<octave-change>` (the unfolded `<diatonic>` and `<chromatic>` stay), `make dev` → `test_every_corpus_file_with_a_transpose_keeps_its_transpositions` fails (41c's contrabass reads back an octave higher); with `MAIALIB_SLOW_TESTS=1` the slow test fails too (xakypueri). (c) Remove `"test/xml_examples/unit_test/test_pattern.musicxml",` from `CORPUS_WITH_TRANSPOSE` → `test_the_list_holds_every_corpus_file_with_a_transpose` fails. (d) Write the stored diatonic interval (`transposition.diatonic = note.getTransposeDiatonic();`), `make dev` → `test_a_stored_diatonic_interval_of_zero_comes_back_as_the_conventional_one` fails (the reload prints `[transpose-pair-corrected]`). (e) Write `transposes.measureStart[m]` before the clefs, `make dev` → `test_every_fixture_keeps_its_transpositions` fails on validity. (f) Dump: drop the `"octaveDoubling"` line → `test_a_note_is_dumped_with_its_octave_doubling` and both golden tests fail. (g) In `make-corpus.py` drop the `os.environ[...]` line → `make corpus` reports the slow test `skipped` (record the output). Revert each; `make dev`; rerun green.
+- [ ] **Step 7: Mutations.** (a) In `transposeXML` drop the `<double>` lines, `make dev` → `test_every_fixture_keeps_its_transpositions` fails (`transpose_double`: `BELOW` against `NONE`). (b) In `transposeXML` delete the `if (octaves != 0) {...}` block that writes `<octave-change>` (the unfolded `<diatonic>` and `<chromatic>` stay), `make dev` → `test_every_corpus_file_with_a_transpose_keeps_its_transpositions` fails (41c's contrabass reads back an octave higher); with `MAIALIB_SLOW_TESTS=1` the slow test fails too (xakypueri). (c) Remove `"test/xml_examples/unit_test/test_pattern.musicxml",` from `CORPUS_WITH_TRANSPOSE` → `test_the_list_holds_every_corpus_file_with_a_transpose` fails. (d) Write the stored diatonic interval (`transposition.diatonic = note.getTransposeDiatonic();`), `make dev` → `test_a_stored_diatonic_interval_of_zero_comes_back_as_the_conventional_one` fails (the reload prints `[transpose-pair-corrected]`). (e) Dump: drop the `"octaveDoubling"` line → `test_a_note_is_dumped_with_its_octave_doubling` and both golden tests fail. (f) In `make-corpus.py` drop the `os.environ[...]` line → `make corpus` reports the slow test `skipped`; this is an observation of `make corpus`'s output, not a failing test (record the output). Revert each; `make dev`; rerun green.
 
 - [ ] **Step 8: Whole suites.** `make py-tests` → OK; `ruff format --check` and `ruff check` on `test/test_musicxml_transpose.py`, `test/musicxml/dump_score.py`, `test/test_musicxml_dump.py`, `scripts/make-corpus.py` → clean.
 
@@ -3584,8 +3671,9 @@ test: export and import keep each note's transposition; the dump records the dou
 
 Every transpose_*.musicxml fixture and every corpus file with a
 <transpose> keeps each note's sounding pitch, spelling, interval and
-doubling through toXML() and a reload, and its export has no schema error
-about a <transpose>. make corpus adds the slow files. dump_score.py
+doubling through toXML() and a reload, and a corpus file's export has no
+schema error about a <transpose>. make corpus adds the slow files once
+the corpus matches its ledgers. dump_score.py
 records octaveDoubling; the golden dump changes accordingly.
 
 Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>
@@ -3600,7 +3688,7 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 - Modify: `maiacore/src/maiacore/score.cpp` (anonymous namespace; `getChordsPerEachNoteEvent` ~2859-2943), `maiacore/include/maiacore/score.h` (`getChords` Doxygen ~719), `maiacore/src/maiacore/python_wrapper/py_score.cpp` (`getChords` docstring ~467-500)
 - Test: `tests-cpp/src/score-test.cpp` (append), `test/test_score_comprehensive.py` (new class after `ScoreAnalysisTestCase`)
 
-**Interfaces:** consumes `spelledDiatonicInterval` (Task 5), the reader (Tasks 3, 4). Produces, in `score.cpp`'s anonymous namespace, `std::vector<std::pair<std::int64_t, std::int64_t>> intervalsPerMeasure(const Part& part)`, `int keyRangeFifths(std::int64_t fifths)`, `std::vector<Key> concertKeys(const std::vector<Part>& parts)`; in `score-test.cpp` the helpers `chordKeys`, `KeyedPart`, `keyedScore`, `wholeNote` (consumed by Task 8).
+**Interfaces:** consumes `spelledDiatonicInterval` (Task 2), the reader (Tasks 3, 4). Produces, in `score.cpp`'s anonymous namespace, `std::vector<std::pair<std::int64_t, std::int64_t>> intervalsPerMeasure(const Part& part)`, `int keyRangeFifths(std::int64_t fifths)`, `std::vector<Key> concertKeys(const std::vector<Part>& parts)`; in `score-test.cpp` the helpers `chordKeys`, `KeyedPart`, `keyedScore`, `wholeNote` (consumed by Task 8).
 
 - [ ] **Step 1: Failing C++ tests** — append to `tests-cpp/src/score-test.cpp`:
 
@@ -3782,10 +3870,10 @@ class ScoreConcertKeyTestCase(unittest.TestCase):
 // note before the measure; without one, that of its first pitched note after it; without any,
 // untransposed. Each is (the diatonic interval the speller uses, the chromatic interval).
 std::vector<std::pair<std::int64_t, std::int64_t>> intervalsPerMeasure(const Part& part) {
-    using Interval = std::pair<std::int64_t, std::int64_t>;
+    using TransposingInterval = std::pair<std::int64_t, std::int64_t>;
     const int numMeasures = part.getNumMeasures();
-    std::vector<std::optional<Interval>> first(numMeasures);
-    std::vector<std::optional<Interval>> last(numMeasures);
+    std::vector<std::optional<TransposingInterval>> first(numMeasures);
+    std::vector<std::optional<TransposingInterval>> last(numMeasures);
     for (int m = 0; m < numMeasures; m++) {
         const Measure& measure = part.getMeasure(m);
         for (int s = 0; s < measure.getNumStaves(); s++) {
@@ -3794,7 +3882,7 @@ std::vector<std::pair<std::int64_t, std::int64_t>> intervalsPerMeasure(const Par
                 if (!note.isNoteOn() || !note.isPitched()) {
                     continue;
                 }
-                const Interval interval{
+                const TransposingInterval interval{
                     maiacore::detail::spelledDiatonicInterval(note.getTransposeDiatonic(),
                                                               note.getTransposeChromatic()),
                     note.getTransposeChromatic()};
@@ -3812,8 +3900,8 @@ std::vector<std::pair<std::int64_t, std::int64_t>> intervalsPerMeasure(const Par
             firstPitchedMeasure = m;
         }
     }
-    std::vector<Interval> intervals(numMeasures, Interval{0, 0});
-    std::optional<Interval> before;
+    std::vector<TransposingInterval> intervals(numMeasures, TransposingInterval{0, 0});
+    std::optional<TransposingInterval> before;
     for (int m = 0; m < numMeasures; m++) {
         if (first[m]) {
             intervals[m] = *first[m];
@@ -3849,6 +3937,9 @@ int keyRangeFifths(std::int64_t fifths) {
 // key moved by its interval's 7 * chromatic - 12 * diatonic fifths, brought into the range Key
 // accepts, with part 0's mode.
 std::vector<Key> concertKeys(const std::vector<Part>& parts) {
+    if (parts.empty()) {
+        return {};
+    }
     const int numMeasures = parts.at(0).getNumMeasures();
     std::vector<std::vector<std::pair<std::int64_t, std::int64_t>>> intervals;
     intervals.reserve(parts.size());
@@ -4333,20 +4424,20 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 - [ ] **Step 6: Final verification (spec §7.4)** from the committed tree, in a second brand-new venv:
   1. PowerShell: `py -3.12 -m venv C:\Users\nyck\AppData\Local\Temp\maialib-1b-final-venv; & 'C:\Users\nyck\AppData\Local\Temp\maialib-1b-final-venv\Scripts\python.exe' -m pip install -r requirements-dev.txt; $LASTEXITCODE` → 0; in «build» below use `$py = 'C:\Users\nyck\AppData\Local\Temp\maialib-1b-final-venv\Scripts\python.exe'`.
   2. «build» `make "PYTHON=$py" dev` → 0.
-  3. «build» `make "PYTHON=$py" cpp-tests` twice → 0 both times; record the count (Task 0's plus the new ones: 4 + 7 + 14 + 5 + 2 + 11 + 3 = 46 more).
+  3. «build» `make "PYTHON=$py" cpp-tests` twice → 0 both times; record the count (Task 0's plus the new ones: 4 + 8 + 15 + 5 + 1 + 11 + 3 = 47 more).
   4. «build» `make "PYTHON=$py" py-tests` → OK; record the count and duration (Task 0's plus 6 + 3 + 12 + 6 + 1 + 2 = 30 more, one of them skipped).
   5. «build» `make "PYTHON=$py" validate` → no new findings.
   6. «build» `make "PYTHON=$py" corpus` (the external corpus is fetched) → 0: neither ledger differs, and the slow round trip ran.
   7. «build» `make "PYTHON=$py" msvc-gate` → 0.
   8. «build» `make "PYTHON=$py" linux-gate` → 0 (the Python tests on Linux with GCC, in WSL). If it exits 2 listing missing apt packages (this machine's WSL has no `cmake` and no password-less sudo), run the Linux route instead and report it: in Bash, `git -C /c/Users/nyck/Desktop/maialib -c core.autocrlf=false -c core.eol=lf archive HEAD` (a plain `git archive` here writes CRLF) extracted under `/var/tmp/maialib-1b` in WSL; there a venv with `requirements-dev.txt` plus `cmake` from pip; `make "PYTHON=<venv>/bin/python" dev` and `make "PYTHON=<venv>/bin/python" py-tests` → 0; record the count; remove `/var/tmp/maialib-1b` afterwards.
-  9. «build» `make "PYTHON=$py" fuzz` → 0; compare `test\musicxml\fuzz-work\report-seed-1.json` with `C:\Users\nyck\AppData\Local\Temp\maialib-1b-fuzz-baseline.json` by outcome, not case by case — the 13 new fixtures shift the list of files the cases pick from (`test/musicxml/README.md`): no `crash:*` or `timeout:*` outcome, and no outcome that the baseline does not have; explain each outcome count that changed. A finding that involves a `<transpose>` is fixed before the branch is finished.
-  10. Import check from outside the repository (Task 0, Step 5) with the final venv; `git status --short` → ` M .gitignore` only; `git log --oneline 8b7bb3d..HEAD` lists the nine commits (plus the plan's own commit, if the controller made it).
+  9. «build» `make "PYTHON=$py" fuzz` → 0; compare `test\musicxml\fuzz-work\report-seed-1.json` with `C:\Users\nyck\AppData\Local\Temp\maialib-1b-fuzz-baseline.json` by outcome, not case by case — the 14 new fixtures shift the list of files the cases pick from (`test/musicxml/README.md`): no `crash:*` or `timeout:*` outcome, and no outcome that the baseline does not have; explain each outcome count that changed. A finding that involves a `<transpose>` is fixed before the branch is finished.
+  10. Import check from outside the repository (Task 0, Step 5) with the final venv; `git status --short` → ` M .gitignore` only; `git log --oneline bd63266..HEAD` lists the nine task commits (Tasks 1-9; Task 0 commits nothing) after the commit that amended this plan before Task 1.
   Put every count, duration and comparison in the task report.
 
 ---
 
 ## Self-review (done while writing)
 
-- **Spec coverage.** §1 problems → Tasks 3 (first measure only, octave-change, changes), 5 (writer), 7 (written key), 4 (abort on range, pair). §2 D1 → Tasks 3, 5 (notes hold the state; no Measure/Part/Score state, no getter); D2 → Task 7; D3 → Task 3 (non-integer chromatic ignored, no API change); D4 → Tasks 1, 8. §3.1 → Task 1 (enum, setter refusal with `LOG_WARN`, `setPitch("rest")`, getters keep the note's own pitch) and Task 3 (folded interval); "the writer writes the inferred value" → Task 5. §3.2 → Task 2 (half-open range, `-1` defaults, atomic, out_of_range indices, the Python in-place role in the docstring; no getter). §4.1 → Task 3 (every measure, `number`, document order, rests not stamped, untransposed without `<transpose>`). §4.2 → Task 3 (absent `<diatonic>` conventional and silent, `octave-change` folded, `<double>`). §4.3 → Tasks 3 (non-integer chromatic), 4 (pair before folding, tritone, explicit 0; out of range over the whole scope; `<for-part>`; `<concert-score/>` has no effect — fixture `transpose_for_part`). §5.1 → Task 5 (measure 1 from the first pitched note, later changes at the measure start or before the note, back to 0/0, `number`, chord error, `<attributes>` opened). §5.2 → Task 5 (unfold, `<diatonic>` always and inferred, `<double>`, position, no `<for-part>`, header unchanged, hashes — tested). §5.3 → Task 6 (sounding pitch, spelling, doubling; the stored-0 exception). §6.1 → Task 7 (majority of key-neutral pitched parts, tie, fallback with the wrap, interval at a measure, mode, docs; `Chord::getDegree` needs no change). §6.2 → Task 8 (getChords and what derives from it, `plotPianoRoll`, melody search untouched). §6.3 → Task 3 (`anOctaveTranspositionChangesTheChords`) and Task 9 (CHANGELOG). §7.1 → Tasks 3, 4 (13 fixtures, one per rule). §7.2 → each task's tests (reader fixtures and 72a/72c/72d/41c/Beethoven/Dvořák; writer; round trip; setter; concert key incl. tie, percussion, wrap; doubling; `OctaveDoubling` API). §7.3 → Tasks 3, 4 (added ledger lines), 6 (`make corpus` unchanged, dump field, golden). §7.4 → Task 9. §8 → Task 9 (the generated docs stay for the release step, per the Global Constraints). §9 → nothing to do.
-- **Interfaces are consistent across tasks:** `OctaveDoubling` (1 → 2-8), `soundsWithinRange` (2 → 4), `conventionalDiatonicInterval` (3 → 4, 5), `spelledDiatonicInterval` (5 → 7), `TransposeElement`/`PitchedNote`/`applyTranspositions` (3 → 4), `Measure::toXML(…, beforeNote)` (5), `load`/`export`/`transposes`/`single_part_score` (5 → 6), `kUnitTest`/`kW3c`/`kSamples`/`describeTransposition`/`transposedNotes`/`transposeWarnings` (3 → 4, 7), `wholeNote`/`keyedScore` (7 → 8).
+- **Spec coverage.** §1 problems → Tasks 3 (first measure only, octave-change, changes), 5 (writer), 7 (written key), 4 (abort on range, pair). §2 D1 → Tasks 3, 5 (notes hold the state; no Measure/Part/Score state, no getter); D2 → Task 7; D3 → Task 3 (non-integer chromatic ignored, no API change); D4 → Tasks 1, 8. §3.1 → Task 1 (enum, setter refusal with `LOG_WARN`, `setPitch("rest")`, getters keep the note's own pitch) and Task 3 (folded interval); "the writer writes the inferred value" → Task 5. §3.2 → Task 2 (half-open range, `-1` defaults, atomic, out_of_range indices, the Python in-place role in the docstring; no getter). §4.1 → Task 3 (every measure, `number` parsed as a whole number, document order, a chord read as a unit, rests not stamped, untransposed without `<transpose>`). §4.2 → Task 3 (absent `<diatonic>` conventional and silent, `octave-change` folded, `<double>`). §4.3 → Tasks 3 (non-integer chromatic), 4 (pair before folding, tritone, explicit 0; out of range over the whole scope, the fallback chord by chord; `<for-part>`; `<concert-score/>` has no effect — fixture `transpose_for_part`). §5.1 → Task 5 (measure 1 from the first pitched note, later changes at the measure start or before the note, back to 0/0, `number`, chord error, `<attributes>` opened). §5.2 → Task 5 (unfold, `<diatonic>` always and inferred, `<double>`, position, no `<for-part>`, header unchanged, hashes — tested). §5.3 → Task 6 (sounding pitch, spelling, doubling; the stored-0 exception). §6.1 → Task 7 (majority of key-neutral pitched parts, tie, fallback with the wrap, interval at a measure, mode, docs; `Chord::getDegree` needs no change). §6.2 → Task 8 (getChords and what derives from it, `plotPianoRoll`, melody search untouched). §6.3 → Task 3 (`anOctaveTranspositionChangesTheChords`) and Task 9 (CHANGELOG). §7.1 → Tasks 3, 4 (14 fixtures, one per rule). §7.2 → each task's tests (reader fixtures and 72a/72c/72d/41c/Beethoven/Dvořák; writer; round trip; setter; concert key incl. tie, percussion, wrap; doubling; `OctaveDoubling` API). §7.3 → Tasks 3, 4 (added ledger lines), 6 (`make corpus` unchanged, dump field, golden). §7.4 → Task 9. §8 → Task 9 (the generated docs stay for the release step, per the Global Constraints). §9 → nothing to do.
+- **Interfaces are consistent across tasks:** `OctaveDoubling` (1 → 2-8), `soundsWithinRange` (2 → 4), `conventionalDiatonicInterval` (3 → 4), `spelledDiatonicInterval` (2 → 5, 7), `TransposeElement`/`PitchedNote`/`applyTranspositions` (3 → 4), `Measure::toXML(…, beforeNote)` (5), `load`/`export`/`transposes`/`single_part_score` (5 → 6), `kUnitTest`/`kW3c`/`kSamples`/`describeTransposition`/`transposedNotes`/`transposeWarnings` (3 → 4, 7), `wholeNote`/`keyedScore` (7 → 8).
 - **Measured facts the tests rely on** (checked with today's build): the positions of the corpus notes named in Tasks 3 and 4; the parts and written keys of 72a (Trumpet in Bb 2, Horn in Eb 3, Piano 0), 72d (Trumpet in C and "MusicXML Part" 1), `test_pattern` (Horn 1, Trumpet 2, Trombone 0) and the Beethoven 5 sample (C Trumpet, Timpani 0 major; the eight others -3 minor); `test_getchords_poly`'s chords; the Dvořák trumpets' `<transpose>` (measure 1, `3`, `4`, part "Trombe I. II. E" after the reader joins its line break); every corpus file with a `<transpose>` keeps its notes, in number and written pitch, through an export and a reload, the slow ones included; an API-built score without a key signature exports no `<key>` and cannot be reloaded, hence `single_part_score`.

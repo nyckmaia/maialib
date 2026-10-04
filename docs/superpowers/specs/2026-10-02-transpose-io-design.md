@@ -113,6 +113,11 @@ in chord extraction and the piano roll, a note one octave below (or above) what 
   `<backup>` and `<forward>`, applies score order. No corpus file has that case: `xakypueri`'s
   mid-measure `<transpose>` elements follow the last note of their measure and take effect in the next
   one.
+- **A chord is read as a unit:** every note of a chord takes the interval and the doubling in force
+  for its staff at the chord's first note, and a `<transpose>` written between the notes of a chord
+  applies from the next note that is not in that chord. A chord read from a file therefore never
+  mixes tuples, so every file that loads can be exported (§5.1). No corpus file writes a
+  `<transpose>` inside a chord.
 - Each pitched note is stamped with the interval and the doubling in force for its staff (§3.1); rests
   and unpitched notes are not stamped (the setter and the writer leave them alone too, so stamping them
   would not survive a round trip). A part with no `<transpose>` stays untransposed.
@@ -138,7 +143,7 @@ the code given here.
 | `<chromatic>` is not an integer | The `<transpose>` is ignored; the previous interval stays in force | `transpose-chromatic-not-integer` |
 | `<octave-change>` is not an integer (schema-invalid) | The same | `transpose-octave-change-not-integer` |
 | The diatonic interval disagrees with the chromatic one | The diatonic interval is replaced by `conventionalDiatonicInterval(c)` and the chromatic one kept, so nothing sounds different; for a tritone (`|c| mod 12 == 6`) both the augmented fourth and the diminished fifth agree. Example: the Dvořák trumpets in E, `(3, 4)` → `(2, 4)`. An explicit `<diatonic>0</diatonic>` with a non-zero chromatic interval, and a `<diatonic>` that is not an integer, are disagreements too | `transpose-pair-corrected` |
-| A note in the element's scope would have no sounding pitch (outside the representable range) | The `<transpose>` is ignored for its whole scope, checked before anything is stamped; the previous interval stays in force, and a note that the previous interval cannot sound either is read untransposed (the warning gives how many). Today the load aborts; this anticipates item-4 §8 item 10 | `transpose-out-of-range` |
+| A note in the element's scope would have no sounding pitch (outside the representable range) | The `<transpose>` is ignored for its whole scope, checked before anything is stamped; the previous interval stays in force, and a chord with a note that the previous interval cannot sound either is read untransposed as a unit, all its notes (§4.1; the warning gives how many notes). Today the load aborts; this anticipates item-4 §8 item 10 | `transpose-out-of-range` |
 | `<for-part>` (MusicXML 4.0 concert score) | Not modelled; dropped. The notes of a concert score are already written at concert pitch | `for-part-not-modelled` |
 
 The pair check runs on the values as written in the file (some files fold octaves into `<diatonic>`
@@ -164,8 +169,10 @@ and `<chromatic>`, e.g. the Strauss sample's contrabassoon `(−7, −12)`, whic
   change in a part with more than one staff always carries `number`: the staves are written one after
   another, so an element without it would also reach the following staves' notes of that measure.
 - A change brought by a chord is written before the chord's first note.
-- **Chords:** a chord whose notes have different tuples (possible only through note-level edits)
-  cannot be written; the export throws, naming the measure and the staff (the spirit of item-4 D3).
+- **Chords:** a chord whose notes have different tuples cannot be written; the export throws, naming
+  the measure and the staff (the spirit of item-4 D3). Such a chord arises only through note-level
+  edits: the reader reads a chord as a unit (§4.1), also where it ignores a `<transpose>` or reads
+  notes untransposed (§4.3).
 - `<attributes>` is opened when a `<transpose>` must be written, also in measures where key, time,
   divisions and clef did not change (`Part::toXML`, `part.cpp:219-229`).
 
@@ -235,8 +242,9 @@ Small MusicXML files under `test/xml_examples/unit_test/`, one per rule: a chang
 part, including a change back to untransposed; a `<transpose>` only in a later measure; a per-staff
 `number`; `octave-change` (contrabass, piccolo, bass clarinet); `<double/>` and
 `<double above="yes"/>`; a non-integer `<chromatic>`; an inconsistent pair; a transposition out of
-range (the file loads); `<for-part>`; a `<transpose>` after notes in its measure; a `<transpose>`
-without `<diatonic>`.
+range (the file loads), including a chord read untransposed as a unit; `<for-part>`; a `<transpose>`
+after notes in its measure; a `<transpose>` between the notes of a chord; a `<transpose>` without
+`<diatonic>`.
 
 ### 7.2 Tests (C++ and Python)
 - **Reader:** the interval and doubling of each note for every fixture, and for 72a, 72c, 72d, 41c,
