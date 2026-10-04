@@ -131,6 +131,29 @@ def records_in(output):
     ]
 
 
+def temporary_variables(folder):
+    """The environment variables that point a process's temporary directory at `folder`."""
+    return dict.fromkeys(("TMPDIR", "TEMP", "TMP"), str(folder))
+
+
+def entries_a_bare_process_leaves():
+    """The names a Python process that runs no code leaves in a fresh temporary directory.
+
+    Software outside the test, such as an antivirus that hooks process creation, can add entries
+    to the temporary directory of every new process. A test of what a worker leaves there discounts
+    these names, measured here instead of listed, so that it judges only the worker's own entries.
+    """
+    with tempfile.TemporaryDirectory() as folder:
+        subprocess.run(
+            [sys.executable, "-c", "pass"],
+            capture_output=True,
+            timeout=60,
+            check=True,
+            env={**os.environ, **temporary_variables(folder)},
+        )
+        return set(os.listdir(folder))
+
+
 def pending_stages(record):
     return sorted(key for key, value in record.items() if value == corpus_worker.PENDING)
 
@@ -363,26 +386,28 @@ class WorkerProcessTestCase(unittest.TestCase):
         # loads succeed only through the worker's ASCII-named copy. On Linux maialib opens such a
         # path itself, so there the test passes with or without the copy.
         ledger = corpus.load_ledger(corpus.LEDGER)
+        environmental = entries_a_bare_process_leaves()
         for name in LOADABLE_FILES:
             with self.subTest(name=name), tempfile.TemporaryDirectory() as folder:
                 path = Path(folder) / ("partitura_\u00e9" + Path(name).suffix)
                 shutil.copyfile(str(corpus.REPO_ROOT / name), str(path))
                 temporary = Path(folder) / "temporary"
                 temporary.mkdir()
-                variables = dict.fromkeys(("TMPDIR", "TEMP", "TMP"), str(temporary))
                 done = subprocess.run(
                     [sys.executable, str(corpus.WORKER), str(path)],
                     capture_output=True,
                     timeout=120,
-                    env={**os.environ, **variables},
+                    env={**os.environ, **temporary_variables(temporary)},
                 )
                 record = records_in(done.stdout.decode("utf-8"))[-1]
                 self.assertEqual("ok", record["load"])
                 self.assertEqual([], corpus.compare({name: ledger[name]}, {name: record}))
-                # The worker ends without an error and leaves nothing in its temporary directory,
-                # where it made the copy.
+                # The worker ends without an error and leaves none of its own entries in its
+                # temporary directory, where it made the copy; entries that any new process gets
+                # there from its environment are not the worker's.
                 self.assertEqual(0, done.returncode, done.stderr.decode("utf-8", "replace"))
-                self.assertEqual([], os.listdir(str(temporary)))
+                left = sorted(set(os.listdir(str(temporary))) - environmental)
+                self.assertEqual([], left)
 
 
 class CorpusLedgerTestCase(unittest.TestCase):
