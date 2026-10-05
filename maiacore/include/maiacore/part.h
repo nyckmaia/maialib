@@ -196,7 +196,10 @@ class Part {
      *          clarinet is (-8, -14)). The notes hold the transposition -- no Part, Measure or
      *          Score state records it -- and the MusicXML writer derives its `<transpose>`
      *          elements from them. Every note is checked before any changes, so the call changes
-     *          all of them or none.
+     *          all of them or none. An export -> import keeps the pair only when it is the
+     *          conventional one for its chromatic interval (or the diminished-fifth tritone);
+     *          another pair is read back corrected (same sound, conventional spelling) with a
+     *          [transpose-pair-corrected] warning.
      * @param diatonicInterval Letters from the written to the sounding pitch (-1 for a B-flat
      *        clarinet).
      * @param chromaticInterval Semitones from the written to the sounding pitch (-2 for a

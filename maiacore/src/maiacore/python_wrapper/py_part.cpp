@@ -73,7 +73,10 @@ void PartClass(const py::module& m) {
         This is the way to change a score's transpositions in place: ``Measure.getNote()``
         returns a copy of the note, so a change made on it does not reach the score
         (``Score.forEachNote`` edits in place too). Every note is checked before any changes, so
-        the call changes all of them or none.
+        the call changes all of them or none. An export -> import keeps the pair only when it is
+        the conventional one for its chromatic interval (or the diminished-fifth tritone);
+        another pair is read back corrected (same sound, conventional spelling) with a
+        ``[transpose-pair-corrected]`` warning.
 
         Parameters
         ----------
@@ -181,7 +184,10 @@ void PartClass(const py::module& m) {
         and unpitched notes change nothing. A ``<transpose>`` has no ``number`` when every staff
         has the same transposition there; the interval is unfolded into ``<diatonic>``,
         ``<chromatic>`` and, from an octave on, ``<octave-change>``, and ``<double/>`` or
-        ``<double above="yes"/>`` states the doubling.
+        ``<double above="yes"/>`` states the doubling. An export -> import keeps a note's
+        interval pair only when it is the conventional one for its chromatic interval (or the
+        diminished-fifth tritone); another pair is read back corrected (same sound,
+        conventional spelling) with a ``[transpose-pair-corrected]`` warning.
 
         Parameters
         ----------
