@@ -198,6 +198,7 @@
   "test/xml_examples/Tchaikovsky/Trepak.xml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "invalid", "input": "valid", "load": "ok", "roundtrip": "stable"},
   "test/xml_examples/unit_test/accidental_sharp_sharp.xml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "unstable"},
   "test/xml_examples/unit_test/melody_chord_top_note.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "unstable"},
+  "test/xml_examples/unit_test/melody_duplicate_patterns.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "unstable"},
   "test/xml_examples/unit_test/melody_last_window.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "unstable"},
   "test/xml_examples/unit_test/melody_patterns_quarter_tone_apart.xml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "unstable"},
   "test/xml_examples/unit_test/melody_staves_and_voices.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "unstable"},

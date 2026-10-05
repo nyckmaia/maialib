@@ -1193,6 +1193,20 @@ TEST(ScoreMelodyPatternSearch, AWindowOfRestsHasNoTransposition) {
     EXPECT_TRUE(std::isnan(table[0].transposeSemitones));
 }
 
+// Each search reads the score as it is: a note added after a search is found by the next one.
+TEST(ScoreMelodyPatternSearch, ASearchSeesTheEditsMadeBeforeIt) {
+    Score score({"Flute"}, 2);
+    score.getPart(0).getMeasure(0).addNote(quarters({"C4", "D4"}));
+    ASSERT_EQ(score.findAnyMelodyPattern(2, 1.0f, 1.0f, 1).size(), 1u);
+    ASSERT_TRUE(score.findMelodyPattern(quarters({"D4", "C#5"}), 1.0f, 1.0f).empty());
+
+    score.getPart(0).getMeasure(1).addNote(Note("C#5"));
+
+    EXPECT_EQ(score.findAnyMelodyPattern(2, 1.0f, 1.0f, 1).size(), 2u);
+    EXPECT_EQ(writtenPitchesOf(score.findMelodyPattern(quarters({"D4", "C#5"}), 1.0f, 1.0f)),
+              (std::vector<std::vector<std::string>>{{"D4", "C#5"}}));
+}
+
 namespace {
 // Captures everything written to 'stream' for its lifetime and restores the stream's own buffer
 // in the destructor. Every write goes through overflow() or xsputn(), which a mutex serialises, so
@@ -1292,12 +1306,80 @@ TEST(ScoreMelodyPatternSearch, EveryPatternIsSearchedWhateverTheThreadCount) {
     }
 }
 
-// C4-D4 (+2) and C4-D1b4 (+1.5) are two patterns a quarter tone apart, not duplicates: comparing
-// rounded MIDI numbers made them equal, since D1b4 rounds to the MIDI number of D4.
+// C4-D4 (+2) and C4-D1b4 (+1.5) are two patterns a quarter tone apart, not duplicates. The line
+// C4 D4 C4 D1b4 E4 has four distinct two-note windows: C4-D4, D4-C4, C4-D1b4 and, the last,
+// D1b4-E4 (+2.5).
 TEST(ScoreMelodyPatternSearch, PatternsAQuarterToneApartAreNotMergedAsDuplicates) {
     Score score("./test/xml_examples/unit_test/melody_patterns_quarter_tone_apart.xml");
-    const auto tables = score.findAnyMelodyPattern(2);
-    EXPECT_EQ(tables.size(), 3u);  // C4-D4, D4-C4 and C4-D1b4
+    const auto found = score.findAnyMelodyPattern(2, 1.0f, 1.0f, 1);
+    EXPECT_EQ(found.size(), 4u);
+}
+
+// Two windows are one pattern when their intervals and their durations are equal; the first
+// window is kept. C4-D4 in quarter notes occurs twice; E4-F#4 has its interval in half notes and
+// is another pattern. Each pattern is searched with the given thresholds, so C4-D4 also matches
+// E4-F#4, whose rhythm has the same proportions. With minOccurrences 1 every pattern is kept.
+TEST(ScoreMelodyPatternSearch, FindAnyMelodyPatternKeepsTheFirstOfEqualWindows) {
+    Score score("./test/xml_examples/unit_test/melody_duplicate_patterns.musicxml");
+    const auto found = score.findAnyMelodyPattern(2, 1.0f, 1.0f, 1);
+
+    std::vector<std::vector<std::string>> patterns;
+    std::vector<float> firstDurations;
+    for (const Score::FoundMelodyPattern& entry : found) {
+        std::vector<std::string> pitches;
+        for (const Note& note : entry.pattern) {
+            pitches.push_back(note.getWrittenPitch());
+        }
+        patterns.push_back(pitches);
+        firstDurations.push_back(entry.pattern[0].getQuarterDuration());
+    }
+    EXPECT_EQ(patterns, (std::vector<std::vector<std::string>>{
+                            {"C4", "D4"}, {"D4", "C4"}, {"D4", "E4"}, {"E4", "F#4"}}));
+    EXPECT_EQ(firstDurations, (std::vector<float>{1.0f, 1.0f, 1.0f, 2.0f}));
+    ASSERT_EQ(found.size(), 4u);
+    EXPECT_EQ(writtenPitchesOf(found[0].matches),
+              (std::vector<std::vector<std::string>>{{"C4", "D4"}, {"C4", "D4"}, {"E4", "F#4"}}));
+}
+
+// A pattern needs at least 2 notes: a smaller length is rejected by name, never a crash.
+TEST(ScoreMelodyPatternSearch, FindAnyMelodyPatternRejectsFewerThanTwoNotes) {
+    Score score("./test/xml_examples/unit_test/melody_duplicate_patterns.musicxml");
+    for (const int length : {1, 0, -1}) {
+        EXPECT_EQ(thrownFirstLine([&] { score.findAnyMelodyPattern(length); }),
+                  "[maiacore] Score::findAnyMelodyPattern: patternNumNotes must be at least 2, "
+                  "and it is " +
+                      std::to_string(length))
+            << length;
+    }
+}
+
+// A pattern is kept when it has at least minOccurrences matches, its own window included. At the
+// default thresholds of 1 and the default of 2, C4-D4 (matched by C4-D4 twice and E4-F#4) and
+// E4-F#4 (the same three) are kept; D4-C4 and D4-E4, which occur once, are not.
+TEST(ScoreMelodyPatternSearch, FindAnyMelodyPatternKeepsPatternsThatOccurAtLeastMinOccurrences) {
+    Score score("./test/xml_examples/unit_test/melody_duplicate_patterns.musicxml");
+    const auto firstPitches = [](const std::vector<Score::FoundMelodyPattern>& found) {
+        std::vector<std::string> pitches;
+        for (const Score::FoundMelodyPattern& entry : found) {
+            pitches.push_back(entry.pattern[0].getWrittenPitch() + "-" +
+                              entry.pattern[1].getWrittenPitch());
+        }
+        return pitches;
+    };
+
+    EXPECT_EQ(firstPitches(score.findAnyMelodyPattern(2)),
+              (std::vector<std::string>{"C4-D4", "E4-F#4"}));
+    EXPECT_EQ(firstPitches(score.findAnyMelodyPattern(2, 1.0f, 1.0f, 3)),
+              (std::vector<std::string>{"C4-D4", "E4-F#4"}));
+    EXPECT_TRUE(score.findAnyMelodyPattern(2, 1.0f, 1.0f, 4).empty());
+    for (const int minOccurrences : {0, -1}) {
+        EXPECT_EQ(
+            thrownFirstLine([&] { score.findAnyMelodyPattern(2, 1.0f, 1.0f, minOccurrences); }),
+            "[maiacore] Score::findAnyMelodyPattern: minOccurrences must be at least 1, "
+            "and it is " +
+                std::to_string(minOccurrences))
+            << minOccurrences;
+    }
 }
 
 // A pattern longer than every line finds nothing, however many notes the score has: here voice 1

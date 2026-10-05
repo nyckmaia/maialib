@@ -375,113 +375,108 @@ void ScoreClass(const py::module& m) {
         [0, 1]
     )pbdoc");
 
-    // cls.def(
-    // "findAnyMelodyPatternDataFrame",
-    // [](Score& score, const int patternNumNotes,
-    //    float totalIntervalsSimilarityThreshold, float totalRhythmSimilarityThreshold,
-    //    const std::function<std::vector<float>(const std::vector<Note>&,
-    //                                           const std::vector<Note>&)>
-    //                                           intervalsSimilarityCallback,
-    //    const std::function<std::vector<float>(const std::vector<Note>&,
-    //                                           const std::vector<Note>&)>
-    //                                           rhythmSimilarityCallback,
-    //    const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
-    //    const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
-    //    const std::function<float(float, float)> totalSimilarityCallback) {
+    cls.def(
+        "findAnyMelodyPatternDataFrame",
+        [](const Score& score, const int patternNumNotes, const float intervalSimilarityThreshold,
+           const float rhythmSimilarityThreshold, const int minOccurrences,
+           const std::function<std::vector<float>(const std::vector<Note>&,
+                                                  const std::vector<Note>&)>
+               intervalsSimilarityCallback,
+           const std::function<std::vector<float>(const std::vector<Note>&,
+                                                  const std::vector<Note>&)>
+               rhythmSimilarityCallback,
+           const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
+           const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
+           const std::function<float(float, float)> totalSimilarityCallback) {
+            // The patterns are searched on worker threads, as the list overload of
+            // findMelodyPatternDataFrame searches them, so the GIL is released the same way.
+            const auto found = [&] {
+                py::gil_scoped_release release;
+                return score.findAnyMelodyPattern(
+                    patternNumNotes, intervalSimilarityThreshold, rhythmSimilarityThreshold,
+                    minOccurrences, intervalsSimilarityCallback, rhythmSimilarityCallback,
+                    totalIntervalSimilarityCallback, totalRhythmSimilarityCallback,
+                    totalSimilarityCallback);
+            }();
+            MelodyDataFrame frame({{"patternIdx", MelodyDataFrame::Kind::Integer},
+                                   {"patternPitches", MelodyDataFrame::Kind::List}});
+            for (size_t idx = 0; idx < found.size(); idx++) {
+                std::vector<std::string> pitches;
+                for (const Note& note : found[idx].pattern) {
+                    pitches.push_back(note.getWrittenPitch());
+                }
+                const py::list leading(py::make_tuple(idx, pitches));
+                for (const Score::MelodyPatternRow& row : found[idx].matches) {
+                    frame.appendRow(leading, row);
+                }
+            }
+            return frame.build();
+        },
+        py::arg("patternNumNotes") = 5, py::arg("intervalSimilarityThreshold") = 1.0f,
+        py::arg("rhythmSimilarityThreshold") = 1.0f, py::arg("minOccurrences") = 2,
+        py::arg("intervalsSimilarityCallback") = nullptr,
+        py::arg("rhythmSimilarityCallback") = nullptr,
+        py::arg("totalIntervalSimilarityCallback") = nullptr,
+        py::arg("totalRhythmSimilarityCallback") = nullptr,
+        py::arg("totalSimilarityCallback") = nullptr,
+        R"pbdoc(
+        Find every distinct melodic pattern of a given length in the score, with its matches.
 
-    //     const auto& results = score.findAnyMelodyPattern(patternNumNotes,
-    //     totalIntervalsSimilarityThreshold,
-    //                                 totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
-    //                                 rhythmSimilarityCallback, totalIntervalSimilarityCallback,
-    //                                 totalRhythmSimilarityCallback, totalSimilarityCallback);
+        Every window of ``patternNumNotes`` events of a melodic line (see
+        ``findMelodyPatternDataFrame``) is a pattern. Two windows are the same pattern when
+        their events are the same notes and rests at the same exact positions relative to their
+        first sounding note (quarter tones included) and have the same durations, exactly; of
+        equal windows the first, in line order, is kept. Each pattern is then searched as the
+        list overload of ``findMelodyPatternDataFrame`` searches it -- so a pattern finds at
+        least its own window -- and kept when it has at least ``minOccurrences`` matches. At the
+        default thresholds of 1 a match is an exact repetition of the pattern, transposed or not,
+        and the default ``minOccurrences=2`` keeps the patterns that repeat: the Beethoven 5
+        sample, 13,675 notes, gives 2,164 patterns and 489,196 rows. Lower thresholds
+        also count close variants, and can give millions of rows for such a score. The GIL is
+        released while the patterns are searched.
 
-    //     // Converte os resultados para DataFrames no contexto principal (com o GIL adquirido)
-    //     py::gil_scoped_acquire acquire;
-    //     py::object Pandas = py::module_::import("pandas");
-    //     py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
-    //     std::vector<py::object> dataframes;
+        Parameters
+        ----------
+        patternNumNotes : int, default 5
+            Number of events in each pattern: at least 2.
+        intervalSimilarityThreshold : float, default 1.0
+            Minimum interval similarity of a match, from 0 to 1.
+        rhythmSimilarityThreshold : float, default 1.0
+            Minimum rhythm similarity of a match, from 0 to 1.
+        minOccurrences : int, default 2
+            Minimum number of matches of a kept pattern, its own window included: at least 1.
+        intervalsSimilarityCallback : callable, optional
+        rhythmSimilarityCallback : callable, optional
+        totalIntervalSimilarityCallback : callable, optional
+        totalRhythmSimilarityCallback : callable, optional
+        totalSimilarityCallback : callable, optional
+            The callbacks of ``findMelodyPatternDataFrame``, with the same pairing rules.
 
-    //     // Definindo as colunas do DataFrame
-    //     std::vector<std::string> columns = {"partName",
-    //                                         "measureId",
-    //                                         "staveId",
-    //                                         "writtenClefKey",
-    //                                         "transposeInterval",
-    //                                         "segmentWrittenPitch",
-    //                                         "semitonesDiff",
-    //                                         "rhythmDiff",
-    //                                         "totalIntervalSimilarity",
-    //                                         "totalRhythmSimilarity",
-    //                                         "totalSimilarity"};
+        Returns
+        -------
+        pandas.DataFrame
+            One row per match of a kept pattern: ``patternIdx`` (int, the kept pattern's number,
+            in line order of its first window) and ``patternPitches`` (list of str, the pattern's written pitches,
+            ``"rest"`` for a rest), followed by the columns of ``findMelodyPatternDataFrame``;
+            sorted by ``patternIdx``, then as ``findMelodyPatternDataFrame`` sorts. An empty
+            DataFrame, with every column and its dtype, when no pattern is kept.
 
-    //     for (size_t idx = 0; idx < results.size(); ++idx) {
-    //         py::object df = FromRecords(results[idx], "columns"_a = columns);
+        Raises
+        ------
+        RuntimeError
+            If ``patternNumNotes`` is less than 2 or ``minOccurrences`` less than 1, or for a
+            callback without its total callback.
 
-    //         // Verifica se o DataFrame possui dados antes de adicioná-lo
-    //         if (df.attr("empty").cast<bool>()) {
-    //             continue;  // Pula DataFrames vazios
-    //         }
-
-    //         // Adiciona coluna "patternIdx" para identificar o índice do padrão
-    //         // int num_columns = df.attr("shape").cast<py::tuple>()[1].cast<int>();
-    //         df.attr("insert")(0, "patternIdx", idx);
-
-    //         dataframes.push_back(df);
-    //     }
-
-    //     // Concatena todos os DataFrames processados com sucesso
-    //     if (!dataframes.empty()) {
-    //         py::object result_df = Pandas.attr("concat")(dataframes, "ignore_index"_a = true);
-
-    //         // Ordena o DataFrame pelo campo "measureId" antes de aplicar filtros
-    //         // result_df.attr("sort_values")("by"_a = "measureId", "ascending"_a = true,
-    //         "inplace"_a = true);
-
-    //         py::list sort_cols;
-    //         sort_cols.append("patternIdx");
-    //         sort_cols.append("measureId");
-    //         sort_cols.append("partName");
-
-    //         py::list ascending;
-    //         ascending.append(true);
-    //         ascending.append(true);
-    //         ascending.append(true);
-
-    //         result_df.attr("sort_values")(
-    //             "by"_a = sort_cols,
-    //             "ascending"_a = ascending,
-    //             "inplace"_a = true
-    //         );
-
-    //         // Filtra as linhas onde "segmentWrittenPitch" contém apenas "rest"
-    //         py::object filtered_df = result_df.attr("loc")[
-    //             result_df.attr("segmentWrittenPitch").attr("apply")(
-    //                 py::cpp_function([](const py::object& pitchList) {
-    //                     auto list = pitchList.cast<std::vector<std::string>>();
-    //                     return std::any_of(list.begin(), list.end(), [](const std::string& s) {
-    //                     return s != "rest"; });
-    //                 })
-    //             )
-    //         ];
-
-    //         // Reseta o índice do DataFrame final após o filtro
-    //         filtered_df = filtered_df.attr("reset_index")("drop"_a = true);
-
-    //         return filtered_df;
-    //     } else {
-    //         throw std::runtime_error("Nenhum DataFrame foi concatenado devido a erro de memória
-    //         ou outro problema.");
-    //     }
-    // },
-    //     py::arg("patternNumNotes") = 5,
-    //     py::arg("intervalSimilarityThreshold") = 1.0f,
-    //     py::arg("rhythmSimilarityThreshold") = 1.0f,
-    //     py::arg("intervalsSimilarityCallback") = nullptr,
-    //     py::arg("rhythmSimilarityCallback") = nullptr,
-    //     py::arg("totalIntervalSimilarityCallback") = nullptr,
-    //     py::arg("totalRhythmSimilarityCallback") = nullptr,
-    //     py::arg("totalSimilarityCallback") = nullptr
-    // );
+        Examples
+        --------
+        >>> score = ml.Score(["Flute"], 1)
+        >>> score.getPart(0).getMeasure(0).addNote(["C4", "D4", "C4", "D4"])
+        >>> table = score.findAnyMelodyPatternDataFrame(2)
+        >>> table[["patternIdx", "patternPitches", "measure", "writtenPitches"]].values.tolist()
+        [[0, ['C4', 'D4'], 0, ['C4', 'D4']], [0, ['C4', 'D4'], 0, ['C4', 'D4']]]
+        >>> score.findAnyMelodyPatternDataFrame(2, minOccurrences=1)["patternIdx"].unique().tolist()
+        [0, 1]
+    )pbdoc");
 
     cls.def("getChords", &Score::getChords, py::arg("config") = nlohmann::json(),
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),

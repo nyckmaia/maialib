@@ -1019,5 +1019,97 @@ class ScoreMelodyPatternDataFrameTestCase(unittest.TestCase):
             )
 
 
+class ScoreFindAnyMelodyPatternTestCase(unittest.TestCase):
+    """findAnyMelodyPatternDataFrame: every distinct window as a pattern, with its matches."""
+
+    def test_equal_windows_are_one_pattern_and_rhythm_tells_them_apart(self):
+        score = ml.Score("./xml_examples/unit_test/melody_duplicate_patterns.musicxml")
+        table = score.findAnyMelodyPatternDataFrame(2, 1.0, 1.0, minOccurrences=1)
+        self.assertEqual(list(table.columns), ["patternIdx", "patternPitches"] + MATCH_COLUMNS)
+        patterns = table.drop_duplicates("patternIdx")
+        self.assertEqual(
+            [list(pitches) for pitches in patterns["patternPitches"]],
+            [["C4", "D4"], ["D4", "C4"], ["D4", "E4"], ["E4", "F#4"]],
+        )
+        first_pattern = table[table["patternIdx"] == 0]
+        self.assertEqual(
+            [list(pitches) for pitches in first_pattern["writtenPitches"]],
+            [["C4", "D4"], ["C4", "D4"], ["E4", "F#4"]],
+        )
+
+    def test_min_occurrences_keeps_the_patterns_that_repeat(self):
+        """C4-D4 and E4-F#4 have three matches each; D4-C4 and D4-E4 one. The kept patterns are
+        numbered from 0."""
+        score = ml.Score("./xml_examples/unit_test/melody_duplicate_patterns.musicxml")
+        for min_occurrences, expected in (
+            (2, [["C4", "D4"], ["E4", "F#4"]]),
+            (3, [["C4", "D4"], ["E4", "F#4"]]),
+            (4, []),
+        ):
+            with self.subTest(minOccurrences=min_occurrences):
+                table = score.findAnyMelodyPatternDataFrame(2, minOccurrences=min_occurrences)
+                patterns = table.drop_duplicates("patternIdx")
+                self.assertEqual([list(p) for p in patterns["patternPitches"]], expected)
+                self.assertEqual(list(patterns["patternIdx"]), list(range(len(expected))))
+
+    def test_fewer_than_two_notes_or_occurrences_below_one_raise(self):
+        score = ml.Score("./xml_examples/unit_test/melody_duplicate_patterns.musicxml")
+        for length in (1, 0, -1):
+            with self.subTest(length=length), self.assertRaises(RuntimeError):
+                score.findAnyMelodyPatternDataFrame(length)
+        for min_occurrences in (0, -1):
+            with self.subTest(minOccurrences=min_occurrences), self.assertRaises(
+                RuntimeError
+            ) as context:
+                score.findAnyMelodyPatternDataFrame(2, minOccurrences=min_occurrences)
+            self.assertEqual(
+                str(context.exception).splitlines()[0],
+                "[maiacore] Score::findAnyMelodyPattern: minOccurrences must be at least 1, and it "
+                f"is {min_occurrences}",
+            )
+
+    def test_no_pattern_kept_gives_an_empty_dataframe_with_every_column(self):
+        score = ml.Score("./xml_examples/unit_test/melody_duplicate_patterns.musicxml")
+        matched = score.findAnyMelodyPatternDataFrame(2)
+        self.assertEqual(str(matched["patternIdx"].dtype), "int64")
+        for empty in (
+            score.findAnyMelodyPatternDataFrame(7),
+            score.findAnyMelodyPatternDataFrame(2, minOccurrences=4),
+        ):
+            self.assertEqual(len(empty), 0)
+            self.assertEqual(str(empty["patternIdx"].dtype), "int64")
+            self.assertEqual(list(empty.dtypes.items()), list(matched.dtypes.items()))
+
+    def test_the_docstring_gives_the_size_at_the_defaults(self):
+        doc = " ".join(ml.Score.findAnyMelodyPatternDataFrame.__doc__.split())
+        self.assertIn("gives 2,164 patterns and 489,196 rows", doc)
+
+    def test_the_defaults_keep_exact_repetitions_transposed_or_not(self):
+        """C4 D4 E4 F4 G4 recurs a tone higher as D4 E4 F#4 G4 A4, an exact repetition; the
+        variant C4 D4 E4 F4 G#4 matches only at lower thresholds. No other five-note window
+        repeats."""
+        score = ml.Score(["Flute"], 3)
+        score.getPart(0).getMeasure(0).addNote(["C4", "D4", "E4", "F4", "G4"])
+        score.getPart(0).getMeasure(1).addNote(["D4", "E4", "F#4", "G4", "A4"])
+        score.getPart(0).getMeasure(2).addNote(["C4", "D4", "E4", "F4", "G#4"])
+        table = score.findAnyMelodyPatternDataFrame()
+        self.assertTrue(table.equals(score.findAnyMelodyPatternDataFrame(5, 1.0, 1.0, 2)))
+        self.assertEqual(
+            [
+                (index, list(pitches), interval)
+                for index, pitches, interval in zip(
+                    table["patternIdx"], table["writtenPitches"], table["transposeInterval"]
+                )
+            ],
+            [
+                (0, ["C4", "D4", "E4", "F4", "G4"], "P1"),
+                (0, ["D4", "E4", "F#4", "G4", "A4"], "M2 asc"),
+            ],
+        )
+        self.assertEqual(
+            len(score.findAnyMelodyPatternDataFrame(5, 0.5, 0.5).query("patternIdx == 0")), 3
+        )
+
+
 if __name__ == "__main__":
     unittest.main()

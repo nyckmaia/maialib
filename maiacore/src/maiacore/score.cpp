@@ -2047,47 +2047,6 @@ bool Score::getPartIndex(const std::string& partName, int* index) const {
     return foundIndex;
 }
 
-std::vector<std::vector<Score::NoteEvent>> Score::collectNoteEventsPerPart() const {
-    // Verifica se o cache já foi preenchido
-    if (_isNoteEventsPerPartCached) {
-        return _cachedNoteEventsPerPart;
-    }
-
-    _cachedNoteEventsPerPart.clear();  // Garante que esteja vazio antes de preencher
-    _cachedNoteEventsPerPart.reserve(getNumParts());
-    const int NUM_NOTES_PER_MEASURE = 16;
-    for (int partIdx = 0; partIdx < getNumParts(); partIdx++) {
-        std::vector<NoteEvent> cachedNoteEvents;
-        cachedNoteEvents.reserve(_part[partIdx].getNumMeasures() * NUM_NOTES_PER_MEASURE);
-
-        const Part& currentPart = _part[partIdx];
-        const std::string& currentPartName = currentPart.getName();
-        for (int measureIdx = 0; measureIdx < currentPart.getNumMeasures(); measureIdx++) {
-            const Measure& currentMeasure = currentPart.getMeasure(measureIdx);
-            const int numStaves = currentMeasure.getNumStaves();
-            for (int staveIdx = 0; staveIdx < numStaves; staveIdx++) {
-                const int numNotes = currentMeasure.getNumNotes(staveIdx);
-                for (int noteIdx = 0; noteIdx < numNotes; noteIdx++) {
-                    const Note& currentNote = currentMeasure.getNote(noteIdx, staveIdx);
-
-                    // Skip all chords and multiple voices! To fix in the future
-                    // Get only the top melody of each instrument/stave
-                    if (currentNote.inChord() || currentNote.getVoice() != 1) {
-                        continue;
-                    }
-                    const std::string& currentKeyName = currentMeasure.getKey().getName();
-                    cachedNoteEvents.push_back({currentPartName, measureIdx, staveIdx, noteIdx,
-                                                currentKeyName, &currentNote});
-                }
-            }
-        }
-        _cachedNoteEventsPerPart.push_back(cachedNoteEvents);
-    }
-
-    _isNoteEventsPerPartCached = true;  // Marca o cache como preenchido
-    return _cachedNoteEventsPerPart;
-}
-
 namespace {
 // The callbacks of a melody search, passed on unchanged to every pattern it searches.
 struct MelodySearchCallbacks {
@@ -2270,6 +2229,32 @@ std::vector<Score::MelodyPatternTable> searchEachPattern(
     }
     return tables;
 }
+
+// The distinct windows of 'length' events of the lines, in line order. A window is keyed by each
+// event's exact position relative to the window's first sounding note -- infinity for a rest --
+// and its duration in quarter notes, so equal keys are the same pattern transposed.
+std::vector<std::vector<Note>> distinctWindows(const std::vector<MelodicLine>& lines,
+                                               const size_t length) {
+    std::vector<std::vector<Note>> windows;
+    std::set<std::vector<float>> seen;
+    for (const MelodicLine& line : lines) {
+        forEachWindow(line, length, [&](size_t /*start*/, const std::vector<Note>& window) {
+            const Note* first = firstSoundingNote(window);
+            std::vector<float> key;
+            key.reserve(2 * length);
+            for (const Note& note : window) {
+                key.push_back(note.isNoteOn()
+                                  ? note.getQuarterToneSteps() - first->getQuarterToneSteps()
+                                  : std::numeric_limits<float>::infinity());
+                key.push_back(note.getQuarterDuration());
+            }
+            if (seen.insert(key).second) {
+                windows.push_back(window);
+            }
+        });
+    }
+    return windows;
+}
 }  // namespace
 
 Score::MelodyPatternTable Score::findMelodyPattern(
@@ -2309,73 +2294,9 @@ std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
          totalRhythmSimilarityCallback, totalSimilarityCallback});
 }
 
-void Score::removeDuplicatePatterns(std::vector<std::vector<Note>>* patterns) const {
-    auto& patternsRef = *patterns;
-    std::set<size_t> uniqueIndices;  // Armazena os índices de padrões únicos
-
-    // The interval between each pair of consecutive notes, in exact semitones: patterns that
-    // differ by a quarter tone are different patterns, which rounded MIDI numbers cannot tell.
-    // Positions are multiples of 0.5, held exactly, so the differences compare exactly.
-    auto calculatePitchDifferences = [](const std::vector<Note>& pattern) {
-        std::vector<float> pitchDiffs;
-        for (size_t i = 1; i < pattern.size(); ++i) {
-            pitchDiffs.push_back(pattern[i].getQuarterToneSteps() -
-                                 pattern[i - 1].getQuarterToneSteps());
-        }
-        return pitchDiffs;
-    };
-
-    // Função auxiliar para calcular as diferenças de durações normalizadas entre notas
-    auto calculateDurationDifferences = [](const std::vector<Note>& pattern) {
-        std::vector<float> durationDiffs;
-        for (size_t i = 1; i < pattern.size(); ++i) {
-            float diff = pattern[i].getQuarterDuration() - pattern[i - 1].getQuarterDuration();
-            durationDiffs.push_back(diff);
-        }
-        return durationDiffs;
-    };
-
-    for (size_t i = 0; i < patternsRef.size(); ++i) {
-        if (uniqueIndices.find(i) != uniqueIndices.end()) {
-            continue;  // Padrão já marcado como único
-        }
-
-        // The pitch and duration differences of the current pattern
-        auto pitchDiffs1 = calculatePitchDifferences(patternsRef[i]);
-        auto durationDiffs1 = calculateDurationDifferences(patternsRef[i]);
-
-        bool isUnique = true;
-
-        for (size_t j = i + 1; j < patternsRef.size(); ++j) {
-            // The pitch and duration differences of the pattern it is compared with
-            auto pitchDiffs2 = calculatePitchDifferences(patternsRef[j]);
-            auto durationDiffs2 = calculateDurationDifferences(patternsRef[j]);
-
-            // Verifica se ambos os critérios de igualdade são atendidos
-            if (pitchDiffs1 == pitchDiffs2 && durationDiffs1 == durationDiffs2) {
-                isUnique = false;
-                uniqueIndices.insert(j);  // Marca o padrão `j` como duplicado
-            }
-        }
-
-        if (isUnique) {
-            uniqueIndices.insert(i);  // Marca o padrão `i` como único
-        }
-    }
-
-    // Filtra o vetor original para manter apenas os padrões únicos
-    std::vector<std::vector<Note>> filteredPatterns;
-    for (size_t i : uniqueIndices) {
-        filteredPatterns.push_back(std::move(patternsRef[i]));
-    }
-
-    // Substitui o vetor original pelos padrões únicos
-    patternsRef = std::move(filteredPatterns);
-}
-
-std::vector<Score::MelodyPatternTable> Score::findAnyMelodyPattern(
-    const int patternNumNotes, const float totalIntervalsSimilarityThreshold,
-    const float totalRhythmSimilarityThreshold,
+std::vector<Score::FoundMelodyPattern> Score::findAnyMelodyPattern(
+    const int patternNumNotes, const float intervalSimilarityThreshold,
+    const float rhythmSimilarityThreshold, const int minOccurrences,
     const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
         intervalsSimilarityCallback,
     const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
@@ -2383,33 +2304,30 @@ std::vector<Score::MelodyPatternTable> Score::findAnyMelodyPattern(
     const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
     const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
     const std::function<float(float, float)> totalSimilarityCallback) const {
-    const auto& noteEventsPerPart = collectNoteEventsPerPart();
-    std::vector<std::vector<Note>> patterns;
-    const int maxNumPatterns = getNumNotes() / patternNumNotes;
-    // std::cout << "Max melody blocks to find: " << maxNumPatterns << std::endl;
-    patterns.reserve(maxNumPatterns);  // Impreciso
+    if (patternNumNotes < 2) {
+        LOG_ERROR("Score::findAnyMelodyPattern: patternNumNotes must be at least 2, and it is " +
+                  std::to_string(patternNumNotes));
+    }
+    if (minOccurrences < 1) {
+        LOG_ERROR("Score::findAnyMelodyPattern: minOccurrences must be at least 1, and it is " +
+                  std::to_string(minOccurrences));
+    }
+    const MelodySearchInput input{_part, melodicLines(_part), concertKeys(_part)};
+    std::vector<std::vector<Note>> patterns =
+        distinctWindows(input.lines, static_cast<size_t>(patternNumNotes));
+    std::vector<MelodyPatternTable> tables = searchEachPattern(
+        input, patterns, intervalSimilarityThreshold, rhythmSimilarityThreshold,
+        {intervalsSimilarityCallback, rhythmSimilarityCallback, totalIntervalSimilarityCallback,
+         totalRhythmSimilarityCallback, totalSimilarityCallback});
 
-    // std::cout << "Creating melody patterns vector..." << std::endl;
-    for (const auto& noteEventList : noteEventsPerPart) {
-        int patternMaxIterationIdx = noteEventList.size() - patternNumNotes;
-        for (int eventIdx = 0; eventIdx < patternMaxIterationIdx; eventIdx++) {
-            std::vector<Note> localPattern;
-            localPattern.reserve(patternNumNotes);
-            const int maxEventIdx = eventIdx + patternNumNotes;
-            for (int idx = eventIdx; idx < maxEventIdx; idx++) {
-                localPattern.push_back(*noteEventList[idx].notePtr);
-            }
-            patterns.push_back(localPattern);
+    std::vector<FoundMelodyPattern> found;
+    found.reserve(patterns.size());
+    for (size_t i = 0; i < patterns.size(); i++) {
+        if (tables[i].size() >= static_cast<size_t>(minOccurrences)) {
+            found.push_back({std::move(patterns[i]), std::move(tables[i])});
         }
     }
-
-    removeDuplicatePatterns(&patterns);
-
-    // std::cout << "Searching patterns..." << std::endl;
-    return findMelodyPattern(patterns, totalIntervalsSimilarityThreshold,
-                             totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
-                             rhythmSimilarityCallback, totalIntervalSimilarityCallback,
-                             totalRhythmSimilarityCallback, totalSimilarityCallback);
+    return found;
 }
 
 bool Score::haveAnacrusisMeasure() const { return _haveAnacrusisMeasure; }

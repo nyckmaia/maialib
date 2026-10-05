@@ -45,36 +45,6 @@ class Score {
                                       ///< file.
     bool _haveAnacrusisMeasure;       ///< True if the score contains an anacrusis (pickup) measure.
 
-    /**
-     * @brief Internal structure to represent a note event in the score.
-     */
-    struct NoteEvent {
-        std::string partName;
-        int measureIdx;
-        int staveIdx;
-        int noteIdx;
-        const std::string keyName;
-        const Note* notePtr;
-    };
-
-    mutable std::vector<std::vector<NoteEvent>>
-        _cachedNoteEventsPerPart;  ///< Cache for note events per part.
-    mutable bool _isNoteEventsPerPartCached =
-        false;  ///< True if per-part note events cache is filled.
-    /**
-     * @brief Collects note events grouped by part.
-     * @return Vector of vectors of NoteEvent, one vector per part.
-     */
-    std::vector<std::vector<NoteEvent>> collectNoteEventsPerPart() const;
-
-    /**
-     * @brief Removes duplicate melodic patterns from a vector of patterns.
-     * @details Compares patterns by MIDI pitch and duration differences, keeping only unique
-     * patterns.
-     * @param patterns Pointer to the vector of note patterns to be filtered.
-     */
-    void removeDuplicatePatterns(std::vector<std::vector<Note>>* patterns) const;
-
     typedef struct noteData_st {
         float currentTimeValue = 0.0f;
         const Note* notePtr = nullptr;
@@ -511,10 +481,6 @@ class Score {
 
         // Deep copy of XML document
         _doc.reset(other._doc);
-
-        // Invalidate the per-part note-event cache - it is rebuilt when needed
-        _isNoteEventsPerPartCached = false;
-        _cachedNoteEventsPerPart.clear();
     }
 
     /**
@@ -542,10 +508,6 @@ class Score {
 
         // Deep copy of XML document
         _doc.reset(other._doc);
-
-        // Invalidate the per-part note-event cache - it is rebuilt when needed
-        _isNoteEventsPerPartCached = false;
-        _cachedNoteEventsPerPart.clear();
 
         return *this;
     }
@@ -603,6 +565,14 @@ class Score {
      *        the order of their lines (part, staff, voice) and windows.
      */
     typedef std::vector<MelodyPatternRow> MelodyPatternTable;
+
+    /**
+     * @brief A pattern that findAnyMelodyPattern() found in the score, with its matches.
+     */
+    struct FoundMelodyPattern {
+        std::vector<Note> pattern;   ///< The window's events, as the search compares them.
+        MelodyPatternTable matches;  ///< Its matches, as findMelodyPattern() returns them.
+    };
 
     /**
      * @brief Searches every melodic line of the score for a melodic pattern.
@@ -700,22 +670,35 @@ class Score {
         const std::function<float(float, float)> totalSimilarityCallback = nullptr) const;
 
     /**
-     * @brief Finds all possible melodic patterns of a given length in the score.
-     * @details Useful for exploratory analysis of motives and recurring melodic cells.
-     * @param patternNumNotes Number of notes in each pattern.
-     * @param totalIntervalsSimilarityThreshold Minimum interval similarity threshold.
-     * @param totalRhythmSimilarityThreshold Minimum rhythm similarity threshold.
-     * @param intervalsSimilarityCallback Custom function to calculate interval similarity.
-     * @param rhythmSimilarityCallback Custom function to calculate rhythm similarity.
-     * @param totalIntervalSimilarityCallback Function to aggregate interval similarity.
-     * @param totalRhythmSimilarityCallback Function to aggregate rhythm similarity.
-     * @param totalSimilarityCallback Function to combine total similarities.
-     * @return Vector of result tables for each found pattern.
-     * @note Not safe to run concurrently on one Score: its first call fills a cache without a lock.
+     * @brief Finds every distinct melodic pattern of a given length in the score, with its
+     *        matches.
+     * @details Every window of patternNumNotes events of a melodic line (see
+     *          findMelodyPattern()) is a pattern. Two windows are the same pattern when their
+     *          events are the same notes and rests at the same exact positions relative to their
+     *          first sounding note (quarter tones included) and have the same durations, exactly;
+     *          of equal windows the first, in line order, is kept. Each pattern is then searched
+     *          as the list overload of findMelodyPattern() searches it, and kept when it has at
+     *          least minOccurrences matches, its own window included. At the default thresholds
+     *          of 1 a match is an exact repetition, transposed or not.
+     * @param patternNumNotes Number of events in each pattern: at least 2.
+     * @param intervalSimilarityThreshold Minimum interval similarity of a match (default 1).
+     * @param rhythmSimilarityThreshold Minimum rhythm similarity of a match (default 1).
+     * @param minOccurrences Minimum number of matches of a kept pattern: at least 1 (default
+     *        2, a pattern that repeats).
+     * @param intervalsSimilarityCallback See findMelodyPattern().
+     * @param rhythmSimilarityCallback See findMelodyPattern().
+     * @param totalIntervalSimilarityCallback See findMelodyPattern().
+     * @param totalRhythmSimilarityCallback See findMelodyPattern().
+     * @param totalSimilarityCallback See findMelodyPattern().
+     * @return The kept patterns in line order of their first window, each with its matches.
+     * @throws std::runtime_error If patternNumNotes is less than 2 or minOccurrences less than 1,
+     *         or as findMelodyPattern() throws.
+     * @note Any number of threads may search the same score at once. Modifying the score, its
+     * parts, measures or notes while a search runs is not safe.
      */
-    std::vector<MelodyPatternTable> findAnyMelodyPattern(
-        const int patternNumNotes = 5, const float totalIntervalsSimilarityThreshold = 1.0f,
-        const float totalRhythmSimilarityThreshold = 1.0f,
+    std::vector<FoundMelodyPattern> findAnyMelodyPattern(
+        const int patternNumNotes = 5, const float intervalSimilarityThreshold = 1.0f,
+        const float rhythmSimilarityThreshold = 1.0f, const int minOccurrences = 2,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
             intervalsSimilarityCallback = nullptr,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
