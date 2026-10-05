@@ -1,8 +1,10 @@
 #pragma once
 
+#include <functional>
 #include <initializer_list>
 #include <map>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "SQLiteCpp/SQLiteCpp.h"
@@ -551,81 +553,109 @@ class Score {
     // ====== MELODIC PATTERN ANALYSIS ======
 
     /**
-     * @brief Table row type for melodic pattern search results.
-     * @details Contains part name, measure, stave, key, transposition, interval/rhythm differences,
-     * and similarity scores.
+     * @brief One match of a melodic pattern: a window of a melodic line of the score.
+     * @details The melody search reads every voice of every staff of every part as a melodic
+     *          line of events -- a note, a chord by its highest sounding note, or a rest; a
+     *          tied note extends the event it is tied to -- and compares the pattern with every
+     *          window of as many consecutive events of one line (see findMelodyPattern()).
      */
-    typedef std::tuple<std::string, int, int, std::string, std::string, std::vector<std::string>,
-                       std::vector<float>, std::vector<float>, float, float, float>
-        MelodyPatternRow;
+    struct MelodyPatternRow {
+        std::string partName;    ///< The part.
+        int measure = 0;         ///< 0-based index of the measure of the window's first event.
+        int staff = 0;           ///< 0-based staff of the line.
+        int voice = 0;           ///< Voice of the line, as written.
+        std::string writtenKey;  ///< The part's written key at that measure (Key::getName()).
+        /// The score's concert key at that measure, by the rule of getChords().
+        std::string concertKey;
+        /// The interval from the pattern's first sounding note to the window's, named at concert
+        /// spelling with its direction ("M2 asc", "P1"); empty when it has no name or when the
+        /// pattern or the window has no sounding note.
+        std::string transposeInterval;
+        /// That interval in exact semitones (quarter tones included); NaN when the pattern or
+        /// the window has no sounding note.
+        float transposeSemitones = 0.0f;
+        std::vector<std::string> writtenPitches;   ///< The window's written pitches ("rest").
+        std::vector<std::string> soundingPitches;  ///< The window's sounding pitches ("rest").
+        std::vector<float> semitonesDiff;          ///< Per-interval differences (pattern size - 1).
+        std::vector<float> rhythmDiff;             ///< Per-duration differences (pattern size).
+        float intervalSimilarity = 0.0f;           ///< The interval similarity.
+        float rhythmSimilarity = 0.0f;             ///< The rhythm similarity.
+        float totalSimilarity = 0.0f;              ///< The combined similarity.
+
+        /**
+         * @brief Field-by-field equality; a NaN transposeSemitones equals no value, NaN included.
+         */
+        bool operator==(const MelodyPatternRow& other) const {
+            return std::tie(partName, measure, staff, voice, writtenKey, concertKey,
+                            transposeInterval, transposeSemitones, writtenPitches, soundingPitches,
+                            semitonesDiff, rhythmDiff, intervalSimilarity, rhythmSimilarity,
+                            totalSimilarity) ==
+                   std::tie(other.partName, other.measure, other.staff, other.voice,
+                            other.writtenKey, other.concertKey, other.transposeInterval,
+                            other.transposeSemitones, other.writtenPitches, other.soundingPitches,
+                            other.semitonesDiff, other.rhythmDiff, other.intervalSimilarity,
+                            other.rhythmSimilarity, other.totalSimilarity);
+        }
+    };
+
     /**
-     * @brief Table type for melodic pattern search results.
+     * @brief The matches of one pattern, sorted stably by measure: matches of one measure keep
+     *        the order of their lines (part, staff, voice) and windows.
      */
     typedef std::vector<MelodyPatternRow> MelodyPatternTable;
 
     /**
-     * @brief Searches for a melodic pattern throughout the score, returning detailed results.
-     * @param melodyPattern Vector of notes representing the pattern to search for.
-     * @param totalIntervalsSimilarityThreshold Minimum interval similarity threshold (0.0-1.0).
-     * @param totalRhythmSimilarityThreshold Minimum rhythm similarity threshold (0.0-1.0).
-     * @param intervalsSimilarityCallback Custom function to calculate interval similarity.
-     * @param rhythmSimilarityCallback Custom function to calculate rhythm similarity.
-     * @param totalIntervalSimilarityCallback Function to aggregate interval similarity.
-     * @param totalRhythmSimilarityCallback Function to aggregate rhythm similarity.
-     * @param totalSimilarityCallback Function to combine total similarities.
-     * @return Table of results with detailed information about found patterns.
-     * @throws std::runtime_error If the pattern has more notes than the score, or if the pattern
-     *         or a segment of the score starts on a quarter tone: each segment's transposition
-     *         from the pattern is named by an Interval, which has no name for a quarter tone. The
-     *         message names the note and, for a segment, its part, measure and stave.
+     * @brief Searches every melodic line of the score for a melodic pattern.
+     * @param melodyPattern The pattern: at least 2 notes; rests are allowed.
+     * @param intervalSimilarityThreshold Minimum interval similarity of a match (0.0-1.0).
+     * @param rhythmSimilarityThreshold Minimum rhythm similarity of a match (0.0-1.0).
+     * @param intervalsSimilarityCallback Replaces the interval differences
+     *        (Helper::getSemitonesDifferenceBetweenMelodies()); give
+     *        totalIntervalSimilarityCallback with it.
+     * @param rhythmSimilarityCallback Replaces the duration differences
+     *        (Helper::getDurationDifferenceBetweenRhythms()); give totalRhythmSimilarityCallback
+     *        with it.
+     * @param totalIntervalSimilarityCallback Reduces the interval differences to a similarity;
+     *        used only with intervalsSimilarityCallback.
+     * @param totalRhythmSimilarityCallback Reduces the duration differences to a similarity;
+     *        used only with rhythmSimilarityCallback.
+     * @param totalSimilarityCallback Combines the two similarities; the default is their mean.
+     * @return One row per match, sorted stably by measure: rows of one measure keep the order of
+     *         their lines (part, staff, voice) and windows.
+     * @throws std::runtime_error If the pattern has fewer than 2 notes; the message names the
+     *         method and the length.
      * @throws std::bad_function_call If intervalsSimilarityCallback or rhythmSimilarityCallback
      *         is given without its total callback.
-     * @details Performs comprehensive melodic pattern matching across all parts and measures of the
-     * score, supporting flexible similarity metrics for both intervallic contour and rhythmic
-     * structure. This function enables motivic analysis, thematic transformation studies, and
-     * computational detection of melodic recurrence.
+     * @details **Melodic lines.** Every voice that occurs on a staff of a part is a line: its
+     *          events in measure order. A note without `<chord/>` starts an event, and the chord
+     *          notes written after it join it; the event stands for its highest note by sounding
+     *          exact position. A note tied to the previous event of its line at the same sounding
+     *          position extends that event, which keeps its first note's written pitch and
+     *          measure and adds the durations. A rest is an event; a grace note is not.
      *
-     *          **Pattern Matching Process**:
-     *          1. Sliding window search across all melodic sequences in the score
-     *          2. For each candidate match:
-     *             a. Compute intervallic similarity (pitch contour matching)
-     *             b. Compute rhythmic similarity (durational pattern matching)
-     *             c. Aggregate similarities using custom or default models
-     *          3. Filter results by threshold criteria
-     *          4. Return matches with positional metadata (part, measure, beat)
+     *          **Windows.** Every window of as many consecutive events of one line as the pattern
+     *          has notes, the last one included; no window spans two lines. A pattern longer
+     *          than every line finds nothing.
      *
-     *          **Similarity Calculation**:
-     *          - **Default Interval Similarity**: Normalized edit distance or contour correlation
-     *            between semitone interval sequences. Allows approximate matching (transposition,
-     *            modal mutation, chromatic alteration).
-     *          - **Default Rhythm Similarity**: Durational ratio comparison with tolerance for
-     *            rhythmic augmentation/diminution and metric displacement.
-     *          - **Custom Callbacks**: User-defined similarity models enable:
-     *            - Weighted interval classes (emphasize melodic leaps vs. stepwise motion)
-     *            - Parsons code contour matching (directional contour only)
-     *            - Fuzzy matching with configurable tolerance bands
+     *          **Comparison.** The melodic intervals of the pattern and of the window are
+     *          compared at sounding exact positions, so the comparison is transposition-invariant
+     *          and quarter tones count as half semitones; an interval to or from a rest is 0.
+     *          Durations are divided by each sequence's longest. Similarity is 1 / (1 + the
+     *          Euclidean norm of the differences) unless a callback replaces it, and a window
+     *          matches when both similarities reach their thresholds.
      *
-     *          **Threshold Parameters**:
-     *          - Values near 1.0: Require near-exact matches (strict motivic repetition)
-     *          - Values near 0.5: Allow moderate variation (thematic transformation, development)
-     *          - Values near 0.0: Detect loose similarity (distant motivic relationships)
-     *
-     *          **Applications**:
-     *          - Motivic analysis (leitmotif tracking in Wagner, Brahms developing variation)
-     *          - Thematic cataloging (identifying subject entries in fugues, variation themes)
-     *          - Computational musicology (corpus-wide melodic similarity studies)
-     *          - Plagiarism detection (melodic borrowing, paraphrase identification)
-     *          - Style analysis (characteristic melodic gestures across composers/periods)
-     *
-     * @note Computational complexity is O(n × m) where n = total notes in score, m = pattern
-     * length. For large scores, consider restricting search to specific parts or measure ranges.
-     * @note The search reads the score and writes nothing another thread shares, so any number of
-     * threads may search the same score at once. Modifying the score, its parts, measures or notes
-     * while a search runs is not safe.
+     *          **Transposition.** For a match only, transposeSemitones and transposeInterval
+     *          relate the pattern's first sounding note to the window's; an interval without a
+     *          name (an augmented ninth C4 -> Cx5, any quarter-tone interval) leaves
+     *          transposeInterval empty and never stops the search.
+     * @note Each call builds the melodic lines from the score as it is. The search reads the
+     *       score and writes nothing another thread shares, so any number of threads may search
+     *       the same score at once. Modifying the score, its parts, measures or notes while a
+     *       search runs is not safe.
      */
     MelodyPatternTable findMelodyPattern(
-        const std::vector<Note>& melodyPattern, const float totalIntervalsSimilarityThreshold = 0.5,
-        const float totalRhythmSimilarityThreshold = 0.5,
+        const std::vector<Note>& melodyPattern, const float intervalSimilarityThreshold = 0.5,
+        const float rhythmSimilarityThreshold = 0.5,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
             intervalsSimilarityCallback = nullptr,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
@@ -637,29 +667,28 @@ class Score {
         const std::function<float(float, float)> totalSimilarityCallback = nullptr) const;
 
     /**
-     * @brief Searches for multiple melodic patterns in the score, returning a table for each
+     * @brief Searches the score for several melodic patterns, returning a table for each
      * pattern.
-     * @details Allows parallel analysis of several patterns, useful for comparative research.
-     * @param melodyPatterns Vector of melodic patterns.
-     * @param totalIntervalsSimilarityThreshold Minimum interval similarity threshold.
-     * @param totalRhythmSimilarityThreshold Minimum rhythm similarity threshold.
-     * @param intervalsSimilarityCallback Custom function to calculate interval similarity.
-     * @param rhythmSimilarityCallback Custom function to calculate rhythm similarity.
-     * @param totalIntervalSimilarityCallback Function to aggregate interval similarity.
-     * @param totalRhythmSimilarityCallback Function to aggregate rhythm similarity.
-     * @param totalSimilarityCallback Function to combine total similarities.
-     * @return Vector of result tables, one for each pattern.
+     * @details Builds the melodic lines once and searches each pattern on a worker thread, as
+     *          the single-pattern overload searches it.
+     * @param melodyPatterns The patterns.
+     * @param intervalSimilarityThreshold Minimum interval similarity of a match.
+     * @param rhythmSimilarityThreshold Minimum rhythm similarity of a match.
+     * @param intervalsSimilarityCallback See the single-pattern overload.
+     * @param rhythmSimilarityCallback See the single-pattern overload.
+     * @param totalIntervalSimilarityCallback See the single-pattern overload.
+     * @param totalRhythmSimilarityCallback See the single-pattern overload.
+     * @param totalSimilarityCallback See the single-pattern overload.
+     * @return One table per pattern, in pattern order.
      * @throws std::runtime_error Or std::bad_function_call, as the single-pattern overload throws
      *         them, for any pattern: the first such exception, in pattern order, is rethrown once
      *         every pattern has been searched.
-     * @note Each pattern is searched on a worker thread by the single-pattern overload, which only
-     * reads the score, so any number of threads may search the same score at once. Modifying the
-     * score, its parts, measures or notes while a search runs is not safe.
+     * @note Any number of threads may search the same score at once. Modifying the score, its
+     * parts, measures or notes while a search runs is not safe.
      */
     std::vector<MelodyPatternTable> findMelodyPattern(
         const std::vector<std::vector<Note>>& melodyPatterns,
-        const float totalIntervalsSimilarityThreshold = 0.5,
-        const float totalRhythmSimilarityThreshold = 0.5,
+        const float intervalSimilarityThreshold = 0.5, const float rhythmSimilarityThreshold = 0.5,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
             intervalsSimilarityCallback = nullptr,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>

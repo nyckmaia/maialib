@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <vector>
 
 #include "maiacore/note.h"
@@ -47,5 +48,16 @@ struct MelodicLine {
  * @return The lines; a line has at least one event.
  */
 std::vector<MelodicLine> melodicLines(const std::vector<Part>& parts);
+
+/**
+ * @brief Rejects a melody pattern of fewer than 2 notes: a melodic interval needs two. Every
+ *        melody search makes this check, naming itself.
+ * @param method The searching method, which the message names first
+ *        ("Score::findMelodyPattern").
+ * @param numNotes The pattern's number of notes.
+ * @throws std::runtime_error If numNotes is less than 2: "<method>: a melody pattern needs at
+ *         least 2 notes, and this one has <numNotes>".
+ */
+void requireTwoNotes(const std::string& method, size_t numNotes);
 
 }  // namespace maiacore::detail

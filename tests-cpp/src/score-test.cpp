@@ -3,6 +3,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdio>
 #include <filesystem>
 #include <fstream>
@@ -1034,64 +1035,162 @@ TEST(ScoreQuarterToneRoundTrip, AQuarterToneScoreWrittenByMaialibReadsBackUnchan
 // ====================
 
 namespace {
-// The rejection of a segment that starts on a quarter tone, naming the note and where it is.
-std::string segmentRejection(const std::string& partName, const std::string& quarterTone,
-                             const int measureId, const int staveId) {
-    return "[maiacore] Melody-pattern search does not support quarter tones: a segment of part '" +
-           partName + "' starts on the quarter tone " + quarterTone + " at measureId " +
-           std::to_string(measureId) + ", staveId " + std::to_string(staveId) +
-           ", so its transposition from the pattern has no interval name (interval names are "
-           "defined only over twelve-tone equal temperament). Round the score's quarter tones to "
-           "the nearest semitone first, e.g. by calling Note::roundToSemitone() on every note "
-           "through Score::forEachNote(), then repeat the search.";
+// The written pitches of a table's matches, one list per row.
+std::vector<std::vector<std::string>> writtenPitchesOf(const Score::MelodyPatternTable& table) {
+    std::vector<std::vector<std::string>> pitches;
+    for (const Score::MelodyPatternRow& row : table) {
+        pitches.push_back(row.writtenPitches);
+    }
+    return pitches;
+}
+
+// The (measure, staff, voice) of a table's matches, one per row.
+std::vector<std::tuple<int, int, int>> placesOf(const Score::MelodyPatternTable& table) {
+    std::vector<std::tuple<int, int, int>> places;
+    for (const Score::MelodyPatternRow& row : table) {
+        places.emplace_back(row.measure, row.staff, row.voice);
+    }
+    return places;
+}
+
+// Notes of the given pitches, each a quarter note.
+std::vector<Note> quarters(const std::vector<std::string>& pitches) {
+    std::vector<Note> notes;
+    for (const std::string& pitch : pitches) {
+        notes.emplace_back(pitch);
+    }
+    return notes;
 }
 }  // namespace
 
-// The list overload searches each pattern on a worker thread. A pattern whose search raises -- here
-// at the first segment that starts on a quarter tone, whose transposition has no interval name --
-// fails the whole call with that error, exactly as the single-pattern overload does, instead of
-// leaving an empty table behind. The error names the note and where it is in the score.
-TEST(ScoreMelodyPatternSearch, AFailingPatternFailsTheListOverloadToo) {
-    Score score("./test/xml_examples/unit_test/test_quarter_tones.musicxml");
-    const std::vector<std::vector<Note>> patterns = {{Note("C4"), Note("D4")}};
+// A melodic interval needs two notes: a shorter pattern is rejected, naming the method and the
+// length, also when it is empty.
+TEST(ScoreMelodyPatternSearch, APatternOfFewerThanTwoNotesIsRejected) {
+    Score score("./test/xml_examples/unit_test/melody_last_window.musicxml");
 
-    const std::string single = thrownFirstLine([&] { score.findMelodyPattern(patterns[0]); });
-    ASSERT_EQ(single, segmentRejection("Piano", "C1x4", 0, 0));
+    EXPECT_EQ(thrownFirstLine([&] { score.findMelodyPattern(quarters({"C4"})); }),
+              "[maiacore] Score::findMelodyPattern: a melody pattern needs at least 2 notes, and "
+              "this one has 1");
+    EXPECT_EQ(thrownFirstLine([&] { score.findMelodyPattern(std::vector<Note>{}); }),
+              "[maiacore] Score::findMelodyPattern: a melody pattern needs at least 2 notes, and "
+              "this one has 0");
+}
+
+// The list overload searches each pattern on a worker thread. A pattern whose search raises fails
+// the whole call with that error, exactly as the single-pattern overload does, instead of leaving
+// an empty table behind.
+TEST(ScoreMelodyPatternSearch, AFailingPatternFailsTheListOverloadToo) {
+    Score score("./test/xml_examples/unit_test/melody_last_window.musicxml");
+    const std::vector<std::vector<Note>> patterns = {quarters({"C4", "D4"}), quarters({"C4"})};
+
+    const std::string single = thrownFirstLine([&] { score.findMelodyPattern(patterns[1]); });
+    ASSERT_FALSE(single.empty());
 
     const std::string list = thrownFirstLine([&] { score.findMelodyPattern(patterns); });
     EXPECT_EQ(list, single);
 }
 
-// The note named is the segment's first sounding note, wherever the segment itself starts: the
-// segment [rest, C1x4] starts in measure 0, and its quarter tone is in measure 1.
-TEST(ScoreMelodyPatternSearch, AQuarterToneAfterARestIsLocatedWhereItIs) {
-    Score score({"Flute"}, 2);
-    Measure& first = score.getPart(0).getMeasure(0);
-    first.addNote(Note("C4"));
-    first.addNote(Note("rest"));
-    Measure& second = score.getPart(0).getMeasure(1);
-    second.addNote(Note("C1x4"));
-    second.addNote(Note("D4"));
-    second.addNote(Note("E4"));
+// The last window of a line is searched: E4 G4 is the end of C4 D4 E4 G4, and C4 D4 E4 G4 is the
+// whole line.
+TEST(ScoreMelodyPatternSearch, TheLastWindowIsSearched) {
+    Score score("./test/xml_examples/unit_test/melody_last_window.musicxml");
 
-    const std::string message = thrownFirstLine(
-        [&] { score.findMelodyPattern(std::vector<Note>{Note("C4"), Note("D4")}); });
-    EXPECT_EQ(message, segmentRejection(score.getPartName(0), "C1x4", 1, 0));
+    EXPECT_EQ(writtenPitchesOf(score.findMelodyPattern(quarters({"E4", "G4"}), 1.0f, 1.0f)),
+              (std::vector<std::vector<std::string>>{{"E4", "G4"}}));
+    EXPECT_EQ(
+        writtenPitchesOf(score.findMelodyPattern(quarters({"C4", "D4", "E4", "G4"}), 1.0f, 1.0f)),
+        (std::vector<std::vector<std::string>>{{"C4", "D4", "E4", "G4"}}));
 }
 
-// A pattern that starts on a quarter tone has no named transposition to any segment. The caller
-// holds the pattern's notes, so the remedy is to round that note.
-TEST(ScoreMelodyPatternSearch, APatternStartingOnAQuarterToneIsRejectedByName) {
-    Score score("./test/xml_examples/Bach/cello_suite_1_violin.xml");
+// Every voice of every staff is a line, the lower staff's voice 5 included, and no window spans
+// two lines. The matches are sorted by measure; the two of measure 0 keep the order of their
+// lines (staff 0 before staff 1).
+TEST(ScoreMelodyPatternSearch, EveryVoiceOfEveryStaffIsSearched) {
+    Score score("./test/xml_examples/unit_test/melody_staves_and_voices.musicxml");
+    const auto table = score.findMelodyPattern(quarters({"C4", "D4", "E4", "F4"}), 1.0f, 1.0f);
 
-    const std::string message = thrownFirstLine(
-        [&] { score.findMelodyPattern(std::vector<Note>{Note("G1x2"), Note("D3"), Note("B3")}); });
-    EXPECT_EQ(message,
-              "[maiacore] Melody-pattern search does not support quarter tones: the melody pattern "
-              "starts on the quarter tone G1x2, so its transposition to a segment of the score has "
-              "no interval name (interval names are defined only over twelve-tone equal "
-              "temperament). Round it to the nearest semitone with Note::roundToSemitone(), then "
-              "repeat the search.");
+    EXPECT_EQ(placesOf(table),
+              (std::vector<std::tuple<int, int, int>>{{0, 0, 1}, {0, 1, 5}, {1, 1, 5}}));
+    EXPECT_EQ(writtenPitchesOf(table),
+              (std::vector<std::vector<std::string>>{
+                  {"G5", "A5", "B5", "C6"}, {"C3", "D3", "E3", "F3"}, {"G3", "A3", "B3", "C4"}}));
+}
+
+// Rows are sorted by measure; rows of one measure keep the order of their lines. E4-F4 rises a
+// semitone: in staff 0 voice 1 from E5 (measure 0) and B5 (measure 1), in staff 1 voice 5 from E3
+// (measure 0) and B3 (measure 1).
+TEST(ScoreMelodyPatternSearch, RowsAreSortedByMeasureThenLine) {
+    Score score("./test/xml_examples/unit_test/melody_staves_and_voices.musicxml");
+    const auto table = score.findMelodyPattern(quarters({"E4", "F4"}), 1.0f, 1.0f);
+
+    EXPECT_EQ(placesOf(table),
+              (std::vector<std::tuple<int, int, int>>{{0, 0, 1}, {0, 1, 5}, {1, 0, 1}, {1, 1, 5}}));
+}
+
+// A chord is one event, represented by its highest sounding note whatever order its notes are
+// written in; a grace note is no event.
+TEST(ScoreMelodyPatternSearch, AChordIsSearchedByItsHighestNote) {
+    Score score("./test/xml_examples/unit_test/melody_chord_top_note.musicxml");
+    const auto table = score.findMelodyPattern(quarters({"G4", "D5", "B4"}), 1.0f, 1.0f);
+
+    EXPECT_EQ(writtenPitchesOf(table), (std::vector<std::vector<std::string>>{{"G4", "D5", "B4"}}));
+}
+
+// A tied note is one event with the summed duration, in the measure where it starts: the window
+// D4 E4 F4 has the rhythm quarter, dotted half, quarter.
+TEST(ScoreMelodyPatternSearch, ATiedNoteIsOneEvent) {
+    Score score("./test/xml_examples/unit_test/melody_tie_across_barline.musicxml");
+    std::vector<Note> pattern = quarters({"D4", "E4", "F4"});
+    pattern[1].setDuration(3.0f);
+
+    const auto table = score.findMelodyPattern(pattern, 1.0f, 1.0f);
+    ASSERT_EQ(table.size(), 1u);
+    EXPECT_EQ(table[0].measure, 0);
+    EXPECT_EQ(table[0].writtenPitches, (std::vector<std::string>{"D4", "E4", "F4"}));
+    EXPECT_EQ(table[0].rhythmDiff, (std::vector<float>{0.0f, 0.0f, 0.0f}));
+}
+
+// A transposition without a name -- C4 to Cx5, an augmented ninth, or to the quarter tone C1x4
+// -- leaves transposeInterval empty and the search goes on; transposeSemitones holds the exact
+// interval.
+TEST(ScoreMelodyPatternSearch, ATranspositionWithoutANameLeavesItEmpty) {
+    Score score("./test/xml_examples/unit_test/melody_unnameable_transposition.musicxml");
+    const auto table = score.findMelodyPattern(quarters({"C4", "D4", "E4"}), 1.0f, 1.0f);
+
+    ASSERT_EQ(table.size(), 2u);
+    EXPECT_EQ(table[0].writtenPitches, (std::vector<std::string>{"Cx5", "Dx5", "Ex5"}));
+    EXPECT_EQ(table[0].transposeInterval, "");
+    EXPECT_FLOAT_EQ(table[0].transposeSemitones, 14.0f);
+    EXPECT_EQ(table[1].writtenPitches, (std::vector<std::string>{"C1x4", "D1x4", "E1x4"}));
+    EXPECT_EQ(table[1].transposeInterval, "");
+    EXPECT_FLOAT_EQ(table[1].transposeSemitones, 0.5f);
+}
+
+// A pattern that starts on a quarter tone is searched like any other: its interval contour is
+// compared exactly, and no transposition from it has a name.
+TEST(ScoreMelodyPatternSearch, APatternStartingOnAQuarterToneIsSearched) {
+    Score score("./test/xml_examples/unit_test/melody_unnameable_transposition.musicxml");
+    const auto table = score.findMelodyPattern(quarters({"C1x4", "D1x4"}), 1.0f, 1.0f);
+
+    EXPECT_EQ(writtenPitchesOf(table),
+              (std::vector<std::vector<std::string>>{
+                  {"Cx5", "Dx5"}, {"Dx5", "Ex5"}, {"C1x4", "D1x4"}, {"D1x4", "E1x4"}}));
+    for (const Score::MelodyPatternRow& row : table) {
+        EXPECT_EQ(row.transposeInterval, "");
+    }
+    EXPECT_FLOAT_EQ(table[2].transposeSemitones, 0.0f);
+}
+
+// A pattern or a window without a sounding note has no transposition: NaN, and no name.
+TEST(ScoreMelodyPatternSearch, AWindowOfRestsHasNoTransposition) {
+    Score score({"Flute"}, 1);
+    score.getPart(0).getMeasure(0).addNote(quarters({"rest", "rest"}));
+
+    const auto table = score.findMelodyPattern(quarters({"rest", "rest"}), 1.0f, 1.0f);
+    ASSERT_EQ(table.size(), 1u);
+    EXPECT_EQ(table[0].writtenPitches, (std::vector<std::string>{"rest", "rest"}));
+    EXPECT_EQ(table[0].transposeInterval, "");
+    EXPECT_TRUE(std::isnan(table[0].transposeSemitones));
 }
 
 namespace {
@@ -1201,10 +1300,9 @@ TEST(ScoreMelodyPatternSearch, PatternsAQuarterToneApartAreNotMergedAsDuplicates
     EXPECT_EQ(tables.size(), 3u);  // C4-D4, D4-C4 and C4-D1b4
 }
 
-// Only each part's first-voice melody is searched -- chords and other voices are skipped -- so a
-// pattern can be longer than every melody without being longer than the score. No window of a
-// melody fits it, and neither overload finds a match.
-TEST(ScoreMelodyPatternSearch, APatternLongerThanEveryMelodyFindsNoMatch) {
+// A pattern longer than every line finds nothing, however many notes the score has: here voice 1
+// has one event and voice 2 two, in a score of three notes.
+TEST(ScoreMelodyPatternSearch, APatternLongerThanEveryLineFindsNoMatch) {
     Score score({"Flute"}, 1);
     Measure& measure = score.getPart(0).getMeasure(0);
     measure.addNote(Note("C4"));
@@ -1213,19 +1311,35 @@ TEST(ScoreMelodyPatternSearch, APatternLongerThanEveryMelodyFindsNoMatch) {
         secondVoice.setVoice(2);
         measure.addNote(secondVoice);
     }
-    const std::vector<Note> pattern = {Note("C4"), Note("D4")};
+    const std::vector<Note> pattern = quarters({"C4", "D4", "E4"});
     ASSERT_EQ(score.getNumNotes(), 3);
 
     EXPECT_TRUE(score.findMelodyPattern(pattern).empty());
     const auto tables = score.findMelodyPattern(std::vector<std::vector<Note>>{pattern});
     ASSERT_EQ(tables.size(), 1u);
     EXPECT_TRUE(tables[0].empty());
+    EXPECT_TRUE(score.findAnyMelodyPattern(3).empty());
+}
+
+// A part with more measures than the first part: the concert key, computed for the first part's
+// measures, is empty beyond them, and the search goes on.
+TEST(ScoreMelodyPatternSearch, AMeasureBeyondTheFirstPartHasNoConcertKey) {
+    Score score({"Flute", "Oboe"}, 1);
+    score.getPart(1).addMeasure(1);
+    score.getPart(1).getMeasure(1).addNote(quarters({"C4", "D4"}));
+
+    const auto table = score.findMelodyPattern(quarters({"C4", "D4"}), 1.0f, 1.0f);
+    ASSERT_EQ(table.size(), 1u);
+    EXPECT_EQ(std::make_tuple(table[0].partName, table[0].measure),
+              std::make_tuple(score.getPartName(1), 1));
+    EXPECT_EQ(table[0].writtenKey, "C");
+    EXPECT_EQ(table[0].concertKey, "");
 }
 
 // ===== Parts of transposing instruments ===== //
 
-// A horn in F's written B4, C#5 and D#5 sound E4, F#4 and G#4, the pattern itself: the segment is
-// the pattern at a unison. The segment's pitches are listed as its part writes them.
+// A horn in F's written B4, C#5 and D#5 sound E4, F#4 and G#4, the pattern itself: the window is
+// the pattern at a unison, named "P1" without a trailing space.
 TEST(ScoreMelodyPatternSearch, ATransposingPartIsComparedByThePitchesItSounds) {
     Score score({"Horn in F"}, 1);
     Measure& measure = score.getPart(0).getMeasure(0);
@@ -1233,12 +1347,33 @@ TEST(ScoreMelodyPatternSearch, ATransposingPartIsComparedByThePitchesItSounds) {
         measure.addNote(hornInF(written));
     }
 
-    const auto table = score.findMelodyPattern(
-        std::vector<Note>{Note("E4"), Note("F#4"), Note("G#4")}, 1.0f, 1.0f);
+    const auto table = score.findMelodyPattern(quarters({"E4", "F#4", "G#4"}), 1.0f, 1.0f);
     ASSERT_EQ(table.size(), 1u);
-    EXPECT_EQ(std::get<4>(table[0]), "P1 ");  // the transposition from the pattern: a unison
-    EXPECT_EQ(std::get<5>(table[0]), (std::vector<std::string>{"B4", "C#5", "D#5"}));
-    EXPECT_FLOAT_EQ(std::get<10>(table[0]), 1.0f);
+    EXPECT_EQ(table[0].transposeInterval, "P1");
+    EXPECT_FLOAT_EQ(table[0].transposeSemitones, 0.0f);
+    EXPECT_EQ(table[0].writtenPitches, (std::vector<std::string>{"B4", "C#5", "D#5"}));
+    EXPECT_EQ(table[0].soundingPitches, (std::vector<std::string>{"E4", "F#4", "G#4"}));
+    EXPECT_FLOAT_EQ(table[0].totalSimilarity, 1.0f);
+}
+
+// A clarinet in B-flat's part: its written key and pitches, the pitches it sounds and the
+// score's concert key, which the violin's C major gives.
+TEST(ScoreMelodyPatternSearch, AMatchReportsTheWrittenAndTheConcertKey) {
+    Score score("./test/xml_examples/unit_test/melody_transposing_instrument.musicxml");
+    const auto table = score.findMelodyPattern(quarters({"C4", "D4", "E4"}), 1.0f, 1.0f);
+
+    ASSERT_EQ(table.size(), 1u);
+    const Score::MelodyPatternRow& row = table[0];
+    EXPECT_EQ(row.partName, "Clarinet in Bb");
+    EXPECT_EQ(std::make_tuple(row.measure, row.staff, row.voice), std::make_tuple(0, 0, 1));
+    EXPECT_EQ(row.writtenKey, "D");
+    EXPECT_EQ(row.concertKey, "C");
+    EXPECT_EQ(row.transposeInterval, "P1");
+    EXPECT_EQ(row.writtenPitches, (std::vector<std::string>{"D4", "E4", "F#4"}));
+    EXPECT_EQ(row.soundingPitches, (std::vector<std::string>{"C4", "D4", "E4"}));
+    EXPECT_EQ(row.semitonesDiff, (std::vector<float>{0.0f, 0.0f}));
+    EXPECT_FLOAT_EQ(row.intervalSimilarity, 1.0f);
+    EXPECT_FLOAT_EQ(row.rhythmSimilarity, 1.0f);
 }
 
 // A score's chords are named by the pitches its parts sound: a horn in F's written B4 sounds E4,

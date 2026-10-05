@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <exception>
 #include <filesystem>  // Para std::filesystem::absolute
+#include <functional>
 #include <future>
 #include <iostream>
 #include <limits>  // std::numeric_limits
@@ -13,6 +14,7 @@
 #include <optional>
 #include <set>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <tuple>
@@ -24,11 +26,15 @@
 #include "maiacore/helper.h"
 #include "maiacore/log.h"
 #include "maiacore/utils.h"
+#include "melodic-lines.h"
 #include "miniz-cpp/zip_file.hpp"
 #include "nlohmann/json.hpp"
 #include "pitch-views.h"
 
 using maiacore::detail::concertPitch;
+using maiacore::detail::MelodicLine;
+using maiacore::detail::melodicLines;
+using maiacore::detail::requireTwoNotes;
 
 namespace {
 // The value of a MusicXML <alter> element, if its text is one of the nine alters this library can
@@ -52,38 +58,6 @@ std::optional<float> spellableAlterValue(const std::string& text) {
         return std::nullopt;
     }
     return static_cast<float>(value);
-}
-
-// Rejects a melody-pattern search whose pattern, or whose segment of the score, starts on a quarter
-// tone. The search names each segment's transposition from the pattern with an Interval between
-// their first sounding notes, and interval names are defined only over twelve-tone equal
-// temperament, so such a transposition has none. The Interval would reject it too, but its message
-// names Note::roundToSemitone() on a note a Score caller never held; this names the note and where
-// it is. 'partName', 'measureIdx' and 'staveIdx' locate the segment's first sounding note, as the
-// search results locate a match.
-void rejectQuarterToneTransposition(const Note& patternFirstNote, const Note& segmentFirstNote,
-                                    const std::string& partName, const int measureIdx,
-                                    const int staveIdx) {
-    if (patternFirstNote.isQuarterTone()) {
-        LOG_ERROR(
-            "Melody-pattern search does not support quarter tones: the melody pattern starts "
-            "on the quarter tone " +
-            patternFirstNote.getWrittenPitch() +
-            ", so its transposition to a segment of the score has no interval name "
-            "(interval names are defined only over twelve-tone equal temperament). Round it "
-            "to the nearest semitone with Note::roundToSemitone(), then repeat the search.");
-    }
-
-    if (segmentFirstNote.isQuarterTone()) {
-        LOG_ERROR("Melody-pattern search does not support quarter tones: a segment of part '" +
-                  partName + "' starts on the quarter tone " + segmentFirstNote.getWrittenPitch() +
-                  " at measureId " + std::to_string(measureIdx) + ", staveId " +
-                  std::to_string(staveIdx) +
-                  ", so its transposition from the pattern has no interval name (interval names "
-                  "are defined only over twelve-tone equal temperament). Round the score's quarter "
-                  "tones to the nearest semitone first, e.g. by calling Note::roundToSemitone() on "
-                  "every note through Score::forEachNote(), then repeat the search.");
-    }
 }
 
 // A transposing interval -- <octave-change> folded in -- and an octave doubling, as a
@@ -2114,216 +2088,163 @@ std::vector<std::vector<Score::NoteEvent>> Score::collectNoteEventsPerPart() con
     return _cachedNoteEventsPerPart;
 }
 
-Score::MelodyPatternTable Score::findMelodyPattern(
-    const std::vector<Note>& melodyPattern, const float totalIntervalsSimilarityThreshold,
-    const float totalRhythmSimilarityThreshold,
-    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
-        intervalsSimilarityCallback,
-    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
-        rhythmSimilarityCallback,
-    const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
-    const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
-    const std::function<float(float, float)> totalSimilarityCallback) const {
-    const int totalNumNotes = getNumNotes();
-    const int melodyPatternSize = melodyPattern.size();
+namespace {
+// The callbacks of a melody search, passed on unchanged to every pattern it searches.
+struct MelodySearchCallbacks {
+    std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)> intervals;
+    std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)> rhythm;
+    std::function<float(const std::vector<float>&)> totalIntervals;
+    std::function<float(const std::vector<float>&)> totalRhythm;
+    std::function<float(float, float)> total;
+};
 
-    if (melodyPatternSize > totalNumNotes) {
-        LOG_ERROR("The melody pattern is bigger than the score");
-    }
+// What every melody search reads: the parts, their melodic lines and the concert key of each
+// measure, built once per call.
+struct MelodySearchInput {
+    const std::vector<Part>& parts;
+    std::vector<MelodicLine> lines;
+    std::vector<Key> concertKeys;
+};
 
-    MelodyPatternTable resultTable;
-
-    // Error checking: empty pattern
-    if (melodyPatternSize == 0) {
-        return resultTable;
-    }
-
-    // The search reads the score and writes nothing but its own locals, so any number of threads
-    // may search one score at once. Each window of a part's melody gives at most one row, so there
-    // are at most as many rows as the score has notes beyond the pattern's length -- never
-    // negative, as checked above.
-    resultTable.reserve(static_cast<size_t>(totalNumNotes - melodyPatternSize));
-
-    // ===== STEP 1: COLETAR TODAS AS NOTAS DA PARTITURA ===== //
-    for (int partIdx = 0; partIdx < getNumParts(); partIdx++) {
-        std::vector<NoteEvent> noteEvents;
-        const int NUM_NOTES_PER_MEASURE = 16;
-        noteEvents.reserve(_part[partIdx].getNumMeasures() * NUM_NOTES_PER_MEASURE);
-
-        const Part& currentPart = _part[partIdx];
-        const std::string& currentPartName = currentPart.getName();
-        for (int measureIdx = 0; measureIdx < currentPart.getNumMeasures(); measureIdx++) {
-            const Measure& currentMeasure = currentPart.getMeasure(measureIdx);
-            const int numStaves = currentMeasure.getNumStaves();
-            for (int staveIdx = 0; staveIdx < numStaves; staveIdx++) {
-                const int numNotes = currentMeasure.getNumNotes(staveIdx);
-                for (int noteIdx = 0; noteIdx < numNotes; noteIdx++) {
-                    const Note& currentNote = currentMeasure.getNote(noteIdx, staveIdx);
-
-                    // Skip all chords and multiple voices! To fix in the future
-                    // Get only the top melody of each instrument/stave
-                    if (currentNote.inChord() || currentNote.getVoice() != 1) {
-                        continue;
-                    }
-                    const std::string& currentKeyName = currentMeasure.getKey().getName();
-                    // Armazena o evento da nota em memória
-                    noteEvents.push_back({currentPartName, measureIdx, staveIdx, noteIdx,
-                                          currentKeyName, &currentNote});
-                }
-            }
-        }
-
-        const int patternMaxIterations = noteEvents.size() - melodyPatternSize;
-        for (int i = 0; i < patternMaxIterations; i++) {
-            // Extrai o segmento para comparação com o padrão
-            std::vector<Note> segment;
-            segment.reserve(melodyPatternSize);
-            for (int offset = 0; offset < melodyPatternSize; offset++) {
-                const Note& note = *noteEvents[i + offset].notePtr;
-                segment.push_back(note);
-            }
-
-            // ==== COMPUTE THE TRANSPOSE SEMITONES ===== //
-            const Note* patternFirstNoteOn = nullptr;
-            bool melodyContainANoteOn = false;
-            for (int i = 0; i < melodyPatternSize; i++) {
-                if (melodyPattern[i].isNoteOff()) {
-                    continue;
-                }
-
-                melodyContainANoteOn = true;
-                patternFirstNoteOn = &melodyPattern[i];
-                break;
-            }
-
-            const Note* segmentFirstNoteOn = nullptr;
-            int segmentFirstNoteOnOffset = 0;
-            bool segmentContainANoteOn = false;
-            for (int i = 0; i < melodyPatternSize; i++) {
-                if (segment[i].isNoteOff()) {
-                    continue;
-                }
-
-                segmentContainANoteOn = true;
-                segmentFirstNoteOn = &segment[i];
-                segmentFirstNoteOnOffset = i;
-                break;
-            }
-
-            // const int patternFirstNoteMidi = patternFirstNoteOn->getMidiNumber();
-            // const int segmentFirstNoteMidi = segmentFirstNoteOn->getMidiNumber();
-            // const int transposeSemitones = segmentFirstNoteMidi - patternFirstNoteMidi;
-
-            std::string intervalName;
-            if (melodyContainANoteOn && segmentContainANoteOn) {
-                const NoteEvent& segmentFirstEvent = noteEvents[i + segmentFirstNoteOnOffset];
-                rejectQuarterToneTransposition(*patternFirstNoteOn, *segmentFirstNoteOn,
-                                               currentPartName, segmentFirstEvent.measureIdx,
-                                               segmentFirstEvent.staveIdx);
-
-                // The Interval relates the two notes by their concert spellings, so a segment of a
-                // transposing part is transposed from the pattern by the pitches it sounds.
-                const Interval transposeInterval(*patternFirstNoteOn, *segmentFirstNoteOn);
-                intervalName = transposeInterval.getName() + " " + transposeInterval.getDirection();
-            }
-
-            const std::vector<float> semitonesDiff =
-                (intervalsSimilarityCallback == nullptr)
-                    ? Helper::getSemitonesDifferenceBetweenMelodies(melodyPattern, segment)
-                    : intervalsSimilarityCallback(melodyPattern, segment);
-
-            const std::vector<float> durationDiff =
-                (rhythmSimilarityCallback == nullptr)
-                    ? Helper::getDurationDifferenceBetweenRhythms(melodyPattern, segment)
-                    : rhythmSimilarityCallback(melodyPattern, segment);
-
-            // Calcula as similaridades
-            float totalIntervalSimilarity = -1.0f;
-            float totalRhythmSimilarity = -1.0f;
-            if (intervalsSimilarityCallback == nullptr) {
-                totalIntervalSimilarity = Helper::calculateMelodyEuclideanSimilarity(semitonesDiff);
-            } else {
-                totalIntervalSimilarity = totalIntervalSimilarityCallback(semitonesDiff);
-            }
-
-            if (rhythmSimilarityCallback == nullptr) {
-                totalRhythmSimilarity = Helper::calculateRhythmicEuclideanSimilarity(durationDiff);
-            } else {
-                totalRhythmSimilarity = totalRhythmSimilarityCallback(durationDiff);
-            }
-
-            // Verifica se as similaridades estão acima dos limites
-            if (totalIntervalSimilarity < totalIntervalsSimilarityThreshold ||
-                totalRhythmSimilarity < totalRhythmSimilarityThreshold) {
-                continue;
-            }
-            // Calcula a similaridade total usando o callback personalizado
-            float totalSimilarity = -1.0f;
-            if (totalSimilarityCallback == nullptr) {
-                totalSimilarity = (totalIntervalSimilarity + totalRhythmSimilarity) / 2.0f;
-            } else {
-                totalSimilarity =
-                    totalSimilarityCallback(totalIntervalSimilarity, totalRhythmSimilarity);
-            }
-
-            std::vector<std::string> segmentPitchList(segment.size());
-            for (int p = 0; p < (int)segment.size(); p++) {
-                segmentPitchList[p] = segment[p].getWrittenPitch();
-            }
-
-            // Armazena o resultado
-            MelodyPatternRow row(currentPartName,
-                                 noteEvents[i].measureIdx,  // Número do compasso
-                                 noteEvents[i].staveIdx,    // ID da clave
-                                 noteEvents[i].keyName,     // Tonalidade do compasso
-                                 intervalName,              // Intervalo de transposição
-                                 segmentPitchList,          // Lista de pitchs do segmento
-                                 semitonesDiff,  // Lista de diferenças intervalares em semitons
-                                 durationDiff,   // Lista de similaridade rítmica
-                                 totalIntervalSimilarity,  // Similaridade intervalar total
-                                 totalRhythmSimilarity,    // Similaridade rítmica total
-                                 totalSimilarity           // Similaridade total
-            );
-
-            resultTable.push_back(row);
+// The first note of 'notes' that is not a rest; nullptr when every one is a rest.
+const Note* firstSoundingNote(const std::vector<Note>& notes) {
+    for (const Note& note : notes) {
+        if (note.isNoteOn()) {
+            return &note;
         }
     }
-
-    return resultTable;
+    return nullptr;
 }
 
-std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
-    const std::vector<std::vector<Note>>& melodyPatterns,
-    const float totalIntervalsSimilarityThreshold, const float totalRhythmSimilarityThreshold,
-    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
-        intervalsSimilarityCallback,
-    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
-        rhythmSimilarityCallback,
-    const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
-    const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
-    const std::function<float(float, float)> totalSimilarityCallback) const {
-    const size_t numPatterns = melodyPatterns.size();
-    std::vector<Score::MelodyPatternTable> results(numPatterns);
+// The transposition from a pattern to a window that matches it: the interval from the pattern's
+// first sounding note to the window's, in exact semitones, and its name at concert spelling with
+// its direction ("M2 asc", "P1"). NaN and no name when either has no sounding note; no name when
+// the interval has none, which Interval reports by throwing (an augmented ninth C4 -> Cx5) and
+// cannot build for a quarter tone, which is checked first.
+std::pair<std::string, float> transposition(const std::vector<Note>& pattern,
+                                            const std::vector<Note>& window) {
+    const Note* from = firstSoundingNote(pattern);
+    const Note* to = firstSoundingNote(window);
+    if (from == nullptr || to == nullptr) {
+        return {std::string(), std::numeric_limits<float>::quiet_NaN()};
+    }
+    const float semitones = to->getQuarterToneSteps() - from->getQuarterToneSteps();
+    if (from->isQuarterTone() || to->isQuarterTone()) {
+        return {std::string(), semitones};
+    }
+    try {
+        const Interval interval(*from, *to);
+        const std::string name = interval.getName();
+        const std::string direction = interval.getDirection();
+        return {direction.empty() ? name : name + " " + direction, semitones};
+    } catch (const std::runtime_error&) {
+        return {std::string(), semitones};
+    }
+}
 
-    // An exception cannot leave a worker thread, so each pattern's search stores the one it
-    // raised in its own slot, and the first of them, in pattern order, is rethrown once every
-    // worker has joined: a failing pattern fails the whole call, as it does for a single pattern,
-    // instead of leaving an empty table behind.
+// Calls 'visit(start, window)' for every window of 'length' consecutive events of 'line', in line
+// order, the last one included: 'window' holds the notes of the events from index 'start' on. A
+// line shorter than 'length' has no window.
+template <typename Visit>
+void forEachWindow(const MelodicLine& line, const size_t length, const Visit& visit) {
+    std::vector<Note> window;
+    window.reserve(length);
+    for (size_t start = 0; start + length <= line.events.size(); start++) {
+        window.clear();
+        for (size_t offset = 0; offset < length; offset++) {
+            window.push_back(line.events[start + offset].note);
+        }
+        visit(start, window);
+    }
+}
+
+// Searches every window of every melodic line for 'pattern'. Rows are appended line by line,
+// window by window, then sorted stably by measure.
+Score::MelodyPatternTable searchMelodicLines(const MelodySearchInput& input,
+                                             const std::vector<Note>& pattern,
+                                             const float intervalSimilarityThreshold,
+                                             const float rhythmSimilarityThreshold,
+                                             const MelodySearchCallbacks& callbacks) {
+    requireTwoNotes("Score::findMelodyPattern", pattern.size());
+    const size_t length = pattern.size();
+    Score::MelodyPatternTable table;
+    for (const MelodicLine& line : input.lines) {
+        const Part& part = input.parts.at(line.partIdx);
+        forEachWindow(line, length, [&](const size_t start, const std::vector<Note>& window) {
+            const std::vector<float> semitonesDiff =
+                (callbacks.intervals == nullptr)
+                    ? Helper::getSemitonesDifferenceBetweenMelodies(pattern, window)
+                    : callbacks.intervals(pattern, window);
+            const std::vector<float> rhythmDiff =
+                (callbacks.rhythm == nullptr)
+                    ? Helper::getDurationDifferenceBetweenRhythms(pattern, window)
+                    : callbacks.rhythm(pattern, window);
+            const float intervalSimilarity =
+                (callbacks.intervals == nullptr)
+                    ? Helper::calculateMelodyEuclideanSimilarity(semitonesDiff)
+                    : callbacks.totalIntervals(semitonesDiff);
+            const float rhythmSimilarity =
+                (callbacks.rhythm == nullptr)
+                    ? Helper::calculateRhythmicEuclideanSimilarity(rhythmDiff)
+                    : callbacks.totalRhythm(rhythmDiff);
+            if (intervalSimilarity < intervalSimilarityThreshold ||
+                rhythmSimilarity < rhythmSimilarityThreshold) {
+                return;
+            }
+
+            Score::MelodyPatternRow row;
+            const int measureIdx = line.events[start].measureIdx;
+            row.partName = part.getName();
+            row.measure = measureIdx;
+            row.staff = line.staff;
+            row.voice = line.voice;
+            row.writtenKey = part.getMeasure(measureIdx).getKey().getName();
+            if (measureIdx < static_cast<int>(input.concertKeys.size())) {
+                row.concertKey = input.concertKeys[measureIdx].getName();
+            }
+            std::tie(row.transposeInterval, row.transposeSemitones) =
+                transposition(pattern, window);
+            for (const Note& note : window) {
+                row.writtenPitches.push_back(note.getWrittenPitch());
+                row.soundingPitches.push_back(note.getSoundingPitch());
+            }
+            row.semitonesDiff = semitonesDiff;
+            row.rhythmDiff = rhythmDiff;
+            row.intervalSimilarity = intervalSimilarity;
+            row.rhythmSimilarity = rhythmSimilarity;
+            row.totalSimilarity = (callbacks.total == nullptr)
+                                      ? (intervalSimilarity + rhythmSimilarity) / 2.0f
+                                      : callbacks.total(intervalSimilarity, rhythmSimilarity);
+            table.push_back(std::move(row));
+        });
+    }
+    std::stable_sort(table.begin(), table.end(),
+                     [](const Score::MelodyPatternRow& a, const Score::MelodyPatternRow& b) {
+                         return a.measure < b.measure;
+                     });
+    return table;
+}
+
+// Searches each pattern on a worker thread. An exception cannot leave a worker thread, so each
+// pattern's search stores the one it raised in its own slot, and the first of them, in pattern
+// order, is rethrown once every worker has joined: a failing pattern fails the whole call, as it
+// does for a single pattern. Each worker takes the next pattern nobody has claimed until none is
+// left, so every pattern is searched however many there are; the thread count only bounds how
+// many run at once. Workers write distinct elements of 'tables' and 'errors' and only read the
+// input, so no lock is needed.
+std::vector<Score::MelodyPatternTable> searchEachPattern(
+    const MelodySearchInput& input, const std::vector<std::vector<Note>>& patterns,
+    const float intervalSimilarityThreshold, const float rhythmSimilarityThreshold,
+    const MelodySearchCallbacks& callbacks) {
+    const size_t numPatterns = patterns.size();
+    std::vector<Score::MelodyPatternTable> tables(numPatterns);
     std::vector<std::exception_ptr> errors(numPatterns);
-
-    // Each worker takes the next pattern nobody has claimed until none is left, so every pattern
-    // is searched however many there are; the thread count only bounds how many run at once.
-    // Workers write distinct elements of 'results' and 'errors', and the single-pattern search
-    // each of them runs only reads the score, so no lock is needed.
     std::atomic<size_t> nextPattern{0};
     auto worker = [&]() {
         for (size_t idx = nextPattern++; idx < numPatterns; idx = nextPattern++) {
             try {
-                results[idx] =
-                    findMelodyPattern(melodyPatterns[idx], totalIntervalsSimilarityThreshold,
-                                      totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
-                                      rhythmSimilarityCallback, totalIntervalSimilarityCallback,
-                                      totalRhythmSimilarityCallback, totalSimilarityCallback);
+                tables[idx] = searchMelodicLines(input, patterns[idx], intervalSimilarityThreshold,
+                                                 rhythmSimilarityThreshold, callbacks);
             } catch (...) {
                 errors[idx] = std::current_exception();
             }
@@ -2347,8 +2268,45 @@ std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
             std::rethrow_exception(error);
         }
     }
+    return tables;
+}
+}  // namespace
 
-    return results;
+Score::MelodyPatternTable Score::findMelodyPattern(
+    const std::vector<Note>& melodyPattern, const float intervalSimilarityThreshold,
+    const float rhythmSimilarityThreshold,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+        intervalsSimilarityCallback,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+        rhythmSimilarityCallback,
+    const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
+    const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
+    const std::function<float(float, float)> totalSimilarityCallback) const {
+    const MelodySearchInput input{_part, melodicLines(_part), concertKeys(_part)};
+    return searchMelodicLines(
+        input, melodyPattern, intervalSimilarityThreshold, rhythmSimilarityThreshold,
+        {intervalsSimilarityCallback, rhythmSimilarityCallback, totalIntervalSimilarityCallback,
+         totalRhythmSimilarityCallback, totalSimilarityCallback});
+}
+
+std::vector<Score::MelodyPatternTable> Score::findMelodyPattern(
+    const std::vector<std::vector<Note>>& melodyPatterns, const float intervalSimilarityThreshold,
+    const float rhythmSimilarityThreshold,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+        intervalsSimilarityCallback,
+    const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>
+        rhythmSimilarityCallback,
+    const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
+    const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
+    const std::function<float(float, float)> totalSimilarityCallback) const {
+    if (melodyPatterns.empty()) {
+        return {};
+    }
+    const MelodySearchInput input{_part, melodicLines(_part), concertKeys(_part)};
+    return searchEachPattern(
+        input, melodyPatterns, intervalSimilarityThreshold, rhythmSimilarityThreshold,
+        {intervalsSimilarityCallback, rhythmSimilarityCallback, totalIntervalSimilarityCallback,
+         totalRhythmSimilarityCallback, totalSimilarityCallback});
 }
 
 void Score::removeDuplicatePatterns(std::vector<std::vector<Note>>* patterns) const {

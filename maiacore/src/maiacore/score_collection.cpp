@@ -118,10 +118,10 @@ ScoreCollection::ExtendedMelodyPatternTable ScoreCollection::findMelodyPattern(
         for (const auto& row : scoreResults) {
             // Constrói diretamente um MelodyPatternRow com o título da partitura
             results.emplace_back(score.getFileName(), score.getComposerName(), score.getTitle(),
-                                 std::get<0>(row), std::get<1>(row), std::get<2>(row),
-                                 std::get<3>(row), std::get<4>(row), std::get<5>(row),
-                                 std::get<6>(row), std::get<7>(row), std::get<8>(row),
-                                 std::get<9>(row), std::get<10>(row));
+                                 row.partName, row.measure, row.staff, row.writtenKey,
+                                 row.transposeInterval, row.writtenPitches, row.semitonesDiff,
+                                 row.rhythmDiff, row.intervalSimilarity, row.rhythmSimilarity,
+                                 row.totalSimilarity);
         }
     }
     return results;
@@ -157,22 +157,11 @@ std::vector<ScoreCollection::ExtendedMultiMelodyPatternTable> ScoreCollection::f
             for (const Score::MelodyPatternRow& row : table) {  // Itera sobre cada linha da tabela
                 // Adiciona uma nova linha ao extendedTable, incluindo o título da partitura no
                 // início
-                extendedTable.emplace_back(patternIdx,
-                                           score.getFileName(),      // Nome do arquivo
-                                           score.getComposerName(),  // Nome do compositor
-                                           score.getTitle(),         // Título da partitura
-                                           std::get<0>(row),         // partName
-                                           std::get<1>(row),         // measureId
-                                           std::get<2>(row),         // staveId
-                                           std::get<3>(row),         // writtenClefKey
-                                           std::get<4>(row),         // transposeInterval
-                                           std::get<5>(row),         // segmentWrittenPitch
-                                           std::get<6>(row),         // semitonesDiff
-                                           std::get<7>(row),         // rhythmDiff
-                                           std::get<8>(row),         // totalIntervalSimilarity
-                                           std::get<9>(row),         // totalRhythmSimilarity
-                                           std::get<10>(row)         // totalSimilarity
-                );
+                extendedTable.emplace_back(
+                    patternIdx, score.getFileName(), score.getComposerName(), score.getTitle(),
+                    row.partName, row.measure, row.staff, row.writtenKey, row.transposeInterval,
+                    row.writtenPitches, row.semitonesDiff, row.rhythmDiff, row.intervalSimilarity,
+                    row.rhythmSimilarity, row.totalSimilarity);
             }
         }
         allResults.push_back(extendedTable);

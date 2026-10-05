@@ -339,44 +339,34 @@ class ScoreMelodyPatternSearchTestCase(unittest.TestCase):
     """findMelodyPatternDataFrame's list overload searches each pattern on a worker thread."""
 
     def test_a_failing_pattern_fails_the_list_overload_too(self):
-        """A segment that starts on a quarter tone has no interval name for its transposition, so
-        the search raises -- through the list overload exactly as through the single-pattern one,
-        instead of answering an empty DataFrame -- naming the note and where it is."""
+        """A pattern of one note has no melodic interval, so its search raises -- through the
+        list overload exactly as through the single-pattern one, instead of answering an empty
+        DataFrame."""
         score = ml.Score("./xml_examples/unit_test/test_quarter_tones.musicxml")
-        pattern = [ml.Note("C4"), ml.Note("D4")]
+        pattern = [ml.Note("C4")]
 
         with self.assertRaises(RuntimeError) as single:
             score.findMelodyPatternDataFrame(pattern)
         with self.assertRaises(RuntimeError) as listed:
-            score.findMelodyPatternDataFrame([pattern])
+            score.findMelodyPatternDataFrame([[ml.Note("C4"), ml.Note("D4")], pattern])
 
         message = str(listed.exception).splitlines()[0]
         self.assertEqual(
             message,
-            "[maiacore] Melody-pattern search does not support quarter tones: a segment of part "
-            "'Piano' starts on the quarter tone C1x4 at measureId 0, staveId 0, so its "
-            "transposition from the pattern has no interval name (interval names are defined "
-            "only over twelve-tone equal temperament). Round the score's quarter tones to the "
-            "nearest semitone first, e.g. by calling Note::roundToSemitone() on every note "
-            "through Score::forEachNote(), then repeat the search.",
+            "[maiacore] Score::findMelodyPattern: a melody pattern needs at least 2 notes, and "
+            "this one has 1",
         )
         self.assertEqual(message, str(single.exception).splitlines()[0])
 
-    def test_a_pattern_starting_on_a_quarter_tone_is_rejected_by_name(self):
-        """The pattern's own first note has no named transposition to any segment either."""
-        score = ml.Score("./xml_examples/Bach/cello_suite_1_violin.xml")
-        pattern = [ml.Note("G1x2"), ml.Note("D3"), ml.Note("B3")]
-
-        with self.assertRaises(RuntimeError) as context:
-            score.findMelodyPatternDataFrame(pattern)
-        self.assertEqual(
-            str(context.exception).splitlines()[0],
-            "[maiacore] Melody-pattern search does not support quarter tones: the melody pattern "
-            "starts on the quarter tone G1x2, so its transposition to a segment of the score has "
-            "no interval name (interval names are defined only over twelve-tone equal "
-            "temperament). Round it to the nearest semitone with Note::roundToSemitone(), then "
-            "repeat the search.",
-        )
+    def test_a_quarter_tone_does_not_stop_the_search(self):
+        """A window that starts on a quarter tone is compared exactly; its transposition has no
+        name."""
+        score = ml.Score("./xml_examples/unit_test/test_quarter_tones.musicxml")
+        table = score.findMelodyPatternDataFrame([ml.Note("C4"), ml.Note("D4")], 0.0, 0.0)
+        starts = table["writtenPitches"].map(lambda pitches: pitches[0] == "C1x4")
+        self.assertGreater(int(starts.sum()), 0)
+        self.assertEqual(set(table[starts]["transposeInterval"]), {""})
+        self.assertEqual(set(table[starts]["transposeSemitones"]), {0.5})
 
     def test_every_pattern_is_searched_whatever_the_thread_count(self):
         """More patterns than processors: each is searched, and finds as many rows as when it is
@@ -448,9 +438,8 @@ class ScoreMelodyPatternSearchTestCase(unittest.TestCase):
         self.assertEqual(differing, "0")
 
     def test_a_pattern_longer_than_every_melody_finds_no_match(self):
-        """Only each part's first-voice melody is searched -- chords and other voices are
-        skipped -- so a pattern can be longer than every melody without being longer than the
-        score. No window of a melody fits it, and neither overload finds a match."""
+        """A pattern longer than every melodic line finds nothing, however many notes the score
+        has: voice 1 has one event and voice 2 two."""
         score = ml.Score(["Flute"], 1)
         measure = score.getPart(0).getMeasure(0)
         measure.addNote(ml.Note("C4"))
@@ -458,7 +447,7 @@ class ScoreMelodyPatternSearchTestCase(unittest.TestCase):
             note = ml.Note(pitch)
             note.setVoice(2)
             measure.addNote(note)
-        pattern = [ml.Note("C4"), ml.Note("D4")]
+        pattern = [ml.Note("C4"), ml.Note("D4"), ml.Note("E4")]
         self.assertEqual(score.getNumNotes(), 3)
 
         self.assertEqual(len(score.findMelodyPatternDataFrame(pattern)), 0)
@@ -914,6 +903,120 @@ class ScoreRobustnessTestCase(unittest.TestCase):
         # Add new part
         score.addPart("Viola")
         self.assertEqual(score.getNumParts(), 3)
+
+
+MATCH_COLUMNS = [
+    "partName",
+    "measure",
+    "staff",
+    "voice",
+    "writtenKey",
+    "concertKey",
+    "transposeInterval",
+    "transposeSemitones",
+    "writtenPitches",
+    "soundingPitches",
+    "semitonesDiff",
+    "rhythmDiff",
+    "intervalSimilarity",
+    "rhythmSimilarity",
+    "totalSimilarity",
+]
+
+
+def quarters(*pitches):
+    return [ml.Note(pitch) for pitch in pitches]
+
+
+class ScoreMelodyPatternDataFrameTestCase(unittest.TestCase):
+    """The DataFrames of the melody search: columns, dtypes, order and the new rules."""
+
+    def test_the_columns_of_a_match(self):
+        score = ml.Score("./xml_examples/unit_test/melody_transposing_instrument.musicxml")
+        table = score.findMelodyPatternDataFrame(quarters("C4", "D4", "E4"), 1.0, 1.0)
+        self.assertEqual(list(table.columns), MATCH_COLUMNS)
+        row = table.iloc[0].to_dict()
+        self.assertEqual(
+            {key: row[key] for key in MATCH_COLUMNS[:8]},
+            {
+                "partName": "Clarinet in Bb",
+                "measure": 0,
+                "staff": 0,
+                "voice": 1,
+                "writtenKey": "D",
+                "concertKey": "C",
+                "transposeInterval": "P1",
+                "transposeSemitones": 0.0,
+            },
+        )
+        self.assertEqual(list(row["writtenPitches"]), ["D4", "E4", "F#4"])
+        self.assertEqual(list(row["soundingPitches"]), ["C4", "D4", "E4"])
+        self.assertEqual(len(table), 1)
+
+    def test_an_empty_result_has_every_column_and_dtype(self):
+        score = ml.Score("./xml_examples/unit_test/melody_last_window.musicxml")
+        matched = score.findMelodyPatternDataFrame(quarters("C4", "D4"), 1.0, 1.0)
+        empty = score.findMelodyPatternDataFrame(quarters("C4", "C6"), 1.0, 1.0)
+        self.assertEqual(len(empty), 0)
+        self.assertEqual(list(empty.dtypes.items()), list(matched.dtypes.items()))
+        for column in ("measure", "staff", "voice"):
+            self.assertEqual(str(matched[column].dtype), "int64", column)
+        for column in ("transposeSemitones", "intervalSimilarity", "totalSimilarity"):
+            self.assertEqual(str(matched[column].dtype), "float64", column)
+
+        listed = score.findMelodyPatternDataFrame([quarters("C4", "D4")], 1.0, 1.0)
+        empty_list = score.findMelodyPatternDataFrame([quarters("C4", "C6")], 1.0, 1.0)
+        self.assertEqual(list(listed.columns), ["patternIdx"] + MATCH_COLUMNS)
+        self.assertEqual(list(empty_list.dtypes.items()), list(listed.dtypes.items()))
+
+    def test_every_voice_of_every_staff_is_searched_and_rows_sort_by_measure(self):
+        score = ml.Score("./xml_examples/unit_test/melody_staves_and_voices.musicxml")
+        table = score.findMelodyPatternDataFrame(quarters("C4", "D4", "E4", "F4"), 1.0, 1.0)
+        self.assertEqual(
+            list(zip(table["measure"], table["staff"], table["voice"])),
+            [(0, 0, 1), (0, 1, 5), (1, 1, 5)],
+        )
+
+    def test_the_list_overload_sorts_by_pattern_then_measure(self):
+        score = ml.Score("./xml_examples/unit_test/melody_staves_and_voices.musicxml")
+        table = score.findMelodyPatternDataFrame(
+            [quarters("C4", "D4", "E4", "F4"), quarters("C5", "B4")], 1.0, 1.0
+        )
+        self.assertEqual(
+            list(zip(table["patternIdx"], table["measure"], table["staff"])),
+            [(0, 0, 0), (0, 0, 1), (0, 1, 1), (1, 0, 0)],
+        )
+
+    def test_a_transposition_without_a_name_does_not_stop_the_search(self):
+        score = ml.Score("./xml_examples/unit_test/melody_unnameable_transposition.musicxml")
+        table = score.findMelodyPatternDataFrame(quarters("C4", "D4", "E4"), 1.0, 1.0)
+        self.assertEqual(list(table["transposeInterval"]), ["", ""])
+        self.assertEqual(list(table["transposeSemitones"]), [14.0, 0.5])
+
+    def test_a_pattern_of_fewer_than_two_notes_raises(self):
+        score = ml.Score("./xml_examples/unit_test/melody_last_window.musicxml")
+        for pattern in ([], quarters("C4")):
+            with self.subTest(length=len(pattern)), self.assertRaises(RuntimeError) as context:
+                score.findMelodyPatternDataFrame(pattern)
+            self.assertEqual(
+                str(context.exception).splitlines()[0],
+                "[maiacore] Score::findMelodyPattern: a melody pattern needs at least 2 notes, "
+                f"and this one has {len(pattern)}",
+            )
+
+    def test_the_thresholds_have_the_same_names_in_both_overloads(self):
+        score = ml.Score("./xml_examples/unit_test/melody_last_window.musicxml")
+        single = score.findMelodyPatternDataFrame(
+            quarters("C4", "D4"), intervalSimilarityThreshold=1.0, rhythmSimilarityThreshold=1.0
+        )
+        listed = score.findMelodyPatternDataFrame(
+            [quarters("C4", "D4")], intervalSimilarityThreshold=1.0, rhythmSimilarityThreshold=1.0
+        )
+        self.assertEqual((len(single), len(listed)), (2, 2))
+        with self.assertRaises(TypeError):
+            score.findMelodyPatternDataFrame(
+                quarters("C4", "D4"), totalIntervalsSimilarityThreshold=1.0
+            )
 
 
 if __name__ == "__main__":

@@ -6,10 +6,12 @@
 #include "maiacore/measure.h"
 #include "maiacore/score.h"
 #include "nlohmann/json.hpp"
+#include "py_melody_dataframe.h"
 #include "pybind11_json/pybind11_json.hpp"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
+using maiacore_python::MelodyDataFrame;
 
 void ScoreClass(const py::module& m) {
     m.doc() = "Score class binding";
@@ -170,9 +172,8 @@ void ScoreClass(const py::module& m) {
 
     cls.def(
         "findMelodyPatternDataFrame",
-        [](Score& score, const std::vector<Note>& melodyPattern,
-           const float totalIntervalsSimilarityThreshold,
-           const float totalRhythmSimilarityThreshold,
+        [](const Score& score, const std::vector<Note>& melodyPattern,
+           const float intervalSimilarityThreshold, const float rhythmSimilarityThreshold,
            const std::function<std::vector<float>(const std::vector<Note>&,
                                                   const std::vector<Note>&)>
                intervalsSimilarityCallback,
@@ -182,37 +183,19 @@ void ScoreClass(const py::module& m) {
            const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
            const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
            const std::function<float(float, float)> totalSimilarityCallback) {
-            // Import Pandas module
-            py::object Pandas = py::module_::import("pandas");
-
-            // Get method 'from_records' from 'DataFrame()' object
-            py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
-
-            // Set DataFrame columns name
-            std::vector<std::string> columns = {"partName",
-                                                "measureId",
-                                                "staveId",
-                                                "writtenClefKey",
-                                                "transposeInterval",
-                                                "segmentWrittenPitch",
-                                                "semitonesDiff",
-                                                "rhythmDiff",
-                                                "totalIntervalSimilarity",
-                                                "totalRhythmSimilarity",
-                                                "totalSimilarity"};
-
-            // Fill DataFrame with records and columns
-            py::object df = FromRecords(
-                score.findMelodyPattern(melodyPattern, totalIntervalsSimilarityThreshold,
-                                        totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
+            const Score::MelodyPatternTable table =
+                score.findMelodyPattern(melodyPattern, intervalSimilarityThreshold,
+                                        rhythmSimilarityThreshold, intervalsSimilarityCallback,
                                         rhythmSimilarityCallback, totalIntervalSimilarityCallback,
-                                        totalRhythmSimilarityCallback, totalSimilarityCallback),
-                "columns"_a = columns);
-
-            return df;
+                                        totalRhythmSimilarityCallback, totalSimilarityCallback);
+            MelodyDataFrame frame({});
+            for (const Score::MelodyPatternRow& row : table) {
+                frame.appendRow(py::list(), row);
+            }
+            return frame.build();
         },
-        py::arg("melodyPattern"), py::arg("totalIntervalsSimilarityThreshold") = 0.5f,
-        py::arg("totalRhythmSimilarityThreshold") = 0.5f,
+        py::arg("melodyPattern"), py::arg("intervalSimilarityThreshold") = 0.5f,
+        py::arg("rhythmSimilarityThreshold") = 0.5f,
         py::arg("intervalsSimilarityCallback") = nullptr,
         py::arg("rhythmSimilarityCallback") = nullptr,
         py::arg("totalIntervalSimilarityCallback") = nullptr,
@@ -220,27 +203,38 @@ void ScoreClass(const py::module& m) {
         py::arg("totalSimilarityCallback") = nullptr,
         py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
         R"pbdoc(
-        Search the score for a melodic pattern, comparing interval contours and rhythms.
+        Search every melodic line of the score for a melodic pattern.
 
-        Each part's first-voice melody -- chords and other voices are skipped -- is scanned with
-        a window as long as the pattern. For each window the interval differences
-        (``Helper.getSemitonesDifferenceBetweenMelodies``, where a quarter tone counts as half a
-        semitone) and the duration differences are reduced to two similarities, and the window is
-        a match when both reach their thresholds.
+        Every voice of every staff of every part is a melodic line: its events in measure
+        order. A note without ``<chord/>`` starts an event, and the chord notes written after it
+        join it: a chord is represented by its highest sounding note. A note tied to the previous
+        event of its line at the same sounding pitch extends that event, which keeps its first
+        note's written pitch and measure and adds the durations. A rest is an event (its melodic
+        interval counts as 0); a grace note is not. Every window of as many consecutive events of
+        one line as the pattern has notes, the last one included, is compared with the pattern;
+        no window spans two voices, staves or parts.
+
+        The melodic intervals are compared at sounding exact positions, so the comparison is
+        transposition-invariant and a quarter tone counts as half a semitone
+        (``Helper.getSemitonesDifferenceBetweenMelodies``); the durations are divided by each
+        sequence's longest (``Helper.getDurationDifferenceBetweenRhythms``). Each list of
+        differences is reduced to a similarity, ``1 / (1 + norm)`` unless a callback replaces
+        it, and a window matches when both similarities reach their thresholds. The search
+        builds the lines from the score as it is at each call.
 
         Parameters
         ----------
         melodyPattern : list of Note
-            The pattern.
-        totalIntervalsSimilarityThreshold : float, default 0.5
+            The pattern: at least 2 notes; rests are allowed.
+        intervalSimilarityThreshold : float, default 0.5
             Minimum interval similarity of a match, from 0 to 1.
-        totalRhythmSimilarityThreshold : float, default 0.5
+        rhythmSimilarityThreshold : float, default 0.5
             Minimum rhythm similarity of a match, from 0 to 1.
         intervalsSimilarityCallback : callable, optional
-            ``f(pattern, segment) -> list of float``, replacing the interval differences. Give
+            ``f(pattern, window) -> list of float``, replacing the interval differences. Give
             ``totalIntervalSimilarityCallback`` with it.
         rhythmSimilarityCallback : callable, optional
-            ``f(pattern, segment) -> list of float``, replacing the duration differences. Give
+            ``f(pattern, window) -> list of float``, replacing the duration differences. Give
             ``totalRhythmSimilarityCallback`` with it.
         totalIntervalSimilarityCallback : callable, optional
             ``f(differences) -> float``, reducing the interval differences to a similarity; used
@@ -254,22 +248,32 @@ void ScoreClass(const py::module& m) {
         Returns
         -------
         pandas.DataFrame
-            One row per match, in score order, with the columns ``partName``, ``measureId``,
-            ``staveId``, ``writtenClefKey`` (the measure's key), ``transposeInterval`` (from the
-            pattern's first sounding note to the segment's, at concert pitch: see ``Interval``),
-            ``segmentWrittenPitch`` (the segment's pitches as its part writes them),
-            ``semitonesDiff``, ``rhythmDiff``, ``totalIntervalSimilarity``,
-            ``totalRhythmSimilarity`` and ``totalSimilarity``.
+            One row per match, sorted stably by ``measure``: the matches of one measure keep the
+            order of their parts, staves, voices and windows. An empty DataFrame, with every
+            column and its dtype, when nothing matches. The columns:
+
+            - ``partName`` (str), ``measure`` (int, the 0-based measure index of the window's
+              first event), ``staff`` (int, 0-based), ``voice`` (int, as written);
+            - ``writtenKey`` (str), the part's written key at that measure, and ``concertKey``
+              (str), the score's concert key there, by the rule of ``getChords``;
+            - ``transposeInterval`` (str), the interval from the pattern's first sounding note
+              to the window's, named at concert spelling with its direction (``"M2 asc"``,
+              ``"P1"``): empty when that interval has no name (an augmented ninth ``C4`` ->
+              ``Cx5``, any quarter-tone interval) or when the pattern or the window has no
+              sounding note; ``transposeSemitones`` (float), that interval in exact semitones,
+              ``NaN`` when either has no sounding note;
+            - ``writtenPitches`` and ``soundingPitches`` (list of str), the window's pitches as
+              its part writes them and as they sound (``"rest"`` for a rest);
+            - ``semitonesDiff`` (list of float, one per interval) and ``rhythmDiff`` (list of
+              float, one per event), the differences;
+            - ``intervalSimilarity``, ``rhythmSimilarity`` and ``totalSimilarity`` (float).
 
         Raises
         ------
         RuntimeError
-            If the pattern has more notes than the score; if ``intervalsSimilarityCallback`` or
+            If the pattern has fewer than 2 notes, or if ``intervalsSimilarityCallback`` or
             ``rhythmSimilarityCallback`` is given without its total callback ("bad function
-            call"); or if the pattern or a segment starts on a quarter tone, whose transposition
-            has no interval name -- melody-pattern search does not support that, and the message
-            names the note and, for a segment, its ``partName``, ``measureId`` and ``staveId``.
-            A quarter tone elsewhere in a segment is compared exactly.
+            call"). A quarter tone, or a transposition without a name, never stops the search.
 
         Examples
         --------
@@ -280,11 +284,10 @@ void ScoreClass(const py::module& m) {
         (True, 1.0)
     )pbdoc");
 
-    // Overload para multiplos padrões em paralelo
     cls.def(
         "findMelodyPatternDataFrame",
-        [](Score& score, const std::vector<std::vector<Note>>& melodyPatterns,
-           float totalIntervalsSimilarityThreshold, float totalRhythmSimilarityThreshold,
+        [](const Score& score, const std::vector<std::vector<Note>>& melodyPatterns,
+           const float intervalSimilarityThreshold, const float rhythmSimilarityThreshold,
            const std::function<std::vector<float>(const std::vector<Note>&,
                                                   const std::vector<Note>&)>
                intervalsSimilarityCallback,
@@ -297,52 +300,23 @@ void ScoreClass(const py::module& m) {
             // The search runs each pattern on a worker thread, and a worker that calls, copies or
             // destroys a Python callback takes the GIL to do it. Holding the GIL here while the
             // workers run would deadlock, so it is released for the search alone, inside this
-            // lambda; it is held again when the lambda returns, before any DataFrame is built.
+            // lambda; it is held again when the lambda returns, before the DataFrame is built.
             // The search only reads the score, so other threads may search it meanwhile.
-            const auto results = [&] {
+            const auto tables = [&] {
                 py::gil_scoped_release release;
                 return score.findMelodyPattern(
-                    melodyPatterns, totalIntervalsSimilarityThreshold,
-                    totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
-                    rhythmSimilarityCallback, totalIntervalSimilarityCallback,
-                    totalRhythmSimilarityCallback, totalSimilarityCallback);
+                    melodyPatterns, intervalSimilarityThreshold, rhythmSimilarityThreshold,
+                    intervalsSimilarityCallback, rhythmSimilarityCallback,
+                    totalIntervalSimilarityCallback, totalRhythmSimilarityCallback,
+                    totalSimilarityCallback);
             }();
-
-            py::object Pandas = py::module_::import("pandas");
-            py::object FromRecords = Pandas.attr("DataFrame").attr("from_records");
-            std::vector<py::object> dataframes;
-
-            // Definindo as colunas do DataFrame
-            std::vector<std::string> columns = {"partName",
-                                                "measureId",
-                                                "staveId",
-                                                "writtenClefKey",
-                                                "transposeInterval",
-                                                "segmentWrittenPitch",
-                                                "semitonesDiff",
-                                                "rhythmDiff",
-                                                "totalIntervalSimilarity",
-                                                "totalRhythmSimilarity",
-                                                "totalSimilarity"};
-
-            for (size_t idx = 0; idx < results.size(); ++idx) {
-                py::object df = FromRecords(results[idx], "columns"_a = columns);
-                int num_columns = df.attr("shape").cast<py::tuple>()[1].cast<int>();
-                df.attr("insert")(num_columns, "patternIdx", idx);
-                dataframes.push_back(df);
+            MelodyDataFrame frame({{"patternIdx", MelodyDataFrame::Kind::Integer}});
+            for (size_t idx = 0; idx < tables.size(); idx++) {
+                for (const Score::MelodyPatternRow& row : tables[idx]) {
+                    frame.appendRow(py::list(py::make_tuple(idx)), row);
+                }
             }
-
-            // Concatena todos os DataFrames processados com sucesso
-            if (!dataframes.empty()) {
-                // std::cout << "Concatenando DataFrames..." << std::endl;
-                py::object result_df = Pandas.attr("concat")(dataframes, "ignore_index"_a = true);
-                result_df.attr("sort_values")("by"_a = "measureId", "ascending"_a = true,
-                                              "inplace"_a = true);
-                return result_df;
-            } else {
-                throw std::runtime_error(
-                    "Nenhum DataFrame foi concatenado devido a erro de memória ou outro problema.");
-            }
+            return frame.build();
         },
         py::arg("melodyPatterns"), py::arg("intervalSimilarityThreshold") = 0.5f,
         py::arg("rhythmSimilarityThreshold") = 0.5f,
@@ -352,20 +326,20 @@ void ScoreClass(const py::module& m) {
         py::arg("totalRhythmSimilarityCallback") = nullptr,
         py::arg("totalSimilarityCallback") = nullptr,
         R"pbdoc(
-        Search the score for several melodic patterns, each on a worker thread.
+        Search every melodic line of the score for several melodic patterns, each on a worker
+        thread.
 
         Every pattern is searched exactly as the single-pattern overload searches it, however
-        many patterns there are. Takes the same thresholds and callbacks, applied to every
-        pattern. The search releases the GIL while it runs, so a Python callback is called from
-        the worker threads, one call at a time, each taking the GIL, and other Python threads run
-        meanwhile. The search only reads the score, so any number of threads may search the same
-        score at once; no thread may modify the score, its parts, measures or notes while a
-        search of it runs.
+        many patterns there are, with the same thresholds and callbacks. The search releases the
+        GIL while it runs, so a Python callback is called from the worker threads, one call at a
+        time, each taking the GIL, and other Python threads run meanwhile. The search only reads
+        the score, so any number of threads may search the same score at once; no thread may
+        modify the score, its parts, measures or notes while a search of it runs.
 
         Parameters
         ----------
         melodyPatterns : list of list of Note
-            The patterns.
+            The patterns, each of at least 2 notes.
         intervalSimilarityThreshold : float, default 0.5
             Minimum interval similarity of a match, from 0 to 1.
         rhythmSimilarityThreshold : float, default 0.5
@@ -380,8 +354,10 @@ void ScoreClass(const py::module& m) {
         Returns
         -------
         pandas.DataFrame
-            The matches of every pattern, with the single-pattern overload's columns plus
-            ``patternIdx``, the pattern's index in ``melodyPatterns``, sorted by ``measureId``.
+            ``patternIdx`` (int, the pattern's index in ``melodyPatterns``) followed by the
+            single-pattern overload's columns; sorted by ``patternIdx``, then as the
+            single-pattern overload sorts. An empty DataFrame, with every column and its dtype,
+            when nothing matches.
 
         Raises
         ------

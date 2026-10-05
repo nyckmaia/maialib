@@ -7,6 +7,7 @@
 #include <utility>
 #include <vector>
 
+#include "maiacore/log.h"
 #include "maiacore/measure.h"
 #include "maiacore/part.h"
 
@@ -104,6 +105,13 @@ std::vector<MelodicLine> melodicLines(const std::vector<Part>& parts) {
         }
     }
     return lines;
+}
+
+void requireTwoNotes(const std::string& method, const size_t numNotes) {
+    if (numNotes < 2) {
+        LOG_ERROR(method + ": a melody pattern needs at least 2 notes, and this one has " +
+                  std::to_string(numNotes));
+    }
 }
 
 }  // namespace maiacore::detail
