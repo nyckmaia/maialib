@@ -61,7 +61,10 @@
   - A note without `<chord/>` starts an event; the chord notes that follow it join that event, which
     is represented by its highest note by sounding exact position (`Note::getQuarterToneSteps()`).
   - A note tied to the previous event's note (same sounding pitch, tie stop) extends that event: its
-    duration is added; the event keeps the first note's written pitch and measure.
+    duration is added; the event keeps the first note's written pitch and measure. The sum is exact,
+    in ticks at `lcm(divisionsA, divisionsB, 1024)`: `Helper::ticks2rhythmFigure` loops forever when
+    the base length it derives from small divisions is 0 or 1 (`Duration(1, 3)`, `Duration(2, 3)`
+    never return), and a multiple of 1024 divisions keeps that length at least 4.
   - A rest is an event, as today: its melodic interval is 0 and its duration counts.
   - A grace note is not an event (it has no duration).
 - **Windows.** Every window of L consecutive events in one line, the last one included
@@ -120,13 +123,23 @@ DataFrame with every column and its dtype. Threshold parameters are named
 ### 4.4 `findAnyMelodyPattern`
 - Same lines and windows as §3; `patternNumNotes < 2` raises.
 - Every distinct window of the score becomes a pattern; two windows are the same pattern when their
-  melodic intervals (exact, quarter tones included) and their durations (exact) are equal. Of equal
-  windows the first, in line order, is kept.
+  events are the same notes and rests at the same exact positions relative to the window's first
+  sounding note (quarter tones included; a rest is told apart from any note) and have the same
+  durations, exactly. Of equal windows the first, in line order, is kept. (Keying by the melodic
+  intervals alone would merge `[C4, rest, E4]` with `[C4, rest, C4]`, since an interval to or from a
+  rest counts as 0.)
 - Each pattern is searched with the given thresholds (same parameters and callbacks as
-  `findMelodyPattern`).
-- Python `Score.findAnyMelodyPatternDataFrame(patternNumNotes=5, intervalSimilarityThreshold=0.5,
-  rhythmSimilarityThreshold=0.5, …)` returns the §4.3 columns plus `patternIdx` and `patternPitches`
-  (the pattern's written pitches), one row per occurrence.
+  `findMelodyPattern`), and kept when it has at least `minOccurrences` matches, its own window
+  included. `minOccurrences` must be at least 1; a smaller value raises (`RuntimeError`).
+- Defaults, in C++ and Python: `intervalSimilarityThreshold = 1.0`, `rhythmSimilarityThreshold = 1.0`
+  (a match is an exact repetition, transposed or not) and `minOccurrences = 2` (the patterns that
+  repeat); the thresholds stay adjustable.
+- C++ `Score::findAnyMelodyPattern(patternNumNotes = 5, intervalSimilarityThreshold = 1.0f,
+  rhythmSimilarityThreshold = 1.0f, minOccurrences = 2, <callbacks>)` returns the kept patterns with
+  their matches; Python `Score.findAnyMelodyPatternDataFrame(patternNumNotes=5,
+  intervalSimilarityThreshold=1.0, rhythmSimilarityThreshold=1.0, minOccurrences=2, …)` returns the
+  §4.3 columns plus `patternIdx` (the kept pattern's number) and `patternPitches` (the pattern's
+  written pitches), one row per occurrence.
 
 ## 5. ScoreCollection
 - `ScoreCollection()` builds an empty collection (C++ and Python); constructors taking a directory or a
@@ -150,8 +163,12 @@ DataFrame with every column and its dtype. Threshold parameters are named
   are updated (the `Part.setTransposingInterval` numpydoc, the CHANGELOG).
 - `Measure::removeNote(noteId, staff = 0)` removes exactly the note at `noteId` of `staff`; an index or
   staff outside the measure raises `std::out_of_range` (Python `IndexError`).
-- `Measure::addNote` with a list of notes at a position inserts them in list order; a position beyond
-  the end or a negative staff raises `std::out_of_range`.
+- `Measure::addNote` with a list of notes at a position inserts them in list order, all or nothing; a
+  position beyond the end or a staff outside the measure, negative or too large, raises
+  `std::out_of_range` (a staff number too large raised `std::runtime_error`).
+- `Measure::getNoteOn` and `getNoteOff` raise `std::out_of_range` for an index at or past the staff's
+  count of notes on (or rests): they returned another note, which a live reference would let the
+  caller edit.
 
 ## 7. Tests, documentation and behaviour changes
 - **Fixtures** (small, under `test/xml_examples/unit_test/`, each with its line in the strict 4a
@@ -182,3 +199,6 @@ DataFrame with every column and its dtype. Threshold parameters are named
 - Loading isolation in `ScoreCollection` and non-ASCII paths on Windows (phase 4c-1).
 - `Part.addStaves` not updating its measures' staff count (backlog).
 - `Chord.removeNote` (backlog).
+- `Helper::ticks2rhythmFigure` loops forever when its base length is 0 or 1 (`Duration(1, 3)`,
+  `Duration(2, 3)`): a hang site, routed to the backlog for phase 4c-1; §3 sums tied durations so
+  that the search never reaches it.
