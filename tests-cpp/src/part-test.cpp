@@ -656,3 +656,17 @@ TEST(PartSetTransposingInterval, invalidIndicesThrowOutOfRange) {
         EXPECT_FALSE(part.getMeasure(m).getNote(0, 0).isTransposed());
     }
 }
+
+// The message names the range the call resolved: a measureEnd of -1 is the part's end.
+TEST(PartSetTransposingInterval, outOfRangeMessageNamesTheResolvedEnd) {
+    Part part = clarinets();
+    std::string message;
+    try {
+        part.setTransposingInterval(-1, -2, 4);
+    } catch (const std::out_of_range& error) {
+        message = error.what();
+    }
+    EXPECT_EQ(message,
+              "Part::setTransposingInterval: the measures [4, 3) are not a range of the part's 3 "
+              "measures");
+}

@@ -290,7 +290,7 @@ void Part::setTransposingInterval(const int diatonicInterval, const int chromati
     const int end = (measureEnd == -1) ? numMeasures : measureEnd;
     if (measureStart < 0 || end < measureStart || end > numMeasures) {
         throw std::out_of_range("Part::setTransposingInterval: the measures [" +
-                                std::to_string(measureStart) + ", " + std::to_string(measureEnd) +
+                                std::to_string(measureStart) + ", " + std::to_string(end) +
                                 ") are not a range of the part's " + std::to_string(numMeasures) +
                                 " measures");
     }
