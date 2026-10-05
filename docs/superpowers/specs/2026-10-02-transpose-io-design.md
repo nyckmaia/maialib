@@ -119,7 +119,7 @@ in chord extraction and the piano roll, a note one octave below (or above) what 
   for its staff at the chord's first note, and a `<transpose>` written between the notes of a chord
   applies from the next note that is not in that chord. A chord read from a file therefore never
   mixes tuples, so every file that loads can be exported (§5.1), except one with a chord whose notes
-  span staves when a staff's transposition changes inside it: the writer groups a chord's notes per
+  span staves when another staff's transposition changes at that chord: the writer groups a chord's notes per
   staff (phase 4b rewrites cross-staff chord output). No corpus file writes a `<transpose>` inside a
   chord.
 - Each pitched note is stamped with the interval and the doubling in force for its staff (§3.1); rests
@@ -177,7 +177,7 @@ and `<chromatic>`, e.g. the Strauss sample's contrabassoon `(−7, −12)`, whic
   the measure and the staff (the spirit of item-4 D3). Such a chord arises only through note-level
   edits: the reader reads a chord as a unit (§4.1), also where it ignores a `<transpose>` or reads
   notes untransposed (§4.3). So every file that loads can be exported, except one with a chord whose
-  notes span staves when a staff's transposition changes inside it: the writer groups a chord's notes
+  notes span staves when another staff's transposition changes at that chord: the writer groups a chord's notes
   per staff (phase 4b rewrites cross-staff chord output).
 - `<attributes>` is opened when a `<transpose>` must be written, also in measures where key, time,
   divisions and clef did not change (`Part::toXML`, `part.cpp:219-229`).
