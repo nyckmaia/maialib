@@ -523,6 +523,17 @@ void ScoreClass(const py::module& m) {
         ``Note.getSoundingPitch``, without the simplification. The notes that analysis returns
         are untransposed notes at that pitch (see ``Chord``).
 
+        The key reported with each chord is the concert key of its measure: the written key
+        that most pitched parts have there among those untransposed in that measure, or
+        transposed by whole octaves only -- a key is its fifths and its mode, and a tie goes to
+        the part that comes first. Unpitched parts do not count; every pitched part does, also
+        those ``partNames`` leaves out. A part's transposition at a measure is that of its first
+        pitched note there; in a measure without one, that of its last pitched note before, or
+        else of its first one after. When every pitched part transposes, it is the first part's
+        written key moved by that part's transposing interval -- 7 fifths per semitone, less 12
+        per letter, so -2 fifths for a B-flat clarinet -- and brought by twelves into the range
+        ``Key`` accepts, -6 to 11 fifths (13 becomes 1).
+
         Parameters
         ----------
         config : dict, optional
@@ -540,9 +551,8 @@ void ScoreClass(const py::module& m) {
             One ``(measure, floatMeasure, key, chord, isHomophonic)`` per onset, in time order:
             the one-based measure number; the onset as a one-based measure position, whose
             fraction is the position within the measure (``1.5`` is halfway through the first
-            measure); the key of that measure in the score's first part, as that part writes it,
-            even when ``partNames`` leaves the part out; the chord; and whether every note of
-            the chord starts at that onset.
+            measure); the concert key of that measure (see above); the chord; and whether
+            every note of the chord starts at that onset.
 
         Raises
         ------

@@ -746,7 +746,16 @@ class Score {
      *          Each tuple contains:
      *          1. **Measure number** (int): Absolute measure position in score
      *          2. **Beat position** (float): Fractional beat location within measure
-     *          3. **Key** (Key object): Prevailing key signature at this position
+     *          3. **Key** (Key object): the concert key of the chord's measure -- the most
+     *             frequent written key among the pitched parts that are untransposed there, or
+     *             transposed by whole octaves only (a key is its fifths and its mode; a tie goes
+     *             to the part that comes first; every pitched part counts, also those `partNames`
+     *             leaves out, and unpitched parts never do). A part's transposition at a measure
+     *             is that of its first pitched note there; in a measure without one, that of its
+     *             last pitched note before, or else of its first one after. When every pitched
+     *             part transposes, the first part's written key moved by its interval, by
+     *             7 fifths per semitone less 12 per letter, and brought by twelves into -6..11
+     *             fifths, the range Key accepts (13 becomes 1)
      *          4. **Chord** (Chord object): Extracted vertical sonority
      *          5. **Homophony flag** (bool): True if all voices share identical rhythm
      *             (homophonic texture indicator)

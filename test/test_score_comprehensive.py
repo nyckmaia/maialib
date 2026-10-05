@@ -572,6 +572,18 @@ class ScoreAnalysisTestCase(unittest.TestCase):
             pass
 
 
+class ScoreConcertKeyTestCase(unittest.TestCase):
+    """getChordsDataFrame's key column is the concert key."""
+
+    def test_the_key_column_is_the_concert_key(self):
+        """W3C 72a's trumpet in B-flat is written in D major and its horn in E-flat in A major;
+        its untransposed piano gives the concert key, C major."""
+        score = ml.Score("./musicxml/w3c-test-suite/xmlFiles/72a-TransposingInstruments.musicxml")
+        table = score.getChordsDataFrame()
+        keys = {(key.getFifthCircle(), bool(key.isMajorMode())) for key in table["key"]}
+        self.assertEqual({(0, True)}, keys)
+
+
 class ScoreManipulationTestCase(unittest.TestCase):
     """Tests for Score manipulation methods"""
 

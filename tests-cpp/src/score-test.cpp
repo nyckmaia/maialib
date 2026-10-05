@@ -1596,3 +1596,153 @@ TEST(ScoreTransposeCorrection, aForPartIsDroppedWithAWarning) {
         << printed;
     EXPECT_EQ(transposeWarnings(printed), 1) << printed;
 }
+
+// ====================
+// The concert key of getChords()
+// ====================
+
+namespace {
+// The (fifths, major) of the key of every chord getChords() finds.
+std::set<std::pair<int, bool>> chordKeys(Score& score,
+                                         const nlohmann::json& config = nlohmann::json()) {
+    std::set<std::pair<int, bool>> keys;
+    for (const auto& chord : score.getChords(config)) {
+        keys.insert({std::get<2>(chord).getFifthCircle(), std::get<2>(chord).isMajorMode() != 0});
+    }
+    return keys;
+}
+
+// A whole note written 'pitch' on an instrument transposing by (diatonic, chromatic).
+Note wholeNote(const std::string& pitch, const int diatonic = 0, const int chromatic = 0) {
+    return transposingNote(pitch, diatonic, chromatic, RhythmFigure::WHOLE);
+}
+
+// One part of a one-measure score: its name, its written key and the whole note it plays.
+struct KeyedPart {
+    std::string name;
+    int fifths;
+    bool major;
+    Note note;
+};
+
+Score keyedScore(const std::vector<KeyedPart>& parts) {
+    std::vector<std::string> names;
+    for (const KeyedPart& part : parts) {
+        names.push_back(part.name);
+    }
+    Score score(names, 1);
+    for (size_t p = 0; p < parts.size(); p++) {
+        Measure& measure = score.getPart(static_cast<int>(p)).getMeasure(0);
+        measure.setKey(parts[p].fifths, parts[p].major);
+        measure.addNote(parts[p].note);
+    }
+    return score;
+}
+}  // namespace
+
+// The W3C transposing-instrument files report the concert key: 72a's piano gives C major against
+// the trumpet's written D and the horn's written A; 72c, whose only part transposes, gives B-flat
+// major in both its measures, as an E-flat clarinet in G and then a B-flat clarinet in C; 72d's
+// untransposed parts give G major.
+TEST(ScoreConcertKey, theW3cTransposingInstrumentsReportTheConcertKey) {
+    Score a(kW3c + "72a-TransposingInstruments.musicxml");
+    EXPECT_EQ(chordKeys(a), (std::set<std::pair<int, bool>>{{0, true}}));
+    Score c(kW3c + "72c-TransposingInstruments-Change.musicxml");
+    EXPECT_EQ(chordKeys(c), (std::set<std::pair<int, bool>>{{-2, true}}));
+    Score d(kW3c + "72d-TransposingInstruments-scorePitch.musicxml");
+    EXPECT_EQ(chordKeys(d), (std::set<std::pair<int, bool>>{{1, true}}));
+}
+
+// test_pattern's horn in F is written in G major; its trombone gives the concert key, C major.
+TEST(ScoreConcertKey, aHornWrittenInGDoesNotGiveTheKey) {
+    Score score(kUnitTest + "test_pattern.musicxml");
+    EXPECT_EQ(chordKeys(score), (std::set<std::pair<int, bool>>{{0, true}}));
+}
+
+// The Beethoven 5 sample's C trumpet and timpani are untransposed and written without a key
+// signature; the eight other untransposed parts, contrabasses included, write C minor's three
+// flats, which win.
+TEST(ScoreConcertKey, theBeethovenSampleIsInCMinor) {
+    Score score(kSamples + "Beethoven_Symphony_5_mov_1.xml");
+    EXPECT_EQ(chordKeys(score), (std::set<std::pair<int, bool>>{{-3, false}}));
+}
+
+TEST(ScoreConcertKey, theMostFrequentKeyWins) {
+    Score score = keyedScore({{"Timpani", 0, true, wholeNote("C3")},
+                              {"Violin", -3, false, wholeNote("C4")},
+                              {"Viola", -3, false, wholeNote("G3")}});
+    EXPECT_EQ(chordKeys(score), (std::set<std::pair<int, bool>>{{-3, false}}));
+}
+
+// A part transposed by whole octaves only is key-neutral: the piccolo counts with the flute, and
+// their G major outweighs the timpani's C major.
+TEST(ScoreConcertKey, anOctaveTranspositionIsKeyNeutral) {
+    Score score = keyedScore({{"Piccolo", 1, true, wholeNote("D5", 7, 12)},
+                              {"Timpani", 0, true, wholeNote("G2")},
+                              {"Flute", 1, true, wholeNote("D5")}});
+    EXPECT_EQ(chordKeys(score), (std::set<std::pair<int, bool>>{{1, true}}));
+}
+
+TEST(ScoreConcertKey, aTieGoesToTheFirstPart) {
+    Score score =
+        keyedScore({{"Flute", -1, true, wholeNote("C5")}, {"Oboe", 2, true, wholeNote("D5")}});
+    EXPECT_EQ(chordKeys(score), (std::set<std::pair<int, bool>>{{-1, true}}));
+}
+
+TEST(ScoreConcertKey, percussionDoesNotCount) {
+    Score score = keyedScore({{"Violin", -1, true, wholeNote("C4")},
+                              {"Snare Drum", 0, true, wholeNote("C4")},
+                              {"Bass Drum", 0, true, wholeNote("C4")}});
+    score.getPart(1).setIsPitched(false);
+    score.getPart(2).setIsPitched(false);
+    EXPECT_EQ(chordKeys(score), (std::set<std::pair<int, bool>>{{-1, true}}));
+}
+
+// A part's interval in a measure without pitched notes is that of its last pitched note before
+// the measure, or else of its first one after: the horn rests in measures 1 and 3 and still
+// transposes there, so its written G major does not count, and the violin gives the key.
+TEST(ScoreConcertKey, aMeasureOfRestsTakesTheIntervalOfTheNeighbouringNotes) {
+    Score score({"Horn in F", "Violin"}, 3);
+    for (int m = 0; m < 3; m++) {
+        for (int p = 0; p < 2; p++) {
+            Measure& measure = score.getPart(p).getMeasure(m);
+            measure.setNumber(m);
+            measure.setKey(p == 0 ? 1 : 0, true);
+        }
+        score.getPart(1).getMeasure(m).addNote(wholeNote("C4"));
+    }
+    score.getPart(0).getMeasure(0).addNote(Note("rest", RhythmFigure::WHOLE));
+    score.getPart(0).getMeasure(1).addNote(wholeNote("D5", -4, -7));
+    score.getPart(0).getMeasure(2).addNote(Note("rest", RhythmFigure::WHOLE));
+    EXPECT_EQ(chordKeys(score), (std::set<std::pair<int, bool>>{{0, true}}));
+}
+
+// A pitched part without any pitched note counts as untransposed, with its written key.
+TEST(ScoreConcertKey, aPartWithoutNotesCountsAsUntransposed) {
+    Score score({"Violin", "Flute 2", "Flute 3"}, 1);
+    score.getPart(0).getMeasure(0).setKey(0, true);
+    score.getPart(0).getMeasure(0).addNote(wholeNote("C4"));
+    score.getPart(1).getMeasure(0).setKey(-1, true);
+    score.getPart(2).getMeasure(0).setKey(-1, true);
+    EXPECT_EQ(chordKeys(score), (std::set<std::pair<int, bool>>{{-1, true}}));
+}
+
+// When every pitched part transposes, the first part's written key is moved by its interval and
+// brought by twelves into -6..11 fifths: a trumpet in D written with 11 fifths sounds 13, held as
+// 1; a B-flat clarinet written with -6 fifths, minor, sounds -8, held as 4, minor.
+TEST(ScoreConcertKey, whenEveryPartTransposesTheFirstPartsKeyIsMovedAndWrapped) {
+    Score trumpet = keyedScore({{"Trumpet in D", 11, true, wholeNote("C4", 1, 2)}});
+    EXPECT_EQ(chordKeys(trumpet), (std::set<std::pair<int, bool>>{{1, true}}));
+    Score clarinet = keyedScore({{"Clarinet in Bb", -6, false, wholeNote("C4", -1, -2)}});
+    EXPECT_EQ(chordKeys(clarinet), (std::set<std::pair<int, bool>>{{4, false}}));
+}
+
+// Every part counts, also those partNames leaves out: the violin, in F major, gives the key of the
+// clarinet's chords.
+TEST(ScoreConcertKey, partsLeftOutOfTheAnalysisStillCount) {
+    Score score = keyedScore({{"Clarinet in Bb", 2, true, wholeNote("D4", -1, -2)},
+                              {"Violin", -1, true, wholeNote("F4")}});
+    nlohmann::json config;
+    config["partNames"] = std::vector<std::string>{"Clarinet in Bb"};
+    EXPECT_EQ(chordKeys(score, config), (std::set<std::pair<int, bool>>{{-1, true}}));
+}

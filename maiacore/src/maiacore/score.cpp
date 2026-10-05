@@ -393,6 +393,131 @@ void applyTranspositions(Part& part, const std::vector<TransposeElement>& elemen
         }
     }
 }
+
+// A part's transposing interval at each measure, as the concert key reads it: that of the
+// measure's first pitched note, staves in order; without one, that of the part's last pitched
+// note before the measure; without one, that of its first pitched note after it; without any,
+// untransposed. Each is (the diatonic interval the speller uses, the chromatic interval).
+std::vector<std::pair<std::int64_t, std::int64_t>> intervalsPerMeasure(const Part& part) {
+    using TransposingInterval = std::pair<std::int64_t, std::int64_t>;
+    const int numMeasures = part.getNumMeasures();
+    std::vector<std::optional<TransposingInterval>> first(numMeasures);
+    std::vector<std::optional<TransposingInterval>> last(numMeasures);
+    for (int m = 0; m < numMeasures; m++) {
+        const Measure& measure = part.getMeasure(m);
+        for (int s = 0; s < measure.getNumStaves(); s++) {
+            for (int n = 0; n < measure.getNumNotes(s); n++) {
+                const Note& note = measure.getNote(n, s);
+                if (!note.isNoteOn() || !note.isPitched()) {
+                    continue;
+                }
+                const TransposingInterval interval{
+                    maiacore::detail::spelledDiatonicInterval(note.getTransposeDiatonic(),
+                                                              note.getTransposeChromatic()),
+                    note.getTransposeChromatic()};
+                if (!first[m]) {
+                    first[m] = interval;
+                }
+                last[m] = interval;
+            }
+        }
+    }
+
+    int firstPitchedMeasure = -1;
+    for (int m = 0; m < numMeasures && firstPitchedMeasure < 0; m++) {
+        if (first[m]) {
+            firstPitchedMeasure = m;
+        }
+    }
+    std::vector<TransposingInterval> intervals(numMeasures, TransposingInterval{0, 0});
+    std::optional<TransposingInterval> before;
+    for (int m = 0; m < numMeasures; m++) {
+        if (first[m]) {
+            intervals[m] = *first[m];
+        } else if (before) {
+            intervals[m] = *before;
+        } else if (firstPitchedMeasure >= 0) {
+            intervals[m] = *first[firstPitchedMeasure];
+        }
+        if (last[m]) {
+            before = last[m];
+        }
+    }
+    return intervals;
+}
+
+// The fifths of a key brought into -6..11, the range Key accepts: a value inside it is kept, one
+// outside it becomes the enharmonically equal value inside it, twelve fifths away (13 gives 1,
+// -8 gives 4).
+int keyRangeFifths(std::int64_t fifths) {
+    if (fifths > 11) {
+        fifths -= 12 * ((fifths - 11 + 11) / 12);
+    }
+    if (fifths < -6) {
+        fifths += 12 * ((-6 - fifths + 11) / 12);
+    }
+    return static_cast<int>(fifths);
+}
+
+// The concert key of each measure: the most frequent written key among the pitched parts whose
+// interval at the measure is key-neutral, 7 * chromatic - 12 * diatonic == 0 (untransposed, or
+// transposed by whole octaves only). A key is its fifths and its mode; a tie goes to the key of
+// the first such part in score order. When no pitched part is key-neutral there, part 0's written
+// key moved by its interval's 7 * chromatic - 12 * diatonic fifths, brought into the range Key
+// accepts, with part 0's mode.
+std::vector<Key> concertKeys(const std::vector<Part>& parts) {
+    if (parts.empty()) {
+        return {};
+    }
+    const int numMeasures = parts.at(0).getNumMeasures();
+    std::vector<std::vector<std::pair<std::int64_t, std::int64_t>>> intervals;
+    intervals.reserve(parts.size());
+    for (const Part& part : parts) {
+        intervals.push_back(intervalsPerMeasure(part));
+    }
+
+    std::vector<Key> keys(numMeasures);
+    for (int m = 0; m < numMeasures; m++) {
+        // Each key-neutral part's written key and how many parts write it, in score order.
+        std::vector<std::pair<Key, int>> tallies;
+        for (size_t p = 0; p < parts.size(); p++) {
+            if (!parts[p].isPitched() || m >= parts[p].getNumMeasures()) {
+                continue;
+            }
+            const std::pair<std::int64_t, std::int64_t>& interval = intervals[p][m];
+            if (7 * interval.second - 12 * interval.first != 0) {
+                continue;
+            }
+            const Key written = parts[p].getMeasure(m).getKey();
+            const auto tally = std::find_if(
+                tallies.begin(), tallies.end(), [&written](const std::pair<Key, int>& candidate) {
+                    return candidate.first.getFifthCircle() == written.getFifthCircle() &&
+                           candidate.first.isMajorMode() == written.isMajorMode();
+                });
+            if (tally == tallies.end()) {
+                tallies.emplace_back(written, 1);
+            } else {
+                tally->second++;
+            }
+        }
+        if (!tallies.empty()) {
+            // std::max_element keeps the first of equal counts: the key of the earliest part.
+            keys[m] =
+                std::max_element(tallies.begin(), tallies.end(),
+                                 [](const std::pair<Key, int>& a, const std::pair<Key, int>& b) {
+                                     return a.second < b.second;
+                                 })
+                    ->first;
+            continue;
+        }
+        const Key written = parts.at(0).getMeasure(m).getKey();
+        const std::pair<std::int64_t, std::int64_t>& interval = intervals.at(0)[m];
+        keys[m] = Key(
+            keyRangeFifths(written.getFifthCircle() + 7 * interval.second - 12 * interval.first),
+            written.isMajorMode() != 0);
+    }
+    return keys;
+}
 }  // namespace
 
 Score::Score(const std::initializer_list<std::string>& partsName, const int numMeasures)
@@ -3168,6 +3293,9 @@ std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChordsPerEachNot
     int chordIdx = 0;
     std::vector<std::tuple<int, float, Key, Chord, bool>> stackedChords;
     stackedChords.reserve(numUniqueEvents);
+    // The concert key of each measure, reported with each of its chords.
+    const std::vector<Key> keys = concertKeys(_part);
+
     for (const float startTime : uniqueStartTime) {
         SQLite::Statement query(db,
                                 "SELECT currentTime, noteAddress, measureAddress, "
@@ -3240,9 +3368,8 @@ std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChordsPerEachNot
 
         chord.sortNotes();
 
-        // Get the current measure Key
         const int measureIdx = measurePtr->getNumber();
-        const Key& key = _part.at(0).getMeasure(measureIdx).getKey();
+        const Key& key = keys.at(measureIdx);
 
         stackedChords.push_back(
             {measureIdx + 1, startTime + 1, key, chord, currentChordData.isHomophonicChord});
