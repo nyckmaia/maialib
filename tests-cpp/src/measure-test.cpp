@@ -8,6 +8,7 @@
 #include <maiacore/time-signature.h>
 
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -668,16 +669,28 @@ TEST(MeasureNoteRetrieval, GetNoteConstOverloadThrowsOnEmptyStave) {
 // Note Removal Tests
 // ====================
 
+namespace {
+// The written pitches of a staff of a measure, in order.
+std::vector<std::string> pitchesOn(const Measure& measure, const int staff = 0) {
+    std::vector<std::string> pitches;
+    for (int n = 0; n < measure.getNumNotes(staff); n++) {
+        pitches.push_back(measure.getNote(n, staff).getWrittenPitch());
+    }
+    return pitches;
+}
+}  // namespace
+
+// removeNote() removes exactly the note at its index: the first, a middle one and the last.
 TEST(MeasureNoteRemoval, RemoveSingleNote) {
     Measure measure;
-
-    measure.addNote(Note("C4"), 0);
-    measure.addNote(Note("E4"), 0);
-    int initialCount = measure.getNumNotes();
+    measure.addNote(std::vector<std::string>{"C4", "D4", "E4", "F4"}, 0);
 
     measure.removeNote(0, 0);
-    // Note removal should reduce count (implementation-dependent behavior)
-    EXPECT_LE(measure.getNumNotes(), initialCount);
+    EXPECT_EQ(pitchesOn(measure), (std::vector<std::string>{"D4", "E4", "F4"}));
+    measure.removeNote(1, 0);
+    EXPECT_EQ(pitchesOn(measure), (std::vector<std::string>{"D4", "F4"}));
+    measure.removeNote(1, 0);
+    EXPECT_EQ(pitchesOn(measure), (std::vector<std::string>{"D4"}));
 }
 
 TEST(MeasureNoteRemoval, RemoveAllNotes) {
@@ -691,19 +704,58 @@ TEST(MeasureNoteRemoval, RemoveAllNotes) {
     EXPECT_EQ(measure.getNumNotes(), 0);
 }
 
+// Removing from one staff leaves the other untouched.
 TEST(MeasureNoteRemoval, RemoveNotesFromSpecificStave) {
     Measure measure(2);
-
-    measure.addNote(Note("C5"), 0);
+    measure.addNote(std::vector<std::string>{"C5", "D5"}, 0);
     measure.addNote(Note("C3"), 1);
-    int stave0Before = measure.getNumNotes(0);
-    int stave1Before = measure.getNumNotes(1);
 
     measure.removeNote(0, 0);
 
-    // After removing note from stave 0, stave 1 should be unchanged
-    EXPECT_LE(measure.getNumNotes(0), stave0Before);
-    EXPECT_EQ(measure.getNumNotes(1), stave1Before);
+    EXPECT_EQ(pitchesOn(measure, 0), (std::vector<std::string>{"D5"}));
+    EXPECT_EQ(pitchesOn(measure, 1), (std::vector<std::string>{"C3"}));
+}
+
+// An index or a staff outside the measure raises std::out_of_range and changes nothing.
+TEST(MeasureNoteRemoval, AnIndexOrAStaffOutsideTheMeasureRaises) {
+    Measure measure;
+    measure.addNote(std::vector<std::string>{"C4", "D4"}, 0);
+
+    EXPECT_THROW(measure.removeNote(2, 0), std::out_of_range);
+    EXPECT_THROW(measure.removeNote(-1, 0), std::out_of_range);
+    EXPECT_THROW(measure.removeNote(0, 1), std::out_of_range);
+    EXPECT_THROW(measure.removeNote(0, -1), std::out_of_range);
+    EXPECT_EQ(pitchesOn(measure), (std::vector<std::string>{"C4", "D4"}));
+}
+
+// A list of notes is inserted in list order, at the given position or at the end.
+TEST(MeasureNoteAddition, AListIsInsertedInListOrder) {
+    Measure measure;
+    measure.addNote(std::vector<std::string>{"C4", "D4"}, 0);
+
+    measure.addNote(std::vector<Note>{Note("A4"), Note("B4")}, 0, 1);
+    EXPECT_EQ(pitchesOn(measure), (std::vector<std::string>{"C4", "A4", "B4", "D4"}));
+    measure.addNote(std::vector<std::string>{"E5", "F5"}, 0, 0);
+    EXPECT_EQ(pitchesOn(measure), (std::vector<std::string>{"E5", "F5", "C4", "A4", "B4", "D4"}));
+    measure.addNote(std::vector<std::string>{"G5", "A5"}, 0);
+    EXPECT_EQ(pitchesOn(measure),
+              (std::vector<std::string>{"E5", "F5", "C4", "A4", "B4", "D4", "G5", "A5"}));
+}
+
+// A position past the end of the staff, or a staff outside the measure, raises
+// std::out_of_range and adds nothing; the end itself is a valid position.
+TEST(MeasureNoteAddition, APositionPastTheEndOrAStaffOutsideTheMeasureRaises) {
+    Measure measure;
+    measure.addNote(Note("C4"), 0);
+
+    EXPECT_THROW(measure.addNote(Note("D4"), 0, 2), std::out_of_range);
+    EXPECT_THROW(measure.addNote(std::vector<std::string>{"D4", "E4"}, 0, 2), std::out_of_range);
+    EXPECT_THROW(measure.addNote(Note("D4"), -1), std::out_of_range);
+    EXPECT_THROW(measure.addNote(Note("D4"), 1), std::out_of_range);
+    EXPECT_EQ(pitchesOn(measure), (std::vector<std::string>{"C4"}));
+
+    measure.addNote(Note("D4"), 0, 1);
+    EXPECT_EQ(pitchesOn(measure), (std::vector<std::string>{"C4", "D4"}));
 }
 
 TEST(MeasureNoteRemoval, ClearEmptyMeasure) {

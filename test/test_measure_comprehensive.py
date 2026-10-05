@@ -207,13 +207,12 @@ class MeasureNotesTestCase(unittest.TestCase):
             self.measure.getNote(0, staveId=1)
 
     def test_remove_note(self):
-        """Test removing a note"""
+        """removeNote(0) removes the first note and only it"""
         self.measure.addNote("F4")
         self.measure.addNote("G4")
-        initial_count = self.measure.getNumNotes()
         self.measure.removeNote(0)
-        # removeNote should work without crashing
-        self.assertIsInstance(self.measure.getNumNotes(), int)
+        self.assertEqual(self.measure.getNumNotes(), 1)
+        self.assertEqual(self.measure.getNote(0).getWrittenPitch(), "G4")
 
     def test_get_num_notes_empty(self):
         """Test getting number of notes in empty measure"""
@@ -423,6 +422,46 @@ class MeasureIntegrationTestCase(unittest.TestCase):
                 self.assertIsNotNone(measure)
                 self.assertIsInstance(measure.getNumber(), int)
                 self.assertGreaterEqual(measure.getNumStaves(), 1)
+
+
+class MeasureEditTestCase(unittest.TestCase):
+    """removeNote removes one note; addNote inserts a list in order; both check their indices."""
+
+    def pitches(self, measure, staff=0):
+        return [
+            measure.getNote(i, staff).getWrittenPitch() for i in range(measure.getNumNotes(staff))
+        ]
+
+    def test_remove_note_removes_exactly_one_note(self):
+        measure = ml.Measure()
+        measure.addNote(["C4", "D4", "E4", "F4"])
+        measure.removeNote(2)
+        self.assertEqual(self.pitches(measure), ["C4", "D4", "F4"])
+        measure.removeNote(0)
+        self.assertEqual(self.pitches(measure), ["D4", "F4"])
+
+    def test_remove_note_outside_the_measure_raises_index_error(self):
+        measure = ml.Measure()
+        measure.addNote(["C4", "D4"])
+        for note_id, stave_id in ((2, 0), (-1, 0), (0, 1), (0, -1)):
+            with self.subTest(noteId=note_id, staveId=stave_id), self.assertRaises(IndexError):
+                measure.removeNote(note_id, stave_id)
+        self.assertEqual(self.pitches(measure), ["C4", "D4"])
+
+    def test_add_note_inserts_a_list_in_list_order(self):
+        measure = ml.Measure()
+        measure.addNote(["C4", "D4"])
+        measure.addNote([ml.Note("A4"), ml.Note("B4")], 0, 1)
+        measure.addNote(["E5", "F5"], 0, 0)
+        self.assertEqual(self.pitches(measure), ["E5", "F5", "C4", "A4", "B4", "D4"])
+
+    def test_add_note_past_the_end_or_on_a_missing_staff_raises_index_error(self):
+        measure = ml.Measure()
+        measure.addNote("C4")
+        for args in ((ml.Note("D4"), 0, 2), (["D4", "E4"], 0, 2), (ml.Note("D4"), -1), ("D4", 1)):
+            with self.subTest(args=args), self.assertRaises(IndexError):
+                measure.addNote(*args)
+        self.assertEqual(self.pitches(measure), ["C4"])
 
 
 if __name__ == "__main__":

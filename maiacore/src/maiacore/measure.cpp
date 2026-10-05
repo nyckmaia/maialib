@@ -2,8 +2,10 @@
 
 #include <iostream>
 #include <map>
+#include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "cherno/instrumentor.h"
 #include "maiacore/helper.h"
@@ -113,50 +115,61 @@ bool Measure::isEmpty() const {
     return true;
 }
 
+namespace {
+// Rejects a staff outside the measure, naming the method and the staff.
+void requireStaff(const char* method, const int staveId, const size_t numStaves) {
+    if (staveId < 0 || staveId >= static_cast<int>(numStaves)) {
+        throw std::out_of_range(std::string(method) + ": staff " + std::to_string(staveId) +
+                                " is outside the measure's " + std::to_string(numStaves) +
+                                " staves");
+    }
+}
+}  // namespace
+
 void Measure::addNote(const Note& note, const int staveId, int position) {
-    PROFILE_FUNCTION();
-    const int numStaves = _note.size();
-
-    if (numStaves < staveId + 1) {
-        LOG_ERROR("Invalid 'staveId' = " + std::to_string(staveId) + ". Out of range");
-    }
-
-    auto& stave = _note.at(staveId);
-
-    if (position < 0) {
-        position = static_cast<int>(stave.size());  // append to the end of the vector
-    }
-
-    stave.insert(stave.begin() + position, note);
+    addNote(std::vector<Note>{note}, staveId, position);
 }
 
 void Measure::addNote(const std::vector<Note>& noteVec, const int staveId, int position) {
-    for (auto& note : noteVec) {
-        addNote(note, staveId, position);
+    PROFILE_FUNCTION();
+    requireStaff("Measure::addNote", staveId, _note.size());
+    auto& stave = _note[staveId];
+
+    if (position < 0) {
+        position = static_cast<int>(stave.size());  // append to the end of the staff
     }
+    if (position > static_cast<int>(stave.size())) {
+        throw std::out_of_range("Measure::addNote: position " + std::to_string(position) +
+                                " is past the end of staff " + std::to_string(staveId) +
+                                ", which has " + std::to_string(stave.size()) + " notes");
+    }
+
+    stave.insert(stave.begin() + position, noteVec.begin(), noteVec.end());
 }
 
 void Measure::addNote(const std::string& pitch, const int staveId, int position) {
-    Note note(pitch);
-    addNote(note, staveId, position);
+    addNote(std::vector<Note>{Note(pitch)}, staveId, position);
 }
 
 void Measure::addNote(const std::vector<std::string>& pitchClassVec, const int staveId,
                       int position) {
-    PROFILE_FUNCTION();
-
-    for (auto& pitch : pitchClassVec) {
-        addNote(pitch, staveId, position);
+    std::vector<Note> notes;
+    notes.reserve(pitchClassVec.size());
+    for (const auto& pitch : pitchClassVec) {
+        notes.emplace_back(pitch);
     }
+    addNote(notes, staveId, position);
 }
 
 void Measure::removeNote(const int noteId, const int staveId) {
-    try {
-        auto& stave = _note[staveId];
-        stave.erase(stave.begin(), stave.begin() + noteId);
-    } catch (const std::out_of_range& oor) {
-        LOG_ERROR("Out of Range error: " + oor.what());
+    requireStaff("Measure::removeNote", staveId, _note.size());
+    auto& stave = _note[staveId];
+    if (noteId < 0 || noteId >= static_cast<int>(stave.size())) {
+        throw std::out_of_range("Measure::removeNote: note " + std::to_string(noteId) +
+                                " is outside staff " + std::to_string(staveId) + ", which has " +
+                                std::to_string(stave.size()) + " notes");
     }
+    stave.erase(stave.begin() + noteId);
 }
 
 bool Measure::timeSignatureChanged() const { return _isTimeSignatureChanged; }

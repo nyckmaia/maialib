@@ -45,20 +45,93 @@ void MeasureClass(const py::module& m) {
 
     cls.def("addNote", py::overload_cast<const Note&, const int, int>(&Measure::addNote),
             py::arg("note"), py::arg("staveId") = 0, py::arg("position") = -1,
-            "Add a single Note object");
+            R"pbdoc(
+        Insert a copy of a note into a staff of the measure.
+
+        Parameters
+        ----------
+        note : Note
+            The note.
+        staveId : int, optional
+            Staff index (default: 0).
+        position : int, optional
+            Index the note takes on the staff, from 0 to ``getNumNotes(staveId)``; -1 (the
+            default), or any negative value, appends it.
+
+        Raises
+        ------
+        IndexError
+            If ``staveId`` is not a staff of the measure, or ``position`` is past the end of the
+            staff; the measure is unchanged.
+    )pbdoc");
     cls.def("addNote",
             py::overload_cast<const std::vector<Note>&, const int, int>(&Measure::addNote),
             py::arg("noteVec"), py::arg("staveId") = 0, py::arg("position") = -1,
-            "Add a Note object vector");
+            R"pbdoc(
+        Insert copies of notes into a staff of the measure, in list order.
+
+        Parameters
+        ----------
+        noteVec : list of Note
+            The notes; the first takes index ``position``, the next ``position + 1``, and so on.
+        staveId : int, optional
+            Staff index (default: 0).
+        position : int, optional
+            Index the first note takes, from 0 to ``getNumNotes(staveId)``; -1 (the default), or
+            any negative value, appends them.
+
+        Raises
+        ------
+        IndexError
+            If ``staveId`` is not a staff of the measure, or ``position`` is past the end of the
+            staff; the measure is unchanged.
+
+        Examples
+        --------
+        >>> measure = ml.Measure()
+        >>> measure.addNote("C4")
+        >>> measure.addNote([ml.Note("A4"), ml.Note("B4")], 0, 0)
+        >>> [measure.getNote(i).getPitch() for i in range(measure.getNumNotes())]
+        ['A4', 'B4', 'C4']
+    )pbdoc");
     cls.def("addNote", py::overload_cast<const std::string&, const int, int>(&Measure::addNote),
             py::arg("pitchClass"), py::arg("staveId") = 0, py::arg("position") = -1,
-            "Create a new Note Obj and add it");
+            R"pbdoc(
+        Insert a new note of the given pitch into a staff of the measure, as
+        ``addNote(Note(pitchClass), staveId, position)`` does.
+    )pbdoc");
     cls.def("addNote",
             py::overload_cast<const std::vector<std::string>&, const int, int>(&Measure::addNote),
             py::arg("pitchClassVec"), py::arg("staveId") = 0, py::arg("position") = -1,
-            "Create a new Note vector and add it");
+            R"pbdoc(
+        Insert new notes of the given pitches into a staff of the measure, in list order, as
+        ``addNote([Note(p) for p in pitchClassVec], staveId, position)`` does.
+    )pbdoc");
 
-    cls.def("removeNote", &Measure::removeNote, py::arg("noteId"), py::arg("staveId") = 0);
+    cls.def("removeNote", &Measure::removeNote, py::arg("noteId"), py::arg("staveId") = 0,
+            R"pbdoc(
+        Remove the note at an index of a staff.
+
+        Parameters
+        ----------
+        noteId : int
+            Index of the note on the staff, from 0 to ``getNumNotes(staveId) - 1``.
+        staveId : int, optional
+            Staff index (default: 0).
+
+        Raises
+        ------
+        IndexError
+            If ``staveId`` or ``noteId`` is outside the measure; the measure is unchanged.
+
+        Examples
+        --------
+        >>> measure = ml.Measure()
+        >>> measure.addNote(["C4", "D4", "E4"])
+        >>> measure.removeNote(1)
+        >>> [measure.getNote(i).getPitch() for i in range(measure.getNumNotes())]
+        ['C4', 'E4']
+    )pbdoc");
 
     cls.def("getClef", py::overload_cast<const int>(&Measure::getClef), py::arg("clefId") = 0,
             py::return_value_policy::reference_internal,

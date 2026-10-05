@@ -152,42 +152,55 @@ class Measure {
     void setDivisionsPerQuarterNote(const int divisionsPerQuarterNote);
 
     /**
-     * @brief Adds a note to a specific staff and position in the measure.
+     * @brief Inserts a copy of a note into a staff of the measure.
      * @param note Note to add.
      * @param staveId Staff index (default: 0).
-     * @param position Position in the staff (-1 for append).
+     * @param position Index the note takes on the staff, from 0 to getNumNotes(staveId); a
+     *        negative value (the default, -1) appends it.
+     * @throws std::out_of_range If staveId is not a staff of the measure, or position is past
+     *         the end of the staff; the measure is unchanged.
      */
     void addNote(const Note& note, const int staveId = 0, int position = -1);
 
     /**
-     * @brief Adds multiple notes to a specific staff and position in the measure.
-     * @param noteVec Vector of notes to add.
+     * @brief Inserts copies of notes into a staff of the measure, in list order: the first takes
+     *        index position, the next position + 1, and so on.
+     * @param noteVec Notes to add.
      * @param staveId Staff index (default: 0).
-     * @param position Position in the staff (-1 for append).
+     * @param position Index the first note takes, from 0 to getNumNotes(staveId); a negative
+     *        value (the default, -1) appends them.
+     * @throws std::out_of_range If staveId is not a staff of the measure, or position is past
+     *         the end of the staff; the measure is unchanged.
      */
     void addNote(const std::vector<Note>& noteVec, const int staveId = 0, int position = -1);
 
     /**
-     * @brief Adds a note by pitch string to a specific staff and position.
+     * @brief Inserts a new note of the given pitch, as addNote(Note(pitchClass), staveId,
+     *        position) does.
      * @param pitchClass Pitch string (e.g., "C4").
      * @param staveId Staff index (default: 0).
-     * @param position Position in the staff (-1 for append).
+     * @param position Index the note takes on the staff; a negative value appends it.
+     * @throws std::out_of_range As the Note overload throws.
      */
     void addNote(const std::string& pitchClass, const int staveId = 0, int position = -1);
 
     /**
-     * @brief Adds multiple notes by pitch string to a specific staff and position.
-     * @param pitchClassVec Vector of pitch strings.
+     * @brief Inserts new notes of the given pitches in list order, as the std::vector<Note>
+     *        overload does; nothing is inserted when a pitch is not valid.
+     * @param pitchClassVec Pitch strings.
      * @param staveId Staff index (default: 0).
-     * @param position Position in the staff (-1 for append).
+     * @param position Index the first note takes; a negative value appends them.
+     * @throws std::out_of_range As the std::vector<Note> overload throws.
      */
     void addNote(const std::vector<std::string>& pitchClassVec, const int staveId = 0,
                  int position = -1);
 
     /**
-     * @brief Removes a note from a specific staff and position.
-     * @param noteId Note index.
+     * @brief Removes the note at an index of a staff: exactly that one note.
+     * @param noteId Index of the note on the staff, from 0 to getNumNotes(staveId) - 1.
      * @param staveId Staff index (default: 0).
+     * @throws std::out_of_range If staveId or noteId is outside the measure; the measure is
+     *         unchanged.
      */
     void removeNote(const int noteId, const int staveId = 0);
 
