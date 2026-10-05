@@ -26,12 +26,12 @@ namespace maiacore::detail {
  *          not (a Note given only a chromatic interval; the MusicXML reader stores the
  *          conventional interval itself), the letter is moved by the diatonic interval
  *          conventionally written for those semitones: 7 letters for each whole octave plus, for
- *          the semitones left over, 1
- *          for 1 or 2, 2 for 3 or 4, 3 for 5 or 6 (the tritone as an augmented fourth), 4 for 7,
- *          5 for 8 or 9 and 6 for 10 or 11, in the direction of transposeChromatic. With (0, -2)
- *          F#4 gives E4 and C4 gives Bb3, as with a B-flat clarinet's (-1, -2), and (0, -7)
- *          moves the letter as a horn in F's (-4, -7) does. A non-zero transposeDiatonic is used
- *          as given, even when it disagrees with transposeChromatic.
+ *          the semitones left over, 1 for 1 or 2, 2 for 3 or 4, 3 for 5 or 6 (the tritone as an
+ *          augmented fourth), 4 for 7, 5 for 8 or 9 and 6 for 10 or 11, in the direction of
+ *          transposeChromatic. With (0, -2) F#4 gives E4 and C4 gives Bb3, as with a B-flat
+ *          clarinet's (-1, -2), and (0, -7) moves the letter as a horn in F's (-4, -7) does. A
+ *          non-zero transposeDiatonic is used as given, even when it disagrees with
+ *          transposeChromatic.
  *
  *          Fallback: when the alter the letter needs would pass a double accidental, or when the
  *          letter's octave would leave -1..11, the position is spelled by the chromatic rule
