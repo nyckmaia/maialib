@@ -40,7 +40,7 @@ The input classes and failure modes the spec implies but no other task test exer
 
 1. **`findAnyMelodyPatternDataFrame()` at its defaults (thresholds 1.0, `minOccurrences=2`: exact repetitions, transposed or not) on an orchestral score** still returns a large table, because doubled parts repeat each other's windows (Beethoven 5 sample, 13,675 notes: 2,164 patterns, 489,196 rows, 14.1 s on this machine) — expected: it completes, and its numpydoc gives these numbers and says that lower thresholds can give millions of rows. Pinned by `ScoreFindAnyMelodyPatternTestCase.test_the_docstring_gives_the_size_at_the_defaults` (Task 5).
 2. **A chord tied to a chord** (piano writing): it is one event when its highest note continues the highest note, and a tie on an inner note alone extends nothing — expected: `E4` (two quarters), `G4`; and `E4`, `E4`. Pinned by `MelodicLines.ATiedChordIsOneEventWhenItsHighestNoteIsTied` (Task 3).
-3. **A collection directory holding a subdirectory named like a score (`old.xml/`) and a file whose name is outside the ANSI code page (`ωδή.txt`)** — expected: both skipped, the scores load (a directory is not loaded as a score; reading a non-ASCII extension never throws on Windows). Pinned by `ScoreCollectionConstructionTestCase.test_a_directory_named_like_a_score_and_a_non_ascii_name_are_skipped` (Task 6).
+3. **A collection directory holding a subdirectory named like a score (`old.xml/`) and a file whose extension is outside the ANSI code page (`notes.ωδή`)** — expected: both skipped, the scores load (a directory is not loaded as a score; reading a non-ASCII extension never throws on Windows). Pinned by `ScoreCollectionConstructionTestCase.test_a_directory_named_like_a_score_and_a_non_ascii_name_are_skipped` (Task 6).
 4. **A part with more measures than the first part** (`Part.addMeasure` on one part) — expected: its matches beyond the first part's measures have `concertKey == ""`, `writtenKey` set, and the search does not index past the concert keys. Pinned by `ScoreMelodyPatternSearch.AMeasureBeyondTheFirstPartHasNoConcertKey` (Task 4).
 5. **A staff count that grows mid-part** (a measure with more staves than the first, as `Part.addStaves` leaves it) — expected: the new staff's voices are lines from that measure on. Pinned by `MelodicLines.AStaffAddedMidPartIsALineFromThatMeasure` (Task 3).
 
@@ -58,7 +58,7 @@ Decisions 5, 6 and 9 and the `minOccurrences` rule of §4.4 are now also in the 
 8. **A pattern longer than every line returns an empty result in every overload**; the `"The melody pattern is bigger than the score"` error (score note count) is gone.
 9. **`Measure::addNote` raises `std::out_of_range` for any staff outside the measure** (negative or too large; too large raised `RuntimeError` "Invalid 'staveId'"), and inserts a list all or nothing; **`Measure::getNoteOn`/`getNoteOff` raise `std::out_of_range` for an index at or past the staff's count of notes on (or rests)**, where they returned another note — a live reference to the wrong note is worse than a copy of it. The four getters share one implementation (the non-const ones call the const ones through `std::as_const` and a `const_cast` of the result).
 10. **`ScoreCollection::setDirectoriesPaths` has a strong guarantee**: every path is checked and listed, and every file loaded, before the directories and scores are replaced; a failure leaves the collection as it was. Directories are loaded in the given order, each one's files sorted by path (`std::filesystem::path` order: `B.XML` before `a.xml`). The extension is read with `path::extension().u8string()`, which cannot throw for a name outside the ANSI code page; loading such a file stays with phase 4c-1.
-11. **`ScoreCollection` searches reject a pattern of fewer than 2 notes even when the collection is empty**, with their own method name, so an empty collection and a full one fail the same way.
+11. **`ScoreCollection` searches reject a pattern of fewer than 2 notes even when the collection is empty**, with their own method name, so an empty collection and a full one fail the same way. The check is one function, `maiacore::detail::requireTwoNotes` (`melodic-lines.h`), which `Score` makes once per pattern search (in `searchMelodicLines`) and `ScoreCollection` once per call before its scores are searched.
 12. **Decomposition:** Task 0 records baselines; the suggested tasks 4 (C++ search) and 5 (Score DataFrames) are one task, Task 4, because changing `Score::MelodyPatternRow` breaks `py_score.cpp`, and every commit must build the module; Task 4 adapts `score_collection.cpp` to the struct in a few lines that Task 6 replaces. The cache is removed in Task 5 with `findAnyMelodyPattern`, its only user, instead of Task 4. The fixtures go with the first task whose tests load them (Tasks 3, 4, 5). The final task (7) holds the README, the notebooks, the CHANGELOG and the verification.
 
 ## File map
@@ -68,7 +68,7 @@ Decisions 5, 6 and 9 and the `minOccurrences` rule of §4.4 are now also in the 
 | `maiacore/include/maiacore/measure.h`, `maiacore/src/maiacore/measure.cpp` | `addNote` (list order, bounds), `removeNote` (one note, bounds), `getNoteOn`/`getNoteOff` bounds | 1, 2 |
 | `maiacore/src/maiacore/python_wrapper/py_measure.cpp` | numpydoc of `addNote`/`removeNote`; live `getNote`/`getNoteOn`/`getNoteOff` | 1, 2 |
 | `maiacore/src/maiacore/python_wrapper/py_part.cpp` | `setTransposingInterval` numpydoc no longer says `getNote()` copies | 2 |
-| `maiacore/src/maiacore/melodic-lines.h`, `melodic-lines.cpp` (new) | `maiacore::detail::MelodicEvent`, `MelodicLine`, `melodicLines()` | 3 |
+| `maiacore/src/maiacore/melodic-lines.h`, `melodic-lines.cpp` (new) | `maiacore::detail::MelodicEvent`, `MelodicLine`, `melodicLines()`; `requireTwoNotes()`, the pattern-length check of every melody search | 3, 4 |
 | `maiacore/include/maiacore/score.h`, `maiacore/src/maiacore/score.cpp` | `MelodyPatternRow` struct, thresholds, search over lines, transposition, worker pool; `FoundMelodyPattern`, `findAnyMelodyPattern`; cache and `removeDuplicatePatterns` removed | 4, 5 |
 | `maiacore/src/maiacore/python_wrapper/py_melody_dataframe.h` (new) | `maiacore_python::MelodyDataFrame`, the typed DataFrame builder | 4 |
 | `maiacore/src/maiacore/python_wrapper/py_score.cpp` | `findMelodyPatternDataFrame` ×2, `findAnyMelodyPatternDataFrame` | 4, 5 |
@@ -1417,14 +1417,15 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 **Files:**
 - Create (fixtures): `test/xml_examples/unit_test/melody_last_window.musicxml`, `test/xml_examples/unit_test/melody_unnameable_transposition.musicxml`
 - Create: `maiacore/src/maiacore/python_wrapper/py_melody_dataframe.h`
-- Modify: `maiacore/include/maiacore/score.h` (includes ~3-6; the melody block from `MelodyPatternRow` through the list overload of `findMelodyPattern`, ~553-673), `maiacore/src/maiacore/score.cpp` (includes ~3-29; `rejectQuarterToneTransposition` ~57-87 deleted; both `findMelodyPattern` overloads ~2117-2352), `maiacore/src/maiacore/python_wrapper/py_score.cpp` (includes; both `findMelodyPatternDataFrame` ~171-400), `maiacore/src/maiacore/score_collection.cpp` (the two `emplace_back` of rows, ~118-124 and ~162-178: an adaptation Task 6 replaces), `test/musicxml/ledger.json` (2 added lines)
+- Modify: `maiacore/src/maiacore/melodic-lines.h`, `maiacore/src/maiacore/melodic-lines.cpp` (`requireTwoNotes` added), `maiacore/include/maiacore/score.h` (includes ~3-6; the melody block from `MelodyPatternRow` through the list overload of `findMelodyPattern`, ~553-673), `maiacore/src/maiacore/score.cpp` (includes ~3-29; `rejectQuarterToneTransposition` ~57-87 deleted; both `findMelodyPattern` overloads ~2117-2352), `maiacore/src/maiacore/python_wrapper/py_score.cpp` (includes; both `findMelodyPatternDataFrame` ~171-400), `maiacore/src/maiacore/score_collection.cpp` (the two `emplace_back` of rows, ~118-124 and ~162-178: an adaptation Task 6 replaces), `test/musicxml/ledger.json` (2 added lines)
 - Test: `tests-cpp/src/score-test.cpp` (melody block ~1036-1095 and ~1205-1242), `test/test_score_comprehensive.py` (`ScoreMelodyPatternSearchTestCase` ~341-379 and ~450-465; new class `ScoreMelodyPatternDataFrameTestCase`)
 
 **Interfaces:** consumes `maiacore::detail::melodicLines` (Task 3) and the file-local `concertKeys(const std::vector<Part>&)` of `score.cpp` (step 1b; reused, not duplicated). Produces:
 `struct Score::MelodyPatternRow { std::string partName; int measure; int staff; int voice; std::string writtenKey; std::string concertKey; std::string transposeInterval; float transposeSemitones; std::vector<std::string> writtenPitches; std::vector<std::string> soundingPitches; std::vector<float> semitonesDiff; std::vector<float> rhythmDiff; float intervalSimilarity; float rhythmSimilarity; float totalSimilarity; bool operator==(const MelodyPatternRow&) const; };`, `typedef std::vector<MelodyPatternRow> Score::MelodyPatternTable;`,
 `MelodyPatternTable Score::findMelodyPattern(const std::vector<Note>& melodyPattern, const float intervalSimilarityThreshold = 0.5, const float rhythmSimilarityThreshold = 0.5, <five callbacks as before>) const;`,
 `std::vector<MelodyPatternTable> Score::findMelodyPattern(const std::vector<std::vector<Note>>& melodyPatterns, const float intervalSimilarityThreshold = 0.5, const float rhythmSimilarityThreshold = 0.5, <five callbacks>) const;`;
-file-local in `score.cpp`: `struct MelodySearchCallbacks`, `struct MelodySearchInput { const std::vector<Part>& parts; std::vector<MelodicLine> lines; std::vector<Key> concertKeys; }`, `void requireTwoNotes(const std::string& method, const size_t numNotes)`, `const Note* firstSoundingNote(const std::vector<Note>&)`, `std::pair<std::string, float> transposition(const std::vector<Note>& pattern, const std::vector<Note>& window)`, `Score::MelodyPatternTable searchMelodicLines(const MelodySearchInput&, const std::vector<Note>&, float, float, const MelodySearchCallbacks&)`, `std::vector<Score::MelodyPatternTable> searchEachPattern(const MelodySearchInput&, const std::vector<std::vector<Note>>&, float, float, const MelodySearchCallbacks&)` (Task 5 reuses them);
+in `melodic-lines.h`: `void maiacore::detail::requireTwoNotes(const std::string& method, size_t numNotes)` (Task 6 reuses it);
+file-local in `score.cpp`: `struct MelodySearchCallbacks`, `struct MelodySearchInput { const std::vector<Part>& parts; std::vector<MelodicLine> lines; std::vector<Key> concertKeys; }`, `const Note* firstSoundingNote(const std::vector<Note>&)`, `template <typename Visit> void forEachWindow(const MelodicLine& line, const size_t length, const Visit& visit)` (calls `visit(start, window)` for every window of the line, the last one included), `std::pair<std::string, float> transposition(const std::vector<Note>& pattern, const std::vector<Note>& window)`, `Score::MelodyPatternTable searchMelodicLines(const MelodySearchInput&, const std::vector<Note>&, float, float, const MelodySearchCallbacks&)`, `std::vector<Score::MelodyPatternTable> searchEachPattern(const MelodySearchInput&, const std::vector<std::vector<Note>>&, float, float, const MelodySearchCallbacks&)` (Task 5 reuses them);
 `class maiacore_python::MelodyDataFrame { enum class Kind { Text, Integer, Real, List }; explicit MelodyDataFrame(const std::vector<std::pair<std::string, Kind>>& leading); void appendRow(const py::list& leading, const Score::MelodyPatternRow& match); py::object build() const; }` (Tasks 5, 6);
 Python `Score.findMelodyPatternDataFrame(melodyPattern, intervalSimilarityThreshold=0.5, rhythmSimilarityThreshold=0.5, intervalsSimilarityCallback=None, rhythmSimilarityCallback=None, totalIntervalSimilarityCallback=None, totalRhythmSimilarityCallback=None, totalSimilarityCallback=None)` and its list overload with the same keywords (`melodyPatterns`).
 `findAnyMelodyPattern` and its cache are untouched here (Task 5).
@@ -2060,8 +2061,35 @@ class ScoreMelodyPatternDataFrameTestCase(unittest.TestCase):
         const std::function<float(float, float)> totalSimilarityCallback = nullptr) const;
 ```
 
-- [ ] **Step 6: The search** — in `maiacore/src/maiacore/score.cpp`:
-  - after `#include <exception>` insert `#include <functional>`; after `#include <sstream>` insert `#include <stdexcept>`; after `#include "maiacore/utils.h"` insert `#include "melodic-lines.h"`; after `using maiacore::detail::concertPitch;` insert `using maiacore::detail::MelodicLine;` and `using maiacore::detail::melodicLines;`;
+- [ ] **Step 6: The search** — the check of a pattern's length goes next to the melodic lines, where `ScoreCollection` (Task 6) reaches it too:
+  - in `maiacore/src/maiacore/melodic-lines.h` insert `#include <string>` before `#include <vector>`, and before `}  // namespace maiacore::detail` insert (one blank line after):
+
+```cpp
+/**
+ * @brief Rejects a melody pattern of fewer than 2 notes: a melodic interval needs two. Every
+ *        melody search makes this check, naming itself.
+ * @param method The searching method, which the message names first
+ *        ("Score::findMelodyPattern").
+ * @param numNotes The pattern's number of notes.
+ * @throws std::runtime_error If numNotes is less than 2: "<method>: a melody pattern needs at
+ *         least 2 notes, and this one has <numNotes>".
+ */
+void requireTwoNotes(const std::string& method, size_t numNotes);
+```
+
+  - in `maiacore/src/maiacore/melodic-lines.cpp` insert `#include "maiacore/log.h"` before `#include "maiacore/measure.h"`, and before its last line, `}  // namespace maiacore::detail`, insert (one blank line after):
+
+```cpp
+void requireTwoNotes(const std::string& method, const size_t numNotes) {
+    if (numNotes < 2) {
+        LOG_ERROR(method + ": a melody pattern needs at least 2 notes, and this one has " +
+                  std::to_string(numNotes));
+    }
+}
+```
+
+  In `maiacore/src/maiacore/score.cpp`:
+  - after `#include <exception>` insert `#include <functional>`; after `#include <sstream>` insert `#include <stdexcept>`; after `#include "maiacore/utils.h"` insert `#include "melodic-lines.h"`; after `using maiacore::detail::concertPitch;` insert `using maiacore::detail::MelodicLine;`, `using maiacore::detail::melodicLines;` and `using maiacore::detail::requireTwoNotes;`;
   - delete `rejectQuarterToneTransposition` with its comment: everything from `// Rejects a melody-pattern search whose pattern, or whose segment of the score, starts on a quarter` (~57) up to, not including, `// A transposing interval -- <octave-change> folded in -- and an octave doubling, as a` (~89);
   - replace everything from `Score::MelodyPatternTable Score::findMelodyPattern(` (~2117) through the closing `}` of the list overload (the line before `void Score::removeDuplicatePatterns(std::vector<std::vector<Note>>* patterns) const {`, ~2352) with:
 
@@ -2083,14 +2111,6 @@ struct MelodySearchInput {
     std::vector<MelodicLine> lines;
     std::vector<Key> concertKeys;
 };
-
-// Rejects a melody pattern of fewer than 2 notes: a melodic interval needs two.
-void requireTwoNotes(const std::string& method, const size_t numNotes) {
-    if (numNotes < 2) {
-        LOG_ERROR(method + ": a melody pattern needs at least 2 notes, and this one has " +
-                  std::to_string(numNotes));
-    }
-}
 
 // The first note of 'notes' that is not a rest; nullptr when every one is a rest.
 const Note* firstSoundingNote(const std::vector<Note>& notes) {
@@ -2128,6 +2148,22 @@ std::pair<std::string, float> transposition(const std::vector<Note>& pattern,
     }
 }
 
+// Calls 'visit(start, window)' for every window of 'length' consecutive events of 'line', in line
+// order, the last one included: 'window' holds the notes of the events from index 'start' on. A
+// line shorter than 'length' has no window.
+template <typename Visit>
+void forEachWindow(const MelodicLine& line, const size_t length, const Visit& visit) {
+    std::vector<Note> window;
+    window.reserve(length);
+    for (size_t start = 0; start + length <= line.events.size(); start++) {
+        window.clear();
+        for (size_t offset = 0; offset < length; offset++) {
+            window.push_back(line.events[start + offset].note);
+        }
+        visit(start, window);
+    }
+}
+
 // Searches every window of every melodic line for 'pattern'. Rows are appended line by line,
 // window by window, then sorted stably by measure.
 Score::MelodyPatternTable searchMelodicLines(const MelodySearchInput& input,
@@ -2139,17 +2175,8 @@ Score::MelodyPatternTable searchMelodicLines(const MelodySearchInput& input,
     const size_t length = pattern.size();
     Score::MelodyPatternTable table;
     for (const MelodicLine& line : input.lines) {
-        if (line.events.size() < length) {
-            continue;
-        }
         const Part& part = input.parts.at(line.partIdx);
-        for (size_t start = 0; start + length <= line.events.size(); start++) {
-            std::vector<Note> window;
-            window.reserve(length);
-            for (size_t offset = 0; offset < length; offset++) {
-                window.push_back(line.events[start + offset].note);
-            }
-
+        forEachWindow(line, length, [&](const size_t start, const std::vector<Note>& window) {
             const std::vector<float> semitonesDiff =
                 (callbacks.intervals == nullptr)
                     ? Helper::getSemitonesDifferenceBetweenMelodies(pattern, window)
@@ -2168,7 +2195,7 @@ Score::MelodyPatternTable searchMelodicLines(const MelodySearchInput& input,
                     : callbacks.totalRhythm(rhythmDiff);
             if (intervalSimilarity < intervalSimilarityThreshold ||
                 rhythmSimilarity < rhythmSimilarityThreshold) {
-                continue;
+                return;
             }
 
             Score::MelodyPatternRow row;
@@ -2195,7 +2222,7 @@ Score::MelodyPatternTable searchMelodicLines(const MelodySearchInput& input,
                                       ? (intervalSimilarity + rhythmSimilarity) / 2.0f
                                       : callbacks.total(intervalSimilarity, rhythmSimilarity);
             table.push_back(std::move(row));
-        }
+        });
     }
     std::stable_sort(table.begin(), table.end(),
                      [](const Score::MelodyPatternRow& a, const Score::MelodyPatternRow& b) {
@@ -2261,7 +2288,6 @@ Score::MelodyPatternTable Score::findMelodyPattern(
     const std::function<float(const std::vector<float>&)> totalIntervalSimilarityCallback,
     const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
     const std::function<float(float, float)> totalSimilarityCallback) const {
-    requireTwoNotes("Score::findMelodyPattern", melodyPattern.size());
     const MelodySearchInput input{_part, melodicLines(_part), concertKeys(_part)};
     return searchMelodicLines(
         input, melodyPattern, intervalSimilarityThreshold, rhythmSimilarityThreshold,
@@ -2649,7 +2675,7 @@ class MelodyDataFrame {
     )pbdoc");
 ```
 
-- [ ] **Step 10: Format, build, pass.** clang-format `score.h`, `score.cpp`, `score_collection.cpp`, `py_melody_dataframe.h`, `py_score.cpp`, `score-test.cpp`. C++ subset `ScoreMelodyPatternSearch.*:ScoreCollection*` → pass (`PatternsAQuarterToneApartAreNotMergedAsDuplicates` still finds 3: `findAnyMelodyPattern` keeps its old windows until Task 5). «build» `make "PYTHON=$py" dev` → 0; «pytest» `test_score_comprehensive` → OK.
+- [ ] **Step 10: Format, build, pass.** clang-format `melodic-lines.h`, `melodic-lines.cpp`, `score.h`, `score.cpp`, `score_collection.cpp`, `py_melody_dataframe.h`, `py_score.cpp`, `score-test.cpp`. C++ subset `MelodicLines.*:ScoreMelodyPatternSearch.*:ScoreCollection*` → pass (`PatternsAQuarterToneApartAreNotMergedAsDuplicates` still finds 3: `findAnyMelodyPattern` keeps its old windows until Task 5). «build» `make "PYTHON=$py" dev` → 0; «pytest» `test_score_comprehensive` → OK.
 
 - [ ] **Step 11: Ledger.** «build» `make "PYTHON=$py" corpus-update-ledger` → 0; `git diff test/musicxml/ledger.json` shows exactly:
 
@@ -2658,11 +2684,11 @@ class MelodyDataFrame {
   "test/xml_examples/unit_test/melody_unnameable_transposition.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "unstable"},
 ```
 
-- [ ] **Step 12: Mutations** (C++ in `score.cpp`, rebuilt with the C++ subset; for the Python tests also «build» `make "PYTHON=$py" dev`). (a) In `requireTwoNotes` replace `numNotes < 2` with `numNotes < 1` → `APatternOfFewerThanTwoNotesIsRejected` and `test_a_pattern_of_fewer_than_two_notes_raises` fail (the helper's own message), and `test_a_failing_pattern_fails_the_list_overload_too` fails. (b) In `searchEachPattern` replace `errors[idx] = std::current_exception();` with `(void)0;` → `AFailingPatternFailsTheListOverloadToo` fails. (c) In `searchMelodicLines` replace `start + length <= line.events.size()` with `start + length < line.events.size()` → `TheLastWindowIsSearched` fails. (d) In `searchMelodicLines`, as the loop body's first statement, add `if (line.voice != 1) { continue; }` → `EveryVoiceOfEveryStaffIsSearched` and `test_every_voice_of_every_staff_is_searched_and_rows_sort_by_measure` fail. (e) Delete the `std::stable_sort(...)` call → `RowsAreSortedByMeasureThenLine` fails. (f) In `transposition` delete the `try {` … `} catch (const std::runtime_error&) { … }` wrapper, keeping its body → `ATranspositionWithoutANameLeavesItEmpty` and `test_a_transposition_without_a_name_does_not_stop_the_search` fail (`Unable to compute the interval [C4, Cx5]`). (g) In `transposition` replace `to->getQuarterToneSteps() - from->getQuarterToneSteps()` with `static_cast<float>(to->getMidiNumber() - from->getMidiNumber())` → `ATranspositionWithoutANameLeavesItEmpty` fails (`1` for the quarter tone). (h) In `transposition`, before `const float semitones`, add `if (from->isQuarterTone()) { LOG_ERROR("quarter-tone pattern"); }` → `APatternStartingOnAQuarterToneIsSearched` fails; with `to->isQuarterTone()` instead → `test_a_quarter_tone_does_not_stop_the_search` fails. (i) Replace `std::numeric_limits<float>::quiet_NaN()` with `0.0f` → `AWindowOfRestsHasNoTransposition` fails. (j) Replace `return {direction.empty() ? name : name + " " + direction, semitones};` with `return {name + " " + direction, semitones};` → `ATransposingPartIsComparedByThePitchesItSounds` and `AMatchReportsTheWrittenAndTheConcertKey` fail (`"P1 "`). (k) Replace `row.concertKey = input.concertKeys[measureIdx].getName();` with `row.concertKey = row.writtenKey;` → `AMatchReportsTheWrittenAndTheConcertKey` and `test_the_columns_of_a_match` fail; replace the whole `if (measureIdx < ...) { ... }` with `row.concertKey = input.concertKeys.at(measureIdx).getName();` → `AMeasureBeyondTheFirstPartHasNoConcertKey` fails (`std::out_of_range`). (l) Replace `row.soundingPitches.push_back(note.getSoundingPitch());` with `row.soundingPitches.push_back(note.getWrittenPitch());` → `AMatchReportsTheWrittenAndTheConcertKey` fails. (m) In `melodic-lines.cpp` replace `partLines[{s, note.getVoice()}]` with `partLines[{s, 1}]` → `APatternLongerThanEveryLineFindsNoMatch` and `test_a_pattern_longer_than_every_melody_finds_no_match` fail (one line `C4 D4 E4`). (n) In `py_melody_dataframe.h` replace `{"concertKey", Kind::Text}` with `{"concert", Kind::Text}` → `test_the_columns_of_a_match` fails; replace `dtype = py::str("int64");` with `dtype = py::str("object");` → `test_an_empty_result_has_every_column_and_dtype` fails. (o) In the list binding, after `return frame.build();` is computed, sort by measure: replace `return frame.build();` (list overload only) with `return frame.build().attr("sort_values")("measure", "kind"_a = "stable");` → `test_the_list_overload_sorts_by_pattern_then_measure` fails. (p) Rename the list overload's `py::arg("intervalSimilarityThreshold")` to `py::arg("totalIntervalsSimilarityThreshold")` → `test_the_thresholds_have_the_same_names_in_both_overloads` fails. Revert each; rerun green.
+- [ ] **Step 12: Mutations** (C++ in `score.cpp`, rebuilt with the C++ subset; for the Python tests also «build» `make "PYTHON=$py" dev`). (a) In `requireTwoNotes` (`melodic-lines.cpp`) replace `numNotes < 2` with `numNotes < 1` → `APatternOfFewerThanTwoNotesIsRejected` and `test_a_pattern_of_fewer_than_two_notes_raises` fail (the helper's own message), and `test_a_failing_pattern_fails_the_list_overload_too` fails. (b) In `searchEachPattern` replace `errors[idx] = std::current_exception();` with `(void)0;` → `AFailingPatternFailsTheListOverloadToo` fails. (c) In `forEachWindow` replace `start + length <= line.events.size()` with `start + length < line.events.size()` → `TheLastWindowIsSearched` fails. (d) In `searchMelodicLines`, as the loop body's first statement, add `if (line.voice != 1) { continue; }` → `EveryVoiceOfEveryStaffIsSearched` and `test_every_voice_of_every_staff_is_searched_and_rows_sort_by_measure` fail. (e) Delete the `std::stable_sort(...)` call → `RowsAreSortedByMeasureThenLine` fails. (f) In `transposition` delete the `try {` … `} catch (const std::runtime_error&) { … }` wrapper, keeping its body → `ATranspositionWithoutANameLeavesItEmpty` and `test_a_transposition_without_a_name_does_not_stop_the_search` fail (`Unable to compute the interval [C4, Cx5]`). (g) In `transposition` replace `to->getQuarterToneSteps() - from->getQuarterToneSteps()` with `static_cast<float>(to->getMidiNumber() - from->getMidiNumber())` → `ATranspositionWithoutANameLeavesItEmpty` fails (`1` for the quarter tone). (h) In `transposition`, before `const float semitones`, add `if (from->isQuarterTone()) { LOG_ERROR("quarter-tone pattern"); }` → `APatternStartingOnAQuarterToneIsSearched` fails; with `to->isQuarterTone()` instead → `test_a_quarter_tone_does_not_stop_the_search` fails. (i) Replace `std::numeric_limits<float>::quiet_NaN()` with `0.0f` → `AWindowOfRestsHasNoTransposition` fails. (j) Replace `return {direction.empty() ? name : name + " " + direction, semitones};` with `return {name + " " + direction, semitones};` → `ATransposingPartIsComparedByThePitchesItSounds` and `AMatchReportsTheWrittenAndTheConcertKey` fail (`"P1 "`). (k) Replace `row.concertKey = input.concertKeys[measureIdx].getName();` with `row.concertKey = row.writtenKey;` → `AMatchReportsTheWrittenAndTheConcertKey` and `test_the_columns_of_a_match` fail; replace the whole `if (measureIdx < ...) { ... }` with `row.concertKey = input.concertKeys.at(measureIdx).getName();` → `AMeasureBeyondTheFirstPartHasNoConcertKey` fails (`std::out_of_range`). (l) Replace `row.soundingPitches.push_back(note.getSoundingPitch());` with `row.soundingPitches.push_back(note.getWrittenPitch());` → `AMatchReportsTheWrittenAndTheConcertKey` fails. (m) In `melodic-lines.cpp` replace `partLines[{s, note.getVoice()}]` with `partLines[{s, 1}]` → `APatternLongerThanEveryLineFindsNoMatch` and `test_a_pattern_longer_than_every_melody_finds_no_match` fail (one line `C4 D4 E4`). (n) In `py_melody_dataframe.h` replace `{"concertKey", Kind::Text}` with `{"concert", Kind::Text}` → `test_the_columns_of_a_match` fails; replace `dtype = py::str("int64");` with `dtype = py::str("object");` → `test_an_empty_result_has_every_column_and_dtype` fails. (o) In the list binding, after `return frame.build();` is computed, sort by measure: replace `return frame.build();` (list overload only) with `return frame.build().attr("sort_values")("measure", "kind"_a = "stable");` → `test_the_list_overload_sorts_by_pattern_then_measure` fails. (p) Rename the list overload's `py::arg("intervalSimilarityThreshold")` to `py::arg("totalIntervalsSimilarityThreshold")` → `test_the_thresholds_have_the_same_names_in_both_overloads` fails. Revert each; rerun green.
 
-- [ ] **Step 13: Whole suites.** «build» `make "PYTHON=$py" cpp-tests` → 0 (Task 3's + 9: 11 new, 2 removed); «build» `make "PYTHON=$py" py-tests` → OK (Task 3's + 7); «build» `make "PYTHON=$py" validate` → no new findings.
+- [ ] **Step 13: Whole suites.** «build» `make "PYTHON=$py" cpp-tests` → 0 (Task 3's + 9: 12 new, 3 removed); «build» `make "PYTHON=$py" py-tests` → OK (Task 3's + 7); «build» `make "PYTHON=$py" validate` → no new findings.
 
-- [ ] **Step 14: Commit.** `git checkout -- AI_API_CHEATSHEET.md llms-full.txt`; `git add maiacore/include/maiacore/score.h maiacore/src/maiacore/score.cpp maiacore/src/maiacore/score_collection.cpp maiacore/src/maiacore/python_wrapper/py_melody_dataframe.h maiacore/src/maiacore/python_wrapper/py_score.cpp tests-cpp/src/score-test.cpp test/test_score_comprehensive.py test/xml_examples/unit_test/melody_last_window.musicxml test/xml_examples/unit_test/melody_unnameable_transposition.musicxml test/musicxml/ledger.json`, message:
+- [ ] **Step 14: Commit.** `git checkout -- AI_API_CHEATSHEET.md llms-full.txt`; `git add maiacore/src/maiacore/melodic-lines.h maiacore/src/maiacore/melodic-lines.cpp maiacore/include/maiacore/score.h maiacore/src/maiacore/score.cpp maiacore/src/maiacore/score_collection.cpp maiacore/src/maiacore/python_wrapper/py_melody_dataframe.h maiacore/src/maiacore/python_wrapper/py_score.cpp tests-cpp/src/score-test.cpp test/test_score_comprehensive.py test/xml_examples/unit_test/melody_last_window.musicxml test/xml_examples/unit_test/melody_unnameable_transposition.musicxml test/musicxml/ledger.json`, message:
 
 ```
 feat: the melody search reads every melodic line, to its last window
@@ -2695,7 +2721,7 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 - Modify: `maiacore/include/maiacore/score.h` (`NoteEvent`, the cache members, `collectNoteEventsPerPart`, `removeDuplicatePatterns` ~46-74; the cache lines of the copy constructor and `operator=` ~512-515, ~543-546; `FoundMelodyPattern` after `MelodyPatternTable`; the `findAnyMelodyPattern` declaration), `maiacore/src/maiacore/score.cpp` (`collectNoteEventsPerPart` deleted; `distinctWindows` added; `removeDuplicatePatterns` and `findAnyMelodyPattern` replaced), `maiacore/src/maiacore/python_wrapper/py_score.cpp` (the commented-out `findAnyMelodyPatternDataFrame`, ~402-509), `test/xml_examples/unit_test/melody_patterns_quarter_tone_apart.xml` (its comment), `test/musicxml/ledger.json` (1 added line)
 - Test: `tests-cpp/src/score-test.cpp` (`PatternsAQuarterToneApartAreNotMergedAsDuplicates` and two new tests; one after `AWindowOfRestsHasNoTransposition`), `test/test_score_comprehensive.py` (new class `ScoreFindAnyMelodyPatternTestCase`)
 
-**Interfaces:** consumes `MelodySearchInput`, `MelodySearchCallbacks`, `firstSoundingNote`, `searchEachPattern` (Task 4) and `MelodyDataFrame` (Task 4). Produces `struct Score::FoundMelodyPattern { std::vector<Note> pattern; MelodyPatternTable matches; };`, `std::vector<FoundMelodyPattern> Score::findAnyMelodyPattern(const int patternNumNotes = 5, const float intervalSimilarityThreshold = 1.0f, const float rhythmSimilarityThreshold = 1.0f, const int minOccurrences = 2, <five callbacks>) const;` (only the patterns with at least `minOccurrences` matches), file-local `std::vector<std::vector<Note>> distinctWindows(const std::vector<MelodicLine>& lines, const size_t length)`, and Python `Score.findAnyMelodyPatternDataFrame(patternNumNotes=5, intervalSimilarityThreshold=1.0, rhythmSimilarityThreshold=1.0, minOccurrences=2, intervalsSimilarityCallback=None, rhythmSimilarityCallback=None, totalIntervalSimilarityCallback=None, totalRhythmSimilarityCallback=None, totalSimilarityCallback=None)`.
+**Interfaces:** consumes `MelodySearchInput`, `MelodySearchCallbacks`, `firstSoundingNote`, `forEachWindow`, `searchEachPattern` (Task 4) and `MelodyDataFrame` (Task 4). Produces `struct Score::FoundMelodyPattern { std::vector<Note> pattern; MelodyPatternTable matches; };`, `std::vector<FoundMelodyPattern> Score::findAnyMelodyPattern(const int patternNumNotes = 5, const float intervalSimilarityThreshold = 1.0f, const float rhythmSimilarityThreshold = 1.0f, const int minOccurrences = 2, <five callbacks>) const;` (only the patterns with at least `minOccurrences` matches), file-local `std::vector<std::vector<Note>> distinctWindows(const std::vector<MelodicLine>& lines, const size_t length)`, and Python `Score.findAnyMelodyPatternDataFrame(patternNumNotes=5, intervalSimilarityThreshold=1.0, rhythmSimilarityThreshold=1.0, minOccurrences=2, intervalsSimilarityCallback=None, rhythmSimilarityCallback=None, totalIntervalSimilarityCallback=None, totalRhythmSimilarityCallback=None, totalSimilarityCallback=None)`.
 
 - [ ] **Step 1: The fixture** — create `test/xml_examples/unit_test/melody_duplicate_patterns.musicxml`:
 
@@ -2899,11 +2925,13 @@ class ScoreFindAnyMelodyPatternTestCase(unittest.TestCase):
     def test_no_pattern_kept_gives_an_empty_dataframe_with_every_column(self):
         score = ml.Score("./xml_examples/unit_test/melody_duplicate_patterns.musicxml")
         matched = score.findAnyMelodyPatternDataFrame(2)
+        self.assertEqual(str(matched["patternIdx"].dtype), "int64")
         for empty in (
             score.findAnyMelodyPatternDataFrame(7),
             score.findAnyMelodyPatternDataFrame(2, minOccurrences=4),
         ):
             self.assertEqual(len(empty), 0)
+            self.assertEqual(str(empty["patternIdx"].dtype), "int64")
             self.assertEqual(list(empty.dtypes.items()), list(matched.dtypes.items()))
 
     def test_the_docstring_gives_the_size_at_the_defaults(self):
@@ -3011,12 +3039,7 @@ std::vector<std::vector<Note>> distinctWindows(const std::vector<MelodicLine>& l
     std::vector<std::vector<Note>> windows;
     std::set<std::vector<float>> seen;
     for (const MelodicLine& line : lines) {
-        for (size_t start = 0; start + length <= line.events.size(); start++) {
-            std::vector<Note> window;
-            window.reserve(length);
-            for (size_t offset = 0; offset < length; offset++) {
-                window.push_back(line.events[start + offset].note);
-            }
+        forEachWindow(line, length, [&](size_t /*start*/, const std::vector<Note>& window) {
             const Note* first = firstSoundingNote(window);
             std::vector<float> key;
             key.reserve(2 * length);
@@ -3027,9 +3050,9 @@ std::vector<std::vector<Note>> distinctWindows(const std::vector<MelodicLine>& l
                 key.push_back(note.getQuarterDuration());
             }
             if (seen.insert(key).second) {
-                windows.push_back(std::move(window));
+                windows.push_back(window);
             }
-        }
+        });
     }
     return windows;
 }
@@ -3178,9 +3201,11 @@ std::vector<Score::FoundMelodyPattern> Score::findAnyMelodyPattern(
         >>> table[["patternIdx", "patternPitches", "measure", "writtenPitches"]].values.tolist()
         [[0, ['C4', 'D4'], 0, ['C4', 'D4']], [0, ['C4', 'D4'], 0, ['C4', 'D4']]]
         >>> score.findAnyMelodyPatternDataFrame(2, minOccurrences=1)["patternIdx"].unique().tolist()
+        [0, 1]
+    )pbdoc");
 ```
 
-- [ ] **Step 8: Format, build, pass.** clang-format `score.h`, `score.cpp`, `py_score.cpp`, `score-test.cpp`. `git grep -n -e NoteEvent -e removeDuplicatePatterns -e collectNoteEventsPerPart -- maiacore` → nothing. C++ subset `ScoreMelodyPatternSearch.*` → pass. «build» `make "PYTHON=$py" dev` → 0; «pytest» `test_score_comprehensive` → OK.
+- [ ] **Step 8: Format, build, pass.** clang-format `score.h`, `score.cpp`, `py_score.cpp`, `score-test.cpp`. `git grep -n -w -e NoteEvent -e removeDuplicatePatterns -e collectNoteEventsPerPart -e _cachedNoteEventsPerPart -e _isNoteEventsPerPartCached -- maiacore` → nothing (`-w`, so `getChordsPerEachNoteEvent` is not reported). C++ subset `ScoreMelodyPatternSearch.*` → pass. «build» `make "PYTHON=$py" dev` → 0; «pytest» `test_score_comprehensive` → OK.
 
 - [ ] **Step 9: Ledger.** «build» `make "PYTHON=$py" corpus-update-ledger` → 0; `git diff test/musicxml/ledger.json` shows exactly (the comment edit changes no field of `melody_patterns_quarter_tone_apart.xml`):
 
@@ -3188,7 +3213,7 @@ std::vector<Score::FoundMelodyPattern> Score::findAnyMelodyPattern(
   "test/xml_examples/unit_test/melody_duplicate_patterns.musicxml": {"export": "ok", "export_errors": [], "export_xml": "well-formed", "export_xsd": "valid", "input": "valid", "load": "ok", "roundtrip": "unstable"},
 ```
 
-- [ ] **Step 10: Mutations.** (a) In `distinctWindows` replace `start + length <= line.events.size()` with `start + length < line.events.size()` → `PatternsAQuarterToneApartAreNotMergedAsDuplicates` (3) and `FindAnyMelodyPatternKeepsTheFirstOfEqualWindows` fail. (b) Delete `key.push_back(note.getQuarterDuration());` → `FindAnyMelodyPatternKeepsTheFirstOfEqualWindows` and `test_equal_windows_are_one_pattern_and_rhythm_tells_them_apart` fail (`E4-F#4` merges into `C4-D4`). (c) Replace `if (seen.insert(key).second) {` with `if (seen.insert(key).second || true) {` → both fail (5 windows). (d) In `findAnyMelodyPattern` replace the `LOG_ERROR(...)` of the `patternNumNotes < 2` check with `return {};` → `FindAnyMelodyPatternRejectsFewerThanTwoNotes` and `test_fewer_than_two_notes_or_occurrences_below_one_raise` fail; replace the `LOG_ERROR(...)` of the `minOccurrences < 1` check with `return {};` → `FindAnyMelodyPatternKeepsPatternsThatOccurAtLeastMinOccurrences` and the same Python test fail. (e) Replace `if (tables[i].size() >= static_cast<size_t>(minOccurrences)) {` with `if (tables[i].size() > static_cast<size_t>(minOccurrences)) {` → `FindAnyMelodyPatternKeepsPatternsThatOccurAtLeastMinOccurrences` (nothing kept at 3) and `test_min_occurrences_keeps_the_patterns_that_repeat` fail; with `if (true) {` (no filter) → both fail, and so does `test_the_defaults_keep_exact_repetitions_transposed_or_not`. (f) In `findAnyMelodyPattern` declare the input `static const MelodySearchInput input{...}` → `ASearchSeesTheEditsMadeBeforeIt` fails (1 pattern after the edit). (g) In the binding replace `{"patternPitches", MelodyDataFrame::Kind::List}` with `{"patternPitches", MelodyDataFrame::Kind::Text}` → `test_equal_windows_are_one_pattern_and_rhythm_tells_them_apart` fails (the lists become strings); in `py_melody_dataframe.h` replace `dtype = py::str("int64");` with `dtype = py::str("object");` → `test_no_pattern_kept_gives_an_empty_dataframe_with_every_column` fails. (h) In the numpydoc replace `2,164 patterns and 489,196 rows` with `2,164 patterns` → `test_the_docstring_gives_the_size_at_the_defaults` fails. (i) Replace the binding's `py::arg("intervalSimilarityThreshold") = 1.0f` with `= 0.5f` → `test_the_defaults_keep_exact_repetitions_transposed_or_not` fails (the `G#4` variant joins pattern 0); `py::arg("minOccurrences") = 2` with `= 1` → it fails (every window is kept); `py::arg("patternNumNotes") = 5` with `= 4` → it fails. In C++ replace the declaration's `const int minOccurrences = 2` with `= 1` → `FindAnyMelodyPatternKeepsPatternsThatOccurAtLeastMinOccurrences` fails. Revert each; rerun green.
+- [ ] **Step 10: Mutations.** (a) In `forEachWindow`, which `distinctWindows` calls (the only `for (size_t start = 0; start + length <= line.events.size(); start++) {` of `score.cpp`), replace `start + length <= line.events.size()` with `start + length < line.events.size()` → `PatternsAQuarterToneApartAreNotMergedAsDuplicates` (3) and `FindAnyMelodyPatternKeepsTheFirstOfEqualWindows` fail. (b) Delete `key.push_back(note.getQuarterDuration());` → `FindAnyMelodyPatternKeepsTheFirstOfEqualWindows` and `test_equal_windows_are_one_pattern_and_rhythm_tells_them_apart` fail (`E4-F#4` merges into `C4-D4`). (c) Replace `if (seen.insert(key).second) {` with `if (seen.insert(key).second || true) {` → both fail (5 windows). (d) In `findAnyMelodyPattern` replace the `LOG_ERROR(...)` of the `patternNumNotes < 2` check with `return {};` → `FindAnyMelodyPatternRejectsFewerThanTwoNotes` and `test_fewer_than_two_notes_or_occurrences_below_one_raise` fail; replace the `LOG_ERROR(...)` of the `minOccurrences < 1` check with `return {};` → `FindAnyMelodyPatternKeepsPatternsThatOccurAtLeastMinOccurrences` and the same Python test fail. (e) Replace `if (tables[i].size() >= static_cast<size_t>(minOccurrences)) {` with `if (tables[i].size() > static_cast<size_t>(minOccurrences)) {` → `FindAnyMelodyPatternKeepsPatternsThatOccurAtLeastMinOccurrences` (nothing kept at 3) and `test_min_occurrences_keeps_the_patterns_that_repeat` fail; with `if (true) {` (no filter) → both fail, and so does `test_the_defaults_keep_exact_repetitions_transposed_or_not`. (f) In `findAnyMelodyPattern` declare the input `static const MelodySearchInput input{...}` and run the C++ subset with the filter `ScoreMelodyPatternSearch.ASearchSeesTheEditsMadeBeforeIt` alone (under a wider filter the static input refers to the parts of a score an earlier test destroyed, and the run can crash instead) → `ASearchSeesTheEditsMadeBeforeIt` fails (1 pattern after the edit). (g) In the binding replace `{"patternPitches", MelodyDataFrame::Kind::List}` with `{"patternPitches", MelodyDataFrame::Kind::Text}` → `test_equal_windows_are_one_pattern_and_rhythm_tells_them_apart` fails (the lists become strings); in `py_melody_dataframe.h` replace `dtype = py::str("int64");` with `dtype = py::str("object");` → `test_no_pattern_kept_gives_an_empty_dataframe_with_every_column` fails (`patternIdx` is `object`, not `int64`). (h) In the numpydoc replace `2,164 patterns and 489,196 rows` with `2,164 patterns` → `test_the_docstring_gives_the_size_at_the_defaults` fails. (i) Replace the binding's `py::arg("intervalSimilarityThreshold") = 1.0f` with `= 0.5f` → `test_the_defaults_keep_exact_repetitions_transposed_or_not` fails (the `G#4` variant joins pattern 0); `py::arg("minOccurrences") = 2` with `= 1` → it fails (every window is kept); `py::arg("patternNumNotes") = 5` with `= 4` → it fails. In C++ replace the declaration's `const int minOccurrences = 2` with `= 1` → `FindAnyMelodyPatternKeepsPatternsThatOccurAtLeastMinOccurrences` fails. Revert each; rerun green.
 
 - [ ] **Step 11: Whole suites.** «build» `make "PYTHON=$py" cpp-tests` → 0 (Task 4's + 4); «build» `make "PYTHON=$py" py-tests` → OK (Task 4's + 6); «build» `make "PYTHON=$py" validate` → no new findings.
 
@@ -3221,7 +3246,7 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 - Modify (whole files): `maiacore/include/maiacore/score_collection.h`, `maiacore/src/maiacore/score_collection.cpp`, `maiacore/src/maiacore/python_wrapper/py_score_collection.cpp`
 - Test: `tests-cpp/src/score-collection-test.cpp` (whole file: the `EXPECT_GE(size_t, 0)` tests become exact ones on the small fixtures), `test/test_score_collection.py` (new)
 
-**Interfaces:** consumes `Score::MelodyPatternRow`/`MelodyPatternTable` (Task 4), `MelodyDataFrame` (Task 4) and the fixtures `melody_last_window.musicxml` (Task 4) and `melody_duplicate_patterns.musicxml` (Task 5). Produces:
+**Interfaces:** consumes `Score::MelodyPatternRow`/`MelodyPatternTable` (Task 4), `maiacore::detail::requireTwoNotes` (`melodic-lines.h`, Task 4), `MelodyDataFrame` (Task 4) and the fixtures `melody_last_window.musicxml` (Task 4) and `melody_duplicate_patterns.musicxml` (Task 5). Produces:
 `struct ScoreCollection::MelodyPatternRow { std::string fileName; std::string composerName; std::string scoreTitle; Score::MelodyPatternRow match; };`, `typedef std::vector<MelodyPatternRow> ScoreCollection::MelodyPatternTable;`,
 `ScoreCollection();`, `explicit ScoreCollection(const std::string& directoryPath, const bool recursive = false);`, `explicit ScoreCollection(const std::vector<std::string>& directoriesPaths, const bool recursive = false);`, `void setDirectoriesPaths(const std::vector<std::string>& directoriesPaths, const bool recursive = false);`, `void removeScore(const int scoreIdx);` (throws `std::out_of_range`),
 `MelodyPatternTable findMelodyPattern(const std::vector<Note>& melodyPattern, const float intervalSimilarityThreshold = 0.5f, const float rhythmSimilarityThreshold = 0.5f, <five callbacks by const reference>) const;`, `std::vector<MelodyPatternTable> findMelodyPattern(const std::vector<std::vector<Note>>& melodyPatterns, <same>) const;` (one table per pattern);
@@ -3980,7 +4005,7 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
     def test_a_directory_named_like_a_score_and_a_non_ascii_name_are_skipped(self):
         with tempfile.TemporaryDirectory() as directory:
             os.makedirs(os.path.join(directory, "old.xml"))
-            with open(os.path.join(directory, "ωδή.txt"), "w", encoding="utf-8") as text:
+            with open(os.path.join(directory, "notes.ωδή"), "w", encoding="utf-8") as text:
                 text.write("not a score")
             shutil.copyfile(LAST_WINDOW, os.path.join(directory, "a.xml"))
 
@@ -4324,6 +4349,9 @@ class ScoreCollection {
 #include <vector>
 
 #include "maiacore/log.h"
+#include "melodic-lines.h"
+
+using maiacore::detail::requireTwoNotes;
 
 namespace {
 // Whether the file's extension is .xml, .mxl or .musicxml, in any case. The extension is read as
@@ -4363,17 +4391,6 @@ std::vector<std::filesystem::path> musicXMLFiles(const std::string& directory,
     }
     return recursive ? musicXMLFilesOf<std::filesystem::recursive_directory_iterator>(directory)
                      : musicXMLFilesOf<std::filesystem::directory_iterator>(directory);
-}
-
-// Rejects a melody pattern of fewer than 2 notes, as Score::findMelodyPattern() does, so that an
-// empty collection rejects it too.
-void requireTwoNotes(const size_t numNotes) {
-    if (numNotes < 2) {
-        LOG_ERROR(
-            "ScoreCollection::findMelodyPattern: a melody pattern needs at least 2 notes, and "
-            "this one has " +
-            std::to_string(numNotes));
-    }
 }
 
 // The rows of 'table', a search of 'score', with the score's file name, composer and title.
@@ -4492,7 +4509,8 @@ ScoreCollection::MelodyPatternTable ScoreCollection::findMelodyPattern(
     const std::function<float(const std::vector<float>&)>& totalIntervalSimilarityCallback,
     const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback,
     const std::function<float(float, float)>& totalSimilarityCallback) const {
-    requireTwoNotes(melodyPattern.size());
+    // Checked here as well, so that an empty collection rejects the pattern as a full one does.
+    requireTwoNotes("ScoreCollection::findMelodyPattern", melodyPattern.size());
     MelodyPatternTable rows;
     for (const Score& score : _scores) {
         appendRows(
@@ -4518,7 +4536,7 @@ std::vector<ScoreCollection::MelodyPatternTable> ScoreCollection::findMelodyPatt
     const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback,
     const std::function<float(float, float)>& totalSimilarityCallback) const {
     for (const std::vector<Note>& pattern : melodyPatterns) {
-        requireTwoNotes(pattern.size());
+        requireTwoNotes("ScoreCollection::findMelodyPattern", pattern.size());
     }
     std::vector<MelodyPatternTable> tables(melodyPatterns.size());
     for (const Score& score : _scores) {
@@ -4884,7 +4902,7 @@ void ScoreCollectionClass(const py::module& m) {
 
 - [ ] **Step 7: Format, build, pass.** clang-format the four C++ files; `ruff check test/test_score_collection.py` and `ruff format --check test/test_score_collection.py` (from the venv's `Scripts`) → clean. C++ subset `ScoreCollection*` → pass. «build» `make "PYTHON=$py" dev` → 0; «pytest» `test_score_collection test_score_comprehensive` → OK (the callback tests of `test_score_comprehensive` build `ml.ScoreCollection([])` and search it through the list overload).
 
-- [ ] **Step 8: Mutations.** (a) Make the default constructor load the current directory: `ScoreCollection::ScoreCollection() { setDirectoriesPaths({"."}); }` → `DefaultConstructor` and `test_the_default_constructor_builds_an_empty_collection` fail. (b) In `musicXMLFiles` delete the `is_directory` check → `APathThatIsNotADirectoryRaises` and `test_a_path_that_is_not_a_directory_raises_runtime_error_naming_it` fail (the iterator's "cannot read the directory" message, or nothing, instead). (c) In `isMusicXMLFile` delete the `std::transform(...)` → `DiscoveryIgnoresCaseSortsAndRecursesOnRequest` and `test_discovery_ignores_case_sorts_and_recurses_on_request` fail (`B.XML`, `c.MusicXML` skipped); delete `std::sort(files.begin(), files.end());` → both fail (NTFS lists `a.xml` first); in `musicXMLFiles` always use `std::filesystem::directory_iterator` → both fail (`d.xml` missing). (d) Replace `if (it->is_regular_file(typeError) && isMusicXMLFile(it->path())) {` with `if (isMusicXMLFile(it->path())) {` → `test_a_directory_named_like_a_score_and_a_non_ascii_name_are_skipped` fails (the directory `old.xml` is loaded); replace `path.extension().u8string()` with `path.extension().string()` → it fails on Windows (`ωδή.txt` is outside the ANSI code page, and `path::string()` throws a system error whose localised message Python cannot decode). (e) Replace `_scores = std::move(scores);` with `_scores.insert(_scores.end(), scores.begin(), scores.end());` → `SetDirectoriesReloads`, `SetDirectoriesMultipleTimes` and `test_set_directories_paths_replaces_the_scores` fail. (f) Move `_directoriesPaths = directoriesPaths;` to the start of `setDirectoriesPaths` → `AFailedReloadChangesNothing` fails. (g) In `removeScore` replace `throw std::out_of_range(` with `throw std::runtime_error(` → `RemoveScoreInvalidIndex`, `RemoveFromEmptyCollection` and `test_remove_score_outside_the_collection_raises_index_error` fail. (h) In `appendRows` pass `score.getTitle()` for the file name → `FindMelodyPatternBasic`, `FindMultipleMelodyPatterns` fail. (i) Delete the `sortByScoreTitle(&rows);` call of the single overload → `FindMelodyPatternSortsByScoreTitle` and `test_the_columns_start_with_the_score` fail; delete the loop that sorts the list overload's tables → `EachTableIsTheSinglePatternSearch` fails; in the list binding delete the `std::stable_sort(...)` → `test_the_list_overload_adds_the_pattern_index_first` fails. (j) In the single overload call `score.findMelodyPattern(melodyPattern)` without the thresholds and callbacks → `FindMelodyPatternHighThresholds` fails (4 rows at 1.0). (k) Delete the single overload's `requireTwoNotes(melodyPattern.size());` → `FindMelodyPatternEmptyCollection` and `test_a_pattern_of_fewer_than_two_notes_raises_even_in_an_empty_collection` fail; delete the list overload's loop of `requireTwoNotes` → `AShortPatternIsRejected` fails. (l) Make the list overload return one table per score (`tables` sized and filled per score, as before) → `FindMultipleMelodyPatterns` fails. (m) In the single overload's loop add `break;` after `appendRows(...)` → `MergeAndSearch` fails (2 rows). (n) In `py_melody_dataframe.h` replace `dtype = py::str("int64");` with `dtype = py::str("object");` → `test_an_empty_result_is_an_empty_dataframe_with_every_column_and_dtype` fails. (o) Rename the single binding's `py::arg("intervalSimilarityThreshold")` to `py::arg("totalIntervalsSimilarityThreshold")` → `test_the_thresholds_have_the_unified_names` fails. Revert each; rerun green.
+- [ ] **Step 8: Mutations.** (a) Make the default constructor load the current directory: `ScoreCollection::ScoreCollection() { setDirectoriesPaths({"."}); }` → `DefaultConstructor` and `test_the_default_constructor_builds_an_empty_collection` fail. (b) In `musicXMLFiles` delete the `is_directory` check → `APathThatIsNotADirectoryRaises` and `test_a_path_that_is_not_a_directory_raises_runtime_error_naming_it` fail (the iterator's "cannot read the directory" message, or nothing, instead). (c) In `isMusicXMLFile` delete the `std::transform(...)` → `DiscoveryIgnoresCaseSortsAndRecursesOnRequest` and `test_discovery_ignores_case_sorts_and_recurses_on_request` fail (`B.XML`, `c.MusicXML` skipped); delete `std::sort(files.begin(), files.end());` → both fail (NTFS lists `a.xml` first); in `musicXMLFiles` always use `std::filesystem::directory_iterator` → both fail (`d.xml` missing). (d) Replace `if (it->is_regular_file(typeError) && isMusicXMLFile(it->path())) {` with `if (isMusicXMLFile(it->path())) {` → `test_a_directory_named_like_a_score_and_a_non_ascii_name_are_skipped` fails (the directory `old.xml` is loaded); replace `path.extension().u8string()` with `path.extension().string()` → it fails on Windows (the extension `.ωδή` of `notes.ωδή` is outside the ANSI code page, and `path::string()` throws a system error whose localised message Python cannot decode). (e) Replace `_scores = std::move(scores);` with `_scores.insert(_scores.end(), scores.begin(), scores.end());` → `SetDirectoriesReloads`, `SetDirectoriesMultipleTimes` and `test_set_directories_paths_replaces_the_scores` fail. (f) Move `_directoriesPaths = directoriesPaths;` to the start of `setDirectoriesPaths` → `AFailedReloadChangesNothing` fails. (g) In `removeScore` replace `throw std::out_of_range(` with `throw std::runtime_error(` → `RemoveScoreInvalidIndex`, `RemoveFromEmptyCollection` and `test_remove_score_outside_the_collection_raises_index_error` fail. (h) In `appendRows` pass `score.getTitle()` for the file name → `FindMelodyPatternBasic`, `FindMultipleMelodyPatterns` fail. (i) Delete the `sortByScoreTitle(&rows);` call of the single overload → `FindMelodyPatternSortsByScoreTitle` and `test_the_columns_start_with_the_score` fail; delete the loop that sorts the list overload's tables → `EachTableIsTheSinglePatternSearch` fails; in the list binding delete the `std::stable_sort(...)` → `test_the_list_overload_adds_the_pattern_index_first` fails. (j) In the single overload call `score.findMelodyPattern(melodyPattern)` without the thresholds and callbacks → `FindMelodyPatternHighThresholds` fails (4 rows at 1.0). (k) Delete the single overload's `requireTwoNotes("ScoreCollection::findMelodyPattern", melodyPattern.size());` → `FindMelodyPatternEmptyCollection` and `test_a_pattern_of_fewer_than_two_notes_raises_even_in_an_empty_collection` fail; delete the list overload's loop of `requireTwoNotes` → `AShortPatternIsRejected` fails. (l) Make the list overload return one table per score (`tables` sized and filled per score, as before) → `FindMultipleMelodyPatterns` fails. (m) In the single overload's loop add `break;` after `appendRows(...)` → `MergeAndSearch` fails (2 rows). (n) In `py_melody_dataframe.h` replace `dtype = py::str("int64");` with `dtype = py::str("object");` → `test_an_empty_result_is_an_empty_dataframe_with_every_column_and_dtype` fails. (o) Rename the single binding's `py::arg("intervalSimilarityThreshold")` to `py::arg("totalIntervalsSimilarityThreshold")` → `test_the_thresholds_have_the_unified_names` fails. Revert each; rerun green.
 
 - [ ] **Step 9: Whole suites.** «build» `make "PYTHON=$py" cpp-tests` → 0 (Task 5's + 3: 6 new, 3 removed); «build» `make "PYTHON=$py" py-tests` → OK (Task 5's + 11); «build» `make "PYTHON=$py" validate` → no new findings.
 
@@ -4998,7 +5016,7 @@ for path, cell, cwd in (('find_pattern.ipynb', 4, '.'), ('03_advanced/01_pattern
   - `ScoreCollection()` builds an empty collection; the directory constructors and `setDirectoriesPaths()` take `recursive=False`, which reads subdirectories at any depth when `True`
 ```
 
-- [ ] **Step 5: CHANGELOG, Fix.** At the end of `### Fix` (after its last line, the `**Breaking:** Exports write \`<transpose>\`` entry, before `### Removed`) insert:
+- [ ] **Step 5: CHANGELOG, Fix.** At the end of `### Fix` (after its last line, the `**Breaking:** Exports write \`<transpose>\`` entry, before `### Removed`) insert the entries below; in the first one, use Step 1's measured counts if they differ from "finds 10 where it found 6":
 
 ```markdown
 - **Breaking:** The melody search (`Score.findMelodyPatternDataFrame()`, `ScoreCollection.findMelodyPatternDataFrame()`, `Score::findMelodyPattern()`) searches every voice of every staff of every part as its own melodic line, where it searched one line per part made of the voice-1 notes of all its staves: the lower staves of the packaged samples (voices 5 and up) and every other voice were never searched, and a window could jump between staves. A chord is one event represented by its highest sounding note (it entered by its first-written note, usually the lowest); a note tied to the previous event at the same pitch extends it (each tied piece was an event); a grace note is not an event. Matches change for every score with chords, ties, several voices or several staves: the README's Beethoven example finds 10 where it found 6
@@ -5013,7 +5031,7 @@ for path, cell, cwd in (('find_pattern.ipynb', 4, '.'), ('03_advanced/01_pattern
 - **Breaking:** `ScoreCollection.setDirectoriesPaths()` replaces the collection's scores, all or nothing, where it appended them (1, then 2, then 3 scores). Discovery matches `.xml`, `.mxl` and `.musicxml` without regard to case (`.XML` and `.MusicXML` were skipped) and loads in sorted path order (it used the file system's). `ml.ScoreCollection()` builds an empty collection, and a path that does not exist or is not a directory raises `RuntimeError` naming it — both raised `UnicodeDecodeError` from a localised message; in C++ `ScoreCollection collection;` was ambiguous. `removeScore()` raises `IndexError` for any index outside the collection, where `removeScore(-1)` crashed the interpreter
 ```
 
-- [ ] **Step 6: Remaining docs.** Bash `git -C /c/Users/nyck/Desktop/maialib grep -n -e "'measureId'" -e "writtenClefKey" -e "segmentWrittenPitch" -e "totalIntervalsSimilarityThreshold" -e "totalRhythmSimilarityThreshold" -e "returns a copy of the note" -e "_cachedNoteEventsPerPart" -- '*.md' '*.h' '*.cpp' '*.py' '*.ipynb' ':!docs/superpowers' ':!AI_API_CHEATSHEET.md' ':!llms-full.txt' ':!DEVELOPMENT_PLAN.md' ':!CHANGELOG.md'` → no line (the CHANGELOG names the old names on purpose; `DEVELOPMENT_PLAN.md` is a historical plan; the generated `AI_API_CHEATSHEET.md` and `llms-full.txt` are regenerated at release). Commit `git add README.md CHANGELOG.md python-tutorial/find_pattern.ipynb python-tutorial/03_advanced/01_pattern_finding.ipynb`, message:
+- [ ] **Step 6: Remaining docs.** Bash `git -C /c/Users/nyck/Desktop/maialib grep -n -e "'measureId'" -e "writtenClefKey" -e "segmentWrittenPitch" -e "totalIntervalsSimilarityThreshold" -e "totalRhythmSimilarityThreshold" -e "returns a copy of the note" -e "_cachedNoteEventsPerPart" -- '*.md' '*.h' '*.cpp' '*.py' '*.ipynb' ':!docs/superpowers' ':!AI_API_CHEATSHEET.md' ':!llms-full.txt' ':!DEVELOPMENT_PLAN.md' ':!CHANGELOG.md' ':!test/'` → no line (the tests under `test/` pass `totalIntervalsSimilarityThreshold=1.0` on purpose, to assert the `TypeError`; the CHANGELOG names the old names on purpose; `DEVELOPMENT_PLAN.md` is a historical plan; the generated `AI_API_CHEATSHEET.md` and `llms-full.txt` are regenerated at release). Commit `git add README.md CHANGELOG.md python-tutorial/find_pattern.ipynb python-tutorial/03_advanced/01_pattern_finding.ipynb`, message:
 
 ```
 docs: changelog, README and notebooks of the melody search over every line
@@ -5032,7 +5050,7 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
   7. «build» `make "PYTHON=$py" msvc-gate` → 0.
   8. «build» `make "PYTHON=$py" linux-gate` → 0. If it exits 2 listing missing apt packages (this machine's WSL has no `cmake` and no password-less sudo), run the Linux route instead and report it: in Bash, `git -C /c/Users/nyck/Desktop/maialib -c core.autocrlf=false -c core.eol=lf archive HEAD` extracted under `/var/tmp/maialib-5` in WSL; there a venv with `requirements-dev.txt` plus `cmake` from pip; `make "PYTHON=<venv>/bin/python" dev` and `make "PYTHON=<venv>/bin/python" py-tests` → 0; record the count (686); remove `/var/tmp/maialib-5` afterwards.
   9. «build» `make "PYTHON=$py" fuzz` → 0; compare `test\musicxml\fuzz-work\report-seed-1.json` with `C:\Users\nyck\AppData\Local\Temp\maialib-5-fuzz-baseline.json` by outcome, not case by case — the seven new fixtures shift the list of files the cases pick from (`test/musicxml/README.md`), and a mutated `<staff>` beyond the part's staves now raises `IndexError` where it raised `RuntimeError`: no `crash:*` or `timeout:*` outcome, and no outcome that the baseline does not have; explain each outcome count that changed. The fuzz worker's analyses do not run the melody search, so a finding there is outside this step's code unless it involves `Measure::addNote`.
-  10. Import check from outside the repository (Task 0, Step 5) with the final venv; `git status --short` → ` M .gitignore` only; `git log --oneline cab545b..HEAD` lists the seven task commits (Tasks 1-7) after the commit that adds this plan.
+  10. Import check from outside the repository (Task 0, Step 5) with the final venv; `git status --short` → ` M .gitignore` only; `git log --oneline "$(git log -1 --format=%H -- docs/superpowers/plans/2026-10-05-melody-search.md)..HEAD"` lists exactly the seven task commits (Tasks 1-7), which follow the plan's last commit.
   Put every count, duration and comparison in the task report.
 
 ---
