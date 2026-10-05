@@ -118,6 +118,12 @@ class DumpScoreTestCase(unittest.TestCase):
         self.assertEqual("B3", record["sounding"])
         self.assertEqual([-1, -2], record["transpose"])
 
+    def test_a_note_is_dumped_with_its_octave_doubling(self):
+        note = ml.Note("C3")
+        self.assertEqual("NONE", dump_score.note_record(note)["octaveDoubling"])
+        note.setOctaveDoubling(ml.OctaveDoubling.BELOW)
+        self.assertEqual("BELOW", dump_score.note_record(note)["octaveDoubling"])
+
     def test_the_attributes_and_change_flags_of_each_measure_are_dumped(self):
         score = ml.Score(["Drums"], 4)
         part = score.getPart(0)

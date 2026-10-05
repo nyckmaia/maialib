@@ -8,9 +8,10 @@ as the ledgers instead; review the diff before committing it. Both need maialib 
 """
 
 import argparse
+import os
 import sys
 
-from build_utils import REPO_ROOT
+from build_utils import REPO_ROOT, run_step
 from terminal_colors import color
 
 sys.path.insert(0, str(REPO_ROOT / "test" / "musicxml"))
@@ -49,6 +50,20 @@ def main() -> int:
         for problem in problems:
             print(f"{color.FAIL}{problem}{color.ENDC}")
         failed = failed or bool(problems)
+    if not arguments.update_ledger and not failed:
+        # `make py-tests` skips the slow corpus files; their <transpose> round trip runs here,
+        # once the corpus matches its ledgers, so that a ledger difference is always reported.
+        os.environ["MAIALIB_SLOW_TESTS"] = "1"
+        run_step(
+            [
+                sys.executable,
+                "-m",
+                "unittest",
+                "test_musicxml_transpose.TransposeRoundTripTestCase",
+            ],
+            "the <transpose> round trip of the corpus",
+            cwd=str(REPO_ROOT / "test"),
+        )
     if failed:
         print(
             f"{color.FAIL}The corpus differs from its ledger: review, then `make corpus-update-ledger`.{color.ENDC}"

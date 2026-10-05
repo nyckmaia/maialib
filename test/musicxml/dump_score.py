@@ -72,6 +72,7 @@ def note_record(note: Any) -> dict[str, Any]:
         "chord": _safe(note.inChord),
         "grace": _safe(note.isGraceNote),
         "transpose": [_safe(note.getTransposeDiatonic), _safe(note.getTransposeChromatic)],
+        "octaveDoubling": _safe(lambda: note.getOctaveDoubling().name),
         "ties": _list(note.getTie),
         "slur": _list(note.getSlur),
         "beams": _list(note.getBeam),

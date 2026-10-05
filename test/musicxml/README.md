@@ -88,7 +88,9 @@ network access, and `musicxml_check.py` needs only lxml.
 
 - `make py-tests` runs `test_musicxml_corpus.py`: every corpus file except the slow ones against
   `ledger.json`.
-- `make corpus` runs every file, slow ones included.
+- `make corpus` runs every file, slow ones included, then, when every file matches its ledger,
+  the `<transpose>` round trip of `test_musicxml_transpose.py` with `MAIALIB_SLOW_TESTS=1`, which
+  adds the slow corpus files that `make py-tests` skips.
 - `make corpus-update-ledger` writes the ledgers from the current results.
 - `make corpus-fetch` downloads OpenScore Lieder and String Quartets (CC0) at pinned commits;
   `make corpus` then includes them. On Windows it fails with "Filename too long" when the path of
