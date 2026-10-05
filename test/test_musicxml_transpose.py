@@ -37,6 +37,7 @@ CORPUS_WITH_TRANSPOSE = (
     "test/musicxml/w3c-test-suite/xmlFiles/72d-TransposingInstruments-scorePitch.musicxml",
     "test/xml_examples/Beethoven/Symphony_5th_1Mov.xml",
     "test/xml_examples/Beethoven/big_files/Symphony_9th.xml",
+    "test/xml_examples/unit_test/melody_transposing_instrument.musicxml",
     "test/xml_examples/unit_test/test_compressed_file.mxl",
     "test/xml_examples/unit_test/test_getChords.xml",
     "test/xml_examples/unit_test/test_getchords_poly.musicxml",
