@@ -94,7 +94,9 @@ in chord extraction and the piano roll, a note one octave below (or above) what 
 - **Atomic:** before changing anything it checks every note in the range; if one would have no
   sounding pitch under the interval (outside the representable range, as `Note::setTransposingInterval`
   defines it), it throws (Python `RuntimeError`) naming the first such note
-  (measure, staff, written pitch) and changes nothing. Invalid measure or staff indices throw as the
+  (measure, staff, written pitch) and changes nothing. The setter also refuses a note that would sound
+  below the lowest representable pitch, `C1b-1`, which `Note::setTransposingInterval` accepts (the
+  note's sounding getters raise later instead). Invalid measure or staff indices throw as the
   other `Part` accessors do.
 - In Python this is the way to change transpositions in place while `Measure.getNote()` returns copies
   (roadmap step 5 changes that); `Score.forEachNote` also edits in place.
@@ -116,8 +118,10 @@ in chord extraction and the piano roll, a note one octave below (or above) what 
 - **A chord is read as a unit:** every note of a chord takes the interval and the doubling in force
   for its staff at the chord's first note, and a `<transpose>` written between the notes of a chord
   applies from the next note that is not in that chord. A chord read from a file therefore never
-  mixes tuples, so every file that loads can be exported (§5.1). No corpus file writes a
-  `<transpose>` inside a chord.
+  mixes tuples, so every file that loads can be exported (§5.1), except one with a chord whose notes
+  span staves when a staff's transposition changes inside it: the writer groups a chord's notes per
+  staff (phase 4b rewrites cross-staff chord output). No corpus file writes a `<transpose>` inside a
+  chord.
 - Each pitched note is stamped with the interval and the doubling in force for its staff (§3.1); rests
   and unpitched notes are not stamped (the setter and the writer leave them alone too, so stamping them
   would not survive a round trip). A part with no `<transpose>` stays untransposed.
@@ -172,7 +176,9 @@ and `<chromatic>`, e.g. the Strauss sample's contrabassoon `(−7, −12)`, whic
 - **Chords:** a chord whose notes have different tuples cannot be written; the export throws, naming
   the measure and the staff (the spirit of item-4 D3). Such a chord arises only through note-level
   edits: the reader reads a chord as a unit (§4.1), also where it ignores a `<transpose>` or reads
-  notes untransposed (§4.3).
+  notes untransposed (§4.3). So every file that loads can be exported, except one with a chord whose
+  notes span staves when a staff's transposition changes inside it: the writer groups a chord's notes
+  per staff (phase 4b rewrites cross-staff chord output).
 - `<attributes>` is opened when a `<transpose>` must be written, also in measures where key, time,
   divisions and clef did not change (`Part::toXML`, `part.cpp:219-229`).
 
