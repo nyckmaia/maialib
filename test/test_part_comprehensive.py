@@ -329,7 +329,7 @@ class PartAppendOverflowTestCase(unittest.TestCase):
 
 class PartSetTransposingIntervalTestCase(unittest.TestCase):
     """Part.setTransposingInterval stamps the pitched notes of a measure range and a staff in
-    place, which an edit through Measure.getNote(), a copy, cannot do."""
+    place, all of them or none."""
 
     def clarinets(self):
         """Two measures of a two-staff part; each staff holds a C4 and a rest."""

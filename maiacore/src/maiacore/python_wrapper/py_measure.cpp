@@ -179,9 +179,14 @@ void MeasureClass(const py::module& m) {
     cls.def("isMajorKeyMode", &Measure::isMajorKeyMode);
 
     cls.def("getNote", py::overload_cast<const int, const int>(&Measure::getNote),
-            py::arg("noteId"), py::arg("staveId") = 0,
+            py::arg("noteId"), py::arg("staveId") = 0, py::return_value_policy::reference_internal,
             R"pbdoc(
-        Get the note at a given index on a given stave.
+        Get the note at a given index on a given stave, as a live reference.
+
+        An edit made through the returned note reaches the measure and its score. The reference
+        is valid until the measure gains or loses notes (``addNote``, ``removeNote``, ``clear``,
+        or an edit of its part or score that rebuilds the measure); fetch the note again after
+        that. ``Chord.getNote`` and ``Part.getMeasures`` return copies.
 
         Parameters
         ----------
@@ -199,21 +204,62 @@ void MeasureClass(const py::module& m) {
         ------
         IndexError
             If ``staveId`` or ``noteId`` is negative or out of range (e.g. on an empty stave).
+
+        Examples
+        --------
+        >>> score = ml.Score(["Flute"], 1)
+        >>> score.getPart(0).getMeasure(0).addNote("C4")
+        >>> score.getPart(0).getMeasure(0).getNote(0).setPitch("D4")
+        >>> score.getPart(0).getMeasure(0).getNote(0).getPitch()
+        'D4'
     )pbdoc");
-    cls.def("getNote", py::overload_cast<const int, const int>(&Measure::getNote, py::const_),
-            py::arg("noteId"), py::arg("staveId") = 0, py::return_value_policy::reference_internal);
 
     cls.def("getNoteOn", py::overload_cast<const int, const int>(&Measure::getNoteOn),
-            py::arg("noteOnId"), py::arg("staveId") = 0);
-    cls.def("getNoteOn", py::overload_cast<const int, const int>(&Measure::getNoteOn, py::const_),
             py::arg("noteOnId"), py::arg("staveId") = 0,
-            py::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal,
+            R"pbdoc(
+        Get the sounding note (not a rest) at a given index among the stave's sounding notes, as
+        a live reference.
+
+        An edit made through the returned note reaches the measure and its score. The reference
+        is valid until the measure gains or loses notes; fetch the note again after that.
+
+        Parameters
+        ----------
+        noteOnId : int
+            Index among the sounding notes of the stave, in ``0 .. getNumNotesOn(staveId) - 1``.
+        staveId : int, optional
+            Stave index (default: 0).
+
+        Raises
+        ------
+        IndexError
+            If ``staveId`` is not a stave of the measure, or ``noteOnId`` is negative or not
+            below the stave's number of sounding notes.
+    )pbdoc");
 
     cls.def("getNoteOff", py::overload_cast<const int, const int>(&Measure::getNoteOff),
-            py::arg("noteOffId"), py::arg("staveId") = 0);
-    cls.def("getNoteOff", py::overload_cast<const int, const int>(&Measure::getNoteOff, py::const_),
             py::arg("noteOffId"), py::arg("staveId") = 0,
-            py::return_value_policy::reference_internal);
+            py::return_value_policy::reference_internal,
+            R"pbdoc(
+        Get the rest at a given index among the stave's rests, as a live reference.
+
+        An edit made through the returned note reaches the measure and its score. The reference
+        is valid until the measure gains or loses notes; fetch the note again after that.
+
+        Parameters
+        ----------
+        noteOffId : int
+            Index among the rests of the stave, in ``0 .. getNumNotesOff(staveId) - 1``.
+        staveId : int, optional
+            Stave index (default: 0).
+
+        Raises
+        ------
+        IndexError
+            If ``staveId`` is not a stave of the measure, or ``noteOffId`` is negative or not
+            below the stave's number of rests.
+    )pbdoc");
 
     cls.def("getNumNotesOn", py::overload_cast<>(&Measure::getNumNotesOn, py::const_));
     cls.def("getNumNotesOn", py::overload_cast<const int>(&Measure::getNumNotesOn, py::const_),

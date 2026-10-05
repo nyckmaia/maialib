@@ -303,145 +303,37 @@ Note& Measure::getNote(const int noteId, const int staveId) {
 }
 
 const Note& Measure::getNoteOn(const int noteOnId, const int staveId) const {
-    if (staveId < 0 || staveId >= static_cast<int>(_note.size())) {
-        throw std::out_of_range("Out of Range error");
-    }
-
-    auto& stave = _note[staveId];
-
-    const int numNotes = getNumNotes(staveId);
-
-    if (noteOnId < 0 || noteOnId > (numNotes - 1)) {
-        throw std::out_of_range("Out of Range error");
-    }
-
-    int noteCount = 0;
-    for (int n = 0; n < numNotes; n++) {
-        const Note& currentNote = stave[n];
-
-        if (!currentNote.isNoteOn()) {
-            continue;
+    requireStaff("Measure::getNoteOn", staveId, _note.size());
+    int count = 0;
+    for (const Note& note : _note[staveId]) {
+        if (note.isNoteOn() && count++ == noteOnId) {
+            return note;
         }
-
-        if (noteOnId != noteCount) {
-            noteCount++;
-            continue;
-        }
-
-        return currentNote;
     }
-
-    return stave[0];  // This return statement is only to remove the warning
-                      // "returning reference to temporary"
+    throw std::out_of_range("Measure::getNoteOn: note on " + std::to_string(noteOnId) +
+                            " is outside staff " + std::to_string(staveId) + ", which has " +
+                            std::to_string(count) + " notes on");
 }
 
 Note& Measure::getNoteOn(const int noteOnId, const int staveId) {
-    if (staveId < 0 || staveId >= static_cast<int>(_note.size())) {
-        throw std::out_of_range("Out of Range error");
-    }
-
-    auto& stave = _note[staveId];
-
-    const int numNotes = getNumNotes(staveId);
-
-    if (noteOnId < 0 || noteOnId > (numNotes - 1)) {
-        throw std::out_of_range("Out of Range error");
-    }
-
-    int noteCount = 0;
-    Note* currentNote = nullptr;
-    for (int n = 0; n < numNotes; n++) {
-        currentNote = &stave[n];
-
-        if (!currentNote->isNoteOn()) {
-            continue;
-        }
-
-        if (noteOnId != noteCount) {
-            noteCount++;
-            continue;
-        }
-
-        break;
-    }
-
-    if (currentNote == nullptr) {
-        LOG_ERROR("Unable to get a note on using the index '" + std::to_string(noteOnId) +
-                  "' and staveId '" + std::to_string(staveId) + "'");
-    }
-
-    return *currentNote;
+    return const_cast<Note&>(std::as_const(*this).getNoteOn(noteOnId, staveId));
 }
 
 const Note& Measure::getNoteOff(const int noteOffId, const int staveId) const {
-    if (staveId < 0 || staveId >= static_cast<int>(_note.size())) {
-        throw std::out_of_range("Out of Range error");
-    }
-
-    auto& stave = _note[staveId];
-
-    const int numNotes = getNumNotes(staveId);
-
-    if (noteOffId < 0 || noteOffId > (numNotes - 1)) {
-        throw std::out_of_range("Out of Range error");
-    }
-
-    int noteCount = 0;
-    for (int n = 0; n < numNotes; n++) {
-        const Note& currentNote = stave[n];
-
-        if (!currentNote.isNoteOff()) {
-            continue;
+    requireStaff("Measure::getNoteOff", staveId, _note.size());
+    int count = 0;
+    for (const Note& note : _note[staveId]) {
+        if (note.isNoteOff() && count++ == noteOffId) {
+            return note;
         }
-
-        if (noteOffId != noteCount) {
-            noteCount++;
-            continue;
-        }
-
-        return currentNote;
     }
-
-    return stave[0];  // This return statement is only to remove the warning
-                      // "returning reference to temporary"
+    throw std::out_of_range("Measure::getNoteOff: rest " + std::to_string(noteOffId) +
+                            " is outside staff " + std::to_string(staveId) + ", which has " +
+                            std::to_string(count) + " rests");
 }
 
 Note& Measure::getNoteOff(const int noteOffId, const int staveId) {
-    if (staveId < 0 || staveId >= static_cast<int>(_note.size())) {
-        throw std::out_of_range("Out of Range error");
-    }
-
-    auto& stave = _note[staveId];
-
-    const int numNotes = getNumNotes(staveId);
-
-    if (noteOffId < 0 || noteOffId > (numNotes - 1)) {
-        throw std::out_of_range("Out of Range error");
-    }
-
-    int noteCount = 0;
-    Note* currentNote = nullptr;
-    for (int n = 0; n < numNotes; n++) {
-        currentNote = &stave[n];
-
-        if (!currentNote->isNoteOff()) {
-            continue;
-        }
-
-        if (noteOffId != noteCount) {
-            noteCount++;
-            continue;
-        }
-
-        break;
-    }
-
-    if (currentNote == nullptr) {
-        LOG_ERROR("Unable to get a note off using the index '" + std::to_string(noteOffId) +
-                  "' and staveId '" + std::to_string(staveId) + "'");
-    }
-
-    return *currentNote;
+    return const_cast<Note&>(std::as_const(*this).getNoteOff(noteOffId, staveId));
 }
 
 int Measure::getNumNotesOn() const {

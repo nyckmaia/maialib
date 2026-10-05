@@ -424,6 +424,43 @@ class MeasureIntegrationTestCase(unittest.TestCase):
                 self.assertGreaterEqual(measure.getNumStaves(), 1)
 
 
+class MeasureLiveNoteTestCase(unittest.TestCase):
+    """getNote, getNoteOn and getNoteOff return live references: an edit reaches the score."""
+
+    def flute(self):
+        score = ml.Score(["Flute"], 1)
+        score.getPart(0).getMeasure(0).addNote(["C4", "rest", "E4"])
+        return score
+
+    def test_an_edit_through_get_note_reaches_the_score(self):
+        score = self.flute()
+        score.getPart(0).getMeasure(0).getNote(0).setPitch("D4")
+        self.assertEqual(score.getPart(0).getMeasure(0).getNote(0).getWrittenPitch(), "D4")
+
+    def test_an_edit_through_get_note_on_reaches_the_score(self):
+        score = self.flute()
+        score.getPart(0).getMeasure(0).getNoteOn(1).setPitch("F4")
+        self.assertEqual(score.getPart(0).getMeasure(0).getNote(2).getWrittenPitch(), "F4")
+
+    def test_an_edit_through_get_note_off_reaches_the_score(self):
+        score = self.flute()
+        score.getPart(0).getMeasure(0).getNoteOff(0).setDuration(2.0)
+        self.assertEqual(score.getPart(0).getMeasure(0).getNote(1).getQuarterDuration(), 2.0)
+
+    def test_the_docstrings_say_how_long_the_reference_is_valid(self):
+        for method in (ml.Measure.getNote, ml.Measure.getNoteOn, ml.Measure.getNoteOff):
+            with self.subTest(method=method.__name__):
+                doc = " ".join(method.__doc__.split())
+                self.assertIn("valid until the measure gains or loses notes", doc)
+
+    def test_an_index_past_the_notes_or_the_rests_raises(self):
+        measure = self.flute().getPart(0).getMeasure(0)
+        with self.assertRaises(IndexError):
+            measure.getNoteOn(2)
+        with self.assertRaises(IndexError):
+            measure.getNoteOff(1)
+
+
 class MeasureEditTestCase(unittest.TestCase):
     """removeNote removes one note; addNote inserts a list in order; both check their indices."""
 

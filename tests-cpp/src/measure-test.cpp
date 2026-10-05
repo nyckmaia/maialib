@@ -758,6 +758,21 @@ TEST(MeasureNoteAddition, APositionPastTheEndOrAStaffOutsideTheMeasureRaises) {
     EXPECT_EQ(pitchesOn(measure), (std::vector<std::string>{"C4", "D4"}));
 }
 
+// getNoteOn() and getNoteOff() count only the notes, or only the rests, of the staff: an index
+// past them raises std::out_of_range instead of answering another note.
+TEST(MeasureNoteRetrieval, NoteOnAndNoteOffIndicesCountOnlyTheirKind) {
+    Measure measure;
+    measure.addNote(std::vector<std::string>{"C4", "rest", "E4"}, 0);
+    const Measure& constMeasure = measure;
+
+    EXPECT_EQ(measure.getNoteOn(1, 0).getWrittenPitch(), "E4");
+    EXPECT_EQ(measure.getNoteOff(0, 0).getWrittenPitch(), "rest");
+    EXPECT_THROW(measure.getNoteOn(2, 0), std::out_of_range);
+    EXPECT_THROW(measure.getNoteOff(1, 0), std::out_of_range);
+    EXPECT_THROW(constMeasure.getNoteOn(2, 0), std::out_of_range);
+    EXPECT_THROW(constMeasure.getNoteOff(1, 0), std::out_of_range);
+}
+
 TEST(MeasureNoteRemoval, ClearEmptyMeasure) {
     Measure measure;
 

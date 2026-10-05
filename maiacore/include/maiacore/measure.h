@@ -385,34 +385,43 @@ class Measure {
     Note& getNote(const int noteId, const int staveId = 0);
 
     /**
-     * @brief Returns a const reference to a sounding note (note on) by index and staff.
-     * @param noteOnId Note on index.
+     * @brief Returns a const reference to a sounding note (note on) by its index among the
+     *        staff's sounding notes.
+     * @param noteOnId Index among the staff's notes on, from 0 to getNumNotesOn(staveId) - 1.
      * @param staveId Staff index (default: 0).
      * @return Const reference to Note.
+     * @throws std::out_of_range If staveId is not a staff of the measure, or noteOnId is not an
+     *         index among its notes on.
      */
     const Note& getNoteOn(const int noteOnId, const int staveId = 0) const;
 
     /**
-     * @brief Returns a reference to a sounding note (note on) by index and staff.
-     * @param noteOnId Note on index.
+     * @brief Returns a reference to a sounding note (note on) by its index among the staff's
+     *        sounding notes; valid until the staff gains or loses notes.
+     * @param noteOnId Index among the staff's notes on, from 0 to getNumNotesOn(staveId) - 1.
      * @param staveId Staff index (default: 0).
      * @return Reference to Note.
+     * @throws std::out_of_range As the const overload throws.
      */
     Note& getNoteOn(const int noteOnId, const int staveId = 0);
 
     /**
-     * @brief Returns a const reference to a rest note (note off) by index and staff.
-     * @param noteOffId Note off index.
+     * @brief Returns a const reference to a rest (note off) by its index among the staff's rests.
+     * @param noteOffId Index among the staff's rests, from 0 to getNumNotesOff(staveId) - 1.
      * @param staveId Staff index (default: 0).
      * @return Const reference to Note.
+     * @throws std::out_of_range If staveId is not a staff of the measure, or noteOffId is not an
+     *         index among its rests.
      */
     const Note& getNoteOff(const int noteOffId, const int staveId = 0) const;
 
     /**
-     * @brief Returns a reference to a rest note (note off) by index and staff.
-     * @param noteOffId Note off index.
+     * @brief Returns a reference to a rest (note off) by its index among the staff's rests;
+     *        valid until the staff gains or loses notes.
+     * @param noteOffId Index among the staff's rests, from 0 to getNumNotesOff(staveId) - 1.
      * @param staveId Staff index (default: 0).
      * @return Reference to Note.
+     * @throws std::out_of_range As the const overload throws.
      */
     Note& getNoteOff(const int noteOffId, const int staveId = 0);
 

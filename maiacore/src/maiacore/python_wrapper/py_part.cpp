@@ -70,10 +70,10 @@ void PartClass(const py::module& m) {
         interval is the total one: an octave transposition is folded in as 7 letters and 12
         semitones per octave, so a B-flat bass clarinet is ``(-8, -14)``. The notes hold the
         transposition, and the MusicXML export writes its ``<transpose>`` elements from them.
-        This is the way to change a score's transpositions in place: ``Measure.getNote()``
-        returns a copy of the note, so a change made on it does not reach the score
-        (``Score.forEachNote`` edits in place too). Every note is checked before any changes, so
-        the call changes all of them or none. An export -> import keeps the pair only when it is
+        It changes the notes in place, as an edit through ``Measure.getNote()`` (a live
+        reference) or ``Score.forEachNote`` does one note at a time. Every note is checked
+        before any changes, so the call changes all of them or none. An export -> import keeps
+        the pair only when it is
         the conventional one for its chromatic interval (or the diminished-fifth tritone);
         another pair is read back corrected (same sound, conventional spelling) with a
         ``[transpose-pair-corrected]`` warning.
