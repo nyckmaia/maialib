@@ -204,7 +204,7 @@ interval comes back as the conventional value the speller already used.
   percussion is excluded) whose interval at that measure is key-neutral, `7·c − 12·d == 0` (untransposed,
   or transposed by whole octaves only). A key is compared as fifths and mode. A tie goes to the first
   part in score order. All parts count, also those `getChords`' `partNames` leaves out.
-- **When every pitched part transposes:** part 0's written key moved by `7·c − 12·d` fifths, brought by
+- **When every pitched part transposes:** the first pitched part's written key moved by `7·c − 12·d` fifths, brought by
   multiples of 12 into the range the `Key` class accepts (an enharmonically equal key; e.g. 13 → 1).
   Here and in the key-neutral test, `d` is the diatonic interval the speller uses (the stored one, or
   the inferred conventional one when the stored one is 0 and `c` is not).

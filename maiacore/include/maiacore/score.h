@@ -753,7 +753,7 @@ class Score {
      *             leaves out, and unpitched parts never do). A part's transposition at a measure
      *             is that of its first pitched note there; in a measure without one, that of its
      *             last pitched note before, or else of its first one after. When every pitched
-     *             part transposes, the first part's written key moved by its interval, by
+     *             part transposes, the first pitched part's written key moved by its interval, by
      *             7 fifths per semitone less 12 per letter, and brought by twelves into -6..11
      *             fifths, the range Key accepts (13 becomes 1)
      *          4. **Chord** (Chord object): Extracted vertical sonority

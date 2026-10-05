@@ -451,10 +451,13 @@ std::vector<std::pair<std::int64_t, std::int64_t>> intervalsPerMeasure(const Par
 // -8 gives 4).
 int keyRangeFifths(std::int64_t fifths) {
     if (fifths > 11) {
-        fifths -= 12 * ((fifths - 11 + 11) / 12);
+        // ceil((fifths - 11) / 12) twelves bring it down to 11 or below; for fifths > 11 that is
+        // fifths / 12.
+        fifths -= 12 * (fifths / 12);
     }
     if (fifths < -6) {
-        fifths += 12 * ((-6 - fifths + 11) / 12);
+        // ceil((-6 - fifths) / 12) twelves bring it up to -6 or above.
+        fifths += 12 * ((5 - fifths) / 12);
     }
     return static_cast<int>(fifths);
 }
@@ -462,9 +465,9 @@ int keyRangeFifths(std::int64_t fifths) {
 // The concert key of each measure: the most frequent written key among the pitched parts whose
 // interval at the measure is key-neutral, 7 * chromatic - 12 * diatonic == 0 (untransposed, or
 // transposed by whole octaves only). A key is its fifths and its mode; a tie goes to the key of
-// the first such part in score order. When no pitched part is key-neutral there, part 0's written
-// key moved by its interval's 7 * chromatic - 12 * diatonic fifths, brought into the range Key
-// accepts, with part 0's mode.
+// the first such part in score order. When no pitched part is key-neutral there, the first pitched
+// part's written key moved by its interval's 7 * chromatic - 12 * diatonic fifths, brought into
+// the range Key accepts, with that part's mode.
 std::vector<Key> concertKeys(const std::vector<Part>& parts) {
     if (parts.empty()) {
         return {};
@@ -510,8 +513,16 @@ std::vector<Key> concertKeys(const std::vector<Part>& parts) {
                     ->first;
             continue;
         }
-        const Key written = parts.at(0).getMeasure(m).getKey();
-        const std::pair<std::int64_t, std::int64_t>& interval = intervals.at(0)[m];
+        // The first pitched part that has the measure; part 0 when no part qualifies.
+        size_t source = 0;
+        for (size_t p = 0; p < parts.size(); p++) {
+            if (parts[p].isPitched() && m < parts[p].getNumMeasures()) {
+                source = p;
+                break;
+            }
+        }
+        const Key written = parts.at(source).getMeasure(m).getKey();
+        const std::pair<std::int64_t, std::int64_t>& interval = intervals.at(source)[m];
         keys[m] = Key(
             keyRangeFifths(written.getFifthCircle() + 7 * interval.second - 12 * interval.first),
             written.isMajorMode() != 0);

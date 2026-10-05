@@ -1737,6 +1737,39 @@ TEST(ScoreConcertKey, whenEveryPartTransposesTheFirstPartsKeyIsMovedAndWrapped) 
     EXPECT_EQ(chordKeys(clarinet), (std::set<std::pair<int, bool>>{{4, false}}));
 }
 
+// A counted part's transposition is read in each measure: the clarinet transposes in measure 1, so
+// the violin's C major is the key there; in measure 2 it is untransposed and its A major ties with
+// the violin's C major, and the tie goes to the clarinet, the first part.
+TEST(ScoreConcertKey, aCountedPartsTranspositionIsReadInEachMeasure) {
+    Score score({"Clar", "Vln"}, 2);
+    for (int m = 0; m < 2; m++) {
+        for (int p = 0; p < 2; p++) {
+            score.getPart(p).getMeasure(m).setNumber(m);
+        }
+        score.getPart(1).getMeasure(m).setKey(0, true);
+        score.getPart(1).getMeasure(m).addNote(wholeNote("C4"));
+    }
+    score.getPart(0).getMeasure(0).setKey(2, true);
+    score.getPart(0).getMeasure(0).addNote(wholeNote("D4", -1, -2));
+    score.getPart(0).getMeasure(1).setKey(3, true);
+    score.getPart(0).getMeasure(1).addNote(wholeNote("D4"));
+    std::vector<std::pair<int, bool>> keys;
+    for (const auto& chord : score.getChords()) {
+        keys.push_back(
+            {std::get<2>(chord).getFifthCircle(), std::get<2>(chord).isMajorMode() != 0});
+    }
+    EXPECT_EQ(keys, (std::vector<std::pair<int, bool>>{{0, true}, {3, true}}));
+}
+
+// When every pitched part transposes, the first pitched part gives the key, not an unpitched part
+// before it: a B-flat clarinet written with 3 fifths sounds 1.
+TEST(ScoreConcertKey, whenEveryPitchedPartTransposesTheFirstPitchedPartGivesTheKey) {
+    Score score = keyedScore({{"Snare Drum", 0, true, wholeNote("C4")},
+                              {"Clarinet in Bb", 3, true, wholeNote("D4", -1, -2)}});
+    score.getPart(0).setIsPitched(false);
+    EXPECT_EQ(chordKeys(score), (std::set<std::pair<int, bool>>{{1, true}}));
+}
+
 // Every part counts, also those partNames leaves out: the violin, in F major, gives the key of the
 // clarinet's chords.
 TEST(ScoreConcertKey, partsLeftOutOfTheAnalysisStillCount) {

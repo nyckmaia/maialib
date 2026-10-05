@@ -529,8 +529,8 @@ void ScoreClass(const py::module& m) {
         the part that comes first. Unpitched parts do not count; every pitched part does, also
         those ``partNames`` leaves out. A part's transposition at a measure is that of its first
         pitched note there; in a measure without one, that of its last pitched note before, or
-        else of its first one after. When every pitched part transposes, it is the first part's
-        written key moved by that part's transposing interval -- 7 fifths per semitone, less 12
+        else of its first one after. When every pitched part transposes, it is the first pitched
+        part's written key moved by that part's transposing interval -- 7 fifths per semitone, less 12
         per letter, so -2 fifths for a B-flat clarinet -- and brought by twelves into the range
         ``Key`` accepts, -6 to 11 fifths (13 becomes 1).
 
