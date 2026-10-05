@@ -215,6 +215,77 @@ class TransposeWriterTestCase(unittest.TestCase):
         )
         self.assertEqual("E", measure[4].findtext("pitch/step"))
 
+    def test_a_staff_that_changes_after_its_first_note_is_written_with_its_number(self):
+        # Staff 1 stays in B-flat; staff 2 becomes a horn in F at its second note, so the
+        # mid-measure <transpose> must name staff 2 or it would also move staff 1's notes in
+        # measure 2.
+        staff_1 = (
+            "<note><pitch><step>C</step><octave>5</octave></pitch><duration>2</duration>"
+            "<voice>1</voice><type>half</type><staff>1</staff></note>"
+            "<note><pitch><step>D</step><octave>5</octave></pitch><duration>2</duration>"
+            "<voice>1</voice><type>half</type><staff>1</staff></note>"
+        )
+        horn = (
+            '<attributes><transpose number="2"><diatonic>-4</diatonic>'
+            "<chromatic>-7</chromatic></transpose></attributes>"
+        )
+        source = f"""<?xml version="1.0" encoding="UTF-8"?>
+<score-partwise version="4.0">
+  <part-list><score-part id="P1"><part-name>Winds</part-name></score-part></part-list>
+  <part id="P1">
+    <measure number="1">
+      <attributes>
+        <divisions>1</divisions>
+        <key><fifths>0</fifths></key>
+        <time><beats>4</beats><beat-type>4</beat-type></time>
+        <staves>2</staves>
+        <clef number="1"><sign>G</sign><line>2</line></clef>
+        <clef number="2"><sign>G</sign><line>2</line></clef>
+        <transpose number="1"><diatonic>-1</diatonic><chromatic>-2</chromatic></transpose>
+        <transpose number="2"><diatonic>-2</diatonic><chromatic>-3</chromatic></transpose>
+      </attributes>
+      {staff_1}
+      <backup><duration>4</duration></backup>
+      <note><pitch><step>C</step><octave>5</octave></pitch><duration>2</duration><voice>2</voice><type>half</type><staff>2</staff></note>
+      {horn}
+      <note><pitch><step>D</step><octave>5</octave></pitch><duration>2</duration><voice>2</voice><type>half</type><staff>2</staff></note>
+    </measure>
+    <measure number="2">
+      {staff_1}
+      <backup><duration>4</duration></backup>
+      <note><pitch><step>E</step><octave>5</octave></pitch><duration>4</duration><voice>2</voice><type>whole</type><staff>2</staff></note>
+    </measure>
+  </part>
+</score-partwise>
+""".encode()
+        score, _ = reloaded(source)
+        data = export(score)
+        self.assertEqual(
+            [
+                ("1", 0, "1", "-1", "-2", None, None),
+                ("1", 0, "2", "-2", "-3", None, None),
+                ("1", 3, "2", "-4", "-7", None, None),
+            ],
+            transposes(data),
+        )
+        again, _ = reloaded(data)
+        intervals = {
+            key: (diatonic, chromatic)
+            for key, (_, _, diatonic, chromatic, _) in note_transpositions(again).items()
+        }
+        self.assertEqual(
+            {
+                (0, 0, 0, 0): (-1, -2),
+                (0, 0, 0, 1): (-1, -2),
+                (0, 0, 1, 0): (-2, -3),
+                (0, 0, 1, 1): (-4, -7),
+                (0, 1, 0, 0): (-1, -2),
+                (0, 1, 0, 1): (-1, -2),
+                (0, 1, 1, 0): (-4, -7),
+            },
+            intervals,
+        )
+
     def test_a_diatonic_interval_of_zero_is_written_as_the_conventional_one(self):
         # A stored 0 and the conventional interval it stands for are one transposition, so the
         # second measure changes nothing.
