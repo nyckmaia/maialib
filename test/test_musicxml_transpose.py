@@ -55,6 +55,10 @@ NOT_LOADABLE = (
     "test/musicxml/w3c-test-suite/xmlFiles/72b-TransposingInstruments-Full.musicxml",
 )
 
+# Its only <transpose> is for a <for-part>, which the reader does not model, so its notes are
+# untransposed.
+UNTRANSPOSED_FIXTURES = ("transpose_for_part.musicxml",)
+
 
 def load(path):
     """The score of a MusicXML file, loaded without printing its warnings."""
@@ -264,9 +268,26 @@ class TransposeRoundTripTestCase(unittest.TestCase):
         """The round trip of a file; with its ledger record, also the export's validity. The
         fixtures' exports are validated by TransposeWriterTestCase."""
         score = load(path)
+        before = note_transpositions(score)
+        if Path(path).name not in UNTRANSPOSED_FIXTURES:
+            self.assertTrue(
+                any(
+                    diatonic or chromatic or doubling != "NONE"
+                    for _, _, diatonic, chromatic, doubling in before.values()
+                ),
+                "no note is transposed or doubled",
+            )
         data = export(score)
         again, _ = reloaded(data)
-        self.assertEqual(note_transpositions(score), note_transpositions(again))
+        after = note_transpositions(again)
+        # A summary, not assertEqual: difflib over the notes of a large score takes hours.
+        diff = {
+            key: (before.get(key), after.get(key))
+            for key in before.keys() | after.keys()
+            if before.get(key) != after.get(key)
+        }
+        first = sorted(diff.items(), key=lambda item: item[0])[:5]
+        self.assertEqual(0, len(diff), f"{len(diff)} notes differ; first: {first}")
         if ledger_record is None:
             return
         report = musicxml_check.check_bytes(data)
@@ -283,6 +304,12 @@ class TransposeRoundTripTestCase(unittest.TestCase):
         for path in fixtures:
             with self.subTest(fixture=path.name):
                 self.check_round_trip(path)
+
+    def test_the_files_left_out_still_do_not_load(self):
+        ledger = corpus.load_ledger(corpus.LEDGER)
+        for name in NOT_LOADABLE:
+            with self.subTest(file=name):
+                self.assertNotEqual("ok", ledger[name]["load"])
 
     def test_every_corpus_file_with_a_transpose_keeps_its_transpositions(self):
         ledger = corpus.load_ledger(corpus.LEDGER)
@@ -304,10 +331,9 @@ class TransposeRoundTripTestCase(unittest.TestCase):
         found = {
             name
             for name in corpus.corpus_files()
-            if not corpus.is_slow(name) and "/transpose_" not in name and contains_transpose(name)
+            if "/transpose_" not in name and contains_transpose(name)
         }
-        expected = {name for name in CORPUS_WITH_TRANSPOSE if not corpus.is_slow(name)}
-        self.assertEqual(expected, found)
+        self.assertEqual(set(CORPUS_WITH_TRANSPOSE), found)
 
     def test_a_stored_diatonic_interval_of_zero_comes_back_as_the_conventional_one(self):
         score = single_part_score("Clarinet in Bb", 1)

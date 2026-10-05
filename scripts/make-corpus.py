@@ -2,9 +2,10 @@
 
 `make corpus` examines every file of the in-repository corpus, the slow ones included, and the
 external corpus once `make corpus-fetch` has downloaded it, and fails when a result differs from
-test/musicxml/ledger.json or ledger-external.json. `make corpus-update-ledger` writes the results
-as the ledgers instead; review the diff before committing it. Both need maialib installed
-(`make dev`).
+test/musicxml/ledger.json or ledger-external.json. When every file matches its ledger, it then
+runs the <transpose> round trip of test/test_musicxml_transpose.py with MAIALIB_SLOW_TESTS=1, which
+adds the slow corpus files. `make corpus-update-ledger` writes the results as the ledgers instead;
+review the diff before committing it. Both need maialib installed (`make dev`).
 """
 
 import argparse
