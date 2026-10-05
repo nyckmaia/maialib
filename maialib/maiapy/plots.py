@@ -15,7 +15,9 @@ __all__ = [
 ]
 
 
-def _score2DataFrame(score: mc.Score, kwargs) -> Tuple[pd.DataFrame, str, str]:
+def _score2DataFrame(
+    score: mc.Score, kwargs, octaveDoublings: bool = False
+) -> Tuple[pd.DataFrame, str, str]:
     """Auxiliar function to convert a maialib Score object to a Pandas DataFrame
 
     Args:
@@ -25,6 +27,11 @@ def _score2DataFrame(score: mc.Score, kwargs) -> Tuple[pd.DataFrame, str, str]:
        measureStart (int): Start measure to plot
        measureEnd (int): End measure to plot
        partNames (list): A str list that contains the filtered desired score parts to plot
+
+    Args (keyword):
+       octaveDoublings (bool): Also list, for each note with an octave doubling, its doubled
+          octave: one octave below or above what it sounds, unless that octave lies outside
+          octaves -1 to 11
 
     Returns:
        Tuple: DataFrame, author, work_title
@@ -171,6 +178,22 @@ def _score2DataFrame(score: mc.Score, kwargs) -> Tuple[pd.DataFrame, str, str]:
                     # Add 'noteData' object to the list
                     plotData["notesData"].append(noteData)
 
+                    # A doubled note is listed again, one octave below or above what it sounds
+                    doubling = currentNote.getOctaveDoubling()
+                    if octaveDoublings and doubling != mc.OctaveDoubling.NONE:
+                        shift = 1 if doubling == mc.OctaveDoubling.ABOVE else -1
+                        doubledOctave = currentNote.getSoundingOctave() + shift
+                        doubledMidi = midiValue + 12 * shift
+                        if -1 <= doubledOctave <= 11 and doubledMidi >= 0:
+                            doubledPitch = currentNote.getSoundingPitchClass() + str(doubledOctave)
+                            plotData["notesData"].append(
+                                {
+                                    **noteData,
+                                    "midiValue": doubledMidi,
+                                    "notePitch": doubledPitch,
+                                }
+                            )
+
             # Update the global current time position
             currentTimePosition = currentTimePosition + measureQuarterTimeAmount
 
@@ -295,6 +318,9 @@ def plotPianoRoll(
 ) -> Tuple[plotly.graph_objs._figure.Figure, pd.DataFrame]:
     """Plots a piano roll graph showing the musical activity of each score instrument
 
+    A note with an octave doubling (Note.getOctaveDoubling()) is drawn twice: at what it sounds
+    and one octave below or above; a doubled octave outside octaves -1 to 11 is not drawn.
+
     Args:
        score (maialib.Score):  A maialib Score object loaded with a valid MusicXML file
 
@@ -317,7 +343,7 @@ def plotPianoRoll(
     >>> plotPianoRoll(myScore, measureStart=50, measureEnd=100, partNames=["Violin 1", "Cello"])
     """
     # ===== CREATE A PLOTLY TIMELINE PLOT ===== #
-    df, author, work_title = _score2DataFrame(score, kwargs)
+    df, author, work_title = _score2DataFrame(score, kwargs, octaveDoublings=True)
 
     fig = px.timeline(
         df,

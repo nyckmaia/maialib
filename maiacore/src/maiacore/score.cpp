@@ -529,6 +529,34 @@ std::vector<Key> concertKeys(const std::vector<Part>& parts) {
     }
     return keys;
 }
+
+// The note an octave doubling adds to the chords: an untransposed note at the concert pitch of
+// 'note', one octave below (OctaveDoubling::BELOW) or above (ABOVE), with its duration, voice and
+// staff. std::nullopt when the note is not doubled, or when that octave lies outside octaves
+// -1..11 or below C1b-1; the latter is reported once per note, through 'reported'.
+std::optional<Note> octaveDoublingNote(const Note& note, std::set<const Note*>& reported) {
+    const OctaveDoubling doubling = note.getOctaveDoubling();
+    if (doubling == OctaveDoubling::NONE || !note.isNoteOn()) {
+        return std::nullopt;
+    }
+    const Pitch concert = concertPitch(note);
+    const int shift = (doubling == OctaveDoubling::ABOVE) ? 1 : -1;
+    const int octave = concert.getOctave().value() + shift;
+    if (octave < c_minPitchOctave || octave > c_maxPitchOctave ||
+        concert.getQuarterToneSteps() + 12.0f * static_cast<float>(shift) < -0.5f) {
+        if (reported.insert(&note).second) {
+            LOG_WARN("Score::getChords: the octave doubling of the written " +
+                     note.getWrittenPitch() + ", which sounds " + concert.getPitch() +
+                     ", lies outside the representable range and is left out of the chords.");
+        }
+        return std::nullopt;
+    }
+    Note doubled(Pitch(concert.getPitchStep(), concert.getAlter(), octave).getPitch());
+    doubled.setDuration(note.getDuration());
+    doubled.setVoice(note.getVoice());
+    doubled.setStaff(note.getStaff());
+    return doubled;
+}
 }  // namespace
 
 Score::Score(const std::initializer_list<std::string>& partsName, const int numMeasures)
@@ -3306,6 +3334,8 @@ std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChordsPerEachNot
     stackedChords.reserve(numUniqueEvents);
     // The concert key of each measure, reported with each of its chords.
     const std::vector<Key> keys = concertKeys(_part);
+    // The notes whose doubled octave cannot be represented, each reported once.
+    std::set<const Note*> unrepresentedDoublings;
 
     for (const float startTime : uniqueStartTime) {
         SQLite::Statement query(db,
@@ -3367,6 +3397,11 @@ std::vector<std::tuple<int, float, Key, Chord, bool>> Score::getChordsPerEachNot
         Chord chord;
         for (const auto& noteData : currentChordData.noteData) {
             chord.addNote(*noteData.notePtr);
+            const std::optional<Note> doubled =
+                octaveDoublingNote(*noteData.notePtr, unrepresentedDoublings);
+            if (doubled) {
+                chord.addNote(*doubled);
+            }
         }
 
         const int measureDivisionPerQuarterNote = measurePtr->getDivisionsPerQuarterNote();

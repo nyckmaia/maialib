@@ -728,6 +728,11 @@ class Score {
      *              both kept, and so are the C4 and C5 of an octave doubling
      *          - `includeUnpitched` (boolean): Include percussion/unpitched elements
      *
+     *          A note with an octave doubling (Note::getOctaveDoubling()) also adds, to each chord
+     *          it sounds in, an untransposed note at its concert pitch one octave below or above;
+     *          a doubled octave outside octaves -1..11, or below C1b-1, is left out, with one
+     *          warning per note.
+     *
      *          **Example Configuration**:
      *          \code{.json}
      *          {

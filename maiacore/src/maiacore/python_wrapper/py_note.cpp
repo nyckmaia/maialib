@@ -1080,7 +1080,8 @@ void NoteClass(const py::module& m) {
         above what it sounds (MusicXML ``<double>``).
 
         The pitch getters -- written, sounding and acoustic -- describe the note itself, never
-        the doubled octave. ``==``, ``!=`` and the hash ignore the doubling: two notes that
+        the doubled octave, which ``Score.getChords`` and ``plotPianoRoll`` add. ``==``, ``!=``
+        and the hash ignore the doubling: two notes that
         differ only in it are equal. A note constructed as a rest, or set to one with
         ``setPitch``, is not doubled; a note silenced with ``setIsNoteOn(False)`` keeps its
         doubling, as it keeps its transposing interval.

@@ -846,7 +846,8 @@ class Note {
      * @brief Returns the octave doubling of the note: whether its part is doubled one octave
      *        below or above what it sounds (MusicXML `<double>`).
      * @details The pitch getters -- written, sounding and acoustic -- describe the note itself,
-     *          never the doubled octave. The doubling takes no part in operator==() and
+     *          never the doubled octave, which Score::getChords() adds to each chord the note
+     *          sounds in. The doubling takes no part in operator==() and
      *          operator!=(), nor in the Python hash, which hashes what operator==() compares: two
      *          notes that differ only in their doubling are equal. A note constructed as a rest,
      *          or set to one with setPitch(), is not doubled; a note silenced with

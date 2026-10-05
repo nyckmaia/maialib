@@ -33,5 +33,30 @@ class SoundingPitchLabels(unittest.TestCase):
         self.assertEqual(list(data["chordNotes"]), ["C4, G4"])
 
 
+class OctaveDoublingInThePianoRoll(unittest.TestCase):
+    """The piano roll draws a doubled note twice: at what it sounds, and one octave below or
+    above."""
+
+    def testThePianoRollDrawsTheDoubledOctave(self):
+        score = ml.Score(["Violoncello and Contrabass", "Flute and Piccolo"], 1)
+        cello = ml.Note("C3")
+        cello.setOctaveDoubling(ml.OctaveDoubling.BELOW)
+        score.getPart(0).getMeasure(0).addNote(cello)
+        flute = ml.Note("G4")
+        flute.setOctaveDoubling(ml.OctaveDoubling.ABOVE)
+        score.getPart(1).getMeasure(0).addNote(flute)
+        _, data = ml.plotPianoRoll(score)
+        self.assertEqual(list(data["notePitch"]), ["C3", "C2", "G4", "G5"])
+        self.assertEqual(list(data["midiValue"]), [48, 36, 67, 79])
+
+    def testThePartsActivityDrawsEachNoteOnce(self):
+        score = ml.Score(["Violoncello and Contrabass"], 1)
+        cello = ml.Note("C3")
+        cello.setOctaveDoubling(ml.OctaveDoubling.BELOW)
+        score.getPart(0).getMeasure(0).addNote(cello)
+        _, data = ml.plotPartsActivity(score)
+        self.assertEqual(1, len(data))
+
+
 if __name__ == "__main__":
     unittest.main()

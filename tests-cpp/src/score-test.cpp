@@ -1779,3 +1779,67 @@ TEST(ScoreConcertKey, partsLeftOutOfTheAnalysisStillCount) {
     config["partNames"] = std::vector<std::string>{"Clarinet in Bb"};
     EXPECT_EQ(chordKeys(score, config), (std::set<std::pair<int, bool>>{{-1, true}}));
 }
+
+// ====================
+// The octave doubling in getChords()
+// ====================
+
+namespace {
+// The pitches a chord sounds, lowest first.
+std::vector<std::string> soundingPitches(const Chord& chord) {
+    std::vector<std::string> pitches;
+    for (const Note& note : chord.getNotes()) {
+        pitches.push_back(note.getSoundingPitch());
+    }
+    return pitches;
+}
+
+Note doubledNote(Note note, const OctaveDoubling doubling) {
+    note.setOctaveDoubling(doubling);
+    return note;
+}
+}  // namespace
+
+TEST(ScoreOctaveDoubling, aDoubledNoteAddsItsOctaveToTheChord) {
+    Score score({"Violoncello and Contrabass", "Flute and Piccolo"}, 1);
+    score.getPart(0).getMeasure(0).addNote(doubledNote(wholeNote("C3"), OctaveDoubling::BELOW));
+    score.getPart(1).getMeasure(0).addNote(doubledNote(wholeNote("G4"), OctaveDoubling::ABOVE));
+    const auto chords = score.getChords();
+    ASSERT_EQ(chords.size(), 1u);
+    EXPECT_EQ(soundingPitches(std::get<3>(chords[0])),
+              (std::vector<std::string>{"C2", "C3", "G4", "G5"}));
+}
+
+// The doubled octave is an octave from what the note sounds: a bass clarinet's written D4 sounds
+// C3, and its doubling below C2.
+TEST(ScoreOctaveDoubling, theDoubledOctaveIsAnOctaveFromWhatTheNoteSounds) {
+    Score score({"Bass Clarinet"}, 1);
+    score.getPart(0).getMeasure(0).addNote(
+        doubledNote(wholeNote("D4", -8, -14), OctaveDoubling::BELOW));
+    const auto chords = score.getChords();
+    ASSERT_EQ(chords.size(), 1u);
+    EXPECT_EQ(soundingPitches(std::get<3>(chords[0])), (std::vector<std::string>{"C2", "C3"}));
+}
+
+// A doubled octave outside the representable range is left out of every chord the note sounds in,
+// with one warning for the note.
+TEST(ScoreOctaveDoubling, aDoubledOctaveOutOfRangeIsLeftOutWithOneWarning) {
+    Score score({"Contrabass", "Violin"}, 1);
+    score.getPart(0).getMeasure(0).addNote(doubledNote(wholeNote("C-1"), OctaveDoubling::BELOW));
+    for (int i = 0; i < 4; i++) {
+        score.getPart(1).getMeasure(0).addNote(Note("G4"));
+    }
+    StdoutCapture capture;
+    const auto chords = score.getChords();
+    const std::string printed = capture.str();
+    ASSERT_EQ(chords.size(), 4u);
+    for (const auto& chord : chords) {
+        EXPECT_EQ(soundingPitches(std::get<3>(chord)), (std::vector<std::string>{"C-1", "G4"}));
+    }
+    const std::string warning =
+        "[WARN] Score::getChords: the octave doubling of the written C-1, which sounds C-1, lies "
+        "outside the representable range and is left out of the chords.\n";
+    const size_t first = printed.find(warning);
+    EXPECT_NE(first, std::string::npos) << printed;
+    EXPECT_EQ(printed.find(warning, first + 1), std::string::npos) << printed;
+}

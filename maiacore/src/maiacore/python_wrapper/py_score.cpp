@@ -523,6 +523,11 @@ void ScoreClass(const py::module& m) {
         ``Note.getSoundingPitch``, without the simplification. The notes that analysis returns
         are untransposed notes at that pitch (see ``Chord``).
 
+        A note with an octave doubling (``Note.getOctaveDoubling``) also adds, to each chord it
+        sounds in, an untransposed note at its concert pitch one octave below or above; a
+        doubled octave outside octaves -1 to 11, or below ``C1b-1``, is left out, with a warning
+        printed once for the note.
+
         The key reported with each chord is the concert key of its measure: the written key
         that most pitched parts have there among those untransposed in that measure, or
         transposed by whole octaves only -- a key is its fifths and its mode, and a tie goes to
