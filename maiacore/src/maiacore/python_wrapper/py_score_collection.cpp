@@ -42,8 +42,7 @@ void ScoreCollectionClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the path does not exist, is not a directory or cannot be read; the message names
-            it.
+            As ``setDirectoriesPaths`` raises it.
     )pbdoc");
 
     cls.def(py::init<const std::vector<std::string>&, const bool>(), py::arg("directoriesPaths"),
@@ -63,7 +62,7 @@ void ScoreCollectionClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If a path does not exist, is not a directory or cannot be read; the message names it.
+            As ``setDirectoriesPaths`` raises it.
     )pbdoc");
 
     cls.def("getDirectoriesPaths", &ScoreCollection::getDirectoriesPaths);
@@ -77,7 +76,8 @@ void ScoreCollectionClass(const py::module& m) {
         regard to case, is loaded, directory by directory in the given order and, within a
         directory, in sorted path order; subdirectories only when ``recursive`` is True. Every
         path is checked before anything is loaded, and the collection changes only when every
-        file has loaded. Scores added with ``addScore`` are replaced too.
+        file has loaded. Scores added with ``addScore`` are replaced too. A subdirectory the user
+        has no permission to read is skipped.
 
         Parameters
         ----------
@@ -89,8 +89,10 @@ void ScoreCollectionClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If a path does not exist, is not a directory or cannot be read; the message names
-            it. A file that fails to load raises its own error.
+            If a path does not exist or is not a directory, or a directory cannot be read: the
+            message names the path that failed, a given path or one of its subdirectories. If a
+            file fails to load: the message is the file's path, ``": "`` and the message of
+            the load's error. The collection is unchanged.
     )pbdoc");
 
     cls.def("addDirectory", &ScoreCollection::addDirectory, py::arg("directoryPath"));

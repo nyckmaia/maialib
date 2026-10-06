@@ -24,21 +24,54 @@ bool isMusicXMLFile(const std::filesystem::path& path) {
     return extension == ".xml" || extension == ".mxl" || extension == ".musicxml";
 }
 
+// The directory that the next increment of 'it' reads: the directory listing its entry, since a
+// directory_iterator never descends.
+std::filesystem::path readNext(const std::filesystem::directory_iterator& it) {
+    return it->path().parent_path();
+}
+
+// The directory that the next increment of 'it' reads: the entry itself when the iterator
+// descends into it -- a directory that is neither a symbolic link nor a junction, whose
+// recursion is pending -- otherwise the directory listing the entry.
+std::filesystem::path readNext(const std::filesystem::recursive_directory_iterator& it) {
+    std::error_code error;
+    if (it.recursion_pending() &&
+        it->symlink_status(error).type() == std::filesystem::file_type::directory) {
+        return it->path();
+    }
+    return it->path().parent_path();
+}
+
 // The MusicXML files of 'directory' (and of its subdirectories at any depth when 'recursive'),
-// in sorted path order. Every failure is reported in English, naming the path: the messages of
-// std::filesystem's own exceptions are localised, and Python cannot always decode them.
+// in sorted path order. A subdirectory the user has no permission to read is skipped; 'directory'
+// itself must be readable. Every failure is reported in English, naming the directory that could
+// not be read -- the caller's own string for 'directory', the UTF-8 form of a subdirectory's
+// path: the messages of std::filesystem's own exceptions are localised, and Python cannot always
+// decode them.
 template <typename Iterator>
 std::vector<std::filesystem::path> musicXMLFilesOf(const std::string& directory) {
-    std::vector<std::filesystem::path> files;
+    const std::filesystem::path directoryPath(directory);
     std::error_code error;
-    for (Iterator it(directory, error); !error && it != Iterator(); it.increment(error)) {
+    // Opened once without skip_permission_denied, which would make a 'directory' the user cannot
+    // read look empty.
+    const std::filesystem::directory_iterator probe(directoryPath, error);
+    if (error) {
+        LOG_ERROR("ScoreCollection: cannot read the directory '" + directory + "'");
+    }
+
+    std::vector<std::filesystem::path> files;
+    std::string failed = directory;
+    for (Iterator it(directory, std::filesystem::directory_options::skip_permission_denied, error);
+         !error && it != Iterator(); it.increment(error)) {
         std::error_code typeError;
         if (it->is_regular_file(typeError) && isMusicXMLFile(it->path())) {
             files.push_back(it->path());
         }
+        const std::filesystem::path next = readNext(it);
+        failed = (next == directoryPath) ? directory : next.u8string();
     }
     if (error) {
-        LOG_ERROR("ScoreCollection: cannot read the directory '" + directory + "'");
+        LOG_ERROR("ScoreCollection: cannot read the directory '" + failed + "'");
     }
     std::sort(files.begin(), files.end());
     return files;
@@ -98,7 +131,11 @@ void ScoreCollection::setDirectoriesPaths(const std::vector<std::string>& direct
             // Logged as UTF-8, which Python's redirected stdout requires: the ANSI code page form
             // of a name with an accented letter is not valid UTF-8.
             LOG_INFO("Loading: " << file.filename().u8string());
-            scores.emplace_back(file.string());
+            try {
+                scores.emplace_back(file.string());
+            } catch (const std::exception& loadError) {
+                throw std::runtime_error(file.u8string() + ": " + loadError.what());
+            }
         }
     }
     _directoriesPaths = directoriesPaths;

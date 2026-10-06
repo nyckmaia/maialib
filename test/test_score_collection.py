@@ -1,5 +1,7 @@
 """ScoreCollection: construction, directory discovery, edits and the melody search's DataFrames."""
 
+import contextlib
+import getpass
 import os
 import shutil
 import subprocess
@@ -53,6 +55,37 @@ def runChild(code):
     )
 
 
+@contextlib.contextmanager
+def unreadable(path):
+    """Deny the current user the listing of the directory 'path' while the block runs, then
+    restore its permissions. Skips the test when the platform does not deny it."""
+    if os.name == "nt":
+        user = getpass.getuser()
+        denied = subprocess.run(["icacls", path, "/deny", f"{user}:(RD)"], capture_output=True)
+        if denied.returncode != 0:
+            raise unittest.SkipTest(f"icacls cannot deny {user} the listing of a directory")
+
+        def restore():
+            subprocess.run(["icacls", path, "/remove:d", user], capture_output=True, check=True)
+    else:
+        mode = os.stat(path).st_mode
+        os.chmod(path, 0)
+
+        def restore():
+            os.chmod(path, mode)
+
+    try:
+        try:
+            os.listdir(path)
+        except PermissionError:
+            pass
+        else:
+            raise unittest.SkipTest("this user can list a directory it has no permission to list")
+        yield
+    finally:
+        restore()
+
+
 def twoScores():
     """A collection of the two small fixtures, the last-window one titled B, the other A."""
     collection = ml.ScoreCollection()
@@ -104,6 +137,61 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
 
             self.assertEqual(fileNames(ml.ScoreCollection(directory, recursive=True)), ["a.xml"])
 
+    def test_an_unreadable_subdirectory_is_skipped_and_an_unreadable_directory_raises(self):
+        with tempfile.TemporaryDirectory() as directory:
+            locked = os.path.join(directory, "locked")
+            os.makedirs(locked)
+            shutil.copyfile(LAST_WINDOW, os.path.join(locked, "b.xml"))
+            shutil.copyfile(LAST_WINDOW, os.path.join(directory, "a.xml"))
+
+            with unreadable(locked):
+                self.assertEqual(
+                    fileNames(ml.ScoreCollection(directory, recursive=True)), ["a.xml"]
+                )
+                for flag in (False, True):
+                    with self.subTest(recursive=flag), self.assertRaises(RuntimeError) as raised:
+                        ml.ScoreCollection(locked, flag)
+                    self.assertEqual(
+                        str(raised.exception).splitlines()[0],
+                        f"[maiacore] ScoreCollection: cannot read the directory '{locked}'",
+                    )
+
+    @unittest.skipUnless(os.name == "nt", "only Windows fails to open a name ending in a dot")
+    def test_a_subdirectory_that_cannot_be_read_is_named_in_the_error(self):
+        """Windows strips the trailing dot of 'sub.' when the directory is opened by its plain
+        path, so listing it fails, with an error other than a denied permission."""
+        with tempfile.TemporaryDirectory() as directory:
+            subdirectory = os.path.join(directory, "sub.")
+            os.makedirs("\\\\?\\" + subdirectory)
+            shutil.copyfile(LAST_WINDOW, os.path.join(directory, "a.xml"))
+            try:
+                with self.assertRaises(RuntimeError) as context:
+                    ml.ScoreCollection(directory, recursive=True)
+                self.assertEqual(
+                    str(context.exception).splitlines()[0],
+                    f"[maiacore] ScoreCollection: cannot read the directory '{subdirectory}'",
+                )
+            finally:
+                os.rmdir("\\\\?\\" + subdirectory)
+
+    def test_a_file_that_fails_to_load_raises_naming_it_and_changes_nothing(self):
+        with tempfile.TemporaryDirectory() as directory:
+            shutil.copyfile(LAST_WINDOW, os.path.join(directory, "a.xml"))
+            broken = os.path.join(directory, "b.xml")
+            with open(broken, "w", encoding="utf-8") as text:
+                text.write("not a score")
+            collection = ml.ScoreCollection()
+            collection.addScore(DUPLICATES)
+
+            with self.assertRaises(RuntimeError) as context:
+                collection.setDirectoriesPaths([directory])
+            self.assertTrue(
+                str(context.exception).startswith(f"{broken}: [maiacore] "),
+                str(context.exception).splitlines()[0],
+            )
+            self.assertEqual(fileNames(collection), ["melody_duplicate_patterns.musicxml"])
+            self.assertEqual(collection.getNumDirectories(), 0)
+
     def test_set_directories_paths_replaces_the_scores(self):
         collection = ml.ScoreCollection(BACH)
         collection.addScore(LAST_WINDOW)
@@ -135,21 +223,36 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
 
     def test_a_non_ascii_file_name_does_not_crash_the_interpreter(self):
         """Run in a child process: logging the name of a file such as 'canção.xml'
-        must not end the interpreter. The file either loads or raises RuntimeError."""
+        must not end the interpreter. The file either loads or raises RuntimeError.
+
+        A search of the loaded collection raises UnicodeDecodeError: its fileName column is
+        built from the name in the ANSI code page, which is not UTF-8. This pins the current
+        behaviour of non-ASCII paths, which are not supported yet, so that a change to it is
+        noticed."""
         code = (
             "import os, shutil, tempfile\n"
             "import maialib as ml\n"
             "with tempfile.TemporaryDirectory() as directory:\n"
             f"    shutil.copyfile({LAST_WINDOW!r}, os.path.join(directory, 'can\u00e7\u00e3o.xml'))\n"
             "    try:\n"
-            "        print('RESULT loaded', ml.ScoreCollection(directory).getNumScores())\n"
+            "        collection = ml.ScoreCollection(directory)\n"
+            "        print('RESULT loaded', collection.getNumScores())\n"
             "    except RuntimeError:\n"
             "        print('RESULT RuntimeError')\n"
+            "    else:\n"
+            "        try:\n"
+            "            collection.findMelodyPatternDataFrame([ml.Note('C4'), ml.Note('D4')])\n"
+            "            print('RESULT searched')\n"
+            "        except UnicodeDecodeError:\n"
+            "            print('RESULT UnicodeDecodeError')\n"
         )
         completed = runChild(code)
         self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
         results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
-        self.assertIn(results, (["RESULT loaded 1"], ["RESULT RuntimeError"]))
+        self.assertIn(
+            results,
+            (["RESULT loaded 1", "RESULT UnicodeDecodeError"], ["RESULT RuntimeError"]),
+        )
 
 
 class ScoreCollectionMelodySearchTestCase(unittest.TestCase):

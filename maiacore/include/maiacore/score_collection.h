@@ -41,7 +41,7 @@ class ScoreCollection {
      * @brief Constructs a collection of the MusicXML files of a directory.
      * @param directoryPath A directory; its files are loaded as setDirectoriesPaths() loads them.
      * @param recursive True to load the files of its subdirectories, at any depth, too.
-     * @throws std::runtime_error If the path is not a directory, as setDirectoriesPaths() throws.
+     * @throws std::runtime_error As setDirectoriesPaths() throws.
      */
     explicit ScoreCollection(const std::string& directoryPath, const bool recursive = false);
 
@@ -50,7 +50,7 @@ class ScoreCollection {
      * @param directoriesPaths The directories; their files are loaded as setDirectoriesPaths()
      *        loads them.
      * @param recursive True to load the files of their subdirectories, at any depth, too.
-     * @throws std::runtime_error If a path is not a directory, as setDirectoriesPaths() throws.
+     * @throws std::runtime_error As setDirectoriesPaths() throws.
      */
     explicit ScoreCollection(const std::vector<std::string>& directoriesPaths,
                              const bool recursive = false);
@@ -67,11 +67,14 @@ class ScoreCollection {
      * @details Loads every file whose extension is `.xml`, `.mxl` or `.musicxml`, compared
      *          without regard to case, directory by directory in the given order and, within a
      *          directory, in sorted path order. Every path is checked before anything is loaded,
-     *          and the collection changes only when every file has loaded.
+     *          and the collection changes only when every file has loaded. A subdirectory the
+     *          user has no permission to read is skipped.
      * @param directoriesPaths The directories; an empty list empties the collection.
      * @param recursive True to load the files of their subdirectories, at any depth, too.
-     * @throws std::runtime_error If a path does not exist, is not a directory or cannot be read;
-     *         the message names it. A file that fails to load raises its own error.
+     * @throws std::runtime_error If a path does not exist or is not a directory, or a directory
+     *         cannot be read: the message names the path that failed, a given path or one of its
+     *         subdirectories. If a file fails to load: the message is the file's path, ": " and
+     *         the message of the load's error.
      */
     void setDirectoriesPaths(const std::vector<std::string>& directoriesPaths,
                              const bool recursive = false);
