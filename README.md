@@ -339,8 +339,8 @@ G4 → G4: P1 (0 semitones)
 ### Example 3: Find Melodic Patterns
 
 ```python
-# Load your Beethoven 5th Symphony score (or any other sheet music)
-score = ml.Score('Beethoven_5th_symphony.xml')
+# Load the packaged Beethoven 5th Symphony sample (or any other sheet music)
+score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Beethoven_Symphony_5th))
 
 # Define a pattern to search for (e.g., descending scale fragment)
 pattern = [

@@ -101,7 +101,7 @@ Welcome to the Maialib tutorial collection! These interactive Jupyter notebooks 
 
 | # | Tutorial | Topics | Difficulty |
 |---|----------|--------|------------|
-| 01 | Pattern Finding | findMelodyPattern(), similarity metrics | 🔴 Hard |
+| 01 | Pattern Finding | findMelodyPatternDataFrame(), similarity metrics | 🔴 Hard |
 | 02 | XPath Queries | Advanced XML queries on scores | 🔴 Hard |
 | 03 | Score Collections | Batch processing multiple scores | 🔴 Hard |
 | 04 | Statistical Analysis | scipy, hypothesis testing, correlations | 🔴 Hard |
