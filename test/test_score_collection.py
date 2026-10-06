@@ -86,6 +86,16 @@ def unreadable(path):
         restore()
 
 
+def fileNamesAreUtf8():
+    """Whether Score keeps a file name as UTF-8. It keeps the name in the ANSI code page, which
+    is UTF-8 everywhere except on Windows with a code page other than 65001."""
+    if os.name != "nt":
+        return True
+    import ctypes
+
+    return ctypes.windll.kernel32.GetACP() == 65001
+
+
 def twoScores():
     """A collection of the two small fixtures, the last-window one titled B, the other A."""
     collection = ml.ScoreCollection()
@@ -225,10 +235,10 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
         """Run in a child process: logging the name of a file such as 'canção.xml'
         must not end the interpreter. The file either loads or raises RuntimeError.
 
-        A search of the loaded collection raises UnicodeDecodeError: its fileName column is
-        built from the name in the ANSI code page, which is not UTF-8. This pins the current
-        behaviour of non-ASCII paths, which are not supported yet, so that a change to it is
-        noticed."""
+        A search of the loaded collection builds its fileName column from the name in the ANSI
+        code page: it succeeds where that is UTF-8, and raises UnicodeDecodeError on Windows
+        with another code page. This pins the current behaviour of non-ASCII paths, which are
+        not supported yet, so that a change to it is noticed."""
         code = (
             "import os, shutil, tempfile\n"
             "import maialib as ml\n"
@@ -249,10 +259,8 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
         completed = runChild(code)
         self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
         results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
-        self.assertIn(
-            results,
-            (["RESULT loaded 1", "RESULT UnicodeDecodeError"], ["RESULT RuntimeError"]),
-        )
+        search = "RESULT searched" if fileNamesAreUtf8() else "RESULT UnicodeDecodeError"
+        self.assertIn(results, (["RESULT loaded 1", search], ["RESULT RuntimeError"]))
 
 
 class ScoreCollectionMelodySearchTestCase(unittest.TestCase):
