@@ -66,13 +66,18 @@ acceptance of umbrella §4). The umbrella's §5 is binding here; this document f
   zip).
 
 ## 3. Unicode paths
-- `Score` opens files through wide-character paths on Windows (`pugi::xml_document::load_file(const
-  wchar_t*)`; `.mxl` archives read through a stream opened from the wide path) and keeps its file name
-  and path as UTF-8 (`getFileName`, `getFilePath` never raise for a non-ASCII name).
+- `Score` opens files through `std::ifstream` on `std::filesystem::u8path` (wide paths on Windows) and
+  parses them with `load_buffer`; `.mxl` is recognised by its extension in any case and by its `PK`
+  signature, and an archive too short to hold a zip end record is refused before miniz reads it. `Score`
+  keeps its file name and path as UTF-8 (`getFileName`, `getFilePath` never raise for a non-ASCII name);
+  title, composer and part names that are not valid UTF-8 are stored with U+FFFD replacements.
+- Console output that Python's stream cannot encode (a valid UTF-8 name on a console whose code page lacks
+  its characters) must not end the process: the redirect to Python's streams is guarded so an encoding
+  failure degrades the text instead of terminating.
 - `ScoreCollection` builds its paths with `std::filesystem::u8path` and passes UTF-8 to `Score`.
 - The corpus worker (`test/musicxml/corpus_worker.py`) loads every file from its own path; the
-  ASCII-named copy is removed. The external ledger's 750 records with non-ASCII paths change
-  deliberately (they now record what maialib does with the real file on every platform).
+  ASCII-named copy is removed. The external ledger's records with non-ASCII paths are expected to stay
+  identical (measured: the ASCII copy behaved like the real file); any change is explained.
 
 ## 4. ScoreCollection isolation
 - A file that fails to load is skipped; `ScoreCollection.getLoadErrors()` returns `(path, message)`
@@ -85,8 +90,8 @@ acceptance of umbrella §4). The umbrella's §5 is binding here; this document f
 - `make fuzz FUZZ_ARGS="--accept"`: exits non-zero when any case's outcome is worth minimising
   (`fuzz.worth_minimising`), and prints those cases; without `--accept` it keeps reporting only.
 - Ledger records gain `exit` (the worker's exit code) only when it is non-zero, and `codes` (the sorted
-  list of distinct report codes) only when non-empty. If the external ledger would exceed 500,000
-  bytes, its codes move to a sidecar file `ledger-external-codes.json` compared the same way.
+  list of distinct report codes) only when non-empty. The external ledger's codes live in a sidecar file
+  `ledger-external-codes.json` (measured at about 224 KB), compared the same way.
 - `make corpus` and `make corpus-update-ledger` accept `CORPUS_ARGS` with `--in-repo-only`,
   `--skip-slow`, `--filter <substring>` and `--workers N` (default `max(2, cpu // 2)`, defined once).
 
