@@ -48,13 +48,13 @@ The input classes and failure modes the spec implies but no other task test exer
 ## Decisions this plan takes beyond the spec (reviewers: accept or overrule)
 
 1. **Decomposition.** The suggested eight tasks stand, with a Task 0 for baselines, and one move: the three accidental/`<alter>` warnings become records in Task 1, not Task 2, because they are the ones that quote raw note text (the 0xC0000409 crash) and the report's storage, copy, DataFrame and summary need real records to be tested. Task 2 converts the `<transpose>` warnings and the silent corrections.
-2. **The catalogue holds code and kind only** (`issueCatalogue()`, sorted, tested for UPPER_SNAKE and uniqueness); the element varies per record (`<actual-notes>` or `<normal-notes>` of a tuplet) and the message is built where the correction is made. The umbrella §6 policy table (`docs/musicxml-import-policy.md`) and its catalogue meta-test are not in the 4c-1a spec and are not written here.
+2. **The catalogue holds code and kind only** (`issueCatalogue()`, sorted, tested for UPPER_SNAKE and uniqueness); the element varies per record (`<actual-notes>` or `<normal-notes>` of a tuplet) and the message is built where the correction is made. The umbrella §6 policy table (`docs/musicxml-import-policy.md`), the catalogue's message templates and its meta-test are deferred to phase 4c-2, which builds the document-order reader the table describes (spec §7); they are not written here.
 3. **Kinds and the summary count.** The four `TRANSPOSE_*` codes are `corrected` (the notes' transposition is replaced by the one in force); `FOR_PART_NOT_MODELLED` and `ELEMENT_NOT_MODELLED` are `dropped`. The summary's `<n>` counts `corrected` records and `<m>` the distinct `element` paths of `dropped` records, so a `<for-part>` counts as one element type however many there are.
 4. **Field conventions.** The three accidental codes have `used` = the note's written pitch as stored (`C4`, `C1x4`); `ALTER_OFF_GRID` and `ACCIDENTAL_ALTER_MISMATCH` have `element` `note/pitch/alter`, `ACCIDENTAL_NAME_UNKNOWN` `note/accidental`. An ignored `<transpose>` and a dropped element have `used` empty; `TRANSPOSE_OUT_OF_RANGE` has `found` `diatonic <d>, chromatic <c>` (octaves folded in). `found` is the element's text as written (untrimmed); `PART_NAME_DUPLICATE` has the renamed part's index and new name and no measure; `DIVISIONS_MISSING` names measure 1 and `used` `256`. Messages carry no part or measure (the fields do) and no bracketed prefix.
-5. **Voice, staff and tuplet values.** A record is made only when the element is present and its text, trimmed, is not a positive whole number (an absent element takes the standard's default without a record; `<voice> 3 </voice>` is valid). Negative voices and tuplet values, which were kept, are read as 1 like 0 (`<= 0` instead of `== 0`); a text that starts with digits keeps `atoi`'s value (`2abc` is voice 2, recorded).
+5. **Voice, staff and tuplet values.** A record is made only when the element is present and its text, trimmed, is not a positive whole number (an absent optional element, `<voice>` or `<staff>`, takes the standard's default without a record; `<voice> 3 </voice>` is valid). The exception is `<actual-notes>` and `<normal-notes>`, which `<time-modification>` requires: they are recorded when absent (`found` empty). Negative voices and tuplet values, which were kept, are read as 1 like 0 (`<= 0` instead of `== 0`); a text that starts with digits keeps `atoi`'s value (`2abc` is voice 2, recorded).
 6. **The closed element list, concretely** (`heldOutsideMeasures()`, `heldInMeasures()` in `import-report.cpp`): umbrella §6 items 1 and 3, plus the elements the writer regenerates from held values (`note/type`, `note/dot`, `note/accidental`, `note/notations/tied`, the containers `attributes`, `note/notations`, `attributes/staff-details`, `identification`, `part-list/score-part/midi-instrument`). `<backup>` and `<forward>` are held as the umbrella lists them, although the reader still ignores `<forward>` (4c-2). `attributes/for-part` keeps its own record and is skipped by the pass. Paths start at the measure inside a measure and at the root's children elsewhere; the pass is one iterative walk.
 7. **Fatal errors.** A file that cannot be opened says `cannot open` without an offset (nothing was parsed); a parse error gives pugixml's `description()` and `(byte offset N)`. An `.mxl` shorter than 22 bytes, the size of the smallest zip archive, is `not a zip archive` without reaching miniz, whose comment scan reads past a buffer of 1 to 3 bytes.
-8. **Opening files.** Both formats are read through one `std::ifstream` on `std::filesystem::u8path(filePath)` — a wide-character path on Windows — and the XML is parsed with `load_buffer`, instead of `load_file(const wchar_t*)` plus a separate `.mxl` stream: one code path, and the same parse (`load_file` reads the whole file and parses the buffer). A path that is not UTF-8 cannot be opened. `.mxl` is recognised in any case (Review Focus 3). The inner document of an archive is still parsed with `load_string` (UTF-16 inner files are 4c-1b, umbrella §8 item 13).
+8. **Opening files.** Both formats are read through one `std::ifstream` on `std::filesystem::u8path(filePath)` — a wide-character path on Windows — and the XML is parsed with `load_buffer`, instead of `load_file(const wchar_t*)` plus a separate `.mxl` stream: one code path, and the same parse (`load_file` reads the whole file and parses the buffer). A path that is not UTF-8 cannot be opened. A file is read as an archive when its extension is `.mxl` in any case (Review Focus 3) or when its bytes start with the zip signature `PK` (spec §3), so a zip archive named `.xml` loads; a file named `.mxl` that is not a zip archive raises `it is not a zip archive`, never read as text. The inner document of an archive is still parsed with `load_string` (UTF-16 inner files are 4c-1b, umbrella §8 item 13).
 9. **The console.** The loading bindings (`Score(filePath)`, the `ScoreCollection` constructors, `setDirectoriesPaths`, the three `addScore`) use a call guard, `ConsoleRedirect` (`py_console.h`), that writes through a wrapper of `sys.stdout`/`sys.stderr` which escapes a character the stream cannot encode (Review Focus 1). The other bindings keep pybind11's plain redirection.
 10. **Names as valid UTF-8.** The title, composer and part names are stored through `validUtf8()` (Review Focus 2); other strings read into the model (stem, beam, tie types, articulation names, barline fields) are not, and `Part::getShortName()` still cuts the name byte by byte (see the report).
 11. **`getLoadErrors()`** returns `(path, message)` pairs: the path as loaded (UTF-8) and the first line of the error's message, without the source location and stack trace `LOG_ERROR` appends, both through `validUtf8()`. Each load (constructor, `setDirectoriesPaths`, `addScore` with one path or several) replaces the list; `addScore(Score)`, `clear()`, `merge()` and copies leave or carry it. `addScore(path)` is `addScore([path])`, which no longer raises for a file that fails.
@@ -279,9 +279,8 @@ TEST(ImportReportCatalogue, CodesAreUpperSnakeSortedAndUnique) {
 // A record takes its kind from the catalogue and every text through validUtf8(); a code outside
 // the catalogue is a programming error.
 TEST(ImportReportRecord, ARecordTakesItsKindAndSanitisesItsText) {
-    const ImportIssue issue =
-        makeIssue("ALTER_OFF_GRID", IssueLocation{0, "Viol\xE9", "1\xE9", 3}, "note/\xE9",
-                  "\xE9", "C4", "The <alter> value '\xE9' ...");
+    const ImportIssue issue = makeIssue("ALTER_OFF_GRID", IssueLocation{0, "Viol\xE9", "1\xE9", 3},
+                                        "note/\xE9", "\xE9", "C4", "The <alter> value '\xE9' ...");
     EXPECT_EQ(issue.code, "ALTER_OFF_GRID");
     EXPECT_EQ(issue.kind, "corrected");
     EXPECT_EQ(issue.partIndex, 0);
@@ -440,9 +439,16 @@ LoadedNote loadWithAlterText(const std::string& alterText) {
 ````
 
 
-**`tests-cpp/src/score-test.cpp` ~884: replace**
+**`tests-cpp/src/score-test.cpp` ~877: replace**
 
 ````cpp
+
+    const std::filesystem::path path =
+        std::filesystem::temp_directory_path() / "maialib_alter_text.xml";
+    {
+        std::ofstream out(path);
+        out << xml;
+    }
 
     std::string pitch;
     std::string printed;
@@ -471,15 +477,15 @@ with
 
 ````cpp
 
+    const TemporaryFile file("maialib_alter_text.xml", xml);
     LoadedNote loaded;
     {
         StdoutCapture capture;
-        Score score(path.string());
+        Score score(file.path());
         loaded.pitch = score.getPart(0).getMeasure(0).getNote(0, 0).getPitch();
         loaded.issues = score.getImportIssues();
         loaded.printed = capture.str();
     }
-    std::filesystem::remove(path);
     return loaded;
 }
 
@@ -1098,7 +1104,7 @@ class ScoreImportReportTestCase(unittest.TestCase):
 
     def test_names_that_are_not_utf8_are_read_with_replacement_characters(self):
         """A title and a part name whose bytes are not UTF-8 (Latin-1 bytes in a file that
-        declares UTF-8) raised UnicodeDecodeError from their getters."""
+        declares UTF-8) are read as valid UTF-8, with U+FFFD in place of each invalid byte."""
         with open("./xml_examples/unit_test/quarter_tone_tartini.xml", "rb") as source:
             data = source.read()
         data = data.replace(
@@ -1115,7 +1121,7 @@ class ScoreImportReportTestCase(unittest.TestCase):
 
     def test_an_alter_that_is_not_utf8_does_not_end_the_interpreter(self):
         """Run in a child process, whose standard output is a pipe: a message quoting bytes
-        that are not UTF-8 ended the process. The record holds U+FFFD in their place."""
+        that are not UTF-8 must not end the process. The record holds U+FFFD in their place."""
         code = (
             "import json, os, tempfile\n"
             "import maialib as ml\n"
@@ -2204,7 +2210,7 @@ with
 
 - [ ] **Step 7: Format, build, pass.** clang-format `import-issue.h`, `import-report.h`, `import-report.cpp`, `score.h`, `score.cpp`, `py_score.cpp`, `import-report-test.cpp`, `test-files.h`, `score-test.cpp`. C++ subset `ImportReport*:ScoreImportReport*:ScoreQuarterTone*:ScoreCopy*` → all pass. «build» `make "PYTHON=$py" dev` → 0. «pytest» `test_score_comprehensive.ScoreQuarterToneReadTestCase test_score_comprehensive.ScoreImportReportTestCase test_musicxml_dump` → OK. Task 0's crash script → `exit 0`, its stdout `[maiacore] latin1.xml: 1 corrections, 0 element types not modelled (dropped on export); see Score.getImportIssues()` and `loaded`.
 
-- [ ] **Step 8: Mutations.** (a) In `validUtf8` replace `valid += kReplacement;` with `valid += text[i];` → `ImportReportUtf8.EachInvalidByteBecomesAReplacementCharacter`, `ImportReportRecord.ARecordTakesItsKindAndSanitisesItsText`, `ScoreQuarterToneRead.AnAlterThatIsNotUtf8IsRecordedAsValidUtf8`, `ScoreImportReport.NamesThatAreNotUtf8AreHeldAsValidUtf8` fail; after `make dev`, `test_an_alter_that_is_not_utf8_does_not_end_the_interpreter` (`3221226505 != 0`) and `test_names_that_are_not_utf8_are_read_with_replacement_characters` (`UnicodeDecodeError`) fail. (b) In the copy constructor of `score.h` delete `_importIssues = other._importIssues;` → `TheReportIsCopiedKeptThroughEditsAndEmptiedByClear` and `test_a_copy_keeps_the_report_and_clear_empties_it` (the collection's copy has an empty report) fail. (c) In `Score::clear()` delete `_importIssues.clear();` → the same two fail at the `clear()` assertion. (d) At the end of `loadXMLFile` replace `if (!_importIssues.empty()) {` with `if (true) {` → `ALoadPrintsOneSummaryLineOnlyWhenTheReportIsNotEmpty` and `AlterTextMustBeANumberAndNothingElse` (a valid text prints a line) fail. (e) In `importSummary` replace `if (issue.kind == "corrected") {` with `if (true) {` → `ImportReportSummary.TheSummaryCountsCorrectionsAndDroppedElementTypes` fails. (f) Delete the `accidentalCorrections.push_back(` of `ALTER_OFF_GRID` (its whole statement) → `AlterTextMustBeANumberAndNothingElse`, `AlterNearAQuarterToneIsNotSnappedOntoIt`, `test_alter_near_a_quarter_tone_is_not_snapped_onto_it` fail. (g) In the part-name loop replace `partsNameVec.push_back(maiacore::detail::validUtf8(rawPartName));` with `partsNameVec.push_back(rawPartName);` → `NamesThatAreNotUtf8AreHeldAsValidUtf8` fails. (h) In `makeIssue` replace `issue.element = validUtf8(element);` with `issue.element = element;` → `ARecordTakesItsKindAndSanitisesItsText` fails. Revert each; rerun green.
+- [ ] **Step 8: Mutations.** (a) In `validUtf8` replace `valid += kReplacement;` with `valid += text[i];` → `ImportReportUtf8.EachInvalidByteBecomesAReplacementCharacter`, `ImportReportRecord.ARecordTakesItsKindAndSanitisesItsText`, `ScoreQuarterToneRead.AnAlterThatIsNotUtf8IsRecordedAsValidUtf8`, `ScoreImportReport.NamesThatAreNotUtf8AreHeldAsValidUtf8` fail; after `make dev`, `test_an_alter_that_is_not_utf8_does_not_end_the_interpreter` (`1 != 0`: the summary line quotes only `latin1.xml`, so nothing prints the raw byte, and the child exits 1 with `UnicodeDecodeError` reading `i.found`) and `test_names_that_are_not_utf8_are_read_with_replacement_characters` (`UnicodeDecodeError`) fail. (b) In the copy constructor of `score.h` delete `_importIssues = other._importIssues;` → `TheReportIsCopiedKeptThroughEditsAndEmptiedByClear` and `test_a_copy_keeps_the_report_and_clear_empties_it` (the collection's copy has an empty report) fail. (c) In `Score::clear()` delete `_importIssues.clear();` → the same two fail at the `clear()` assertion. (d) At the end of `loadXMLFile` replace `if (!_importIssues.empty()) {` with `if (true) {` → `ALoadPrintsOneSummaryLineOnlyWhenTheReportIsNotEmpty` and `AlterTextMustBeANumberAndNothingElse` (a valid text prints a line) fail. (e) In `importSummary` replace `if (issue.kind == "corrected") {` with `if (true) {` → `ImportReportSummary.TheSummaryCountsCorrectionsAndDroppedElementTypes` fails. (f) Delete the `accidentalCorrections.push_back(` of `ALTER_OFF_GRID` (its whole statement) → `AlterTextMustBeANumberAndNothingElse`, `AlterNearAQuarterToneIsNotSnappedOntoIt`, `test_alter_near_a_quarter_tone_is_not_snapped_onto_it` fail. (g) In the part-name loop replace `partsNameVec.push_back(maiacore::detail::validUtf8(rawPartName));` with `partsNameVec.push_back(rawPartName);` → `NamesThatAreNotUtf8AreHeldAsValidUtf8` fails. (h) In `makeIssue` replace `issue.element = validUtf8(element);` with `issue.element = element;` → `ARecordTakesItsKindAndSanitisesItsText` fails. (i) In `validUtf8` replace `} else if (lead >= 0xC2 && lead <= 0xDF) {` with `} else if (lead >= 0xC4 && lead <= 0xDF) {` → `ImportReportUtf8.ValidTextIsUnchanged` fails (`can\xC3\xA7\xC3\xA3o` gains U+FFFD). (j) In `issueCatalogue()` swap the first two entries (`ACCIDENTAL_NAME_UNKNOWN` before `ACCIDENTAL_ALTER_MISMATCH`) → `ImportReportCatalogue.CodesAreUpperSnakeSortedAndUnique` fails (`EXPECT_LT`). (k) In `importIssuesDataFrame` replace `py::str("int64")` with `text` → after `make dev`, `test_the_dataframe_has_one_row_per_record_and_fixed_dtypes` fails (`partIndex` is not `int64`). (l) Delete `issue.def(py::self == py::self);` → after `make dev`, `test_records_compare_by_value` fails (two records compare by identity). (m) Delete the `accidentalCorrections.push_back(` of `ACCIDENTAL_ALTER_MISMATCH` (its whole statement) → `ScoreQuarterToneRead.DisagreeingAccidentalWinsWithARecord` and, after `make dev`, `test_disagreeing_accidental_wins_with_a_record` fail. (n) Delete the `accidentalCorrections.push_back(` of `ACCIDENTAL_NAME_UNKNOWN` (its whole statement) → `ScoreQuarterToneRead.UnrecognisedAccidentalNameFallsBackToAlterInsteadOfAborting` and, after `make dev`, `test_unrecognised_accidental_name_falls_back_instead_of_raising` fail. Revert each; rerun green. `ScoreImportReport.AScoreBuiltThroughTheApiHasAnEmptyReport` and `test_a_score_built_through_the_api_has_an_empty_report` pin invariants that no mutation of the reader can fail (a score built through the API starts with an empty report; an empty DataFrame has every column, with the dtypes of a loaded one): record them in the task report as invariants, not as mutation-proven tests.
 
 - [ ] **Step 9: Whole suites.** «build» `make "PYTHON=$py" cpp-tests` → 0, `[  PASSED  ] 1198 tests.` (1188 + 10). «build» `make "PYTHON=$py" py-tests` → OK, `Ran 696 tests` (690 + 6), `OK (skipped=1)`; the corpus test passes with the ledger unchanged. «build» `make "PYTHON=$py" validate` → no new findings.
 
@@ -2246,7 +2252,7 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 
 **Files:**
 - Modify: `maiacore/src/maiacore/import-report.cpp` (catalogue ~62), `maiacore/src/maiacore/score.cpp` (`TransposeElement` ~79; `ignoredTranspose` before `trimmed` ~103; `readTranspose` ~141-215; `readTransposeElements` ~228; `applyTranspositions` ~270-380; `isPositiveWholeNumber` before `toIntRange`; duplicate part names ~781-801; divisions ~927; the measure's location ~1070; tuplet values ~1120; voice and staff ~1238; the call of `applyTranspositions` ~1336), `maiacore/include/maiacore/score.h` (constructor Doxygen ~132), `maiacore/src/maiacore/python_wrapper/py_score.cpp` (`Score(filePath)` numpydoc ~144), `maiacore/include/maiacore/part.h` (~200), `maiacore/src/maiacore/python_wrapper/py_part.cpp` (~76, ~187)
-- Test: `tests-cpp/src/score-test.cpp` (the `<transpose>` tests ~1655-1880 assert records; new `ScoreSilentCorrections` before `// The concert key of getChords()`), `test/test_musicxml_transpose.py` (`load` ~64, `reloaded` ~138, the zero-diatonic test ~412 and a new test after it)
+- Test: `tests-cpp/src/score-test.cpp` (the `<transpose>` tests ~1648-1873 assert records; new `ScoreSilentCorrections` before `// The concert key of getChords()`), `test/test_musicxml_transpose.py` (`load` ~64, `reloaded` ~138, the zero-diatonic test ~412 and a new test after it)
 
 **Interfaces:**
 - Consumes: `makeIssue`, `IssueLocation`, `issueCatalogue`, `ImportIssue`, `correctionCodes`, `TemporaryFile`, `minimalScore`, `kMinimalAttributes`, `kWholeC4` (Task 1).
@@ -2254,7 +2260,7 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 
 - [ ] **Step 1: Write the failing C++ tests.** In `tests-cpp/src/score-test.cpp` apply, in order:
 
-**`tests-cpp/src/score-test.cpp` ~1655: replace**
+**`tests-cpp/src/score-test.cpp` ~1648: replace**
 
 ````cpp
 
@@ -2345,7 +2351,7 @@ TEST(ScoreTransposeRead, aTransposeInALaterMeasureAppliesFromThere) {
 ````
 
 
-**`tests-cpp/src/score-test.cpp` ~1694: replace**
+**`tests-cpp/src/score-test.cpp` ~1687: replace**
 
 ````cpp
     EXPECT_FALSE(unpitched.isTransposed());
@@ -2362,7 +2368,7 @@ with
 ````
 
 
-**`tests-cpp/src/score-test.cpp` ~1744: replace**
+**`tests-cpp/src/score-test.cpp` ~1737: replace**
 
 ````cpp
 TEST(ScoreTransposeRead, aTransposeWithoutDiatonicStoresTheConventionalInterval) {
@@ -2444,7 +2450,7 @@ TEST(ScoreTransposeRead, anOctaveChangeThatIsNotAWholeNumberIsIgnored) {
 ````
 
 
-**`tests-cpp/src/score-test.cpp` ~1850: replace**
+**`tests-cpp/src/score-test.cpp` ~1843: replace**
 
 ````cpp
 // A <diatonic> that does not match <chromatic> is replaced by the conventional diatonic interval,
@@ -2642,7 +2648,7 @@ TEST(ScoreTransposeCorrection, aForPartIsDroppedWithARecord) {
 }
 
 // ====================
-// Corrections the reader made silently before the import report
+// Values the reader replaces: part names, divisions, voices, staves and tuplet ratios
 // ====================
 
 namespace {
@@ -2861,7 +2867,8 @@ with
             (-1, -2, "E4"),
             (note.getTransposeDiatonic(), note.getTransposeChromatic(), note.getSoundingPitch()),
         )
-        # Its export has no <divisions> (DIVISIONS_MISSING); no <transpose> is corrected.
+        # Its export has no <divisions>; no <transpose> is corrected.
+        self.assertIn("DIVISIONS_MISSING", corrections)
         self.assertEqual([], [code for code in corrections if code.startswith("TRANSPOSE_")])
 
     def test_a_transpose_record_names_its_part_and_measure(self):
@@ -3571,7 +3578,7 @@ with
      *          either is read untransposed. `<for-part>` is not modelled: it is dropped
      *          (FOR_PART_NOT_MODELLED).
      *
-     *          The reader also records what it used to correct silently: parts that share a name
+     *          The reader also records these corrections: parts that share a name
      *          are told apart by a suffix, " 1", " 2", ... (PART_NAME_DUPLICATE); a part whose
      *          first measure has no `<divisions>` is read at 256 divisions per quarter note
      *          (DIVISIONS_MISSING); a `<voice>` or a `<staff>` that is not a positive whole number
@@ -3618,7 +3625,7 @@ with
         with a note it cannot sound either is read untransposed. ``<for-part>`` is not modelled:
         it is dropped (``FOR_PART_NOT_MODELLED``).
 
-        The reader also records what it used to correct silently: parts that share a name are
+        The reader also records these corrections: parts that share a name are
         told apart by a suffix, ``" 1"``, ``" 2"``, ... (``PART_NAME_DUPLICATE``); a part whose
         first measure has no ``<divisions>`` is read at 256 divisions per quarter note
         (``DIVISIONS_MISSING``); a ``<voice>`` or a ``<staff>`` that is not a positive whole
@@ -3659,7 +3666,7 @@ with
 
 - [ ] **Step 6: Format, build, pass.** clang-format `import-report.cpp`, `score.cpp`, `score.h`, `py_score.cpp`, `part.h`, `py_part.cpp`, `score-test.cpp`. C++ subset `ScoreTransposeRead*:ScoreTransposeCorrection*:ScoreSilentCorrections*:ScoreImportReport*:ScoreQuarterTone*:ImportReport*` → all pass. «build» `make "PYTHON=$py" dev` → 0. «pytest» `test_musicxml_transpose test_score_comprehensive.ScoreImportReportTestCase` → OK. Bash: `git -C /c/Users/nyck/Desktop/maialib grep -n "LOG_WARN\|LOG_INFO" -- maiacore/src/maiacore/score.cpp` → only `Score::getChords` (one `LOG_WARN`, not a load) and `Score::info()` remain.
 
-- [ ] **Step 7: Mutations.** (a) Replace `if (voice <= 0) {` with `if (voice == 0) {` → `AVoiceThatIsNotPositiveIsRecorded` fails (voice -2 kept). (b) Replace `if (timeModification) {` with `if (false) {` → `ATupletValueThatIsNotPositiveIsRecorded` fails. (c) In `readTransposeElements` delete the statement `issues.push_back(makeIssue("FOR_PART_NOT_MODELLED", ...));` (the loop's whole body) → `aForPartIsDroppedWithARecord` fails. (d) Replace `if (element.pairCorrected) {` with `if (element.values) {` → every applied `<transpose>` records a pair: `aChangeInTheMiddleOfAPartIsFollowed`, `aDiatonicIntervalThatDoesNotMatchIsReplaced` and, after `make dev`, `test_a_stored_diatonic_interval_of_zero_comes_back_as_the_conventional_one` and `test_a_transpose_record_names_its_part_and_measure` fail. (e) Replace `rejection += untransposedNotes;` with `rejection += "";` → `aTransposeOutOfRangeIsIgnoredForItsWholeScope` fails (the count sentence is gone). (f) Replace `if (partsNameVec[n] != writtenNames[n]) {` with `if (false) {` → `ADuplicatePartNameIsSuffixedAndRecorded` fails. (g) Replace the `} else {` that opens the `DIVISIONS_MISSING` record with `} else if (false) {` → `MissingDivisionsAreRecordedWithTheDefaultUsed` fails. (h) Replace `if (node.child("staff") && !isPositiveWholeNumber(node.child_value("staff"))) {` with `if (false) {` → `AStaffThatIsNotPositiveIsRecorded` fails. Revert each; rerun green.
+- [ ] **Step 7: Mutations.** (a) Replace `if (voice <= 0) {` with `if (voice == 0) {` → `AVoiceThatIsNotPositiveIsRecorded` fails (voice -2 kept). (b) Replace `if (timeModification) {` with `if (false) {` → `ATupletValueThatIsNotPositiveIsRecorded` fails. (c) In `readTransposeElements` delete the statement `issues.push_back(makeIssue("FOR_PART_NOT_MODELLED", ...));` (the loop's whole body) → `aForPartIsDroppedWithARecord` fails. (d) Replace `if (element.pairCorrected) {` with `if (element.values) {` → every applied `<transpose>` records a pair: `aChangeInTheMiddleOfAPartIsFollowed`, `aDiatonicIntervalThatDoesNotMatchIsReplaced` and, after `make dev`, `test_a_stored_diatonic_interval_of_zero_comes_back_as_the_conventional_one` and `test_a_transpose_record_names_its_part_and_measure` fail. (e) Replace `rejection += untransposedNotes;` with `rejection += "";` → `aTransposeOutOfRangeIsIgnoredForItsWholeScope` fails (the count sentence is gone). (f) Replace `if (partsNameVec[n] != writtenNames[n]) {` with `if (false) {` → `ADuplicatePartNameIsSuffixedAndRecorded` fails. (g) Replace the `} else {` that opens the `DIVISIONS_MISSING` record with `} else if (false) {` → `MissingDivisionsAreRecordedWithTheDefaultUsed` and, after `make dev`, `test_a_stored_diatonic_interval_of_zero_comes_back_as_the_conventional_one` fail. (h) Replace `if (node.child("staff") && !isPositiveWholeNumber(node.child_value("staff"))) {` with `if (false) {` → `AStaffThatIsNotPositiveIsRecorded` fails. (i) In `ignoredTranspose` pass `""` instead of `element.ignoredText` as `found` (the `makeIssue` argument after `"attributes/transpose/" + name`) → `aChromaticThatIsNotAWholeNumberIsIgnored` and `anOctaveChangeThatIsNotAWholeNumberIsIgnored` fail. (j) In the `TRANSPOSE_PAIR_CORRECTED` record pass `element.diatonicText` instead of `std::to_string(element.conventionalDiatonic)` as `used` → `aDiatonicThatIsNotAWholeNumberIsReplaced` and `aDiatonicIntervalThatDoesNotMatchIsReplaced` fail. Revert each; rerun green.
 
 - [ ] **Step 8: Whole suites.** «build» `make "PYTHON=$py" cpp-tests` → 0, `[  PASSED  ] 1203 tests.` (1198 + 5). «build» `make "PYTHON=$py" py-tests` → OK, `Ran 697 tests` (696 + 1), the ledger unchanged. «build» `make "PYTHON=$py" validate` → no new findings.
 
@@ -3700,7 +3707,7 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 **Files:**
 - Create: `test/xml_examples/unit_test/import_report_dropped.musicxml`
 - Modify: `maiacore/src/maiacore/import-report.h` (include ~6; `droppedElements` before `importSummary` ~38), `maiacore/src/maiacore/import-report.cpp` (includes; the closed element list; catalogue; `droppedElements`), `maiacore/src/maiacore/score.cpp` (end of `loadXMLFile` ~1430), `maiacore/include/maiacore/score.h` (constructor Doxygen ~153), `maiacore/src/maiacore/python_wrapper/py_score.cpp` (numpydoc ~164), `test/musicxml/ledger.json` (one line)
-- Test: `tests-cpp/src/import-report-test.cpp` (`ImportReportDropped`), `tests-cpp/src/score-test.cpp` (the for-part summary ~1947; two new `ScoreImportReport` tests ~1130), `test/test_score_comprehensive.py` (`ScoreImportReportTestCase` ~308)
+- Test: `tests-cpp/src/import-report-test.cpp` (`ImportReportDropped`), `tests-cpp/src/score-test.cpp` (the for-part summary ~1940; two new `ScoreImportReport` tests ~1123), `test/test_score_comprehensive.py` (`ScoreImportReportTestCase` ~308)
 
 **Interfaces:**
 - Consumes: `makeIssue`, `IssueLocation`, `ImportIssue`, `importSummary`, `TemporaryFile` (Task 1); `aForPartIsDroppedWithARecord` (Task 2).
@@ -3813,26 +3820,6 @@ using maiacore::detail::importSummary;
 ````
 
 
-**`tests-cpp/src/import-report-test.cpp` ~66: replace**
-
-````cpp
-TEST(ImportReportRecord, ARecordTakesItsKindAndSanitisesItsText) {
-    const ImportIssue issue =
-        makeIssue("ALTER_OFF_GRID", IssueLocation{0, "Viol\xE9", "1\xE9", 3}, "note/\xE9",
-                  "\xE9", "C4", "The <alter> value '\xE9' ...");
-    EXPECT_EQ(issue.code, "ALTER_OFF_GRID");
-````
-
-with
-
-````cpp
-TEST(ImportReportRecord, ARecordTakesItsKindAndSanitisesItsText) {
-    const ImportIssue issue = makeIssue("ALTER_OFF_GRID", IssueLocation{0, "Viol\xE9", "1\xE9", 3},
-                                        "note/\xE9", "\xE9", "C4", "The <alter> value '\xE9' ...");
-    EXPECT_EQ(issue.code, "ALTER_OFF_GRID");
-````
-
-
 **`tests-cpp/src/import-report-test.cpp` ~81: replace**
 
 ````cpp
@@ -3908,7 +3895,7 @@ TEST(ImportReportDropped, ADocumentOfHeldElementsDropsNothing) {
 ````
 
 
-**`tests-cpp/src/score-test.cpp` ~1130: replace**
+**`tests-cpp/src/score-test.cpp` ~1123: replace**
 
 ````cpp
 
@@ -3979,7 +3966,7 @@ TEST(ScoreImportReport, AnExportLoadedAgainRecordsOnlyTheElementsTheWriterInvent
 ````
 
 
-**`tests-cpp/src/score-test.cpp` ~1947: replace**
+**`tests-cpp/src/score-test.cpp` ~1940: replace**
 
 ````cpp
     EXPECT_EQ(capture.str(),
@@ -4390,7 +4377,7 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 
 - [ ] **Step 1: Write the failing C++ tests.** Apply:
 
-**`tests-cpp/src/score-test.cpp` ~1184: replace**
+**`tests-cpp/src/score-test.cpp` ~1177: replace**
 
 ````cpp
                   {"ELEMENT_NOT_MODELLED", "part-list/score-part/score-instrument"}}));
@@ -4508,7 +4495,7 @@ class ScoreFatalInputTestCase(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = os.path.join(directory, "plain.mxl")
             with open(path, "wb") as plain:
-                plain.write(b"<score-partwise/>")
+                plain.write(b'<score-partwise version="4.0"/>')
             self.assertLoadFails(
                 path,
                 f"[maiacore] Score: '{path}' is not a readable MusicXML archive: it is not a zip "
@@ -4824,11 +4811,11 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 
 **Interfaces:**
 - Consumes: `fileBytes` (Task 4), `validUtf8` (Task 1), `TemporaryFile`, `StdoutCapture` (`test-capture.h`).
-- Produces: `fileBytes` opens through `std::filesystem::u8path`; `.mxl` recognised by a lowercase compare of the last four characters; in `maiacore_python` (`py_console.h`): `py::object tolerantStream(const char* name)` and the call guard `class ConsoleRedirect` (default-constructible; redirects `std::cout`/`std::cerr`), used by `Score(filePath)`, both `ScoreCollection` directory constructors and `setDirectoriesPaths` (Task 6 adds the three `addScore`); `ScoreCollection` builds its paths with `std::filesystem::u8path` and passes `file.u8string()` to `Score`; `TemporaryDirectory::utf8()` in `score-collection-test.cpp`; `runChild(code, environment=None)` in `test_score_collection.py`.
+- Produces: `fileBytes` opens through `std::filesystem::u8path`; an archive recognised by a lowercase compare of the last four characters with `.mxl` or by the zip signature `PK` at the start of the bytes; in `maiacore_python` (`py_console.h`): `py::object tolerantStream(const char* name)` and the call guard `class ConsoleRedirect` (default-constructible; redirects `std::cout`/`std::cerr`), used by `Score(filePath)`, both `ScoreCollection` directory constructors and `setDirectoriesPaths` (Task 6 adds the three `addScore`); `ScoreCollection` builds its paths with `std::filesystem::u8path` and passes `file.u8string()` to `Score`; `TemporaryDirectory::utf8()` in `score-collection-test.cpp`; `runChild(code, environment=None)` in `test_score_collection.py`.
 
 - [ ] **Step 1: Write the failing C++ tests.** Apply, in order:
 
-**`tests-cpp/src/score-test.cpp` ~1216: replace**
+**`tests-cpp/src/score-test.cpp` ~1209: replace**
 
 ````cpp
 
@@ -4870,9 +4857,26 @@ TEST(ScoreUnicodePath, ANonAsciiPathLoadsAndKeepsItsNameAsUtf8) {
     }
 }
 
-// An .mxl archive is recognised by its extension in any case.
+// An .mxl archive is recognised by its extension in any case: SCORE.MXL loads, and TEXT.MXL,
+// which holds MusicXML text, is refused as an archive that is not a zip archive.
 TEST(ScoreUnicodePath, AnUppercaseMxlExtensionIsReadAsAnArchive) {
     const TemporaryFile file("SCORE.MXL",
+                             fileContent("./test/xml_examples/unit_test/test_compressed_file.mxl"));
+    {
+        StdoutCapture quiet;
+        Score score(file.path());
+        EXPECT_GT(score.getNumNotes(), 0);
+    }
+    const TemporaryFile text("TEXT.MXL",
+                             fileContent("./test/xml_examples/unit_test/quarter_tone_tartini.xml"));
+    EXPECT_EQ(thrownFirstLine([&text] { Score score(text.path()); }),
+              "[maiacore] Score: '" + text.path() +
+                  "' is not a readable MusicXML archive: it is not a zip archive");
+}
+
+// A zip archive is also recognised by the signature its bytes start with, "PK", whatever its name.
+TEST(ScoreUnicodePath, AZipArchiveNamedXmlIsReadAsAnArchive) {
+    const TemporaryFile file("score.xml",
                              fileContent("./test/xml_examples/unit_test/test_compressed_file.mxl"));
     StdoutCapture quiet;
     Score score(file.path());
@@ -5011,8 +5015,27 @@ class ScoreUnicodePathTestCase(unittest.TestCase):
                     self.assertEqual(score.getFilePath(), path)
 
     def test_an_uppercase_mxl_extension_is_read_as_an_archive(self):
+        """SCORE.MXL loads; TEXT.MXL, which holds MusicXML text, is refused as an archive."""
         with tempfile.TemporaryDirectory() as directory:
             path = os.path.join(directory, "SCORE.MXL")
+            shutil.copyfile("./xml_examples/unit_test/test_compressed_file.mxl", path)
+            with contextlib.redirect_stdout(io.StringIO()):
+                score = ml.Score(path)
+            self.assertGreater(score.getNumNotes(), 0)
+            text = os.path.join(directory, "TEXT.MXL")
+            shutil.copyfile("./xml_examples/unit_test/quarter_tone_tartini.xml", text)
+            with self.assertRaises(RuntimeError) as raised:
+                ml.Score(text)
+            self.assertEqual(
+                str(raised.exception).splitlines()[0],
+                f"[maiacore] Score: '{text}' is not a readable MusicXML archive: it is not a zip "
+                "archive",
+            )
+
+    def test_a_zip_archive_named_xml_is_read_as_an_archive(self):
+        """An archive is also recognised by the zip signature its bytes start with, "PK"."""
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "score.xml")
             shutil.copyfile("./xml_examples/unit_test/test_compressed_file.mxl", path)
             with contextlib.redirect_stdout(io.StringIO()):
                 score = ml.Score(path)
@@ -5227,7 +5250,7 @@ with
                 self.assertEqual(0, done.returncode, done.stderr.decode("utf-8", "replace"))
 ````
 
-- [ ] **Step 3: Run them and see them fail.** C++ subset `ScoreUnicodePath*:ScoreCollectionConstructor*` → on Windows `ANonAsciiPathLoadsAndKeepsItsNameAsUtf8` fails (`[maiacore] Score: cannot open '...\canção 日本.xml'`), `ANonAsciiFileNameLoadsWithItsUtf8Name` fails (`std::system_error` from `file.string()` for `日本.xml`, or `cannot open`), and on every platform `AnUppercaseMxlExtensionIsReadAsAnArchive` fails (`is not well-formed XML`). «pytest» `test_score_comprehensive.ScoreUnicodePathTestCase test_score_collection.ScoreCollectionConstructionTestCase test_musicxml_corpus.WorkerProcessTestCase` → on Windows the non-ASCII tests fail (`cannot open`; the collection child exits 1 with `UnicodeDecodeError`), `test_an_uppercase_mxl_extension_is_read_as_an_archive` fails everywhere, and `test_a_name_the_console_cannot_encode_does_not_end_the_interpreter` fails (`RuntimeError` on Windows; once the path opens, `3221226505 != 0`).
+- [ ] **Step 3: Run them and see them fail.** C++ subset `ScoreUnicodePath*:ScoreCollectionConstructor*` → on Windows `ANonAsciiPathLoadsAndKeepsItsNameAsUtf8` fails (`[maiacore] Score: cannot open '...\canção 日本.xml'`), `ANonAsciiFileNameLoadsWithItsUtf8Name` fails (`std::system_error` from `file.string()` for `日本.xml`, or `cannot open`), and on every platform `AnUppercaseMxlExtensionIsReadAsAnArchive` and `AZipArchiveNamedXmlIsReadAsAnArchive` fail (`is not well-formed XML`). «pytest» `test_score_comprehensive.ScoreUnicodePathTestCase test_score_collection.ScoreCollectionConstructionTestCase test_musicxml_corpus.WorkerProcessTestCase` → on Windows the non-ASCII tests fail (`cannot open`; the collection child exits 1 with `UnicodeDecodeError`), `test_an_uppercase_mxl_extension_is_read_as_an_archive` and `test_a_zip_archive_named_xml_is_read_as_an_archive` fail everywhere, and `test_a_name_the_console_cannot_encode_does_not_end_the_interpreter` fails (`RuntimeError` on Windows; once the path opens, `3221226505 != 0`).
 
 - [ ] **Step 4: Opening by UTF-8 path.** Apply, in order:
 
@@ -5297,7 +5320,7 @@ with
 
 ````cpp
 
-    // An .mxl archive by its extension, in any case; any other file is read as MusicXML text.
+    // The extension, in lowercase.
     std::string extension = filePath.substr(filePath.size() - 4);
     std::transform(extension.begin(), extension.end(), extension.begin(),
                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
@@ -5309,7 +5332,10 @@ with
         LOG_ERROR("Score: cannot open " + shownPath);
     }
 
-    if (extension == ".mxl") {
+    // A file named .mxl, in any case, is read as an archive, and so is any file that starts with
+    // the zip signature "PK"; any other file is read as MusicXML text.
+    const bool zipSignature = bytes->size() >= 2 && (*bytes)[0] == 'P' && (*bytes)[1] == 'K';
+    if (extension == ".mxl" || zipSignature) {
         const auto [document, rootfile] = mxlRootfile(*bytes, shownPath);
 ````
 
@@ -5546,7 +5572,8 @@ with
     cls.def(py::init<const std::string&>(), py::arg("filePath"), py::call_guard<ConsoleRedirect>(),
             R"pbdoc(
         Load a score from a MusicXML file (``.xml``, ``.musicxml`` or compressed ``.mxl``, the
-        extension in any case). Any path opens on every platform, whatever its characters, and
+        extension in any case; a file that starts with the zip signature ``PK`` is read as an
+        archive whatever its name). Any path opens on every platform, whatever its characters, and
         ``getFileName()`` and ``getFilePath()`` return it as given. What the load prints goes to
         ``sys.stdout``; a character the stream cannot encode is written as a backslash escape.
 
@@ -5663,8 +5690,9 @@ with
 ````cpp
      * @brief Constructs a new Score object by loading a MusicXML file.
      * @details Supported formats: *.xml, *.musicxml, *.mxl (compressed; the extension in any
-     *          case). The path is UTF-8, and any name opens on every platform: on Windows the
-     *          file is opened through a wide-character path, whatever the ANSI code page.
+     *          case, or any file that starts with the zip signature "PK"). The path is UTF-8, and
+     *          any name opens on every platform: on Windows the file is opened through a
+     *          wide-character path, whatever the ANSI code page.
      *
 ````
 
@@ -5830,9 +5858,9 @@ ledger records what maialib does with the real file, on every platform.
 
 - [ ] **Step 8: Format, build, pass.** clang-format `score.cpp`, `score_collection.cpp`, `score.h`, `py_console.h`, `py_score.cpp`, `py_score_collection.cpp`, `score-test.cpp`, `score-collection-test.cpp`. C++ subset `ScoreUnicodePath*:ScoreCollection*:ScoreFatalInput*` → all pass. «build» `make "PYTHON=$py" dev` → 0. «pytest» `test_score_comprehensive.ScoreUnicodePathTestCase test_score_collection test_musicxml_corpus.WorkerProcessTestCase` → OK. `ruff check` and `ruff format --check` on `test/musicxml/corpus_worker.py test/test_musicxml_corpus.py test/test_score_collection.py` → clean.
 
-- [ ] **Step 9: Mutations.** (a) In `fileBytes` replace `std::ifstream stream(file, std::ios::binary);` with `std::ifstream stream(path, std::ios::binary);` → on Windows `ScoreUnicodePath.ANonAsciiPathLoadsAndKeepsItsNameAsUtf8` and `ScoreCollectionConstructor.ANonAsciiFileNameLoadsWithItsUtf8Name` fail with `cannot open` (measured), and after `make dev` the Python non-ASCII tests. (b) Delete the `std::transform(extension.begin(), ...` statement → `AnUppercaseMxlExtensionIsReadAsAnArchive` and `test_an_uppercase_mxl_extension_is_read_as_an_archive` fail. (c) In `py_console.h` replace `if (!error.matches(PyExc_UnicodeEncodeError)) {` with `if (true) {` → after `make dev`, `test_a_name_the_console_cannot_encode_does_not_end_the_interpreter` and `test_non_ascii_file_names_load_with_their_utf8_names` fail with `3221226505 != 0` (measured). (d) In `setDirectoriesPaths` replace `scores.emplace_back(file.u8string());` with `scores.emplace_back(file.string());` → on Windows `ANonAsciiFileNameLoadsWithItsUtf8Name` fails (`std::system_error` for `日本.xml`). Revert each; rerun green (rebuild the module after (c)).
+- [ ] **Step 9: Mutations.** (a) In `fileBytes` replace `std::ifstream stream(file, std::ios::binary);` with `std::ifstream stream(path, std::ios::binary);` → on Windows `ScoreUnicodePath.ANonAsciiPathLoadsAndKeepsItsNameAsUtf8` and `ScoreCollectionConstructor.ANonAsciiFileNameLoadsWithItsUtf8Name` fail with `cannot open` (measured), and after `make dev` the Python non-ASCII tests. (b) Delete the `std::transform(extension.begin(), ...` statement → `AnUppercaseMxlExtensionIsReadAsAnArchive` and `test_an_uppercase_mxl_extension_is_read_as_an_archive` fail (`TEXT.MXL`, which does not start with `PK`, is read as MusicXML text and loads; `SCORE.MXL` still loads by its signature). (c) In `py_console.h` replace `if (!error.matches(PyExc_UnicodeEncodeError)) {` with `if (true) {` → after `make dev`, `test_a_name_the_console_cannot_encode_does_not_end_the_interpreter` and `test_non_ascii_file_names_load_with_their_utf8_names` fail with `3221226505 != 0` (measured). (d) In `setDirectoriesPaths` replace `scores.emplace_back(file.u8string());` with `scores.emplace_back(file.string());` → on Windows `ANonAsciiFileNameLoadsWithItsUtf8Name` fails (`std::system_error` for `日本.xml`). (e) Replace `if (extension == ".mxl" || zipSignature) {` with `if (extension == ".mxl") {` → `AZipArchiveNamedXmlIsReadAsAnArchive` and, after `make dev`, `test_a_zip_archive_named_xml_is_read_as_an_archive` fail (`is not well-formed XML`). (f) Replace it with `if (zipSignature) {` → `AnUppercaseMxlExtensionIsReadAsAnArchive`, `ScoreFatalInput.AnMxlThatIsNotAZipArchiveIsNamed` and, after `make dev`, `test_an_uppercase_mxl_extension_is_read_as_an_archive` and `test_an_mxl_that_is_not_a_zip_archive_is_named` fail (a file named `.mxl` that holds text is read as MusicXML, and the expected `RuntimeError` is not the one raised). Revert each; rerun green (rebuild the module after (c), (e) and (f)).
 
-- [ ] **Step 10: Whole suites and the corpus.** «build» `make "PYTHON=$py" cpp-tests` → 0, `[  PASSED  ] 1213 tests.` (1210 + 3). «build» `make "PYTHON=$py" py-tests` → OK, `Ran 708 tests` (705 + 3). «build» `make "PYTHON=$py" validate` → no new findings. «build» `make "PYTHON=$py" corpus; $LASTEXITCODE` (the external corpus fetched) → 0: neither ledger differs. The 750 external files with non-ASCII paths, loaded from their own paths now, give the records their ASCII copies gave (measured on a scratch copy: 60 of them chosen at random, every record identical); if a line differs, stop and report it with the file.
+- [ ] **Step 10: Whole suites and the corpus.** «build» `make "PYTHON=$py" cpp-tests` → 0, `[  PASSED  ] 1214 tests.` (1210 + 4). «build» `make "PYTHON=$py" py-tests` → OK, `Ran 709 tests` (705 + 4). «build» `make "PYTHON=$py" validate` → no new findings. «build» `make "PYTHON=$py" corpus; $LASTEXITCODE` (the external corpus fetched) → 0: neither ledger differs. The 750 external files with non-ASCII paths, loaded from their own paths now, give the records their ASCII copies gave (measured on a scratch copy: 60 of them chosen at random, every record identical); if a line differs, stop and report it with the file.
 
 - [ ] **Step 11: Commit.** `git checkout -- AI_API_CHEATSHEET.md llms-full.txt`; `git add maiacore/src/maiacore/score.cpp maiacore/src/maiacore/score_collection.cpp maiacore/include/maiacore/score.h maiacore/src/maiacore/python_wrapper/py_console.h maiacore/src/maiacore/python_wrapper/py_score.cpp maiacore/src/maiacore/python_wrapper/py_score_collection.cpp tests-cpp/src/score-test.cpp tests-cpp/src/score-collection-test.cpp test/test_score_comprehensive.py test/test_score_collection.py test/test_musicxml_corpus.py test/musicxml/corpus_worker.py test/musicxml/README.md`, message:
 
@@ -5843,7 +5871,9 @@ Score(path) handed a UTF-8 path to narrow-character file functions,
 which Windows reads in the ANSI code page: "canção.xml" did not open.
 Files are now opened through std::filesystem::u8path, a wide-character
 path on Windows, and parsed from the bytes read; an .mxl archive is
-recognised by its extension in any case ("SCORE.MXL" was parsed as XML).
+recognised by its extension in any case ("SCORE.MXL" was parsed as XML)
+and by the zip signature its bytes start with, "PK", so a zip archive
+named .xml loads; a file named .mxl that is not a zip archive raises.
 ScoreCollection builds its paths the same way and passes UTF-8 to
 Score: getFileName() and getFilePath() raised UnicodeDecodeError for a
 name such as "canção.xml", and a name outside the code page, such as
@@ -6070,7 +6100,7 @@ with
             )
 
     def test_add_score_by_path_lists_a_failure_and_prints_to_sys_stdout(self):
-        """addScore printed to the C runtime's stdout, which redirect_stdout does not catch."""
+        """addScore prints to sys.stdout, which redirect_stdout catches."""
         collection = ml.ScoreCollection()
         printed = io.StringIO()
         with contextlib.redirect_stdout(printed):
@@ -6473,7 +6503,7 @@ with
 
 - [ ] **Step 7: Mutations.** (a) In `addScore(const std::vector<std::string>&)` replace `_loadErrors = std::move(errors);` with `_loadErrors.clear();` → `AddScoreSkipsAndListsTheFilesThatFailToLoad` and `test_add_score_by_path_lists_a_failure_and_prints_to_sys_stdout` fail. (b) In `loadInto` replace `message.substr(0, message.find('\n'))` with `message` → `AFileThatFailsToLoadIsSkippedAndListed`, `ANonAsciiDirectoryListsItsFailuresInUtf8` and `test_a_file_that_fails_to_load_is_skipped_and_listed` fail (the stack trace follows the first line). (c) In `printLoadErrors` replace `if (!errors.empty()) {` with `if (false) {` → `AFileThatFailsToLoadIsSkippedAndListed`, `AddScoreSkipsAndListsTheFilesThatFailToLoad` and the two Python tests that count the line fail. (d) In the binding of `addScore` with `filePath` replace `py::arg("filePath"), py::call_guard<ConsoleRedirect>(),` with `py::arg("filePath"),` → after `make dev`, `test_add_score_by_path_lists_a_failure_and_prints_to_sys_stdout` fails (`1 != 2`: the line went to the C runtime's stdout). (e) In `setDirectoriesPaths` replace `_loadErrors = std::move(errors);` with `_loadErrors.clear();` → `AFileThatFailsToLoadIsSkippedAndListed` and `ANonAsciiDirectoryListsItsFailuresInUtf8` fail. Revert each; rerun green.
 
-- [ ] **Step 8: Whole suites.** «build» `make "PYTHON=$py" cpp-tests` → 0, `[  PASSED  ] 1215 tests.` (1213 + 2: one test replaced, two added). «build» `make "PYTHON=$py" py-tests` → OK, `Ran 710 tests` (708 + 2). «build» `make "PYTHON=$py" validate` → no new findings.
+- [ ] **Step 8: Whole suites.** «build» `make "PYTHON=$py" cpp-tests` → 0, `[  PASSED  ] 1216 tests.` (1214 + 2: one test replaced, two added). «build» `make "PYTHON=$py" py-tests` → OK, `Ran 711 tests` (709 + 2). «build» `make "PYTHON=$py" validate` → no new findings.
 
 - [ ] **Step 9: Commit.** `git checkout -- AI_API_CHEATSHEET.md llms-full.txt`; `git add maiacore/include/maiacore/score_collection.h maiacore/src/maiacore/score_collection.cpp maiacore/src/maiacore/python_wrapper/py_score_collection.cpp tests-cpp/src/score-collection-test.cpp test/test_score_collection.py`, message:
 
@@ -7342,7 +7372,7 @@ with
 
 - [ ] **Step 5: Pass.** «pytest» `test_musicxml_corpus.LedgerLogicTestCase test_musicxml_corpus.WorkerStagesTestCase test_musicxml_corpus.WorkerProcessTestCase test_musicxml_fuzz` → OK. `ruff check` and `ruff format --check` on `test/musicxml/corpus.py test/musicxml/corpus_worker.py test/musicxml/fuzz.py scripts/make-corpus.py scripts/make-fuzz.py test/test_musicxml_corpus.py test/test_musicxml_fuzz.py` → clean. «build» `make "PYTHON=$py" corpus 'CORPUS_ARGS=--in-repo-only --filter unit_test/transpose_ --workers 2'; $LASTEXITCODE` → 1, every difference a missing `codes` (the ledgers are regenerated next), and no round trip runs.
 
-- [ ] **Step 6: Mutations.** (a) In `run_one` replace `record["exit"] = exit_code` with `pass` → `test_a_worker_that_dies_is_a_crash_at_its_first_unfinished_stage`, `test_a_worker_that_dies_while_checking_the_export_is_a_crash_there` and `test_diagnostics_give_the_exit_status_and_the_end_of_stderr` fail. (b) In the worker replace `if codes:` with `if True:` → `test_a_loaded_file_has_the_sorted_codes_of_its_report_and_none_when_it_is_empty` fails (`None != []`). (c) In `write_ledger` replace `if len(data) > LEDGER_LIMIT:` with `if False:` → `test_codes_move_to_a_sidecar_only_when_the_ledger_would_exceed_the_limit` fails. (d) In `load_ledger` replace `if sidecar.is_file():` with `if False:` → the same test fails (the codes are lost on loading). (e) In `ledger_after` replace `ledger = {} if complete else dict(old)` with `ledger = {}` → `test_a_partial_update_keeps_the_entries_of_the_files_it_did_not_examine` fails. (f) In `select` replace `not (skip_slow and is_slow(name))` with `True` → `test_a_selection_keeps_the_files_with_the_substring_and_can_leave_out_slow_ones` fails. (g) In `make-fuzz.py` replace `return 1` with `return 0` → `test_accept_fails_and_lists_each_case_worth_minimising` fails. Revert each; rerun green.
+- [ ] **Step 6: Mutations.** (a) In `run_one` replace `record["exit"] = exit_code` with `pass` → `test_a_worker_that_dies_is_a_crash_at_its_first_unfinished_stage`, `test_a_worker_that_dies_while_checking_the_export_is_a_crash_there` and `test_diagnostics_give_the_exit_status_and_the_end_of_stderr` fail. (b) In the worker replace `if codes:` with `if True:` → `test_a_loaded_file_has_the_sorted_codes_of_its_report_and_none_when_it_is_empty` fails (`None != []`). (c) In `write_ledger` replace `if len(data) > LEDGER_LIMIT:` with `if False:` → `test_codes_move_to_a_sidecar_only_when_the_ledger_would_exceed_the_limit` fails. (d) In `load_ledger` replace `if sidecar.is_file():` with `if False:` → the same test fails (the codes are lost on loading). (e) In `ledger_after` replace `ledger = {} if complete else dict(old)` with `ledger = {}` → `test_a_partial_update_keeps_the_entries_of_the_files_it_did_not_examine` fails. (f) In `select` replace `not (skip_slow and is_slow(name))` with `True` → `test_a_selection_keeps_the_files_with_the_substring_and_can_leave_out_slow_ones` fails. (g) In `make-fuzz.py` replace `return 1` with `return 0` → `test_accept_fails_and_lists_each_case_worth_minimising` fails. (h) In `make-fuzz.py` replace `if arguments.accept:` with `if True:` → `test_without_accept_the_run_only_reports` fails (`0 != 1`: a `crash:load` case fails the run). (i) In `make-fuzz.py` replace `if fuzz.worth_minimising(outcome)` with `if True` → `test_accept_passes_when_every_outcome_is_expected` fails (`0 != 1`). Revert each; rerun green.
 
 - [ ] **Step 7: Regenerate the ledgers.** «build» `make "PYTHON=$py" corpus-update-ledger; $LASTEXITCODE` (every file, the slow ones and the external corpus included) → 0. Write with the Write tool `C:\Users\nyck\AppData\Local\Temp\maialib-4c1a-ledger-check.py`:
 
@@ -7381,7 +7411,7 @@ for item in other:
 
   Then, in Bash from the repository root: `git show HEAD:test/musicxml/ledger.json > /c/Users/nyck/AppData/Local/Temp/maialib-4c1a-ledger-old.json; git show HEAD:test/musicxml/ledger-external.json > /c/Users/nyck/AppData/Local/Temp/maialib-4c1a-ledger-external-old.json`; `$PY /c/Users/nyck/AppData/Local/Temp/maialib-4c1a-ledger-check.py /c/Users/nyck/AppData/Local/Temp/maialib-4c1a-ledger-old.json test/musicxml/ledger.json` and `$PY /c/Users/nyck/AppData/Local/Temp/maialib-4c1a-ledger-check.py /c/Users/nyck/AppData/Local/Temp/maialib-4c1a-ledger-external-old.json test/musicxml/ledger-external.json test/musicxml/ledger-external-codes.json` (with `PY=/c/Users/nyck/AppData/Local/Temp/maialib-4c1a-venv/Scripts/python.exe`) → `other differences: 0` for both. Measured on a scratch copy (the whole update took 18 minutes): ledger.json, 229 of 289 files with codes — `ELEMENT_NOT_MODELLED` 219, `PART_NAME_DUPLICATE` 5, `ACCIDENTAL_ALTER_MISMATCH` 3, `ACCIDENTAL_NAME_UNKNOWN` 3, `ALTER_OFF_GRID` 3, `TRANSPOSE_PAIR_CORRECTED` 3, `DIVISIONS_MISSING` 1, `FOR_PART_NOT_MODELLED` 1, `TRANSPOSE_CHROMATIC_NOT_INTEGER` 1, `TRANSPOSE_OCTAVE_CHANGE_NOT_INTEGER` 1, `TRANSPOSE_OUT_OF_RANGE` 1 (71,473 bytes); the external ledger, 1,587 of 1,658 files with codes — `ELEMENT_NOT_MODELLED` 1,587, `ACCIDENTAL_NAME_UNKNOWN` 13, `PART_NAME_DUPLICATE` 12. With its codes the external ledger would exceed 500,000 bytes, so `ledger-external.json` stays byte-identical (`git diff --stat test/musicxml/ledger-external.json` is empty) and the codes are in the new `test/musicxml/ledger-external-codes.json` (223,869 bytes with LF endings); record the sizes and counts you get. No line may hold `exit` (no corpus file crashes today); if one does, stop and report it. Then «build» `make "PYTHON=$py" corpus; $LASTEXITCODE` → 0 (both ledgers match, the round trip runs).
 
-- [ ] **Step 8: Whole suites.** «build» `make "PYTHON=$py" cpp-tests` → 0, `[  PASSED  ] 1215 tests.` «build» `make "PYTHON=$py" py-tests` → OK, `Ran 717 tests` (710 + 7). «build» `make "PYTHON=$py" fuzz; $LASTEXITCODE` → 0 (report mode). «build» `make "PYTHON=$py" fuzz 'FUZZ_ARGS=--accept'; $LASTEXITCODE` → 1 until 4c-1b, the cases it lists matching the report's findings that are worth minimising; record them.
+- [ ] **Step 8: Whole suites.** «build» `make "PYTHON=$py" cpp-tests` → 0, `[  PASSED  ] 1216 tests.` «build» `make "PYTHON=$py" py-tests` → OK, `Ran 718 tests` (711 + 7). «build» `make "PYTHON=$py" fuzz; $LASTEXITCODE` → 0 (report mode). «build» `make "PYTHON=$py" fuzz 'FUZZ_ARGS=--accept'; $LASTEXITCODE` → 1 until 4c-1b, the cases it lists matching the report's findings that are worth minimising; record them.
 
 - [ ] **Step 9: Commit.** `git checkout -- AI_API_CHEATSHEET.md llms-full.txt`; `git add test/musicxml/corpus.py test/musicxml/corpus_worker.py test/musicxml/fuzz.py scripts/make-corpus.py scripts/make-fuzz.py Makefile test/musicxml/README.md test/musicxml/ledger.json test/musicxml/ledger-external-codes.json test/test_musicxml_corpus.py test/test_musicxml_fuzz.py` (and `test/musicxml/ledger-external.json` only if Step 7 found it changed, which it must explain), message (the counts measured on a scratch copy; use Step 7's if they differ):
 
@@ -7517,7 +7547,7 @@ with
 - **Breaking:** Loading a MusicXML file prints no `[WARN]` or `[INFO]` line per correction. The accidental and `<transpose>` warnings, printed to `sys.stdout` while loading, are records of the import report (see Added), and a load with records prints one summary line; a script that read the warnings reads `getImportIssues()`, whose codes are UPPER_SNAKE (`[transpose-pair-corrected]` is `TRANSPOSE_PAIR_CORRECTED`). The reader also records what it corrected without a word: a part renamed with a suffix because another part has its name (the `[INFO]` line), a first measure without `<divisions>` read at 256 divisions, and a voice, a staff or a tuplet value that is not a positive whole number. A negative voice or tuplet value, which was kept, is read as 1
 - Loading a file whose text is not UTF-8 where the reader quotes it -- an `<alter>` holding a Latin-1 byte -- ended the Python interpreter (0xC0000409, from the destructor of pybind11's redirected stream). Text from the file reaches a record, a message or the console as valid UTF-8, each invalid byte replaced by U+FFFD; the title, the composer and the part names are held that way too, where their getters raised `UnicodeDecodeError`
 - **Breaking:** A file that cannot be read raises `RuntimeError` naming the file and the problem: `Score: cannot open '<path>'`; `Score: '<path>' is not well-formed XML: <description> (byte offset <n>)`, with pugixml's description and where it stopped; for an `.mxl`, `Score: '<path>' is not a readable MusicXML archive: ` and the problem (not a zip archive, no `META-INF/container.xml`, no rootfile named, the rootfile not in the archive), or the rootfile's own parse error. The message was `Unable to load the file: <path>`, or miniz's own words for an archive
-- `Score(path)` opens any path on Windows, whatever its characters: `canção.xml` did not open, its UTF-8 path read in the ANSI code page. `getFileName()` and `getFilePath()` return UTF-8, where the scores of a `ScoreCollection` raised `UnicodeDecodeError` for `canção.xml` and the collection raised for a name outside the code page, such as `日本.xml`. An `.mxl` archive is recognised by its extension in any case (`SCORE.MXL` was parsed as XML). A load that prints a name the console cannot encode, as when the output is piped on Windows, writes it with backslash escapes instead of ending the interpreter
+- `Score(path)` opens any path on Windows, whatever its characters: `canção.xml` did not open, its UTF-8 path read in the ANSI code page. `getFileName()` and `getFilePath()` return UTF-8, where the scores of a `ScoreCollection` raised `UnicodeDecodeError` for `canção.xml` and the collection raised for a name outside the code page, such as `日本.xml`. An `.mxl` archive is recognised by its extension in any case (`SCORE.MXL` was parsed as XML) and by the zip signature its bytes start with, so a zip archive named `.xml` loads; a file named `.mxl` that is not a zip archive raises `RuntimeError` (`it is not a zip archive`). A load that prints a name the console cannot encode, as when the output is piped on Windows, writes it with backslash escapes instead of ending the interpreter
 - **Breaking:** `ScoreCollection` skips a file that fails to load and lists it in `getLoadErrors()`, with one line saying how many files failed: the constructor, `setDirectoriesPaths()` and `addScore()` with paths raised `RuntimeError` for one failing file, and the collection kept its old scores. A directory that does not exist, is not a directory or cannot be read still raises before anything changes. The `addScore()` overloads print to Python's `sys.stdout`, as the other loading methods do; they printed to the C runtime's stdout
 
 ````
@@ -7550,8 +7580,8 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 - [ ] **Step 3: Final verification (spec §6)** from the committed tree, in a second brand-new venv:
   1. PowerShell: `py -3.12 -m venv C:\Users\nyck\AppData\Local\Temp\maialib-4c1a-final-venv; & 'C:\Users\nyck\AppData\Local\Temp\maialib-4c1a-final-venv\Scripts\python.exe' -m pip install -r requirements-dev.txt; $LASTEXITCODE` → 0; in «build» below use `$py = 'C:\Users\nyck\AppData\Local\Temp\maialib-4c1a-final-venv\Scripts\python.exe'`.
   2. «build» `make "PYTHON=$py" dev` → 0; `git checkout -- AI_API_CHEATSHEET.md llms-full.txt`.
-  3. «build» `make "PYTHON=$py" cpp-tests` twice → 0 both times, `[  PASSED  ] 1215 tests.` (1188 + 10 + 5 + 4 + 3 + 3 + 2).
-  4. «build» `make "PYTHON=$py" py-tests` → OK, `Ran 717 tests` (690 + 6 + 1 + 1 + 7 + 3 + 2 + 7), `OK (skipped=1)`; record the duration.
+  3. «build» `make "PYTHON=$py" cpp-tests` twice → 0 both times, `[  PASSED  ] 1216 tests.` (1188 + 10 + 5 + 4 + 3 + 4 + 2).
+  4. «build» `make "PYTHON=$py" py-tests` → OK, `Ran 718 tests` (690 + 6 + 1 + 1 + 7 + 4 + 2 + 7), `OK (skipped=1)`; record the duration.
   5. «build» `make "PYTHON=$py" validate` → no new findings (measured on a scratch copy of the finished tree: `Validation: no new findings (44 known).`, `21 baseline finding(s) no longer reported`).
   6. «build» `make "PYTHON=$py" corpus` (the external corpus fetched) → 0: neither ledger nor the sidecar differs, and the round trip ran.
   7. «build» `make "PYTHON=$py" msvc-gate` → 0.
@@ -7565,6 +7595,6 @@ Claude-Session: https://claude.ai/code/session_01PZ1fS7HaQBBTCqJoCrbcqV
 ## Self-review (done while writing)
 
 - **Spec coverage.** §1 problems → Task 1 (the three accidental warnings without part or measure; the 0xC0000409 crash), Task 2 (step 1b's five warnings as finished strings; the silent corrections), Task 4 (pugixml description and offset dropped; raw miniz messages), Task 5 (non-ASCII paths; the ASCII copy), Task 6 (all or nothing; `addScore` to the C stdout), Task 7 (`make fuzz` always 0; the invisible exit; no codes; no subset; the worker count written twice; the external ledger's size). §2 `ImportIssue` fields → Task 1 (struct, class, `==`); API: list and DataFrame with fixed dtypes and an empty frame with every column, copy/assignment, `clear()`, edits and exports, API-built empty → Task 1 (`TheReportIsCopiedKeptThroughEditsAndEmptiedByClear`, `AScoreBuiltThroughTheApiHasAnEmptyReport`, the Python tests); records: accidental codes with part and measure → Task 1; step 1b's codes with structured `found`/`used` and no bracketed prefix → Task 2; `PART_NAME_DUPLICATE`, `DIVISIONS_MISSING`, `VOICE_NOT_POSITIVE`, `STAFF_CLAMPED`, `TUPLET_CLAMPED` → Task 2; dropped elements by path with their count, one extra pass → Task 3; the summary line only when the report is not empty, no per-event `[WARN]` → Tasks 1-3; text from the file as valid UTF-8 → Task 1 (records, messages, the summary; names by Decision 10); fatal input → Task 4. §3 wide-character open on Windows, `.mxl` from the wide path, UTF-8 name and path → Task 5 (Decision 8 for the mechanism); `ScoreCollection` `u8path` → Task 5; the worker without the copy and the external ledger → Tasks 5 and 7 (Decision 14). §4 isolation, `getLoadErrors()` for the constructor, `setDirectoriesPaths` and `addScore` by path, the summary line, a bad directory still raising before anything changes, `addScore` redirected → Task 6. §5 `--accept`, `exit`, `codes`, the sidecar over 500,000 bytes, `CORPUS_ARGS` with the four options and the worker count defined once → Task 7. §6 fixtures or probes with mutations → every task's mutation step; the tests that captured warnings (C++ accidental and transpose tests, `test_score_comprehensive.py`, `test_musicxml_dump.py`, `test_musicxml_transpose.py`, `test_score_collection.py`) → Tasks 1, 2, 5, 6; step 5's all-or-nothing tests → Task 6; Doxygen and numpydoc → Tasks 1-6; CHANGELOG relative to v1.10.3 → Task 8; ledger changes explained → Tasks 3, 5, 7; verification list → Task 8 Step 3. §7 out of scope: untouched (the reader's crash sites stay, so `make fuzz --accept` fails until 4c-1b).
-- **Not mapped, deliberately:** umbrella §6's policy table (`docs/musicxml-import-policy.md`) and its catalogue meta-test (Decision 2); umbrella §5's timewise conversion and `<opus>` refusal, and parts matched by `id` (umbrella §12), which the 4c-1a spec leaves to 4c-1b; the stubs (`maialib/maiacore/*.pyi`), regenerated at release.
+- **Not mapped, deliberately:** umbrella §6's policy table (`docs/musicxml-import-policy.md`), the catalogue's message templates and its meta-test, deferred to phase 4c-2 by spec §7 (Decision 2); umbrella §5's timewise conversion and `<opus>` refusal, and parts matched by `id` (umbrella §12), which the 4c-1a spec leaves to 4c-1b; the stubs (`maialib/maiacore/*.pyi`), regenerated at release.
 - **Interfaces are consistent across tasks:** `ImportIssue`, `makeIssue`, `IssueLocation`, `validUtf8`, `importSummary` (1 → 2, 3, 4, 5, 6); `correctionCodes`, `alterOffGrid`, `TemporaryFile`, `minimalScore`, `kMinimalAttributes`, `kWholeC4` (1 → 2-5); `issueFields`, `ISSUE_FIELDS`, `summaryLine` (1 → 3, 5); `transposeRecords`, `transposeIssue` (2 → 3); `droppedElements` (3); `fileBytes`, `notWellFormed`, `mxlRootfile` (4 → 5); `ConsoleRedirect`, `TemporaryDirectory::utf8()`, `runChild(code, environment)` (5 → 6); `getLoadErrors`, `loadInto`, `printLoadErrors` (6); `default_workers`, `select`, `ledger_after`, `codes_path`, `LEDGER_LIMIT` (7).
-- **Measured facts the plan relies on** (a scratch copy of `b620ed1` with every task applied in order, built with clang 18, the module installed in a fresh venv): the counts after each task (C++ 1198, 1203, 1207, 1210, 1213, 1215, 1215; Python 696, 697, 698, 705, 708, 710, 717); every record, message and summary line quoted in the tests; pugixml's descriptions and offsets (`Start-end tags mismatch (byte offset 29)`, `Error parsing start element tag (byte offset 20)`, `No document element found (byte offset 11)`); the crash before Task 1 (exit 3221226505) and after (exit 0); mutations Task 5 (a) and (c); `make validate`; both ledgers regenerated with codes (18 minutes; `ledger-external.json` byte-identical, the sidecar 223,869 bytes); 60 non-ASCII external files loaded from their own paths, each matching its ledger line; the code blocks above are the diffs of that copy, each block's first text unique in its file when applied in order.
+- **Measured facts the plan relies on** (a scratch copy of `b620ed1` with every task applied in order, built with clang 18, the module installed in a fresh venv): the counts after each task (C++ 1198, 1203, 1207, 1210, 1214, 1216, 1216; Python 696, 697, 698, 705, 709, 711, 718); every record, message and summary line quoted in the tests; pugixml's descriptions and offsets (`Start-end tags mismatch (byte offset 29)`, `Error parsing start element tag (byte offset 20)`, `No document element found (byte offset 11)`); the crash before Task 1 (exit 3221226505) and after (exit 0); mutations Task 5 (a) and (c); `make validate`; both ledgers regenerated with codes (18 minutes; `ledger-external.json` byte-identical, the sidecar 223,869 bytes); 60 non-ASCII external files loaded from their own paths, each matching its ledger line; the code blocks above are the diffs of that copy, each block's first text unique in its file when applied in order.

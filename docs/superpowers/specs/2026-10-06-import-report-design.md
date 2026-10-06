@@ -68,9 +68,11 @@ acceptance of umbrella §4). The umbrella's §5 is binding here; this document f
 ## 3. Unicode paths
 - `Score` opens files through `std::ifstream` on `std::filesystem::u8path` (wide paths on Windows) and
   parses them with `load_buffer`; `.mxl` is recognised by its extension in any case and by its `PK`
-  signature, and an archive too short to hold a zip end record is refused before miniz reads it. `Score`
-  keeps its file name and path as UTF-8 (`getFileName`, `getFilePath` never raise for a non-ASCII name);
-  title, composer and part names that are not valid UTF-8 are stored with U+FFFD replacements.
+  signature (a zip archive loads whatever its name; a file named `.mxl` that is not a zip archive raises
+  `RuntimeError` naming the problem), and an archive too short to hold a zip end record is refused
+  before miniz reads it. `Score` keeps its file name and path as UTF-8 (`getFileName`, `getFilePath`
+  never raise for a non-ASCII name); title, composer and part names that are not valid UTF-8 are
+  stored with U+FFFD replacements.
 - Console output that Python's stream cannot encode (a valid UTF-8 name on a console whose code page lacks
   its characters) must not end the process: the redirect to Python's streams is guarded so an encoding
   failure degrades the text instead of terminating.
@@ -115,3 +117,7 @@ acceptance of umbrella §4). The umbrella's §5 is binding here; this document f
   hanging the load (4c-1b). Timewise conversion and `<opus>` refusal (umbrella §8 item 16) also go to
   4c-1b.
 - A `<divisions>` change in the middle of a part (4c-2, attribute inheritance).
+- The umbrella §6 policy table (`docs/musicxml-import-policy.md`), the catalogue's message templates
+  and the catalogue meta-test (4c-2, which builds the document-order reader the table describes); the
+  4c-1a catalogue holds each code and its kind, and each record's message is built where the
+  correction is made.
