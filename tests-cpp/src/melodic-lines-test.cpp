@@ -161,6 +161,23 @@ TEST(MelodicLines, AChordNoteWithoutItsFirstNoteOnTheStaffIsNoEvent) {
     EXPECT_EQ(pitchesOf(lines[0]), (std::vector<std::string>{"C5"}));
 }
 
+// A chord note of another voice than the note written before it on its staff joins no event:
+// voice 2's E5 does not stand for voice 1's C5, and starts no line of its own.
+TEST(MelodicLines, AChordNoteOfAnotherVoiceJoinsNoEvent) {
+    Score score({"Piano"}, 1);
+    Measure& measure = score.getPart(0).getMeasure(0);
+    measure.addNote(Note("C5"));
+    Note otherVoice("E5");
+    otherVoice.setVoice(2);
+    otherVoice.setIsInChord(true);
+    measure.addNote(otherVoice);
+    measure.addNote(Note("D5"));
+
+    const std::vector<MelodicLine> lines = linesOf(score);
+    ASSERT_EQ(keysOf(lines), (std::vector<std::tuple<int, int, int>>{{0, 0, 1}}));
+    EXPECT_EQ(pitchesOf(lines[0]), (std::vector<std::string>{"C5", "D5"}));
+}
+
 // A chord tied to a chord is one event when its highest note continues the highest note; a tie
 // on an inner note alone extends nothing.
 TEST(MelodicLines, ATiedChordIsOneEventWhenItsHighestNoteIsTied) {

@@ -76,7 +76,9 @@ class Measure {
     std::string getKeyName() const;
 
     /**
-     * @brief Removes all notes and resets measure state.
+     * @brief Removes every note of every staff and resets the metronome.
+     * @details The staves stay: getNumStaves() is unchanged, and getNumNotes(staveId) is 0 for
+     *          each of them.
      */
     void clear();
 

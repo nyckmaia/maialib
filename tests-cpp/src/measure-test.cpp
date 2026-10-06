@@ -5,6 +5,7 @@
 #include <maiacore/key.h>
 #include <maiacore/measure.h>
 #include <maiacore/note.h>
+#include <maiacore/score.h>
 #include <maiacore/time-signature.h>
 
 #include <map>
@@ -1066,6 +1067,27 @@ TEST(MeasureState, ClearPreservesProperties) {
     EXPECT_EQ(measure.getNumber(), 5);
     EXPECT_EQ(measure.getTimeSignature().getUpperValue(), 3);
     // Note: metronome may or may not be preserved depending on implementation
+}
+
+// clear() empties every staff and keeps the staves, so a score holding the cleared measure can
+// still be read staff by staff.
+TEST(MeasureState, ClearEmptiesEveryStaffAndKeepsIt) {
+    Score score({"Piano"}, 2);
+    Measure& measure = score.getPart(0).getMeasure(0);
+    measure.setNumStaves(2);
+    measure.addNote(std::vector<std::string>{"C5", "D5"}, 0);
+    measure.addNote(Note("C3"), 1);
+    score.getPart(0).getMeasure(1).addNote(std::vector<std::string>{"E4", "F4", "G4"});
+
+    measure.clear();
+
+    ASSERT_EQ(measure.getNumStaves(), 2);
+    EXPECT_EQ(measure.getNumNotes(0), 0);
+    EXPECT_EQ(measure.getNumNotes(1), 0);
+    EXPECT_NO_THROW(score.getChords());
+    Score::MelodyPatternTable matches;
+    EXPECT_NO_THROW(matches = score.findMelodyPattern({Note("E4"), Note("F4")}, 1.0f, 1.0f));
+    EXPECT_EQ(matches.size(), 1u);
 }
 
 TEST(MeasureState, InfoMethod) {

@@ -100,7 +100,10 @@ Key Measure::getKey() const { return _key; }
 std::string Measure::getKeyName() const { return _key.getName(); }
 
 void Measure::clear() {
-    _note.clear();
+    // Each staff is emptied, not removed: the measure keeps its getNumStaves() staves.
+    for (std::vector<Note>& staff : _note) {
+        staff.clear();
+    }
     _metronomeValue = 0;
     _metronomeFigure = {};
 }

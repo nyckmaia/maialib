@@ -173,13 +173,26 @@ class DumpScoreTestCase(unittest.TestCase):
         self.assertEqual({"location": "left", "style": "", "repeat": ""}, measure["barlines"][0])
 
     def test_a_staff_whose_notes_cannot_be_read_is_recorded_instead_of_stopping_the_dump(self):
-        score = ml.Score(["Piano"], 2)
-        # clear() empties the measure's note lists but keeps its staff count.
-        score.getPart(0).getMeasure(0).clear()
-        measures = dump_score.dump_score(score)["parts"][0]["measures"]
-        self.assertEqual({"error": "IndexError"}, measures[0]["staves"][0]["notes"])
-        self.assertEqual({"sign": "G", "line": 2}, measures[0]["staves"][0]["clef"])
-        self.assertEqual([], measures[1]["staves"][0]["notes"])
+        class OneStaffTooMany:
+            """A measure that counts one staff more than it has: reading the notes of that
+            staff raises IndexError."""
+
+            def __init__(self, measure):
+                self._measure = measure
+
+            def __getattr__(self, name):
+                return getattr(self._measure, name)
+
+            def getNumStaves(self):
+                return self._measure.getNumStaves() + 1
+
+        score = ml.Score(["Piano"], 1)
+        score.getPart(0).getMeasure(0).addNote("C4")
+        staves = dump_score._measure(OneStaffTooMany(score.getPart(0).getMeasure(0)))["staves"]
+        self.assertEqual(2, len(staves))
+        self.assertEqual({"error": "IndexError"}, staves[1]["notes"])
+        self.assertEqual({"sign": "G", "line": 2}, staves[0]["clef"])
+        self.assertEqual(["C4"], [note["pitch"] for note in staves[0]["notes"]])
 
 
 if __name__ == "__main__":
