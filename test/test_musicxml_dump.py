@@ -20,7 +20,8 @@ from fixtures import MINIMAL_SCORE  # noqa: E402
 # Two staves in every measure, so a dump that left out a staff would lose notes.
 FIXTURE = Path(__file__).resolve().parent / "xml_examples" / "unit_test" / "test_staves.xml"
 
-# Its <accidental> name is unknown to maialib, which prints a warning while it loads the score.
+# Its <accidental> name is unknown to maialib, which records a correction while it loads the score
+# and prints the summary line of its import report.
 WARNING_FIXTURE = (
     Path(__file__).resolve().parent
     / "xml_examples"
@@ -91,7 +92,7 @@ class DumpScoreTestCase(unittest.TestCase):
     def test_the_command_line_prints_the_golden_dump(self):
         self.assertEqual(GOLDEN.read_bytes(), run_command_line())
 
-    def test_the_command_line_prints_only_the_dump_and_warnings_go_to_stderr(self):
+    def test_the_command_line_prints_only_the_dump_and_the_load_summary_goes_to_stderr(self):
         command = [sys.executable, str(MUSICXML / "dump_score.py"), str(WARNING_FIXTURE)]
         done = subprocess.run(command, capture_output=True, timeout=120)
         self.assertEqual(0, done.returncode, done.stderr.decode("utf-8", "replace"))
@@ -99,11 +100,15 @@ class DumpScoreTestCase(unittest.TestCase):
             printed = json.loads(done.stdout)
         except ValueError:
             self.fail(f"stdout is not only the JSON dump: {done.stdout[:200]!r}")
-        with contextlib.redirect_stdout(io.StringIO()):  # where the load's warning goes
+        with contextlib.redirect_stdout(io.StringIO()):  # where the load's summary goes
             expected = dump_score.dump_score(ml.Score(str(WARNING_FIXTURE)))
         self.assertEqual(expected, printed)
         self.assertNotIn(b"\r", done.stdout)
-        self.assertIn(b"[WARN] Unrecognized <accidental> name 'natural-sharp'", done.stderr)
+        self.assertEqual(
+            b"[maiacore] quarter_tone_unknown_accidental_name.xml: 1 corrections, 0 element types "
+            b"not modelled (dropped on export); see Score.getImportIssues()",
+            done.stderr.strip(),
+        )
 
     def test_a_note_is_dumped_with_its_pitch_rhythm_and_flags(self):
         record = dump_score.note_record(ml.Note("C#4"))
@@ -160,9 +165,11 @@ class DumpScoreTestCase(unittest.TestCase):
         part = dump["parts"][0]
         measure = part["measures"][0]
         note = measure["staves"][0]["notes"][0]
-        self.assertEqual(error, dump["title"])
-        self.assertEqual(error, dump["composer"])
-        self.assertEqual(error, part["name"])
+        # The title, the composer and the part name are read as valid UTF-8, U+FFFD in place of
+        # each invalid byte; the short name, cut from the part name byte by byte, is not.
+        self.assertEqual("Caf\ufffd", dump["title"])
+        self.assertEqual("Caf\ufffd", dump["composer"])
+        self.assertEqual("Caf\ufffd", part["name"])
         self.assertEqual(error, part["short_name"])
         for field in ("ties", "stem", "beams", "slur", "articulations"):
             self.assertEqual(error, note[field], field)

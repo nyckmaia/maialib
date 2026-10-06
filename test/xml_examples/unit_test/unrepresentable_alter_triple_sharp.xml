@@ -24,7 +24,7 @@
       </attributes>
       <!-- <alter>3</alter> with no <accidental> at all. A triple sharp is outside the
            nine values Helper::alterValue2symbol() can spell (-2..2 in 0.5 steps): a
-           limit of the accidental vocabulary. It must load as natural, with a warning,
+           limit of the accidental vocabulary. It must load as natural, with a record,
            rather than aborting. -->
       <note>
         <pitch>

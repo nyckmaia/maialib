@@ -10,6 +10,7 @@
 #include "SQLiteCpp/SQLiteCpp.h"
 #include "maiacore/chord.h"
 #include "maiacore/constants.h"
+#include "maiacore/import-issue.h"
 #include "maiacore/key.h"
 #include "maiacore/measure.h"
 #include "maiacore/note.h"
@@ -44,6 +45,7 @@ class Score {
     int _lcmDivisionsPerQuarterNote;  ///< Least common multiple of all 'divisions' tags in the XML
                                       ///< file.
     bool _haveAnacrusisMeasure;       ///< True if the score contains an anacrusis (pickup) measure.
+    std::vector<ImportIssue> _importIssues;  ///< The import report of the loaded file.
 
     typedef struct noteData_st {
         float currentTimeValue = 0.0f;
@@ -103,11 +105,19 @@ class Score {
      *          decimal `<alter>` value, and is natural otherwise. `<alter>` is parsed with a '.'
      *          decimal point whatever the C or C++ locale, and must be exactly one of the nine
      *          alters this library can spell (a multiple of 0.5 from -2 to 2). An `<accidental>`
-     *          name this library cannot spell warns and falls back to `<alter>`; an `<alter>` it
-     *          cannot spell (3, the eighth tone 0.25, or 0.46, near a quarter tone but not one)
-     *          warns and leaves the note natural, never rounded to the nearest pitch. When a
-     *          recognised `<accidental>` and the `<alter>` disagree, the `<accidental>` is used
-     *          and a warning is printed. None of these aborts the load.
+     *          name this library cannot spell falls back to `<alter>` (record
+     *          ACCIDENTAL_NAME_UNKNOWN); an `<alter>` it cannot spell (3, the eighth tone 0.25, or
+     *          0.46, near a quarter tone but not one) leaves the note natural, never rounded to
+     *          the nearest pitch (ALTER_OFF_GRID). When a recognised `<accidental>` and the
+     *          `<alter>` disagree, the `<accidental>` is used (ACCIDENTAL_ALTER_MISMATCH). None of
+     *          these aborts the load.
+     *
+     *          Every value the reader corrects is a record of the import report
+     *          (getImportIssues()), with its part, its measure, the element, the value found and
+     *          the value used. When the report is not empty, the load prints one line:
+     *          "[maiacore] <file>: <n> corrections, <m> element types not modelled (dropped on
+     *          export); see Score.getImportIssues()". Text taken from the file reaches a record,
+     *          a message or the console as valid UTF-8: a byte that is not is replaced by U+FFFD.
      *
      *          A `<transpose>` is read in every measure. It applies to the pitched notes written
      *          after it, in its measure and the following ones, on the staff its `number` names or,
@@ -343,6 +353,16 @@ class Score {
     std::string getFileName() const;
 
     /**
+     * @brief Returns the import report: what the reader corrected or dropped while loading the
+     *        file, in the order it did.
+     * @details The report describes the load. It is copied with the score, emptied by clear(),
+     *          and left unchanged by edits and exports; a score built through the API has an empty
+     *          report.
+     * @return The records, one ImportIssue each.
+     */
+    const std::vector<ImportIssue>& getImportIssues() const;
+
+    /**
      * @brief Returns true if the MusicXML file contains <type> tags for notes.
      * @return True if <type> tags are present.
      */
@@ -478,6 +498,7 @@ class Score {
         _lcmDivisionsPerQuarterNote = other._lcmDivisionsPerQuarterNote;
         _stackedChords = other._stackedChords;
         _haveAnacrusisMeasure = other._haveAnacrusisMeasure;
+        _importIssues = other._importIssues;
 
         // Deep copy of XML document
         _doc.reset(other._doc);
@@ -505,6 +526,7 @@ class Score {
         _lcmDivisionsPerQuarterNote = other._lcmDivisionsPerQuarterNote;
         _stackedChords = other._stackedChords;
         _haveAnacrusisMeasure = other._haveAnacrusisMeasure;
+        _importIssues = other._importIssues;
 
         // Deep copy of XML document
         _doc.reset(other._doc);

@@ -22,6 +22,7 @@
 #include <vector>
 
 // #include "cherno/instrumentor.h"
+#include "import-report.h"
 #include "maiacore/clef.h"
 #include "maiacore/helper.h"
 #include "maiacore/log.h"
@@ -32,6 +33,8 @@
 #include "pitch-views.h"
 
 using maiacore::detail::concertPitch;
+using maiacore::detail::IssueLocation;
+using maiacore::detail::makeIssue;
 using maiacore::detail::MelodicLine;
 using maiacore::detail::melodicLines;
 using maiacore::detail::requireTwoNotes;
@@ -79,6 +82,15 @@ struct TransposeElement {
     std::optional<NoteTransposition> values;
     std::string ignored;
     std::string pairCorrected;  // the warning for a <diatonic> replaced, or empty
+};
+
+// A correction of a note's accidental, recorded once the note's pitch -- the value used -- is
+// known.
+struct AccidentalCorrection {
+    const char* code;
+    const char* element;
+    std::string found;
+    std::string message;
 };
 
 // A pitched note the reader stored: its measure, the position among the measure's <note> elements
@@ -601,6 +613,7 @@ void Score::clear() {
     _haveTypeTag = false;
     _isLoadedXML = false;
     _lcmDivisionsPerQuarterNote = 0;
+    _importIssues.clear();
 }
 
 void Score::info() const {
@@ -634,6 +647,8 @@ void Score::info() const {
 std::string Score::getFilePath() const { return _filePath; }
 
 std::string Score::getFileName() const { return _fileName; }
+
+const std::vector<ImportIssue>& Score::getImportIssues() const { return _importIssues; }
 
 void Score::loadXMLFile(const std::string& filePath) {
     clear();
@@ -748,7 +763,8 @@ void Score::loadXMLFile(const std::string& filePath) {
             rawPartName.replace(pos, 2, " ");
         }
 
-        partsNameVec.push_back(rawPartName);
+        // Held as valid UTF-8, which every getter of the name returns to Python.
+        partsNameVec.push_back(maiacore::detail::validUtf8(rawPartName));
     }
 
     // Lambda function to detect duplacated part names
@@ -842,8 +858,8 @@ void Score::loadXMLFile(const std::string& filePath) {
         composerName = composerNode.node().text().as_string();
     }
 
-    setTitle(workTitle);
-    setComposerName(composerName);
+    setTitle(maiacore::detail::validUtf8(workTitle));
+    setComposerName(maiacore::detail::validUtf8(composerName));
 
     // ===== PARSING THE FILE TO THE CLASS MEMBERS ===== //
     // For each part 'p'
@@ -1141,6 +1157,7 @@ void Score::loadXMLFile(const std::string& filePath) {
                     }
 
                     std::string alterSymbol;
+                    std::vector<AccidentalCorrection> accidentalCorrections;
                     if (!isUnpitched) {
                         auto pitchChild = node.child("pitch");
                         if (pitchChild) {
@@ -1155,18 +1172,21 @@ void Score::loadXMLFile(const std::string& filePath) {
                             // Helper::alterName2symbol() only knows the 14 names this library
                             // can spell; MusicXML defines roughly 40. Its own contract is to
                             // throw on an unrecognised one, but that contract must not abort a
-                            // whole score load here: warn and fall through to <alter>, then
+                            // whole score load here: record it and fall through to <alter>, then
                             // natural, exactly as if no <accidental> had been present.
                             bool accidentalRecognised = false;
                             if (!accidentalTag.empty()) {
                                 try {
                                     alterSymbol = Helper::alterName2symbol(accidentalTag);
                                     accidentalRecognised = true;
-                                } catch (const std::runtime_error& e) {
-                                    LOG_WARN("Unrecognized <accidental> name '"
-                                             << accidentalTag
-                                             << "'; falling back to <alter> or natural. "
-                                             << e.what());
+                                } catch (const std::runtime_error&) {
+                                    accidentalCorrections.push_back(
+                                        {"ACCIDENTAL_NAME_UNKNOWN", "note/accidental",
+                                         accidentalTag,
+                                         "The <accidental> name '" + accidentalTag +
+                                             "' is not one this library can spell; the note is "
+                                             "read from its <alter>, or as natural without "
+                                             "one."});
                                 }
                             }
 
@@ -1175,10 +1195,11 @@ void Score::loadXMLFile(const std::string& filePath) {
                             // such as 3, a microtone such as the eighth tone 0.25, a value near
                             // the grid such as 0.46, or text that is not a number -- is a real
                             // limitation of that vocabulary, not something to solve here, and
-                            // must not abort the load: the note is read as natural, with a
-                            // warning. Never invent a spelling for it, and never round to the
-                            // nearest representable pitch -- a silent wrong pitch is worse than
-                            // a loud dropped accidental in a library used for musical analysis.
+                            // must not abort the load: the note is read as natural, and the
+                            // correction is recorded. Never invent a spelling for it, and never
+                            // round to the nearest representable pitch -- a silent wrong pitch
+                            // is worse than a recorded dropped accidental in a library used for
+                            // musical analysis.
                             const std::optional<float> alterValue =
                                 alterTag.empty() ? std::nullopt : spellableAlterValue(alterTag);
 
@@ -1186,24 +1207,26 @@ void Score::loadXMLFile(const std::string& filePath) {
                                 if (alterValue.has_value()) {
                                     alterSymbol = Helper::alterValue2symbol(alterValue.value());
                                 } else {
-                                    LOG_WARN("Unrepresentable <alter> value '"
-                                             << alterTag
-                                             << "': this library's accidental vocabulary "
-                                             << "spells only multiples of 0.5 from -2 to 2, so "
-                                             << "the note was read as natural (its pitch is off "
-                                             << "by that amount).");
+                                    accidentalCorrections.push_back(
+                                        {"ALTER_OFF_GRID", "note/pitch/alter", alterTag,
+                                         "The <alter> value '" + alterTag +
+                                             "' is not one this library can spell (a multiple "
+                                             "of 0.5 from -2 to 2); the note is read as "
+                                             "natural, its pitch off by that amount."});
                                 }
                             }
 
                             // An <accidental> that is recognised wins over a disagreeing <alter>,
-                            // but the disagreement is reported: arrow glyphs, for one, also mark
+                            // but the disagreement is recorded: arrow glyphs, for one, also mark
                             // microtones other than the quarter tone.
                             if (accidentalRecognised && !alterTag.empty() &&
                                 (!alterValue.has_value() ||
                                  alterValue.value() != Helper::alterSymbol2Value(alterSymbol))) {
-                                LOG_WARN("The <accidental> '"
-                                         << accidentalTag << "' and the <alter> '" << alterTag
-                                         << "' of this note disagree; the <accidental> is used.");
+                                accidentalCorrections.push_back(
+                                    {"ACCIDENTAL_ALTER_MISMATCH", "note/pitch/alter", alterTag,
+                                     "The <accidental> '" + accidentalTag + "' and the <alter> '" +
+                                         alterTag +
+                                         "' of this note disagree; the <accidental> is used."});
                             }
                         }
                     }
@@ -1212,6 +1235,11 @@ void Score::loadXMLFile(const std::string& filePath) {
                                  ? atoi(node.child("pitch").child_value("octave"))
                                  : atoi(node.child("unpitched").child_value("display-octave"));
                     pitch = step + alterSymbol + std::to_string(octave);
+                    for (const AccidentalCorrection& correction : accidentalCorrections) {
+                        _importIssues.push_back(makeIssue(
+                            correction.code, {p, _part[p].getName(), measureNumbers[m], m},
+                            correction.element, correction.found, pitch, correction.message));
+                    }
                 }
 
                 if (voice == 0) {
@@ -1307,6 +1335,10 @@ void Score::loadXMLFile(const std::string& filePath) {
         }
 
         applyTranspositions(_part[p], transposeElements, pitchedNotes, measureNumbers);
+    }
+
+    if (!_importIssues.empty()) {
+        std::cout << maiacore::detail::importSummary(_fileName, _importIssues) << std::endl;
     }
 }
 

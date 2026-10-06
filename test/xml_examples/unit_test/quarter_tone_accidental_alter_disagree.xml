@@ -24,7 +24,7 @@
       </attributes>
       <!-- <accidental>quarter-sharp</accidental> with <alter>1</alter>: the two disagree. The
            <accidental> wins, as it does whenever it is recognised, and the disagreement is
-           reported with a warning. Expected: C1x4. -->
+           recorded (ACCIDENTAL_ALTER_MISMATCH). Expected: C1x4. -->
       <note>
         <pitch>
           <step>C</step>

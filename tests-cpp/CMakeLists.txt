@@ -42,6 +42,7 @@ add_executable(cpp-tests
     src/pitch-test.cpp
     src/pitch-views-test.cpp
     src/melodic-lines-test.cpp
+    src/import-report-test.cpp
 )
 
 # Tests of maiacore's internal functions include their private headers, which live next to the

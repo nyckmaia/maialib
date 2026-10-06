@@ -1,8 +1,14 @@
 #include <pybind11/functional.h>
 #include <pybind11/iostream.h>
+#include <pybind11/operators.h>
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <string>
+#include <utility>
+#include <vector>
+
+#include "maiacore/import-issue.h"
 #include "maiacore/measure.h"
 #include "maiacore/score.h"
 #include "nlohmann/json.hpp"
@@ -13,8 +19,87 @@ namespace py = pybind11;
 using namespace pybind11::literals;
 using maiacore_python::MelodyDataFrame;
 
+namespace {
+// The import report as a DataFrame: one column per ImportIssue field, in field order, text
+// columns `str` and index columns `int64`, so an empty report keeps every column and dtype.
+py::object importIssuesDataFrame(const std::vector<ImportIssue>& issues) {
+    const std::vector<std::pair<const char*, bool>> columns = {
+        {"code", true},          {"kind", true},          {"partIndex", false}, {"partName", true},
+        {"measureNumber", true}, {"measureIndex", false}, {"element", true},    {"found", true},
+        {"used", true},          {"message", true}};
+    std::vector<py::list> values(columns.size());
+    for (const ImportIssue& issue : issues) {
+        values[0].append(issue.code);
+        values[1].append(issue.kind);
+        values[2].append(issue.partIndex);
+        values[3].append(issue.partName);
+        values[4].append(issue.measureNumber);
+        values[5].append(issue.measureIndex);
+        values[6].append(issue.element);
+        values[7].append(issue.found);
+        values[8].append(issue.used);
+        values[9].append(issue.message);
+    }
+    const py::module_ pandas = py::module_::import("pandas");
+    const py::object text = py::module_::import("builtins").attr("str");
+    py::dict data;
+    for (size_t c = 0; c < columns.size(); c++) {
+        const py::object dtype = columns[c].second ? text : py::str("int64");
+        data[py::str(columns[c].first)] =
+            pandas.attr("Series")(values[c], py::arg("dtype") = dtype);
+    }
+    return pandas.attr("DataFrame")(data);
+}
+}  // namespace
+
 void ScoreClass(const py::module& m) {
     m.doc() = "Score class binding";
+
+    py::class_<ImportIssue> issue(m, "ImportIssue", R"pbdoc(
+        One record of a score's import report: a value the MusicXML reader corrected, or an
+        element it dropped. ``Score.getImportIssues()`` returns them; the fields are read-only.
+
+        Attributes
+        ----------
+        code : str
+            Stable identifier in UPPER_SNAKE case, such as ``"ALTER_OFF_GRID"``; a code is never
+            renamed.
+        kind : str
+            ``"corrected"`` when a value read was replaced or filled, ``"dropped"`` when an
+            element was removed.
+        partIndex : int
+            0-based index of the part; -1 when the record is about no one part.
+        partName : str
+            The part's name in the score; empty when ``partIndex`` is -1.
+        measureNumber : str
+            The measure's ``number`` attribute as the file writes it; empty when the record is
+            about no one measure.
+        measureIndex : int
+            0-based index of the measure; -1 when ``measureNumber`` is empty.
+        element : str
+            The element's path: from its measure inside a measure (``"note/pitch/alter"``), from
+            the score's root element otherwise (``"part-list/score-part/part-name"``).
+        found : str
+            The value read; empty when the element is absent.
+        used : str
+            The value stored in the score; empty when nothing of the element is stored.
+        message : str
+            What happened, in English.
+    )pbdoc");
+    issue.def_readonly("code", &ImportIssue::code);
+    issue.def_readonly("kind", &ImportIssue::kind);
+    issue.def_readonly("partIndex", &ImportIssue::partIndex);
+    issue.def_readonly("partName", &ImportIssue::partName);
+    issue.def_readonly("measureNumber", &ImportIssue::measureNumber);
+    issue.def_readonly("measureIndex", &ImportIssue::measureIndex);
+    issue.def_readonly("element", &ImportIssue::element);
+    issue.def_readonly("found", &ImportIssue::found);
+    issue.def_readonly("used", &ImportIssue::used);
+    issue.def_readonly("message", &ImportIssue::message);
+    issue.def(py::self == py::self);
+    issue.def("__repr__", [](const ImportIssue& record) {
+        return "<ImportIssue " + record.code + " " + record.element + ": " + record.message + ">";
+    });
 
     // bindings to Score class
     py::class_<Score> cls(m, "Score");
@@ -33,11 +118,18 @@ void ScoreClass(const py::module& m) {
         ``<alter>`` is read with a ``.`` decimal point whatever the process locale, and must be
         exactly one of the nine alters this library can spell (a multiple of 0.5 from -2 to 2).
         An ``<accidental>`` name this library cannot spell (see ``Helper.alterName2symbol``)
-        prints a warning and falls back to ``<alter>``; an ``<alter>`` value it cannot spell
-        (e.g. 3, the eighth tone 0.25, or 0.46, near a quarter tone but not one) prints a
-        warning and leaves the note natural, never rounded to the nearest pitch. When a
+        falls back to ``<alter>`` (record ``ACCIDENTAL_NAME_UNKNOWN``); an ``<alter>`` value it
+        cannot spell (e.g. 3, the eighth tone 0.25, or 0.46, near a quarter tone but not one)
+        leaves the note natural, never rounded to the nearest pitch (``ALTER_OFF_GRID``). When a
         recognised ``<accidental>`` and the ``<alter>`` disagree, the ``<accidental>`` is used
-        and a warning is printed. None of these aborts the load.
+        (``ACCIDENTAL_ALTER_MISMATCH``). None of these aborts the load.
+
+        Every value the reader corrects is a record of the import report
+        (``getImportIssues()``), with its part, its measure, the element, the value found and the
+        value used. When the report is not empty, the load prints one line, ``[maiacore] <file>:
+        <n> corrections, <m> element types not modelled (dropped on export); see
+        Score.getImportIssues()``. Text taken from the file reaches a record, a message or the
+        console as valid UTF-8: a byte that is not is replaced by U+FFFD.
 
         A ``<transpose>`` is read in every measure. It applies to the pitched notes written after
         it, in its measure and the following ones, on the staff its ``number`` names or, without
@@ -104,6 +196,41 @@ void ScoreClass(const py::module& m) {
 
     cls.def("getFilePath", &Score::getFilePath);
     cls.def("getFileName", &Score::getFileName);
+
+    cls.def("getImportIssues", &Score::getImportIssues, R"pbdoc(
+        Return the import report: what the MusicXML reader corrected or dropped while loading the
+        file, in the order it did.
+
+        The report describes the load: it is copied with the score, emptied by ``clear()``, and
+        left unchanged by edits and exports. A score built through the API has an empty report.
+
+        Returns
+        -------
+        list of ImportIssue
+            The records.
+
+        Examples
+        --------
+        >>> score = ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1))
+        >>> [issue.code for issue in score.getImportIssues() if issue.kind == "corrected"]
+        []
+    )pbdoc");
+
+    cls.def(
+        "getImportIssuesDataFrame",
+        [](const Score& score) { return importIssuesDataFrame(score.getImportIssues()); },
+        R"pbdoc(
+        Return the import report (``getImportIssues()``) as a pandas DataFrame.
+
+        Returns
+        -------
+        pandas.DataFrame
+            One row per record and one column per field, in this order: ``code``, ``kind``,
+            ``partIndex``, ``partName``, ``measureNumber``, ``measureIndex``, ``element``,
+            ``found``, ``used``, ``message``. The text columns have the ``str`` dtype and the
+            two index columns ``int64``; an empty report gives an empty DataFrame with every
+            column.
+    )pbdoc");
     cls.def("setTitle", &Score::setTitle, py::arg("scoreTitle"));
 
     cls.def("getComposerName", &Score::getComposerName);

@@ -24,7 +24,7 @@
       </attributes>
       <!-- <accidental>sharp-sharp</accidental>: MusicXML's name for a double sharp drawn as two
            sharp signs, rather than the "x" glyph of "double-sharp". It is a recognised name, so
-           it must read as a double sharp with no warning. Expected: Cx4. -->
+           it must read as a double sharp with no record. Expected: Cx4. -->
       <note>
         <pitch>
           <step>C</step>

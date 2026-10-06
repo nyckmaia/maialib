@@ -22,6 +22,7 @@
 #include "maiacore/note.h"
 #include "maiacore/part.h"
 #include "test-capture.h"
+#include "test-files.h"
 #include "test-locale.h"
 #include "transposing-instruments.h"
 
@@ -821,16 +822,31 @@ TEST(ScoreQuarterToneRead, AccidentalOnlyNoAlterMuseScoreCase) {
 TEST(ScoreQuarterToneRead, UnrecognisedAccidentalNameFallsBackToAlterInsteadOfAborting) {
     // <accidental>natural-sharp</accidental> is a real MusicXML name outside the 13 this
     // library spells. It carries a usable <alter>1</alter>, so the whole load must not abort;
-    // it must degrade to the <alter> value, same as if no <accidental> had been present.
+    // it must degrade to the <alter> value, same as if no <accidental> had been present, and
+    // record the name it could not use.
     Score score("./test/xml_examples/unit_test/quarter_tone_unknown_accidental_name.xml");
 
     ASSERT_TRUE(score.isValid());
     EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C#4");
+    ImportIssue expected;
+    expected.code = "ACCIDENTAL_NAME_UNKNOWN";
+    expected.kind = "corrected";
+    expected.partIndex = 0;
+    expected.partName = "Music";
+    expected.measureNumber = "1";
+    expected.measureIndex = 0;
+    expected.element = "note/accidental";
+    expected.found = "natural-sharp";
+    expected.used = "C#4";
+    expected.message =
+        "The <accidental> name 'natural-sharp' is not one this library can spell; the note is "
+        "read from its <alter>, or as natural without one.";
+    EXPECT_EQ(score.getImportIssues(), std::vector<ImportIssue>{expected});
 }
 
 TEST(ScoreQuarterToneRead, UnrepresentableAlterTripleSharpFallsBackToNatural) {
     // <alter>3</alter>, no <accidental> at all. A triple sharp is outside the nine values
-    // Helper::alterValue2symbol() can spell -- must load as natural with a warning, not throw.
+    // Helper::alterValue2symbol() can spell -- must load as natural with a record, not throw.
     Score score("./test/xml_examples/unit_test/unrepresentable_alter_triple_sharp.xml");
 
     ASSERT_TRUE(score.isValid());
@@ -862,9 +878,46 @@ std::vector<std::string> writtenPitches(Score& score) {
 
 const std::vector<std::string> kAlterOnlyPitches = {"C1x4", "E3b4"};
 
+// The codes of a score's "corrected" records, in report order.
+std::vector<std::string> correctionCodes(const Score& score) {
+    std::vector<std::string> codes;
+    for (const ImportIssue& issue : score.getImportIssues()) {
+        if (issue.kind == "corrected") {
+            codes.push_back(issue.code);
+        }
+    }
+    return codes;
+}
+
+// The record of an <alter> this library cannot spell, on the C4 of measure "1" of the part
+// "Music".
+ImportIssue alterOffGrid(const std::string& found) {
+    ImportIssue issue;
+    issue.code = "ALTER_OFF_GRID";
+    issue.kind = "corrected";
+    issue.partIndex = 0;
+    issue.partName = "Music";
+    issue.measureNumber = "1";
+    issue.measureIndex = 0;
+    issue.element = "note/pitch/alter";
+    issue.found = found;
+    issue.used = "C4";
+    issue.message = "The <alter> value '" + found +
+                    "' is not one this library can spell (a multiple of 0.5 from -2 to 2); the "
+                    "note is read as natural, its pitch off by that amount.";
+    return issue;
+}
+
+// What loading a one-note score gave: the note's pitch, the import report and what was printed.
+struct LoadedNote {
+    std::string pitch;
+    std::vector<ImportIssue> issues;
+    std::string printed;
+};
+
 // Loads a one-note score whose only note is a C4 with the given <alter> text and no
-// <accidental>, and returns its pitch and what the load printed.
-std::pair<std::string, std::string> loadWithAlterText(const std::string& alterText) {
+// <accidental>.
+LoadedNote loadWithAlterText(const std::string& alterText) {
     std::ifstream in("./test/xml_examples/unit_test/unrepresentable_alter_eighth_tone.xml");
     std::stringstream source;
     source << in.rdbuf();
@@ -875,33 +928,32 @@ std::pair<std::string, std::string> loadWithAlterText(const std::string& alterTe
         at += alterText.size();
     }
 
-    const std::filesystem::path path =
-        std::filesystem::temp_directory_path() / "maialib_alter_text.xml";
-    {
-        std::ofstream out(path);
-        out << xml;
-    }
-
-    std::string pitch;
-    std::string printed;
+    const TemporaryFile file("maialib_alter_text.xml", xml);
+    LoadedNote loaded;
     {
         StdoutCapture capture;
-        Score score(path.string());
-        pitch = score.getPart(0).getMeasure(0).getNote(0, 0).getPitch();
-        printed = capture.str();
+        Score score(file.path());
+        loaded.pitch = score.getPart(0).getMeasure(0).getNote(0, 0).getPitch();
+        loaded.issues = score.getImportIssues();
+        loaded.printed = capture.str();
     }
-    std::filesystem::remove(path);
-    return {pitch, printed};
+    return loaded;
+}
+
+// The line a load prints when its report holds 'corrections' corrections and nothing dropped.
+std::string summaryLine(const std::string& fileName, const int corrections) {
+    return "[maiacore] " + fileName + ": " + std::to_string(corrections) +
+           " corrections, 0 element types not modelled (dropped on export); see "
+           "Score.getImportIssues()\n";
 }
 }  // namespace
 
 // A quarter tone given by <alter> alone, with no <accidental>: the form a quarter tone takes when
 // its accidental carries through the measure.
 TEST(ScoreQuarterToneRead, AlterWithoutAccidentalIsReadAsAQuarterTone) {
-    StdoutCapture capture;
     Score score("./test/xml_examples/unit_test/quarter_tone_alter_only.xml");
     EXPECT_EQ(writtenPitches(score), kAlterOnlyPitches);
-    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+    EXPECT_EQ(correctionCodes(score), std::vector<std::string>{});
 }
 
 // The C library's atof() follows setlocale(): under a comma-decimal LC_NUMERIC it stops at the
@@ -918,10 +970,9 @@ TEST(ScoreQuarterToneRead, AlterIsReadTheSameUnderACommaDecimalCLocale) {
     std::snprintf(formatted, sizeof(formatted), "%.1f", 0.5);
     ASSERT_EQ(std::string(formatted), "0,5") << "the locale does not use a decimal comma";
 
-    StdoutCapture capture;
     Score score("./test/xml_examples/unit_test/quarter_tone_alter_only.xml");
     EXPECT_EQ(writtenPitches(score), kAlterOnlyPitches);
-    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+    EXPECT_EQ(correctionCodes(score), std::vector<std::string>{});
 }
 
 // The reader's string stream is imbued with the classic locale, so a comma-decimal global C++
@@ -938,65 +989,73 @@ TEST(ScoreQuarterToneRead, AlterIsReadTheSameUnderACommaDecimalGlobalCppLocale) 
     probe >> parsed;
     ASSERT_EQ(parsed, 0.5) << "the locale does not use a decimal comma";
 
-    StdoutCapture capture;
     Score score("./test/xml_examples/unit_test/quarter_tone_alter_only.xml");
     EXPECT_EQ(writtenPitches(score), kAlterOnlyPitches);
-    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+    EXPECT_EQ(correctionCodes(score), std::vector<std::string>{});
 }
 
 // The whole <alter> text must be the number, surrounding whitespace aside: "1,5" is not a sharp
-// followed by noise, and a number with trailing text is not a number.
+// followed by noise, and a number with trailing text is not a number. A text that is not one is
+// recorded, and the load prints one summary line; a valid one records and prints nothing.
 TEST(ScoreQuarterToneRead, AlterTextMustBeANumberAndNothingElse) {
     for (const std::string text : {"1,5", "0.5abc", "0.5.5", "sharp"}) {
-        const auto [pitch, printed] = loadWithAlterText(text);
-        EXPECT_EQ(pitch, "C4") << "<alter>" << text << "</alter>";
-        EXPECT_NE(printed.find("[WARN] Unrepresentable <alter> value '" + text + "'"),
-                  std::string::npos)
-            << printed;
+        const LoadedNote loaded = loadWithAlterText(text);
+        EXPECT_EQ(loaded.pitch, "C4") << "<alter>" << text << "</alter>";
+        EXPECT_EQ(loaded.issues, std::vector<ImportIssue>{alterOffGrid(text)});
+        EXPECT_EQ(loaded.printed, summaryLine("maialib_alter_text.xml", 1));
     }
 
     for (const std::string text : {" 0.5 ", "\n-1.5\n", "+0.5"}) {
-        const auto [pitch, printed] = loadWithAlterText(text);
-        EXPECT_EQ(pitch, text.find("-1.5") != std::string::npos ? "C3b4" : "C1x4")
+        const LoadedNote loaded = loadWithAlterText(text);
+        EXPECT_EQ(loaded.pitch, text.find("-1.5") != std::string::npos ? "C3b4" : "C1x4")
             << "<alter>" << text << "</alter>";
-        EXPECT_EQ(printed.find("[WARN]"), std::string::npos) << printed;
+        EXPECT_EQ(loaded.issues, std::vector<ImportIssue>{});
+        EXPECT_EQ(loaded.printed, "");
     }
 }
 
+// An <alter> whose bytes are not UTF-8 is recorded with U+FFFD in place of each invalid byte, in
+// the record and in its message: Python decodes both as UTF-8.
+TEST(ScoreQuarterToneRead, AnAlterThatIsNotUtf8IsRecordedAsValidUtf8) {
+    const LoadedNote loaded = loadWithAlterText("\xE9");
+    EXPECT_EQ(loaded.pitch, "C4");
+    EXPECT_EQ(loaded.issues, std::vector<ImportIssue>{alterOffGrid("\xEF\xBF\xBD")});
+}
+
 // Near a quarter-tone sharp is not a quarter-tone sharp: the reader never rounds to the nearest
-// representable pitch, it reads the note as natural and says so, naming the value.
+// representable pitch, it reads the note as natural and records the value.
 TEST(ScoreQuarterToneRead, AlterNearAQuarterToneIsNotSnappedOntoIt) {
     StdoutCapture capture;
     Score score("./test/xml_examples/unit_test/unrepresentable_alter_near_quarter_tone.xml");
     EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C4");
-    EXPECT_NE(capture.str().find("[WARN] Unrepresentable <alter> value '0.46'"), std::string::npos)
-        << capture.str();
+    EXPECT_EQ(score.getImportIssues(), std::vector<ImportIssue>{alterOffGrid("0.46")});
+    EXPECT_EQ(capture.str(), summaryLine("unrepresentable_alter_near_quarter_tone.xml", 1));
 }
 
-// A recognised <accidental> wins over a disagreeing <alter>, and the disagreement is reported.
-TEST(ScoreQuarterToneRead, DisagreeingAccidentalWinsWithAWarning) {
-    StdoutCapture capture;
+// A recognised <accidental> wins over a disagreeing <alter>, and the disagreement is recorded.
+TEST(ScoreQuarterToneRead, DisagreeingAccidentalWinsWithARecord) {
     Score score("./test/xml_examples/unit_test/quarter_tone_accidental_alter_disagree.xml");
     EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C1x4");
-    EXPECT_NE(capture.str().find("[WARN] The <accidental> 'quarter-sharp' and the <alter> '1' of "
-                                 "this note disagree"),
-              std::string::npos)
-        << capture.str();
+    ImportIssue expected = alterOffGrid("1");
+    expected.code = "ACCIDENTAL_ALTER_MISMATCH";
+    expected.used = "C1x4";
+    expected.message =
+        "The <accidental> 'quarter-sharp' and the <alter> '1' of this note disagree; the "
+        "<accidental> is used.";
+    EXPECT_EQ(score.getImportIssues(), std::vector<ImportIssue>{expected});
 }
 
-TEST(ScoreQuarterToneRead, AgreeingAccidentalAndAlterReadWithoutAWarning) {
-    StdoutCapture capture;
+TEST(ScoreQuarterToneRead, AgreeingAccidentalAndAlterReadWithoutARecord) {
     Score score("./test/xml_examples/unit_test/quarter_tone_tartini.xml");
     EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "C1x4");
-    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+    EXPECT_EQ(correctionCodes(score), std::vector<std::string>{});
 }
 
 // "sharp-sharp" is MusicXML's double sharp drawn as two sharp signs: a recognised name.
 TEST(ScoreQuarterToneRead, SharpSharpAccidentalIsADoubleSharp) {
-    StdoutCapture capture;
     Score score("./test/xml_examples/unit_test/accidental_sharp_sharp.xml");
     EXPECT_EQ(score.getPart(0).getMeasure(0).getNote(0, 0).getPitch(), "Cx4");
-    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+    EXPECT_EQ(correctionCodes(score), std::vector<std::string>{});
 }
 
 // A quarter-tone score written by maialib itself reads back unchanged, with no warning: the
@@ -1017,17 +1076,83 @@ TEST(ScoreQuarterToneRoundTrip, AQuarterToneScoreWrittenByMaialibReadsBackUnchan
     const std::string written = base.string() + ".xml";
 
     std::vector<std::string> readBack;
-    std::string printed;
+    std::vector<std::string> corrections;
     {
-        StdoutCapture capture;
         Score reread(written);
         readBack = writtenPitches(reread);
-        printed = capture.str();
+        corrections = correctionCodes(reread);
     }
     std::filesystem::remove(written);
 
     EXPECT_EQ(readBack, pitches);
-    EXPECT_EQ(printed.find("[WARN]"), std::string::npos) << printed;
+    EXPECT_EQ(corrections, std::vector<std::string>{});
+}
+
+// ====================
+// The import report
+// ====================
+
+// A score built through the API has an empty report.
+TEST(ScoreImportReport, AScoreBuiltThroughTheApiHasAnEmptyReport) {
+    Score score({"Piano"}, 2);
+    EXPECT_EQ(score.getImportIssues(), std::vector<ImportIssue>{});
+}
+
+// The report describes the load: a copy and an assignment carry it, edits and exports leave it,
+// and clear() empties it.
+TEST(ScoreImportReport, TheReportIsCopiedKeptThroughEditsAndEmptiedByClear) {
+    Score original("./test/xml_examples/unit_test/unrepresentable_alter_near_quarter_tone.xml");
+    const std::vector<ImportIssue> report = {alterOffGrid("0.46")};
+    ASSERT_EQ(original.getImportIssues(), report);
+
+    const Score copy(original);
+    EXPECT_EQ(copy.getImportIssues(), report);
+    Score assigned({"Piano"}, 1);
+    assigned = original;
+    EXPECT_EQ(assigned.getImportIssues(), report);
+
+    original.setTitle("Edited");
+    original.getPart(0).getMeasure(0).addNote(Note("D4"));
+    original.toXML();
+    EXPECT_EQ(original.getImportIssues(), report);
+
+    original.clear();
+    EXPECT_EQ(original.getImportIssues(), std::vector<ImportIssue>{});
+    EXPECT_EQ(copy.getImportIssues(), report);
+}
+
+// A title, a composer and a part name whose bytes are not UTF-8 are held with U+FFFD in place of
+// each invalid byte: their getters return them to Python, which decodes them as UTF-8.
+TEST(ScoreImportReport, NamesThatAreNotUtf8AreHeldAsValidUtf8) {
+    std::string text = minimalScore(kWholeC4);
+    text.replace(text.find("<part-list>"), 0,
+                 "<work><work-title>Sonata \xE9</work-title></work><identification><creator "
+                 "type=\"composer\">Jos\xE9</creator></identification>");
+    text.replace(text.find("<part-name>Music"), 16, "<part-name>M\xFAsica");
+    const TemporaryFile file("names.musicxml", text);
+
+    Score score(file.path());
+    EXPECT_EQ(score.getTitle(), "Sonata \xEF\xBF\xBD");
+    EXPECT_EQ(score.getComposerName(), "Jos\xEF\xBF\xBD");
+    EXPECT_EQ(score.getPartsNames(), std::vector<std::string>{"M\xEF\xBF\xBDsica"});
+}
+
+// A load with an empty report prints nothing; one with records prints exactly one summary line,
+// however many records it holds.
+TEST(ScoreImportReport, ALoadPrintsOneSummaryLineOnlyWhenTheReportIsNotEmpty) {
+    const TemporaryFile clean("clean.musicxml", minimalScore(kWholeC4));
+    const std::string offGrid =
+        "<note><pitch><step>C</step><alter>0.3</alter><octave>4</octave></pitch>"
+        "<duration>2</duration><voice>1</voice><type>half</type></note>";
+    const TemporaryFile corrected("corrected.musicxml", minimalScore(offGrid + offGrid));
+
+    StdoutCapture capture;
+    { Score score(clean.path()); }
+    EXPECT_EQ(capture.str(), "");
+    Score score(corrected.path());
+    EXPECT_EQ(correctionCodes(score),
+              (std::vector<std::string>{"ALTER_OFF_GRID", "ALTER_OFF_GRID"}));
+    EXPECT_EQ(capture.str(), summaryLine("corrected.musicxml", 2));
 }
 
 // ====================

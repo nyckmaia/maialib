@@ -25,7 +25,7 @@
       <!-- <alter>0.25</alter> with no <accidental> at all: a non-quarter-tone
            microtonal value (an eighth tone), also outside the nine values
            Helper::alterValue2symbol() can spell. Same expectation as the triple-sharp
-           fixture: load as natural, with a warning naming the value, not a throw. -->
+           fixture: load as natural, with a record naming the value, not a throw. -->
       <note>
         <pitch>
           <step>C</step>

@@ -2,7 +2,8 @@
 
 Command line: ``python dump_score.py SCORE [OUTPUT]`` writes the dump to OUTPUT or prints it, as
 ASCII with LF line endings on every platform. What maialib prints while it loads the score and
-the dump reads it, such as its warnings, goes to stderr, so that stdout holds only the dump.
+the dump reads it, such as the summary line of its import report, goes to stderr, so that
+stdout holds only the dump.
 Every value comes from maialib's public API through ``_safe``: a getter that raises, such as a
 string getter whose bytes are not UTF-8, is recorded as {"error": "<exception type>"} instead of
 stopping the dump. So is a list that cannot be read, such as the notes of a staff whose note

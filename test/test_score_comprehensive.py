@@ -15,6 +15,8 @@ import tempfile
 import textwrap
 import unittest
 
+import pandas
+
 import maialib as ml
 
 # Comma-decimal locale names: Windows first, then glibc and macOS.
@@ -38,6 +40,57 @@ def setCommaDecimalNumericLocale():
         except locale.Error:
             continue
     return None
+
+
+def correctionCodes(score):
+    """The codes of the score's "corrected" import records, in report order."""
+    return [issue.code for issue in score.getImportIssues() if issue.kind == "corrected"]
+
+
+def issueFields(issue):
+    """An import record as a dict of its fields."""
+    return {name: getattr(issue, name) for name in ISSUE_FIELDS}
+
+
+# The fields of an ImportIssue, which are also the columns of getImportIssuesDataFrame().
+ISSUE_FIELDS = [
+    "code",
+    "kind",
+    "partIndex",
+    "partName",
+    "measureNumber",
+    "measureIndex",
+    "element",
+    "found",
+    "used",
+    "message",
+]
+
+
+def summaryLine(fileName, corrections):
+    """The line a load prints for a report of 'corrections' corrections and nothing dropped."""
+    return (
+        f"[maiacore] {fileName}: {corrections} corrections, 0 element types not modelled "
+        "(dropped on export); see Score.getImportIssues()\n"
+    )
+
+
+def alterOffGrid(found, used="C4"):
+    """The record of an <alter> this library cannot spell, on the first note of measure "1" of
+    the part "Music"."""
+    return {
+        "code": "ALTER_OFF_GRID",
+        "kind": "corrected",
+        "partIndex": 0,
+        "partName": "Music",
+        "measureNumber": "1",
+        "measureIndex": 0,
+        "element": "note/pitch/alter",
+        "found": found,
+        "used": used,
+        "message": f"The <alter> value '{found}' is not one this library can spell (a multiple "
+        "of 0.5 from -2 to 2); the note is read as natural, its pitch off by that amount.",
+    }
 
 
 def writtenPitches(score):
@@ -102,29 +155,44 @@ class ScoreQuarterToneReadTestCase(unittest.TestCase):
     def test_unrecognised_accidental_name_falls_back_instead_of_raising(self):
         """<accidental>natural-sharp</accidental> is outside the 14 names this library
         spells but carries a usable <alter>1</alter>; the load must degrade to that
-        value instead of raising and aborting."""
+        value instead of raising and aborting, and record the name."""
         self.assertEqual(self._first_note_pitch("quarter_tone_unknown_accidental_name.xml"), "C#4")
+        score = ml.Score("./xml_examples/unit_test/quarter_tone_unknown_accidental_name.xml")
+        self.assertEqual(
+            [issueFields(issue) for issue in score.getImportIssues()],
+            [
+                {
+                    **alterOffGrid("natural-sharp", "C#4"),
+                    "code": "ACCIDENTAL_NAME_UNKNOWN",
+                    "element": "note/accidental",
+                    "message": "The <accidental> name 'natural-sharp' is not one this library "
+                    "can spell; the note is read from its <alter>, or as natural without one.",
+                }
+            ],
+        )
 
     def test_unrepresentable_alter_falls_back_to_natural_instead_of_raising(self):
         """<alter>3</alter>, no <accidental> at all: a triple sharp is outside the nine
         values this library's accidental vocabulary can spell. The load must degrade to
-        natural, with a warning, rather than raising and aborting -- this is the path a
+        natural, with a record, rather than raising and aborting -- this is the path a
         real ml.Score() user actually hits, not just the underlying C++ function."""
         self.assertEqual(self._first_note_pitch("unrepresentable_alter_triple_sharp.xml"), "C4")
 
     def _pitches_and_output(self, fileName):
-        """Every written pitch of the loaded score's first part, and what the load printed."""
+        """Every written pitch of the loaded score's first part, its import records as dicts,
+        and what the load printed."""
         buffer = io.StringIO()
         with contextlib.redirect_stdout(buffer):
             score = ml.Score(f"./xml_examples/unit_test/{fileName}")
-        return writtenPitches(score), buffer.getvalue()
+        issues = [issueFields(issue) for issue in score.getImportIssues()]
+        return writtenPitches(score), issues, buffer.getvalue()
 
     def test_alter_without_accidental_is_read_as_a_quarter_tone(self):
         """<alter>0.5</alter> and <alter>-1.5</alter> with no <accidental>: the form a quarter
         tone takes when its accidental carries through the measure."""
-        pitches, printed = self._pitches_and_output("quarter_tone_alter_only.xml")
+        pitches, issues, printed = self._pitches_and_output("quarter_tone_alter_only.xml")
         self.assertEqual(pitches, ["C1x4", "E3b4"])
-        self.assertNotIn("[WARN]", printed)
+        self.assertEqual([issue for issue in issues if issue["kind"] == "corrected"], [])
 
     def test_alter_is_read_the_same_under_a_comma_decimal_locale(self):
         """The reader parses <alter> in the classic locale, not with atof(), which follows
@@ -137,39 +205,49 @@ class ScoreQuarterToneReadTestCase(unittest.TestCase):
             if setCommaDecimalNumericLocale() is None:
                 self.skipTest("no comma-decimal locale is installed")
             self.assertEqual(locale.localeconv()["decimal_point"], ",")
-            pitches, printed = self._pitches_and_output("quarter_tone_alter_only.xml")
+            pitches, issues, printed = self._pitches_and_output("quarter_tone_alter_only.xml")
         finally:
             locale.setlocale(locale.LC_NUMERIC, previous)
         self.assertEqual(pitches, ["C1x4", "E3b4"])
-        self.assertNotIn("[WARN]", printed)
+        self.assertEqual([issue for issue in issues if issue["kind"] == "corrected"], [])
 
     def test_alter_near_a_quarter_tone_is_not_snapped_onto_it(self):
         """<alter>0.46</alter> is near a quarter-tone sharp but is not one: the note reads as
-        natural, with a warning naming the value, never rounded to the nearest pitch."""
-        pitches, printed = self._pitches_and_output("unrepresentable_alter_near_quarter_tone.xml")
+        natural, with a record naming the value, never rounded to the nearest pitch; the load
+        prints one summary line."""
+        fileName = "unrepresentable_alter_near_quarter_tone.xml"
+        pitches, issues, printed = self._pitches_and_output(fileName)
         self.assertEqual(pitches, ["C4"])
-        self.assertIn("[WARN] Unrepresentable <alter> value '0.46'", printed)
+        self.assertEqual(issues, [alterOffGrid("0.46")])
+        self.assertEqual(printed, summaryLine(fileName, 1))
 
-    def test_disagreeing_accidental_wins_with_a_warning(self):
+    def test_disagreeing_accidental_wins_with_a_record(self):
         """<accidental>quarter-sharp</accidental> with <alter>1</alter>: the accidental wins,
-        and the disagreement is reported."""
-        pitches, printed = self._pitches_and_output("quarter_tone_accidental_alter_disagree.xml")
+        and the disagreement is recorded."""
+        pitches, issues, _ = self._pitches_and_output("quarter_tone_accidental_alter_disagree.xml")
         self.assertEqual(pitches, ["C1x4"])
-        self.assertIn(
-            "[WARN] The <accidental> 'quarter-sharp' and the <alter> '1' of this note disagree",
-            printed,
+        self.assertEqual(
+            issues,
+            [
+                {
+                    **alterOffGrid("1", "C1x4"),
+                    "code": "ACCIDENTAL_ALTER_MISMATCH",
+                    "message": "The <accidental> 'quarter-sharp' and the <alter> '1' of this "
+                    "note disagree; the <accidental> is used.",
+                }
+            ],
         )
 
-    def test_agreeing_accidental_and_alter_read_without_a_warning(self):
-        pitches, printed = self._pitches_and_output("quarter_tone_tartini.xml")
+    def test_agreeing_accidental_and_alter_read_without_a_record(self):
+        pitches, issues, _ = self._pitches_and_output("quarter_tone_tartini.xml")
         self.assertEqual(pitches, ["C1x4"])
-        self.assertNotIn("[WARN]", printed)
+        self.assertEqual([issue for issue in issues if issue["kind"] == "corrected"], [])
 
     def test_sharp_sharp_accidental_is_a_double_sharp(self):
         """"sharp-sharp" is MusicXML's double sharp drawn as two sharp signs."""
-        pitches, printed = self._pitches_and_output("accidental_sharp_sharp.xml")
+        pitches, issues, _ = self._pitches_and_output("accidental_sharp_sharp.xml")
         self.assertEqual(pitches, ["Cx4"])
-        self.assertNotIn("[WARN]", printed)
+        self.assertEqual([issue for issue in issues if issue["kind"] == "corrected"], [])
 
     def test_quarter_tone_score_written_by_maialib_reads_back_unchanged(self):
         """The source spells every quarter tone with an arrow glyph and no <alter>, so each
@@ -183,13 +261,95 @@ class ScoreQuarterToneReadTestCase(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             base = os.path.join(directory, "round_trip")
             original.toFile(base, False)
-            buffer = io.StringIO()
-            with contextlib.redirect_stdout(buffer):
-                reread = ml.Score(base + ".xml")
+            reread = ml.Score(base + ".xml")
             readBack = writtenPitches(reread)
 
         self.assertEqual(readBack, pitches)
-        self.assertNotIn("[WARN]", buffer.getvalue())
+        self.assertEqual(correctionCodes(reread), [])
+
+
+class ScoreImportReportTestCase(unittest.TestCase):
+    """Score.getImportIssues(), its DataFrame, and what a load prints."""
+
+    DISAGREE = "./xml_examples/unit_test/quarter_tone_accidental_alter_disagree.xml"
+
+    def test_a_score_built_through_the_api_has_an_empty_report(self):
+        score = ml.Score(["Piano"], 2)
+        self.assertEqual(score.getImportIssues(), [])
+        frame = score.getImportIssuesDataFrame()
+        self.assertEqual(list(frame.columns), ISSUE_FIELDS)
+        self.assertEqual(len(frame), 0)
+        loaded = ml.Score(self.DISAGREE).getImportIssuesDataFrame()
+        self.assertEqual(list(frame.dtypes.items()), list(loaded.dtypes.items()))
+
+    def test_the_dataframe_has_one_row_per_record_and_fixed_dtypes(self):
+        score = ml.Score(self.DISAGREE)
+        frame = score.getImportIssuesDataFrame()
+        self.assertEqual(
+            frame.to_dict("records"), [issueFields(issue) for issue in score.getImportIssues()]
+        )
+        self.assertEqual(len(frame), 1)
+        textDtype = str(pandas.Series([], dtype=str).dtype)
+        for column in ISSUE_FIELDS:
+            expected = "int64" if column in ("partIndex", "measureIndex") else textDtype
+            self.assertEqual(str(frame[column].dtype), expected, column)
+
+    def test_a_copy_keeps_the_report_and_clear_empties_it(self):
+        score = ml.Score(self.DISAGREE)
+        report = [issueFields(issue) for issue in score.getImportIssues()]
+        collection = ml.ScoreCollection()
+        collection.addScore(score)  # copies the score
+        score.setTitle("Edited")
+        score.toXML()
+        self.assertEqual([issueFields(issue) for issue in score.getImportIssues()], report)
+        score.clear()
+        self.assertEqual(score.getImportIssues(), [])
+        copy = collection.getScores()[0]
+        self.assertEqual([issueFields(issue) for issue in copy.getImportIssues()], report)
+
+    def test_records_compare_by_value(self):
+        first = ml.Score(self.DISAGREE).getImportIssues()
+        second = ml.Score(self.DISAGREE).getImportIssues()
+        self.assertTrue(first[0] == second[0])
+        self.assertIn("ACCIDENTAL_ALTER_MISMATCH", repr(first[0]))
+
+    def test_names_that_are_not_utf8_are_read_with_replacement_characters(self):
+        """A title and a part name whose bytes are not UTF-8 (Latin-1 bytes in a file that
+        declares UTF-8) are read as valid UTF-8, with U+FFFD in place of each invalid byte."""
+        with open("./xml_examples/unit_test/quarter_tone_tartini.xml", "rb") as source:
+            data = source.read()
+        data = data.replace(
+            b"<part-list>", b"<work><work-title>Sonata \xe9</work-title></work><part-list>"
+        )
+        data = data.replace(b"<part-name>Music", b"<part-name>M\xfasica")
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "latin1-names.xml")
+            with open(path, "wb") as target:
+                target.write(data)
+            score = ml.Score(path)
+        self.assertEqual(score.getTitle(), "Sonata \ufffd")
+        self.assertEqual(score.getPartsNames(), ["M\ufffdsica"])
+
+    def test_an_alter_that_is_not_utf8_does_not_end_the_interpreter(self):
+        """Run in a child process, whose standard output is a pipe: a message quoting bytes
+        that are not UTF-8 must not end the process. The record holds U+FFFD in their place."""
+        code = (
+            "import json, os, tempfile\n"
+            "import maialib as ml\n"
+            "source = open('./xml_examples/unit_test/unrepresentable_alter_eighth_tone.xml', "
+            "'rb').read()\n"
+            "source = source.replace(b'<alter>0.25</alter>', b'<alter>\\xe9</alter>')\n"
+            "with tempfile.TemporaryDirectory() as directory:\n"
+            "    path = os.path.join(directory, 'latin1.xml')\n"
+            "    open(path, 'wb').write(source)\n"
+            "    score = ml.Score(path)\n"
+            "    print('RESULT', json.dumps([(i.code, i.found) for i in score.getImportIssues()]))\n"
+        )
+        completed = runChild(code)
+        self.assertIsNotNone(completed)
+        self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
+        self.assertEqual(resultLine(completed), 'RESULT [["ALTER_OFF_GRID", "\\ufffd"]]')
+        self.assertIn(summaryLine("latin1.xml", 1), completed.stdout.replace("\r\n", "\n"))
 
 
 # A melody search that calls Python callbacks from its worker threads. Run in a child process,

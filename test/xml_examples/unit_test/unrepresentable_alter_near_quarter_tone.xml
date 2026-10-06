@@ -24,7 +24,7 @@
       </attributes>
       <!-- <alter>0.46</alter> with no <accidental>: close to a quarter-tone sharp, but not one.
            The reader never rounds to the nearest representable pitch, so this must load as
-           natural, with a warning naming the value. Expected: C4. -->
+           natural, with a record naming the value. Expected: C4. -->
       <note>
         <pitch>
           <step>C</step>
