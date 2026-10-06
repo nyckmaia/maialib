@@ -302,6 +302,13 @@ void ScoreClass(const py::module& m) {
             // workers run would deadlock, so it is released for the search alone, inside this
             // lambda; it is held again when the lambda returns, before the DataFrame is built.
             // The search only reads the score, so other threads may search it meanwhile.
+            //
+            // The call guard, built on the calling thread with the GIL held, redirects std::cout
+            // and std::cerr to sys.stdout and sys.stderr for the whole call. It swaps the buffer
+            // of the stream objects, which every thread shares, so the workers' output goes
+            // through it too; its buffer takes the GIL to flush, which the released GIL allows.
+            // That buffer is not safe for concurrent writers: the search writes nothing to these
+            // streams from its workers, and a Python callback runs holding the GIL.
             const auto tables = [&] {
                 py::gil_scoped_release release;
                 return score.findMelodyPattern(
@@ -325,6 +332,7 @@ void ScoreClass(const py::module& m) {
         py::arg("totalIntervalSimilarityCallback") = nullptr,
         py::arg("totalRhythmSimilarityCallback") = nullptr,
         py::arg("totalSimilarityCallback") = nullptr,
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
         R"pbdoc(
         Search every melodic line of the score for several melodic patterns, each on a worker
         thread.
@@ -389,7 +397,8 @@ void ScoreClass(const py::module& m) {
            const std::function<float(const std::vector<float>&)> totalRhythmSimilarityCallback,
            const std::function<float(float, float)> totalSimilarityCallback) {
             // The patterns are searched on worker threads, as the list overload of
-            // findMelodyPatternDataFrame searches them, so the GIL is released the same way.
+            // findMelodyPatternDataFrame searches them, so the GIL is released, and the output
+            // redirected, the same way.
             const auto found = [&] {
                 py::gil_scoped_release release;
                 return score.findAnyMelodyPattern(
@@ -419,6 +428,7 @@ void ScoreClass(const py::module& m) {
         py::arg("totalIntervalSimilarityCallback") = nullptr,
         py::arg("totalRhythmSimilarityCallback") = nullptr,
         py::arg("totalSimilarityCallback") = nullptr,
+        py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
         R"pbdoc(
         Find every distinct melodic pattern of a given length in the score, with its matches.
 
