@@ -62,7 +62,7 @@ UNTRANSPOSED_FIXTURES = ("transpose_for_part.musicxml",)
 
 
 def load(path):
-    """The score of a MusicXML file, loaded without printing its warnings."""
+    """The score of a MusicXML file, loaded without printing the summary of its import report."""
     with contextlib.redirect_stdout(io.StringIO()):
         return ml.Score(str(path))
 
@@ -136,14 +136,14 @@ def note_transpositions(score):
 
 
 def reloaded(data):
-    """The score an export loads back as, and what the load printed."""
+    """The score an export loads back as, and the codes of the corrections the load recorded."""
     with tempfile.TemporaryDirectory() as directory:
         path = Path(directory) / "round-trip.musicxml"
         path.write_bytes(data)
-        printed = io.StringIO()
-        with contextlib.redirect_stdout(printed):
+        with contextlib.redirect_stdout(io.StringIO()):
             score = ml.Score(str(path))
-    return score, printed.getvalue()
+    corrections = [issue.code for issue in score.getImportIssues() if issue.kind == "corrected"]
+    return score, corrections
 
 
 def contains_transpose(name):
@@ -410,13 +410,52 @@ class TransposeRoundTripTestCase(unittest.TestCase):
     def test_a_stored_diatonic_interval_of_zero_comes_back_as_the_conventional_one(self):
         score = single_part_score("Clarinet in Bb", 1)
         score.getPart(0).getMeasure(0).addNote(ml.Note("F#4", transposeChromatic=-2))
-        again, printed = reloaded(export(score))
+        again, corrections = reloaded(export(score))
         note = again.getPart(0).getMeasure(0).getNote(0)
         self.assertEqual(
             (-1, -2, "E4"),
             (note.getTransposeDiatonic(), note.getTransposeChromatic(), note.getSoundingPitch()),
         )
-        self.assertNotIn("[WARN]", printed)
+        # Its export has no <divisions>; no <transpose> is corrected.
+        self.assertIn("DIVISIONS_MISSING", corrections)
+        self.assertEqual([], [code for code in corrections if code.startswith("TRANSPOSE_")])
+
+    def test_a_transpose_record_names_its_part_and_measure(self):
+        """The reader's <transpose> records reach Python with their fields."""
+        score = load(REPO / "test/xml_examples/unit_test/transpose_pair_inconsistent.musicxml")
+        found = [
+            (
+                issue.code,
+                issue.partName,
+                issue.measureNumber,
+                issue.element,
+                issue.found,
+                issue.used,
+            )
+            for issue in score.getImportIssues()
+            if issue.code == "TRANSPOSE_PAIR_CORRECTED"
+        ]
+        self.assertEqual(
+            [
+                (
+                    "TRANSPOSE_PAIR_CORRECTED",
+                    "Trumpet in E",
+                    "1",
+                    "attributes/transpose/diatonic",
+                    "3",
+                    "2",
+                ),
+                (
+                    "TRANSPOSE_PAIR_CORRECTED",
+                    "Clarinet in Bb",
+                    "1",
+                    "attributes/transpose/diatonic",
+                    "0",
+                    "-1",
+                ),
+            ],
+            found,
+        )
 
 
 if __name__ == "__main__":

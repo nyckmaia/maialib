@@ -60,6 +60,16 @@ const std::vector<IssueCode>& issueCatalogue() {
         {"ACCIDENTAL_ALTER_MISMATCH", "corrected"},
         {"ACCIDENTAL_NAME_UNKNOWN", "corrected"},
         {"ALTER_OFF_GRID", "corrected"},
+        {"DIVISIONS_MISSING", "corrected"},
+        {"FOR_PART_NOT_MODELLED", "dropped"},
+        {"PART_NAME_DUPLICATE", "corrected"},
+        {"STAFF_CLAMPED", "corrected"},
+        {"TRANSPOSE_CHROMATIC_NOT_INTEGER", "corrected"},
+        {"TRANSPOSE_OCTAVE_CHANGE_NOT_INTEGER", "corrected"},
+        {"TRANSPOSE_OUT_OF_RANGE", "corrected"},
+        {"TRANSPOSE_PAIR_CORRECTED", "corrected"},
+        {"TUPLET_CLAMPED", "corrected"},
+        {"VOICE_NOT_POSITIVE", "corrected"},
     };
     return catalogue;
 }

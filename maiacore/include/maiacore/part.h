@@ -198,8 +198,8 @@ class Part {
      *          elements from them. Every note is checked before any changes, so the call changes
      *          all of them or none. An export -> import keeps the pair only when it is the
      *          conventional one for its chromatic interval (or the diminished-fifth tritone);
-     *          another pair is read back corrected (same sound, conventional spelling) with a
-     *          [transpose-pair-corrected] warning.
+     *          another pair is read back corrected (same sound, conventional spelling), with a
+     *          TRANSPOSE_PAIR_CORRECTED record in the import report (Score::getImportIssues()).
      * @param diatonicInterval Letters from the written to the sounding pitch (-1 for a B-flat
      *        clarinet).
      * @param chromaticInterval Semitones from the written to the sounding pitch (-2 for a

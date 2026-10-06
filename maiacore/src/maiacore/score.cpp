@@ -77,11 +77,18 @@ struct TransposeElement {
     int measureIdx = 0;   // the index of its measure in the part
     int notesBefore = 0;  // the <note> elements before its <attributes> in that measure
     int staff = -1;       // the 0-based staff its number attribute names; -1 for every staff
-    std::string where;    // part "<name>", measure <number as the file writes it>
-    // What it stamps; empty when it is ignored, and 'ignored' is then the warning that says why.
+    // What it stamps; empty when it is ignored, and 'ignoredCode' then says why.
     std::optional<NoteTransposition> values;
-    std::string ignored;
-    std::string pairCorrected;  // the warning for a <diatonic> replaced, or empty
+    // TRANSPOSE_CHROMATIC_NOT_INTEGER or TRANSPOSE_OCTAVE_CHANGE_NOT_INTEGER when the text of that
+    // element, 'ignoredText', is not a whole number; empty otherwise.
+    std::string ignoredCode;
+    std::string ignoredText;
+    std::string chromaticText;  // <chromatic> as the file writes it, trimmed
+    // A <diatonic> that does not match <chromatic>: its text, trimmed, and the conventional
+    // diatonic interval used instead.
+    bool pairCorrected = false;
+    std::string diatonicText;
+    std::int64_t conventionalDiatonic = 0;
 };
 
 // A correction of a note's accidental, recorded once the note's pitch -- the value used -- is
@@ -102,6 +109,18 @@ struct PitchedNote {
     int staff = 0;
     int index = 0;
 };
+
+// The record of a <transpose> that is ignored: why, and the text that is not a whole number.
+ImportIssue ignoredTranspose(const TransposeElement& element, const IssueLocation& location) {
+    const bool chromatic = element.ignoredCode == "TRANSPOSE_CHROMATIC_NOT_INTEGER";
+    const std::string name = chromatic ? "chromatic" : "octave-change";
+    return makeIssue(element.ignoredCode, location, "attributes/transpose/" + name,
+                     element.ignoredText, "",
+                     "<" + name + ">" + element.ignoredText + "</" + name +
+                         "> is not a whole number of " + (chromatic ? "semitones" : "octaves") +
+                         "; the <transpose> is ignored and the previous transposition stays in "
+                         "force.");
+}
 
 // 'text' without the white space around it, which MusicXML numbers allow.
 std::string trimmed(const std::string& text) {
@@ -139,6 +158,12 @@ std::optional<std::int64_t> wholeNumber(const std::string& text) {
     return (text[0] == '-') ? -magnitude : magnitude;
 }
 
+// Whether 'text', trimmed, is a whole number of at least 1 (see wholeNumber()).
+bool isPositiveWholeNumber(const std::string& text) {
+    const std::optional<std::int64_t> value = wholeNumber(trimmed(text));
+    return value && *value >= 1;
+}
+
 // An interval held to the range of int: one beyond it is held at its limit, where no note can
 // sound.
 int toIntRange(const std::int64_t value) {
@@ -149,25 +174,22 @@ int toIntRange(const std::int64_t value) {
 // Reads one <transpose>: the interval, <octave-change> folded in as 7 letters and 12 semitones
 // per octave, and the octave doubling of <double>. An absent <diatonic> stands for the
 // conventional diatonic interval of <chromatic>; one that does not match it is replaced by that
-// interval, with a warning. A <chromatic> or an <octave-change> that is not a whole number makes
-// the element ignored. A number attribute that is not a positive integer is read as absent.
+// interval, which is recorded. A <chromatic> or an <octave-change> that is not a whole number
+// makes the element ignored. A number attribute that is not a positive integer is read as absent.
 TransposeElement readTranspose(const pugi::xml_node& transpose, const int measureIdx,
-                               const int notesBefore, const std::string& where) {
+                               const int notesBefore) {
     TransposeElement element;
     element.measureIdx = measureIdx;
     element.notesBefore = notesBefore;
-    element.where = where;
     const std::optional<std::int64_t> number =
         wholeNumber(trimmed(transpose.attribute("number").value()));
     element.staff = (number && *number >= 1) ? toIntRange(*number - 1) : -1;
 
-    const std::string chromaticText = trimmedChildText(transpose, "chromatic");
-    const std::optional<std::int64_t> chromatic = wholeNumber(chromaticText);
+    element.chromaticText = trimmedChildText(transpose, "chromatic");
+    const std::optional<std::int64_t> chromatic = wholeNumber(element.chromaticText);
     if (!chromatic) {
-        element.ignored = "[transpose-chromatic-not-integer] " + where + ": <chromatic>" +
-                          chromaticText +
-                          "</chromatic> is not a whole number of semitones; the <transpose> is "
-                          "ignored and the previous transposition stays in force.";
+        element.ignoredCode = "TRANSPOSE_CHROMATIC_NOT_INTEGER";
+        element.ignoredText = element.chromaticText;
         return element;
     }
 
@@ -176,11 +198,8 @@ TransposeElement readTranspose(const pugi::xml_node& transpose, const int measur
         const std::string octaveText = trimmedChildText(transpose, "octave-change");
         const std::optional<std::int64_t> value = wholeNumber(octaveText);
         if (!value) {
-            element.ignored = "[transpose-octave-change-not-integer] " + where +
-                              ": <octave-change>" + octaveText +
-                              "</octave-change> is not a whole number of octaves; the "
-                              "<transpose> is ignored and the previous transposition stays in "
-                              "force.";
+            element.ignoredCode = "TRANSPOSE_OCTAVE_CHANGE_NOT_INTEGER";
+            element.ignoredText = octaveText;
             return element;
         }
         octaves = *value;
@@ -205,10 +224,9 @@ TransposeElement readTranspose(const pugi::xml_node& transpose, const int measur
         if (matches) {
             diatonic = *value;
         } else {
-            element.pairCorrected = "[transpose-pair-corrected] " + where + ": <diatonic>" +
-                                    diatonicText + "</diatonic> does not match <chromatic>" +
-                                    chromaticText + "</chromatic>; using " +
-                                    std::to_string(conventional) + ".";
+            element.pairCorrected = true;
+            element.diatonicText = diatonicText;
+            element.conventionalDiatonic = conventional;
         }
     }
 
@@ -226,9 +244,10 @@ TransposeElement readTranspose(const pugi::xml_node& transpose, const int measur
 }
 
 // The <transpose> elements of a measure's <attributes>, in document order, each with the number
-// of <note> elements before its <attributes>; a <for-part> is reported and dropped.
-void readTransposeElements(const pugi::xml_node& measure, const int measureIdx,
-                           const std::string& where, std::vector<TransposeElement>& elements) {
+// of <note> elements before its <attributes>; a <for-part> is dropped and recorded in 'issues'.
+void readTransposeElements(const pugi::xml_node& measure, const IssueLocation& location,
+                           std::vector<TransposeElement>& elements,
+                           std::vector<ImportIssue>& issues) {
     int notesBefore = 0;
     for (const pugi::xml_node child : measure.children()) {
         const std::string name = child.name();
@@ -236,13 +255,14 @@ void readTransposeElements(const pugi::xml_node& measure, const int measureIdx,
             notesBefore++;
         } else if (name == "attributes") {
             for (const pugi::xml_node transpose : child.children("transpose")) {
-                elements.push_back(readTranspose(transpose, measureIdx, notesBefore, where));
+                elements.push_back(readTranspose(transpose, location.measureIndex, notesBefore));
             }
             for (pugi::xml_node forPart = child.child("for-part"); forPart;
                  forPart = forPart.next_sibling("for-part")) {
-                LOG_WARN("[for-part-not-modelled] " + where +
-                         ": <for-part> is not modelled and is dropped; the notes of a concert "
-                         "score are written at concert pitch.");
+                issues.push_back(makeIssue("FOR_PART_NOT_MODELLED", location, "attributes/for-part",
+                                           "", "",
+                                           "<for-part> is not modelled and is dropped; the notes "
+                                           "of a concert score are written at concert pitch."));
             }
         }
     }
@@ -268,10 +288,12 @@ bool inSameChord(const PitchedNote& a, const PitchedNote& b) {
 // have no sounding pitch with it: it is checked before anything is stamped, so an ignored element
 // stamps nothing. The previous transposition stays in force over the scope of an ignored element;
 // a chord with a note it cannot sound either is read untransposed, all its notes. Each element
-// prints its warnings: the corrected pair, then why it is ignored.
-void applyTranspositions(Part& part, const std::vector<TransposeElement>& elements,
+// adds its records to 'issues': the corrected pair, then why it is ignored.
+void applyTranspositions(Part& part, const int partIndex,
+                         const std::vector<TransposeElement>& elements,
                          const std::vector<PitchedNote>& notes,
-                         const std::vector<std::string>& measureNumbers) {
+                         const std::vector<std::string>& measureNumbers,
+                         std::vector<ImportIssue>& issues) {
     std::map<int, std::vector<PitchedNote>> notesByStaff;
     for (const PitchedNote& note : notes) {
         notesByStaff[note.staff].push_back(note);
@@ -304,14 +326,21 @@ void applyTranspositions(Part& part, const std::vector<TransposeElement>& elemen
     std::map<int, NoteTransposition> inForce;
     for (size_t e = 0; e < elements.size(); e++) {
         const TransposeElement& element = elements[e];
-        if (!element.pairCorrected.empty()) {
-            LOG_WARN(element.pairCorrected);
+        const IssueLocation location{partIndex, part.getName(),
+                                     measureNumbers.at(element.measureIdx), element.measureIdx};
+        if (element.pairCorrected) {
+            issues.push_back(makeIssue(
+                "TRANSPOSE_PAIR_CORRECTED", location, "attributes/transpose/diatonic",
+                element.diatonicText, std::to_string(element.conventionalDiatonic),
+                "<diatonic>" + element.diatonicText + "</diatonic> does not match <chromatic>" +
+                    element.chromaticText + "</chromatic>; using " +
+                    std::to_string(element.conventionalDiatonic) + "."));
         }
 
-        // Why the element is ignored, if it is: its value cannot be read, or the first note of
-        // its scope that cannot sound with it.
-        std::string rejection = element.ignored;
-        if (rejection.empty()) {
+        // Why the element is out of range, if it is: the first note of its scope that cannot
+        // sound with it.
+        std::string rejection;
+        if (element.values) {
             const NoteTransposition& values = *element.values;
             for (const auto& scope : scopes[e]) {
                 const std::vector<PitchedNote>& staffNotes = notesByStaff.at(scope.first);
@@ -320,8 +349,7 @@ void applyTranspositions(Part& part, const std::vector<TransposeElement>& elemen
                     const Note& note = noteAt(staffNotes[i]);
                     if (!maiacore::detail::soundsWithinRange(note, values.diatonic,
                                                              values.chromatic)) {
-                        rejection = "[transpose-out-of-range] " + element.where + ": the written " +
-                                    note.getWrittenPitch() + " of measure " +
+                        rejection = "The written " + note.getWrittenPitch() + " of measure " +
                                     measureNumbers.at(staffNotes[i].measureIdx) + ", staff " +
                                     std::to_string(staffNotes[i].staff + 1) +
                                     " would sound outside the representable range; the "
@@ -335,9 +363,10 @@ void applyTranspositions(Part& part, const std::vector<TransposeElement>& elemen
             }
         }
 
+        const bool stamps = element.values && rejection.empty();
         int untransposed = 0;
         for (const auto& [staff, scope] : scopes[e]) {
-            if (rejection.empty()) {
+            if (stamps) {
                 inForce[staff] = *element.values;
             }
             const NoteTransposition stamp = inForce[staff];
@@ -368,14 +397,25 @@ void applyTranspositions(Part& part, const std::vector<TransposeElement>& elemen
             }
         }
 
-        if (!rejection.empty()) {
-            if (untransposed > 0) {
-                rejection +=
-                    " Its notes that the previous transposition cannot sound either are "
-                    "read untransposed, with the other notes of their chords (" +
-                    std::to_string(untransposed) + " in all).";
-            }
-            LOG_WARN(rejection);
+        // Notes that the transposition in force cannot sound either are read untransposed, with
+        // the other notes of their chords.
+        const std::string untransposedNotes =
+            (untransposed > 0)
+                ? " Its notes that the previous transposition cannot sound either are read "
+                  "untransposed, with the other notes of their chords (" +
+                      std::to_string(untransposed) + " in all)."
+                : "";
+        if (!element.ignoredCode.empty()) {
+            ImportIssue issue = ignoredTranspose(element, location);
+            issue.message += untransposedNotes;
+            issues.push_back(issue);
+        } else if (!rejection.empty()) {
+            rejection += untransposedNotes;
+            issues.push_back(makeIssue("TRANSPOSE_OUT_OF_RANGE", location, "attributes/transpose",
+                                       "diatonic " + std::to_string(element.values->diatonic) +
+                                           ", chromatic " +
+                                           std::to_string(element.values->chromatic),
+                                       "", rejection));
         }
     }
 }
@@ -779,9 +819,9 @@ void Score::loadXMLFile(const std::string& filePath) {
     };
 
     if (hasDuplicatesPartNames(partsNameVec)) {
-        LOG_INFO("Adding part names index suffix to better identification");
+        const std::vector<std::string> writtenNames = partsNameVec;
 
-        // Adding part names index suffix to better identification
+        // Parts that share a name are told apart by a suffix: " 1", " 2", ... in part order.
         auto modifyNames = [](std::vector<std::string>& vec) {
             std::unordered_map<std::string, int> countMap;
             std::unordered_map<std::string, int> indexMap;
@@ -799,8 +839,17 @@ void Score::loadXMLFile(const std::string& filePath) {
             }
         };
 
-        // Adding part names index suffix to better identification
         modifyNames(partsNameVec);
+        for (size_t n = 0; n < partsNameVec.size(); n++) {
+            if (partsNameVec[n] != writtenNames[n]) {
+                _importIssues.push_back(
+                    makeIssue("PART_NAME_DUPLICATE",
+                              IssueLocation{static_cast<int>(n), partsNameVec[n], "", -1},
+                              "part-list/score-part/part-name", writtenNames[n], partsNameVec[n],
+                              "More than one part has the name '" + writtenNames[n] +
+                                  "'; this one is named '" + partsNameVec[n] + "'."));
+            }
+        }
     }
 
     // Get the parts and measures amounts:
@@ -925,6 +974,14 @@ void Score::loadXMLFile(const std::string& filePath) {
                 firstMeasureNode.node().select_node("attributes/divisions");
             if (firstMeasureDivisionsPerQuarterNote.node()) {
                 firstDivisionsTemp = firstMeasureDivisionsPerQuarterNote.node().text().as_int();
+            } else {
+                _importIssues.push_back(makeIssue(
+                    "DIVISIONS_MISSING",
+                    IssueLocation{p, _part[p].getName(),
+                                  firstMeasureNode.node().attribute("number").value(), 0},
+                    "attributes/divisions", "", "256",
+                    "The part's first measure has no <divisions>; 256 divisions per quarter note "
+                    "are used."));
             }
         }
 
@@ -1068,10 +1125,9 @@ void Score::loadXMLFile(const std::string& filePath) {
             }
             // ===== TRANSPOSE ===== //
             measureNumbers[m] = measureNode.node().attribute("number").value();
-            readTransposeElements(
-                measureNode.node(), m,
-                "part \"" + _part[p].getName() + "\", measure " + measureNumbers[m],
-                transposeElements);
+            const IssueLocation measureLocation{p, _part[p].getName(), measureNumbers[m], m};
+            readTransposeElements(measureNode.node(), measureLocation, transposeElements,
+                                  _importIssues);
             // The position of the first note of the chord the current note belongs to: a chord is
             // read as a unit, from its first note.
             int chordStart = 0;
@@ -1118,17 +1174,34 @@ void Score::loadXMLFile(const std::string& filePath) {
                 type = node.child_value("type");
                 stem = node.child_value("stem");
                 staff = atoi(node.child_value("staff")) - 1;
-                tupleActualNotes =
-                    atoi(node.child("time-modification").child_value("actual-notes"));
-                tupleNormalNotes =
-                    atoi(node.child("time-modification").child_value("normal-notes"));
-                tupleNormalType = node.child("time-modification").child_value("normal-type");
-                if (tupleActualNotes == 0) {
+                const pugi::xml_node timeModification = node.child("time-modification");
+                tupleActualNotes = atoi(timeModification.child_value("actual-notes"));
+                tupleNormalNotes = atoi(timeModification.child_value("normal-notes"));
+                tupleNormalType = timeModification.child_value("normal-type");
+                if (tupleActualNotes <= 0) {
                     tupleActualNotes = 1;
                 }
 
-                if (tupleNormalNotes == 0) {
+                if (tupleNormalNotes <= 0) {
                     tupleNormalNotes = 1;
+                }
+
+                // A tuplet ratio is two positive whole numbers; any other value is recorded with
+                // the one used.
+                if (timeModification) {
+                    for (const char* name : {"actual-notes", "normal-notes"}) {
+                        const std::string text = timeModification.child_value(name);
+                        if (!isPositiveWholeNumber(text)) {
+                            const std::string used = std::to_string(
+                                std::string(name) == "actual-notes" ? tupleActualNotes
+                                                                    : tupleNormalNotes);
+                            _importIssues.push_back(makeIssue(
+                                "TUPLET_CLAMPED", measureLocation,
+                                std::string("note/time-modification/") + name, text, used,
+                                "<" + std::string(name) + ">" + text + "</" + name +
+                                    "> is not a positive whole number; " + used + " is used."));
+                        }
+                    }
                 }
 
                 if (tupleNormalType.empty()) {
@@ -1236,18 +1309,37 @@ void Score::loadXMLFile(const std::string& filePath) {
                                  : atoi(node.child("unpitched").child_value("display-octave"));
                     pitch = step + alterSymbol + std::to_string(octave);
                     for (const AccidentalCorrection& correction : accidentalCorrections) {
-                        _importIssues.push_back(makeIssue(
-                            correction.code, {p, _part[p].getName(), measureNumbers[m], m},
-                            correction.element, correction.found, pitch, correction.message));
+                        _importIssues.push_back(makeIssue(correction.code, measureLocation,
+                                                          correction.element, correction.found,
+                                                          pitch, correction.message));
                     }
                 }
 
-                if (voice == 0) {
+                // A voice or a staff that is not a positive whole number is read as voice 1 or
+                // the first staff -- or, for a text that starts with digits, as those digits --
+                // and recorded when the file writes it.
+                if (voice <= 0) {
                     voice = 1;
+                }
+                if (node.child("voice") && !isPositiveWholeNumber(node.child_value("voice"))) {
+                    const std::string text = node.child_value("voice");
+                    _importIssues.push_back(makeIssue(
+                        "VOICE_NOT_POSITIVE", measureLocation, "note/voice", text,
+                        std::to_string(voice),
+                        "<voice>" + text + "</voice> is not a positive whole number; voice " +
+                            std::to_string(voice) + " is used."));
                 }
 
                 if (staff <= 0) {
                     staff = 0;
+                }
+                if (node.child("staff") && !isPositiveWholeNumber(node.child_value("staff"))) {
+                    const std::string text = node.child_value("staff");
+                    _importIssues.push_back(makeIssue(
+                        "STAFF_CLAMPED", measureLocation, "note/staff", text,
+                        std::to_string(staff + 1),
+                        "<staff>" + text + "</staff> is not a positive whole number; staff " +
+                            std::to_string(staff + 1) + " is used."));
                 }
 
                 // ===== CONSTRUCT A NOTE OBJECT AND STORE IT INSIDE THE SCORE ===== //
@@ -1334,7 +1426,8 @@ void Score::loadXMLFile(const std::string& filePath) {
             }
         }
 
-        applyTranspositions(_part[p], transposeElements, pitchedNotes, measureNumbers);
+        applyTranspositions(_part[p], p, transposeElements, pitchedNotes, measureNumbers,
+                            _importIssues);
     }
 
     if (!_importIssues.empty()) {

@@ -130,20 +130,27 @@ class Score {
      *          and unpitched notes are left alone. A `<transpose>` without `<diatonic>` is given
      *          the conventional diatonic interval of its `<chromatic>` one (see
      *          Note::getSoundingPitch()). One whose `<chromatic>` or `<octave-change>` is not a
-     *          whole number is ignored, leaving the previous transposition in force, with a warning
-     *          that starts with [transpose-chromatic-not-integer] or
-     *          [transpose-octave-change-not-integer]. A `<diatonic>` that does not match
-     *          `<chromatic>` is replaced by the conventional diatonic interval, so that nothing
-     *          sounds different, with a [transpose-pair-corrected] warning; for a tritone both the
-     *          augmented fourth and the diminished fifth match, and an explicit 0 with a non-zero
-     *          `<chromatic>` does not. A `<transpose>` with which a note of its scope -- the notes
-     *          it would apply to, up to the next `<transpose>` for their staff -- would have no
-     *          sounding pitch (below C1b-1, or above B11 where its letter cannot spell it) is
-     *          ignored for its whole scope, with a [transpose-out-of-range] warning; there the
+     *          whole number is ignored, leaving the previous transposition in force (records
+     *          TRANSPOSE_CHROMATIC_NOT_INTEGER and TRANSPOSE_OCTAVE_CHANGE_NOT_INTEGER). A
+     *          `<diatonic>` that does not match `<chromatic>` is replaced by the conventional
+     *          diatonic interval, so that nothing sounds different (TRANSPOSE_PAIR_CORRECTED); for
+     *          a tritone both the augmented fourth and the diminished fifth match, and an explicit
+     *          0 with a non-zero `<chromatic>` does not. A `<transpose>` with which a note of its
+     *          scope -- the notes it would apply to, up to the next `<transpose>` for their staff
+     *          -- would have no sounding pitch (below C1b-1, or above B11 where its letter cannot
+     *          spell it) is ignored for its whole scope (TRANSPOSE_OUT_OF_RANGE); there the
      *          previous transposition stays in force, and a chord with a note it cannot sound
-     *          either is read untransposed. `<for-part>` is not modelled: it is dropped with a
-     *          [for-part-not-modelled] warning. Each warning names the part and the measure as the
-     *          file numbers it.
+     *          either is read untransposed. `<for-part>` is not modelled: it is dropped
+     *          (FOR_PART_NOT_MODELLED).
+     *
+     *          The reader also records these corrections: parts that share a name
+     *          are told apart by a suffix, " 1", " 2", ... (PART_NAME_DUPLICATE); a part whose
+     *          first measure has no `<divisions>` is read at 256 divisions per quarter note
+     *          (DIVISIONS_MISSING); a `<voice>` or a `<staff>` that is not a positive whole number
+     *          is read as voice 1 or the first staff, or as the digits its text starts with
+     *          (VOICE_NOT_POSITIVE, STAFF_CLAMPED); an `<actual-notes>` or `<normal-notes>` of a
+     *          `<time-modification>` that is not a positive whole number is read as 1
+     *          (TUPLET_CLAMPED).
      * @param filePath Path to the MusicXML file.
      */
     explicit Score(const std::string& filePath);

@@ -1646,16 +1646,36 @@ std::vector<std::string> transposedNotes(Score& score, const int partId) {
     return notes;
 }
 
-// How many warnings of the <transpose> reader 'printed' holds.
-int transposeWarnings(const std::string& printed) {
-    int count = 0;
-    for (const char* code : {"[WARN] [transpose-", "[WARN] [for-part-"}) {
-        for (size_t at = printed.find(code); at != std::string::npos;
-             at = printed.find(code, at + 1)) {
-            count++;
+// The records of the <transpose> reader in a score's report, in report order.
+std::vector<ImportIssue> transposeRecords(const Score& score) {
+    std::vector<ImportIssue> records;
+    for (const ImportIssue& issue : score.getImportIssues()) {
+        if (issue.code.rfind("TRANSPOSE_", 0) == 0 || issue.code == "FOR_PART_NOT_MODELLED") {
+            records.push_back(issue);
         }
     }
-    return count;
+    return records;
+}
+
+// A record of the <transpose> reader; FOR_PART_NOT_MODELLED is "dropped", every other code
+// "corrected".
+ImportIssue transposeIssue(const std::string& code, const int partIndex,
+                           const std::string& partName, const std::string& measureNumber,
+                           const int measureIndex, const std::string& element,
+                           const std::string& found, const std::string& used,
+                           const std::string& message) {
+    ImportIssue issue;
+    issue.code = code;
+    issue.kind = (code == "FOR_PART_NOT_MODELLED") ? "dropped" : "corrected";
+    issue.partIndex = partIndex;
+    issue.partName = partName;
+    issue.measureNumber = measureNumber;
+    issue.measureIndex = measureIndex;
+    issue.element = element;
+    issue.found = found;
+    issue.used = used;
+    issue.message = message;
+    return issue;
 }
 }  // namespace
 
@@ -1663,18 +1683,16 @@ int transposeWarnings(const std::string& printed) {
 // followed and carried forward, and <diatonic>0</diatonic><chromatic>0</chromatic> returns to
 // untransposed.
 TEST(ScoreTransposeRead, aChangeInTheMiddleOfAPartIsFollowed) {
-    StdoutCapture capture;
     Score score(kUnitTest + "transpose_change_mid_part.musicxml");
     EXPECT_EQ(transposedNotes(score, 0),
               (std::vector<std::string>{"C4 (-1, -2, NONE) Bb3", "C4 (-2, -3, NONE) A3",
                                         "D4 (-2, -3, NONE) B3", "C4 (0, 0, NONE) C4"}));
-    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+    EXPECT_EQ(correctionCodes(score), std::vector<std::string>{});
 }
 
 // A part whose first <transpose> comes in a later measure is untransposed up to it; rests and
 // unpitched notes take no transposition.
 TEST(ScoreTransposeRead, aTransposeInALaterMeasureAppliesFromThere) {
-    StdoutCapture capture;
     Score score(kUnitTest + "transpose_later_measure.musicxml");
     EXPECT_EQ(transposedNotes(score, 0),
               (std::vector<std::string>{"C4 (0, 0, NONE) C4", "C4 (-4, -7, NONE) F3",
@@ -1685,7 +1703,7 @@ TEST(ScoreTransposeRead, aTransposeInALaterMeasureAppliesFromThere) {
     const Note& unpitched = score.getPart(0).getMeasure(2).getNote(1, 0);
     ASSERT_FALSE(unpitched.isPitched());
     EXPECT_FALSE(unpitched.isTransposed());
-    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+    EXPECT_EQ(correctionCodes(score), std::vector<std::string>{});
 }
 
 // A <transpose number="s"> applies to staff s alone; one without number to every staff.
@@ -1735,43 +1753,36 @@ TEST(ScoreTransposeRead, aTransposeBetweenTheNotesOfAChordAppliesAfterTheChord) 
 
 // Without <diatonic>, the conventional diatonic interval of <chromatic> is stored, silently.
 TEST(ScoreTransposeRead, aTransposeWithoutDiatonicStoresTheConventionalInterval) {
-    StdoutCapture capture;
     Score score(kUnitTest + "transpose_without_diatonic.musicxml");
     EXPECT_EQ(transposedNotes(score, 0), (std::vector<std::string>{"F#4 (-1, -2, NONE) E4"}));
-    EXPECT_EQ(capture.str().find("[WARN]"), std::string::npos) << capture.str();
+    EXPECT_EQ(correctionCodes(score), std::vector<std::string>{});
 }
 
-// A <chromatic> that is not a whole number is ignored with one warning; the previous
+// A <chromatic> that is not a whole number is ignored with one record; the previous
 // transposition stays in force.
 TEST(ScoreTransposeRead, aChromaticThatIsNotAWholeNumberIsIgnored) {
-    StdoutCapture capture;
     Score score(kUnitTest + "transpose_chromatic_not_integer.musicxml");
-    const std::string printed = capture.str();
     EXPECT_EQ(transposedNotes(score, 0),
               (std::vector<std::string>{"C4 (-1, -2, NONE) Bb3", "C4 (-1, -2, NONE) Bb3"}));
-    EXPECT_NE(printed.find("[WARN] [transpose-chromatic-not-integer] part \"Clarinet\", measure 2: "
-                           "<chromatic>-2.5</chromatic> is not a whole number of semitones; the "
-                           "<transpose> is ignored and the previous transposition stays in "
-                           "force.\n"),
-              std::string::npos)
-        << printed;
-    EXPECT_EQ(transposeWarnings(printed), 1) << printed;
+    EXPECT_EQ(transposeRecords(score),
+              std::vector<ImportIssue>{transposeIssue(
+                  "TRANSPOSE_CHROMATIC_NOT_INTEGER", 0, "Clarinet", "2", 1,
+                  "attributes/transpose/chromatic", "-2.5", "",
+                  "<chromatic>-2.5</chromatic> is not a whole number of semitones; the "
+                  "<transpose> is ignored and the previous transposition stays in force.")});
 }
 
 // Likewise an <octave-change> that is not a whole number.
 TEST(ScoreTransposeRead, anOctaveChangeThatIsNotAWholeNumberIsIgnored) {
-    StdoutCapture capture;
     Score score(kUnitTest + "transpose_octave_change_not_integer.musicxml");
-    const std::string printed = capture.str();
     EXPECT_EQ(transposedNotes(score, 0),
               (std::vector<std::string>{"C4 (-1, -2, NONE) Bb3", "C4 (-1, -2, NONE) Bb3"}));
-    EXPECT_NE(printed.find("[WARN] [transpose-octave-change-not-integer] part \"Clarinet\", "
-                           "measure 2: <octave-change>1.5</octave-change> is not a whole number "
-                           "of octaves; the <transpose> is ignored and the previous "
-                           "transposition stays in force.\n"),
-              std::string::npos)
-        << printed;
-    EXPECT_EQ(transposeWarnings(printed), 1) << printed;
+    EXPECT_EQ(transposeRecords(score),
+              std::vector<ImportIssue>{transposeIssue(
+                  "TRANSPOSE_OCTAVE_CHANGE_NOT_INTEGER", 0, "Clarinet", "2", 1,
+                  "attributes/transpose/octave-change", "1.5", "",
+                  "<octave-change>1.5</octave-change> is not a whole number of octaves; the "
+                  "<transpose> is ignored and the previous transposition stays in force.")});
 }
 
 // The W3C transposing-instrument files sound as they say: 72c's change from E-flat to B-flat
@@ -1841,102 +1852,239 @@ TEST(ScoreTransposeRead, anOctaveTranspositionChangesTheChords) {
 }
 
 // A <diatonic> that does not match <chromatic> is replaced by the conventional diatonic interval,
-// with one warning per <transpose>; an explicit 0 with a non-zero chromatic interval does not
+// with one record per <transpose>; an explicit 0 with a non-zero chromatic interval does not
 // match either, while a tritone matches the augmented fourth and the diminished fifth alike.
 TEST(ScoreTransposeCorrection, aDiatonicIntervalThatDoesNotMatchIsReplaced) {
-    StdoutCapture capture;
     Score score(kUnitTest + "transpose_pair_inconsistent.musicxml");
-    const std::string printed = capture.str();
     EXPECT_EQ(transposedNotes(score, 0), (std::vector<std::string>{"F#4 (2, 4, NONE) A#4"}));
     EXPECT_EQ(transposedNotes(score, 1), (std::vector<std::string>{"C4 (-1, -2, NONE) Bb3"}));
     EXPECT_EQ(transposedNotes(score, 2), (std::vector<std::string>{"C4 (-4, -6, NONE) F#3"}));
     EXPECT_EQ(transposedNotes(score, 3), (std::vector<std::string>{"C4 (-3, -6, NONE) Gb3"}));
-    EXPECT_NE(printed.find("[WARN] [transpose-pair-corrected] part \"Trumpet in E\", measure 1: "
-                           "<diatonic>3</diatonic> does not match <chromatic>4</chromatic>; "
-                           "using 2.\n"),
-              std::string::npos)
-        << printed;
-    EXPECT_NE(printed.find("[WARN] [transpose-pair-corrected] part \"Clarinet in Bb\", measure 1: "
-                           "<diatonic>0</diatonic> does not match <chromatic>-2</chromatic>; "
-                           "using -1.\n"),
-              std::string::npos)
-        << printed;
-    EXPECT_EQ(transposeWarnings(printed), 2) << printed;
+    EXPECT_EQ(transposeRecords(score),
+              (std::vector<ImportIssue>{
+                  transposeIssue("TRANSPOSE_PAIR_CORRECTED", 0, "Trumpet in E", "1", 0,
+                                 "attributes/transpose/diatonic", "3", "2",
+                                 "<diatonic>3</diatonic> does not match <chromatic>4</chromatic>; "
+                                 "using 2."),
+                  transposeIssue("TRANSPOSE_PAIR_CORRECTED", 1, "Clarinet in Bb", "1", 0,
+                                 "attributes/transpose/diatonic", "0", "-1",
+                                 "<diatonic>0</diatonic> does not match <chromatic>-2</chromatic>; "
+                                 "using -1.")}));
 }
 
 // The Dvorak sample's trumpets in E, written with the letters of a fourth and the semitones of a
 // major third, are read as a major third: a written F#4 sounds A#4.
 TEST(ScoreTransposeCorrection, theDvorakTrumpetsInESoundAMajorThirdUp) {
-    StdoutCapture capture;
     Score score(kSamples + "Dvorak_Symphony_9_mov_4.mxl");
-    const std::string printed = capture.str();
     EXPECT_EQ(describeTransposition(score.getPart(6).getMeasure(7).getNote(1, 0)),
               "F#4 (2, 4, NONE) A#4");
-    EXPECT_NE(printed.find("[WARN] [transpose-pair-corrected] part \"Trombe I. II. E\", measure "
-                           "1: <diatonic>3</diatonic> does not match <chromatic>4</chromatic>; "
-                           "using 2.\n"),
-              std::string::npos)
-        << printed;
-    EXPECT_EQ(transposeWarnings(printed), 1) << printed;
+    EXPECT_EQ(transposeRecords(score),
+              std::vector<ImportIssue>{transposeIssue(
+                  "TRANSPOSE_PAIR_CORRECTED", 6, "Trombe I. II. E", "1", 0,
+                  "attributes/transpose/diatonic", "3", "2",
+                  "<diatonic>3</diatonic> does not match <chromatic>4</chromatic>; using 2.")});
 }
 
 // A <diatonic> that is not a whole number does not match <chromatic> either.
 TEST(ScoreTransposeCorrection, aDiatonicThatIsNotAWholeNumberIsReplaced) {
-    StdoutCapture capture;
     Score score(kUnitTest + "transpose_diatonic_not_integer.musicxml");
-    const std::string printed = capture.str();
     EXPECT_EQ(transposedNotes(score, 0), (std::vector<std::string>{"G4 (-4, -7, NONE) C4"}));
-    EXPECT_NE(printed.find("[WARN] [transpose-pair-corrected] part \"Horn in F\", measure 1: "
-                           "<diatonic>-4.5</diatonic> does not match <chromatic>-7</chromatic>; "
-                           "using -4.\n"),
-              std::string::npos)
-        << printed;
-    EXPECT_EQ(transposeWarnings(printed), 1) << printed;
+    EXPECT_EQ(
+        transposeRecords(score),
+        std::vector<ImportIssue>{transposeIssue(
+            "TRANSPOSE_PAIR_CORRECTED", 0, "Horn in F", "1", 0, "attributes/transpose/diatonic",
+            "-4.5", "-4",
+            "<diatonic>-4.5</diatonic> does not match <chromatic>-7</chromatic>; using -4.")});
 }
 
 // A <transpose> with which a note of its scope would have no sounding pitch is ignored for its
 // whole scope -- none of its notes takes it, not even one that could sound with it -- and the
 // previous transposition stays in force; a chord with a note that this one cannot sound either is
-// read untransposed as a unit, and the warning counts its notes.
+// read untransposed as a unit, and the record counts its notes.
 TEST(ScoreTransposeCorrection, aTransposeOutOfRangeIsIgnoredForItsWholeScope) {
-    StdoutCapture capture;
     Score score(kUnitTest + "transpose_out_of_range.musicxml");
-    const std::string printed = capture.str();
     EXPECT_EQ(transposedNotes(score, 0),
               (std::vector<std::string>{"C9 (7, 12, NONE) C10", "C8 (7, 12, NONE) C9",
                                         "C9 (7, 12, NONE) C10"}));
     EXPECT_EQ(transposedNotes(score, 1),
               (std::vector<std::string>{"C1 (-7, -12, NONE) C0", "Cb0 (0, 0, NONE) B-1",
                                         "C1 (0, 0, NONE) C1", "D1 (-7, -12, NONE) D0"}));
-    EXPECT_NE(printed.find("[WARN] [transpose-out-of-range] part \"Piccolo\", measure 2: the "
-                           "written C9 of measure 3, staff 1 would sound outside the "
+    EXPECT_EQ(
+        transposeRecords(score),
+        (std::vector<ImportIssue>{
+            transposeIssue("TRANSPOSE_OUT_OF_RANGE", 0, "Piccolo", "2", 1, "attributes/transpose",
+                           "diatonic 21, chromatic 36", "",
+                           "The written C9 of measure 3, staff 1 would sound outside the "
                            "representable range; the <transpose> is ignored and the previous "
-                           "transposition stays in force.\n"),
-              std::string::npos)
-        << printed;
-    EXPECT_NE(printed.find("[WARN] [transpose-out-of-range] part \"Contrabass\", measure 2: the "
-                           "written Cb0 of measure 2, staff 1 would sound outside the "
+                           "transposition stays in force."),
+            transposeIssue("TRANSPOSE_OUT_OF_RANGE", 1, "Contrabass", "2", 1,
+                           "attributes/transpose", "diatonic -14, chromatic -24", "",
+                           "The written Cb0 of measure 2, staff 1 would sound outside the "
                            "representable range; the <transpose> is ignored and the previous "
                            "transposition stays in force. Its notes that the previous "
                            "transposition cannot sound either are read untransposed, with the "
-                           "other notes of their chords (2 in all).\n"),
-              std::string::npos)
-        << printed;
-    EXPECT_EQ(transposeWarnings(printed), 2) << printed;
+                           "other notes of their chords (2 in all).")}));
 }
 
-// <for-part> is dropped with a warning: a concert score's notes are already at concert pitch.
-TEST(ScoreTransposeCorrection, aForPartIsDroppedWithAWarning) {
+// <for-part> is dropped with a record: a concert score's notes are already at concert pitch.
+TEST(ScoreTransposeCorrection, aForPartIsDroppedWithARecord) {
     StdoutCapture capture;
     Score score(kUnitTest + "transpose_for_part.musicxml");
-    const std::string printed = capture.str();
     EXPECT_EQ(transposedNotes(score, 0), (std::vector<std::string>{"C4 (0, 0, NONE) C4"}));
-    EXPECT_NE(printed.find("[WARN] [for-part-not-modelled] part \"Clarinet in Bb\", measure 1: "
-                           "<for-part> is not modelled and is dropped; the notes of a concert "
-                           "score are written at concert pitch.\n"),
-              std::string::npos)
-        << printed;
-    EXPECT_EQ(transposeWarnings(printed), 1) << printed;
+    EXPECT_EQ(
+        transposeRecords(score),
+        std::vector<ImportIssue>{transposeIssue(
+            "FOR_PART_NOT_MODELLED", 0, "Clarinet in Bb", "1", 0, "attributes/for-part", "", "",
+            "<for-part> is not modelled and is dropped; the notes of a concert score are "
+            "written at concert pitch.")});
+    EXPECT_EQ(capture.str(),
+              "[maiacore] transpose_for_part.musicxml: 0 corrections, 1 element types not "
+              "modelled (dropped on export); see Score.getImportIssues()\n");
+}
+
+// ====================
+// Values the reader replaces: part names, divisions, voices, staves and tuplet ratios
+// ====================
+
+namespace {
+// A record of the reader on measure "1" of the part "Music", or on no measure when measureNumber
+// is empty.
+ImportIssue musicIssue(const std::string& code, const std::string& measureNumber,
+                       const std::string& element, const std::string& found,
+                       const std::string& used, const std::string& message) {
+    ImportIssue issue;
+    issue.code = code;
+    issue.kind = "corrected";
+    issue.partIndex = 0;
+    issue.partName = "Music";
+    issue.measureNumber = measureNumber;
+    issue.measureIndex = measureNumber.empty() ? -1 : 0;
+    issue.element = element;
+    issue.found = found;
+    issue.used = used;
+    issue.message = message;
+    return issue;
+}
+
+// A quarter-note C4 with 'extra' after its <duration>.
+std::string quarterC4(const std::string& extra) {
+    return "<note><pitch><step>C</step><octave>4</octave></pitch><duration>1</duration>" + extra +
+           "<type>quarter</type></note>";
+}
+}  // namespace
+
+// Parts that share a name are told apart by a suffix, in part order, and each renamed part is
+// recorded; a part whose name is its own is not.
+TEST(ScoreSilentCorrections, ADuplicatePartNameIsSuffixedAndRecorded) {
+    const std::string measure =
+        "<measure number=\"1\">" + kMinimalAttributes + kWholeC4 + "</measure></part>";
+    const TemporaryFile file(
+        "duplicate-names.musicxml",
+        "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<score-partwise version=\"4.0\"><part-list>"
+        "<score-part id=\"P1\"><part-name>Music</part-name></score-part>"
+        "<score-part id=\"P2\"><part-name>Music</part-name></score-part>"
+        "<score-part id=\"P3\"><part-name>Flute</part-name></score-part></part-list>"
+        "<part id=\"P1\">" +
+            measure + "<part id=\"P2\">" + measure + "<part id=\"P3\">" + measure +
+            "</score-partwise>\n");
+
+    Score score(file.path());
+    EXPECT_EQ(score.getPartsNames(), (std::vector<std::string>{"Music 1", "Music 2", "Flute"}));
+    ImportIssue second =
+        musicIssue("PART_NAME_DUPLICATE", "", "part-list/score-part/part-name", "Music", "Music 2",
+                   "More than one part has the name 'Music'; this one is named "
+                   "'Music 2'.");
+    second.partIndex = 1;
+    second.partName = "Music 2";
+    ImportIssue first = second;
+    first.partIndex = 0;
+    first.partName = "Music 1";
+    first.used = "Music 1";
+    first.message = "More than one part has the name 'Music'; this one is named 'Music 1'.";
+    EXPECT_EQ(score.getImportIssues(), (std::vector<ImportIssue>{first, second}));
+}
+
+// A part whose first measure has no <divisions> is read at 256 divisions per quarter note, and
+// recorded.
+TEST(ScoreSilentCorrections, MissingDivisionsAreRecordedWithTheDefaultUsed) {
+    std::string attributes = kMinimalAttributes;
+    attributes.erase(attributes.find("<divisions>1</divisions>"), 24);
+    const std::string note =
+        "<note><pitch><step>C</step><octave>4</octave></pitch><duration>1024</duration>"
+        "<voice>1</voice><type>whole</type></note>";
+    const TemporaryFile file("no-divisions.musicxml", minimalScore(note, attributes));
+
+    Score score(file.path());
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getDivisionsPerQuarterNote(), 256);
+    EXPECT_EQ(score.getImportIssues(),
+              std::vector<ImportIssue>{musicIssue(
+                  "DIVISIONS_MISSING", "1", "attributes/divisions", "", "256",
+                  "The part's first measure has no <divisions>; 256 divisions per quarter note "
+                  "are used.")});
+}
+
+// A <voice> that is not a positive whole number is read as voice 1 -- or as the digits it starts
+// with -- and recorded; an absent <voice>, or one with white space around its number, is not.
+TEST(ScoreSilentCorrections, AVoiceThatIsNotPositiveIsRecorded) {
+    const TemporaryFile file(
+        "voices.musicxml",
+        minimalScore(quarterC4("<voice>0</voice>") + quarterC4("<voice>-2</voice>") +
+                     quarterC4("<voice>2abc</voice>") + quarterC4("") +
+                     quarterC4("<voice> 3 </voice>")));
+
+    Score score(file.path());
+    std::vector<int> voices;
+    for (int n = 0; n < score.getPart(0).getMeasure(0).getNumNotes(0); n++) {
+        voices.push_back(score.getPart(0).getMeasure(0).getNote(n, 0).getVoice());
+    }
+    EXPECT_EQ(voices, (std::vector<int>{1, 1, 2, 1, 3}));
+    const auto voiceIssue = [](const std::string& found, const std::string& used) {
+        return musicIssue("VOICE_NOT_POSITIVE", "1", "note/voice", found, used,
+                          "<voice>" + found + "</voice> is not a positive whole number; voice " +
+                              used + " is used.");
+    };
+    EXPECT_EQ(score.getImportIssues(),
+              (std::vector<ImportIssue>{voiceIssue("0", "1"), voiceIssue("-2", "1"),
+                                        voiceIssue("2abc", "2")}));
+}
+
+// A <staff> that is not a positive whole number is read as the first staff and recorded; an
+// absent <staff> is not.
+TEST(ScoreSilentCorrections, AStaffThatIsNotPositiveIsRecorded) {
+    const TemporaryFile file("staves.musicxml",
+                             minimalScore(quarterC4("<voice>1</voice><staff>0</staff>") +
+                                          quarterC4("<voice>1</voice><staff>1</staff>") +
+                                          quarterC4("<voice>1</voice>")));
+
+    Score score(file.path());
+    EXPECT_EQ(score.getPart(0).getMeasure(0).getNumNotes(0), 3);
+    EXPECT_EQ(score.getImportIssues(),
+              std::vector<ImportIssue>{
+                  musicIssue("STAFF_CLAMPED", "1", "note/staff", "0", "1",
+                             "<staff>0</staff> is not a positive whole number; staff 1 is used.")});
+}
+
+// A <time-modification> whose <actual-notes> or <normal-notes> is not a positive whole number --
+// absent included, which the standard requires -- is read with 1 there, and each is recorded; a
+// note without <time-modification> is no tuplet and records nothing.
+TEST(ScoreSilentCorrections, ATupletValueThatIsNotPositiveIsRecorded) {
+    const TemporaryFile file(
+        "tuplets.musicxml",
+        minimalScore(quarterC4("<voice>1</voice><time-modification><actual-notes>0</actual-notes>"
+                               "</time-modification>") +
+                     quarterC4("<voice>1</voice><time-modification><actual-notes>3</actual-notes>"
+                               "<normal-notes>2</normal-notes></time-modification>") +
+                     quarterC4("<voice>1</voice>")));
+
+    Score score(file.path());
+    EXPECT_EQ(score.getImportIssues(),
+              (std::vector<ImportIssue>{
+                  musicIssue("TUPLET_CLAMPED", "1", "note/time-modification/actual-notes", "0", "1",
+                             "<actual-notes>0</actual-notes> is not a positive whole number; 1 is "
+                             "used."),
+                  musicIssue("TUPLET_CLAMPED", "1", "note/time-modification/normal-notes", "", "1",
+                             "<normal-notes></normal-notes> is not a positive whole number; 1 is "
+                             "used.")}));
 }
 
 // ====================

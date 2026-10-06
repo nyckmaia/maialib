@@ -75,7 +75,7 @@ void PartClass(const py::module& m) {
         before any changes, so the call changes all of them or none. An export -> import keeps
         the pair only when it is the conventional one for its chromatic interval (or the
         diminished-fifth tritone); another pair is read back corrected (same sound,
-        conventional spelling) with a ``[transpose-pair-corrected]`` warning.
+        conventional spelling), with a ``TRANSPOSE_PAIR_CORRECTED`` record in the import report.
 
         Parameters
         ----------
@@ -186,7 +186,7 @@ void PartClass(const py::module& m) {
         ``<double above="yes"/>`` states the doubling. An export -> import keeps a note's
         interval pair only when it is the conventional one for its chromatic interval (or the
         diminished-fifth tritone); another pair is read back corrected (same sound,
-        conventional spelling) with a ``[transpose-pair-corrected]`` warning.
+        conventional spelling), with a ``TRANSPOSE_PAIR_CORRECTED`` record in the import report.
 
         Parameters
         ----------
