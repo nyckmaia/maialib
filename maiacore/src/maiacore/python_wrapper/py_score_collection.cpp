@@ -4,25 +4,94 @@
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "maiacore/score_collection.h"
+#include "py_melody_dataframe.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
+using maiacore_python::MelodyDataFrame;
 
 void ScoreCollectionClass(const py::module& m) {
     m.doc() = "ScoreCollection class binding";
 
     // bindings to ScoreCollection class
     py::class_<ScoreCollection> cls(m, "ScoreCollection");
-    cls.def(py::init<const std::string&>(), py::arg("directoryPath") = std::string());
+    cls.def(py::init<>(), R"pbdoc(
+        Create an empty collection: no directory and no score.
+    )pbdoc");
 
-    cls.def(py::init<const std::vector<std::string>&>(),
-            py::arg("directoriesPaths") = std::vector<std::string>());
+    cls.def(py::init<const std::string&, const bool>(), py::arg("directoryPath"),
+            py::arg("recursive") = false,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Create a collection of the MusicXML files of a directory, as ``setDirectoriesPaths``
+        loads them.
+
+        Parameters
+        ----------
+        directoryPath : str
+            The directory.
+        recursive : bool, default False
+            True to load the files of its subdirectories, at any depth, too.
+
+        Raises
+        ------
+        RuntimeError
+            If the path does not exist, is not a directory or cannot be read; the message names
+            it.
+    )pbdoc");
+
+    cls.def(py::init<const std::vector<std::string>&, const bool>(), py::arg("directoriesPaths"),
+            py::arg("recursive") = false,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Create a collection of the MusicXML files of several directories, as
+        ``setDirectoriesPaths`` loads them.
+
+        Parameters
+        ----------
+        directoriesPaths : list of str
+            The directories; ``[]`` gives an empty collection.
+        recursive : bool, default False
+            True to load the files of their subdirectories, at any depth, too.
+
+        Raises
+        ------
+        RuntimeError
+            If a path does not exist, is not a directory or cannot be read; the message names it.
+    )pbdoc");
 
     cls.def("getDirectoriesPaths", &ScoreCollection::getDirectoriesPaths);
     cls.def("setDirectoriesPaths", &ScoreCollection::setDirectoriesPaths,
-            py::arg("directoriesPaths"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::arg("directoriesPaths"), py::arg("recursive") = false,
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Replace the collection's directories and scores with those of the given directories.
+
+        Every file whose extension is ``.xml``, ``.mxl`` or ``.musicxml``, compared without
+        regard to case, is loaded, directory by directory in the given order and, within a
+        directory, in sorted path order; subdirectories only when ``recursive`` is True. Every
+        path is checked before anything is loaded, and the collection changes only when every
+        file has loaded. Scores added with ``addScore`` are replaced too.
+
+        Parameters
+        ----------
+        directoriesPaths : list of str
+            The directories; ``[]`` empties the collection.
+        recursive : bool, default False
+            True to load the files of their subdirectories, at any depth, too.
+
+        Raises
+        ------
+        RuntimeError
+            If a path does not exist, is not a directory or cannot be read; the message names
+            it. A file that fails to load raises its own error.
+    )pbdoc");
 
     cls.def("addDirectory", &ScoreCollection::addDirectory, py::arg("directoryPath"));
 
@@ -46,12 +115,26 @@ void ScoreCollectionClass(const py::module& m) {
     cls.def("isEmpty", &ScoreCollection::isEmpty);
     cls.def("merge", &ScoreCollection::merge, py::arg("other"));
     cls.def("removeScore", &ScoreCollection::removeScore, py::arg("scoreIdx"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
+            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            R"pbdoc(
+        Remove the score at an index of the collection.
+
+        Parameters
+        ----------
+        scoreIdx : int
+            Index of the score, from 0 to ``getNumScores() - 1``.
+
+        Raises
+        ------
+        IndexError
+            If ``scoreIdx`` is negative or not below ``getNumScores()``; the collection is
+            unchanged.
+    )pbdoc");
 
     cls.def(
         "findMelodyPatternDataFrame",
         [](const ScoreCollection& collection, const std::vector<Note>& melodyPattern,
-           float totalIntervalsSimilarityThreshold, float totalRhythmSimilarityThreshold,
+           const float intervalSimilarityThreshold, const float rhythmSimilarityThreshold,
            const std::function<std::vector<float>(
                const std::vector<Note>&, const std::vector<Note>&)>& intervalsSimilarityCallback,
            const std::function<std::vector<float>(
@@ -59,38 +142,23 @@ void ScoreCollectionClass(const py::module& m) {
            const std::function<float(const std::vector<float>&)>& totalIntervalSimilarityCallback,
            const std::function<float(const std::vector<float>&)>& totalRhythmSimilarityCallback,
            const std::function<float(float, float)>& totalSimilarityCallback) {
-            auto results = collection.findMelodyPattern(
-                melodyPattern, totalIntervalsSimilarityThreshold, totalRhythmSimilarityThreshold,
+            const ScoreCollection::MelodyPatternTable table = collection.findMelodyPattern(
+                melodyPattern, intervalSimilarityThreshold, rhythmSimilarityThreshold,
                 intervalsSimilarityCallback, rhythmSimilarityCallback,
                 totalIntervalSimilarityCallback, totalRhythmSimilarityCallback,
                 totalSimilarityCallback);
-
-            // Converte para uma lista de dicionários para compatibilidade com Pandas
-            std::vector<py::dict> records;
-            for (const auto& row : results) {
-                records.push_back(py::dict(
-                    "filename"_a = std::get<0>(row), "composerName"_a = std::get<1>(row),
-                    "scoreTitle"_a = std::get<2>(row), "partName"_a = std::get<3>(row),
-                    "measureId"_a = std::get<4>(row), "staveId"_a = std::get<5>(row),
-                    "writtenClefKey"_a = std::get<6>(row), "transposeInterval"_a = std::get<7>(row),
-                    "segmentWrittenPitch"_a = std::get<8>(row),
-                    "semitonesDiff"_a = std::get<9>(row), "rhythmDiff"_a = std::get<10>(row),
-                    "totalIntervalSimilarity"_a = std::get<11>(row),
-                    "totalRhythmSimilarity"_a = std::get<12>(row),
-                    "totalSimilarity"_a = std::get<13>(row)));
+            MelodyDataFrame frame({{"fileName", MelodyDataFrame::Kind::Text},
+                                   {"composerName", MelodyDataFrame::Kind::Text},
+                                   {"scoreTitle", MelodyDataFrame::Kind::Text}});
+            for (const ScoreCollection::MelodyPatternRow& row : table) {
+                frame.appendRow(
+                    py::list(py::make_tuple(row.fileName, row.composerName, row.scoreTitle)),
+                    row.match);
             }
-
-            py::object pandas = py::module_::import("pandas");
-            auto df = pandas.attr("DataFrame")(records);
-
-            // Resetando o índice e ordenando pelo título da partitura
-            df.attr("sort_values")("by"_a = "scoreTitle", "inplace"_a = true);
-            df.attr("reset_index")("drop"_a = true, "inplace"_a = true);
-
-            return df;
+            return frame.build();
         },
-        py::arg("melodyPattern"), py::arg("totalIntervalsSimilarityThreshold") = 0.5f,
-        py::arg("totalRhythmSimilarityThreshold") = 0.5f,
+        py::arg("melodyPattern"), py::arg("intervalSimilarityThreshold") = 0.5f,
+        py::arg("rhythmSimilarityThreshold") = 0.5f,
         py::arg("intervalsSimilarityCallback") = nullptr,
         py::arg("rhythmSimilarityCallback") = nullptr,
         py::arg("totalIntervalSimilarityCallback") = nullptr,
@@ -105,10 +173,10 @@ void ScoreCollectionClass(const py::module& m) {
         Parameters
         ----------
         melodyPattern : list of Note
-            The pattern.
-        totalIntervalsSimilarityThreshold : float, default 0.5
+            The pattern: at least 2 notes.
+        intervalSimilarityThreshold : float, default 0.5
             Minimum interval similarity of a match, from 0 to 1.
-        totalRhythmSimilarityThreshold : float, default 0.5
+        rhythmSimilarityThreshold : float, default 0.5
             Minimum rhythm similarity of a match, from 0 to 1.
         intervalsSimilarityCallback : callable, optional
         rhythmSimilarityCallback : callable, optional
@@ -120,32 +188,32 @@ void ScoreCollectionClass(const py::module& m) {
         Returns
         -------
         pandas.DataFrame
-            The matches in every score, with ``Score.findMelodyPatternDataFrame``'s columns
-            preceded by ``filename``, ``composerName`` and ``scoreTitle``, sorted by
-            ``scoreTitle``.
+            The matches in every score: ``fileName``, ``composerName`` and ``scoreTitle`` (str),
+            followed by ``Score.findMelodyPatternDataFrame``'s columns; sorted stably by
+            ``scoreTitle``, each score's matches in the order the score gives them. An empty
+            DataFrame, with every column and its dtype, when nothing matches or the collection
+            is empty.
 
         Raises
         ------
         RuntimeError
-            If the search of any score raises, for the reasons
-            ``Score.findMelodyPatternDataFrame`` gives.
-        KeyError
-            If no score has a match: the empty result has no ``scoreTitle`` column to sort by.
+            If the pattern has fewer than 2 notes, even for an empty collection, or if the
+            search of any score raises, for the reasons ``Score.findMelodyPatternDataFrame``
+            gives.
 
         Examples
         --------
-        >>> collection = ml.ScoreCollection([])
+        >>> collection = ml.ScoreCollection()
         >>> collection.addScore(ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1)))
         >>> table = collection.findMelodyPatternDataFrame([ml.Note("G2"), ml.Note("D3")], 1.0, 1.0)
         >>> list(table.columns[:4])
-        ['filename', 'composerName', 'scoreTitle', 'partName']
+        ['fileName', 'composerName', 'scoreTitle', 'partName']
     )pbdoc");
 
-    // Wrapper para a segunda versão de findMelodyPatternDataFrame, que aceita múltiplos padrões
     cls.def(
         "findMelodyPatternDataFrame",
         [](const ScoreCollection& collection, const std::vector<std::vector<Note>>& melodyPatterns,
-           float totalIntervalsSimilarityThreshold, float totalRhythmSimilarityThreshold,
+           const float intervalSimilarityThreshold, const float rhythmSimilarityThreshold,
            const std::function<std::vector<float>(
                const std::vector<Note>&, const std::vector<Note>&)>& intervalsSimilarityCallback,
            const std::function<std::vector<float>(
@@ -156,50 +224,43 @@ void ScoreCollectionClass(const py::module& m) {
             // Each score's search runs its patterns on worker threads, and a worker that calls,
             // copies or destroys a Python callback takes the GIL to do it. Holding the GIL here
             // while the workers run would deadlock, so it is released for the search alone, inside
-            // this lambda; it is held again when the lambda returns, before any record or
-            // DataFrame is built. The search only reads the collection and its scores, so other
-            // threads may search them meanwhile.
-            const auto allResults = [&] {
+            // this lambda; it is held again when the lambda returns, before the DataFrame is
+            // built. The search only reads the collection and its scores, so other threads may
+            // search them meanwhile.
+            const auto tables = [&] {
                 py::gil_scoped_release release;
                 return collection.findMelodyPattern(
-                    melodyPatterns, totalIntervalsSimilarityThreshold,
-                    totalRhythmSimilarityThreshold, intervalsSimilarityCallback,
-                    rhythmSimilarityCallback, totalIntervalSimilarityCallback,
-                    totalRhythmSimilarityCallback, totalSimilarityCallback);
+                    melodyPatterns, intervalSimilarityThreshold, rhythmSimilarityThreshold,
+                    intervalsSimilarityCallback, rhythmSimilarityCallback,
+                    totalIntervalSimilarityCallback, totalRhythmSimilarityCallback,
+                    totalSimilarityCallback);
             }();
 
-            // Converte para uma lista de dicionários para compatibilidade com Pandas
-            py::object pandas = py::module_::import("pandas");
-            std::vector<py::object> dataframes;
-
-            for (const auto& table : allResults) {
-                std::vector<py::dict> records;
-                for (const auto& row : table) {
-                    records.push_back(py::dict(
-                        "patternIdx"_a = std::get<0>(row), "filename"_a = std::get<1>(row),
-                        "composerName"_a = std::get<2>(row), "scoreTitle"_a = std::get<3>(row),
-                        "partName"_a = std::get<4>(row), "measureId"_a = std::get<5>(row),
-                        "staveId"_a = std::get<6>(row), "writtenClefKey"_a = std::get<7>(row),
-                        "transposeInterval"_a = std::get<8>(row),
-                        "segmentWrittenPitch"_a = std::get<9>(row),
-                        "semitonesDiff"_a = std::get<10>(row), "rhythmDiff"_a = std::get<11>(row),
-                        "totalIntervalSimilarity"_a = std::get<12>(row),
-                        "totalRhythmSimilarity"_a = std::get<13>(row),
-                        "totalSimilarity"_a = std::get<14>(row)));
+            // Every row with its pattern's index, in pattern order, then sorted stably by score
+            // title: rows of one title keep the pattern order and each table's order.
+            std::vector<std::pair<size_t, const ScoreCollection::MelodyPatternRow*>> rows;
+            for (size_t idx = 0; idx < tables.size(); idx++) {
+                for (const ScoreCollection::MelodyPatternRow& row : tables[idx]) {
+                    rows.emplace_back(idx, &row);
                 }
-                dataframes.push_back(pandas.attr("DataFrame")(records));
             }
+            std::stable_sort(rows.begin(), rows.end(), [](const auto& a, const auto& b) {
+                return a.second->scoreTitle < b.second->scoreTitle;
+            });
 
-            // Concatena, reseta o índice e ordena pelo título da partitura
-            auto final_df = pandas.attr("concat")(dataframes, "ignore_index"_a = true);
-
-            final_df.attr("sort_values")("by"_a = "scoreTitle", "inplace"_a = true);
-            final_df.attr("reset_index")("drop"_a = true, "inplace"_a = true);
-
-            return final_df;
+            MelodyDataFrame frame({{"patternIdx", MelodyDataFrame::Kind::Integer},
+                                   {"fileName", MelodyDataFrame::Kind::Text},
+                                   {"composerName", MelodyDataFrame::Kind::Text},
+                                   {"scoreTitle", MelodyDataFrame::Kind::Text}});
+            for (const auto& [idx, row] : rows) {
+                frame.appendRow(py::list(py::make_tuple(idx, row->fileName, row->composerName,
+                                                        row->scoreTitle)),
+                                row->match);
+            }
+            return frame.build();
         },
-        py::arg("melodyPatterns"), py::arg("totalIntervalsSimilarityThreshold") = 0.5f,
-        py::arg("totalRhythmSimilarityThreshold") = 0.5f,
+        py::arg("melodyPatterns"), py::arg("intervalSimilarityThreshold") = 0.5f,
+        py::arg("rhythmSimilarityThreshold") = 0.5f,
         py::arg("intervalsSimilarityCallback") = nullptr,
         py::arg("rhythmSimilarityCallback") = nullptr,
         py::arg("totalIntervalSimilarityCallback") = nullptr,
@@ -219,10 +280,10 @@ void ScoreCollectionClass(const py::module& m) {
         Parameters
         ----------
         melodyPatterns : list of list of Note
-            The patterns.
-        totalIntervalsSimilarityThreshold : float, default 0.5
+            The patterns, each of at least 2 notes.
+        intervalSimilarityThreshold : float, default 0.5
             Minimum interval similarity of a match, from 0 to 1.
-        totalRhythmSimilarityThreshold : float, default 0.5
+        rhythmSimilarityThreshold : float, default 0.5
             Minimum rhythm similarity of a match, from 0 to 1.
         intervalsSimilarityCallback : callable, optional
         rhythmSimilarityCallback : callable, optional
@@ -234,25 +295,24 @@ void ScoreCollectionClass(const py::module& m) {
         Returns
         -------
         pandas.DataFrame
-            The matches of every pattern in every score, with the columns ``patternIdx`` (the
-            pattern's index in ``melodyPatterns``), ``filename``, ``composerName`` and
-            ``scoreTitle``, followed by ``Score.findMelodyPatternDataFrame``'s, sorted by
-            ``scoreTitle``.
+            The matches of every pattern in every score: ``patternIdx`` (int, the pattern's
+            index in ``melodyPatterns``), ``fileName``, ``composerName`` and ``scoreTitle``
+            (str), followed by ``Score.findMelodyPatternDataFrame``'s columns; sorted stably by
+            ``scoreTitle``, then ``patternIdx``, each score's matches in the order the score
+            gives them. An empty DataFrame, with every column and its dtype, when nothing
+            matches or the collection is empty.
 
         Raises
         ------
         RuntimeError
-            If the search for any pattern in any score raises, for the reasons
+            If a pattern has fewer than 2 notes, even for an empty collection, or if the search
+            for any pattern in any score raises, for the reasons
             ``Score.findMelodyPatternDataFrame`` gives, never leaving an empty result in its
             place.
-        KeyError
-            If no score has a match: the empty result has no ``scoreTitle`` column to sort by.
-        ValueError
-            If the collection holds no score.
 
         Examples
         --------
-        >>> collection = ml.ScoreCollection([])
+        >>> collection = ml.ScoreCollection()
         >>> collection.addScore(ml.Score(ml.getSampleScorePath(ml.SampleScore.Bach_Cello_Suite_1)))
         >>> patterns = [[ml.Note("G2"), ml.Note("D3")], [ml.Note("D3"), ml.Note("B3")]]
         >>> table = collection.findMelodyPatternDataFrame(patterns, 1.0, 1.0)

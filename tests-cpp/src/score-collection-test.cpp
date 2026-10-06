@@ -1,6 +1,14 @@
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <filesystem>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
+
 #include "maiacore/score_collection.h"
+#include "test-capture.h"
 
 // Test directories with XML files
 const std::string BACH_DIR = "./test/xml_examples/Bach";
@@ -11,8 +19,61 @@ const std::string UNIT_TEST_DIR = "./test/xml_examples/unit_test";
 // Constructor Tests
 // ============================================================================
 
+namespace {
+const std::string LAST_WINDOW = "./test/xml_examples/unit_test/melody_last_window.musicxml";
+const std::string DUPLICATES = "./test/xml_examples/unit_test/melody_duplicate_patterns.musicxml";
+
+// A directory of its own under the system's temporary directory, removed with its contents when
+// the object is destroyed.
+class TemporaryDirectory {
+   public:
+    TemporaryDirectory()
+        : _path(std::filesystem::temp_directory_path() /
+                ("maialib-collection-test-" +
+                 std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()))) {
+        std::filesystem::create_directories(_path);
+    }
+    ~TemporaryDirectory() {
+        std::error_code ignored;
+        std::filesystem::remove_all(_path, ignored);
+    }
+    TemporaryDirectory(const TemporaryDirectory&) = delete;
+    TemporaryDirectory& operator=(const TemporaryDirectory&) = delete;
+
+    const std::filesystem::path& path() const { return _path; }
+
+    // Copies a score into the directory as 'name', which may name a subdirectory.
+    void addCopy(const std::string& source, const std::string& name) const {
+        std::filesystem::create_directories((_path / name).parent_path());
+        std::filesystem::copy_file(source, _path / name);
+    }
+
+   private:
+    std::filesystem::path _path;
+};
+
+// The file names of a collection's scores, in collection order.
+std::vector<std::string> fileNamesOf(const ScoreCollection& collection) {
+    std::vector<std::string> names;
+    for (const Score& score : collection.getScores()) {
+        names.push_back(score.getFileName());
+    }
+    return names;
+}
+
+// The file name and the written pitches of each row of a table.
+std::vector<std::pair<std::string, std::vector<std::string>>> rowsOf(
+    const ScoreCollection::MelodyPatternTable& table) {
+    std::vector<std::pair<std::string, std::vector<std::string>>> rows;
+    for (const ScoreCollection::MelodyPatternRow& row : table) {
+        rows.emplace_back(row.fileName, row.match.writtenPitches);
+    }
+    return rows;
+}
+}  // namespace
+
 TEST(ScoreCollectionConstructor, DefaultConstructor) {
-    ScoreCollection collection(std::vector<std::string>{});  // Empty string constructor
+    ScoreCollection collection;
     EXPECT_EQ(collection.getNumScores(), 0);
     EXPECT_EQ(collection.getNumDirectories(), 0);
     EXPECT_TRUE(collection.isEmpty());
@@ -37,6 +98,42 @@ TEST(ScoreCollectionConstructor, EmptyDirectoryPath) {
     ScoreCollection collection(std::vector<std::string>{});
     EXPECT_EQ(collection.getNumScores(), 0);
     EXPECT_TRUE(collection.isEmpty());
+}
+
+// A path that does not exist, or that is not a directory, raises a std::runtime_error whose
+// message, in English, names it.
+TEST(ScoreCollectionConstructor, APathThatIsNotADirectoryRaises) {
+    for (const std::string& path :
+         {std::string("./test/xml_examples/no-such-directory"), LAST_WINDOW, std::string()}) {
+        EXPECT_EQ(
+            thrownFirstLine([&] { ScoreCollection collection(path); }),
+            "[maiacore] ScoreCollection: '" + path + "' is not a directory, or does not exist")
+            << path;
+    }
+    EXPECT_EQ(thrownFirstLine([&] {
+                  ScoreCollection collection(std::vector<std::string>{BACH_DIR, "missing"});
+              }),
+              "[maiacore] ScoreCollection: 'missing' is not a directory, or does not exist");
+}
+
+// Extensions match without regard to case, other files are skipped, subdirectories are read only
+// when recursive, and the files load in sorted path order.
+TEST(ScoreCollectionConstructor, DiscoveryIgnoresCaseSortsAndRecursesOnRequest) {
+    TemporaryDirectory directory;
+    directory.addCopy(LAST_WINDOW, "c.MusicXML");
+    directory.addCopy(LAST_WINDOW, "a.xml");
+    directory.addCopy(LAST_WINDOW, "B.XML");
+    directory.addCopy(LAST_WINDOW, "notes.txt");
+    directory.addCopy(LAST_WINDOW, "sub/d.xml");
+    const std::string path = directory.path().string();
+
+    StdoutCapture quiet;
+    EXPECT_EQ(fileNamesOf(ScoreCollection(path)),
+              (std::vector<std::string>{"B.XML", "a.xml", "c.MusicXML"}));
+    EXPECT_EQ(fileNamesOf(ScoreCollection(path, true)),
+              (std::vector<std::string>{"B.XML", "a.xml", "c.MusicXML", "d.xml"}));
+    EXPECT_EQ(fileNamesOf(ScoreCollection(std::vector<std::string>{path}, true)),
+              (std::vector<std::string>{"B.XML", "a.xml", "c.MusicXML", "d.xml"}));
 }
 
 TEST(ScoreCollectionConstructor, EmptyDirectoryList) {
@@ -73,15 +170,30 @@ TEST(ScoreCollectionDirectories, SetDirectoriesPaths) {
     EXPECT_GT(collection.getNumScores(), 0);  // Should auto-load
 }
 
+// setDirectoriesPaths() replaces the directories and the scores, those added with addScore()
+// included: the Bach directory's two files, then the Beethoven directory's three.
 TEST(ScoreCollectionDirectories, SetDirectoriesReloads) {
     ScoreCollection collection(BACH_DIR);
+    collection.addScore(LAST_WINDOW);
+    ASSERT_EQ(collection.getNumScores(), 3);
 
-    // Set new directories - should replace and reload
-    std::vector<std::string> new_dirs = {BEETHOVEN_DIR};
-    collection.setDirectoriesPaths(new_dirs);
+    collection.setDirectoriesPaths({BEETHOVEN_DIR});
 
-    EXPECT_EQ(collection.getNumDirectories(), 1);
-    // Score count may differ based on number of files in each directory
+    EXPECT_EQ(collection.getDirectoriesPaths(), (std::vector<std::string>{BEETHOVEN_DIR}));
+    EXPECT_EQ(fileNamesOf(collection),
+              (std::vector<std::string>{"Beethoven_quartet_133.xml", "Beethoven_quartet_Op133.xml",
+                                        "Symphony_5th_1Mov.xml"}));
+}
+
+// A directory that cannot be loaded leaves the collection as it was.
+TEST(ScoreCollectionDirectories, AFailedReloadChangesNothing) {
+    ScoreCollection collection(BACH_DIR);
+
+    EXPECT_THROW(collection.setDirectoriesPaths({BEETHOVEN_DIR, "missing"}), std::runtime_error);
+
+    EXPECT_EQ(collection.getDirectoriesPaths(), (std::vector<std::string>{BACH_DIR}));
+    EXPECT_EQ(fileNamesOf(collection),
+              (std::vector<std::string>{"cello_suite_1_violin.xml", "prelude_1_BWV_846.xml"}));
 }
 
 TEST(ScoreCollectionDirectories, AddDirectory) {
@@ -234,8 +346,10 @@ TEST(ScoreCollectionScores, RemoveScoreInvalidIndex) {
     ScoreCollection collection(std::vector<std::string>{});
     collection.addScore("./test/xml_examples/Bach/prelude_1_BWV_846.xml");
 
-    EXPECT_THROW(collection.removeScore(10), std::runtime_error);  // Flat
-    EXPECT_EQ(collection.getNumScores(), 1);                       // Unchanged
+    EXPECT_THROW(collection.removeScore(10), std::out_of_range);
+    EXPECT_THROW(collection.removeScore(1), std::out_of_range);
+    EXPECT_THROW(collection.removeScore(-1), std::out_of_range);
+    EXPECT_EQ(collection.getNumScores(), 1);  // Unchanged
 }
 
 // ============================================================================
@@ -339,91 +453,104 @@ TEST(ScoreCollectionOperator, PlusOperatorChaining) {
 // Pattern Finding Tests - Single Pattern
 // ============================================================================
 
+// Each score's matches, with its file name; scores with equal titles keep the collection's order.
 TEST(ScoreCollectionPatternFinding, FindMelodyPatternBasic) {
-    ScoreCollection collection(std::vector<std::string>{});
-    collection.addScore("./test/xml_examples/Bach/prelude_1_BWV_846.xml");
+    ScoreCollection collection;
+    collection.addScore(LAST_WINDOW);
+    collection.addScore(DUPLICATES);
 
-    // Create a simple 3-note pattern
-    std::vector<Note> pattern = {Note("C4"), Note("D4"), Note("E4")};
+    const auto table = collection.findMelodyPattern({Note("C4"), Note("D4")}, 1.0f, 1.0f);
 
-    auto results = collection.findMelodyPattern(pattern, 0.5f, 0.5f);
-
-    // Results should be a table (vector of tuples)
-    // May or may not find matches depending on the score content
-    EXPECT_GE(results.size(), 0);
+    EXPECT_EQ(rowsOf(table), (std::vector<std::pair<std::string, std::vector<std::string>>>{
+                                 {"melody_last_window.musicxml", {"C4", "D4"}},
+                                 {"melody_last_window.musicxml", {"D4", "E4"}},
+                                 {"melody_duplicate_patterns.musicxml", {"C4", "D4"}},
+                                 {"melody_duplicate_patterns.musicxml", {"C4", "D4"}},
+                                 {"melody_duplicate_patterns.musicxml", {"E4", "F#4"}}}));
 }
 
-TEST(ScoreCollectionPatternFinding, FindMelodyPatternMultipleScores) {
-    ScoreCollection collection(BACH_DIR);
+// The rows are sorted stably by score title.
+TEST(ScoreCollectionPatternFinding, FindMelodyPatternSortsByScoreTitle) {
+    ScoreCollection collection;
+    collection.addScore(LAST_WINDOW);
+    collection.addScore(DUPLICATES);
+    collection.getScores()[0].setTitle("B");
+    collection.getScores()[1].setTitle("A");
 
-    std::vector<Note> pattern = {Note("C4"), Note("E4"), Note("G4")};
+    const auto table = collection.findMelodyPattern({Note("C4"), Note("D4")}, 1.0f, 1.0f);
 
-    auto results = collection.findMelodyPattern(pattern, 0.3f, 0.3f);
-
-    // With multiple scores and low thresholds, should potentially find matches
-    EXPECT_GE(results.size(), 0);
+    std::vector<std::string> titles;
+    for (const auto& row : table) {
+        titles.push_back(row.scoreTitle);
+    }
+    EXPECT_EQ(titles, (std::vector<std::string>{"A", "A", "A", "B", "B"}));
 }
 
+// Thresholds of 1 keep only exact matches: D4-E4 in a quarter and a half is no C4-D4 in quarters.
 TEST(ScoreCollectionPatternFinding, FindMelodyPatternHighThresholds) {
-    ScoreCollection collection(std::vector<std::string>{});
-    collection.addScore("./test/xml_examples/Bach/prelude_1_BWV_846.xml");
+    ScoreCollection collection;
+    collection.addScore(DUPLICATES);
 
-    std::vector<Note> pattern = {Note("C4"), Note("D4")};
-
-    // Very high thresholds - likely few/no matches
-    auto results = collection.findMelodyPattern(pattern, 0.99f, 0.99f);
-
-    EXPECT_GE(results.size(), 0);
+    EXPECT_EQ(collection.findMelodyPattern({Note("C4"), Note("D4")}, 1.0f, 1.0f).size(), 3u);
+    EXPECT_EQ(collection.findMelodyPattern({Note("C4"), Note("D4")}, 0.5f, 0.5f).size(), 4u);
 }
 
+// An empty collection finds nothing, but a pattern of fewer than 2 notes is rejected all the
+// same.
 TEST(ScoreCollectionPatternFinding, FindMelodyPatternEmptyCollection) {
-    ScoreCollection collection(std::vector<std::string>{});  // Empty
+    ScoreCollection collection;
 
-    std::vector<Note> pattern = {Note("C4")};
-
-    auto results = collection.findMelodyPattern(pattern);
-
-    EXPECT_EQ(results.size(), 0);  // No scores = no results
+    EXPECT_TRUE(collection.findMelodyPattern({Note("C4"), Note("D4")}).empty());
+    EXPECT_EQ(thrownFirstLine([&] { collection.findMelodyPattern(std::vector<Note>{Note("C4")}); }),
+              "[maiacore] ScoreCollection::findMelodyPattern: a melody pattern needs at least 2 "
+              "notes, and this one has 1");
 }
 
 // ============================================================================
 // Pattern Finding Tests - Multiple Patterns
 // ============================================================================
 
+// One table per pattern, each with the pattern's matches in every score.
 TEST(ScoreCollectionMultiPattern, FindMultipleMelodyPatterns) {
-    ScoreCollection collection(std::vector<std::string>{});
-    collection.addScore("./test/xml_examples/Bach/prelude_1_BWV_846.xml");
+    ScoreCollection collection;
+    collection.addScore(LAST_WINDOW);
+    collection.addScore(DUPLICATES);
+    const std::vector<std::vector<Note>> patterns = {
+        {Note("C4"), Note("D4")}, {Note("E4"), Note("G4")}, {Note("C4"), Note("B3"), Note("A3")}};
 
-    std::vector<std::vector<Note>> patterns = {
-        {Note("C4"), Note("D4")}, {Note("E4"), Note("F4")}, {Note("G4"), Note("A4")}};
+    const auto tables = collection.findMelodyPattern(patterns, 1.0f, 1.0f);
 
-    auto results = collection.findMelodyPattern(patterns, 0.5f, 0.5f);
-
-    // Should return a vector of tables, one for each pattern
-    // Even with no matches, should return correct structure
-    EXPECT_GE(results.size(), 0);
+    ASSERT_EQ(tables.size(), 3u);
+    EXPECT_EQ(tables[0].size(), 5u);
+    EXPECT_EQ(rowsOf(tables[1]), (std::vector<std::pair<std::string, std::vector<std::string>>>{
+                                     {"melody_last_window.musicxml", {"E4", "G4"}}}));
+    EXPECT_TRUE(tables[2].empty());
 }
 
-TEST(ScoreCollectionMultiPattern, MultiplePatternsSingleScore) {
-    ScoreCollection collection(std::vector<std::string>{});
-    collection.addScore("./test/xml_examples/Bach/cello_suite_1_violin.xml");
+// Each table holds what the single-pattern search of its pattern finds, in the same order.
+TEST(ScoreCollectionMultiPattern, EachTableIsTheSinglePatternSearch) {
+    ScoreCollection collection;
+    collection.addScore(LAST_WINDOW);
+    collection.addScore(DUPLICATES);
+    collection.getScores()[0].setTitle("B");
+    collection.getScores()[1].setTitle("A");
+    const std::vector<std::vector<Note>> patterns = {{Note("C4"), Note("D4")},
+                                                     {Note("D4"), Note("C4")}};
 
-    std::vector<std::vector<Note>> patterns = {{Note("C4"), Note("D4"), Note("E4")},
-                                               {Note("G4"), Note("B4"), Note("A4")}};
+    const auto tables = collection.findMelodyPattern(patterns, 0.5f, 0.5f);
 
-    auto results = collection.findMelodyPattern(patterns, 0.3f, 0.3f);
-
-    EXPECT_GE(results.size(), 0);
+    ASSERT_EQ(tables.size(), 2u);
+    for (size_t p = 0; p < patterns.size(); p++) {
+        EXPECT_EQ(rowsOf(tables[p]), rowsOf(collection.findMelodyPattern(patterns[p], 0.5f, 0.5f)))
+            << p;
+    }
 }
 
-TEST(ScoreCollectionMultiPattern, MultiplePatternsMultipleScores) {
-    ScoreCollection collection(BACH_DIR);
-
-    std::vector<std::vector<Note>> patterns = {{Note("C4"), Note("D4")}, {Note("E4"), Note("F4")}};
-
-    auto results = collection.findMelodyPattern(patterns, 0.4f, 0.4f);
-
-    EXPECT_GE(results.size(), 0);
+// A pattern of fewer than 2 notes is rejected, even in an empty collection.
+TEST(ScoreCollectionMultiPattern, AShortPatternIsRejected) {
+    ScoreCollection collection;
+    EXPECT_THROW(collection.findMelodyPattern(std::vector<std::vector<Note>>{{Note("C4")}}),
+                 std::runtime_error);
 }
 
 TEST(ScoreCollectionMultiPattern, EmptyPatternList) {
@@ -468,25 +595,26 @@ TEST(ScoreCollectionIntegration, MergeAndSearch) {
     EXPECT_GT(merged.getNumScores(), 0);
     EXPECT_EQ(merged.getNumDirectories(), 2);
 
-    // Search in merged collection
-    std::vector<Note> pattern = {Note("C4"), Note("E4")};
-    auto results = merged.findMelodyPattern(pattern, 0.3f, 0.3f);
-
-    EXPECT_GE(results.size(), 0);
+    // A merged collection searches the scores of both
+    ScoreCollection first;
+    first.addScore(LAST_WINDOW);
+    ScoreCollection second;
+    second.addScore(DUPLICATES);
+    const auto table = (first + second).findMelodyPattern({Note("C4"), Note("D4")}, 1.0f, 1.0f);
+    EXPECT_EQ(table.size(), 5u);
 }
 
 TEST(ScoreCollectionIntegration, SetDirectoriesMultipleTimes) {
     ScoreCollection collection(std::vector<std::string>{});
 
     collection.setDirectoriesPaths({BACH_DIR});
-    int count1 = collection.getNumScores();
+    EXPECT_EQ(collection.getNumScores(), 2);
 
     collection.setDirectoriesPaths({BEETHOVEN_DIR});
-    int count2 = collection.getNumScores();
+    EXPECT_EQ(collection.getNumScores(), 3);
 
-    // Both should have loaded scores
-    EXPECT_GT(count1, 0);
-    EXPECT_GT(count2, 0);
+    collection.setDirectoriesPaths({BEETHOVEN_DIR});
+    EXPECT_EQ(collection.getNumScores(), 3);
 }
 
 // ============================================================================
@@ -496,7 +624,7 @@ TEST(ScoreCollectionIntegration, SetDirectoriesMultipleTimes) {
 TEST(ScoreCollectionEdgeCases, RemoveFromEmptyCollection) {
     ScoreCollection collection(std::vector<std::string>{});
 
-    EXPECT_THROW(collection.removeScore(0), std::runtime_error);
+    EXPECT_THROW(collection.removeScore(0), std::out_of_range);
     EXPECT_EQ(collection.getNumScores(), 0);
 }
 

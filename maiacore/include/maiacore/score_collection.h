@@ -14,49 +14,46 @@
  * processing of MusicXML files.
  */
 class ScoreCollection {
-   private:
-    std::vector<std::string> _directoriesPaths;  ///< List of directories containing score files.
-    std::vector<Score> _scores;                  ///< Vector of loaded Score objects.
-
-    /**
-     * @brief Loads all MusicXML files from the specified directories into the collection.
-     * @details Scans each directory for .xml, .mxl, and .musicxml files and loads them as Score
-     * objects.
-     */
-    void loadCollectionFiles();
-
-    /**
-     * @brief Row type for extended melodic pattern search results (single pattern).
-     * @details Includes file metadata and all fields from Score::MelodyPatternRow.
-     */
-    typedef std::tuple<std::string, std::string, std::string, std::string, int, int, std::string,
-                       std::string, std::vector<std::string>, std::vector<float>,
-                       std::vector<float>, float, float, float>
-        ExtendedMelodyPatternRow;
-    typedef std::vector<ExtendedMelodyPatternRow> ExtendedMelodyPatternTable;
-
-    /**
-     * @brief Row type for extended multi-pattern melodic search results.
-     * @details Includes pattern index, file metadata, and all fields from Score::MelodyPatternRow.
-     */
-    typedef std::tuple<int, std::string, std::string, std::string, std::string, int, int,
-                       std::string, std::string, std::vector<std::string>, std::vector<float>,
-                       std::vector<float>, float, float, float>
-        ExtendedMultiMelodyPatternRow;
-    typedef std::vector<ExtendedMultiMelodyPatternRow> ExtendedMultiMelodyPatternTable;
-
    public:
     /**
-     * @brief Constructs a ScoreCollection from a single directory path.
-     * @param directoryPath Path to a directory containing MusicXML files.
+     * @brief One match of a melodic pattern in a score of the collection.
      */
-    explicit ScoreCollection(const std::string& directoryPath = {});
+    struct MelodyPatternRow {
+        std::string fileName;           ///< The score's file name (Score::getFileName()).
+        std::string composerName;       ///< The score's composer (Score::getComposerName()).
+        std::string scoreTitle;         ///< The score's title (Score::getTitle()).
+        Score::MelodyPatternRow match;  ///< The match, as Score::findMelodyPattern() gives it.
+    };
 
     /**
-     * @brief Constructs a ScoreCollection from multiple directory paths.
-     * @param directoriesPaths Vector of directory paths.
+     * @brief The matches of one pattern in every score, sorted stably by score title: the matches
+     *        of one score keep the order Score::findMelodyPattern() gives them, and scores with
+     *        the same title keep the collection's order.
      */
-    explicit ScoreCollection(const std::vector<std::string>& directoriesPaths = {});
+    typedef std::vector<MelodyPatternRow> MelodyPatternTable;
+
+    /**
+     * @brief Constructs an empty collection: no directory and no score.
+     */
+    ScoreCollection();
+
+    /**
+     * @brief Constructs a collection of the MusicXML files of a directory.
+     * @param directoryPath A directory; its files are loaded as setDirectoriesPaths() loads them.
+     * @param recursive True to load the files of its subdirectories, at any depth, too.
+     * @throws std::runtime_error If the path is not a directory, as setDirectoriesPaths() throws.
+     */
+    explicit ScoreCollection(const std::string& directoryPath, const bool recursive = false);
+
+    /**
+     * @brief Constructs a collection of the MusicXML files of several directories.
+     * @param directoriesPaths The directories; their files are loaded as setDirectoriesPaths()
+     *        loads them.
+     * @param recursive True to load the files of their subdirectories, at any depth, too.
+     * @throws std::runtime_error If a path is not a directory, as setDirectoriesPaths() throws.
+     */
+    explicit ScoreCollection(const std::vector<std::string>& directoriesPaths,
+                             const bool recursive = false);
 
     /**
      * @brief Returns the list of directory paths associated with the collection.
@@ -65,10 +62,19 @@ class ScoreCollection {
     std::vector<std::string> getDirectoriesPaths() const;
 
     /**
-     * @brief Sets the list of directory paths and reloads the collection.
-     * @param directoriesPaths Vector of directory path strings.
+     * @brief Replaces the collection's directories and scores with those of the given
+     *        directories.
+     * @details Loads every file whose extension is `.xml`, `.mxl` or `.musicxml`, compared
+     *          without regard to case, directory by directory in the given order and, within a
+     *          directory, in sorted path order. Every path is checked before anything is loaded,
+     *          and the collection changes only when every file has loaded.
+     * @param directoriesPaths The directories; an empty list empties the collection.
+     * @param recursive True to load the files of their subdirectories, at any depth, too.
+     * @throws std::runtime_error If a path does not exist, is not a directory or cannot be read;
+     *         the message names it. A file that fails to load raises its own error.
      */
-    void setDirectoriesPaths(const std::vector<std::string>& directoriesPaths);
+    void setDirectoriesPaths(const std::vector<std::string>& directoriesPaths,
+                             const bool recursive = false);
 
     /**
      * @brief Adds a directory path to the collection (does not reload files automatically).
@@ -95,7 +101,7 @@ class ScoreCollection {
     void addScore(const std::vector<std::string>& filePaths);
 
     /**
-     * @brief Removes all scores from the collection.
+     * @brief Removes all scores from the collection; its directories are kept.
      */
     void clear();
 
@@ -137,27 +143,30 @@ class ScoreCollection {
 
     /**
      * @brief Removes a score from the collection by its index.
-     * @param scoreIdx Index of the score to remove.
+     * @param scoreIdx Index of the score to remove, from 0 to getNumScores() - 1.
+     * @throws std::out_of_range If scoreIdx is negative or not below getNumScores(); the
+     *         collection is unchanged.
      */
     void removeScore(const int scoreIdx);
 
     /**
-     * @brief Searches for a melodic pattern in all scores, returning extended results.
-     * @details Each result row includes file metadata and all fields from Score::MelodyPatternRow.
-     * @param melodyPattern Vector of Note objects representing the pattern.
-     * @param totalIntervalsSimilarityThreshold Minimum interval similarity threshold.
-     * @param totalRhythmSimilarityThreshold Minimum rhythm similarity threshold.
-     * @param intervalsSimilarityCallback Custom function to calculate interval similarity.
-     * @param rhythmSimilarityCallback Custom function to calculate rhythm similarity.
-     * @param totalIntervalSimilarityCallback Function to aggregate interval similarity.
-     * @param totalRhythmSimilarityCallback Function to aggregate rhythm similarity.
-     * @param totalSimilarityCallback Function to combine total similarities.
-     * @return ExtendedMelodyPatternTable with results from all scores.
+     * @brief Searches every score of the collection for a melodic pattern.
+     * @details Each score is searched as Score::findMelodyPattern() searches it.
+     * @param melodyPattern The pattern: at least 2 notes.
+     * @param intervalSimilarityThreshold Minimum interval similarity of a match.
+     * @param rhythmSimilarityThreshold Minimum rhythm similarity of a match.
+     * @param intervalsSimilarityCallback See Score::findMelodyPattern().
+     * @param rhythmSimilarityCallback See Score::findMelodyPattern().
+     * @param totalIntervalSimilarityCallback See Score::findMelodyPattern().
+     * @param totalRhythmSimilarityCallback See Score::findMelodyPattern().
+     * @param totalSimilarityCallback See Score::findMelodyPattern().
+     * @return The matches in every score, sorted stably by score title.
+     * @throws std::runtime_error If the pattern has fewer than 2 notes, even for an empty
+     *         collection, or as Score::findMelodyPattern() throws.
      */
-    ExtendedMelodyPatternTable findMelodyPattern(
-        const std::vector<Note>& melodyPattern,
-        const float totalIntervalsSimilarityThreshold = 0.5f,
-        const float totalRhythmSimilarityThreshold = 0.5f,
+    MelodyPatternTable findMelodyPattern(
+        const std::vector<Note>& melodyPattern, const float intervalSimilarityThreshold = 0.5f,
+        const float rhythmSimilarityThreshold = 0.5f,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>&
             intervalsSimilarityCallback = nullptr,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>&
@@ -169,24 +178,26 @@ class ScoreCollection {
         const std::function<float(float, float)>& totalSimilarityCallback = nullptr) const;
 
     /**
-     * @brief Searches for multiple melodic patterns in all scores, returning extended results for
-     * each pattern.
-     * @details Each result row includes pattern index, file metadata, and all fields from
-     * Score::MelodyPatternRow.
-     * @param melodyPatterns Vector of melodic patterns (each a vector of Note).
-     * @param totalIntervalsSimilarityThreshold Minimum interval similarity threshold.
-     * @param totalRhythmSimilarityThreshold Minimum rhythm similarity threshold.
-     * @param intervalsSimilarityCallback Custom function to calculate interval similarity.
-     * @param rhythmSimilarityCallback Custom function to calculate rhythm similarity.
-     * @param totalIntervalSimilarityCallback Function to aggregate interval similarity.
-     * @param totalRhythmSimilarityCallback Function to aggregate rhythm similarity.
-     * @param totalSimilarityCallback Function to combine total similarities.
-     * @return Vector of ExtendedMultiMelodyPatternTable, one for each pattern.
+     * @brief Searches every score of the collection for several melodic patterns.
+     * @details Each score is searched as the list overload of Score::findMelodyPattern()
+     *          searches it.
+     * @param melodyPatterns The patterns.
+     * @param intervalSimilarityThreshold Minimum interval similarity of a match.
+     * @param rhythmSimilarityThreshold Minimum rhythm similarity of a match.
+     * @param intervalsSimilarityCallback See Score::findMelodyPattern().
+     * @param rhythmSimilarityCallback See Score::findMelodyPattern().
+     * @param totalIntervalSimilarityCallback See Score::findMelodyPattern().
+     * @param totalRhythmSimilarityCallback See Score::findMelodyPattern().
+     * @param totalSimilarityCallback See Score::findMelodyPattern().
+     * @return One table per pattern, in pattern order, each with the pattern's matches in every
+     *         score, sorted stably by score title.
+     * @throws std::runtime_error If a pattern has fewer than 2 notes, even for an empty
+     *         collection, or as Score::findMelodyPattern() throws.
      */
-    std::vector<ExtendedMultiMelodyPatternTable> findMelodyPattern(
+    std::vector<MelodyPatternTable> findMelodyPattern(
         const std::vector<std::vector<Note>>& melodyPatterns,
-        const float totalIntervalsSimilarityThreshold = 0.5f,
-        const float totalRhythmSimilarityThreshold = 0.5f,
+        const float intervalSimilarityThreshold = 0.5f,
+        const float rhythmSimilarityThreshold = 0.5f,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>&
             intervalsSimilarityCallback = nullptr,
         const std::function<std::vector<float>(const std::vector<Note>&, const std::vector<Note>&)>&
@@ -207,4 +218,8 @@ class ScoreCollection {
         sc.merge(other);
         return sc;
     }
+
+   private:
+    std::vector<std::string> _directoriesPaths;  ///< List of directories containing score files.
+    std::vector<Score> _scores;                  ///< Vector of loaded Score objects.
 };
