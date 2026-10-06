@@ -350,28 +350,32 @@ pattern = [
     ml.Note("D4")
 ]
 
-# Find all occurrences
+# Find all occurrences, in every voice of every staff
 df_patterns = score.findMelodyPatternDataFrame(
     melodyPattern=pattern,
-    totalIntervalsSimilarityThreshold=0.8,
-    totalRhythmSimilarityThreshold=0.5
+    intervalSimilarityThreshold=0.8,
+    rhythmSimilarityThreshold=0.5
 )
 
 print(f"Found {len(df_patterns)} occurrences of the pattern")
-print(df_patterns[['partName', 'measureId', 'transposeInterval', 'totalSimilarity']])
+print(df_patterns[['partName', 'measure', 'staff', 'voice', 'transposeInterval', 'totalSimilarity']])
 ```
 
 **Output**
 
 ```
-Found 6 occurrences of the pattern
-    partName  measureId transposeInterval  totalSimilarity
-0  Violins 1        406            m3 asc              1.0
-1  Violins 1        409            m7 asc              1.0
-2  Violins 2        406            m3 asc              1.0
-3  Violins 2        409            m7 asc              1.0
-4     Violas        166           M2 desc              1.0
-5     Violas        460           M6 desc              1.0
+Found 10 occurrences of the pattern
+       partName  measure  staff  voice transposeInterval  totalSimilarity
+0        Violas      166      0      1           M2 desc              1.0
+1  Violoncellos      166      0      1           M2 desc              1.0
+2     Violins 1      406      0      1            m3 asc              1.0
+3     Violins 2      406      0      1            m3 asc              1.0
+4     Violins 1      409      0      1            m7 asc              1.0
+5     Violins 2      409      0      1            m7 asc              1.0
+6         Flute      452      0      2            P4 asc              1.0
+7   Bb Clarinet      452      0      2            P4 asc              1.0
+8       Bassoon      452      0      2           P5 desc              1.0
+9        Violas      460      0      1           M6 desc              1.0
 ```
 
 ### Example 4: Statistical Harmonic Analysis
