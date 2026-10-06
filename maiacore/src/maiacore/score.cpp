@@ -5,12 +5,15 @@
 #include <cstdint>
 #include <exception>
 #include <filesystem>  // Para std::filesystem::absolute
+#include <fstream>
 #include <functional>
 #include <future>
 #include <iostream>
+#include <iterator>
 #include <limits>  // std::numeric_limits
 #include <locale>
 #include <map>
+#include <memory>
 #include <optional>
 #include <set>
 #include <sstream>
@@ -120,6 +123,77 @@ ImportIssue ignoredTranspose(const TransposeElement& element, const IssueLocatio
                          "> is not a whole number of " + (chromatic ? "semitones" : "octaves") +
                          "; the <transpose> is ignored and the previous transposition stays in "
                          "force.");
+}
+
+// The bytes of the file at 'path', or std::nullopt when it cannot be opened.
+std::optional<std::vector<unsigned char>> fileBytes(const std::string& path) {
+    std::ifstream stream(path, std::ios::binary);
+    if (!stream) {
+        return std::nullopt;
+    }
+    return std::vector<unsigned char>(std::istreambuf_iterator<char>(stream),
+                                      std::istreambuf_iterator<char>());
+}
+
+// Why pugixml could not load a document: its description and the byte offset where it stopped.
+// 'document' names the document in the message, quoted.
+std::string notWellFormed(const pugi::xml_parse_result& result, const std::string& document) {
+    return "Score: " + document + " is not well-formed XML: " + result.description() +
+           " (byte offset " + std::to_string(result.offset) + ")";
+}
+
+// The MusicXML document of an .mxl archive -- the first rootfile its META-INF/container.xml
+// names -- and the rootfile's name. 'archive' names the archive in the messages, quoted. Throws
+// std::runtime_error when the bytes are not a zip archive, the archive has no
+// META-INF/container.xml or an entry cannot be read, the container names no rootfile, or the
+// rootfile is not in the archive.
+std::pair<std::string, std::string> mxlRootfile(const std::vector<unsigned char>& bytes,
+                                                const std::string& archive) {
+    const std::string unreadable = "Score: " + archive + " is not a readable MusicXML archive: ";
+    // The smallest zip archive is its 22-byte end-of-central-directory record.
+    std::unique_ptr<miniz_cpp::zip_file> zip;
+    if (bytes.size() >= 22) {
+        try {
+            zip = std::make_unique<miniz_cpp::zip_file>(bytes);
+        } catch (const std::exception&) {
+            zip.reset();
+        }
+    }
+    if (!zip) {
+        LOG_ERROR(unreadable + "it is not a zip archive");
+    }
+    const auto read = [&zip, &unreadable](const std::string& name) {
+        std::string content;
+        bool readable = true;
+        try {
+            content = zip->read(name);
+        } catch (const std::exception&) {
+            readable = false;
+        }
+        if (!readable) {
+            LOG_ERROR(unreadable + "its entry '" + maiacore::detail::validUtf8(name) +
+                      "' cannot be read");
+        }
+        return content;
+    };
+
+    if (!zip->has_file("META-INF/container.xml")) {
+        LOG_ERROR(unreadable + "it has no META-INF/container.xml");
+    }
+    pugi::xml_document container;
+    container.load_string(read("META-INF/container.xml").c_str());
+    const std::string rootfile = container.select_node("/container/rootfiles/rootfile")
+                                     .node()
+                                     .attribute("full-path")
+                                     .value();
+    if (rootfile.empty()) {
+        LOG_ERROR(unreadable + "its META-INF/container.xml names no rootfile");
+    }
+    if (!zip->has_file(rootfile)) {
+        LOG_ERROR(unreadable + "the rootfile '" + maiacore::detail::validUtf8(rootfile) +
+                  "' is not in the archive");
+    }
+    return {read(rootfile), rootfile};
 }
 
 // 'text' without the white space around it, which MusicXML numbers allow.
@@ -715,38 +789,26 @@ void Score::loadXMLFile(const std::string& filePath) {
 
     const std::string fileExtension = filePath.substr(filePath.size() - 3, filePath.size());
 
-    std::vector<std::string> result2 = Helper::splitString(filePath, '/');
-    const std::string fileName = result2[result2.size() - 1];
-    pugi::xml_parse_result isLoad;
-
-    if (fileExtension == "mxl") {
-        // LOG_DEBUG("Decompressing file...");
-        miniz_cpp::zip_file file(filePath);
-
-        // Read the internal META-INF/container.xml file
-        const std::string containerFile = file.read("META-INF/container.xml");
-        pugi::xml_document containerXML;
-        containerXML.load_string(containerFile.c_str());
-
-        const std::string xPathInternalXMLFile = "/container/rootfiles/rootfile";
-
-        const std::string internalXMLFileName =
-            containerXML.select_node(xPathInternalXMLFile.c_str())
-                .node()
-                .attribute("full-path")
-                .value();
-
-        const std::string fileContent = file.read(internalXMLFileName);
-        isLoad = _doc.load_string(fileContent.c_str());
-    } else {
-        // Try to parse the XML file:
-        isLoad = _doc.load_file(filePath.c_str());
+    // The path as messages quote it.
+    const std::string shownPath = "'" + maiacore::detail::validUtf8(filePath) + "'";
+    const std::optional<std::vector<unsigned char>> bytes = fileBytes(filePath);
+    if (!bytes) {
+        LOG_ERROR("Score: cannot open " + shownPath);
     }
 
-    // Error checking:
-    if (!isLoad) {
-        LOG_ERROR("Unable to load the file: " + filePath);
-        return;
+    if (fileExtension == "mxl") {
+        const auto [document, rootfile] = mxlRootfile(*bytes, shownPath);
+        const pugi::xml_parse_result result = _doc.load_string(document.c_str());
+        if (!result) {
+            LOG_ERROR(notWellFormed(
+                result,
+                "the rootfile '" + maiacore::detail::validUtf8(rootfile) + "' of " + shownPath));
+        }
+    } else {
+        const pugi::xml_parse_result result = _doc.load_buffer(bytes->data(), bytes->size());
+        if (!result) {
+            LOG_ERROR(notWellFormed(result, shownPath));
+        }
     }
 
     // Try to get the main MusicXML nodes:

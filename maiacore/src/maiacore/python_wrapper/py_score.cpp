@@ -177,8 +177,12 @@ void ScoreClass(const py::module& m) {
         Raises
         ------
         RuntimeError
-            If the path is too short to name a file, the file cannot be loaded, or it lacks
-            the MusicXML part and measure elements.
+            If the path is too short to name a file; the file cannot be opened
+            (``Score: cannot open '<path>'``); it is not well-formed XML (the parser's
+            description and the byte offset where it stopped); an ``.mxl`` is not a readable
+            archive (the file and the problem: not a zip archive, no ``META-INF/container.xml``,
+            no rootfile named, the rootfile not in the archive or not well-formed XML); or the
+            document lacks the MusicXML part and measure elements.
 
         Examples
         --------

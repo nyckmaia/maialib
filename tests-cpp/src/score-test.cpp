@@ -1177,6 +1177,36 @@ TEST(ScoreImportReport, AnExportLoadedAgainRecordsOnlyTheElementsTheWriterInvent
                   {"ELEMENT_NOT_MODELLED", "part-list/score-part/score-instrument"}}));
 }
 
+// ====================
+// Fatal input
+// ====================
+
+// A file that is not well-formed XML raises with pugixml's description of the error and the byte
+// offset where the parser stopped.
+TEST(ScoreFatalInput, AFileThatIsNotWellFormedXmlGivesTheParsersDescriptionAndOffset) {
+    const TemporaryFile file("broken.musicxml", "<score-partwise><part-list></score-partwise>");
+    EXPECT_EQ(thrownFirstLine([&file] { Score score(file.path()); }),
+              "[maiacore] Score: '" + file.path() +
+                  "' is not well-formed XML: Start-end tags mismatch (byte offset 29)");
+}
+
+// A file that cannot be opened is named.
+TEST(ScoreFatalInput, AFileThatCannotBeOpenedIsNamed) {
+    EXPECT_EQ(thrownFirstLine([] { Score score("./test/xml_examples/missing.xml"); }),
+              "[maiacore] Score: cannot open './test/xml_examples/missing.xml'");
+}
+
+// An .mxl that is not a zip archive -- a plain MusicXML file, or a file too short to be one --
+// is named with the problem.
+TEST(ScoreFatalInput, AnMxlThatIsNotAZipArchiveIsNamed) {
+    for (const std::string& content : {minimalScore(kWholeC4), std::string("PK")}) {
+        const TemporaryFile file("plain.mxl", content);
+        EXPECT_EQ(thrownFirstLine([&file] { Score score(file.path()); }),
+                  "[maiacore] Score: '" + file.path() +
+                      "' is not a readable MusicXML archive: it is not a zip archive");
+    }
+}
+
 // A title, a composer and a part name whose bytes are not UTF-8 are held with U+FFFD in place of
 // each invalid byte: their getters return them to Python, which decodes them as UTF-8.
 TEST(ScoreImportReport, NamesThatAreNotUtf8AreHeldAsValidUtf8) {

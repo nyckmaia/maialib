@@ -14,6 +14,7 @@ import sys
 import tempfile
 import textwrap
 import unittest
+import zipfile
 
 import pandas
 
@@ -127,6 +128,96 @@ class ScoreLoadingTestCase(unittest.TestCase):
         """Test that file path is stored correctly after loading"""
         score = ml.Score("./xml_examples/unit_test/test_chord.xml")
         self.assertIn("test_chord.xml", score.getFilePath())
+
+
+# The META-INF/container.xml of an .mxl archive whose rootfile is score.xml.
+CONTAINER = (
+    b'<?xml version="1.0" encoding="UTF-8"?><container><rootfiles>'
+    b'<rootfile full-path="score.xml"/></rootfiles></container>'
+)
+
+
+class ScoreFatalInputTestCase(unittest.TestCase):
+    """What Score(path) raises for a file it cannot read: the first line of the message."""
+
+    def assertLoadFails(self, path, message):
+        with self.assertRaises(RuntimeError) as raised:
+            ml.Score(path)
+        self.assertEqual(str(raised.exception).splitlines()[0], message)
+
+    def archive(self, directory, entries):
+        """An .mxl archive in 'directory' holding 'entries' (name -> bytes); its path."""
+        path = os.path.join(directory, "score.mxl")
+        with zipfile.ZipFile(path, "w") as archive:
+            for name, data in entries.items():
+                archive.writestr(name, data)
+        return path
+
+    def test_a_missing_file_is_named(self):
+        self.assertLoadFails(
+            "./nonexistent_file.xml", "[maiacore] Score: cannot open './nonexistent_file.xml'"
+        )
+
+    def test_a_file_that_is_not_well_formed_gives_the_description_and_offset(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "broken.xml")
+            with open(path, "wb") as broken:
+                broken.write(b"<score-partwise><part-list></score-partwise>")
+            self.assertLoadFails(
+                path,
+                f"[maiacore] Score: '{path}' is not well-formed XML: Start-end tags mismatch "
+                "(byte offset 29)",
+            )
+
+    def test_an_mxl_that_is_not_a_zip_archive_is_named(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "plain.mxl")
+            with open(path, "wb") as plain:
+                plain.write(b'<score-partwise version="4.0"/>')
+            self.assertLoadFails(
+                path,
+                f"[maiacore] Score: '{path}' is not a readable MusicXML archive: it is not a zip "
+                "archive",
+            )
+
+    def test_an_mxl_without_its_container_is_named(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.archive(directory, {"score.xml": b"<score-partwise/>"})
+            self.assertLoadFails(
+                path,
+                f"[maiacore] Score: '{path}' is not a readable MusicXML archive: it has no "
+                "META-INF/container.xml",
+            )
+
+    def test_an_mxl_whose_container_names_no_rootfile_is_named(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.archive(directory, {"META-INF/container.xml": b"<container/>"})
+            self.assertLoadFails(
+                path,
+                f"[maiacore] Score: '{path}' is not a readable MusicXML archive: its "
+                "META-INF/container.xml names no rootfile",
+            )
+
+    def test_an_mxl_whose_rootfile_is_missing_is_named(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.archive(directory, {"META-INF/container.xml": CONTAINER})
+            self.assertLoadFails(
+                path,
+                f"[maiacore] Score: '{path}' is not a readable MusicXML archive: the rootfile "
+                "'score.xml' is not in the archive",
+            )
+
+    def test_an_mxl_whose_rootfile_is_not_well_formed_names_both(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path = self.archive(
+                directory,
+                {"META-INF/container.xml": CONTAINER, "score.xml": b"<score-partwise><part"},
+            )
+            self.assertLoadFails(
+                path,
+                f"[maiacore] Score: the rootfile 'score.xml' of '{path}' is not well-formed XML: "
+                "Error parsing start element tag (byte offset 20)",
+            )
 
 
 class ScoreQuarterToneReadTestCase(unittest.TestCase):
