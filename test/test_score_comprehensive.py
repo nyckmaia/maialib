@@ -307,6 +307,27 @@ class ScoreImportReportTestCase(unittest.TestCase):
         copy = collection.getScores()[0]
         self.assertEqual([issueFields(issue) for issue in copy.getImportIssues()], report)
 
+    def test_dropped_elements_are_one_row_per_path_with_their_count(self):
+        score = ml.Score("./xml_examples/unit_test/import_report_dropped.musicxml")
+        frame = score.getImportIssuesDataFrame()
+        self.assertEqual(
+            frame[["code", "kind", "element", "found", "partIndex"]].values.tolist(),
+            [
+                ["ELEMENT_NOT_MODELLED", "dropped", "direction", "1", -1],
+                ["ELEMENT_NOT_MODELLED", "dropped", "identification/encoding", "1", -1],
+                ["ELEMENT_NOT_MODELLED", "dropped", "movement-title", "1", -1],
+                ["ELEMENT_NOT_MODELLED", "dropped", "note/lyric", "2", -1],
+                ["ELEMENT_NOT_MODELLED", "dropped", "note/notations/fermata", "1", -1],
+                [
+                    "ELEMENT_NOT_MODELLED",
+                    "dropped",
+                    "part-list/score-part/score-instrument",
+                    "1",
+                    -1,
+                ],
+            ],
+        )
+
     def test_records_compare_by_value(self):
         first = ml.Score(self.DISAGREE).getImportIssues()
         second = ml.Score(self.DISAGREE).getImportIssues()

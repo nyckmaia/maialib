@@ -151,6 +151,12 @@ class Score {
      *          (VOICE_NOT_POSITIVE, STAFF_CLAMPED); an `<actual-notes>` or `<normal-notes>` of a
      *          `<time-modification>` that is not a positive whole number is read as 1
      *          (TUPLET_CLAMPED).
+     *
+     *          An element the model does not hold -- one outside the closed element list, matched
+     *          by its path, so that a `<staff>` in a `<direction>` is not a note's `<staff>` -- is
+     *          dropped with everything in it, and dropped again on export. The report has one
+     *          "dropped" record per such path (ELEMENT_NOT_MODELLED), after the corrections, with
+     *          the number of such elements in the file as `found`.
      * @param filePath Path to the MusicXML file.
      */
     explicit Score(const std::string& filePath);

@@ -1,11 +1,106 @@
 #include "import-report.h"
 
+#include <map>
 #include <set>
 #include <stdexcept>
 #include <string>
 #include <vector>
 
 namespace maiacore::detail {
+
+namespace {
+// The closed element list: the elements the model holds, by path. Outside a measure the path
+// starts at the root element's children; a part's measure starts a path of its own, from the
+// measure's children. "<path>/*" holds every child of <path>, whatever its name. The children of
+// a held element are checked in turn; an element that is not held is dropped with everything in
+// it.
+const std::set<std::string>& heldOutsideMeasures() {
+    static const std::set<std::string> held = {
+        "work",
+        "work/work-title",
+        "identification",
+        "identification/creator",
+        "part-list",
+        "part-list/score-part",
+        "part-list/score-part/part-name",
+        "part-list/score-part/midi-instrument",
+        "part-list/score-part/midi-instrument/midi-unpitched",
+        "part",
+    };
+    return held;
+}
+
+const std::set<std::string>& heldInMeasures() {
+    static const std::set<std::string> held = {
+        "attributes",
+        "attributes/divisions",
+        "attributes/key",
+        "attributes/key/fifths",
+        "attributes/key/mode",
+        "attributes/time",
+        "attributes/time/beats",
+        "attributes/time/beat-type",
+        "attributes/staves",
+        "attributes/clef",
+        "attributes/clef/sign",
+        "attributes/clef/line",
+        "attributes/staff-details",
+        "attributes/staff-details/staff-lines",
+        "attributes/transpose",
+        "attributes/transpose/diatonic",
+        "attributes/transpose/chromatic",
+        "attributes/transpose/octave-change",
+        "attributes/transpose/double",
+        "barline",
+        "barline/bar-style",
+        "barline/repeat",
+        "backup",
+        "backup/duration",
+        "forward",
+        "forward/duration",
+        "forward/voice",
+        "forward/staff",
+        "note",
+        "note/pitch",
+        "note/pitch/step",
+        "note/pitch/alter",
+        "note/pitch/octave",
+        "note/unpitched",
+        "note/unpitched/display-step",
+        "note/unpitched/display-octave",
+        "note/rest",
+        "note/chord",
+        "note/grace",
+        "note/duration",
+        "note/voice",
+        "note/type",
+        "note/dot",
+        "note/accidental",
+        "note/stem",
+        "note/staff",
+        "note/time-modification",
+        "note/time-modification/actual-notes",
+        "note/time-modification/normal-notes",
+        "note/time-modification/normal-type",
+        "note/instrument",
+        "note/beam",
+        "note/tie",
+        "note/notations",
+        "note/notations/articulations",
+        "note/notations/articulations/*",
+        "note/notations/slur",
+        "note/notations/tied",
+    };
+    return held;
+}
+
+// Elements inside a measure that the reader drops with a record of their own, so that the
+// closed-list pass neither counts them nor looks into them.
+const std::set<std::string>& reportedInMeasures() {
+    static const std::set<std::string> reported = {"attributes/for-part"};
+    return reported;
+}
+}  // namespace
 
 std::string validUtf8(const std::string& text) {
     static const char kReplacement[] = "\xEF\xBF\xBD";  // U+FFFD
@@ -61,6 +156,7 @@ const std::vector<IssueCode>& issueCatalogue() {
         {"ACCIDENTAL_NAME_UNKNOWN", "corrected"},
         {"ALTER_OFF_GRID", "corrected"},
         {"DIVISIONS_MISSING", "corrected"},
+        {"ELEMENT_NOT_MODELLED", "dropped"},
         {"FOR_PART_NOT_MODELLED", "dropped"},
         {"PART_NAME_DUPLICATE", "corrected"},
         {"STAFF_CLAMPED", "corrected"},
@@ -94,6 +190,51 @@ ImportIssue makeIssue(const std::string& code, const IssueLocation& location,
         }
     }
     throw std::logic_error("makeIssue: '" + code + "' is not in the import-report catalogue");
+}
+
+std::vector<ImportIssue> droppedElements(const pugi::xml_document& document) {
+    // An element whose children are still to be checked: its path, and whether the path starts
+    // at a measure.
+    struct Pending {
+        pugi::xml_node element;
+        std::string path;
+        bool inMeasure;
+    };
+    std::map<std::string, int> counts;
+    std::vector<Pending> pending = {{document.document_element(), "", false}};
+    while (!pending.empty()) {
+        const Pending current = pending.back();
+        pending.pop_back();
+        const std::set<std::string>& held =
+            current.inMeasure ? heldInMeasures() : heldOutsideMeasures();
+        const bool everyChildHeld = held.count(current.path + "/*") > 0;
+        for (const pugi::xml_node child : current.element.children()) {
+            if (child.type() != pugi::node_element) {
+                continue;
+            }
+            const std::string path =
+                current.path.empty() ? child.name() : current.path + "/" + child.name();
+            if (!current.inMeasure && path == "part/measure") {
+                pending.push_back({child, "", true});
+            } else if (current.inMeasure && reportedInMeasures().count(path) > 0) {
+                continue;
+            } else if (everyChildHeld || held.count(path) > 0) {
+                pending.push_back({child, path, current.inMeasure});
+            } else {
+                counts[path]++;
+            }
+        }
+    }
+
+    std::vector<ImportIssue> issues;
+    for (const auto& entry : counts) {
+        const std::string count = std::to_string(entry.second);
+        issues.push_back(makeIssue("ELEMENT_NOT_MODELLED", IssueLocation{}, entry.first, count, "",
+                                   "'" + entry.first +
+                                       "' is not held by the model and is dropped on export (" +
+                                       count + " in the file)."));
+    }
+    return issues;
 }
 
 std::string importSummary(const std::string& fileName, const std::vector<ImportIssue>& issues) {

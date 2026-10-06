@@ -4,6 +4,7 @@
 #include <vector>
 
 #include "maiacore/import-issue.h"
+#include "pugi/pugixml.hpp"
 
 namespace maiacore::detail {
 
@@ -35,6 +36,13 @@ const std::vector<IssueCode>& issueCatalogue();
 ImportIssue makeIssue(const std::string& code, const IssueLocation& location,
                       const std::string& element, const std::string& found, const std::string& used,
                       const std::string& message);
+
+// One "dropped" record, ELEMENT_NOT_MODELLED, per element path of 'document' outside the closed
+// element list -- the elements the model holds -- in path order, its count in 'found'. Paths are
+// matched whole, because names such as <type> and <staff> mean different things in different
+// places; an element outside the list is counted once, with everything in it. Inside a measure
+// the path starts at the measure ("note/lyric"), elsewhere at the root ("credit").
+std::vector<ImportIssue> droppedElements(const pugi::xml_document& document);
 
 // The line printed after a load whose report is not empty, without its line break:
 // "[maiacore] <file>: <n> corrections, <m> element types not modelled (dropped on export); see

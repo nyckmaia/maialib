@@ -1430,6 +1430,10 @@ void Score::loadXMLFile(const std::string& filePath) {
                             _importIssues);
     }
 
+    // The elements outside the closed element list, once per path, after the corrections.
+    const std::vector<ImportIssue> dropped = maiacore::detail::droppedElements(_doc);
+    _importIssues.insert(_importIssues.end(), dropped.begin(), dropped.end());
+
     if (!_importIssues.empty()) {
         std::cout << maiacore::detail::importSummary(_fileName, _importIssues) << std::endl;
     }

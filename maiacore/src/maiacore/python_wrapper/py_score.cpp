@@ -163,6 +163,12 @@ void ScoreClass(const py::module& m) {
         of a ``<time-modification>`` that is not a positive whole number is read as 1
         (``TUPLET_CLAMPED``).
 
+        An element the model does not hold -- one outside the closed element list, matched by its
+        path, so that a ``<staff>`` in a ``<direction>`` is not a note's ``<staff>`` -- is dropped
+        with everything in it, and dropped again on export. The report has one ``"dropped"``
+        record per such path (``ELEMENT_NOT_MODELLED``), after the corrections, with the number of
+        such elements in the file as ``found``.
+
         Parameters
         ----------
         filePath : str

@@ -1121,6 +1121,62 @@ TEST(ScoreImportReport, TheReportIsCopiedKeptThroughEditsAndEmptiedByClear) {
     EXPECT_EQ(copy.getImportIssues(), report);
 }
 
+namespace {
+// The record of an element outside the closed element list.
+ImportIssue notModelled(const std::string& element, const std::string& count) {
+    ImportIssue issue;
+    issue.code = "ELEMENT_NOT_MODELLED";
+    issue.kind = "dropped";
+    issue.element = element;
+    issue.found = count;
+    issue.message = "'" + element + "' is not held by the model and is dropped on export (" +
+                    count + " in the file).";
+    return issue;
+}
+
+// The (code, element) of each record of a score's report.
+std::vector<std::pair<std::string, std::string>> codesAndElements(const Score& score) {
+    std::vector<std::pair<std::string, std::string>> records;
+    for (const ImportIssue& issue : score.getImportIssues()) {
+        records.emplace_back(issue.code, issue.element);
+    }
+    return records;
+}
+}  // namespace
+
+// Each element path outside the closed element list is one "dropped" record, after the
+// corrections, with its count; the summary counts the paths.
+TEST(ScoreImportReport, DroppedElementsAreRecordedOncePerPathWithTheirCount) {
+    StdoutCapture capture;
+    Score score("./test/xml_examples/unit_test/import_report_dropped.musicxml");
+    EXPECT_EQ(score.getImportIssues(),
+              (std::vector<ImportIssue>{
+                  notModelled("direction", "1"), notModelled("identification/encoding", "1"),
+                  notModelled("movement-title", "1"), notModelled("note/lyric", "2"),
+                  notModelled("note/notations/fermata", "1"),
+                  notModelled("part-list/score-part/score-instrument", "1")}));
+    EXPECT_EQ(capture.str(),
+              "[maiacore] import_report_dropped.musicxml: 0 corrections, 6 element types not "
+              "modelled (dropped on export); see Score.getImportIssues()\n");
+}
+
+// A score maialib exported, loaded again, records no correction; its dropped records are the
+// header and part-list elements the writer invents, which the model does not hold.
+TEST(ScoreImportReport, AnExportLoadedAgainRecordsOnlyTheElementsTheWriterInvents) {
+    Score original("./test/xml_examples/unit_test/test_chord.xml");
+    const TemporaryFile exported("export.musicxml", original.toXML());
+    Score again(exported.path());
+    EXPECT_EQ(codesAndElements(again),
+              (std::vector<std::pair<std::string, std::string>>{
+                  {"ELEMENT_NOT_MODELLED", "defaults"},
+                  {"ELEMENT_NOT_MODELLED", "identification/encoding"},
+                  {"ELEMENT_NOT_MODELLED", "identification/rights"},
+                  {"ELEMENT_NOT_MODELLED", "part-list/score-part/part-abbreviation"},
+                  {"ELEMENT_NOT_MODELLED", "part-list/score-part/part-abbreviation-display"},
+                  {"ELEMENT_NOT_MODELLED", "part-list/score-part/part-name-display"},
+                  {"ELEMENT_NOT_MODELLED", "part-list/score-part/score-instrument"}}));
+}
+
 // A title, a composer and a part name whose bytes are not UTF-8 are held with U+FFFD in place of
 // each invalid byte: their getters return them to Python, which decodes them as UTF-8.
 TEST(ScoreImportReport, NamesThatAreNotUtf8AreHeldAsValidUtf8) {
@@ -1938,7 +1994,7 @@ TEST(ScoreTransposeCorrection, aForPartIsDroppedWithARecord) {
             "<for-part> is not modelled and is dropped; the notes of a concert score are "
             "written at concert pitch.")});
     EXPECT_EQ(capture.str(),
-              "[maiacore] transpose_for_part.musicxml: 0 corrections, 1 element types not "
+              "[maiacore] transpose_for_part.musicxml: 0 corrections, 2 element types not "
               "modelled (dropped on export); see Score.getImportIssues()\n");
 }
 
