@@ -437,13 +437,13 @@ void ScoreClass(const py::module& m) {
         their events are the same notes and rests at the same exact positions relative to their
         first sounding note (quarter tones included) and have the same durations, exactly; of
         equal windows the first, in line order, is kept. Each pattern is then searched as the
-        list overload of ``findMelodyPatternDataFrame`` searches it -- so a pattern finds at
-        least its own window -- and kept when it has at least ``minOccurrences`` matches. At the
-        default thresholds of 1 a match is an exact repetition of the pattern, transposed or not,
-        and the default ``minOccurrences=2`` keeps the patterns that repeat: the Beethoven 5
-        sample, 13,675 notes, gives 2,164 patterns and 489,196 rows. Lower thresholds
-        also count close variants, and can give millions of rows for such a score. The GIL is
-        released while the patterns are searched.
+        list overload of ``findMelodyPatternDataFrame`` searches it -- so, with the default
+        comparison, a pattern finds at least its own window -- and kept when it has at least
+        ``minOccurrences`` matches. At the default thresholds of 1 a match is an exact
+        repetition of the pattern, transposed or not, and the default ``minOccurrences=2`` keeps
+        the patterns that repeat: the Beethoven 5 sample, 13,675 notes, gives 2,164 patterns and
+        489,196 rows. Lower thresholds also count close variants, and can give millions of rows
+        for such a score. The GIL is released while the patterns are searched.
 
         Parameters
         ----------
@@ -466,10 +466,11 @@ void ScoreClass(const py::module& m) {
         -------
         pandas.DataFrame
             One row per match of a kept pattern: ``patternIdx`` (int, the kept pattern's number,
-            in line order of its first window) and ``patternPitches`` (list of str, the pattern's written pitches,
-            ``"rest"`` for a rest), followed by the columns of ``findMelodyPatternDataFrame``;
-            sorted by ``patternIdx``, then as ``findMelodyPatternDataFrame`` sorts. An empty
-            DataFrame, with every column and its dtype, when no pattern is kept.
+            in line order of its first window) and ``patternPitches`` (list of str, the
+            pattern's written pitches, ``"rest"`` for a rest), followed by the columns of
+            ``findMelodyPatternDataFrame``; sorted by ``patternIdx``, then as
+            ``findMelodyPatternDataFrame`` sorts. An empty DataFrame, with every column and its
+            dtype, when no pattern is kept.
 
         Raises
         ------

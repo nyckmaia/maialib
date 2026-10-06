@@ -678,8 +678,9 @@ class Score {
      *          first sounding note (quarter tones included) and have the same durations, exactly;
      *          of equal windows the first, in line order, is kept. Each pattern is then searched
      *          as the list overload of findMelodyPattern() searches it, and kept when it has at
-     *          least minOccurrences matches, its own window included. At the default thresholds
-     *          of 1 a match is an exact repetition, transposed or not.
+     *          least minOccurrences matches, its own window included with the default
+     *          comparison. At the default thresholds of 1 a match is an exact repetition,
+     *          transposed or not.
      * @param patternNumNotes Number of events in each pattern: at least 2.
      * @param intervalSimilarityThreshold Minimum interval similarity of a match (default 1).
      * @param rhythmSimilarityThreshold Minimum rhythm similarity of a match (default 1).

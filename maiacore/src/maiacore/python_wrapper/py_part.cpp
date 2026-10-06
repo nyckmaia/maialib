@@ -73,10 +73,9 @@ void PartClass(const py::module& m) {
         It changes the notes in place, as an edit through ``Measure.getNote()`` (a live
         reference) or ``Score.forEachNote`` does one note at a time. Every note is checked
         before any changes, so the call changes all of them or none. An export -> import keeps
-        the pair only when it is
-        the conventional one for its chromatic interval (or the diminished-fifth tritone);
-        another pair is read back corrected (same sound, conventional spelling) with a
-        ``[transpose-pair-corrected]`` warning.
+        the pair only when it is the conventional one for its chromatic interval (or the
+        diminished-fifth tritone); another pair is read back corrected (same sound,
+        conventional spelling) with a ``[transpose-pair-corrected]`` warning.
 
         Parameters
         ----------

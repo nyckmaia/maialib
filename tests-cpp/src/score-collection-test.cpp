@@ -138,7 +138,6 @@ TEST(ScoreCollectionConstructor, DiscoveryIgnoresCaseSortsAndRecursesOnRequest) 
 }
 
 TEST(ScoreCollectionConstructor, EmptyDirectoryList) {
-    std::vector<std::string> empty_dirs;
     ScoreCollection collection(std::vector<std::string>{});
 
     EXPECT_EQ(collection.getNumDirectories(), 0);

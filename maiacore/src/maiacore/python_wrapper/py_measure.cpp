@@ -99,6 +99,14 @@ void MeasureClass(const py::module& m) {
             R"pbdoc(
         Insert a new note of the given pitch into a staff of the measure, as
         ``addNote(Note(pitchClass), staveId, position)`` does.
+
+        Raises
+        ------
+        IndexError
+            If ``staveId`` is not a staff of the measure, or ``position`` is past the end of the
+            staff; the measure is unchanged.
+        RuntimeError
+            If ``pitchClass`` is not a pitch ``Note`` accepts; the measure is unchanged.
     )pbdoc");
     cls.def("addNote",
             py::overload_cast<const std::vector<std::string>&, const int, int>(&Measure::addNote),
@@ -106,6 +114,14 @@ void MeasureClass(const py::module& m) {
             R"pbdoc(
         Insert new notes of the given pitches into a staff of the measure, in list order, as
         ``addNote([Note(p) for p in pitchClassVec], staveId, position)`` does.
+
+        Raises
+        ------
+        IndexError
+            If ``staveId`` is not a staff of the measure, or ``position`` is past the end of the
+            staff; the measure is unchanged.
+        RuntimeError
+            If a pitch of ``pitchClassVec`` is not one ``Note`` accepts; the measure is unchanged.
     )pbdoc");
 
     cls.def("removeNote", &Measure::removeNote, py::arg("noteId"), py::arg("staveId") = 0,
@@ -231,6 +247,11 @@ void MeasureClass(const py::module& m) {
         staveId : int, optional
             Stave index (default: 0).
 
+        Returns
+        -------
+        Note
+            The sounding note at ``noteOnId`` among those of ``staveId``.
+
         Raises
         ------
         IndexError
@@ -253,6 +274,11 @@ void MeasureClass(const py::module& m) {
             Index among the rests of the stave, in ``0 .. getNumNotesOff(staveId) - 1``.
         staveId : int, optional
             Stave index (default: 0).
+
+        Returns
+        -------
+        Note
+            The rest at ``noteOffId`` among those of ``staveId``.
 
         Raises
         ------
