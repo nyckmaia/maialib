@@ -95,7 +95,9 @@ void ScoreCollection::setDirectoriesPaths(const std::vector<std::string>& direct
     std::vector<Score> scores;
     for (const auto& directoryFiles : files) {
         for (const std::filesystem::path& file : directoryFiles) {
-            LOG_INFO("Loading: " << file.filename().string());
+            // Logged as UTF-8, which Python's redirected stdout requires: the ANSI code page form
+            // of a name with an accented letter is not valid UTF-8.
+            LOG_INFO("Loading: " << file.filename().u8string());
             scores.emplace_back(file.string());
         }
     }

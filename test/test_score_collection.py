@@ -40,6 +40,19 @@ def fileNames(collection):
     return [score.getFileName() for score in collection.getScores()]
 
 
+def runChild(code):
+    """Run the Python source 'code' in a child process, from this directory, so that a crash of
+    the interpreter shows as the child's exit code instead of ending the test run."""
+    return subprocess.run(
+        [sys.executable, "-c", code],
+        cwd=HERE,
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=120,
+    )
+
+
 def twoScores():
     """A collection of the two small fixtures, the last-window one titled B, the other A."""
     collection = ml.ScoreCollection()
@@ -115,12 +128,28 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
             "        pass\n"
             "print('RESULT', c.getNumScores())\n"
         )
-        completed = subprocess.run(
-            [sys.executable, "-c", code], capture_output=True, encoding="utf-8", timeout=120
-        )
+        completed = runChild(code)
         self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
         results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
         self.assertEqual(results, ["RESULT 1"])
+
+    def test_a_non_ascii_file_name_does_not_crash_the_interpreter(self):
+        """Run in a child process: logging the name of a file such as 'canção.xml'
+        must not end the interpreter. The file either loads or raises RuntimeError."""
+        code = (
+            "import os, shutil, tempfile\n"
+            "import maialib as ml\n"
+            "with tempfile.TemporaryDirectory() as directory:\n"
+            f"    shutil.copyfile({LAST_WINDOW!r}, os.path.join(directory, 'can\u00e7\u00e3o.xml'))\n"
+            "    try:\n"
+            "        print('RESULT loaded', ml.ScoreCollection(directory).getNumScores())\n"
+            "    except RuntimeError:\n"
+            "        print('RESULT RuntimeError')\n"
+        )
+        completed = runChild(code)
+        self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
+        results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
+        self.assertIn(results, (["RESULT loaded 1"], ["RESULT RuntimeError"]))
 
 
 class ScoreCollectionMelodySearchTestCase(unittest.TestCase):
@@ -131,8 +160,9 @@ class ScoreCollectionMelodySearchTestCase(unittest.TestCase):
         self.assertEqual(list(table.index), [0, 1, 2, 3, 4])
 
     def test_the_list_overload_adds_the_pattern_index_first(self):
-        """Both patterns match in both scores, so the rows sort by title, then pattern, then
-        measure, unlike the pattern-by-pattern order the search gives them in."""
+        """Both patterns match in both scores, so the search's pattern-by-pattern order differs
+        from the table's: the binding sorts the rows stably by title, and the pattern and measure
+        order within a title follow from the order of the per-score results."""
         patterns = [[ml.Note("C4"), ml.Note("D4")], [ml.Note("E4"), ml.Note("F#4")]]
         table = twoScores().findMelodyPatternDataFrame(patterns, 1.0, 1.0)
         self.assertEqual(list(table.columns), ["patternIdx"] + SCORE_COLUMNS + MATCH_COLUMNS)

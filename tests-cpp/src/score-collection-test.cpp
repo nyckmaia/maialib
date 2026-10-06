@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -190,6 +191,24 @@ TEST(ScoreCollectionDirectories, AFailedReloadChangesNothing) {
     ScoreCollection collection(BACH_DIR);
 
     EXPECT_THROW(collection.setDirectoriesPaths({BEETHOVEN_DIR, "missing"}), std::runtime_error);
+
+    EXPECT_EQ(collection.getDirectoriesPaths(), (std::vector<std::string>{BACH_DIR}));
+    EXPECT_EQ(fileNamesOf(collection),
+              (std::vector<std::string>{"cello_suite_1_violin.xml", "prelude_1_BWV_846.xml"}));
+}
+
+// A file that fails to load, after one that loads, leaves the collection as it was too.
+TEST(ScoreCollectionDirectories, AFileThatFailsToLoadChangesNothing) {
+    TemporaryDirectory directory;
+    directory.addCopy(LAST_WINDOW, "a.xml");
+    std::ofstream(directory.path() / "b.xml") << "not a score";
+    ScoreCollection collection(BACH_DIR);
+
+    {
+        StdoutCapture quiet;
+        EXPECT_THROW(collection.setDirectoriesPaths({directory.path().string()}),
+                     std::runtime_error);
+    }
 
     EXPECT_EQ(collection.getDirectoriesPaths(), (std::vector<std::string>{BACH_DIR}));
     EXPECT_EQ(fileNamesOf(collection),
