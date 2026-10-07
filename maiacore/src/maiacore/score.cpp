@@ -16,6 +16,7 @@
 #include <locale>
 #include <map>
 #include <memory>
+#include <new>
 #include <optional>
 #include <set>
 #include <sstream>
@@ -746,7 +747,20 @@ Score::Score(const std::string& filePath)
       _haveAnacrusisMeasure(false) {
     // Instrumentor::Instance().beginSession("TEST");
     // PROFILE_FUNCTION();
-    loadXMLFile(filePath);
+    try {
+        loadXMLFile(filePath);
+    } catch (const std::bad_alloc&) {
+        throw;
+    } catch (const std::exception& error) {
+        // A message can quote the file's text, whose bytes need not be UTF-8, and Python cannot
+        // raise one that is not: such a message becomes valid UTF-8, with U+FFFD in place of each
+        // invalid byte, in a std::runtime_error. Any other exception goes on unchanged.
+        const std::string message = maiacore::detail::validUtf8(error.what());
+        if (message != error.what()) {
+            throw std::runtime_error(message);
+        }
+        throw;
+    }
     // Instrumentor::Instance().endSession();
 }
 

@@ -596,6 +596,21 @@ class ScoreImportReportTestCase(unittest.TestCase):
         self.assertEqual(score.getTitle(), "Sonata \ufffd")
         self.assertEqual(score.getPartsNames(), ["M\ufffdsica"])
 
+    def test_an_error_quoting_text_that_is_not_utf8_is_a_runtime_error(self):
+        """A <step> whose byte is not UTF-8 ends the load with a RuntimeError whose message holds
+        U+FFFD in place of the byte."""
+        with open("./xml_examples/unit_test/quarter_tone_tartini.xml", "rb") as source:
+            data = source.read()
+        self.assertIn(b"<step>C</step>", data)
+        data = data.replace(b"<step>C</step>", b"<step>\xe9</step>")
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "latin1-step.xml")
+            with open(path, "wb") as target:
+                target.write(data)
+            with self.assertRaises(RuntimeError) as raised:
+                ml.Score(path)
+        self.assertIn("\ufffd", str(raised.exception))
+
     def test_an_alter_that_is_not_utf8_does_not_end_the_interpreter(self):
         """Run in a child process, whose standard output is a pipe: a message quoting bytes
         that are not UTF-8 must not end the process. The record holds U+FFFD in their place."""

@@ -18,6 +18,7 @@
 #include <utility>
 #include <vector>
 
+#include "import-report.h"
 #include "maiacore/helper.h"
 #include "maiacore/note.h"
 #include "maiacore/part.h"
@@ -1194,6 +1195,23 @@ TEST(ScoreFatalInput, AFileThatIsNotWellFormedXmlGivesTheParsersDescriptionAndOf
 TEST(ScoreFatalInput, AFileThatCannotBeOpenedIsNamed) {
     EXPECT_EQ(thrownFirstLine([] { Score score("./test/xml_examples/missing.xml"); }),
               "[maiacore] Score: cannot open './test/xml_examples/missing.xml'");
+}
+
+// An error whose message quotes text of the file that is not UTF-8 -- a Latin-1 <step> -- is a
+// std::runtime_error whose message is valid UTF-8, with U+FFFD in place of the invalid byte.
+TEST(ScoreFatalInput, AMessageQuotingTextThatIsNotUtf8IsValidUtf8) {
+    const TemporaryFile file(
+        "latin1-step.musicxml",
+        minimalScore("<note><pitch><step>\xE9</step><octave>4</octave></pitch><duration>4"
+                     "</duration><voice>1</voice><type>whole</type></note>"));
+    std::string message;
+    try {
+        Score score(file.path());
+    } catch (const std::runtime_error& error) {
+        message = error.what();
+    }
+    EXPECT_EQ(maiacore::detail::validUtf8(message), message);
+    EXPECT_NE(message.find("\xEF\xBF\xBD"), std::string::npos);
 }
 
 // An .mxl that is not a zip archive -- a plain MusicXML file, or a file too short to be one --

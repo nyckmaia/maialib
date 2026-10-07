@@ -187,7 +187,8 @@ void ScoreClass(const py::module& m) {
             description and the byte offset where it stopped); an ``.mxl`` is not a readable
             archive (the file and the problem: not a zip archive, no ``META-INF/container.xml``,
             no rootfile named, the rootfile not in the archive or not well-formed XML); or the
-            document lacks the MusicXML part and measure elements.
+            document lacks the MusicXML part and measure elements. A message that quotes text
+            of the file holds U+FFFD in place of each byte that is not UTF-8.
 
         Examples
         --------
