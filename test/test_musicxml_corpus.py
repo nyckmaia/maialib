@@ -4,6 +4,7 @@ The slow files (marked in the ledger) run only under `make corpus`.
 """
 
 import contextlib
+import importlib.util
 import io
 import json
 import os
@@ -287,6 +288,65 @@ class LedgerLogicTestCase(unittest.TestCase):
         self.assertEqual(
             {SMALL_FILE: {**FINISHED, "load": "IndexError"}}, corpus.updated_ledger(old, actual)
         )
+
+
+def make_corpus():
+    """scripts/make-corpus.py as a module, with scripts/ on the path for its own imports."""
+    scripts = Path(__file__).resolve().parents[1] / "scripts"
+    if str(scripts) not in sys.path:
+        sys.path.insert(0, str(scripts))
+    spec = importlib.util.spec_from_file_location("make_corpus", scripts / "make-corpus.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class MakeCorpusTestCase(unittest.TestCase):
+    """scripts/make-corpus.py's options, with the examination of the files replaced."""
+
+    def run_make_corpus(self, *arguments, results=None, ledger=None):
+        """make-corpus.py's exit status and output, and the ledger it wrote (None when it wrote
+        none), for a run on the in-repository corpus whose examined files give 'results'."""
+        script = make_corpus()
+        written = {}
+        output = io.StringIO()
+        with mock.patch.object(
+            script.corpus, "run_corpus", return_value=results or {}
+        ), mock.patch.object(
+            script.corpus, "load_ledger", return_value=ledger or {}
+        ), mock.patch.object(
+            script.corpus, "write_ledger", side_effect=lambda _, records: written.update(records)
+        ), mock.patch.object(
+            sys, "argv", ["make-corpus.py", "--in-repo-only", *arguments]
+        ), contextlib.redirect_stdout(output):
+            status = script.main()
+        return status, output.getvalue(), written or None
+
+    def test_a_filtered_update_keeps_the_entries_of_the_files_it_left_out(self):
+        status, _, written = self.run_make_corpus(
+            "--update-ledger",
+            "--filter",
+            SMALL_FILE,
+            results={SMALL_FILE: NOTHING_FINISHED},
+            ledger={SMALL_FILE: FINISHED, SLOW_FILE: FINISHED},
+        )
+        self.assertEqual(0, status)
+        self.assertEqual({SMALL_FILE: NOTHING_FINISHED, SLOW_FILE: FINISHED}, written)
+
+    def test_a_filter_that_leaves_no_file_fails(self):
+        for arguments in (["--filter", "no-such-file"], ["--update-ledger", "--filter", "nothing"]):
+            with self.subTest(arguments=arguments):
+                status, printed, written = self.run_make_corpus(*arguments)
+                self.assertEqual(1, status)
+                self.assertIn("No corpus file is left to examine.", printed)
+                self.assertIsNone(written)
+
+    def test_fewer_than_one_worker_is_refused(self):
+        for workers in ("0", "-2", "two"):
+            with self.subTest(workers=workers), contextlib.redirect_stderr(io.StringIO()):
+                with self.assertRaises(SystemExit) as raised:
+                    self.run_make_corpus("--filter", "no-such-file", "--workers", workers)
+                self.assertEqual(2, raised.exception.code)
 
 
 class WorkerStagesTestCase(unittest.TestCase):

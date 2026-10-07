@@ -100,9 +100,9 @@ network access, and `musicxml_check.py` needs only lxml.
 - Both take options through `CORPUS_ARGS`, e.g. `make corpus CORPUS_ARGS="--skip-slow --workers 4"`:
   `--in-repo-only` leaves out the external corpus, `--skip-slow` the files of 10 MB or more, and
   `--filter SUBSTRING` every file whose repository-relative path does not contain `SUBSTRING`;
-  `--workers N` examines N files at once (default: half the CPUs, at least 2). A run that leaves
-  files out compares, or writes, only the lines of the files it examined, and skips the round
-  trip.
+  `--workers N` examines N files at once (N at least 1; default: half the CPUs, at least 2). A
+  run that leaves files out compares, or writes, only the lines of the files it examined, and
+  skips the round trip; one that leaves every file out fails.
 - `make corpus-fetch` downloads OpenScore Lieder and String Quartets (CC0) at pinned commits;
   `make corpus` then includes them. On Windows it fails with "Filename too long" when the path of
   the repository's root is longer than 66 characters: the deepest OpenScore file adds 193 more,
@@ -112,6 +112,7 @@ network access, and `musicxml_check.py` needs only lxml.
   `fuzz-regressions/`, minimised where possible. Options go through `FUZZ_ARGS`, e.g.
   `make fuzz FUZZ_ARGS="--seed 7 --cases 1000"` (also `--minutes`, `--timeout`, `--per-outcome`).
   `make fuzz FUZZ_ARGS="--accept"` is the acceptance test: it lists each case whose outcome is
-  worth minimising and exits 1 when there is one; without `--accept` the run only reports.
+  worth minimising, and the script exits 1, so that make fails, when there is one; without
+  `--accept` the run only reports.
 - `python test/musicxml/musicxml_check.py FILE...` validates files; `python
   test/musicxml/dump_score.py SCORE [OUTPUT]` dumps a score.

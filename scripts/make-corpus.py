@@ -10,8 +10,9 @@ review the diff before committing it. Both need maialib installed (`make dev`).
 Options go through CORPUS_ARGS, e.g. `make corpus CORPUS_ARGS="--skip-slow --workers 4"`:
 --in-repo-only leaves out the external corpus, --skip-slow the files of 10 MB or more, and
 --filter SUBSTRING every file whose repository-relative path does not contain SUBSTRING; --workers
-sets how many files are examined at once. A run that leaves files out compares, or updates, only
-the files it examined, and does not run the round trip.
+sets how many files are examined at once, at least 1. A run that leaves files out compares, or
+updates, only the files it examined, and does not run the round trip; one that leaves every file
+out fails.
 """
 
 import argparse
@@ -24,6 +25,17 @@ from terminal_colors import color
 sys.path.insert(0, str(REPO_ROOT / "test" / "musicxml"))
 
 import corpus  # noqa: E402
+
+
+def positive_int(text: str) -> int:
+    """argparse type: a whole number of at least 1."""
+    try:
+        value = int(text)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"{text!r} is not a whole number") from None
+    if value < 1:
+        raise argparse.ArgumentTypeError(f"{value} is less than 1")
+    return value
 
 
 def main() -> int:
@@ -40,7 +52,7 @@ def main() -> int:
     )
     parser.add_argument(
         "--workers",
-        type=int,
+        type=positive_int,
         default=None,
         help=f"files examined at once (default {corpus.default_workers()})",
     )
@@ -49,11 +61,13 @@ def main() -> int:
     if not arguments.in_repo_only:
         corpora.append((corpus.EXTERNAL_LEDGER, corpus.external_files()))
     failed = False
+    examined = 0
     partial = arguments.skip_slow or arguments.filter is not None
     for ledger, every_file in corpora:
         files = corpus.select(every_file, arguments.filter, arguments.skip_slow)
         if not files:
             continue
+        examined += len(files)
         print(
             f"{color.OKGREEN}Examining {len(files)} files for {ledger.name}...{color.ENDC}",
             flush=True,
@@ -74,6 +88,9 @@ def main() -> int:
         for problem in problems:
             print(f"{color.FAIL}{problem}{color.ENDC}")
         failed = failed or bool(problems)
+    if examined == 0:
+        print(f"{color.FAIL}No corpus file is left to examine.{color.ENDC}")
+        return 1
     if not arguments.update_ledger and not failed and not partial:
         # `make py-tests` skips the slow corpus files; their <transpose> round trip runs here,
         # once the corpus matches its ledgers, so that a ledger difference is always reported.
