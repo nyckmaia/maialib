@@ -1259,6 +1259,63 @@ TEST(ScoreFatalInput, AnArchiveWithACommentLoads) {
     EXPECT_EQ(commented.getNumNotes(), plain.getNumNotes());
 }
 
+// ====================
+// Unicode paths
+// ====================
+
+namespace {
+// The bytes of a file.
+std::string fileContent(const std::string& path) {
+    std::ifstream in(path, std::ios::binary);
+    std::stringstream content;
+    content << in.rdbuf();
+    return content.str();
+}
+}  // namespace
+
+// A UTF-8 path with characters outside every ANSI code page opens, uncompressed and compressed,
+// and the score keeps its name and path as UTF-8.
+TEST(ScoreUnicodePath, ANonAsciiPathLoadsAndKeepsItsNameAsUtf8) {
+    const std::string name = "can\xC3\xA7\xC3\xA3o \xE6\x97\xA5\xE6\x9C\xAC";
+    const TemporaryFile xml(name + ".xml",
+                            fileContent("./test/xml_examples/unit_test/quarter_tone_tartini.xml"));
+    const TemporaryFile mxl(name + ".mxl",
+                            fileContent("./test/xml_examples/unit_test/test_compressed_file.mxl"));
+    for (const TemporaryFile* file : {&xml, &mxl}) {
+        StdoutCapture quiet;
+        Score score(file->path());
+        EXPECT_GT(score.getNumNotes(), 0) << file->path();
+        EXPECT_EQ(score.getFilePath(), file->path());
+        EXPECT_EQ(score.getFileName(), name + file->path().substr(file->path().size() - 4));
+    }
+}
+
+// An .mxl archive is recognised by its extension in any case: SCORE.MXL loads, and TEXT.MXL,
+// which holds MusicXML text, is refused as an archive that is not a zip archive.
+TEST(ScoreUnicodePath, AnUppercaseMxlExtensionIsReadAsAnArchive) {
+    const TemporaryFile file("SCORE.MXL",
+                             fileContent("./test/xml_examples/unit_test/test_compressed_file.mxl"));
+    {
+        StdoutCapture quiet;
+        Score score(file.path());
+        EXPECT_GT(score.getNumNotes(), 0);
+    }
+    const TemporaryFile text("TEXT.MXL",
+                             fileContent("./test/xml_examples/unit_test/quarter_tone_tartini.xml"));
+    EXPECT_EQ(thrownFirstLine([&text] { Score score(text.path()); }),
+              "[maiacore] Score: '" + text.path() +
+                  "' is not a readable MusicXML archive: it is not a zip archive");
+}
+
+// A zip archive is also recognised by the signature its bytes start with, "PK", whatever its name.
+TEST(ScoreUnicodePath, AZipArchiveNamedXmlIsReadAsAnArchive) {
+    const TemporaryFile file("score.xml",
+                             fileContent("./test/xml_examples/unit_test/test_compressed_file.mxl"));
+    StdoutCapture quiet;
+    Score score(file.path());
+    EXPECT_GT(score.getNumNotes(), 0);
+}
+
 // A title, a composer and a part name whose bytes are not UTF-8 are held with U+FFFD in place of
 // each invalid byte: their getters return them to Python, which decodes them as UTF-8.
 TEST(ScoreImportReport, NamesThatAreNotUtf8AreHeldAsValidUtf8) {

@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cctype>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -126,9 +127,17 @@ ImportIssue ignoredTranspose(const TransposeElement& element, const IssueLocatio
                          "force.");
 }
 
-// The bytes of the file at 'path', or std::nullopt when it cannot be opened.
+// The bytes of the file at 'path', a UTF-8 path, or std::nullopt when it cannot be opened -- a
+// path that is not UTF-8 included. The file is opened through std::filesystem::path, which is a
+// wide-character path on Windows, so the ANSI code page does not limit the names it can open.
 std::optional<std::vector<unsigned char>> fileBytes(const std::string& path) {
-    std::ifstream stream(path, std::ios::binary);
+    std::filesystem::path file;
+    try {
+        file = std::filesystem::u8path(path);
+    } catch (const std::exception&) {
+        return std::nullopt;
+    }
+    std::ifstream stream(file, std::ios::binary);
     if (!stream) {
         return std::nullopt;
     }
@@ -818,7 +827,10 @@ void Score::loadXMLFile(const std::string& filePath) {
         return;
     }
 
-    const std::string fileExtension = filePath.substr(filePath.size() - 3, filePath.size());
+    // The extension, in lowercase.
+    std::string extension = filePath.substr(filePath.size() - 4);
+    std::transform(extension.begin(), extension.end(), extension.begin(),
+                   [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     // The path as messages quote it.
     const std::string shownPath = "'" + maiacore::detail::validUtf8(filePath) + "'";
@@ -827,7 +839,10 @@ void Score::loadXMLFile(const std::string& filePath) {
         LOG_ERROR("Score: cannot open " + shownPath);
     }
 
-    if (fileExtension == "mxl") {
+    // A file named .mxl, in any case, is read as an archive, and so is any file that starts with
+    // the zip signature "PK"; any other file is read as MusicXML text.
+    const bool zipSignature = bytes->size() >= 2 && (*bytes)[0] == 'P' && (*bytes)[1] == 'K';
+    if (extension == ".mxl" || zipSignature) {
         const auto [document, rootfile] = mxlRootfile(*bytes, shownPath);
         const pugi::xml_parse_result result = _doc.load_buffer(document.data(), document.size());
         if (!result) {

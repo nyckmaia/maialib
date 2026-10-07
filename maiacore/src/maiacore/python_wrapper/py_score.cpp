@@ -12,11 +12,13 @@
 #include "maiacore/measure.h"
 #include "maiacore/score.h"
 #include "nlohmann/json.hpp"
+#include "py_console.h"
 #include "py_melody_dataframe.h"
 #include "pybind11_json/pybind11_json.hpp"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
+using maiacore_python::ConsoleRedirect;
 using maiacore_python::MelodyDataFrame;
 
 namespace {
@@ -108,10 +110,13 @@ void ScoreClass(const py::module& m) {
             py::arg("numMeasures") = 20,
             py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>());
 
-    cls.def(py::init<const std::string&>(), py::arg("filePath"),
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+    cls.def(py::init<const std::string&>(), py::arg("filePath"), py::call_guard<ConsoleRedirect>(),
             R"pbdoc(
-        Load a score from a MusicXML file (``.xml``, ``.musicxml`` or compressed ``.mxl``).
+        Load a score from a MusicXML file (``.xml``, ``.musicxml`` or compressed ``.mxl``, the
+        extension in any case; a file that starts with the zip signature ``PK`` is read as an
+        archive whatever its name). Any path opens on every platform, whatever its characters, and
+        ``getFileName()`` and ``getFilePath()`` return it as given. What the load prints goes to
+        ``sys.stdout``; a character the stream cannot encode is written as a backslash escape.
 
         A note's accidental is read from its ``<accidental>`` element first -- where a quarter
         tone lives -- then from the decimal ``<alter>`` value, and is natural otherwise.

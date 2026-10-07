@@ -382,14 +382,13 @@ class WorkerProcessTestCase(unittest.TestCase):
         self.assertEqual("ok", record["load"])
 
     def test_a_file_whose_path_is_not_ascii_has_the_record_of_its_content(self):
-        # maialib cannot open a path with a character outside ASCII on Windows, where these
-        # loads succeed only through the worker's ASCII-named copy. On Linux maialib opens such a
-        # path itself, so there the test passes with or without the copy.
+        # maialib opens such a path itself on every platform, a name outside the Windows ANSI
+        # code page included; the worker loads the file from its own path.
         ledger = corpus.load_ledger(corpus.LEDGER)
         environmental = entries_a_bare_process_leaves()
         for name in LOADABLE_FILES:
             with self.subTest(name=name), tempfile.TemporaryDirectory() as folder:
-                path = Path(folder) / ("partitura_\u00e9" + Path(name).suffix)
+                path = Path(folder) / ("partitura_\u00e9_\u65e5\u672c" + Path(name).suffix)
                 shutil.copyfile(str(corpus.REPO_ROOT / name), str(path))
                 temporary = Path(folder) / "temporary"
                 temporary.mkdir()
@@ -403,8 +402,8 @@ class WorkerProcessTestCase(unittest.TestCase):
                 self.assertEqual("ok", record["load"])
                 self.assertEqual([], corpus.compare({name: ledger[name]}, {name: record}))
                 # The worker ends without an error and leaves none of its own entries in its
-                # temporary directory, where it made the copy; entries that any new process gets
-                # there from its environment are not the worker's.
+                # temporary directory; entries that any new process gets there from its
+                # environment are not the worker's.
                 self.assertEqual(0, done.returncode, done.stderr.decode("utf-8", "replace"))
                 left = sorted(set(os.listdir(str(temporary))) - environmental)
                 self.assertEqual([], left)

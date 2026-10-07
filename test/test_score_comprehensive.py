@@ -9,6 +9,7 @@ import contextlib
 import io
 import locale
 import os
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -431,6 +432,85 @@ class ScoreQuarterToneReadTestCase(unittest.TestCase):
 
         self.assertEqual(readBack, pitches)
         self.assertEqual(correctionCodes(reread), [])
+
+
+class ScoreUnicodePathTestCase(unittest.TestCase):
+    """Paths with characters outside the ANSI code page, and the console that cannot print them."""
+
+    NAME = "can\u00e7\u00e3o \u65e5\u672c"
+
+    def test_a_non_ascii_path_loads_and_keeps_its_name(self):
+        sources = {
+            ".xml": "./xml_examples/unit_test/quarter_tone_tartini.xml",
+            ".mxl": "./xml_examples/unit_test/test_compressed_file.mxl",
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            for suffix, source in sources.items():
+                with self.subTest(suffix=suffix):
+                    path = os.path.join(directory, self.NAME + suffix)
+                    shutil.copyfile(source, path)
+                    with contextlib.redirect_stdout(io.StringIO()):
+                        score = ml.Score(path)
+                    self.assertGreater(score.getNumNotes(), 0)
+                    self.assertEqual(score.getFileName(), self.NAME + suffix)
+                    self.assertEqual(score.getFilePath(), path)
+
+    def test_an_uppercase_mxl_extension_is_read_as_an_archive(self):
+        """SCORE.MXL loads; TEXT.MXL, which holds MusicXML text, is refused as an archive."""
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "SCORE.MXL")
+            shutil.copyfile("./xml_examples/unit_test/test_compressed_file.mxl", path)
+            with contextlib.redirect_stdout(io.StringIO()):
+                score = ml.Score(path)
+            self.assertGreater(score.getNumNotes(), 0)
+            text = os.path.join(directory, "TEXT.MXL")
+            shutil.copyfile("./xml_examples/unit_test/quarter_tone_tartini.xml", text)
+            with self.assertRaises(RuntimeError) as raised:
+                ml.Score(text)
+            self.assertEqual(
+                str(raised.exception).splitlines()[0],
+                f"[maiacore] Score: '{text}' is not a readable MusicXML archive: it is not a zip "
+                "archive",
+            )
+
+    def test_a_zip_archive_named_xml_is_read_as_an_archive(self):
+        """An archive is also recognised by the zip signature its bytes start with, "PK"."""
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "score.xml")
+            shutil.copyfile("./xml_examples/unit_test/test_compressed_file.mxl", path)
+            with contextlib.redirect_stdout(io.StringIO()):
+                score = ml.Score(path)
+            self.assertGreater(score.getNumNotes(), 0)
+
+    def test_a_name_the_console_cannot_encode_does_not_end_the_interpreter(self):
+        """Run in a child process whose standard output is ASCII: the summary line names the file,
+        which the stream cannot encode; it is written with backslash escapes."""
+        code = (
+            "import os, shutil, tempfile\n"
+            "import maialib as ml\n"
+            "with tempfile.TemporaryDirectory() as directory:\n"
+            "    path = os.path.join(directory, '\\u65e5\\u672c.xml')\n"
+            "    shutil.copyfile('./xml_examples/unit_test/"
+            "unrepresentable_alter_near_quarter_tone.xml', path)\n"
+            "    score = ml.Score(path)\n"
+            "    print('RESULT', ascii(score.getFileName()))\n"
+        )
+        completed = subprocess.run(
+            [sys.executable, "-c", code],
+            cwd=os.path.dirname(os.path.abspath(__file__)),
+            capture_output=True,
+            encoding="ascii",
+            errors="replace",
+            env={**os.environ, "PYTHONIOENCODING": "ascii"},
+            timeout=60,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
+        self.assertEqual(resultLine(completed), "RESULT '\\u65e5\\u672c.xml'")
+        self.assertIn(
+            "[maiacore] \\u65e5\\u672c.xml: 1 corrections, 0 element types not modelled "
+            "(dropped on export); see Score.getImportIssues()",
+            completed.stdout,
+        )
 
 
 class ScoreImportReportTestCase(unittest.TestCase):

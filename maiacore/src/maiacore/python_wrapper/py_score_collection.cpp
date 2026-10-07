@@ -10,10 +10,12 @@
 #include <vector>
 
 #include "maiacore/score_collection.h"
+#include "py_console.h"
 #include "py_melody_dataframe.h"
 
 namespace py = pybind11;
 using namespace pybind11::literals;
+using maiacore_python::ConsoleRedirect;
 using maiacore_python::MelodyDataFrame;
 
 void ScoreCollectionClass(const py::module& m) {
@@ -26,8 +28,7 @@ void ScoreCollectionClass(const py::module& m) {
     )pbdoc");
 
     cls.def(py::init<const std::string&, const bool>(), py::arg("directoryPath"),
-            py::arg("recursive") = false,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            py::arg("recursive") = false, py::call_guard<ConsoleRedirect>(),
             R"pbdoc(
         Create a collection of the MusicXML files of a directory, as ``setDirectoriesPaths``
         loads them.
@@ -46,8 +47,7 @@ void ScoreCollectionClass(const py::module& m) {
     )pbdoc");
 
     cls.def(py::init<const std::vector<std::string>&, const bool>(), py::arg("directoriesPaths"),
-            py::arg("recursive") = false,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            py::arg("recursive") = false, py::call_guard<ConsoleRedirect>(),
             R"pbdoc(
         Create a collection of the MusicXML files of several directories, as
         ``setDirectoriesPaths`` loads them.
@@ -68,16 +68,16 @@ void ScoreCollectionClass(const py::module& m) {
     cls.def("getDirectoriesPaths", &ScoreCollection::getDirectoriesPaths);
     cls.def("setDirectoriesPaths", &ScoreCollection::setDirectoriesPaths,
             py::arg("directoriesPaths"), py::arg("recursive") = false,
-            py::call_guard<py::scoped_ostream_redirect, py::scoped_estream_redirect>(),
+            py::call_guard<ConsoleRedirect>(),
             R"pbdoc(
         Replace the collection's directories and scores with those of the given directories.
 
         Every file whose extension is ``.xml``, ``.mxl`` or ``.musicxml``, compared without
-        regard to case, is loaded, directory by directory in the given order and, within a
-        directory, in sorted path order; subdirectories only when ``recursive`` is True. Every
-        path is checked before anything is loaded, and the collection changes only when every
-        file has loaded. Scores added with ``addScore`` are replaced too. A subdirectory the user
-        has no permission to read is skipped.
+        regard to case, whatever the characters of its name, is loaded, directory by directory
+        in the given order and, within a directory, in sorted path order; subdirectories only
+        when ``recursive`` is True. Every path is checked before anything is loaded, and the
+        collection changes only when every file has loaded. Scores added with ``addScore`` are
+        replaced too. A subdirectory the user has no permission to read is skipped.
 
         Parameters
         ----------

@@ -39,9 +39,8 @@ depends on the compiler. `make corpus-update-ledger` keeps the alternatives whil
 one of them, and their note while any are kept, so alternatives never narrow by themselves: once
 their cause is fixed, prune them, and the note, by hand.
 
-A file whose path has a character outside ASCII is loaded by maialib from an ASCII-named temporary
-copy, because maialib cannot open such a path on Windows: the ledger records what maialib makes of
-the MusicXML content, whatever the file's name. The validator reads the file itself.
+maialib and the validator read every file from its own path, whatever characters it holds: the
+ledger records what maialib does with the real file, on every platform.
 
 The ledger is strict both ways: a file that gets worse fails, and so does a file that gets better
 without a ledger update. `make corpus-update-ledger` writes the current results; review its diff

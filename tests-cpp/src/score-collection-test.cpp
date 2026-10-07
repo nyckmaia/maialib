@@ -43,10 +43,14 @@ class TemporaryDirectory {
 
     const std::filesystem::path& path() const { return _path; }
 
-    // Copies a score into the directory as 'name', which may name a subdirectory.
+    // The directory's path in UTF-8, as ScoreCollection takes it.
+    std::string utf8() const { return _path.u8string(); }
+
+    // Copies a score into the directory as 'name', UTF-8, which may name a subdirectory.
     void addCopy(const std::string& source, const std::string& name) const {
-        std::filesystem::create_directories((_path / name).parent_path());
-        std::filesystem::copy_file(source, _path / name);
+        const std::filesystem::path target = _path / std::filesystem::u8path(name);
+        std::filesystem::create_directories(target.parent_path());
+        std::filesystem::copy_file(source, target);
     }
 
    private:
@@ -126,7 +130,7 @@ TEST(ScoreCollectionConstructor, DiscoveryIgnoresCaseSortsAndRecursesOnRequest) 
     directory.addCopy(LAST_WINDOW, "B.XML");
     directory.addCopy(LAST_WINDOW, "notes.txt");
     directory.addCopy(LAST_WINDOW, "sub/d.xml");
-    const std::string path = directory.path().string();
+    const std::string path = directory.utf8();
 
     StdoutCapture quiet;
     EXPECT_EQ(fileNamesOf(ScoreCollection(path)),
@@ -135,6 +139,22 @@ TEST(ScoreCollectionConstructor, DiscoveryIgnoresCaseSortsAndRecursesOnRequest) 
               (std::vector<std::string>{"B.XML", "a.xml", "c.MusicXML", "d.xml"}));
     EXPECT_EQ(fileNamesOf(ScoreCollection(std::vector<std::string>{path}, true)),
               (std::vector<std::string>{"B.XML", "a.xml", "c.MusicXML", "d.xml"}));
+}
+
+// Files whose names have characters outside every ANSI code page load, and keep their names and
+// paths as UTF-8.
+TEST(ScoreCollectionConstructor, ANonAsciiFileNameLoadsWithItsUtf8Name) {
+    TemporaryDirectory directory;
+    const std::string portuguese = "can\xC3\xA7\xC3\xA3o.xml";
+    const std::string japanese = "\xE6\x97\xA5\xE6\x9C\xAC.xml";
+    directory.addCopy(LAST_WINDOW, japanese);
+    directory.addCopy(LAST_WINDOW, portuguese);
+
+    StdoutCapture quiet;
+    const ScoreCollection collection(directory.utf8());
+    EXPECT_EQ(fileNamesOf(collection), (std::vector<std::string>{portuguese, japanese}));
+    EXPECT_EQ(collection.getScores().at(1).getFilePath(),
+              (directory.path() / std::filesystem::u8path(japanese)).u8string());
 }
 
 TEST(ScoreCollectionConstructor, EmptyDirectoryList) {

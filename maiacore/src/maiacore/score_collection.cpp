@@ -9,6 +9,7 @@
 #include <utility>
 #include <vector>
 
+#include "import-report.h"
 #include "maiacore/log.h"
 #include "melodic-lines.h"
 
@@ -42,33 +43,35 @@ std::filesystem::path readNext(const std::filesystem::recursive_directory_iterat
     return it->path().parent_path();
 }
 
-// The MusicXML files of 'directory' (and of its subdirectories at any depth when 'recursive'),
-// in sorted path order. A subdirectory the user has no permission to read is skipped; 'directory'
-// itself must be readable. Every failure is reported in English, naming the directory that could
-// not be read -- the caller's own string for 'directory', the UTF-8 form of a subdirectory's
-// path: the messages of std::filesystem's own exceptions are localised, and Python cannot always
-// decode them.
+// The MusicXML files of 'directory', a UTF-8 path (and of its subdirectories at any depth when
+// 'recursive'), in sorted path order. A subdirectory the user has no permission to read is
+// skipped; 'directory' itself must be readable. Every failure is reported in English, naming the
+// directory that could not be read -- the caller's own string for 'directory', the UTF-8 form of
+// a subdirectory's path: the messages of std::filesystem's own exceptions are localised, and
+// Python cannot always decode them.
 template <typename Iterator>
 std::vector<std::filesystem::path> musicXMLFilesOf(const std::string& directory) {
-    const std::filesystem::path directoryPath(directory);
+    const std::filesystem::path directoryPath = std::filesystem::u8path(directory);
     std::error_code error;
     // Opened once without skip_permission_denied, which would make a 'directory' the user cannot
     // read look empty.
     const std::filesystem::directory_iterator probe(directoryPath, error);
     if (error) {
-        LOG_ERROR("ScoreCollection: cannot read the directory '" + directory + "'");
+        LOG_ERROR("ScoreCollection: cannot read the directory '" +
+                  maiacore::detail::validUtf8(directory) + "'");
     }
 
     std::vector<std::filesystem::path> files;
-    std::string failed = directory;
-    for (Iterator it(directory, std::filesystem::directory_options::skip_permission_denied, error);
+    std::string failed = maiacore::detail::validUtf8(directory);
+    for (Iterator it(directoryPath, std::filesystem::directory_options::skip_permission_denied,
+                     error);
          !error && it != Iterator(); it.increment(error)) {
         std::error_code typeError;
         if (it->is_regular_file(typeError) && isMusicXMLFile(it->path())) {
             files.push_back(it->path());
         }
         const std::filesystem::path next = readNext(it);
-        failed = (next == directoryPath) ? directory : next.u8string();
+        failed = (next == directoryPath) ? maiacore::detail::validUtf8(directory) : next.u8string();
     }
     if (error) {
         LOG_ERROR("ScoreCollection: cannot read the directory '" + failed + "'");
@@ -79,9 +82,17 @@ std::vector<std::filesystem::path> musicXMLFilesOf(const std::string& directory)
 
 std::vector<std::filesystem::path> musicXMLFiles(const std::string& directory,
                                                  const bool recursive) {
-    std::error_code error;
-    if (!std::filesystem::is_directory(directory, error)) {
-        LOG_ERROR("ScoreCollection: '" + directory + "' is not a directory, or does not exist");
+    // A path that is not UTF-8 names no directory.
+    bool isDirectory = false;
+    try {
+        std::error_code error;
+        isDirectory = std::filesystem::is_directory(std::filesystem::u8path(directory), error);
+    } catch (const std::exception&) {
+        isDirectory = false;
+    }
+    if (!isDirectory) {
+        LOG_ERROR("ScoreCollection: '" + maiacore::detail::validUtf8(directory) +
+                  "' is not a directory, or does not exist");
     }
     return recursive ? musicXMLFilesOf<std::filesystem::recursive_directory_iterator>(directory)
                      : musicXMLFilesOf<std::filesystem::directory_iterator>(directory);
@@ -132,7 +143,7 @@ void ScoreCollection::setDirectoriesPaths(const std::vector<std::string>& direct
             // of a name with an accented letter is not valid UTF-8.
             LOG_INFO("Loading: " << file.filename().u8string());
             try {
-                scores.emplace_back(file.string());
+                scores.emplace_back(file.u8string());
             } catch (const std::exception& loadError) {
                 throw std::runtime_error(file.u8string() + ": " + loadError.what());
             }

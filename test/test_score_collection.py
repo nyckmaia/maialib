@@ -42,9 +42,10 @@ def fileNames(collection):
     return [score.getFileName() for score in collection.getScores()]
 
 
-def runChild(code):
+def runChild(code, environment=None):
     """Run the Python source 'code' in a child process, from this directory, so that a crash of
-    the interpreter shows as the child's exit code instead of ending the test run."""
+    the interpreter shows as the child's exit code instead of ending the test run; 'environment'
+    adds variables to the child's environment."""
     return subprocess.run(
         [sys.executable, "-c", code],
         cwd=HERE,
@@ -52,6 +53,7 @@ def runChild(code):
         encoding="utf-8",
         errors="replace",
         timeout=120,
+        env={**os.environ, **(environment or {})},
     )
 
 
@@ -84,16 +86,6 @@ def unreadable(path):
         yield
     finally:
         restore()
-
-
-def fileNamesAreUtf8():
-    """Whether Score keeps a file name as UTF-8. It keeps the name in the ANSI code page, which
-    is UTF-8 everywhere except on Windows with a code page other than 65001."""
-    if os.name != "nt":
-        return True
-    import ctypes
-
-    return ctypes.windll.kernel32.GetACP() == 65001
 
 
 def twoScores():
@@ -231,36 +223,27 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
         results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
         self.assertEqual(results, ["RESULT 1"])
 
-    def test_a_non_ascii_file_name_does_not_crash_the_interpreter(self):
-        """Run in a child process: logging the name of a file such as 'canção.xml'
-        must not end the interpreter. The file either loads or raises RuntimeError.
-
-        A search of the loaded collection builds its fileName column from the name in the ANSI
-        code page: it succeeds where that is UTF-8, and raises UnicodeDecodeError on Windows
-        with another code page. This pins the current behaviour of non-ASCII paths, which are
-        not supported yet, so that a change to it is noticed."""
+    def test_non_ascii_file_names_load_with_their_utf8_names(self):
+        """Run in a child process whose standard output is ASCII: 'canção.xml' and '日本.xml'
+        load, keep their names as UTF-8, and name the search's rows; the "Loading:" lines that
+        name them are written with backslash escapes."""
         code = (
             "import os, shutil, tempfile\n"
             "import maialib as ml\n"
             "with tempfile.TemporaryDirectory() as directory:\n"
-            f"    shutil.copyfile({LAST_WINDOW!r}, os.path.join(directory, 'can\u00e7\u00e3o.xml'))\n"
-            "    try:\n"
-            "        collection = ml.ScoreCollection(directory)\n"
-            "        print('RESULT loaded', collection.getNumScores())\n"
-            "    except RuntimeError:\n"
-            "        print('RESULT RuntimeError')\n"
-            "    else:\n"
-            "        try:\n"
-            "            collection.findMelodyPatternDataFrame([ml.Note('C4'), ml.Note('D4')])\n"
-            "            print('RESULT searched')\n"
-            "        except UnicodeDecodeError:\n"
-            "            print('RESULT UnicodeDecodeError')\n"
+            "    for name in ('can\\u00e7\\u00e3o.xml', '\\u65e5\\u672c.xml'):\n"
+            f"        shutil.copyfile({LAST_WINDOW!r}, os.path.join(directory, name))\n"
+            "    collection = ml.ScoreCollection(directory)\n"
+            "    table = collection.findMelodyPatternDataFrame([ml.Note('C4'), ml.Note('D4')])\n"
+            "    names = [score.getFileName() for score in collection.getScores()]\n"
+            "    print('RESULT', ascii(names), ascii(sorted(set(table['fileName']))))\n"
         )
-        completed = runChild(code)
+        completed = runChild(code, {"PYTHONIOENCODING": "ascii"})
         self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
+        names = "['can\\xe7\\xe3o.xml', '\\u65e5\\u672c.xml']"
         results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
-        search = "RESULT searched" if fileNamesAreUtf8() else "RESULT UnicodeDecodeError"
-        self.assertIn(results, (["RESULT loaded 1", search], ["RESULT RuntimeError"]))
+        self.assertEqual(results, [f"RESULT {names} {names}"])
+        self.assertIn("Loading: \\u65e5\\u672c.xml", completed.stdout)
 
 
 class ScoreCollectionMelodySearchTestCase(unittest.TestCase):

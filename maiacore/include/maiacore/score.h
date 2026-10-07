@@ -99,7 +99,10 @@ class Score {
 
     /**
      * @brief Constructs a new Score object by loading a MusicXML file.
-     * @details Supported formats: *.xml, *.musicxml, *.mxl (compressed).
+     * @details Supported formats: *.xml, *.musicxml, *.mxl (compressed; the extension in any
+     *          case, or any file that starts with the zip signature "PK"). The path is UTF-8, and
+     *          any name opens on every platform: on Windows the file is opened through a
+     *          wide-character path, whatever the ANSI code page.
      *
      *          A note's accidental is read from its `<accidental>` element first, then from the
      *          decimal `<alter>` value, and is natural otherwise. `<alter>` is parsed with a '.'
@@ -157,7 +160,7 @@ class Score {
      *          dropped with everything in it, and dropped again on export. The report has one
      *          "dropped" record per such path (ELEMENT_NOT_MODELLED), after the corrections, with
      *          the number of such elements in the file as `found`.
-     * @param filePath Path to the MusicXML file.
+     * @param filePath Path to the MusicXML file, in UTF-8.
      * @throws std::runtime_error If the path is too short to name a file; the file cannot be
      *         opened ("Score: cannot open '<path>'"); it is not well-formed XML (pugixml's
      *         description and the byte offset where it stopped); an `.mxl` is not a readable
@@ -360,13 +363,14 @@ class Score {
     bool isValid(void) const;
 
     /**
-     * @brief Returns the file path of the loaded MusicXML file.
+     * @brief Returns the file path of the loaded MusicXML file, as it was given (UTF-8).
      * @return File path string.
      */
     std::string getFilePath() const;
 
     /**
-     * @brief Returns the file name of the loaded MusicXML file.
+     * @brief Returns the file name of the loaded MusicXML file: its path after the last '/' or
+     *        '\\' (UTF-8).
      * @return File name string.
      */
     std::string getFileName() const;
