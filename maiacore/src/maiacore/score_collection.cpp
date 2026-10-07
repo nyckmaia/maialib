@@ -4,6 +4,7 @@
 #include <cctype>
 #include <filesystem>
 #include <iostream>
+#include <new>
 #include <stdexcept>
 #include <string>
 #include <system_error>
@@ -106,6 +107,9 @@ void loadInto(const std::string& path, std::vector<Score>& scores,
               std::vector<std::pair<std::string, std::string>>& errors) {
     try {
         scores.emplace_back(path);
+    } catch (const std::bad_alloc&) {
+        // Running out of memory is not a fault of the file: the whole load fails.
+        throw;
     } catch (const std::exception& error) {
         const std::string message = error.what();
         errors.emplace_back(maiacore::detail::validUtf8(path),

@@ -208,12 +208,19 @@ TEST(ScoreCollectionDirectories, SetDirectoriesReloads) {
 // A directory that cannot be loaded leaves the collection as it was.
 TEST(ScoreCollectionDirectories, AFailedReloadChangesNothing) {
     ScoreCollection collection(BACH_DIR);
+    {
+        StdoutCapture quiet;
+        collection.addScore("./missing.xml");
+    }
+    const std::vector<std::pair<std::string, std::string>> errors = collection.getLoadErrors();
+    ASSERT_EQ(errors.size(), 1u);
 
     EXPECT_THROW(collection.setDirectoriesPaths({BEETHOVEN_DIR, "missing"}), std::runtime_error);
 
     EXPECT_EQ(collection.getDirectoriesPaths(), (std::vector<std::string>{BACH_DIR}));
     EXPECT_EQ(fileNamesOf(collection),
               (std::vector<std::string>{"cello_suite_1_violin.xml", "prelude_1_BWV_846.xml"}));
+    EXPECT_EQ(collection.getLoadErrors(), errors);
 }
 
 namespace {

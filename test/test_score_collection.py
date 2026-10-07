@@ -256,6 +256,19 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
             ["Beethoven_quartet_133.xml", "Beethoven_quartet_Op133.xml", "Symphony_5th_1Mov.xml"],
         )
 
+    def test_a_failed_reload_keeps_the_scores_and_the_load_errors(self):
+        collection = ml.ScoreCollection()
+        with contextlib.redirect_stdout(io.StringIO()):
+            collection.addScore([LAST_WINDOW, "./missing.xml"])
+        errors = collection.getLoadErrors()
+        self.assertEqual(len(errors), 1)
+
+        with self.assertRaises(RuntimeError):
+            collection.setDirectoriesPaths([BACH, "no-such-directory"])
+        self.assertEqual(fileNames(collection), ["melody_last_window.musicxml"])
+        self.assertEqual(collection.getNumDirectories(), 0)
+        self.assertEqual(collection.getLoadErrors(), errors)
+
     def test_remove_score_outside_the_collection_raises_index_error(self):
         """Run in a child process: an unchecked negative index crashes the interpreter."""
         code = (
@@ -296,6 +309,75 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
         results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
         self.assertEqual(results, [f"RESULT {names} {names}"])
         self.assertIn("Loading: \\u65e5\\u672c.xml", completed.stdout)
+
+
+class ConsoleRedirectTestCase(unittest.TestCase):
+    """The loading methods write to Python's sys.stdout; a stream that fails cannot end the
+    interpreter or change what the call does. Each test runs in a child process, where a crash
+    shows as the exit code."""
+
+    PRINTS = os.path.join(UNIT_TEST, "unrepresentable_alter_near_quarter_tone.xml")
+
+    def test_a_stream_that_raises_value_error_drops_the_text(self):
+        code = (
+            "import sys\n"
+            "import maialib as ml\n"
+            "class Closed:\n"
+            "    encoding = 'utf-8'\n"
+            "    def write(self, text):\n"
+            "        raise ValueError('I/O operation on closed file.')\n"
+            "    def flush(self):\n"
+            "        raise ValueError('I/O operation on closed file.')\n"
+            "standard = sys.stdout\n"
+            "sys.stdout = Closed()\n"
+            "collection = ml.ScoreCollection()\n"
+            "collection.addScore('./missing.xml')\n"
+            f"score = ml.Score({self.PRINTS!r})\n"
+            "sys.stdout = standard\n"
+            "print('RESULT', collection.getNumScores(), collection.getLoadErrors(),\n"
+            "      len(score.getImportIssues()))\n"
+        )
+        completed = runChild(code)
+        self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
+        results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
+        self.assertEqual(
+            results,
+            ["RESULT 0 [('./missing.xml', \"[maiacore] Score: cannot open './missing.xml'\")] 1"],
+        )
+
+    def test_a_stream_that_raises_keyboard_interrupt_interrupts_after_the_call(self):
+        """The interrupt is raised once the call has returned with its whole result, and once."""
+        code = (
+            "import sys\n"
+            "import maialib as ml\n"
+            "class Interrupting:\n"
+            "    encoding = 'utf-8'\n"
+            "    def write(self, text):\n"
+            "        raise KeyboardInterrupt\n"
+            "    def flush(self):\n"
+            "        pass\n"
+            "standard = sys.stdout\n"
+            "sys.stdout = Interrupting()\n"
+            "outcomes = []\n"
+            "collection = ml.ScoreCollection()\n"
+            "for call in (lambda: collection.addScore('./missing.xml'),\n"
+            f"             lambda: ml.Score({self.PRINTS!r})):\n"
+            "    try:\n"
+            "        call()\n"
+            "        for _ in range(1000):\n"
+            "            pass\n"
+            "        outcomes.append('not interrupted')\n"
+            "    except KeyboardInterrupt:\n"
+            "        outcomes.append('interrupted')\n"
+            "    for _ in range(1000):\n"
+            "        pass\n"
+            "sys.stdout = standard\n"
+            "print('RESULT', outcomes, collection.getNumScores(), len(collection.getLoadErrors()))\n"
+        )
+        completed = runChild(code)
+        self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
+        results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
+        self.assertEqual(results, ["RESULT ['interrupted', 'interrupted'] 0 1"])
 
 
 class ScoreCollectionMelodySearchTestCase(unittest.TestCase):
