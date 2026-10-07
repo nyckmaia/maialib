@@ -75,9 +75,10 @@ void ScoreCollectionClass(const py::module& m) {
         Every file whose extension is ``.xml``, ``.mxl`` or ``.musicxml``, compared without
         regard to case, whatever the characters of its name, is loaded, directory by directory
         in the given order and, within a directory, in sorted path order; subdirectories only
-        when ``recursive`` is True. Every path is checked before anything is loaded, and the
-        collection changes only when every file has loaded. Scores added with ``addScore`` are
-        replaced too. A subdirectory the user has no permission to read is skipped.
+        when ``recursive`` is True. Every directory is checked and listed before anything is
+        loaded or changed. A file that fails to load is skipped: ``getLoadErrors()`` lists it, and
+        one line says how many files failed. Scores added with ``addScore`` are replaced too. A
+        subdirectory the user has no permission to read is skipped.
 
         Parameters
         ----------
@@ -90,20 +91,61 @@ void ScoreCollectionClass(const py::module& m) {
         ------
         RuntimeError
             If a path does not exist or is not a directory, or a directory cannot be read: the
-            message names the path that failed, a given path or one of its subdirectories. If a
-            file fails to load: the message is the file's path, ``": "`` and the message of
-            the load's error. The collection is unchanged.
+            message names the path that failed, a given path or one of its subdirectories. The
+            collection is unchanged.
     )pbdoc");
 
     cls.def("addDirectory", &ScoreCollection::addDirectory, py::arg("directoryPath"));
 
     cls.def("addScore", py::overload_cast<const Score&>(&ScoreCollection::addScore),
-            py::arg("score"));
+            py::arg("score"), py::call_guard<ConsoleRedirect>(), R"pbdoc(
+        Add a copy of a score to the collection.
+    )pbdoc");
     cls.def("addScore", py::overload_cast<const std::string&>(&ScoreCollection::addScore),
-            py::arg("filePath"));
+            py::arg("filePath"), py::call_guard<ConsoleRedirect>(), R"pbdoc(
+        Load a score from a file and add it to the collection.
+
+        A file that fails to load is skipped: ``getLoadErrors()`` lists it, and one line says so.
+        What the load prints goes to ``sys.stdout``.
+
+        Parameters
+        ----------
+        filePath : str
+            Path to a MusicXML file.
+    )pbdoc");
     cls.def("addScore",
             py::overload_cast<const std::vector<std::string>&>(&ScoreCollection::addScore),
-            py::arg("filePaths"));
+            py::arg("filePaths"), py::call_guard<ConsoleRedirect>(), R"pbdoc(
+        Load scores from files and add them to the collection, in order.
+
+        Each file that fails to load is skipped: ``getLoadErrors()`` lists it, and one line says
+        how many files failed. What the loads print goes to ``sys.stdout``.
+
+        Parameters
+        ----------
+        filePaths : list of str
+            Paths to MusicXML files.
+    )pbdoc");
+
+    cls.def("getLoadErrors", &ScoreCollection::getLoadErrors, R"pbdoc(
+        Return the files that failed to load in the collection's last load: the constructor,
+        ``setDirectoriesPaths`` or ``addScore`` with paths.
+
+        A load in which every file loaded empties the list; the other methods leave it as it is.
+
+        Returns
+        -------
+        list of tuple of (str, str)
+            Each failure's file path and the first line of its error's message, in load order.
+
+        Examples
+        --------
+        >>> collection = ml.ScoreCollection()
+        >>> collection.addScore("missing.xml")
+        [maiacore] ScoreCollection: 1 of 1 files failed to load; see ScoreCollection.getLoadErrors()
+        >>> collection.getLoadErrors()
+        [('missing.xml', "[maiacore] Score: cannot open 'missing.xml'")]
+    )pbdoc");
 
     cls.def("clear", &ScoreCollection::clear);
     cls.def("getNumDirectories", &ScoreCollection::getNumDirectories);

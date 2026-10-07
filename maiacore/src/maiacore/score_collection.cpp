@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <cctype>
 #include <filesystem>
+#include <iostream>
 #include <stdexcept>
 #include <string>
 #include <system_error>
@@ -98,6 +99,29 @@ std::vector<std::filesystem::path> musicXMLFiles(const std::string& directory,
                      : musicXMLFilesOf<std::filesystem::directory_iterator>(directory);
 }
 
+// Loads the score at 'path', UTF-8, into 'scores'. A file that fails to load is skipped: its path
+// and the first line of the error's message -- what went wrong, without the source location and
+// stack trace LOG_ERROR adds -- go to 'errors', as valid UTF-8.
+void loadInto(const std::string& path, std::vector<Score>& scores,
+              std::vector<std::pair<std::string, std::string>>& errors) {
+    try {
+        scores.emplace_back(path);
+    } catch (const std::exception& error) {
+        const std::string message = error.what();
+        errors.emplace_back(maiacore::detail::validUtf8(path),
+                            maiacore::detail::validUtf8(message.substr(0, message.find('\n'))));
+    }
+}
+
+// The line that says how many of a load's files failed, printed when any did.
+void printLoadErrors(const std::vector<std::pair<std::string, std::string>>& errors,
+                     const size_t numFiles) {
+    if (!errors.empty()) {
+        std::cout << "[maiacore] ScoreCollection: " << errors.size() << " of " << numFiles
+                  << " files failed to load; see ScoreCollection.getLoadErrors()" << std::endl;
+    }
+}
+
 // The rows of 'table', a search of 'score', with the score's file name, composer and title.
 void appendRows(const Score& score, const Score::MelodyPatternTable& table,
                 ScoreCollection::MelodyPatternTable* rows) {
@@ -137,20 +161,26 @@ void ScoreCollection::setDirectoriesPaths(const std::vector<std::string>& direct
     }
 
     std::vector<Score> scores;
+    std::vector<std::pair<std::string, std::string>> errors;
+    size_t numFiles = 0;
     for (const auto& directoryFiles : files) {
         for (const std::filesystem::path& file : directoryFiles) {
-            // Logged as UTF-8, which Python's redirected stdout requires: the ANSI code page form
-            // of a name with an accented letter is not valid UTF-8.
-            LOG_INFO("Loading: " << file.filename().u8string());
-            try {
-                scores.emplace_back(file.u8string());
-            } catch (const std::exception& loadError) {
-                throw std::runtime_error(file.u8string() + ": " + loadError.what());
-            }
+            // Logged as valid UTF-8, which Python's redirected stdout requires: the ANSI code page
+            // form of a name with an accented letter is not UTF-8, nor are the bytes of a name on
+            // a file system that does not hold names in UTF-8.
+            LOG_INFO("Loading: " << maiacore::detail::validUtf8(file.filename().u8string()));
+            loadInto(file.u8string(), scores, errors);
+            numFiles++;
         }
     }
     _directoriesPaths = directoriesPaths;
     _scores = std::move(scores);
+    _loadErrors = std::move(errors);
+    printLoadErrors(_loadErrors, numFiles);
+}
+
+std::vector<std::pair<std::string, std::string>> ScoreCollection::getLoadErrors() const {
+    return _loadErrors;
 }
 
 void ScoreCollection::addDirectory(const std::string& directoryPath) {
@@ -159,12 +189,17 @@ void ScoreCollection::addDirectory(const std::string& directoryPath) {
 
 void ScoreCollection::addScore(const Score& score) { _scores.push_back(score); }
 
-void ScoreCollection::addScore(const std::string& filePath) { addScore(Score(filePath)); }
+void ScoreCollection::addScore(const std::string& filePath) {
+    addScore(std::vector<std::string>{filePath});
+}
 
 void ScoreCollection::addScore(const std::vector<std::string>& filePaths) {
-    for (const auto& fp : filePaths) {
-        addScore(fp);
+    std::vector<std::pair<std::string, std::string>> errors;
+    for (const std::string& filePath : filePaths) {
+        loadInto(filePath, _scores, errors);
     }
+    _loadErrors = std::move(errors);
+    printLoadErrors(_loadErrors, filePaths.size());
 }
 
 void ScoreCollection::clear() { _scores.clear(); }

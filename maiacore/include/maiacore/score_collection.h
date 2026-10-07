@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "maiacore/score.h"
@@ -66,15 +67,16 @@ class ScoreCollection {
      *        directories.
      * @details Loads every file whose extension is `.xml`, `.mxl` or `.musicxml`, compared
      *          without regard to case, directory by directory in the given order and, within a
-     *          directory, in sorted path order. Every path is checked before anything is loaded,
-     *          and the collection changes only when every file has loaded. A subdirectory the
+     *          directory, in sorted path order. Every directory is checked and listed before
+     *          anything is loaded or changed. A file that fails to load is skipped: it is listed
+     *          by getLoadErrors(), and one line says how many files failed. A subdirectory the
      *          user has no permission to read is skipped.
-     * @param directoriesPaths The directories; an empty list empties the collection.
+     * @param directoriesPaths The directories, UTF-8 paths; an empty list empties the
+     *        collection.
      * @param recursive True to load the files of their subdirectories, at any depth, too.
      * @throws std::runtime_error If a path does not exist or is not a directory, or a directory
      *         cannot be read: the message names the path that failed, a given path or one of its
-     *         subdirectories. If a file fails to load: the message is the file's path, ": " and
-     *         the message of the load's error.
+     *         subdirectories, and the collection is unchanged.
      */
     void setDirectoriesPaths(const std::vector<std::string>& directoriesPaths,
                              const bool recursive = false);
@@ -93,15 +95,29 @@ class ScoreCollection {
 
     /**
      * @brief Loads a Score from a file path and adds it to the collection.
-     * @param filePath Path to a MusicXML file.
+     * @details A file that fails to load is skipped and listed by getLoadErrors(), as
+     *          setDirectoriesPaths() lists it.
+     * @param filePath Path to a MusicXML file, in UTF-8.
      */
     void addScore(const std::string& filePath);
 
     /**
-     * @brief Loads multiple Scores from file paths and adds them to the collection.
-     * @param filePaths Vector of MusicXML file paths.
+     * @brief Loads multiple Scores from file paths and adds them to the collection, in order.
+     * @details Each file that fails to load is skipped and listed by getLoadErrors(), as
+     *          setDirectoriesPaths() lists it.
+     * @param filePaths MusicXML file paths, in UTF-8.
      */
     void addScore(const std::vector<std::string>& filePaths);
+
+    /**
+     * @brief The files that failed to load in the collection's last load: the constructor,
+     *        setDirectoriesPaths() or addScore() with paths.
+     * @details Each failure is the file's path and the first line of its error's message, in
+     *          load order; both are valid UTF-8. A load in which every file loaded empties the
+     *          list; the other methods leave it as it is.
+     * @return (path, message) pairs.
+     */
+    std::vector<std::pair<std::string, std::string>> getLoadErrors() const;
 
     /**
      * @brief Removes all scores from the collection; its directories are kept.
@@ -225,4 +241,6 @@ class ScoreCollection {
    private:
     std::vector<std::string> _directoriesPaths;  ///< List of directories containing score files.
     std::vector<Score> _scores;                  ///< Vector of loaded Score objects.
+    /// The files that failed to load in the last load, and why.
+    std::vector<std::pair<std::string, std::string>> _loadErrors;
 };

@@ -216,22 +216,92 @@ TEST(ScoreCollectionDirectories, AFailedReloadChangesNothing) {
               (std::vector<std::string>{"cello_suite_1_violin.xml", "prelude_1_BWV_846.xml"}));
 }
 
-// A file that fails to load, after one that loads, leaves the collection as it was too.
-TEST(ScoreCollectionDirectories, AFileThatFailsToLoadChangesNothing) {
+namespace {
+// The first line of the error that loading a file that is not XML, 'not a score', raises.
+std::string notXml(const std::string& path) {
+    return "[maiacore] Score: '" + path +
+           "' is not well-formed XML: No document element found (byte offset 11)";
+}
+
+// The line a load prints when 'failed' of its 'total' files fail.
+std::string failedLine(const int failed, const int total) {
+    return "[maiacore] ScoreCollection: " + std::to_string(failed) + " of " +
+           std::to_string(total) + " files failed to load; see ScoreCollection.getLoadErrors()\n";
+}
+
+typedef std::vector<std::pair<std::string, std::string>> LoadErrors;
+}  // namespace
+
+// A file that fails to load is skipped and listed with the first line of its error; the files
+// that load replace the collection's scores, and one line says how many failed. A load in which
+// every file loads empties the list.
+TEST(ScoreCollectionDirectories, AFileThatFailsToLoadIsSkippedAndListed) {
     TemporaryDirectory directory;
     directory.addCopy(LAST_WINDOW, "a.xml");
     std::ofstream(directory.path() / "b.xml") << "not a score";
+    const std::string broken = (directory.path() / "b.xml").u8string();
     ScoreCollection collection(BACH_DIR);
+    EXPECT_EQ(collection.getLoadErrors(), LoadErrors{});
 
     {
-        StdoutCapture quiet;
-        EXPECT_THROW(collection.setDirectoriesPaths({directory.path().string()}),
-                     std::runtime_error);
+        StdoutCapture capture;
+        collection.setDirectoriesPaths({directory.utf8()});
+        EXPECT_NE(capture.str().find(failedLine(1, 2)), std::string::npos) << capture.str();
     }
 
-    EXPECT_EQ(collection.getDirectoriesPaths(), (std::vector<std::string>{BACH_DIR}));
+    EXPECT_EQ(collection.getDirectoriesPaths(), (std::vector<std::string>{directory.utf8()}));
+    EXPECT_EQ(fileNamesOf(collection), (std::vector<std::string>{"a.xml"}));
+    EXPECT_EQ(collection.getLoadErrors(), (LoadErrors{{broken, notXml(broken)}}));
+
+    StdoutCapture quiet;
+    collection.setDirectoriesPaths({BACH_DIR});
+    EXPECT_EQ(collection.getLoadErrors(), LoadErrors{});
+}
+
+// addScore() with a path, or with several, skips each file that fails to load and lists it; the
+// list is that of the last load. addScore() with a Score, which loads nothing, leaves it.
+TEST(ScoreCollectionScores, AddScoreSkipsAndListsTheFilesThatFailToLoad) {
+    ScoreCollection collection;
+    StdoutCapture capture;
+
+    collection.addScore("./missing.xml");
+    EXPECT_EQ(collection.getNumScores(), 0);
+    EXPECT_EQ(collection.getLoadErrors(),
+              (LoadErrors{{"./missing.xml", "[maiacore] Score: cannot open './missing.xml'"}}));
+    EXPECT_EQ(capture.str(), failedLine(1, 1));
+
+    collection.addScore(std::vector<std::string>{LAST_WINDOW, "./missing.xml", DUPLICATES});
     EXPECT_EQ(fileNamesOf(collection),
-              (std::vector<std::string>{"cello_suite_1_violin.xml", "prelude_1_BWV_846.xml"}));
+              (std::vector<std::string>{"melody_last_window.musicxml",
+                                        "melody_duplicate_patterns.musicxml"}));
+    EXPECT_EQ(collection.getLoadErrors(),
+              (LoadErrors{{"./missing.xml", "[maiacore] Score: cannot open './missing.xml'"}}));
+
+    collection.addScore(Score({"Piano"}, 1));
+    EXPECT_EQ(collection.getLoadErrors().size(), 1u);
+    collection.addScore(LAST_WINDOW);
+    EXPECT_EQ(collection.getLoadErrors(), LoadErrors{});
+    EXPECT_EQ(collection.getNumScores(), 4);
+}
+
+// A directory whose name and files' names are outside every ANSI code page: its scores load, and
+// the paths of the scores and of the files that fail are UTF-8.
+TEST(ScoreCollectionDirectories, ANonAsciiDirectoryListsItsFailuresInUtf8) {
+    TemporaryDirectory directory;
+    const std::string music = "m\xC3\xBAsicas";
+    const std::string japanese = "\xE6\x97\xA5\xE6\x9C\xAC.xml";
+    directory.addCopy(LAST_WINDOW, music + "/" + japanese);
+    directory.addCopy(LAST_WINDOW, music + "/ruim.xml");
+    const std::filesystem::path folder = directory.path() / std::filesystem::u8path(music);
+    std::ofstream(folder / "ruim.xml", std::ios::trunc) << "not a score";
+    const std::string broken = (folder / "ruim.xml").u8string();
+
+    StdoutCapture quiet;
+    const ScoreCollection collection(folder.u8string());
+    EXPECT_EQ(fileNamesOf(collection), (std::vector<std::string>{japanese}));
+    EXPECT_EQ(collection.getScores().at(0).getFilePath(),
+              (folder / std::filesystem::u8path(japanese)).u8string());
+    EXPECT_EQ(collection.getLoadErrors(), (LoadErrors{{broken, notXml(broken)}}));
 }
 
 TEST(ScoreCollectionDirectories, AddDirectory) {

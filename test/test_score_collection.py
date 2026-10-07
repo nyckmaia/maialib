@@ -2,6 +2,7 @@
 
 import contextlib
 import getpass
+import io
 import os
 import shutil
 import subprocess
@@ -176,7 +177,7 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
             finally:
                 os.rmdir("\\\\?\\" + subdirectory)
 
-    def test_a_file_that_fails_to_load_raises_naming_it_and_changes_nothing(self):
+    def test_a_file_that_fails_to_load_is_skipped_and_listed(self):
         with tempfile.TemporaryDirectory() as directory:
             shutil.copyfile(LAST_WINDOW, os.path.join(directory, "a.xml"))
             broken = os.path.join(directory, "b.xml")
@@ -185,14 +186,65 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
             collection = ml.ScoreCollection()
             collection.addScore(DUPLICATES)
 
-            with self.assertRaises(RuntimeError) as context:
+            printed = io.StringIO()
+            with contextlib.redirect_stdout(printed):
                 collection.setDirectoriesPaths([directory])
-            self.assertTrue(
-                str(context.exception).startswith(f"{broken}: [maiacore] "),
-                str(context.exception).splitlines()[0],
+            self.assertEqual(fileNames(collection), ["a.xml"])
+            self.assertEqual(collection.getDirectoriesPaths(), [directory])
+            self.assertEqual(
+                collection.getLoadErrors(),
+                [
+                    (
+                        broken,
+                        f"[maiacore] Score: '{broken}' is not well-formed XML: No document "
+                        "element found (byte offset 11)",
+                    )
+                ],
             )
-            self.assertEqual(fileNames(collection), ["melody_duplicate_patterns.musicxml"])
-            self.assertEqual(collection.getNumDirectories(), 0)
+            self.assertIn(
+                "[maiacore] ScoreCollection: 1 of 2 files failed to load; see "
+                "ScoreCollection.getLoadErrors()",
+                printed.getvalue(),
+            )
+
+    def test_add_score_by_path_lists_a_failure_and_prints_to_sys_stdout(self):
+        """addScore prints to sys.stdout, which redirect_stdout catches."""
+        collection = ml.ScoreCollection()
+        printed = io.StringIO()
+        with contextlib.redirect_stdout(printed):
+            collection.addScore("./missing.xml")
+            collection.addScore([LAST_WINDOW, "./missing.xml"])
+        self.assertEqual(fileNames(collection), ["melody_last_window.musicxml"])
+        self.assertEqual(
+            collection.getLoadErrors(),
+            [("./missing.xml", "[maiacore] Score: cannot open './missing.xml'")],
+        )
+        self.assertEqual(
+            printed.getvalue().count("files failed to load; see ScoreCollection.getLoadErrors()"),
+            2,
+        )
+
+    def test_a_non_ascii_directory_lists_its_failures_with_utf8_paths(self):
+        """Run in a child process whose standard output is ASCII: a directory 'músicas' holding
+        '日本.xml', which loads, and 'ruim.xml', which does not."""
+        code = (
+            "import os, shutil, tempfile\n"
+            "import maialib as ml\n"
+            "with tempfile.TemporaryDirectory() as directory:\n"
+            "    folder = os.path.join(directory, 'm\\u00fasicas')\n"
+            "    os.makedirs(folder)\n"
+            f"    shutil.copyfile({LAST_WINDOW!r}, os.path.join(folder, '\\u65e5\\u672c.xml'))\n"
+            "    with open(os.path.join(folder, 'ruim.xml'), 'w') as text:\n"
+            "        text.write('not a score')\n"
+            "    collection = ml.ScoreCollection(folder)\n"
+            "    paths = [path for path, _ in collection.getLoadErrors()]\n"
+            "    names = [score.getFileName() for score in collection.getScores()]\n"
+            "    print('RESULT', ascii(names), paths == [os.path.join(folder, 'ruim.xml')])\n"
+        )
+        completed = runChild(code, {"PYTHONIOENCODING": "ascii"})
+        self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
+        results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
+        self.assertEqual(results, ["RESULT ['\\u65e5\\u672c.xml'] True"])
 
     def test_set_directories_paths_replaces_the_scores(self):
         collection = ml.ScoreCollection(BACH)
