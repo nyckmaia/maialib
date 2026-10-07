@@ -2287,6 +2287,8 @@ TEST(ScoreSilentCorrections, ATupletValueThatIsNotPositiveIsRecorded) {
                                "</time-modification>") +
                      quarterC4("<voice>1</voice><time-modification><actual-notes>3</actual-notes>"
                                "<normal-notes>2</normal-notes></time-modification>") +
+                     quarterC4("<voice>1</voice><time-modification><actual-notes>-3</actual-notes>"
+                               "<normal-notes>1</normal-notes></time-modification>") +
                      quarterC4("<voice>1</voice>")));
 
     Score score(file.path());
@@ -2297,7 +2299,11 @@ TEST(ScoreSilentCorrections, ATupletValueThatIsNotPositiveIsRecorded) {
                              "used."),
                   musicIssue("TUPLET_CLAMPED", "1", "note/time-modification/normal-notes", "", "1",
                              "<normal-notes></normal-notes> is not a positive whole number; 1 is "
-                             "used.")}));
+                             "used."),
+                  musicIssue("TUPLET_CLAMPED", "1", "note/time-modification/actual-notes", "-3",
+                             "1",
+                             "<actual-notes>-3</actual-notes> is not a positive whole number; 1 "
+                             "is used.")}));
 }
 
 // ====================

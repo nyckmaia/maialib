@@ -578,6 +578,57 @@ class ScoreImportReportTestCase(unittest.TestCase):
         second = ml.Score(self.DISAGREE).getImportIssues()
         self.assertTrue(first[0] == second[0])
         self.assertIn("ACCIDENTAL_ALTER_MISMATCH", repr(first[0]))
+        other = ml.Score("./xml_examples/unit_test/test_quater_sharp_flat.xml").getImportIssues()
+        self.assertEqual(first[0].code, other[0].code)
+        self.assertFalse(first[0] == other[0])
+        self.assertTrue(first[0] != other[0])
+
+    def test_dropped_records_follow_the_corrections(self):
+        score = ml.Score("./xml_examples/unit_test/test_quater_sharp_flat.xml")
+        self.assertEqual(
+            [
+                (issue.kind, issue.code, issue.element, issue.found, issue.used)
+                for issue in score.getImportIssues()
+            ],
+            [
+                ("corrected", "ACCIDENTAL_ALTER_MISMATCH", "note/pitch/alter", "0", "C1x5"),
+                ("corrected", "ACCIDENTAL_ALTER_MISMATCH", "note/pitch/alter", "1", "C3x5"),
+                ("corrected", "ACCIDENTAL_ALTER_MISMATCH", "note/pitch/alter", "0", "C1b5"),
+                ("corrected", "ACCIDENTAL_ALTER_MISMATCH", "note/pitch/alter", "-1", "C3b5"),
+                ("dropped", "ELEMENT_NOT_MODELLED", "defaults", "1", ""),
+                ("dropped", "ELEMENT_NOT_MODELLED", "identification/encoding", "1", ""),
+                ("dropped", "ELEMENT_NOT_MODELLED", "identification/rights", "1", ""),
+                (
+                    "dropped",
+                    "ELEMENT_NOT_MODELLED",
+                    "part-list/score-part/part-abbreviation",
+                    "1",
+                    "",
+                ),
+                (
+                    "dropped",
+                    "ELEMENT_NOT_MODELLED",
+                    "part-list/score-part/part-abbreviation-display",
+                    "1",
+                    "",
+                ),
+                (
+                    "dropped",
+                    "ELEMENT_NOT_MODELLED",
+                    "part-list/score-part/part-name-display",
+                    "1",
+                    "",
+                ),
+                (
+                    "dropped",
+                    "ELEMENT_NOT_MODELLED",
+                    "part-list/score-part/score-instrument",
+                    "1",
+                    "",
+                ),
+                ("dropped", "ELEMENT_NOT_MODELLED", "print", "1", ""),
+            ],
+        )
 
     def test_names_that_are_not_utf8_are_read_with_replacement_characters(self):
         """A title and a part name whose bytes are not UTF-8 (Latin-1 bytes in a file that
