@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <filesystem>  // Para std::filesystem::absolute
@@ -142,6 +143,36 @@ std::string notWellFormed(const pugi::xml_parse_result& result, const std::strin
            " (byte offset " + std::to_string(result.offset) + ")";
 }
 
+// The zip archive in 'bytes' with its comment and anything after it removed, or std::nullopt when
+// 'bytes' do not hold a complete end-of-central-directory record: the last "PK\x05\x06"
+// signature, the 22-byte record it starts, and the comment whose length the record's last two
+// bytes give (little-endian). miniz-cpp reads that length through signed chars, and copies the
+// comment before it checks the signature or the length, so it is only given an archive without
+// a comment.
+std::optional<std::vector<unsigned char>> withoutComment(const std::vector<unsigned char>& bytes) {
+    constexpr std::size_t kRecordSize = 22;
+    const std::vector<unsigned char> signature = {'P', 'K', 0x05, 0x06};
+    const auto found =
+        std::find_end(bytes.begin(), bytes.end(), signature.begin(), signature.end());
+    if (found == bytes.end()) {
+        return std::nullopt;
+    }
+    const std::size_t record = static_cast<std::size_t>(found - bytes.begin());
+    if (bytes.size() - record < kRecordSize) {
+        return std::nullopt;
+    }
+    const std::size_t commentLength = static_cast<std::size_t>(bytes[record + 20]) |
+                                      (static_cast<std::size_t>(bytes[record + 21]) << 8);
+    if (bytes.size() - record - kRecordSize < commentLength) {
+        return std::nullopt;
+    }
+    std::vector<unsigned char> archive(
+        bytes.begin(), bytes.begin() + static_cast<std::ptrdiff_t>(record + kRecordSize));
+    archive[record + 20] = 0;
+    archive[record + 21] = 0;
+    return archive;
+}
+
 // The MusicXML document of an .mxl archive -- the first rootfile its META-INF/container.xml
 // names -- and the rootfile's name. 'archive' names the archive in the messages, quoted. Throws
 // std::runtime_error when the bytes are not a zip archive, the archive has no
@@ -150,13 +181,13 @@ std::string notWellFormed(const pugi::xml_parse_result& result, const std::strin
 std::pair<std::string, std::string> mxlRootfile(const std::vector<unsigned char>& bytes,
                                                 const std::string& archive) {
     const std::string unreadable = "Score: " + archive + " is not a readable MusicXML archive: ";
-    // The smallest zip archive is its 22-byte end-of-central-directory record.
     std::unique_ptr<miniz_cpp::zip_file> zip;
-    if (bytes.size() >= 22) {
+    if (const std::optional<std::vector<unsigned char>> archiveBytes = withoutComment(bytes)) {
         try {
-            zip = std::make_unique<miniz_cpp::zip_file>(bytes);
-        } catch (const std::exception&) {
-            zip.reset();
+            zip = std::make_unique<miniz_cpp::zip_file>(*archiveBytes);
+        } catch (const std::runtime_error&) {
+            // 'zip' stays empty: miniz-cpp reports an archive it cannot read with a
+            // std::runtime_error; any other exception is not about the archive and propagates.
         }
     }
     if (!zip) {
@@ -798,7 +829,7 @@ void Score::loadXMLFile(const std::string& filePath) {
 
     if (fileExtension == "mxl") {
         const auto [document, rootfile] = mxlRootfile(*bytes, shownPath);
-        const pugi::xml_parse_result result = _doc.load_string(document.c_str());
+        const pugi::xml_parse_result result = _doc.load_buffer(document.data(), document.size());
         if (!result) {
             LOG_ERROR(notWellFormed(
                 result,

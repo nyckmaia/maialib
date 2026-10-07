@@ -1207,6 +1207,58 @@ TEST(ScoreFatalInput, AnMxlThatIsNotAZipArchiveIsNamed) {
     }
 }
 
+// The bytes of the committed archive test_compressed_file.mxl, whose end-of-central-directory
+// record holds no comment.
+std::string compressedFixtureBytes() {
+    std::ifstream in("./test/xml_examples/unit_test/test_compressed_file.mxl", std::ios::binary);
+    std::stringstream bytes;
+    bytes << in.rdbuf();
+    return bytes.str();
+}
+
+// An .mxl without the end-of-central-directory signature, whose bytes 2 and 3 a reader that
+// skips the signature check takes for a comment length of almost 64 KB, is not a zip archive.
+TEST(ScoreFatalInput, AnMxlWithoutAnEndRecordIsNotAZipArchive) {
+    const TemporaryFile file("high.mxl", "AB\xff\xff" + std::string(40, 'x'));
+    EXPECT_EQ(thrownFirstLine([&file] { Score score(file.path()); }),
+              "[maiacore] Score: '" + file.path() +
+                  "' is not a readable MusicXML archive: it is not a zip archive");
+}
+
+// An archive cut inside its end-of-central-directory record is not a zip archive.
+TEST(ScoreFatalInput, AnArchiveCutInsideItsEndRecordIsNotAZipArchive) {
+    const std::string archive = compressedFixtureBytes();
+    ASSERT_EQ(archive.compare(archive.size() - 22, 4, "PK\x05\x06"), 0);
+    for (const std::size_t cut : {std::size_t{1}, std::size_t{5}, std::size_t{18}}) {
+        const TemporaryFile file("cut.mxl", archive.substr(0, archive.size() - cut));
+        EXPECT_EQ(thrownFirstLine([&file] { Score score(file.path()); }),
+                  "[maiacore] Score: '" + file.path() +
+                      "' is not a readable MusicXML archive: it is not a zip archive")
+            << "cut by " << cut << " bytes";
+    }
+    // The record's comment is cut: it is shorter than the length the record gives.
+    std::string commented = archive;
+    commented[commented.size() - 2] = static_cast<char>(200);
+    commented += std::string(195, 'c');
+    const TemporaryFile file("cut-comment.mxl", commented);
+    EXPECT_EQ(thrownFirstLine([&file] { Score score(file.path()); }),
+              "[maiacore] Score: '" + file.path() +
+                  "' is not a readable MusicXML archive: it is not a zip archive");
+}
+
+// An archive with a comment of 200 bytes, whose length's low byte is above 127, loads as the
+// same archive without it.
+TEST(ScoreFatalInput, AnArchiveWithACommentLoads) {
+    std::string archive = compressedFixtureBytes();
+    archive[archive.size() - 2] = static_cast<char>(200);
+    archive += std::string(200, 'c');
+    const TemporaryFile file("commented.mxl", archive);
+    const Score plain("./test/xml_examples/unit_test/test_compressed_file.mxl");
+    const Score commented(file.path());
+    EXPECT_EQ(commented.getNumParts(), plain.getNumParts());
+    EXPECT_EQ(commented.getNumNotes(), plain.getNumNotes());
+}
+
 // A title, a composer and a part name whose bytes are not UTF-8 are held with U+FFFD in place of
 // each invalid byte: their getters return them to Python, which decodes them as UTF-8.
 TEST(ScoreImportReport, NamesThatAreNotUtf8AreHeldAsValidUtf8) {

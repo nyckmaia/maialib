@@ -219,6 +219,80 @@ class ScoreFatalInputTestCase(unittest.TestCase):
                 "Error parsing start element tag (byte offset 20)",
             )
 
+    def test_an_mxl_without_an_end_record_is_not_a_zip_archive(self):
+        """Bytes 2 and 3 of this file read as a comment length of almost 64 KB by a reader
+        that skips the end-of-central-directory signature check."""
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "high.mxl")
+            with open(path, "wb") as high:
+                high.write(b"AB\xff\xff" + b"x" * 40)
+            self.assertLoadFails(
+                path,
+                f"[maiacore] Score: '{path}' is not a readable MusicXML archive: it is not a zip "
+                "archive",
+            )
+
+    def test_an_archive_cut_inside_its_end_record_is_not_a_zip_archive(self):
+        with tempfile.TemporaryDirectory() as directory:
+            source = self.archive(directory, {"META-INF/container.xml": CONTAINER})
+            with open(source, "rb") as complete:
+                data = complete.read()
+            self.assertEqual(data[-22:-18], b"PK\x05\x06")
+            for cut in (1, 5, 18):
+                with self.subTest(cut=cut):
+                    path = os.path.join(directory, f"cut{cut}.mxl")
+                    with open(path, "wb") as truncated:
+                        truncated.write(data[:-cut])
+                    self.assertLoadFails(
+                        path,
+                        f"[maiacore] Score: '{path}' is not a readable MusicXML archive: it is "
+                        "not a zip archive",
+                    )
+            # The record's comment is cut: it is shorter than the length the record gives.
+            path = os.path.join(directory, "cut-comment.mxl")
+            with open(path, "wb") as truncated:
+                truncated.write(data[:-2] + bytes([200, 0]) + b"c" * 195)
+            self.assertLoadFails(
+                path,
+                f"[maiacore] Score: '{path}' is not a readable MusicXML archive: it is not a zip "
+                "archive",
+            )
+
+
+class ScoreArchiveTestCase(unittest.TestCase):
+    """Archives Score(path) reads as the plain file they hold."""
+
+    PLAIN = "./xml_examples/unit_test/test_chord.xml"
+
+    def assertLoadsAsPlain(self, rootfile, comment=b""):
+        """An .mxl holding 'rootfile' as score.xml, with the archive comment 'comment', loads
+        with the parts and notes of the plain file."""
+        plain = ml.Score(self.PLAIN)
+        with tempfile.TemporaryDirectory() as directory:
+            path = os.path.join(directory, "score.mxl")
+            with zipfile.ZipFile(path, "w") as archive:
+                archive.writestr("META-INF/container.xml", CONTAINER)
+                archive.writestr("score.xml", rootfile)
+                archive.comment = comment
+            score = ml.Score(path)
+        self.assertEqual(score.getNumParts(), plain.getNumParts())
+        self.assertEqual(score.getNumNotes(), plain.getNumNotes())
+
+    def plainBytes(self):
+        with open(self.PLAIN, "rb") as plain:
+            return plain.read()
+
+    def test_an_archive_with_a_comment_loads(self):
+        """A comment of 200 bytes: the low byte of its length is above 127."""
+        self.assertLoadsAsPlain(self.plainBytes(), comment=b"c" * 200)
+
+    def test_a_utf16_rootfile_loads(self):
+        text = self.plainBytes().decode("utf-8")
+        self.assertIn("encoding='UTF-8'", text)
+        utf16 = text.replace("encoding='UTF-8'", "encoding='UTF-16'").encode("utf-16")
+        self.assertTrue(utf16.startswith((b"\xff\xfe", b"\xfe\xff")))
+        self.assertLoadsAsPlain(utf16)
+
 
 class ScoreQuarterToneReadTestCase(unittest.TestCase):
     """Tests that MusicXML quarter tones survive a real Score(path) load through the
