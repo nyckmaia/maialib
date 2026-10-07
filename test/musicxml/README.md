@@ -29,6 +29,8 @@ One line per corpus file (a repository-relative path), with these fields:
 | `export_xsd` | `valid` or `invalid`; `n/a` without a well-formed export |
 | `export_errors` | the error-level semantic checks the export fails (`musicxml_check.py`); empty without a well-formed export |
 | `roundtrip` | `stable` when the export, loaded and exported again, is identical apart from its encoding date; `unstable`; an exception type; `crash`; `timeout`; `n/a` |
+| `codes` | the distinct codes of the file's import report (`Score.getImportIssues()`), sorted; present only when the file loads and its report is not empty |
+| `exit` | the worker's exit status, present only when it is not 0 -- also when the worker ended after its final record, which no stage shows. The status of a crash differs between platforms (3221226505 for 0xC0000409 on Windows, a negative signal number on Linux): a ledger line that holds one needs `{"any_of": [...]}` |
 | `slow` | `true` for files of 10 MB or more: `make py-tests` skips them, `make corpus` runs them |
 | `note` | why a field lists alternatives |
 
@@ -41,6 +43,10 @@ their cause is fixed, prune them, and the note, by hand.
 
 maialib and the validator read every file from its own path, whatever characters it holds: the
 ledger records what maialib does with the real file, on every platform.
+
+A ledger that would exceed 500,000 bytes keeps its `codes` in a sidecar file, `<ledger>-codes.json`
+(`ledger-external-codes.json`), one file per line in the same format; `make corpus` reads both, and
+`make corpus-update-ledger` writes the sidecar, or removes it when the ledger fits again.
 
 The ledger is strict both ways: a file that gets worse fails, and so does a file that gets better
 without a ledger update. `make corpus-update-ledger` writes the current results; review its diff
@@ -91,6 +97,12 @@ network access, and `musicxml_check.py` needs only lxml.
   the `<transpose>` round trip of `test_musicxml_transpose.py` with `MAIALIB_SLOW_TESTS=1`, which
   adds the slow corpus files that `make py-tests` skips.
 - `make corpus-update-ledger` writes the ledgers from the current results.
+- Both take options through `CORPUS_ARGS`, e.g. `make corpus CORPUS_ARGS="--skip-slow --workers 4"`:
+  `--in-repo-only` leaves out the external corpus, `--skip-slow` the files of 10 MB or more, and
+  `--filter SUBSTRING` every file whose repository-relative path does not contain `SUBSTRING`;
+  `--workers N` examines N files at once (default: half the CPUs, at least 2). A run that leaves
+  files out compares, or writes, only the lines of the files it examined, and skips the round
+  trip.
 - `make corpus-fetch` downloads OpenScore Lieder and String Quartets (CC0) at pinned commits;
   `make corpus` then includes them. On Windows it fails with "Filename too long" when the path of
   the repository's root is longer than 66 characters: the deepest OpenScore file adds 193 more,
@@ -99,5 +111,7 @@ network access, and `musicxml_check.py` needs only lxml.
   fuzz-minimize` does the same, then saves up to two cases of each outcome worth it into
   `fuzz-regressions/`, minimised where possible. Options go through `FUZZ_ARGS`, e.g.
   `make fuzz FUZZ_ARGS="--seed 7 --cases 1000"` (also `--minutes`, `--timeout`, `--per-outcome`).
+  `make fuzz FUZZ_ARGS="--accept"` is the acceptance test: it lists each case whose outcome is
+  worth minimising and exits 1 when there is one; without `--accept` the run only reports.
 - `python test/musicxml/musicxml_check.py FILE...` validates files; `python
   test/musicxml/dump_score.py SCORE [OUTPUT]` dumps a score.

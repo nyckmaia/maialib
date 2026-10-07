@@ -1,5 +1,7 @@
 """The fuzz driver's mutations, case generation, outcome classes and report (no worker runs here)."""
 
+import contextlib
+import importlib.util
 import io
 import json
 import random
@@ -18,6 +20,7 @@ from fixtures import CONTAINER, MINIMAL_SCORE  # noqa: E402
 from lxml import etree  # noqa: E402
 
 BYTE_LEVEL = ("utf16", "byte-order-mark", "latin1-declaration", "truncate")
+SCRIPTS = Path(__file__).resolve().parents[1] / "scripts"
 
 
 def canonical(data: bytes) -> bytes:
@@ -278,6 +281,57 @@ class RunTestCase(unittest.TestCase):
             },
             report,
         )
+
+
+def make_fuzz():
+    """scripts/make-fuzz.py as a module, with scripts/ on the path for its own imports."""
+    if str(SCRIPTS) not in sys.path:
+        sys.path.insert(0, str(SCRIPTS))
+    spec = importlib.util.spec_from_file_location("make_fuzz", SCRIPTS / "make-fuzz.py")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+class AcceptanceTestCase(unittest.TestCase):
+    """`make fuzz FUZZ_ARGS="--accept"`: the exit status and the cases it lists."""
+
+    def run_make_fuzz(self, outcomes, *arguments):
+        """make-fuzz.py's exit status and output for a run whose cases end in 'outcomes'."""
+        script = make_fuzz()
+        results = [
+            (fuzz.Case(1, index, f"{index}.xml", "truncate", b"", ".xml"), record(), outcome)
+            for index, outcome in enumerate(outcomes)
+        ]
+        report = fuzz.WORK / "report-seed-1.json"
+        output = io.StringIO()
+        with mock.patch.object(script.fuzz, "run", return_value=results), mock.patch.object(
+            script.fuzz, "write_report", return_value=report
+        ), mock.patch.object(sys, "argv", ["make-fuzz.py", *arguments]), contextlib.redirect_stdout(
+            output
+        ):
+            status = script.main()
+        return status, output.getvalue()
+
+    def test_accept_fails_and_lists_each_case_worth_minimising(self):
+        status, printed = self.run_make_fuzz(
+            ["ok", "load:IndexError", "export:xsd-invalid", "crash:load"], "--accept"
+        )
+        self.assertEqual(1, status)
+        self.assertIn("case 1: load:IndexError (1.xml, truncate)", printed)
+        self.assertIn("case 3: crash:load (3.xml, truncate)", printed)
+        self.assertNotIn("case 2:", printed)
+
+    def test_accept_passes_when_every_outcome_is_expected(self):
+        status, _ = self.run_make_fuzz(
+            ["ok", "export:xsd-invalid", "roundtrip:unstable"], "--accept"
+        )
+        self.assertEqual(0, status)
+
+    def test_without_accept_the_run_only_reports(self):
+        status, printed = self.run_make_fuzz(["crash:load"])
+        self.assertEqual(0, status)
+        self.assertIn("crash:load: 1", printed)
 
 
 if __name__ == "__main__":

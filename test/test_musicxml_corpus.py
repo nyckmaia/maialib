@@ -74,6 +74,9 @@ class Score:
     def __init__(self, path):
         pass
 
+    def getImportIssues(self):
+        return []
+
     def toXML(self):
         return EXPORT
 
@@ -100,6 +103,9 @@ musicxml_check.check_bytes = lambda data: os._exit(3)
 class Score:
     def __init__(self, path):
         pass
+
+    def getImportIssues(self):
+        return []
 
     def toXML(self):
         return "<score-partwise/>"
@@ -232,6 +238,49 @@ class LedgerLogicTestCase(unittest.TestCase):
             corpus.updated_ledger(old, actual),
         )
 
+    def test_a_partial_update_keeps_the_entries_of_the_files_it_did_not_examine(self):
+        old = {"a.xml": FINISHED, SMALL_FILE: FINISHED}
+        actual = {SMALL_FILE: {**FINISHED, "load": "IndexError"}}
+        self.assertEqual(
+            {"a.xml": FINISHED, SMALL_FILE: {**FINISHED, "load": "IndexError"}},
+            corpus.ledger_after(old, actual, complete=False),
+        )
+        self.assertEqual(
+            {SMALL_FILE: {**FINISHED, "load": "IndexError"}},
+            corpus.ledger_after(old, actual, complete=True),
+        )
+
+    def test_a_selection_keeps_the_files_with_the_substring_and_can_leave_out_slow_ones(self):
+        names = [SMALL_FILE, SLOW_FILE, LOADABLE_FILES[0]]
+        self.assertEqual([SMALL_FILE, SLOW_FILE], corpus.select(names, "xml_examples"))
+        self.assertEqual([SMALL_FILE], corpus.select(names, "xml_examples", skip_slow=True))
+        self.assertEqual([SMALL_FILE, LOADABLE_FILES[0]], corpus.select(names, skip_slow=True))
+        self.assertEqual(names, corpus.select(names))
+
+    def test_codes_move_to_a_sidecar_only_when_the_ledger_would_exceed_the_limit(self):
+        records = {
+            "a.xml": {**FINISHED, "codes": ["ALTER_OFF_GRID", "ELEMENT_NOT_MODELLED"]},
+            "b.xml": FINISHED,
+        }
+        with tempfile.TemporaryDirectory() as folder:
+            ledger = Path(folder) / "ledger-external.json"
+            sidecar = Path(folder) / "ledger-external-codes.json"
+            with mock.patch.object(corpus, "LEDGER_LIMIT", 100):
+                corpus.write_ledger(ledger, records)
+            self.assertNotIn(b"codes", ledger.read_bytes())
+            self.assertEqual(
+                {"files": {"a.xml": ["ALTER_OFF_GRID", "ELEMENT_NOT_MODELLED"]}},
+                json.loads(sidecar.read_text(encoding="utf-8")),
+            )
+            self.assertEqual(records, corpus.load_ledger(ledger))
+
+            corpus.write_ledger(ledger, records)
+            self.assertFalse(sidecar.exists())
+            self.assertIn(
+                b'"codes": ["ALTER_OFF_GRID", "ELEMENT_NOT_MODELLED"]', ledger.read_bytes()
+            )
+            self.assertEqual(records, corpus.load_ledger(ledger))
+
     def test_an_update_drops_the_note_when_no_alternative_still_holds(self):
         old = {SMALL_FILE: {**FINISHED, "load": {"any_of": ["ok", "crash"]}, "note": "why"}}
         actual = {SMALL_FILE: {**FINISHED, "load": "IndexError"}}
@@ -265,6 +314,21 @@ class WorkerStagesTestCase(unittest.TestCase):
         before_the_round_trip = records[-2]
         self.assertEqual("ill-formed", before_the_round_trip["export_xml"])
         self.assertEqual("n/a", before_the_round_trip["export_xsd"])
+
+    def test_a_loaded_file_has_the_sorted_codes_of_its_report_and_none_when_it_is_empty(self):
+        unit = corpus.REPO_ROOT / "test/xml_examples/unit_test"
+        expected = {
+            "transpose_out_of_range.musicxml": ["TRANSPOSE_OUT_OF_RANGE"],
+            "transpose_for_part.musicxml": ["ELEMENT_NOT_MODELLED", "FOR_PART_NOT_MODELLED"],
+            "quarter_tone_tartini.xml": None,
+        }
+        for name, codes in expected.items():
+            with self.subTest(name=name):
+                output = io.StringIO()
+                with contextlib.redirect_stdout(output):
+                    corpus_worker.examine(unit / name, analyses=False)
+                final = records_in(output.getvalue())[-1]
+                self.assertEqual(codes, final.get("codes"))
 
     def test_an_exception_in_the_validator_is_the_input_result_and_maialib_still_runs(self):
         output = io.StringIO()
@@ -317,7 +381,7 @@ class WorkerProcessTestCase(unittest.TestCase):
         # crash inside maialib would.
         with stand_in_maialib("import os\n\nos._exit(3)\n"):
             record = corpus.run_one(SMALL_FILE, timeout=60)
-        self.assertEqual({**NOTHING_FINISHED, "input": "valid", "load": "crash"}, record)
+        self.assertEqual({**NOTHING_FINISHED, "input": "valid", "load": "crash", "exit": 3}, record)
 
     def test_a_worker_that_dies_while_checking_the_export_is_a_crash_there(self):
         # The record that says the export succeeded comes before the export's checks.
@@ -330,6 +394,7 @@ class WorkerProcessTestCase(unittest.TestCase):
                 "load": "ok",
                 "export": "ok",
                 "export_xml": "crash",
+                "exit": 3,
             },
             record,
         )
@@ -338,8 +403,8 @@ class WorkerProcessTestCase(unittest.TestCase):
         diagnostics = {}
         with stand_in_maialib(DIES_AFTER_THE_FINAL_RECORD):
             record = corpus.run_one(SMALL_FILE, timeout=60, diagnostics=diagnostics)
-        # The record is complete: only the exit status shows the crash.
-        self.assertEqual({**FINISHED, "export_xsd": "valid"}, record)
+        # The record is complete but for the exit status, which shows the crash.
+        self.assertEqual({**FINISHED, "export_xsd": "valid", "exit": 3}, record)
         self.assertEqual(
             {"exit_code": 3, "stderr_tail": "a" * 1991 + "\ufffd the end"}, diagnostics
         )

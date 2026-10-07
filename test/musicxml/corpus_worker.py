@@ -10,6 +10,8 @@ with --analyses: chords and the intervals between consecutive notes), export (Sc
 export's checks (export_xml: well-formed; export_xsd: the schema; export_errors: the semantic
 errors), and roundtrip (the export loaded and exported again, compared without its encoding
 date). A stage that cannot run because of an earlier result is "n/a".
+A file that loads also has "codes": the distinct codes of its import report, sorted, when the
+report is not empty.
 """
 
 from __future__ import annotations
@@ -122,6 +124,9 @@ def examine_with_maialib(path: Path, record: Record, analyses: bool) -> None:
         finish(record)
         return
     record["load"] = "ok"
+    codes = sorted({issue.code for issue in score.getImportIssues()})
+    if codes:
+        record["codes"] = codes
     emit(record)
 
     if analyses:

@@ -11,7 +11,6 @@ from __future__ import annotations
 import copy
 import io
 import json
-import os
 import random
 import re
 import time
@@ -307,7 +306,7 @@ def run(
     """Run cases 0..cases-1 of ``seed``; with ``minutes``, stop starting batches after that."""
     seeds = seed_files()
     deadline = None if minutes is None else time.monotonic() + minutes * 60
-    count = workers or max(2, (os.cpu_count() or 2) // 2)
+    count = workers or corpus.default_workers()
     results: list[tuple[Case, Record, str]] = []
     index = 0
     with ThreadPoolExecutor(max_workers=count) as pool:

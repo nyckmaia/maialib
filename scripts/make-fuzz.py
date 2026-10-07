@@ -4,7 +4,9 @@ Options go through FUZZ_ARGS, e.g. `make fuzz FUZZ_ARGS="--seed 7 --cases 1000"`
 how many cases ended in each outcome and writes every case that is not ok to
 test/musicxml/fuzz-work/report-seed-<seed>.json; with --minimize, up to --per-outcome cases of
 each failing outcome are saved into test/musicxml/fuzz-regressions/, minimised unless
-fuzz.minimize keeps them as they are. Needs maialib installed (`make dev`).
+fuzz.minimize keeps them as they are. With --accept the run is the acceptance test: it lists every
+case whose outcome is worth minimising (fuzz.worth_minimising) and exits 1 when there is one;
+without it the run only reports. Needs maialib installed (`make dev`).
 """
 
 import argparse
@@ -29,6 +31,9 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=30.0, help="seconds per case")
     parser.add_argument("--minimize", action="store_true")
     parser.add_argument("--per-outcome", type=int, default=2, help="cases saved per outcome")
+    parser.add_argument(
+        "--accept", action="store_true", help="fail when an outcome is worth minimising"
+    )
     arguments = parser.parse_args()
 
     results = fuzz.run(arguments.seed, arguments.cases, arguments.minutes, arguments.timeout)
@@ -49,6 +54,16 @@ def main() -> int:
                 case, outcome, fuzz.minimize(case, outcome, arguments.timeout)
             )
             print(f"  {outcome}, case {case.index}: {path.relative_to(REPO_ROOT)}")
+    if arguments.accept:
+        findings = [
+            (case, outcome) for case, _, outcome in results if fuzz.worth_minimising(outcome)
+        ]
+        for case, outcome in findings:
+            finding = f"case {case.index}: {outcome} ({case.source}, {case.mutation})"
+            print(f"{color.FAIL}{finding}{color.ENDC}")
+        if findings:
+            print(f"{color.FAIL}{len(findings)} cases are not accepted.{color.ENDC}")
+            return 1
     return 0
 
 

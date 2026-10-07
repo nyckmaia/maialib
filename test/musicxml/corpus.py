@@ -32,6 +32,9 @@ SLOW_BYTES = 10_000_000
 SLOW_TIMEOUT = 3600.0
 IGNORED_KEYS = ("slow", "note")
 STDERR_TAIL = 2000
+# The size above which a ledger keeps its "codes" in a sidecar file instead, below the 500 KB
+# from which the repository's pre-commit hook refuses a file.
+LEDGER_LIMIT = 500_000
 
 Record = Dict[str, Any]
 
@@ -52,6 +55,23 @@ def corpus_files() -> list[str]:
 def external_files() -> list[str]:
     """Repository-relative paths of the fetched external corpus; empty until it is fetched."""
     return _files_under(EXTERNAL_ROOT) if EXTERNAL_ROOT.is_dir() else []
+
+
+def default_workers() -> int:
+    """The number of files examined at once unless told otherwise: half the CPUs, at least 2."""
+    return max(2, (os.cpu_count() or 2) // 2)
+
+
+def select(
+    names: Iterable[str], substring: str | None = None, skip_slow: bool = False
+) -> list[str]:
+    """The names that contain ``substring`` (all without one), the slow files left out with
+    ``skip_slow``."""
+    return [
+        name
+        for name in names
+        if (substring is None or substring in name) and not (skip_slow and is_slow(name))
+    ]
 
 
 def is_slow(name: str) -> bool:
@@ -96,7 +116,8 @@ def run_one(
     The worker keeps its temporary files in a directory of its own, removed when the worker has
     ended, so that a worker killed at the timeout or ended by a crash leaves none behind. With
     ``diagnostics``, also fill it with the worker's ``exit_code`` (None when the timeout stopped
-    it) and ``stderr_tail``, the last STDERR_TAIL characters of its standard error.
+    it) and ``stderr_tail``, the last STDERR_TAIL characters of its standard error. A worker that
+    ended with a status other than 0 has it in the record's ``exit``, also after its final record.
     """
     command = [sys.executable, str(WORKER), str(REPO_ROOT / name)]
     if analyses:
@@ -122,6 +143,8 @@ def run_one(
         diagnostics["exit_code"] = exit_code
         diagnostics["stderr_tail"] = (stderr or b"").decode("utf-8", "replace")[-STDERR_TAIL:]
     record = _last_record(stdout or b"") or corpus_worker.new_record(analyses)
+    if exit_code is not None and exit_code != 0:
+        record["exit"] = exit_code
     return ended(record, "timeout" if exit_code is None else "crash")
 
 
@@ -130,25 +153,64 @@ def run_corpus(
 ) -> dict[str, Record]:
     """Examine the files in parallel and return their records by name."""
     names = list(names)
-    count = workers or max(2, (os.cpu_count() or 2) // 2)
-    with ThreadPoolExecutor(max_workers=count) as pool:
+    with ThreadPoolExecutor(max_workers=workers or default_workers()) as pool:
         records = list(pool.map(lambda name: run_one(name, analyses), names))
     return dict(zip(names, records))
 
 
+def codes_path(path: Path) -> Path:
+    """The sidecar file of a ledger, which holds its "codes" when the ledger would be too big."""
+    return path.with_name(path.stem + "-codes.json")
+
+
 def load_ledger(path: Path) -> dict[str, Record]:
-    return json.loads(path.read_text(encoding="utf-8"))["files"]
+    """The ledger's records, with the "codes" of its sidecar file, if it has one."""
+    records = json.loads(path.read_text(encoding="utf-8"))["files"]
+    sidecar = codes_path(path)
+    if sidecar.is_file():
+        for name, codes in json.loads(sidecar.read_text(encoding="utf-8"))["files"].items():
+            records.setdefault(name, {})["codes"] = codes
+    return records
+
+
+def _ledger_bytes(entries: dict[str, Any]) -> bytes:
+    """One file per line, sorted, so that a change shows as a one-line diff; LF line endings on
+    every platform (Path.write_text has no newline argument before Python 3.10)."""
+    lines = [
+        f"  {json.dumps(name)}: {json.dumps(entries[name], sort_keys=True)}"
+        for name in sorted(entries)
+    ]
+    return ('{"files": {\n' + ",\n".join(lines) + "\n}}\n").encode("utf-8")
 
 
 def write_ledger(path: Path, records: dict[str, Record]) -> None:
-    """Write one file per line, sorted, so that a change shows as a one-line diff."""
-    lines = [
-        f"  {json.dumps(name)}: {json.dumps(records[name], sort_keys=True)}"
-        for name in sorted(records)
-    ]
-    # Bytes, so the line endings are LF on every platform (Path.write_text has no newline
-    # argument before Python 3.10).
-    path.write_bytes(('{"files": {\n' + ",\n".join(lines) + "\n}}\n").encode("utf-8"))
+    """Write the ledger, one file per line. When it would exceed LEDGER_LIMIT bytes, the "codes"
+    of its records go to its sidecar file (codes_path), in the same format; otherwise a sidecar
+    left from an earlier write is removed."""
+    data = _ledger_bytes(records)
+    sidecar = codes_path(path)
+    if len(data) > LEDGER_LIMIT:
+        codes = {name: record["codes"] for name, record in records.items() if "codes" in record}
+        rest = {
+            name: {key: value for key, value in record.items() if key != "codes"}
+            for name, record in records.items()
+        }
+        data = _ledger_bytes(rest)
+        sidecar.write_bytes(_ledger_bytes(codes))
+    elif sidecar.is_file():
+        sidecar.unlink()
+    path.write_bytes(data)
+
+
+def ledger_after(
+    old: dict[str, Record], actual: dict[str, Record], complete: bool
+) -> dict[str, Record]:
+    """The ledger to write after examining the files of ``actual``: their updated entries, and,
+    when the run examined only some of the corpus (``complete`` false), the old entries of every
+    other file."""
+    ledger = {} if complete else dict(old)
+    ledger.update(updated_ledger(old, actual))
+    return ledger
 
 
 def updated_ledger(old: dict[str, Record], actual: dict[str, Record]) -> dict[str, Record]:

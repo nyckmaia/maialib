@@ -124,13 +124,15 @@ tests:
 	@$(MAKE) --no-print-directory py-tests
 
 # Every file of the MusicXML corpus, the slow ones included, and the external corpus once
-# `make corpus-fetch` has downloaded it, compared with test/musicxml/ledger*.json.
+# `make corpus-fetch` has downloaded it, compared with test/musicxml/ledger*.json. Options go
+# through CORPUS_ARGS: --in-repo-only, --skip-slow, --filter SUBSTRING, --workers N.
 corpus:
-	@$(PYTHON) $(SCRIPTS_DIR)/make-corpus.py
+	@$(PYTHON) $(SCRIPTS_DIR)/make-corpus.py $(CORPUS_ARGS)
 
-# Write the current corpus results as the ledgers; review the diff before committing it.
+# Write the current corpus results as the ledgers; review the diff before committing it. With
+# CORPUS_ARGS that leave files out, only the examined files' lines are written.
 corpus-update-ledger:
-	@$(PYTHON) $(SCRIPTS_DIR)/make-corpus.py --update-ledger
+	@$(PYTHON) $(SCRIPTS_DIR)/make-corpus.py --update-ledger $(CORPUS_ARGS)
 
 # Download the external MusicXML corpus (OpenScore, CC0) at pinned commits into
 # test/musicxml/external/, which git ignores.
@@ -138,7 +140,7 @@ corpus-fetch:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-corpus-fetch.py
 
 # Seeded mutation fuzzing of the MusicXML reader and writer; options through FUZZ_ARGS, e.g.
-# make fuzz FUZZ_ARGS="--seed 7 --cases 1000".
+# make fuzz FUZZ_ARGS="--seed 7 --cases 1000"; --accept fails on a case worth minimising.
 fuzz:
 	@$(PYTHON) $(SCRIPTS_DIR)/make-fuzz.py $(FUZZ_ARGS)
 
