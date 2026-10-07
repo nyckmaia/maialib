@@ -364,14 +364,15 @@ class Score {
     bool isValid(void) const;
 
     /**
-     * @brief Returns the file path of the loaded MusicXML file, as it was given (UTF-8).
+     * @brief Returns the file path of the loaded MusicXML file, as it was given, in valid UTF-8:
+     *        U+FFFD in place of each byte that is not.
      * @return File path string.
      */
     std::string getFilePath() const;
 
     /**
      * @brief Returns the file name of the loaded MusicXML file: its path after the last '/' or
-     *        '\\' (UTF-8).
+     *        '\\', in valid UTF-8 like getFilePath().
      * @return File name string.
      */
     std::string getFileName() const;

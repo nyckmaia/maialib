@@ -310,6 +310,22 @@ class ScoreCollectionConstructionTestCase(unittest.TestCase):
         self.assertEqual(results, [f"RESULT {names} {names}"])
         self.assertIn("Loading: \\u65e5\\u672c.xml", completed.stdout)
 
+    @unittest.skipUnless(sys.platform.startswith("linux"), "Linux file names are bytes")
+    def test_a_file_name_that_is_not_utf8_loads_with_a_replacement_character(self):
+        """On Linux a file name is bytes, which need not be UTF-8: the file named b'\\xff.xml'
+        loads, and its name and path hold U+FFFD in place of the byte."""
+        with tempfile.TemporaryDirectory() as directory:
+            shutil.copyfile(LAST_WINDOW, os.path.join(os.fsencode(directory), b"\xff.xml"))
+            output = io.StringIO()
+            with contextlib.redirect_stdout(output):
+                collection = ml.ScoreCollection(directory)
+            self.assertEqual(collection.getLoadErrors(), [])
+            self.assertEqual(fileNames(collection), ["�.xml"])
+            self.assertEqual(
+                collection.getScores()[0].getFilePath(), os.path.join(directory, "�.xml")
+            )
+            self.assertIn("Loading: �.xml", output.getvalue())
+
 
 class ConsoleRedirectTestCase(unittest.TestCase):
     """The loading methods write to Python's sys.stdout; a stream that fails cannot end the

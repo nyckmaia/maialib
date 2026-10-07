@@ -73,7 +73,7 @@ std::vector<std::filesystem::path> musicXMLFilesOf(const std::string& directory)
             files.push_back(it->path());
         }
         const std::filesystem::path next = readNext(it);
-        failed = (next == directoryPath) ? maiacore::detail::validUtf8(directory) : next.u8string();
+        failed = maiacore::detail::validUtf8((next == directoryPath) ? directory : next.u8string());
     }
     if (error) {
         LOG_ERROR("ScoreCollection: cannot read the directory '" + failed + "'");

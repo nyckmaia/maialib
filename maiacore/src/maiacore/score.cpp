@@ -821,7 +821,9 @@ const std::vector<ImportIssue>& Score::getImportIssues() const { return _importI
 void Score::loadXMLFile(const std::string& filePath) {
     clear();
 
-    _filePath = filePath;
+    // Stored as valid UTF-8, which Python requires: on Linux a name's bytes need not be UTF-8.
+    // The file itself is opened at 'filePath', as given.
+    _filePath = maiacore::detail::validUtf8(filePath);
 
     _fileName = [](const std::string& path) -> std::string {
         // Encontrar a última ocorrência de '/' ou '\'
