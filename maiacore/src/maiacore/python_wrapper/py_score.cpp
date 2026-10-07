@@ -116,8 +116,9 @@ void ScoreClass(const py::module& m) {
             R"pbdoc(
         Load a score from a MusicXML file (``.xml``, ``.musicxml`` or compressed ``.mxl``, the
         extension in any case; a file that starts with the zip signature ``PK`` is read as an
-        archive whatever its name). Any path Python can pass as ``str`` opens, on every platform,
-        and ``getFileName()`` and ``getFilePath()`` return it as given. What the load prints goes to
+        archive whatever its name). Any path given as a valid UTF-8 ``str`` opens, on every
+        platform, and ``getFileName()`` and ``getFilePath()`` return it as given; on Linux, a file
+        whose name is not UTF-8 is loaded through ``ScoreCollection``. What the load prints goes to
         ``sys.stdout``; a character the stream cannot encode is written as a backslash escape.
 
         A note's accidental is read from its ``<accidental>`` element first -- where a quarter
