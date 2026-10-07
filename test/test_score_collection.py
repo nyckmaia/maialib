@@ -364,7 +364,8 @@ class ConsoleRedirectTestCase(unittest.TestCase):
     def test_a_stream_that_raises_keyboard_interrupt_interrupts_after_the_call(self):
         """The interrupt is raised once the call has returned with its whole result, and once."""
         code = (
-            "import sys\n"
+            "import signal, sys\n"
+            "signal.signal(signal.SIGINT, signal.default_int_handler)\n"
             "import maialib as ml\n"
             "class Interrupting:\n"
             "    encoding = 'utf-8'\n"
@@ -394,6 +395,42 @@ class ConsoleRedirectTestCase(unittest.TestCase):
         self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
         results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
         self.assertEqual(results, ["RESULT ['interrupted', 'interrupted'] 0 1"])
+
+    def test_a_keyboard_interrupt_on_another_thread_is_dropped(self):
+        """A stream that raises KeyboardInterrupt while a worker thread loads: the worker's call
+        returns its result, and the main thread, which an interrupt raised again would reach, is
+        not interrupted."""
+        code = (
+            "import signal, sys, threading\n"
+            "signal.signal(signal.SIGINT, signal.default_int_handler)\n"
+            "import maialib as ml\n"
+            "class Interrupting:\n"
+            "    encoding = 'utf-8'\n"
+            "    def write(self, text):\n"
+            "        raise KeyboardInterrupt\n"
+            "    def flush(self):\n"
+            "        pass\n"
+            "standard = sys.stdout\n"
+            "outcomes = []\n"
+            "def load():\n"
+            "    sys.stdout = Interrupting()\n"
+            "    try:\n"
+            f"        outcomes.append(len(ml.Score({self.PRINTS!r}).getImportIssues()))\n"
+            "    except KeyboardInterrupt:\n"
+            "        outcomes.append('interrupted')\n"
+            "    finally:\n"
+            "        sys.stdout = standard\n"
+            "worker = threading.Thread(target=load)\n"
+            "worker.start()\n"
+            "worker.join()\n"
+            "for _ in range(1000):\n"
+            "    pass\n"
+            "print('RESULT', outcomes)\n"
+        )
+        completed = runChild(code)
+        self.assertEqual(completed.returncode, 0, completed.stderr[-2000:])
+        results = [line for line in completed.stdout.splitlines() if line.startswith("RESULT")]
+        self.assertEqual(results, ["RESULT [1]"])
 
 
 class ScoreCollectionMelodySearchTestCase(unittest.TestCase):

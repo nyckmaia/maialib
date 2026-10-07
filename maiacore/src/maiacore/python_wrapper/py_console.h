@@ -9,12 +9,21 @@ namespace maiacore_python {
 
 namespace py = pybind11;
 
-// Handles an error that a write or flush of the console raised, which must not escape: a
-// KeyboardInterrupt is raised again as a pending interrupt, which Python raises at its next check
-// for signals, once the call returns; any other error is dropped with the text.
+// Handles an error that a write or flush of the console raised, which must not escape. On the
+// main thread a KeyboardInterrupt is raised again as a pending interrupt, which Python raises at
+// its next check for signals, once the call returns. PyErr_SetInterrupt() always interrupts the
+// main thread, so on any other thread the interrupt is dropped with the text, as any other error
+// is.
 inline void dropConsoleError(const py::error_already_set& error) {
-    if (error.matches(PyExc_KeyboardInterrupt)) {
-        PyErr_SetInterrupt();
+    if (!error.matches(PyExc_KeyboardInterrupt)) {
+        return;
+    }
+    try {
+        const py::module_ threading = py::module_::import("threading");
+        if (threading.attr("current_thread")().is(threading.attr("main_thread")())) {
+            PyErr_SetInterrupt();
+        }
+    } catch (...) {
     }
 }
 
