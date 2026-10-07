@@ -74,15 +74,17 @@ void ScoreClass(const py::module& m) {
         partName : str
             The part's name in the score; empty when ``partIndex`` is -1.
         measureNumber : str
-            The measure's ``number`` attribute as the file writes it; empty when the record is
-            about no one measure.
+            The measure's ``number`` attribute as the file writes it; empty when the measure
+            has no ``number`` or the record is about no one measure.
         measureIndex : int
-            0-based index of the measure; -1 when ``measureNumber`` is empty.
+            0-based index of the measure; -1 only when the record is about no one measure.
         element : str
             The element's path: from its measure inside a measure (``"note/pitch/alter"``), from
             the score's root element otherwise (``"part-list/score-part/part-name"``).
         found : str
-            The value read; empty when the element is absent.
+            The value read; empty when the element is absent. For a ``"dropped"`` element outside
+            the closed element list (``ELEMENT_NOT_MODELLED``), the number of such elements in
+            the file.
         used : str
             The value stored in the score; empty when nothing of the element is stored.
         message : str
@@ -114,8 +116,8 @@ void ScoreClass(const py::module& m) {
             R"pbdoc(
         Load a score from a MusicXML file (``.xml``, ``.musicxml`` or compressed ``.mxl``, the
         extension in any case; a file that starts with the zip signature ``PK`` is read as an
-        archive whatever its name). Any path opens on every platform, whatever its characters, and
-        ``getFileName()`` and ``getFilePath()`` return it as given. What the load prints goes to
+        archive whatever its name). Any path Python can pass as ``str`` opens, on every platform,
+        and ``getFileName()`` and ``getFilePath()`` return it as given. What the load prints goes to
         ``sys.stdout``; a character the stream cannot encode is written as a backslash escape.
 
         A note's accidental is read from its ``<accidental>`` element first -- where a quarter

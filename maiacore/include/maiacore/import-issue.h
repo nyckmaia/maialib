@@ -18,16 +18,17 @@ struct ImportIssue {
     std::string kind;
     int partIndex = -1;    ///< 0-based index of the part; -1 when the record is about no one part.
     std::string partName;  ///< The part's name in the score; empty when partIndex is -1.
-    /// The measure's number attribute as the file writes it; empty when the record is about no
-    /// one measure.
+    /// The measure's number attribute as the file writes it; empty when the measure has no
+    /// number attribute or the record is about no one measure.
     std::string measureNumber;
-    int measureIndex = -1;  ///< 0-based index of the measure; -1 when measureNumber is empty.
+    /// 0-based index of the measure; -1 only when the record is about no one measure.
+    int measureIndex = -1;
     /// The element's path: from its measure for an element inside a measure
     /// ("note/pitch/alter"), from the score's root element otherwise
     /// ("part-list/score-part/part-name").
     std::string element;
-    /// The value read; empty when the element is absent. For a "dropped" element of the closed
-    /// element list, the number of such elements in the file.
+    /// The value read; empty when the element is absent. For a "dropped" element outside the
+    /// closed element list (ELEMENT_NOT_MODELLED), the number of such elements in the file.
     std::string found;
     /// The value stored in the score; empty when nothing of the element is stored.
     std::string used;
